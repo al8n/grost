@@ -1,0 +1,142 @@
+[package]
+name = "grost"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+default = ["std"]
+alloc = [
+  "bytes",
+  "tinyvec/alloc",
+  "smol_str",
+  "chrono_0_4?/alloc",
+  "hostaddr_0_1?/alloc",
+  "hostaddr_0_1?/tinyvec_1",
+  "hostaddr_0_1?/bytes_1",
+  "hostaddr_0_1?/smol_str_0_3",
+  "ruint_1?/alloc",
+]
+std = [
+  "bytes_1/default",
+  "varing/default",
+  "bigdecimal_0_4?/default",
+  "chrono_0_4?/default",
+  "chrono-tz_0_10?/default",
+  "hashbrown_0_15?/default",
+  "hostaddr_0_1?/default",
+  "hostaddr_0_1?/bytes_1",
+  "hostaddr_0_1?/tinyvec_1",
+  "hostaddr_0_1?/smol_str_0_3",
+  "indexmap_2?/default",
+  "ruint_1?/default",
+  "smol_str_0_3/default",
+  "thiserror/default",
+  "tinyvec/default",
+  "triomphe_0_1?/default",
+  "url_2?/default",
+  "uuid_1?/default",
+]
+
+arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
+arbitrary-int = ["arbitrary-int_1"]
+
+bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
+bnum = ["bnum_0_13"]
+
+bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
+bytes = ["bytes_1"]
+
+bigdecimal_0_4 = ["dep:bigdecimal_0_4"]
+bigdecimal = ["bigdecimal_0_4"]
+
+chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
+chrono = ["chrono_0_4"]
+
+chrono-tz_0_10 = ["dep:chrono-tz_0_10"]
+chrono-tz = ["chrono-tz_0_10"]
+
+decimal_1 = ["dep:rust_decimal_1"]
+decimal = ["decimal_1"]
+
+hashbrown_0_15 = ["dep:hashbrown_0_15"]
+hashbrown = ["hashbrown_0_15"]
+
+heapless_0_8 = ["dep:heapless_0_8"]
+heapless = ["heapless_0_8"]
+
+hostaddr_0_1 = ["dep:hostaddr_0_1"]
+hostaddr = ["hostaddr_0_1"]
+
+indexmap_2 = ["dep:indexmap_2"]
+indexmap = ["indexmap_2"]
+
+num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
+num-rational = ["num-rational_0_4"]
+
+num-complex_0_4 = ["dep:num-complex_0_4", "varing/num-complex_0_4"]
+num-complex = ["num-complex_0_4"]
+
+ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
+ruint = ["ruint_1"]
+
+smol_str_0_3 = ["dep:smol_str_0_3", "hostaddr_0_1?/smol_str_0_3"]
+smol_str = ["smol_str_0_3"]
+
+time_0_3 = ["dep:time_0_3", "varing/time_0_3"]
+time = ["time_0_3"]
+
+triomphe_0_1 = ["dep:triomphe_0_1", "hostaddr_0_1?/triomphe_0_1"]
+triomphe = ["triomphe_0_1"]
+
+url_2 = ["dep:url_2"]
+url = ["url_2"]
+
+uuid_1 = ["dep:uuid_1"]
+uuid = ["uuid_1"]
+
+arbitrary = [
+  "dep:arbitrary",
+  "chrono-tz_0_10?/arbitrary",
+  "smol_str_0_3?/arbitrary",
+  "ruint_1?/arbitrary",
+  "rust_decimal_1?/rust-fuzz",
+  "uuid_1?/arbitrary",
+]
+quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck"]
+
+[dependencies]
+varing.workspace = true
+derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "try_unwrap"] }
+paste = "1"
+seq-macro = "0.3"
+thiserror = { version = "2", default-features = false }
+tinyvec = { version = "1", default-features = false, features = ["latest_stable_rust"] }
+
+arbitrary = { version = "1", optional = true, features = ["derive"] }
+arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
+bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
+bigdecimal_0_4 = { package = "bigdecimal", version = "0.4", default-features = false, optional = true }
+chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
+chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
+hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
+heapless_0_8 = { package = "heapless", version = "0.8", default-features = false, optional = true }
+hostaddr_0_1 = { package = "hostaddr", version = "0.1", default-features = false, optional = true }
+indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
+num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
+num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
+quickcheck = { version = "1", default-features = false, optional = true }
+ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
+rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
+triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
+time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
+url_2 = { package = "url", version = "2", default-features = false, optional = true }
+uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
