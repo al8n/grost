@@ -15,6 +15,7 @@ compile_error!("`heapless` feature must be enabled when both `std` and `alloc` a
 pub use buffer::Buffer;
 pub use error::{DecodeError, EncodeError};
 pub use impls::*;
+
 pub use selection_set::SelectionSet;
 pub use tag::Tag;
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -26,45 +27,19 @@ pub use wire_type::WireType;
 pub use bytes_1 as bytes;
 
 mod buffer;
-/// The error module contains all the error types used in the Graph RPC.
+/// The error module contains all the error types used in the `Grost`.
 mod error;
+#[macro_use]
+mod macros;
+/// Traits implemented for primitive types and common types.
 mod impls;
 mod selection_set;
 mod tag;
 mod unknown;
 mod wire_type;
 
-/// A trait defining the core type components for Graph RPC queries.
-///
-/// This trait specifies the associated types that work together to form
-/// a complete Graph RPC query system, including selection, output, filtering,
-/// and ordering capabilities.
-pub trait Type {
-  /// The selection type for a Graph RPC query.
-  ///
-  /// This type defines which fields should be returned in the query results.
-  /// It must be serializable for transmission and clonable for manipulation.
-  type Selection: OutputType + Clone;
 
-  /// The output type for a Graph RPC query.
-  ///
-  /// This represents the structured data returned from a query operation.
-  type Output: OutputType;
-
-  /// The filter type for a Graph RPC query.
-  ///
-  /// This type defines criteria to determine which results should be included
-  /// or excluded from the query results.
-  type Filter: OutputType + Clone;
-
-  /// The order by type for a Graph RPC query.
-  ///
-  /// This type defines how results should be sorted when returned.
-  /// It must be clonable for efficient manipulation.
-  type OrderBy: OutputType + Clone;
-}
-
-/// A trait for types that can be used as output from Graph RPC queries.
+/// A message type that can be serialized and deserialized.
 ///
 /// This trait defines how output types can be serialized, deserialized,
 /// borrowed, and converted between different representations.
@@ -72,7 +47,7 @@ pub trait Type {
 /// * `Serialized<'a>` - A serialized representation with lifetime 'a
 /// * `Borrowed<'a>` - A borrowed view with lifetime 'a
 /// * `SerializedOwned` - An owned serialized representation
-pub trait OutputType: Serialize {
+pub trait Message: Serialize {
   /// A serialized representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and deserialized from raw bytes.
@@ -84,7 +59,7 @@ pub trait OutputType: Serialize {
   ///
   /// This type provides a non-owned view that can be created from a reference
   /// and serialized when needed.
-  type Borrowed<'a>: Copy + From<&'a Self> + Serialize
+  type Borrowed<'a>: Copy + TypeBorrowed<'a, Self> + Serialize
   where
     Self: 'a;
 
@@ -94,20 +69,8 @@ pub trait OutputType: Serialize {
     Self: Sized + 'static;
 }
 
-/// A trait for types that can be converted to another type.
-///
-/// This trait enables bidirectional conversion between serialized
-/// representations and their corresponding deserialized types.
-///
-/// * `T` - The target type to convert to
-pub trait TypeRef<T> {
-  /// Converts a reference of this type to the target type.
-  ///
-  /// # Errors
-  ///
-  /// Returns a [`DecodeError`] if the conversion fails.
-  fn to_target(&self) -> Result<T, DecodeError>;
-
+/// A trait for consuming `Self` and converting it to `T`.
+pub trait IntoTarget<T> {
   /// Consumes this type and converts it to the target type.
   ///
   /// # Errors
@@ -122,20 +85,49 @@ pub trait TypeRef<T> {
 /// representations and their corresponding deserialized types.
 ///
 /// * `T` - The target type to convert to
-pub trait TypeOwned<T> {
+pub trait TypeRef<T>: IntoTarget<T> {
   /// Converts a reference of this type to the target type.
   ///
   /// # Errors
   ///
   /// Returns a [`DecodeError`] if the conversion fails.
-  fn to_target(&self) -> Result<T, DecodeError>;
+  fn to(&self) -> Result<T, DecodeError>;
+}
 
-  /// Consumes this type and converts it to the target type.
+/// A trait for types that can be converted to another type.
+///
+/// This trait enables bidirectional conversion between serialized
+/// representations and their corresponding deserialized types.
+///
+/// * `T` - The target type to convert to
+pub trait TypeBorrowed<'a, T: ?Sized> {
+  /// Converts a reference of this type to the target type.
   ///
   /// # Errors
   ///
   /// Returns a [`DecodeError`] if the conversion fails.
-  fn into_target(self) -> Result<T, DecodeError>;
+  fn from_borrow(val: &'a T) -> Self;
+}
+
+impl<'a, T: ?Sized> TypeBorrowed<'a, T> for &'a T {
+  fn from_borrow(val: &'a T) -> Self {
+    val
+  }
+}
+
+/// A trait for types that can be converted to another type.
+///
+/// This trait enables bidirectional conversion between serialized
+/// representations and their corresponding deserialized types.
+///
+/// * `T` - The target type to convert to
+pub trait TypeOwned<T>: IntoTarget<T> {
+  /// Converts a reference of this type to the target type.
+  ///
+  /// # Errors
+  ///
+  /// Returns a [`DecodeError`] if the conversion fails.
+  fn to(&self) -> Result<T, DecodeError>;
 }
 
 /// A trait for types that can be encoded with a specific wire format.
@@ -341,14 +333,103 @@ pub trait Serialize: Wirable {
   }
 }
 
-impl<'a, T> Wirable for &'a T
+/// A trait for serializing data to binary format with support for various wire types.
+///
+/// This trait provides methods to encode data into binary representations,
+/// calculate required buffer sizes, and handle length-delimited encoding.
+pub trait PartialSerialize: Wirable {
+  /// The selection type for the message, which determines which fields to include
+  /// in the serialized output.
+  type Selection;
+
+  /// Encodes the message into the provided buffer.
+  ///
+  /// Returns the number of bytes written to the buffer or an error if the operation fails.
+  ///
+  /// [`Serialize::encoded_len`] can be used to determine the required buffer size.
+  fn partial_encode(&self, tag: Tag, selection: &Self::Selection, buf: &mut [u8]) -> Result<usize, EncodeError>;
+
+  /// Returns the number of bytes needed to encode the message.
+  ///
+  /// This is used to determine the buffer size required for encoding.
+  fn partial_encoded_len(&self, tag: Tag, selection: &Self::Selection) -> usize;
+
+  /// Returns the encoded length of the data including the length delimiter prefix.
+  ///
+  /// For `WireType::LengthDelimited`, this includes the varint-encoded length
+  /// prefix followed by the actual data length. For other wire types, this is
+  /// equivalent to [`Serialize::encoded_len`].
+  fn partial_encoded_len_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> usize {
+    let len = self.partial_encoded_len(tag, selection);
+    match Self::WIRE_TYPE {
+      WireType::LengthDelimited => varing::encoded_u32_varint_len(len as u32) + len,
+      _ => len,
+    }
+  }
+
+  /// Encodes the message into a [`Vec`](std::vec::Vec).
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  fn partial_encode_to_vec(&self, tag: Tag, selection: &Self::Selection,) -> Result<std::vec::Vec<u8>, error::EncodeError> {
+    let mut buf = std::vec![0; self.partial_encoded_len(tag, selection)];
+    self.partial_encode(tag, selection, &mut buf)?;
+    Ok(buf)
+  }
+
+  /// Encodes the message into a [`Bytes`](::bytes::Bytes).
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  fn partial_encode_to_bytes(&self, tag: Tag, selection: &Self::Selection,) -> Result<bytes::Bytes, EncodeError> {
+    self.partial_encode_to_vec(tag, selection).map(Into::into)
+  }
+
+  /// Encodes the message with a length-delimiter prefix to a buffer.
+  ///
+  /// For `WireType::LengthDelimited`, this prepends a varint-encoded length
+  /// before the message data. For other wire types, this behaves the same as [`Serialize::encode`].
+  ///
+  /// An error will be returned if the buffer does not have sufficient capacity.
+  fn partial_encode_with_prefix(&self, tag: Tag, selection: &Self::Selection, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    if Self::WIRE_TYPE != WireType::LengthDelimited {
+      return self.partial_encode(tag, selection, buf);
+    }
+
+    let len = self.partial_encoded_len(tag, selection);
+    if len > u32::MAX as usize {
+      return Err(EncodeError::TooLarge);
+    }
+
+    let mut offset = 0;
+    offset += varing::encode_u32_varint_to(len as u32, buf)?;
+    offset += self.partial_encode(tag, selection, &mut buf[offset..])?;
+
+    #[cfg(debug_assertions)]
+    debug_assert_write_eq::<Self>(offset, self.partial_encoded_len_with_prefix(tag, selection));
+
+    Ok(offset)
+  }
+
+  /// Encodes the message with a length-delimiter into a new [`std::vec::Vec<u8>`].
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  fn partial_encode_to_vec_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> Result<::std::vec::Vec<u8>, EncodeError> {
+    let len = self.partial_encoded_len_with_prefix(tag, selection);
+    let mut vec = ::std::vec![0; len];
+    self.partial_encode_with_prefix(tag, selection, &mut vec).map(|_| vec)
+  }
+
+  /// Encodes the message with a length-delimiter into a [`Bytes`](::bytes::Bytes).
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  fn partial_encode_to_bytes_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> Result<bytes::Bytes, EncodeError> {
+    self.partial_encode_to_vec_with_prefix(tag, selection).map(Into::into)
+  }
+}
+
+impl<T> Wirable for &T
 where
   T: Wirable + ?Sized,
 {
   const WIRE_TYPE: WireType = T::WIRE_TYPE;
 }
 
-impl<'a, T> Serialize for &'a T
+impl<T> Serialize for &T
 where
   T: Serialize + ?Sized,
 {
@@ -447,4 +528,10 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
     "{}: expect reading {expected} bytes, but actual read {actual} bytes",
     core::any::type_name::<T>()
   );
+}
+
+#[doc(hidden)]
+pub mod __private {
+  pub use varing;
+  pub use super::*;
 }

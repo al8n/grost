@@ -1,7 +1,7 @@
 use tinyvec::TinyVec;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, TypeOwned,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
   TypeRef, UnknownBuffer, UnknownRefBuffer, Wirable,
 };
 
@@ -47,7 +47,7 @@ impl<const N: usize> DeserializeOwned for TinyVec<[u8; N]> {
   }
 }
 
-impl<const N: usize> OutputType for TinyVec<[u8; N]> {
+impl<const N: usize> Message for TinyVec<[u8; N]> {
   type Serialized<'a>
     = &'a [u8]
   where

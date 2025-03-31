@@ -5,8 +5,10 @@ use bytes_1 as bytes;
 
 use varing::U32VarintBuffer;
 
+use crate::{IntoTarget, TypeBorrowed};
+
 use super::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, TypeOwned,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
   TypeRef, Unknown, UnknownBuffer, UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
 };
 
@@ -57,9 +59,9 @@ where
   const SET_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(Self::SET_MERGED);
 }
 
-impl<S, B> OutputType for SelectionSet<S, B>
+impl<S, B> Message for SelectionSet<S, B>
 where
-  S: OutputType,
+  S: Message,
   B: for<'a> From<&'a [u8]> + AsRef<[u8]> + Clone,
 {
   type Serialized<'a>
@@ -228,20 +230,11 @@ where
   }
 }
 
-impl<'a, S, B> TypeRef<SelectionSet<S, B>> for SerializedSelectionSet<'a, S::Serialized<'a>>
+impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for SerializedSelectionSet<'a, S::Serialized<'a>>
 where
-  S: OutputType,
+  S: Message,
   B: From<&'a [u8]>,
 {
-  fn to_target(&self) -> Result<SelectionSet<S, B>, DecodeError> {
-    Ok(match self {
-      Self::All => SelectionSet::All,
-      Self::None => SelectionSet::None,
-      Self::Set(set) => return set.to_target().map(SelectionSet::Set),
-      Self::Unknown(unknown) => SelectionSet::Unknown(unknown.to_owned()),
-    })
-  }
-
   fn into_target(self) -> Result<SelectionSet<S, B>, DecodeError> {
     Ok(match self {
       Self::All => SelectionSet::All,
@@ -252,39 +245,60 @@ where
   }
 }
 
-impl<'a, S, B> From<&'a SelectionSet<S, B>> for SelectionSet<S::Borrowed<'a>, &'a B>
+impl<'a, S, B> TypeRef<SelectionSet<S, B>> for SerializedSelectionSet<'a, S::Serialized<'a>>
 where
-  S: OutputType,
+  S: Message,
+  B: From<&'a [u8]>,
 {
-  fn from(value: &'a SelectionSet<S, B>) -> Self {
+  fn to(&self) -> Result<SelectionSet<S, B>, DecodeError> {
+    Ok(match self {
+      Self::All => SelectionSet::All,
+      Self::None => SelectionSet::None,
+      Self::Set(set) => return set.to().map(SelectionSet::Set),
+      Self::Unknown(unknown) => SelectionSet::Unknown(unknown.to_owned()),
+    })
+  }
+}
+
+impl<'a, S, B> TypeBorrowed<'a, SelectionSet<S, B>> for SelectionSet<S::Borrowed<'a>, &'a B>
+where
+  S: Message,
+{
+  fn from_borrow(value: &'a SelectionSet<S, B>) -> Self {
     match value {
       SelectionSet::All => SelectionSet::All,
       SelectionSet::None => SelectionSet::None,
-      SelectionSet::Set(set) => SelectionSet::Set(set.into()),
+      SelectionSet::Set(set) => SelectionSet::Set(<S::Borrowed<'_> as TypeBorrowed<'_, _>>::from_borrow(set)),
       SelectionSet::Unknown(unknown) => SelectionSet::Unknown(unknown.borrow()),
     }
   }
 }
 
-impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::SerializedOwned, bytes::Bytes>
+impl<S, B> IntoTarget<SelectionSet<S, B>> for SelectionSet<S::SerializedOwned, bytes::Bytes>
 where
-  S: OutputType,
+  S: Message,
   B: for<'a> From<&'a [u8]>,
 {
-  fn to_target(&self) -> Result<SelectionSet<S, B>, DecodeError> {
-    Ok(match self {
-      Self::All => SelectionSet::All,
-      Self::None => SelectionSet::None,
-      Self::Set(set) => return set.to_target().map(SelectionSet::Set),
-      Self::Unknown(unknown) => SelectionSet::Unknown(unknown.map()),
-    })
-  }
-
   fn into_target(self) -> Result<SelectionSet<S, B>, DecodeError> {
     Ok(match self {
       Self::All => SelectionSet::All,
       Self::None => SelectionSet::None,
       Self::Set(set) => return set.into_target().map(SelectionSet::Set),
+      Self::Unknown(unknown) => SelectionSet::Unknown(unknown.map()),
+    })
+  }
+}
+
+impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::SerializedOwned, bytes::Bytes>
+where
+  S: Message,
+  B: for<'a> From<&'a [u8]>,
+{
+  fn to(&self) -> Result<SelectionSet<S, B>, DecodeError> {
+    Ok(match self {
+      Self::All => SelectionSet::All,
+      Self::None => SelectionSet::None,
+      Self::Set(set) => return set.to().map(SelectionSet::Set),
       Self::Unknown(unknown) => SelectionSet::Unknown(unknown.map()),
     })
   }

@@ -3,7 +3,7 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, Wirable,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable,
   WireType, merge, split,
 };
 
@@ -19,8 +19,8 @@ const V6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(V6_MERGED);
 const V4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V4_MERGED);
 const V6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V6_MERGED);
 
-impl_type_conversion_for_self!(
-  @copy SocketAddr, SocketAddrV4, SocketAddrV6,
+message!(
+  SocketAddr, SocketAddrV4, SocketAddrV6,
 );
 
 macro_rules! impl_codec {
@@ -81,7 +81,7 @@ macro_rules! impl_codec {
 impl_codec!(V4(u32));
 impl_codec!(V6(u128, 0, 0));
 
-impl_output_type!(SocketAddr, SocketAddrV4, SocketAddrV6);
+partial_serialize_primitives!(SocketAddr, SocketAddrV4, SocketAddrV6);
 
 struct Helper<const N: usize> {
   ip: [u8; N],

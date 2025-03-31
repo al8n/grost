@@ -1,5 +1,5 @@
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, TypeOwned,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
   TypeRef, UnknownBuffer, UnknownRefBuffer, Wirable,
 };
 use bytes_1::Bytes;
@@ -43,7 +43,7 @@ impl DeserializeOwned for Bytes {
   }
 }
 
-impl OutputType for Bytes {
+impl Message for Bytes {
   type Serialized<'a>
     = &'a [u8]
   where

@@ -1,5 +1,5 @@
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, TypeOwned,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
   TypeRef, UnknownBuffer, UnknownRefBuffer, Wirable, WireType,
 };
 use heapless_0_8::Vec;
@@ -64,9 +64,9 @@ where
   }
 }
 
-// impl<T> OutputType for Vec<u8>
+// impl<T> Message for Vec<u8>
 // where
-//   T: OutputType,
+//   T: Message,
 // {
 //   type Serialized<'a>
 //     = &'a [T::Serialized<'a>]

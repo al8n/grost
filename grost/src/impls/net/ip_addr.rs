@@ -3,7 +3,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, Wirable,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable,
   WireType, merge, split,
 };
 
@@ -18,8 +18,8 @@ const IPV6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(IPV6_MERGE
 const IPV4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV4_MERGED);
 const IPV6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV6_MERGED);
 
-impl_type_conversion_for_self!(
-  @copy IpAddr, Ipv4Addr, Ipv6Addr,
+message!(
+  IpAddr, Ipv4Addr, Ipv6Addr,
 );
 
 macro_rules! impl_codec {
@@ -79,7 +79,6 @@ macro_rules! impl_codec {
 
 impl_codec!(Ipv6Addr::Fixed128::IPV6_LEN::u128);
 impl_codec!(Ipv4Addr::Fixed32::IPV4_LEN::u32);
-impl_output_type!(IpAddr, Ipv4Addr, Ipv6Addr);
 
 impl Wirable for IpAddr {}
 
@@ -168,3 +167,5 @@ impl DeserializeOwned for IpAddr {
     decode_ip!(&src)
   }
 }
+
+partial_serialize_primitives!(Ipv4Addr, Ipv6Addr, IpAddr);

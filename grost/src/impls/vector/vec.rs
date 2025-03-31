@@ -1,7 +1,7 @@
 use bytes_1::Bytes;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, OutputType, Serialize, Tag, TypeOwned,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
   TypeRef, UnknownBuffer, UnknownRefBuffer, Wirable, WireType,
 };
 use core::marker::PhantomData;
@@ -66,9 +66,9 @@ where
   }
 }
 
-impl<T> OutputType for Vec<T>
+impl<T> Message for Vec<T>
 where
-  T: OutputType + DeserializeOwned + Clone,
+  T: Message + DeserializeOwned + Clone,
 {
   type Serialized<'a>
     = SerializedVec<'a, T::Serialized<'a>>
@@ -86,25 +86,27 @@ where
     Self: Sized + 'static;
 }
 
-impl<T: Clone> TypeOwned<Self> for Vec<T> {
-  fn to_target(&self) -> Result<Self, DecodeError> {
-    Ok(self.to_vec())
-  }
+// impl<T: Clone> TypeOwned<Self> for Vec<T> {
+//   fn to_target(&self) -> Result<Self, DecodeError> {
+//     Ok(self.to_vec())
+//   }
 
-  fn into_target(self) -> Result<Self, DecodeError> {
-    Ok(self)
-  }
-}
+//   fn into_target(self) -> Result<Self, DecodeError> {
+//     Ok(self)
+//   }
+// }
 
-impl<T> TypeRef<Self> for Vec<T> {
-  fn to_target(&self) -> Result<Self, DecodeError> {
-    todo!()
-  }
+// impl<T> TypeRef<Self> for Vec<T> {
+//   fn to_target(&self) -> Result<Self, DecodeError> {
+//     todo!()
+//   }
 
-  fn into_target(self) -> Result<Self, DecodeError> {
-    Ok(self)
-  }
-}
+//   fn into_target(self) -> Result<Self, DecodeError> {
+//     Ok(self)
+//   }
+// }
+
+
 
 /// The serialized type for [`Vec<T>`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -115,7 +117,7 @@ pub struct SerializedVec<'a, T> {
 
 impl<'a, T> TypeRef<Vec<T>> for SerializedVec<'a, T::Serialized<'a>>
 where
-  T: OutputType,
+  T: Message,
 {
   fn to_target(&self) -> Result<Vec<T>, DecodeError> {
     todo!()
@@ -163,7 +165,7 @@ pub struct SerializedOwnedVec<T> {
 
 impl<T> TypeOwned<Vec<T>> for SerializedOwnedVec<T::SerializedOwned>
 where
-  T: OutputType,
+  T: Message,
 {
   fn to_target(&self) -> Result<Vec<T>, DecodeError> {
     todo!()
