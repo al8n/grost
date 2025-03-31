@@ -1,21 +1,24 @@
 use ruint_1::Uint;
 
-use crate::{Deserialize, DeserializeOwned, IntoTarget, Message, PartialSerialize, Serialize, TypeOwned, TypeRef, Wirable};
+use crate::{
+  Deserialize, DeserializeOwned, IntoTarget, Message, PartialSerialize, Serialize, TypeOwned,
+  TypeRef, Wirable,
+};
 
 impl<const BITS: usize, const LMITS: usize> Wirable for Uint<BITS, LMITS> {
   wirable!(@varint);
 }
 
 impl<const BITS: usize, const LMITS: usize> Serialize for Uint<BITS, LMITS> {
-  varing!(@serialize_impl);
+  varint!(@serialize_impl);
 }
 
 impl<'de, const BITS: usize, const LMITS: usize> Deserialize<'de> for Uint<BITS, LMITS> {
-  varing!(@deserialize_impl);
+  varint!(@deserialize_impl);
 }
 
 impl<const BITS: usize, const LMITS: usize> DeserializeOwned for Uint<BITS, LMITS> {
-  varing!(@deserialize_owned_impl);
+  varint!(@deserialize_owned_impl);
 }
 
 impl<const BITS: usize, const LMITS: usize> Message for Uint<BITS, LMITS> {

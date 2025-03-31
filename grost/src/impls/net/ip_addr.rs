@@ -3,8 +3,8 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable,
-  WireType, merge, split,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable, WireType,
+  merge, split,
 };
 
 const IPV4_LEN: usize = 4;
@@ -18,9 +18,7 @@ const IPV6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(IPV6_MERGE
 const IPV4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV4_MERGED);
 const IPV6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV6_MERGED);
 
-message!(
-  IpAddr, Ipv4Addr, Ipv6Addr,
-);
+message!(IpAddr, Ipv4Addr, Ipv6Addr,);
 
 macro_rules! impl_codec {
   ($ty:ident::$wire_ty:ident::$size:ident::$int:ident) => {
@@ -29,7 +27,7 @@ macro_rules! impl_codec {
     }
 
     impl Serialize for $ty {
-      fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+      fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
         let buf_len = buf.len();
         if buf_len < $size {
           return Err(EncodeError::insufficient_buffer($size, buf_len));
@@ -39,7 +37,7 @@ macro_rules! impl_codec {
         Ok($size)
       }
 
-      fn encoded_len(&self, _: Tag) -> usize {
+      fn encoded_len(&self) -> usize {
         $size
       }
     }
@@ -83,7 +81,7 @@ impl_codec!(Ipv4Addr::Fixed32::IPV4_LEN::u32);
 impl Wirable for IpAddr {}
 
 impl Serialize for IpAddr {
-  fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     macro_rules! encode_ip_variant {
       ($variant:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {
@@ -106,7 +104,7 @@ impl Serialize for IpAddr {
     }
   }
 
-  fn encoded_len(&self, _: Tag) -> usize {
+  fn encoded_len(&self) -> usize {
     match self {
       Self::V4(_) => IPV4_MERGED_ENCODED_LEN + IPV4_LEN,
       Self::V6(_) => IPV6_MERGED_ENCODED_LEN + IPV6_LEN,

@@ -38,7 +38,6 @@ mod tag;
 mod unknown;
 mod wire_type;
 
-
 /// A message type that can be serialized and deserialized.
 ///
 /// This trait defines how output types can be serialized, deserialized,
@@ -258,20 +257,20 @@ pub trait Serialize: Wirable {
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
   /// [`Serialize::encoded_len`] can be used to determine the required buffer size.
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError>;
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError>;
 
   /// Returns the number of bytes needed to encode the message.
   ///
   /// This is used to determine the buffer size required for encoding.
-  fn encoded_len(&self, tag: Tag) -> usize;
+  fn encoded_len(&self) -> usize;
 
   /// Returns the encoded length of the data including the length delimiter prefix.
   ///
   /// For `WireType::LengthDelimited`, this includes the varint-encoded length
   /// prefix followed by the actual data length. For other wire types, this is
   /// equivalent to [`Serialize::encoded_len`].
-  fn encoded_len_with_prefix(&self, tag: Tag) -> usize {
-    let len = self.encoded_len(tag);
+  fn encoded_len_with_prefix(&self) -> usize {
+    let len = self.encoded_len();
     match Self::WIRE_TYPE {
       WireType::LengthDelimited => varing::encoded_u32_varint_len(len as u32) + len,
       _ => len,
@@ -280,16 +279,16 @@ pub trait Serialize: Wirable {
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec(&self, tag: Tag) -> Result<std::vec::Vec<u8>, error::EncodeError> {
-    let mut buf = std::vec![0; self.encoded_len(tag)];
-    self.encode(tag, &mut buf)?;
+  fn encode_to_vec(&self) -> Result<std::vec::Vec<u8>, error::EncodeError> {
+    let mut buf = std::vec![0; self.encoded_len()];
+    self.encode(&mut buf)?;
     Ok(buf)
   }
 
   /// Encodes the message into a [`Bytes`](::bytes::Bytes).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes(&self, tag: Tag) -> Result<bytes::Bytes, EncodeError> {
-    self.encode_to_vec(tag).map(Into::into)
+  fn encode_to_bytes(&self) -> Result<bytes::Bytes, EncodeError> {
+    self.encode_to_vec().map(Into::into)
   }
 
   /// Encodes the message with a length-delimiter prefix to a buffer.
@@ -298,38 +297,38 @@ pub trait Serialize: Wirable {
   /// before the message data. For other wire types, this behaves the same as [`Serialize::encode`].
   ///
   /// An error will be returned if the buffer does not have sufficient capacity.
-  fn encode_with_prefix(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode_with_prefix(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return self.encode(tag, buf);
+      return self.encode(buf);
     }
 
-    let len = self.encoded_len(tag);
+    let len = self.encoded_len();
     if len > u32::MAX as usize {
       return Err(EncodeError::TooLarge);
     }
 
     let mut offset = 0;
     offset += varing::encode_u32_varint_to(len as u32, buf)?;
-    offset += self.encode(tag, &mut buf[offset..])?;
+    offset += self.encode(&mut buf[offset..])?;
 
     #[cfg(debug_assertions)]
-    debug_assert_write_eq::<Self>(offset, self.encoded_len_with_prefix(tag));
+    debug_assert_write_eq::<Self>(offset, self.encoded_len_with_prefix());
 
     Ok(offset)
   }
 
   /// Encodes the message with a length-delimiter into a new [`std::vec::Vec<u8>`].
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec_with_prefix(&self, tag: Tag) -> Result<::std::vec::Vec<u8>, EncodeError> {
-    let len = self.encoded_len_with_prefix(tag);
+  fn encode_to_vec_with_prefix(&self) -> Result<::std::vec::Vec<u8>, EncodeError> {
+    let len = self.encoded_len_with_prefix();
     let mut vec = ::std::vec![0; len];
-    self.encode_with_prefix(tag, &mut vec).map(|_| vec)
+    self.encode_with_prefix(&mut vec).map(|_| vec)
   }
 
   /// Encodes the message with a length-delimiter into a [`Bytes`](::bytes::Bytes).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes_with_prefix(&self, tag: Tag) -> Result<bytes::Bytes, EncodeError> {
-    self.encode_to_vec_with_prefix(tag).map(Into::into)
+  fn encode_to_bytes_with_prefix(&self) -> Result<bytes::Bytes, EncodeError> {
+    self.encode_to_vec_with_prefix().map(Into::into)
   }
 }
 
@@ -347,20 +346,24 @@ pub trait PartialSerialize: Wirable {
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
   /// [`Serialize::encoded_len`] can be used to determine the required buffer size.
-  fn partial_encode(&self, tag: Tag, selection: &Self::Selection, buf: &mut [u8]) -> Result<usize, EncodeError>;
+  fn partial_encode(
+    &self,
+    selection: &Self::Selection,
+    buf: &mut [u8],
+  ) -> Result<usize, EncodeError>;
 
   /// Returns the number of bytes needed to encode the message.
   ///
   /// This is used to determine the buffer size required for encoding.
-  fn partial_encoded_len(&self, tag: Tag, selection: &Self::Selection) -> usize;
+  fn partial_encoded_len(&self, selection: &Self::Selection) -> usize;
 
   /// Returns the encoded length of the data including the length delimiter prefix.
   ///
   /// For `WireType::LengthDelimited`, this includes the varint-encoded length
   /// prefix followed by the actual data length. For other wire types, this is
   /// equivalent to [`Serialize::encoded_len`].
-  fn partial_encoded_len_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> usize {
-    let len = self.partial_encoded_len(tag, selection);
+  fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> usize {
+    let len = self.partial_encoded_len(selection);
     match Self::WIRE_TYPE {
       WireType::LengthDelimited => varing::encoded_u32_varint_len(len as u32) + len,
       _ => len,
@@ -369,16 +372,22 @@ pub trait PartialSerialize: Wirable {
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_vec(&self, tag: Tag, selection: &Self::Selection,) -> Result<std::vec::Vec<u8>, error::EncodeError> {
-    let mut buf = std::vec![0; self.partial_encoded_len(tag, selection)];
-    self.partial_encode(tag, selection, &mut buf)?;
+  fn partial_encode_to_vec(
+    &self,
+    selection: &Self::Selection,
+  ) -> Result<std::vec::Vec<u8>, error::EncodeError> {
+    let mut buf = std::vec![0; self.partial_encoded_len(selection)];
+    self.partial_encode(selection, &mut buf)?;
     Ok(buf)
   }
 
   /// Encodes the message into a [`Bytes`](::bytes::Bytes).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_bytes(&self, tag: Tag, selection: &Self::Selection,) -> Result<bytes::Bytes, EncodeError> {
-    self.partial_encode_to_vec(tag, selection).map(Into::into)
+  fn partial_encode_to_bytes(
+    &self,
+    selection: &Self::Selection,
+  ) -> Result<bytes::Bytes, EncodeError> {
+    self.partial_encode_to_vec(selection).map(Into::into)
   }
 
   /// Encodes the message with a length-delimiter prefix to a buffer.
@@ -387,38 +396,52 @@ pub trait PartialSerialize: Wirable {
   /// before the message data. For other wire types, this behaves the same as [`Serialize::encode`].
   ///
   /// An error will be returned if the buffer does not have sufficient capacity.
-  fn partial_encode_with_prefix(&self, tag: Tag, selection: &Self::Selection, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn partial_encode_with_prefix(
+    &self,
+    selection: &Self::Selection,
+    buf: &mut [u8],
+  ) -> Result<usize, EncodeError> {
     if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return self.partial_encode(tag, selection, buf);
+      return self.partial_encode(selection, buf);
     }
 
-    let len = self.partial_encoded_len(tag, selection);
+    let len = self.partial_encoded_len(selection);
     if len > u32::MAX as usize {
       return Err(EncodeError::TooLarge);
     }
 
     let mut offset = 0;
     offset += varing::encode_u32_varint_to(len as u32, buf)?;
-    offset += self.partial_encode(tag, selection, &mut buf[offset..])?;
+    offset += self.partial_encode(selection, &mut buf[offset..])?;
 
     #[cfg(debug_assertions)]
-    debug_assert_write_eq::<Self>(offset, self.partial_encoded_len_with_prefix(tag, selection));
+    debug_assert_write_eq::<Self>(offset, self.partial_encoded_len_with_prefix(selection));
 
     Ok(offset)
   }
 
   /// Encodes the message with a length-delimiter into a new [`std::vec::Vec<u8>`].
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_vec_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> Result<::std::vec::Vec<u8>, EncodeError> {
-    let len = self.partial_encoded_len_with_prefix(tag, selection);
+  fn partial_encode_to_vec_with_prefix(
+    &self,
+    selection: &Self::Selection,
+  ) -> Result<::std::vec::Vec<u8>, EncodeError> {
+    let len = self.partial_encoded_len_with_prefix(selection);
     let mut vec = ::std::vec![0; len];
-    self.partial_encode_with_prefix(tag, selection, &mut vec).map(|_| vec)
+    self
+      .partial_encode_with_prefix(selection, &mut vec)
+      .map(|_| vec)
   }
 
   /// Encodes the message with a length-delimiter into a [`Bytes`](::bytes::Bytes).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_bytes_with_prefix(&self, tag: Tag, selection: &Self::Selection,) -> Result<bytes::Bytes, EncodeError> {
-    self.partial_encode_to_vec_with_prefix(tag, selection).map(Into::into)
+  fn partial_encode_to_bytes_with_prefix(
+    &self,
+    selection: &Self::Selection,
+  ) -> Result<bytes::Bytes, EncodeError> {
+    self
+      .partial_encode_to_vec_with_prefix(selection)
+      .map(Into::into)
   }
 }
 
@@ -433,12 +456,12 @@ impl<T> Serialize for &T
 where
   T: Serialize + ?Sized,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    (*self).encode(tag, buf)
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    (*self).encode(buf)
   }
 
-  fn encoded_len(&self, tag: Tag) -> usize {
-    (*self).encoded_len(tag)
+  fn encoded_len(&self) -> usize {
+    (*self).encoded_len()
   }
 }
 
@@ -532,6 +555,6 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 
 #[doc(hidden)]
 pub mod __private {
-  pub use varing;
   pub use super::*;
+  pub use varing;
 }

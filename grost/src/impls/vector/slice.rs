@@ -3,7 +3,7 @@ use crate::{Deserialize, Serialize, Tag, TypeRef, Wirable};
 impl Wirable for &[u8] {}
 
 impl Serialize for &[u8] {
-  fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
     let len = self.len();
     let buf_len = buf.len();
     if buf_len < len {
@@ -14,7 +14,7 @@ impl Serialize for &[u8] {
     Ok(len)
   }
 
-  fn encoded_len(&self, _: Tag) -> usize {
+  fn encoded_len(&self,) -> usize {
     self.len()
   }
 }

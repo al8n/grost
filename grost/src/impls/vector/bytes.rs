@@ -7,7 +7,7 @@ use bytes_1::Bytes;
 impl Wirable for Bytes {}
 
 impl Serialize for Bytes {
-  fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let len = self.len();
     let buf_len = buf.len();
     if buf_len < len {
@@ -18,7 +18,7 @@ impl Serialize for Bytes {
     Ok(len)
   }
 
-  fn encoded_len(&self, _: Tag) -> usize {
+  fn encoded_len(&self,) -> usize {
     self.len()
   }
 }

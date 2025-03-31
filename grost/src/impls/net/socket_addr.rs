@@ -3,8 +3,8 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable,
-  WireType, merge, split,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable, WireType,
+  merge, split,
 };
 
 const PORT_LEN: usize = 2;
@@ -19,9 +19,7 @@ const V6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(V6_MERGED);
 const V4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V4_MERGED);
 const V6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V6_MERGED);
 
-message!(
-  SocketAddr, SocketAddrV4, SocketAddrV6,
-);
+message!(SocketAddr, SocketAddrV4, SocketAddrV6,);
 
 macro_rules! impl_codec {
   ($variant:ident($bits:ident $(, $($others:literal),+$(,)?)?)) => {
@@ -29,11 +27,11 @@ macro_rules! impl_codec {
       impl Wirable for [< SocketAddr $variant >] {}
 
       impl Serialize for [< SocketAddr $variant >] {
-        fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+        fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
           Helper::[< from_ip $variant:snake >](*self.ip(), self.port()).encode(buf)
         }
 
-        fn encoded_len(&self, _: Tag) -> usize {
+        fn encoded_len(&self,) -> usize {
           Helper::[< from_ip $variant:snake >](*self.ip(), self.port()).encoded_len()
         }
       }
@@ -183,7 +181,7 @@ impl<'de, const N: usize> Helper<N> {
 impl Wirable for SocketAddr {}
 
 impl Serialize for SocketAddr {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let buf_len = buf.len();
     match self {
       Self::V4(addr) => {
@@ -192,7 +190,7 @@ impl Serialize for SocketAddr {
           return Err(EncodeError::insufficient_buffer(required, buf_len));
         }
         buf[..V4_MERGED_ENCODED_LEN].copy_from_slice(&V4_MERGED_ENCODED);
-        addr.encode(tag, buf)
+        addr.encode(buf)
       }
       Self::V6(addr) => {
         let required = V6_MERGED_ENCODED_LEN + Helper::<V6_LEN>::V6_ENCODED_LEN;
@@ -200,12 +198,12 @@ impl Serialize for SocketAddr {
           return Err(EncodeError::insufficient_buffer(required, buf_len));
         }
         buf[..V6_MERGED_ENCODED_LEN].copy_from_slice(&V6_MERGED_ENCODED);
-        addr.encode(tag, buf)
+        addr.encode(buf)
       }
     }
   }
 
-  fn encoded_len(&self, _: Tag) -> usize {
+  fn encoded_len(&self) -> usize {
     match self {
       Self::V4(_) => V4_MERGED_ENCODED_LEN + Helper::<V4_LEN>::V4_ENCODED_LEN,
       Self::V6(_) => V6_MERGED_ENCODED_LEN + Helper::<V6_LEN>::V6_ENCODED_LEN,

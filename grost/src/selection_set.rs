@@ -83,7 +83,7 @@ where
 impl<S, B> Wirable for SelectionSet<S, B> where S: Wirable {}
 
 macro_rules! encode {
-  ($this:ident($tag:ident,$buf:ident)) => {{
+  ($this:ident($buf:ident)) => {{
     match $this {
       Self::All => {
         let buf_len = $buf.len();
@@ -105,14 +105,14 @@ macro_rules! encode {
       }
       Self::Set(set) => {
         let buf_len = $buf.len();
-        let set_len = set.encoded_len_with_prefix($tag);
+        let set_len = set.encoded_len_with_prefix();
         let total = Self::SET_MERGED_ENCODED_LEN + set_len;
         if buf_len < total {
           return Err(EncodeError::insufficient_buffer(total, buf_len));
         }
 
         $buf[..Self::SET_MERGED_ENCODED_LEN].copy_from_slice(&Self::SET_MERGED_ENCODED);
-        set.encode_with_prefix($tag, &mut $buf[Self::SET_MERGED_ENCODED_LEN..])?;
+        set.encode_with_prefix(&mut $buf[Self::SET_MERGED_ENCODED_LEN..])?;
         Ok(total)
       }
       Self::Unknown(unknown) => unknown.serialize($buf),
@@ -121,11 +121,11 @@ macro_rules! encode {
 }
 
 macro_rules! encoded_len {
-  ($this:ident($tag:ident)) => {{
+  ($this:ident()) => {{
     match $this {
       Self::All => ALL_ENCODED_LEN,
       Self::None => NONE_ENCODED_LEN,
-      Self::Set(set) => Self::SET_MERGED_ENCODED_LEN + set.encoded_len_with_prefix($tag),
+      Self::Set(set) => Self::SET_MERGED_ENCODED_LEN + set.encoded_len_with_prefix(),
       Self::Unknown(unknown) => unknown.encoded_len(),
     }
   }};
@@ -162,12 +162,12 @@ where
   S: Serialize,
   B: AsRef<[u8]>,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    encode!(self(tag, buf))
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    encode!(self(buf))
   }
 
-  fn encoded_len(&self, tag: Tag) -> usize {
-    encoded_len!(self(tag))
+  fn encoded_len(&self) -> usize {
+    encoded_len!(self())
   }
 }
 
@@ -208,12 +208,12 @@ impl<S> Serialize for SerializedSelectionSet<'_, S>
 where
   S: Serialize,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    encode!(self(tag, buf))
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    encode!(self(buf))
   }
 
-  fn encoded_len(&self, tag: Tag) -> usize {
-    encoded_len!(self(tag))
+  fn encoded_len(&self) -> usize {
+    encoded_len!(self())
   }
 }
 
@@ -268,7 +268,9 @@ where
     match value {
       SelectionSet::All => SelectionSet::All,
       SelectionSet::None => SelectionSet::None,
-      SelectionSet::Set(set) => SelectionSet::Set(<S::Borrowed<'_> as TypeBorrowed<'_, _>>::from_borrow(set)),
+      SelectionSet::Set(set) => {
+        SelectionSet::Set(<S::Borrowed<'_> as TypeBorrowed<'_, _>>::from_borrow(set))
+      }
       SelectionSet::Unknown(unknown) => SelectionSet::Unknown(unknown.borrow()),
     }
   }

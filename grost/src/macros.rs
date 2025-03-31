@@ -1,18 +1,17 @@
-
 /// A macro emits traits implementations for a zero-sized type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use grost::zst;
-/// 
+///
 /// #[derive(Default)]
 /// struct MyZst;
-/// 
+///
 /// #[derive(Default)]
 /// #[repr(transparent)]
 /// struct MyZstTwo(MyZst);
-/// 
+///
 /// zst!(MyZst, MyZstTwo);
 /// ```
 #[macro_export]
@@ -61,19 +60,19 @@ macro_rules! zst {
       impl $crate::Wirable for $ty {
         const WIRE_TYPE: $crate::WireType = $crate::WireType::Merged;
       }
-      
+
       impl $crate::Serialize for $ty {
         #[inline]
-        fn encode(&self, _: $crate::Tag, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+        fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
           ::core::result::Result::Ok(0)
         }
-    
+
         #[inline]
-        fn encoded_len(&self, _: $crate::Tag) -> ::core::primitive::usize {
+        fn encoded_len(&self) -> ::core::primitive::usize {
           0
         }
       }
-      
+
       impl<'de> $crate::Deserialize<'de> for $ty {
         fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::DecodeError>
         where
@@ -83,7 +82,7 @@ macro_rules! zst {
           ::core::result::Result::Ok((0, ::core::default::Default::default()))
         }
       }
-      
+
       impl $crate::DeserializeOwned for $ty
       where
         Self: 'static,
@@ -106,12 +105,12 @@ macro_rules! zst {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: $crate::Tag, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+        fn partial_encode(&self, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
           ::core::result::Result::Ok(0)
         }
-      
+
         #[inline]
-        fn partial_encoded_len(&self, _: $crate::Tag, _: &Self::Selection,) -> ::core::primitive::usize {
+        fn partial_encoded_len(&self, _: &Self::Selection,) -> ::core::primitive::usize {
           0
         }
       }
@@ -120,21 +119,21 @@ macro_rules! zst {
 }
 
 /// A macro emits traits implementations for a type that through a bridge to another type.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use grost::bridge;
-/// 
+///
 /// struct MyU8(u8);
-/// 
+///
 /// struct MyU32(u32);
-/// 
+///
 /// struct MyOtherU32 {
 ///   low: u16,
 ///   high: u16,
 /// }
-/// 
+///
 /// // Examples of bridge implementations
 /// bridge! {
 ///   u8 {
@@ -205,12 +204,12 @@ macro_rules! bridge {
     )*
   };
   (@serialize_impl $bridge:ty => $to:expr) => {
-    fn encode(&self, tag: $crate::Tag, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
-      <$bridge as $crate::Serialize>::encode(&$to(self), tag, buf)
+    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+      <$bridge as $crate::Serialize>::encode(&$to(self), buf)
     }
 
-    fn encoded_len(&self, tag: $crate::Tag) -> ::core::primitive::usize {
-      <$bridge as $crate::Serialize>::encoded_len(&$to(self), tag)
+    fn encoded_len(&self) -> ::core::primitive::usize {
+      <$bridge as $crate::Serialize>::encoded_len(&$to(self))
     }
   };
   (@serialize $(
@@ -229,12 +228,12 @@ macro_rules! bridge {
     )*
   };
   (@partial_serialize_impl $bridge:ty => $to:expr) => {
-    fn partial_encode(&self, tag: $crate::Tag, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
-      <$bridge as $crate::PartialSerialize>::partial_encode(&$to(self), tag, selection, buf)
+    fn partial_encode(&self, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+      <$bridge as $crate::PartialSerialize>::partial_encode(&$to(self), selection, buf)
     }
 
-    fn partial_encoded_len(&self, tag: $crate::Tag, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::PartialSerialize>::partial_encoded_len(&$to(self), tag, selection)
+    fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::PartialSerialize>::partial_encoded_len(&$to(self), selection)
     }
   };
   (@partial_serialize $(
@@ -406,7 +405,7 @@ macro_rules! conversion {
 }
 
 /// A macro emits [`Message`](super::Message) implementations for `Self`.
-/// 
+///
 /// **NB:** this macro can only be used for types that implements [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! message {
@@ -442,13 +441,13 @@ macro_rules! message {
 macro_rules! partial_serialize_primitives {
   (@impl) => {
     type Selection = ();
-  
-    fn partial_encode(&self, tag: $crate::Tag, _: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
-      <Self as $crate::Serialize>::encode(self, tag, buf)
+
+    fn partial_encode(&self, _: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+      <Self as $crate::Serialize>::encode(self, buf)
     }
 
-    fn partial_encoded_len(&self, tag: $crate::Tag, _: &Self::Selection) -> ::core::primitive::usize {
-      <Self as $crate::Serialize>::encoded_len(self, tag)
+    fn partial_encoded_len(&self, _: &Self::Selection) -> ::core::primitive::usize {
+      <Self as $crate::Serialize>::encoded_len(self)
     }
   };
   ($($ty:ty),+$(,)?) => {
@@ -461,20 +460,20 @@ macro_rules! partial_serialize_primitives {
 }
 
 /// A macro emits [`Wirable`](super::Wirable) implementations for given types.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use grost::wirable;
-/// 
+///
 /// struct FixedU16(u16);
 /// struct FixedU16Le(u16);
 /// struct FixedU16Be(u16);
-/// 
+///
 /// struct FixedU32(u32);
 /// struct FixedU32Le(u32);
 /// struct FixedU32Be(u32);
-/// 
+///
 /// wirable! {
 ///   (@fixed16) <=> (FixedU16, FixedU16Le, FixedU16Be),
 ///   (@fixed32) <=> (FixedU32, FixedU32Le, FixedU32Be),
@@ -521,35 +520,35 @@ macro_rules! wirable {
 
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
-macro_rules! varing {
+macro_rules! varint {
   ($($ty:ty),+$(,)?) => {
     $crate::wirable!((@varint) <=> ($($ty,)*));
     $crate::message!($($ty),*);
     $crate::partial_serialize_primitives!($($ty),*);
-    $crate::varing!(@serialize $($ty),+);
-    $crate::varing!(@deserialize $($ty),+);
-    $crate::varing!(@deserialize_owned $($ty),+);
+    $crate::varint!(@serialize $($ty),+);
+    $crate::varint!(@deserialize $($ty),+);
+    $crate::varint!(@deserialize_owned $($ty),+);
   };
   (@serialize $($ty:ty), +$(,)?) => {
     $(
       impl $crate::Serialize for $ty {
-        $crate::varing!(@serialize_impl);
+        $crate::varint!(@serialize_impl);
       }
     )*
   };
   (@serialize_impl) => {
-    fn encode(&self, _: $crate::Tag, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::EncodeError> {
+    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::EncodeError> {
       $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
     }
 
-    fn encoded_len(&self, _: $crate::Tag) -> ::core::primitive::usize {
+    fn encoded_len(&self) -> ::core::primitive::usize {
       $crate::__private::varing::Varint::encoded_len(self)
     }
   };
   (@deserialize $($ty:ty), +$(,)?) => {
     $(
       impl<'de> $crate::Deserialize<'de> for $ty {
-        $crate::varing!(@deserialize_impl);
+        $crate::varint!(@deserialize_impl);
       }
     )*
   };
@@ -565,7 +564,7 @@ macro_rules! varing {
   (@deserialize_owned $($ty:ty), +$(,)?) => {
     $(
       impl $crate::DeserializeOwned for $ty {
-        $crate::varing!(@deserialize_owned_impl);
+        $crate::varint!(@deserialize_owned_impl);
       }
     )*
   };
@@ -581,5 +580,135 @@ macro_rules! varing {
     {
       $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(&src)).map_err(::core::convert::Into::into)
     }
+  };
+}
+
+/// A macro emits traits implementations for `PhantomData<T>` like types.
+///
+/// ## Example
+///
+/// ```rust
+/// use grost::phantom;
+/// use core::marker::PhantomData;
+///
+/// #[repr(transparent)]
+/// struct MyPhantom<T: ?Sized>(PhantomData<T>);
+///
+/// impl<T: ?Sized> Default for MyPhantom<T> {
+///   fn default() -> Self {
+///     Self(PhantomData)
+///   }
+/// }
+///
+/// impl<T: ?Sized> Clone for MyPhantom<T> {
+///  fn clone(&self) -> Self {
+///    *self
+///  }
+/// }
+///
+/// impl<T: ?Sized> Copy for MyPhantom<T> {}
+///
+/// phantom!(MyPhantom<T>);
+/// ```
+macro_rules! phantom {
+  ($($ty:ty),+$(,)?) => {
+    $(
+      impl<T: ?::core::marker::Sized> $crate::Wirable for $ty {
+        const WIRE_TYPE: $crate::WireType = {
+          assert!(::core::mem::size_of::<Self>() == 0, "Not a zero-sized type");
+
+          $crate::WireType::Merged
+        };
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::Serialize for $ty {
+        #[inline]
+        fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+          ::core::result::Result::Ok(0)
+        }
+
+        #[inline]
+        fn encoded_len(&self) -> ::core::primitive::usize {
+          0
+        }
+      }
+
+      impl<'de, T: ?::core::marker::Sized> $crate::Deserialize<'de> for $ty {
+        fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'de,
+          B: $crate::UnknownRefBuffer<'de>,
+        {
+          ::core::result::Result::Ok((0, ::core::default::Default::default()))
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::DeserializeOwned for $ty
+      where
+        Self: 'static,
+      {
+        #[cfg(any(feature = "std", feature = "alloc"))]
+        #[inline]
+        fn decode_from_bytes<U>(
+          _: $crate::bytes::Bytes,
+          _: &mut U,
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'static,
+          U: $crate::UnknownBuffer<$crate::bytes::Bytes>,
+        {
+          ::core::result::Result::Ok((0, ::core::default::Default::default()))
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::PartialSerialize for $ty {
+        type Selection = ();
+
+        #[inline]
+        fn partial_encode(&self, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
+          ::core::result::Result::Ok(0)
+        }
+
+        #[inline]
+        fn partial_encoded_len(&self, _: &Self::Selection,) -> ::core::primitive::usize {
+          0
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::Message for $ty {
+        type Serialized<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type SerializedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::TypeOwned<Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, $crate::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::TypeRef<Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, $crate::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::IntoTarget<Self> for $ty {
+        fn into_target(self) -> ::core::result::Result<Self, $crate::DecodeError> {
+          ::core::result::Result::Ok(self)
+        }
+      }
+    )*
   };
 }

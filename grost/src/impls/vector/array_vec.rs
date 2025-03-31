@@ -11,7 +11,7 @@ pub type ArrayBytes<const N: usize> = ArrayVec<[u8; N]>;
 impl<const N: usize> Wirable for ArrayVec<[u8; N]> {}
 
 impl<const N: usize> Serialize for ArrayVec<[u8; N]> {
-  fn encode(&self, _: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let len = self.len();
     let buf_len = buf.len();
     if buf_len < len {
@@ -22,7 +22,7 @@ impl<const N: usize> Serialize for ArrayVec<[u8; N]> {
     Ok(len)
   }
 
-  fn encoded_len(&self, _: Tag) -> usize {
+  fn encoded_len(&self,) -> usize {
     self.len()
   }
 }

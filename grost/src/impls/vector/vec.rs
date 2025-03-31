@@ -13,8 +13,8 @@ impl<T> Serialize for Vec<T>
 where
   T: Serialize,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let len = self.encoded_len(tag);
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    let len = self.encoded_len();
     let buf_len = buf.len();
     if buf_len < len {
       return Err(EncodeError::insufficient_buffer(len, buf_len));
@@ -134,7 +134,7 @@ impl<T> Serialize for SerializedVec<'_, T>
 where
   T: Serialize,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     todo!()
   }
 
@@ -182,7 +182,7 @@ impl<T> Serialize for SerializedOwnedVec<T>
 where
   T: Serialize,
 {
-  fn encode(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     todo!()
   }
 

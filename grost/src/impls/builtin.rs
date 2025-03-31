@@ -1,10 +1,14 @@
-use crate::{Deserialize, DeserializeOwned, Serialize,};
+use crate::{Deserialize, DeserializeOwned, Serialize};
 
-varing!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 zst!((), ::core::marker::PhantomPinned);
+phantom!(::core::marker::PhantomData<T>);
+
+varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 message!(u8, i8, bool);
+
 wirable!((@byte) <=> (u8));
 partial_serialize_primitives!(u8);
+
 bridge!(
   u8 {
     i8 {
@@ -19,7 +23,7 @@ bridge!(
 );
 
 impl Serialize for u8 {
-  fn encode(&self, _: crate::Tag, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
+  fn encode(&self, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
     if buf.is_empty() {
       return Err(crate::EncodeError::insufficient_buffer(1, 0));
     }
@@ -28,7 +32,7 @@ impl Serialize for u8 {
     Ok(1)
   }
 
-  fn encoded_len(&self, _: crate::Tag) -> usize {
+  fn encoded_len(&self) -> usize {
     1
   }
 }
@@ -85,70 +89,4 @@ const fn convert_u8_to_i8(v: u8) -> i8 {
   v as i8
 }
 
-macro_rules! impl_for_phantom {
-  ($($ty:ty),+$(,)?) => {
-    $(
-      impl<T: ?::core::marker::Sized> $crate::Wirable for $ty {
-        const WIRE_TYPE: $crate::WireType = $crate::WireType::Merged;
-      }
-      
-      impl<T: ?::core::marker::Sized> $crate::Serialize for $ty {
-        #[inline]
-        fn encode(&self, _: $crate::Tag, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
-          ::core::result::Result::Ok(0)
-        }
-    
-        #[inline]
-        fn encoded_len(&self, _: $crate::Tag) -> ::core::primitive::usize {
-          0
-        }
-      }
-      
-      impl<'de, T: ?::core::marker::Sized> $crate::Deserialize<'de> for $ty {
-        fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::DecodeError>
-        where
-          Self: ::core::marker::Sized + 'de,
-          B: $crate::UnknownRefBuffer<'de>,
-        {
-          ::core::result::Result::Ok((0, ::core::default::Default::default()))
-        }
-      }
-      
-      impl<T: ?::core::marker::Sized> $crate::DeserializeOwned for $ty
-      where
-        Self: 'static,
-      {
-        #[cfg(any(feature = "std", feature = "alloc"))]
-        #[inline]
-        fn decode_from_bytes<U>(
-          _: $crate::bytes::Bytes,
-          _: &mut U,
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::DecodeError>
-        where
-          Self: ::core::marker::Sized + 'static,
-          U: $crate::UnknownBuffer<$crate::bytes::Bytes>,
-        {
-          ::core::result::Result::Ok((0, ::core::default::Default::default()))
-        }
-      }
-
-      impl<T: ?::core::marker::Sized> $crate::PartialSerialize for $ty {
-        type Selection = ();
-
-        #[inline]
-        fn partial_encode(&self, _: $crate::Tag, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::EncodeError> {
-          ::core::result::Result::Ok(0)
-        }
-      
-        #[inline]
-        fn partial_encoded_len(&self, _: $crate::Tag, _: &Self::Selection,) -> ::core::primitive::usize {
-          0
-        }
-      }
-    )*
-  };
-}
-
-impl_for_phantom!(
-  ::core::marker::PhantomData<T>,
-);
+mod array;
