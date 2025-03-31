@@ -118,7 +118,9 @@ paste = "1"
 seq-macro = "0.3"
 thiserror = { version = "2", default-features = false }
 tinyvec = { version = "1", default-features = false, features = ["latest_stable_rust"] }
+simdutf8 = { version = "0.1", default-features = false }
 
+# Optional dependencies
 arbitrary = { version = "1", optional = true, features = ["derive"] }
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }

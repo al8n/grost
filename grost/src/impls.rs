@@ -13,6 +13,9 @@ mod set;
 mod string;
 mod vector;
 
+#[cfg(feature = "heapless")]
+mod heapless;
+
 /// Re-export types of [`arbitrary-int`](arbitrary_int_1).
 #[cfg(feature = "arbitrary-int")]
 pub mod arbitrary_int;

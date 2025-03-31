@@ -1,7 +1,7 @@
-use varing::{decode_u32_varint, encode_u32_varint_to, encoded_u32_varint_len};
+use varing::{decode_u32_varint, encode_u32_varint_to};
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Wirable, WireType,
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, IntoTarget, Message, Serialize, TypeOwned, TypeRef, Wirable, WireType
 };
 
 impl<const N: usize> Wirable for [u8; N] {
@@ -33,33 +33,21 @@ impl<const N: usize> Serialize for [u8; N] {
   }
 
   fn encoded_len(&self) -> usize {
-    match N {
-      0 => 0,
-      1 => 1,
-      2 => 2,
-      4 => 4,
-      8 => 8,
-      16 => 16,
-      _ => N,
-    }
+    N 
   }
 
   fn encoded_len_with_prefix(&self) -> usize {
     match N {
       0 | 1 | 2 | 4 | 8 | 16 => N,
       _ => {
-        let len_size = encoded_u32_varint_len(N as u32);
-        len_size + N
+        self.as_slice().encoded_len_with_prefix()
       }
     }
   }
 
   fn encode_with_prefix(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     match N {
-      0 | 1 | 2 | 4 | 8 | 16 => {
-        let len = self.encode(buf)?;
-        Ok(len)
-      }
+      0 | 1 | 2 | 4 | 8 | 16 => self.encode(buf),
       _ => {
         let len_size = encode_u32_varint_to(N as u32, buf)
           .map_err(|e| EncodeError::from(e).update(self.encoded_len(), buf.len()))?;
@@ -104,6 +92,39 @@ impl<const N: usize> DeserializeOwned for [u8; N] {
   }
 }
 
+impl<const N: usize> IntoTarget<Self> for [u8; N] {
+  fn into_target(self) -> Result<Self, DecodeError> {
+    Ok(self)
+  }
+}
+
+impl<const N: usize> TypeRef<Self> for [u8; N] {
+  fn to(&self) -> Result<Self, DecodeError> {
+    Ok(*self)
+  }
+}
+
+impl<const N: usize> TypeOwned<Self> for [u8; N] {
+  fn to(&self) -> Result<Self, DecodeError> {
+    Ok(*self)
+  }
+}
+
+impl<const N: usize> Message for [u8; N] {
+  type Serialized<'a> = &'a [u8]
+    where
+      Self: Sized + 'a;
+
+  type Borrowed<'a> = &'a [u8; N]
+    where
+      Self: 'a;
+
+  type SerializedOwned = Self
+    where
+      Self: Sized + 'static;
+}
+
+#[inline]
 fn decode<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
   if N == 0 {
     return Ok((0, [0; N]));
@@ -115,6 +136,7 @@ fn decode<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
     .map_err(|_| DecodeError::buffer_underflow())
 }
 
+#[inline]
 fn decode_length_prefix<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
   if N == 0 {
     return Ok((0, [0; N]));

@@ -26,6 +26,9 @@ pub use wire_type::WireType;
 #[cfg(feature = "bytes_1")]
 pub use bytes_1 as bytes;
 
+#[cfg(feature = "smol_str_0_3")]
+pub use smol_str_0_3 as smol_str;
+
 mod buffer;
 /// The error module contains all the error types used in the `Grost`.
 mod error;
@@ -557,4 +560,7 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 pub mod __private {
   pub use super::*;
   pub use varing;
+  pub use simdutf8;
+  pub use smol_str_0_3 as smol_str;
+  pub use bytes_1 as bytes;
 }

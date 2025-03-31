@@ -90,3 +90,5 @@ const fn convert_u8_to_i8(v: u8) -> i8 {
 }
 
 mod array;
+mod string;
+mod slice;
