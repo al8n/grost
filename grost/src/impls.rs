@@ -2,6 +2,7 @@ pub use map::*;
 pub use set::*;
 pub use string::*;
 
+mod bytes;
 mod duration;
 mod map;
 mod net;
@@ -10,7 +11,6 @@ mod path;
 mod primitives;
 mod set;
 mod string;
-mod bytes;
 
 /// Re-export types of [`arbitrary-int`](arbitrary_int_1).
 #[cfg(feature = "arbitrary-int")]

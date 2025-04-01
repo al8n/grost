@@ -1,7 +1,10 @@
-use tinyvec_1::{ArrayVec, Array};
+use tinyvec_1::{Array, ArrayVec};
 
-use crate::{DecodeError, Deserialize, DeserializeOwned, IntoTarget, Message, Serialize, TypeOwned, TypeRef, Wirable, WireType};
 use super::larger_than_array_capacity;
+use crate::{
+  DecodeError, Deserialize, DeserializeOwned, IntoTarget, Message, Serialize, TypeOwned, TypeRef,
+  Wirable, WireType,
+};
 
 impl<A> Wirable for ArrayVec<A>
 where
@@ -43,7 +46,7 @@ where
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>
+    B: crate::UnknownRefBuffer<'de>,
   {
     decode_to_array(src)
   }
@@ -54,13 +57,10 @@ where
   A: Array<Item = u8> + 'static,
 {
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn decode_from_bytes<U>(
-    src: bytes_1::Bytes,
-    _: &mut U,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    U: crate::UnknownBuffer<bytes_1::Bytes>
+    U: crate::UnknownBuffer<bytes_1::Bytes>,
   {
     decode_to_array(src.as_ref())
   }
@@ -70,15 +70,18 @@ impl<A> Message for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
-  type Serialized<'a> = &'a [A::Item]
+  type Serialized<'a>
+    = &'a [A::Item]
   where
     Self: Sized + 'a;
 
-  type Borrowed<'a> = &'a Self
+  type Borrowed<'a>
+    = &'a Self
   where
     Self: 'a;
 
-  type SerializedOwned = Self
+  type SerializedOwned
+    = Self
   where
     Self: Sized + 'static;
 }

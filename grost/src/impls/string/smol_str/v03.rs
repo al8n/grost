@@ -9,4 +9,3 @@ str_bridge!(SmolStr {
     from: |val: SmolStr| Ok(val);
   }
 },);
-

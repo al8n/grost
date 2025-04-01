@@ -15,6 +15,9 @@ mod heapless;
 mod rc;
 
 #[cfg(any(feature = "std", feature = "alloc"))]
+mod smallvec;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
 mod triomphe;
 
 mod tinyvec;

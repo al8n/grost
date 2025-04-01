@@ -13,6 +13,7 @@ fn larger_than_array_capacity<A: Array>() -> crate::DecodeError {
 #[cfg(any(feature = "std", feature = "alloc"))]
 fn larger_than_array_capacity<A: Array>() -> crate::DecodeError {
   crate::DecodeError::custom(std::format!(
-    "cannot decode array with length greater than the capacity {}", A::CAPACITY,
+    "cannot decode array with length greater than the capacity {}",
+    A::CAPACITY,
   ))
 }
