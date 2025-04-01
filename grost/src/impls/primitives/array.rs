@@ -1,7 +1,8 @@
 use varing::{decode_u32_varint, encode_u32_varint_to};
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, IntoTarget, Message, Serialize, TypeOwned, TypeRef, Wirable, WireType
+  DecodeError, Deserialize, DeserializeOwned, EncodeError, IntoTarget, Message, Serialize,
+  TypeOwned, TypeRef, Wirable, WireType,
 };
 
 impl<const N: usize> Wirable for [u8; N] {
@@ -33,15 +34,13 @@ impl<const N: usize> Serialize for [u8; N] {
   }
 
   fn encoded_len(&self) -> usize {
-    N 
+    N
   }
 
   fn encoded_len_with_prefix(&self) -> usize {
     match N {
       0 | 1 | 2 | 4 | 8 | 16 => N,
-      _ => {
-        self.as_slice().encoded_len_with_prefix()
-      }
+      _ => self.as_slice().encoded_len_with_prefix(),
     }
   }
 
@@ -111,17 +110,20 @@ impl<const N: usize> TypeOwned<Self> for [u8; N] {
 }
 
 impl<const N: usize> Message for [u8; N] {
-  type Serialized<'a> = &'a [u8]
-    where
-      Self: Sized + 'a;
+  type Serialized<'a>
+    = &'a [u8]
+  where
+    Self: Sized + 'a;
 
-  type Borrowed<'a> = &'a [u8; N]
-    where
-      Self: 'a;
+  type Borrowed<'a>
+    = &'a [u8; N]
+  where
+    Self: 'a;
 
-  type SerializedOwned = Self
-    where
-      Self: Sized + 'static;
+  type SerializedOwned
+    = Self
+  where
+    Self: Sized + 'static;
 }
 
 #[inline]

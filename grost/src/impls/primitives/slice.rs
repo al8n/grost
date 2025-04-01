@@ -1,6 +1,5 @@
 use crate::{DecodeError, Deserialize, EncodeError, IntoTarget, Serialize, TypeRef, Wirable};
 
-
 impl Wirable for &[u8] {}
 
 impl Serialize for &[u8] {
@@ -25,9 +24,9 @@ impl<'de> Deserialize<'de> for &'de [u8] {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>
+    B: crate::UnknownRefBuffer<'de>,
   {
-    Ok((src.len(), src))  
+    Ok((src.len(), src))
   }
 }
 

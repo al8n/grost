@@ -3,18 +3,15 @@ pub use set::*;
 pub use string::*;
 pub use vector::*;
 
-mod builtin;
 mod duration;
 mod map;
 mod net;
 #[cfg(feature = "std")]
 mod path;
+mod primitives;
 mod set;
 mod string;
 mod vector;
-
-#[cfg(feature = "heapless")]
-mod heapless;
 
 /// Re-export types of [`arbitrary-int`](arbitrary_int_1).
 #[cfg(feature = "arbitrary-int")]

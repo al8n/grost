@@ -39,6 +39,7 @@ mod impls;
 mod selection_set;
 mod tag;
 mod unknown;
+mod utils;
 mod wire_type;
 
 /// A message type that can be serialized and deserialized.
@@ -559,8 +560,25 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
-  pub use varing;
+  pub use bytes_1 as bytes;
   pub use simdutf8;
   pub use smol_str_0_3 as smol_str;
-  pub use bytes_1 as bytes;
+  pub use varing;
+
+  #[cfg(not(feature = "simdutf8"))]
+  pub use ::core::str::from_utf8;
+  #[cfg(feature = "simdutf8")]
+  pub use simdutf8::basic::from_utf8;
+
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {
+    crate::DecodeError::custom("cannot decode string with length greater than the capacity")
+  }
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {
+    crate::DecodeError::custom(std::format!(
+      "cannot decode string with length greater than the capacity {N}"
+    ))
+  }
 }
