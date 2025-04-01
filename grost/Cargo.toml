@@ -14,23 +14,20 @@ metadata.workspace = true
 default = ["std", "simdutf8"]
 alloc = [
   "bytes",
-  "tinyvec/alloc",
   "smol_str",
-  
   "chrono_0_4?/alloc",
   "hostaddr_0_1?/alloc",
   "hostaddr_0_1?/tinyvec_1",
   "hostaddr_0_1?/bytes_1",
   "hostaddr_0_1?/smol_str_0_3",
   "ruint_1?/alloc",
+  "tinyvec_1?/alloc",
 ]
 std = [
   "bytes_1/default",
   "varing/default",
   "smol_str_0_3/default",
   "thiserror/default",
-  "tinyvec/default",
-
   "arrayvec_0_7?/default",
   "bigdecimal_0_4?/default",
   "chrono_0_4?/default",
@@ -45,6 +42,7 @@ std = [
   "simdutf8?/default",
   "triomphe_0_1?/default",
   "tinystr_0_8?/default",
+  "tinyvec_1?/default",
   "url_2?/default",
   "uuid_1?/default",
 ]
@@ -106,6 +104,9 @@ triomphe = ["triomphe_0_1"]
 tinystr_0_8 = ["dep:tinystr_0_8"]
 tinystr = ["tinystr_0_8"]
 
+tinyvec_1 = ["dep:tinyvec_1"]
+tinyvec = ["tinyvec_1"]
+
 url_2 = ["dep:url_2"]
 url = ["url_2"]
 
@@ -128,7 +129,7 @@ derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "t
 paste = "1"
 seq-macro = "0.3"
 thiserror = { version = "2", default-features = false }
-tinyvec = { version = "1", default-features = false, features = ["latest_stable_rust"] }
+
 simdutf8 = { version = "0.1", default-features = false, optional = true }
 
 # Optional dependencies
@@ -152,6 +153,7 @@ rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = f
 smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
 triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
 tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
+tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
 time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
 url_2 = { package = "url", version = "2", default-features = false, optional = true }
 uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }

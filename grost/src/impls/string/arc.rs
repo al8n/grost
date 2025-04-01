@@ -1,18 +1,12 @@
+use crate::smol_str::SmolStr;
 use std::sync::Arc;
 
-use crate::smol_str::SmolStr;
-
 str_bridge!(Arc<str> {
-  from_str: Arc::<str>::from,
-  to_str: AsRef::as_ref,
-},);
+  from_str: |val: &str| Ok(Arc::<str>::from(val));
+  to_str: AsRef::as_ref;
 
-str_bridge!(
-  @smolstr_message
-  Arc::<str> {
-    from_ref: |s: &SmolStr| {
-      s.clone().into()
-    },
-    from: Into::into,
-  },
-);
+  type SerializedOwned = SmolStr {
+    from_ref: |s: &SmolStr| Ok(Arc::<str>::from(s.as_str()));
+    from: |s: SmolStr| Ok(Arc::from(s.as_str()));
+  }
+},);

@@ -1,14 +1,12 @@
 use ::smol_str_0_3::SmolStr;
 
 str_bridge!(SmolStr {
-  from_str: SmolStr::new,
-  to_str: SmolStr::as_str,
+  from_str: |val| Ok(SmolStr::new(val));
+  to_str: SmolStr::as_str;
+
+  type SerializedOwned = SmolStr {
+    from_ref: |val: &SmolStr| Ok(val.clone());
+    from: |val: SmolStr| Ok(val);
+  }
 },);
 
-str_bridge!(
-  @smolstr_message
-  SmolStr {
-    from_ref: Clone::clone,
-    from: Into::into,
-  }
-);

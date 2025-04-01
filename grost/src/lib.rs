@@ -18,8 +18,7 @@ pub use impls::*;
 
 pub use selection_set::SelectionSet;
 pub use tag::Tag;
-#[cfg(any(feature = "std", feature = "alloc"))]
-pub use tinyvec;
+
 pub use unknown::*;
 pub use wire_type::WireType;
 
@@ -28,6 +27,9 @@ pub use bytes_1 as bytes;
 
 #[cfg(feature = "smol_str_0_3")]
 pub use smol_str_0_3 as smol_str;
+
+#[cfg(feature = "tinyvec_1")]
+pub use tinyvec_1 as tinyvec;
 
 mod buffer;
 /// The error module contains all the error types used in the `Grost`.
@@ -579,6 +581,18 @@ pub mod __private {
   pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {
     crate::DecodeError::custom(std::format!(
       "cannot decode string with length greater than the capacity {N}"
+    ))
+  }
+
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  pub fn larger_than_array_capacity<const N: usize>() -> crate::DecodeError {
+    crate::DecodeError::custom("cannot decode array with length greater than the capacity")
+  }
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  pub fn larger_than_array_capacity<const N: usize>() -> crate::DecodeError {
+    crate::DecodeError::custom(std::format!(
+      "cannot decode array with length greater than the capacity {N}"
     ))
   }
 }

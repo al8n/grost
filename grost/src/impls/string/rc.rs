@@ -1,20 +1,12 @@
+use crate::smol_str::SmolStr;
 use std::rc::Rc;
 
-use crate::smol_str::SmolStr;
-
 str_bridge!(Rc<str> {
-  from_str: Rc::<str>::from,
-  to_str: AsRef::as_ref,
-},);
+  from_str: |val: &str| Ok(Rc::<str>::from(val));
+  to_str: AsRef::as_ref;
 
-str_bridge!(
-  @smolstr_message
-  Rc::<str> {
-    from_ref: |s: &SmolStr| {
-      Rc::<str>::from(s.as_str())
-    },
-    from: |s: SmolStr| {
-      Rc::from(s.as_str())
-    },
-  },
-);
+  type SerializedOwned = SmolStr {
+    from_ref: |s: &SmolStr| Ok(Rc::<str>::from(s.as_str()));
+    from: |s: SmolStr| Ok(Rc::from(s.as_str()));
+  }
+},);

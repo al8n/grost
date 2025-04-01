@@ -333,8 +333,13 @@ macro_rules! bridge {
 ///
 /// str_bridge!(
 ///   MyString {
-///     from_str: |s: &str| MyString(s.to_string()),
+///     from_str: |s: &str| Ok(MyString(s.to_string()));
 ///     to_str: MyString::as_str,
+/// 
+///     type SerializedOwned = SmolStr {
+///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string())),
+///       from: |s: SmolStr| Ok(MyString(s.to_string())),
+///     }
 ///   }
 /// );
 /// ```
@@ -343,8 +348,13 @@ macro_rules! bridge {
 #[macro_export]
 macro_rules! str_bridge {
   ($($ty:ty {
-    from_str: $from_str: expr,
-    to_str: $to_str: expr,
+    from_str: $from_str: expr;
+    to_str: $to_str: expr;
+
+    type SerializedOwned = $owned_ty:ty {
+      from_ref: $from_ref: expr;
+      from: $from: expr;
+    } $(;)?
   }), +$(,)?) => {
     $(
       impl $crate::Wirable for $ty {}
@@ -352,7 +362,40 @@ macro_rules! str_bridge {
       $crate::str_bridge!(@serialize $ty: $to_str);
       $crate::str_bridge!(@deserialize $ty: $from_str);
       $crate::str_bridge!(@deserialize_owned $ty: $from_str);
-      $crate::str_bridge!(@str_conversion $ty: $from_str);
+
+      impl $crate::__private::IntoTarget<$ty> for &::core::primitive::str {
+        $crate::str_bridge!(@into_target_impl $ty: $from_str);
+      }
+  
+      impl $crate::__private::TypeRef<$ty> for &::core::primitive::str {
+        $crate::str_bridge!(@str_to_impl $ty: $from_str);
+      }
+  
+      impl $crate::__private::TypeOwned<$ty> for &::core::primitive::str {
+        $crate::str_bridge!(@str_to_impl $ty: $from_str);
+      }
+
+      impl $crate::__private::IntoTarget<$ty> for $owned_ty {
+        $crate::str_bridge!(@into_target_impl $ty: $from);
+      }
+
+      impl $crate::__private::TypeOwned<$ty> for $owned_ty {
+        $crate::str_bridge!(@to_impl $ty: $from_ref);
+      }
+
+      impl $crate::__private::Message for $ty {
+        type Serialized<'a> = &'a ::core::primitive::str
+        where
+          Self: ::core::marker::Sized + 'a;
+
+        type Borrowed<'a> = &'a $ty
+        where
+          Self: 'a;
+
+        type SerializedOwned = $owned_ty
+        where
+          Self: ::core::marker::Sized + 'static;
+      }
     )*
   };
   (@serialize $ty:ty: $to_str:expr) => {
@@ -377,15 +420,14 @@ macro_rules! str_bridge {
     }
   };
   (@deserialize_impl $from_str:expr) => {
-    fn decode<B>(src: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
       B: $crate::__private::UnknownRefBuffer<'de>
     {
-      $crate::__private::from_utf8(src)
-        .map(|s| (src.len(), s))
+      $crate::__private::from_utf8(&src)
         .map_err(|_| $crate::__private::DecodeError::custom("invalid UTF-8"))
-        .map(|(read, val)| (read, $from_str(val)))
+        .and_then(|val| $from_str(val).map(|v| (src.len(), v)))
     }
   };
   (@deserialize_owned $ty:ty: $from_str:expr) => {
@@ -403,54 +445,98 @@ macro_rules! str_bridge {
       U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>
     {
       $crate::__private::from_utf8(&src)
-        .map(|s| (src.len(), s))
         .map_err(|_| $crate::__private::DecodeError::custom("invalid UTF-8"))
-        .map(|(read, val)| (read, $from_str(val)))
-    }
-  };
-  (@str_conversion $ty:ty: $from_str:expr) => {
-    impl $crate::__private::IntoTarget<$ty> for &::core::primitive::str {
-      $crate::str_bridge!(@into_target_impl $ty: $from_str);
-    }
-
-    impl $crate::__private::TypeRef<$ty> for &::core::primitive::str {
-      $crate::str_bridge!(@str_to_impl $ty: $from_str);
-    }
-
-    impl $crate::__private::TypeOwned<$ty> for &::core::primitive::str {
-      $crate::str_bridge!(@str_to_impl $ty: $from_str);
+        .and_then(|val| $from_str(val).map(|v| (src.len(), v)))
     }
   };
   (@into_target_impl $ty:ty: $from:expr) => {
     fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
-      ::core::result::Result::Ok($from(self))
+      $from(self)
     }
   };
   (@str_to_impl $ty:ty: $from:expr) => {
     fn to(&self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
-      ::core::result::Result::Ok($from(*self))
+      $from(*self)
     }
   };
-  (@smolstr_to_impl $ty:ty: $from:expr) => {
+  (@to_impl $ty:ty: $from:expr) => {
     fn to(&self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
-      ::core::result::Result::Ok($from(self))
+      $from(self)
     }
   };
-  (@smolstr_message $($ty:ty {
-    from_ref: $from_ref: expr,
-    from: $from: expr,
+}
+
+/// A macro emits traits implementation for types underlying is a `&[u8]`.
+///
+/// This macro requires the types are `'static`
+///
+/// ## Example
+///
+/// ```rust
+/// use grost::{str_bridge, bytes::Bytes};
+///
+/// struct MyString(String);
+///
+/// impl MyString {
+///   fn as_str(&self) -> &str {
+///     self.0.as_str()
+///   }
+/// }
+///
+/// str_bridge!(
+///   MyString {
+///     from_str: |s: &str| Ok(MyString(s.to_string()));
+///     to_str: MyString::as_str,
+/// 
+///     type SerializedOwned = SmolStr {
+///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string())),
+///       from: |s: SmolStr| Ok(MyString(s.to_string())),
+///     }
+///   }
+/// );
+/// ```
+#[cfg(any(feature = "alloc", feature = "std"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "alloc", feature = "std"))))]
+#[macro_export]
+macro_rules! bytes_bridge {
+  ($($ty:ty {
+    from_bytes: $from_bytes: expr;
+    to_bytes: $to_bytes: expr;
+
+    type SerializedOwned = $owned_ty:ty {
+      from_ref: $from_ref: expr;
+      from: $from: expr;
+    } $(;)?
   }), +$(,)?) => {
     $(
-      impl $crate::__private::IntoTarget<$ty> for $crate::__private::smol_str::SmolStr {
-        $crate::str_bridge!(@into_target_impl $ty: $from);
+      impl $crate::Wirable for $ty {}
+
+      $crate::bytes_bridge!(@serialize $ty: $to_bytes);
+      $crate::bytes_bridge!(@deserialize $ty: $from_bytes);
+      $crate::bytes_bridge!(@deserialize_owned $ty: $from_bytes);
+
+      impl $crate::__private::IntoTarget<$ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@into_target_impl $ty: $from_bytes);
+      }
+  
+      impl $crate::__private::TypeRef<$ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
+      }
+  
+      impl $crate::__private::TypeOwned<$ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
       }
 
-      impl $crate::__private::TypeOwned<$ty> for $crate::__private::smol_str::SmolStr {
-        $crate::str_bridge!(@smolstr_to_impl $ty: $from_ref);
+      impl $crate::__private::IntoTarget<$ty> for $owned_ty {
+        $crate::bytes_bridge!(@into_target_impl $ty: $from);
+      }
+
+      impl $crate::__private::TypeOwned<$ty> for $owned_ty {
+        $crate::bytes_bridge!(@to_impl $ty: $from_ref);
       }
 
       impl $crate::__private::Message for $ty {
-        type Serialized<'a> = &'a ::core::primitive::str
+        type Serialized<'a> = &'a [::core::primitive::u8]
         where
           Self: ::core::marker::Sized + 'a;
 
@@ -458,12 +544,74 @@ macro_rules! str_bridge {
         where
           Self: 'a;
 
-        type SerializedOwned = $crate::__private::smol_str::SmolStr
+        type SerializedOwned = $owned_ty
         where
           Self: ::core::marker::Sized + 'static;
       }
     )*
-  }
+  };
+  (@serialize $ty:ty: $to_bytes:expr) => {
+    impl $crate::__private::Serialize for $ty {
+      $crate::bytes_bridge!(@serialize_impl $to_bytes);
+    }
+  };
+  (@serialize_impl $to_bytes:expr) => {
+    #[inline]
+    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <&[::core::primitive::u8] as $crate::__private::Serialize>::encode(&$to_bytes(self), buf)
+    }
+
+    #[inline]
+    fn encoded_len(&self) -> ::core::primitive::usize {
+      <&[::core::primitive::u8] as $crate::__private::Serialize>::encoded_len(&$to_bytes(self))
+    }
+  };
+  (@deserialize $ty:ty: $from_bytes:expr) => {
+    impl<'de> $crate::__private::Deserialize<'de> for $ty {
+      $crate::bytes_bridge!(@deserialize_impl $from_bytes);
+    }
+  };
+  (@deserialize_impl $from_bytes:expr) => {
+    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'de,
+      B: $crate::__private::UnknownRefBuffer<'de>
+    {
+      $from_bytes(src).map(|v| (src.len(), v))
+    }
+  };
+  (@deserialize_owned $ty:ty: $from_bytes:expr) => {
+    impl $crate::__private::DeserializeOwned for $ty {
+      $crate::bytes_bridge!(@deserialize_owned_impl $from_bytes);
+    }
+  };
+  (@deserialize_owned_impl $from_bytes:expr) => {
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      _: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>
+    {
+      $from_bytes(&src).map(|v| (src.len(), v))
+    }
+  };
+  (@into_target_impl $ty:ty: $from:expr) => {
+    fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
+      $from(self)
+    }
+  };
+  (@str_to_impl $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
+      $from(*self)
+    }
+  };
+  (@to_impl $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::DecodeError> {
+      $from(self)
+    }
+  };
 }
 
 /// A macro emits traits implementations for a array-style `str` type.

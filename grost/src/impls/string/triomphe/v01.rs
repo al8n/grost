@@ -1,20 +1,12 @@
+use crate::smol_str::SmolStr;
 use triomphe_0_1::Arc;
 
-use crate::smol_str::SmolStr;
-
 str_bridge!(Arc<str> {
-  from_str: Arc::<str>::from,
-  to_str: AsRef::as_ref,
-},);
+  from_str: |val: &str| Ok(Arc::<str>::from(val));
+  to_str: AsRef::as_ref;
 
-str_bridge!(
-  @smolstr_message
-  Arc::<str> {
-    from_ref: |s: &SmolStr| {
-      Arc::<str>::from(s.as_str())
-    },
-    from: |s: SmolStr| {
-      Arc::from(s.as_str())
-    },
-  },
-);
+  type SerializedOwned = SmolStr {
+    from_ref: |s: &SmolStr| Ok(Arc::<str>::from(s.as_str()));
+    from: |s: SmolStr| Ok(Arc::from(s.as_str()));
+  }
+},);

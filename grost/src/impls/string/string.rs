@@ -2,14 +2,11 @@ use crate::smol_str::SmolStr;
 use std::string::String;
 
 str_bridge!(String {
-  from_str: String::from,
-  to_str: String::as_str,
-},);
+  from_str: |val: &str| Ok(String::from(val));
+  to_str: String::as_str;
 
-str_bridge!(
-  @smolstr_message
-  String {
-    from_ref: |s: &SmolStr| String::from(s.as_str()),
-    from: Into::into,
-  },
-);
+  type SerializedOwned = SmolStr {
+    from_ref: |s: &SmolStr| Ok(String::from(s.as_str()));
+    from: |val: SmolStr| Ok(val.into());
+  }
+},);
