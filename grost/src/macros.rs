@@ -473,24 +473,24 @@ macro_rules! str_bridge {
 /// ## Example
 ///
 /// ```rust
-/// use grost::{str_bridge, bytes::Bytes};
+/// use grost::{bytes_bridge, bytes::Bytes};
 ///
-/// struct MyString(String);
+/// struct MyVec(Vec<u8>);
 ///
-/// impl MyString {
-///   fn as_str(&self) -> &str {
-///     self.0.as_str()
+/// impl MyVec {
+///   fn as_bytes(&self) -> &[u8] {
+///     self.0.as_slice()
 ///   }
 /// }
 ///
-/// str_bridge!(
-///   MyString {
-///     from_str: |s: &str| Ok(MyString(s.to_string()));
-///     to_str: MyString::as_str,
+/// bytes_bridge!(
+///   MyVec {
+///     from_bytes: |s: &str| Ok(MyVec(s.to_vec()));
+///     to_bytes: MyVec::as_bytes,
 /// 
-///     type SerializedOwned = SmolStr {
-///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string())),
-///       from: |s: SmolStr| Ok(MyString(s.to_string())),
+///     type SerializedOwned = Bytes {
+///       from_ref: |s: &Bytes| Ok(MyVec(s.to_vec())),
+///       from: |s: Bytes| Ok(MyVec(s)),
 ///     }
 ///   }
 /// );
@@ -700,24 +700,7 @@ macro_rules! array_str {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::DeserializeOwned for $ty {
-      fn decode_from_bytes<U>(
-        src: $crate::__private::bytes::Bytes,
-        _: &mut U,
-      ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-      where
-        Self: ::core::marker::Sized + 'static,
-        U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-      {
-        if N == 0 {
-          return ::core::result::Result::Ok((0, $new()));
-        }
-
-        if src.len() > N {
-          return ::core::result::Result::Err($crate::__private::larger_than_str_capacity::<N>());
-        }
-
-        $decode(::core::convert::AsRef::<[u8]>::as_ref(&src))
-      }
+      $crate::__array_str_deserialized_owned_impl!($new, $decode);
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
@@ -767,6 +750,39 @@ macro_rules! array_str {
         Self: ::core::marker::Sized + 'static;
     }
   };
+}
+
+#[cfg(any(feature = "alloc", feature = "std"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __array_str_deserialized_owned_impl {
+  ($new:expr, $decode:expr) => {
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      _: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+    {
+      if N == 0 {
+        return ::core::result::Result::Ok((0, $new()));
+      }
+
+      if src.len() > N {
+        return ::core::result::Result::Err($crate::__private::larger_than_str_capacity::<N>());
+      }
+
+      $decode(::core::convert::AsRef::<[::core::primitive::u8]>::as_ref(&src))
+    }
+  }
+}
+
+#[cfg(not(any(feature = "alloc", feature = "std")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __array_str_deserialized_owned_impl {
+  ($new:expr, $decode:expr) => {}
 }
 
 /// A macro emits [`TypeRef`](super::TypeRef) implementations for `Self`
