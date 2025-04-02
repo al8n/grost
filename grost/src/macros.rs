@@ -363,6 +363,10 @@ macro_rules! str_bridge {
       $crate::str_bridge!(@deserialize $ty: $from_str);
       $crate::str_bridge!(@deserialize_owned $ty: $from_str);
 
+      impl $crate::__private::PartialSerialize for $ty {
+        $crate::partial_serialize_primitives!(@impl);
+      }
+
       impl $crate::__private::IntoTarget<$ty> for &::core::primitive::str {
         $crate::str_bridge!(@into_target_impl $ty: $from_str);
       }
@@ -509,33 +513,37 @@ macro_rules! bytes_bridge {
     } $(;)?
   }), +$(,)?) => {
     $(
-      impl$(<const $g: usize>)? $crate::Wirable for $ty {}
+      impl$(<const $g: ::core::primitive::usize>)? $crate::Wirable for $ty {}
 
       $crate::bytes_bridge!(@serialize $ty $([const $g: usize])?: $to_bytes);
       $crate::bytes_bridge!(@deserialize $ty $([const $g: usize])?: $from_bytes);
       $crate::bytes_bridge!(@deserialize_owned  $ty $([const $g: usize])?: $from_bytes);
 
-      impl$(<const $g: usize>)? $crate::__private::IntoTarget<$ty> for &[::core::primitive::u8] {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialSerialize for $ty {
+        $crate::partial_serialize_primitives!(@impl);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$ty> for &[::core::primitive::u8] {
         $crate::bytes_bridge!(@into_target_impl $ty: $from_bytes);
       }
 
-      impl$(<const $g: usize>)? $crate::__private::TypeRef<$ty> for &[::core::primitive::u8] {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeRef<$ty> for &[::core::primitive::u8] {
         $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
       }
 
-      impl$(<const $g: usize>)? $crate::__private::TypeOwned<$ty> for &[::core::primitive::u8] {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$ty> for &[::core::primitive::u8] {
         $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
       }
 
-      impl$(<const $g: usize>)? $crate::__private::IntoTarget<$ty> for $owned_ty {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$ty> for $owned_ty {
         $crate::bytes_bridge!(@into_target_impl $ty: $from);
       }
 
-      impl$(<const $g: usize>)? $crate::__private::TypeOwned<$ty> for $owned_ty {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$ty> for $owned_ty {
         $crate::bytes_bridge!(@to_impl $ty: $from_ref);
       }
 
-      impl$(<const $g: usize>)? $crate::__private::Message for $ty {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::Message for $ty {
         type Serialized<'a> = &'a [::core::primitive::u8]
         where
           Self: ::core::marker::Sized + 'a;
@@ -551,7 +559,7 @@ macro_rules! bytes_bridge {
     )*
   };
   (@serialize $ty:ty $([const $g:ident: usize])?: $to_bytes:expr) => {
-    impl $(<const $g: usize>)? $crate::__private::Serialize for $ty {
+    impl $(<const $g: ::core::primitive::usize>)? $crate::__private::Serialize for $ty {
       $crate::bytes_bridge!(@serialize_impl $to_bytes);
     }
   };
@@ -581,7 +589,7 @@ macro_rules! bytes_bridge {
     }
   };
   (@deserialize_owned $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl$(<const $g: usize>)? $crate::__private::DeserializeOwned for $ty {
+    impl$(<const $g: ::core::primitive::usize>)? $crate::__private::DeserializeOwned for $ty {
       $crate::bytes_bridge!(@deserialize_owned_impl $from_bytes);
     }
   };
@@ -676,6 +684,10 @@ macro_rules! array_str {
 
         $crate::__private::Serialize::encode_with_prefix(&self.as_bytes(), buf)
       }
+    }
+
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialSerialize for $ty {
+      $crate::partial_serialize_primitives!(@impl);
     }
 
     impl<'de, const $g: ::core::primitive::usize> $crate::__private::Deserialize<'de> for $ty {
@@ -849,6 +861,10 @@ macro_rules! array_bytes {
 
         $crate::__private::Serialize::encode_with_prefix(&$as_bytes(self), buf)
       }
+    }
+
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialSerialize for $ty {
+      $crate::partial_serialize_primitives!(@impl);
     }
 
     impl<'de, const $g: ::core::primitive::usize> $crate::__private::Deserialize<'de> for $ty {
