@@ -56,4 +56,7 @@ macro_rules! impl_ {
   };
 }
 
-impl_!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128);
+impl_!(u8, u16, u32, u64, i8, i16, i32, i64);
+
+#[cfg(any(feature = "bnum_0_13", feature = "ruint_1"))]
+impl_!(i128, u128);
