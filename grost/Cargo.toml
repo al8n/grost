@@ -65,7 +65,7 @@ bigdecimal = ["bigdecimal_0_4"]
 chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
 chrono = ["chrono_0_4"]
 
-chrono-tz_0_10 = ["dep:chrono-tz_0_10"]
+chrono-tz_0_10 = ["dep:chrono-tz_0_10", "varing/chrono-tz_0_10"]
 chrono-tz = ["chrono-tz_0_10"]
 
 decimal_1 = ["dep:rust_decimal_1"]

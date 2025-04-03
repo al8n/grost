@@ -19,6 +19,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [workspace.dependencies]
-varing = { version = "0.4", default-features = false }
+varing = { version = "0.5", default-features = false }
 
 graphrpc-types = { path = "graphrpc-types", version = "0.1", default-features = false }

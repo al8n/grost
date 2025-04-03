@@ -1,11 +1,13 @@
 use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
-use varing::U32VarintBuffer;
+use varing::utils::Buffer;
 
 use crate::{
   DecodeError, Decode, DecodeOwned, EncodeError, Encode, Tag, Wirable, WireType,
   merge, split,
 };
+
+type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
 
 const PORT_LEN: usize = 2;
 const V4_LEN: usize = 4;

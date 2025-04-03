@@ -3,7 +3,7 @@ use core::num::NonZeroUsize;
 #[cfg(feature = "bytes_1")]
 use bytes_1 as bytes;
 
-use varing::U32VarintBuffer;
+use varing::{utils::Buffer, Varint};
 
 use crate::{IntoTarget, TypeBorrowed};
 
@@ -39,6 +39,8 @@ pub enum SelectionSet<S, B> {
   /// The unknown selection set.
   Unknown(Unknown<B>),
 }
+
+type U32VarintBuffer = Buffer<{ <u32 as Varint>::MAX_ENCODED_LEN + 1 }>;
 
 const ALL_TAG: Tag = Tag(1);
 const NONE_TAG: Tag = Tag(2);

@@ -1,12 +1,16 @@
-use crate::bytes::Bytes;
 use std::boxed::Box;
 
-bytes_bridge!(Box<[u8]> {
-  from_bytes: |val: &[u8]| Ok(Box::<[u8]>::from(val));
-  to_bytes: AsRef::as_ref;
+#[cfg(feature = "bytes_1")]
+const _: () = {
+  use bytes_1::Bytes;
 
-  type EncodedOwned = Bytes {
-    from_ref: |s: &Bytes| Ok(Box::<[u8]>::from(s.as_ref()));
-    from: |s: Bytes| Ok(Box::from(s.as_ref()));
-  }
-},);
+  bytes_bridge!(Box<[u8]> {
+    from_bytes: |val: &[u8]| Ok(Box::<[u8]>::from(val));
+    to_bytes: AsRef::as_ref;
+  
+    type EncodedOwned = Bytes {
+      from_ref: |s: &Bytes| Ok(Box::<[u8]>::from(s.as_ref()));
+      from: |s: Bytes| Ok(Box::from(s.as_ref()));
+    }
+  },);
+};
