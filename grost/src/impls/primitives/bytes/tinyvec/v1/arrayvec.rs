@@ -2,8 +2,8 @@ use tinyvec_1::{Array, ArrayVec};
 
 use super::larger_than_array_capacity;
 use crate::{
-  DecodeError, Decode, DecodeOwned, IntoTarget, Message, Encode, TypeOwned, TypeRef,
-  Wirable, WireType,
+  Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, TypeOwned, TypeRef, Wirable,
+  WireType,
 };
 
 impl<A> Wirable for ArrayVec<A>

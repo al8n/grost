@@ -1,5 +1,13 @@
 use crate::{Decode, DecodeOwned, Encode};
 
+mod arbitrary_int;
+mod bigdecimal;
+mod bnum;
+mod decimal;
+mod num_rational;
+mod num_complex;
+mod ruint;
+
 varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 message!(u8, i8, bool);
 

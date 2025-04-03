@@ -1,4 +1,4 @@
-use crate::{DecodeError, Decode, EncodeError, IntoTarget, Encode, TypeRef, Wirable};
+use crate::{Decode, DecodeError, Encode, EncodeError, IntoTarget, TypeRef, Wirable};
 
 impl Wirable for &[u8] {}
 

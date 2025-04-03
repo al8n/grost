@@ -983,16 +983,16 @@ macro_rules! __array_bytes_decoded_owned_impl {
 /// A macro emits [`TypeRef`](super::TypeRef) implementations for `Self`
 #[macro_export]
 macro_rules! type_ref {
-  ($($ty:ty),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::TypeRef<Self> for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::TypeRef<Self> for $ty {
         $crate::type_ref!(@copy_impl);
       }
     )*
   };
-  (@clone $($ty:ty),+$(,)?) => {
+  (@clone $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::TypeRef<Self> for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::TypeRef<Self> for $ty {
         $crate::type_ref!(@clone_impl);
       }
     )*
@@ -1012,16 +1012,16 @@ macro_rules! type_ref {
 /// A macro emits [`TypeOwned`](super::TypeOwned) implementations for `Self`
 #[macro_export]
 macro_rules! type_owned {
-  ($($ty:ty),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::TypeOwned<Self> for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
         $crate::type_ref!(@copy_impl);
       }
     )*
   };
-  (@clone $($ty:ty),+$(,)?) => {
+  (@clone $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::TypeOwned<Self> for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
         $crate::type_ref!(@clone_impl);
       }
     )*
@@ -1041,9 +1041,9 @@ macro_rules! type_owned {
 /// A macro emits [`IntoTarget`](super::IntoTarget) implementations for `Self`
 #[macro_export]
 macro_rules! into_target {
-  ($($ty:ty),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
     $(
-      impl $crate::__private::IntoTarget<Self> for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::IntoTarget<Self> for $ty {
         $crate::into_target!(@impl);
       }
     )*
@@ -1058,15 +1058,15 @@ macro_rules! into_target {
 /// A macro emits convertion traits implementations for `Self`
 #[macro_export]
 macro_rules! conversion {
-  ($($ty:ty),+$(,)?) => {
-    $crate::type_ref!($($ty),+);
-    $crate::type_owned!($($ty),+);
-    $crate::into_target!($($ty),+);
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $crate::type_ref!($($ty $([ $(const $g: usize),* ])?),+);
+    $crate::type_owned!($($ty $([ $(const $g: usize),* ])?),+);
+    $crate::into_target!($($ty $([ $(const $g: usize),* ])?),+);
   };
-  (@clone $($ty:ty),+$(,)?) => {
-    $crate::type_ref!(@clone $($ty),+);
-    $crate::type_owned!(@clone $($ty),+);
-    $crate::into_target!($($ty),+);
+  (@clone $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $crate::type_ref!(@clone $($ty $([ $(const $g: usize),* ])?),+);
+    $crate::type_owned!(@clone $($ty $([ $(const $g: usize),* ])?),+);
+    $crate::into_target!($($ty $([ $(const $g: usize),* ])?),+);
   };
 }
 
@@ -1075,14 +1075,14 @@ macro_rules! conversion {
 /// **NB:** this macro can only be used for types that implements [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! message {
-  ($($ty:ty),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::Message for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::Message for $ty {
         $crate::message!(@impl);
       }
     )*
 
-    $crate::conversion!($($ty),+);
+    $($crate::conversion!($ty $([ $(const $g: usize),* ])? );)*
   };
   (@impl) => {
     type Encoded<'a>
@@ -1116,9 +1116,9 @@ macro_rules! partial_encode_primitives {
       <Self as $crate::__private::Encode>::encoded_len(self)
     }
   };
-  ($($ty:ty),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $crate::__private::PartialEncode for $ty {
+      impl $( < $(const $g:usize),* > )? $crate::__private::PartialEncode for $ty {
         $crate::partial_encode_primitives!(@impl);
       }
     )*
@@ -1172,11 +1172,11 @@ macro_rules! wirable {
     const WIRE_TYPE: $crate::WireType = $crate::WireType::Fixed128;
   };
   ($(
-    (@$wire_varint:ident) <=> ($($ty:ty), +$(,)?)
+    (@$wire_varint:ident) <=> ($ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?), +$(,)?)
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::Wirable for $ty {
+        impl$( < $(const $g:usize),* > )? $crate::Wirable for $ty {
           $crate::wirable!(@$wire_varint);
         }
       )*
@@ -1187,20 +1187,18 @@ macro_rules! wirable {
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! varint {
-  ($($ty:ty),+$(,)?) => {
-    $crate::wirable!((@varint) <=> ($($ty,)*));
-    $crate::message!($($ty),*);
-    $crate::partial_encode_primitives!($($ty),*);
-    $crate::varint!(@encode $($ty),+);
-    $crate::varint!(@decode $($ty),+);
-    $crate::varint!(@decode_owned $($ty),+);
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $($crate::wirable!((@varint) <=> ($ty $([ $(const $g: usize),* ])?));)*
+    $($crate::message!($ty $([$(const $g: usize),*])?);)*
+    $($crate::partial_encode_primitives!($ty $([ $(const $g: usize),* ])?);)*
+    $($crate::varint!(@encode $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::varint!(@decode $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::varint!(@decode_owned $ty $([ $(const $g: usize),* ])?);)*
   };
-  (@encode $($ty:ty), +$(,)?) => {
-    $(
-      impl $crate::__private::Encode for $ty {
-        $crate::varint!(@encode_impl);
-      }
-    )*
+  (@encode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
+    impl $( < $(const $g:usize),* > )? $crate::__private::Encode for $ty {
+      $crate::varint!(@encode_impl);
+    }
   };
   (@encode_impl) => {
     fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
@@ -1211,12 +1209,10 @@ macro_rules! varint {
       $crate::__private::varing::Varint::encoded_len(self)
     }
   };
-  (@decode $($ty:ty), +$(,)?) => {
-    $(
-      impl<'de> $crate::__private::Decode<'de> for $ty {
-        $crate::varint!(@decode_impl);
-      }
-    )*
+  (@decode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
+    impl<'de, $($(const $g:usize),*)?> $crate::__private::Decode<'de> for $ty {
+      $crate::varint!(@decode_impl);
+    }
   };
   (@decode_impl) => {
     fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
@@ -1227,12 +1223,10 @@ macro_rules! varint {
       $crate::__private::varing::Varint::decode(src).map_err(::core::convert::Into::into)
     }
   };
-  (@decode_owned $($ty:ty), +$(,)?) => {
-    $(
-      impl $crate::__private::DecodeOwned for $ty {
-        $crate::varint!(@decode_owned_impl);
-      }
-    )*
+  (@decode_owned $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
+    impl $( < $(const $g:usize),* > )? $crate::__private::DecodeOwned for $ty {
+      $crate::varint!(@decode_owned_impl);
+    }
   };
   (@decode_owned_impl) => {
     #[cfg(any(feature = "std", feature = "alloc"))]

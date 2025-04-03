@@ -1,4 +1,4 @@
-use crate::{DecodeError, Decode, EncodeError, Encode, Wirable};
+use crate::{Decode, DecodeError, Encode, EncodeError, Wirable};
 
 impl Wirable for &str {}
 

@@ -1,4 +1,3 @@
-
 use std::string::String;
 
 #[cfg(feature = "smol_str_0_3")]
@@ -13,6 +12,5 @@ const _: () = {
       from_ref: |s: &SmolStr| Ok(String::from(s.as_str()));
       from: |val: SmolStr| Ok(val.into());
     }
-  },);  
+  },);
 };
-

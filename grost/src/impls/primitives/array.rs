@@ -1,8 +1,8 @@
 use varing::{decode_u32_varint, encode_u32_varint_to};
 
 use crate::{
-  DecodeError, Decode, DecodeOwned, EncodeError, IntoTarget, Message, Encode,
-  TypeOwned, TypeRef, Wirable, WireType,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, TypeOwned, TypeRef,
+  Wirable, WireType,
 };
 
 impl<const N: usize> Wirable for [u8; N] {

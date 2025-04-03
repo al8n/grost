@@ -3,8 +3,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::utils::Buffer;
 
 use crate::{
-  DecodeError, Decode, DecodeOwned, EncodeError, Encode, Tag, Wirable, WireType,
-  merge, split,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, merge, split,
 };
 
 type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;

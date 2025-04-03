@@ -3,13 +3,13 @@ use core::num::NonZeroUsize;
 #[cfg(feature = "bytes_1")]
 use bytes_1 as bytes;
 
-use varing::{utils::Buffer, Varint};
+use varing::{Varint, utils::Buffer};
 
 use crate::{IntoTarget, TypeBorrowed};
 
 use super::{
-  DecodeError, Decode, DecodeOwned, EncodeError, Message, Encode, Tag, TypeOwned,
-  TypeRef, Unknown, UnknownBuffer, UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Message, Tag, TypeOwned, TypeRef, Unknown,
+  UnknownBuffer, UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
 };
 
 /// A selection set.
