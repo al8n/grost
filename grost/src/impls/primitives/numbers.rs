@@ -1,10 +1,10 @@
-use crate::{Deserialize, DeserializeOwned, Serialize};
+use crate::{Decode, DecodeOwned, Encode};
 
 varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 message!(u8, i8, bool);
 
 wirable!((@byte) <=> (u8));
-partial_serialize_primitives!(u8);
+partial_encode_primitives!(u8);
 
 bridge!(
   u8 {
@@ -19,7 +19,7 @@ bridge!(
   },
 );
 
-impl Serialize for u8 {
+impl Encode for u8 {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
     if buf.is_empty() {
       return Err(crate::EncodeError::insufficient_buffer(1, 0));
@@ -34,7 +34,7 @@ impl Serialize for u8 {
   }
 }
 
-impl<'de> Deserialize<'de> for u8 {
+impl<'de> Decode<'de> for u8 {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), crate::DecodeError>
   where
     Self: Sized + 'de,
@@ -44,7 +44,7 @@ impl<'de> Deserialize<'de> for u8 {
   }
 }
 
-impl DeserializeOwned for u8 {
+impl DecodeOwned for u8 {
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn decode_from_bytes<U>(
     src: bytes_1::Bytes,

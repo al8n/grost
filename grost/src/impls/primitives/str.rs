@@ -1,8 +1,8 @@
-use crate::{DecodeError, Deserialize, EncodeError, Serialize, Wirable};
+use crate::{DecodeError, Decode, EncodeError, Encode, Wirable};
 
 impl Wirable for &str {}
 
-impl Serialize for &str {
+impl Encode for &str {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let this_len = self.len();
     let buf_len = buf.len();
@@ -21,7 +21,7 @@ impl Serialize for &str {
   }
 }
 
-impl<'de> Deserialize<'de> for &'de str {
+impl<'de> Decode<'de> for &'de str {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,

@@ -6,7 +6,7 @@ bytes_bridge!(
     from_bytes: |bytes: &[u8]| Ok(SmallVec::from_slice(bytes));
     to_bytes: SmallVec::as_slice;
 
-    type SerializedOwned = Bytes {
+    type EncodedOwned = Bytes {
       from_ref: |s: &Bytes| Ok(SmallVec::from_slice(s));
       from: |s: Bytes| Ok(SmallVec::from_slice(&s));
     };

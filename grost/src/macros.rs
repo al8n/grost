@@ -27,7 +27,7 @@ macro_rules! zst {
       };
 
       impl $crate::__private::Message for $ty {
-        type Serialized<'a>
+        type Encoded<'a>
           = Self
         where
           Self: Sized + 'a;
@@ -37,7 +37,7 @@ macro_rules! zst {
         where
           Self: 'a;
 
-        type SerializedOwned
+        type EncodedOwned
           = Self
         where
           Self: Sized + 'static;
@@ -61,7 +61,7 @@ macro_rules! zst {
         const WIRE_TYPE: $crate::WireType = $crate::WireType::Merged;
       }
 
-      impl $crate::__private::Serialize for $ty {
+      impl $crate::__private::Encode for $ty {
         #[inline]
         fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
@@ -73,7 +73,7 @@ macro_rules! zst {
         }
       }
 
-      impl<'de> $crate::__private::Deserialize<'de> for $ty {
+      impl<'de> $crate::__private::Decode<'de> for $ty {
         fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
@@ -83,7 +83,7 @@ macro_rules! zst {
         }
       }
 
-      impl $crate::__private::DeserializeOwned for $ty
+      impl $crate::__private::DecodeOwned for $ty
       where
         Self: 'static,
       {
@@ -101,7 +101,7 @@ macro_rules! zst {
         }
       }
 
-      impl $crate::__private::PartialSerialize for $ty {
+      impl $crate::__private::PartialEncode for $ty {
         type Selection = ();
 
         #[inline]
@@ -177,25 +177,25 @@ macro_rules! bridge {
           $ty,
         });
 
-        $crate::bridge!(@serialize $bridge {
+        $crate::bridge!(@encode $bridge {
           $ty {
             to: $to,
           }
         });
 
-        $crate::bridge!(@partial_serialize $bridge {
+        $crate::bridge!(@partial_encode $bridge {
           $ty {
             to: $to,
           }
         });
 
-        $crate::bridge!(@deserialize $bridge {
+        $crate::bridge!(@decode $bridge {
           $ty {
             from: $from,
           }
         });
 
-        $crate::bridge!(@deserialize_owned $bridge {
+        $crate::bridge!(@decode_owned $bridge {
           $ty {
             from: $from,
           }
@@ -203,16 +203,16 @@ macro_rules! bridge {
       )*
     )*
   };
-  (@serialize_impl $bridge:ty => $to:expr) => {
+  (@encode_impl $bridge:ty => $to:expr) => {
     fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::Serialize>::encode(&$to(self), buf)
+      <$bridge as $crate::__private::Encode>::encode(&$to(self), buf)
     }
 
     fn encoded_len(&self) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::Serialize>::encoded_len(&$to(self))
+      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self))
     }
   };
-  (@serialize $(
+  (@encode $(
     $bridge:ty {
       $($ty:ty {
         to: $to:expr $(,)?
@@ -221,22 +221,22 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::Serialize for $ty {
-          $crate::bridge!(@serialize_impl $bridge => $to);
+        impl $crate::__private::Encode for $ty {
+          $crate::bridge!(@encode_impl $bridge => $to);
         }
       )*
     )*
   };
-  (@partial_serialize_impl $bridge:ty => $to:expr) => {
+  (@partial_encode_impl $bridge:ty => $to:expr) => {
     fn partial_encode(&self, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialSerialize>::partial_encode(&$to(self), selection, buf)
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), selection, buf)
     }
 
     fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialSerialize>::partial_encoded_len(&$to(self), selection)
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
     }
   };
-  (@partial_serialize $(
+  (@partial_encode $(
     $bridge:ty {
       $($ty:ty {
         to: $to:expr $(,)?
@@ -245,23 +245,23 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::PartialSerialize for $ty {
-          type Selection = <$bridge as $crate::__private::PartialSerialize>::Selection;
+        impl $crate::__private::PartialEncode for $ty {
+          type Selection = <$bridge as $crate::__private::PartialEncode>::Selection;
 
-          $crate::bridge!(@partial_serialize_impl $bridge => $to);
+          $crate::bridge!(@partial_encode_impl $bridge => $to);
         }
       )*
     )*
   };
-  (@deserialize_impl $from:expr => $bridge:ty) => {
+  (@decode_impl $from:expr => $bridge:ty) => {
     fn decode<B>(src: &'de [::core::primitive::u8], ub: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
         B: $crate::__private::UnknownRefBuffer<'de> {
-      <$bridge as $crate::__private::Deserialize>::decode(src, ub).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::Decode>::decode(src, ub).map(|(n, v)| (n, $from(v)))
     }
   };
-  (@deserialize $(
+  (@decode $(
     $bridge:ty {
       $($ty:ty {
         from: $from:expr $(,)?
@@ -270,13 +270,13 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de> $crate::__private::Deserialize<'de> for $ty {
-          $crate::bridge!(@deserialize_impl $from => $bridge);
+        impl<'de> $crate::__private::Decode<'de> for $ty {
+          $crate::bridge!(@decode_impl $from => $bridge);
         }
       )*
     )*
   };
-  (@deserialize_owned_impl $from:expr => $bridge:ty) => {
+  (@decode_owned_impl $from:expr => $bridge:ty) => {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
@@ -285,10 +285,10 @@ macro_rules! bridge {
     where
       Self: ::core::marker::Sized + 'static,
       U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
-      <$bridge as $crate::__private::DeserializeOwned>::decode_from_bytes(src, ub).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).map(|(n, v)| (n, $from(v)))
     }
   };
-  (@deserialize_owned $(
+  (@decode_owned $(
     $bridge:ty {
       $($ty:ty {
         from: $from:expr $(,)?
@@ -297,8 +297,8 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::DeserializeOwned for $ty {
-          $crate::bridge!(@deserialize_owned_impl $from => $bridge);
+        impl $crate::__private::DecodeOwned for $ty {
+          $crate::bridge!(@decode_owned_impl $from => $bridge);
         }
       )*
     )*
@@ -336,7 +336,7 @@ macro_rules! bridge {
 ///     from_str: |s: &str| Ok(MyString(s.to_string()));
 ///     to_str: MyString::as_str,
 ///
-///     type SerializedOwned = SmolStr {
+///     type EncodedOwned = SmolStr {
 ///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string())),
 ///       from: |s: SmolStr| Ok(MyString(s.to_string())),
 ///     }
@@ -351,7 +351,7 @@ macro_rules! str_bridge {
     from_str: $from_str: expr;
     to_str: $to_str: expr;
 
-    type SerializedOwned = $owned_ty:ty {
+    type EncodedOwned = $owned_ty:ty {
       from_ref: $from_ref: expr;
       from: $from: expr;
     } $(;)?
@@ -359,12 +359,12 @@ macro_rules! str_bridge {
     $(
       impl $crate::Wirable for $ty {}
 
-      $crate::str_bridge!(@serialize $ty: $to_str);
-      $crate::str_bridge!(@deserialize $ty: $from_str);
-      $crate::str_bridge!(@deserialize_owned $ty: $from_str);
+      $crate::str_bridge!(@encode $ty: $to_str);
+      $crate::str_bridge!(@decode $ty: $from_str);
+      $crate::str_bridge!(@decode_owned $ty: $from_str);
 
-      impl $crate::__private::PartialSerialize for $ty {
-        $crate::partial_serialize_primitives!(@impl);
+      impl $crate::__private::PartialEncode for $ty {
+        $crate::partial_encode_primitives!(@impl);
       }
 
       impl $crate::__private::IntoTarget<$ty> for &::core::primitive::str {
@@ -388,7 +388,7 @@ macro_rules! str_bridge {
       }
 
       impl $crate::__private::Message for $ty {
-        type Serialized<'a> = &'a ::core::primitive::str
+        type Encoded<'a> = &'a ::core::primitive::str
         where
           Self: ::core::marker::Sized + 'a;
 
@@ -396,34 +396,34 @@ macro_rules! str_bridge {
         where
           Self: 'a;
 
-        type SerializedOwned = $owned_ty
+        type EncodedOwned = $owned_ty
         where
           Self: ::core::marker::Sized + 'static;
       }
     )*
   };
-  (@serialize $ty:ty: $to_str:expr) => {
-    impl $crate::__private::Serialize for $ty {
-      $crate::str_bridge!(@serialize_impl $to_str);
+  (@encode $ty:ty: $to_str:expr) => {
+    impl $crate::__private::Encode for $ty {
+      $crate::str_bridge!(@encode_impl $to_str);
     }
   };
-  (@serialize_impl $to_str:expr) => {
+  (@encode_impl $to_str:expr) => {
     #[inline]
     fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <&::core::primitive::str as $crate::__private::Serialize>::encode(&$to_str(self), buf)
+      <&::core::primitive::str as $crate::__private::Encode>::encode(&$to_str(self), buf)
     }
 
     #[inline]
     fn encoded_len(&self) -> ::core::primitive::usize {
-      <&::core::primitive::str as $crate::__private::Serialize>::encoded_len(&$to_str(self))
+      <&::core::primitive::str as $crate::__private::Encode>::encoded_len(&$to_str(self))
     }
   };
-  (@deserialize $ty:ty: $from_str:expr) => {
-    impl<'de> $crate::__private::Deserialize<'de> for $ty {
-      $crate::str_bridge!(@deserialize_impl $from_str);
+  (@decode $ty:ty: $from_str:expr) => {
+    impl<'de> $crate::__private::Decode<'de> for $ty {
+      $crate::str_bridge!(@decode_impl $from_str);
     }
   };
-  (@deserialize_impl $from_str:expr) => {
+  (@decode_impl $from_str:expr) => {
     fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
@@ -434,12 +434,12 @@ macro_rules! str_bridge {
         .and_then(|val| $from_str(val).map(|v| (src.len(), v)))
     }
   };
-  (@deserialize_owned $ty:ty: $from_str:expr) => {
-    impl $crate::__private::DeserializeOwned for $ty {
-      $crate::str_bridge!(@deserialize_owned_impl $from_str);
+  (@decode_owned $ty:ty: $from_str:expr) => {
+    impl $crate::__private::DecodeOwned for $ty {
+      $crate::str_bridge!(@decode_owned_impl $from_str);
     }
   };
-  (@deserialize_owned_impl $from_str:expr) => {
+  (@decode_owned_impl $from_str:expr) => {
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -492,7 +492,7 @@ macro_rules! str_bridge {
 ///     from_bytes: |s: &str| Ok(MyVec(s.to_vec()));
 ///     to_bytes: MyVec::as_bytes,
 ///
-///     type SerializedOwned = Bytes {
+///     type EncodedOwned = Bytes {
 ///       from_ref: |s: &Bytes| Ok(MyVec(s.to_vec())),
 ///       from: |s: Bytes| Ok(MyVec(s)),
 ///     }
@@ -507,7 +507,7 @@ macro_rules! bytes_bridge {
     from_bytes: $from_bytes: expr;
     to_bytes: $to_bytes: expr;
 
-    type SerializedOwned = $owned_ty:ty {
+    type EncodedOwned = $owned_ty:ty {
       from_ref: $from_ref: expr;
       from: $from: expr;
     } $(;)?
@@ -515,12 +515,12 @@ macro_rules! bytes_bridge {
     $(
       impl$(<const $g: ::core::primitive::usize>)? $crate::Wirable for $ty {}
 
-      $crate::bytes_bridge!(@serialize $ty $([const $g: usize])?: $to_bytes);
-      $crate::bytes_bridge!(@deserialize $ty $([const $g: usize])?: $from_bytes);
-      $crate::bytes_bridge!(@deserialize_owned  $ty $([const $g: usize])?: $from_bytes);
+      $crate::bytes_bridge!(@encode $ty $([const $g: usize])?: $to_bytes);
+      $crate::bytes_bridge!(@decode $ty $([const $g: usize])?: $from_bytes);
+      $crate::bytes_bridge!(@decode_owned  $ty $([const $g: usize])?: $from_bytes);
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialSerialize for $ty {
-        $crate::partial_serialize_primitives!(@impl);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialEncode for $ty {
+        $crate::partial_encode_primitives!(@impl);
       }
 
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$ty> for &[::core::primitive::u8] {
@@ -544,7 +544,7 @@ macro_rules! bytes_bridge {
       }
 
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::Message for $ty {
-        type Serialized<'a> = &'a [::core::primitive::u8]
+        type Encoded<'a> = &'a [::core::primitive::u8]
         where
           Self: ::core::marker::Sized + 'a;
 
@@ -552,34 +552,34 @@ macro_rules! bytes_bridge {
         where
           Self: 'a;
 
-        type SerializedOwned = $owned_ty
+        type EncodedOwned = $owned_ty
         where
           Self: ::core::marker::Sized + 'static;
       }
     )*
   };
-  (@serialize $ty:ty $([const $g:ident: usize])?: $to_bytes:expr) => {
-    impl $(<const $g: ::core::primitive::usize>)? $crate::__private::Serialize for $ty {
-      $crate::bytes_bridge!(@serialize_impl $to_bytes);
+  (@encode $ty:ty $([const $g:ident: usize])?: $to_bytes:expr) => {
+    impl $(<const $g: ::core::primitive::usize>)? $crate::__private::Encode for $ty {
+      $crate::bytes_bridge!(@encode_impl $to_bytes);
     }
   };
-  (@serialize_impl $to_bytes:expr) => {
+  (@encode_impl $to_bytes:expr) => {
     #[inline]
     fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <&[::core::primitive::u8] as $crate::__private::Serialize>::encode(&$to_bytes(self), buf)
+      <&[::core::primitive::u8] as $crate::__private::Encode>::encode(&$to_bytes(self), buf)
     }
 
     #[inline]
     fn encoded_len(&self) -> ::core::primitive::usize {
-      <&[::core::primitive::u8] as $crate::__private::Serialize>::encoded_len(&$to_bytes(self))
+      <&[::core::primitive::u8] as $crate::__private::Encode>::encoded_len(&$to_bytes(self))
     }
   };
-  (@deserialize $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl<'de, $(const $g: usize)?> $crate::__private::Deserialize<'de> for $ty {
-      $crate::bytes_bridge!(@deserialize_impl $from_bytes);
+  (@decode $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
+    impl<'de, $(const $g: usize)?> $crate::__private::Decode<'de> for $ty {
+      $crate::bytes_bridge!(@decode_impl $from_bytes);
     }
   };
-  (@deserialize_impl $from_bytes:expr) => {
+  (@decode_impl $from_bytes:expr) => {
     fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
@@ -588,12 +588,12 @@ macro_rules! bytes_bridge {
       $from_bytes(src).map(|v| (src.len(), v))
     }
   };
-  (@deserialize_owned $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl$(<const $g: ::core::primitive::usize>)? $crate::__private::DeserializeOwned for $ty {
-      $crate::bytes_bridge!(@deserialize_owned_impl $from_bytes);
+  (@decode_owned $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
+    impl$(<const $g: ::core::primitive::usize>)? $crate::__private::DecodeOwned for $ty {
+      $crate::bytes_bridge!(@decode_owned_impl $from_bytes);
     }
   };
-  (@deserialize_owned_impl $from_bytes:expr) => {
+  (@decode_owned_impl $from_bytes:expr) => {
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -645,7 +645,7 @@ macro_rules! array_str {
       };
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Serialize for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
       fn encode(
         &self,
         buf: &mut [::core::primitive::u8],
@@ -654,7 +654,7 @@ macro_rules! array_str {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Serialize::encode(&self.as_bytes(), buf)
+        $crate::__private::Encode::encode(&self.as_bytes(), buf)
       }
 
       #[inline]
@@ -663,7 +663,7 @@ macro_rules! array_str {
           return 0;
         }
 
-        $crate::__private::Serialize::encoded_len(&self.as_bytes())
+        $crate::__private::Encode::encoded_len(&self.as_bytes())
       }
 
       fn encoded_len_with_prefix(&self) -> ::core::primitive::usize {
@@ -671,7 +671,7 @@ macro_rules! array_str {
           return 0;
         }
 
-        $crate::__private::Serialize::encoded_len_with_prefix(&self.as_bytes())
+        $crate::__private::Encode::encoded_len_with_prefix(&self.as_bytes())
       }
 
       fn encode_with_prefix(
@@ -682,15 +682,15 @@ macro_rules! array_str {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Serialize::encode_with_prefix(&self.as_bytes(), buf)
+        $crate::__private::Encode::encode_with_prefix(&self.as_bytes(), buf)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialSerialize for $ty {
-      $crate::partial_serialize_primitives!(@impl);
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode for $ty {
+      $crate::partial_encode_primitives!(@impl);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Deserialize<'de> for $ty {
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de> for $ty {
       fn decode<B>(
         src: &'de [::core::primitive::u8],
         _: &mut B,
@@ -711,8 +711,8 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DeserializeOwned for $ty {
-      $crate::__array_str_deserialized_owned_impl!($new, $decode);
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned for $ty {
+      $crate::__array_str_decoded_owned_impl!($new, $decode);
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
@@ -746,7 +746,7 @@ macro_rules! array_str {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
-      type Serialized<'a>
+      type Encoded<'a>
         = &'a ::core::primitive::str
       where
         Self: ::core::marker::Sized + 'a;
@@ -756,7 +756,7 @@ macro_rules! array_str {
       where
         Self: 'a;
 
-      type SerializedOwned
+      type EncodedOwned
         = Self
       where
         Self: ::core::marker::Sized + 'static;
@@ -767,7 +767,7 @@ macro_rules! array_str {
 #[cfg(any(feature = "alloc", feature = "std"))]
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __array_str_deserialized_owned_impl {
+macro_rules! __array_str_decoded_owned_impl {
   ($new:expr, $decode:expr) => {
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
@@ -795,7 +795,7 @@ macro_rules! __array_str_deserialized_owned_impl {
 #[cfg(not(any(feature = "alloc", feature = "std")))]
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __array_str_deserialized_owned_impl {
+macro_rules! __array_str_decoded_owned_impl {
   ($new:expr, $decode:expr) => {};
 }
 
@@ -822,7 +822,7 @@ macro_rules! array_bytes {
       };
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Serialize for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
       fn encode(
         &self,
         buf: &mut [::core::primitive::u8],
@@ -831,7 +831,7 @@ macro_rules! array_bytes {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Serialize::encode(&$as_bytes(self), buf)
+        $crate::__private::Encode::encode(&$as_bytes(self), buf)
       }
 
       #[inline]
@@ -840,7 +840,7 @@ macro_rules! array_bytes {
           return 0;
         }
 
-        $crate::__private::Serialize::encoded_len(&$as_bytes(self))
+        $crate::__private::Encode::encoded_len(&$as_bytes(self))
       }
 
       fn encoded_len_with_prefix(&self) -> ::core::primitive::usize {
@@ -848,7 +848,7 @@ macro_rules! array_bytes {
           return 0;
         }
 
-        $crate::__private::Serialize::encoded_len_with_prefix(&$as_bytes(self))
+        $crate::__private::Encode::encoded_len_with_prefix(&$as_bytes(self))
       }
 
       fn encode_with_prefix(
@@ -859,15 +859,15 @@ macro_rules! array_bytes {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Serialize::encode_with_prefix(&$as_bytes(self), buf)
+        $crate::__private::Encode::encode_with_prefix(&$as_bytes(self), buf)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialSerialize for $ty {
-      $crate::partial_serialize_primitives!(@impl);
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode for $ty {
+      $crate::partial_encode_primitives!(@impl);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Deserialize<'de> for $ty {
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de> for $ty {
       fn decode<B>(
         src: &'de [::core::primitive::u8],
         _: &mut B,
@@ -888,8 +888,8 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DeserializeOwned for $ty {
-      $crate::__array_bytes_deserialized_owned_impl!($new, $decode);
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned for $ty {
+      $crate::__array_bytes_decoded_owned_impl!($new, $decode);
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
@@ -927,7 +927,7 @@ macro_rules! array_bytes {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
-      type Serialized<'a>
+      type Encoded<'a>
         = &'a [::core::primitive::u8]
       where
         Self: ::core::marker::Sized + 'a;
@@ -937,7 +937,7 @@ macro_rules! array_bytes {
       where
         Self: 'a;
 
-      type SerializedOwned
+      type EncodedOwned
         = Self
       where
         Self: ::core::marker::Sized + 'static;
@@ -948,7 +948,7 @@ macro_rules! array_bytes {
 #[cfg(any(feature = "alloc", feature = "std"))]
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __array_bytes_deserialized_owned_impl {
+macro_rules! __array_bytes_decoded_owned_impl {
   ($new:expr, $decode:expr) => {
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
@@ -976,7 +976,7 @@ macro_rules! __array_bytes_deserialized_owned_impl {
 #[cfg(not(any(feature = "alloc", feature = "std")))]
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __array_bytes_deserialized_owned_impl {
+macro_rules! __array_bytes_decoded_owned_impl {
   ($new:expr, $decode:expr) => {};
 }
 
@@ -1085,7 +1085,7 @@ macro_rules! message {
     $crate::conversion!($($ty),+);
   };
   (@impl) => {
-    type Serialized<'a>
+    type Encoded<'a>
       = Self
     where
       Self: ::core::marker::Sized + 'a;
@@ -1095,31 +1095,31 @@ macro_rules! message {
     where
       Self: 'a;
 
-    type SerializedOwned
+    type EncodedOwned
       = Self
     where
       Self: ::core::marker::Sized + 'static;
   };
 }
 
-/// A macro emits [`PartialSerialize`](super::PartialSerialize) implementations for primitive types.
+/// A macro emits [`PartialEncode`](super::PartialEncode) implementations for primitive types.
 #[macro_export]
-macro_rules! partial_serialize_primitives {
+macro_rules! partial_encode_primitives {
   (@impl) => {
     type Selection = ();
 
     fn partial_encode(&self, _: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <Self as $crate::__private::Serialize>::encode(self, buf)
+      <Self as $crate::__private::Encode>::encode(self, buf)
     }
 
     fn partial_encoded_len(&self, _: &Self::Selection) -> ::core::primitive::usize {
-      <Self as $crate::__private::Serialize>::encoded_len(self)
+      <Self as $crate::__private::Encode>::encoded_len(self)
     }
   };
   ($($ty:ty),+$(,)?) => {
     $(
-      impl $crate::__private::PartialSerialize for $ty {
-        $crate::partial_serialize_primitives!(@impl);
+      impl $crate::__private::PartialEncode for $ty {
+        $crate::partial_encode_primitives!(@impl);
       }
     )*
   };
@@ -1190,19 +1190,19 @@ macro_rules! varint {
   ($($ty:ty),+$(,)?) => {
     $crate::wirable!((@varint) <=> ($($ty,)*));
     $crate::message!($($ty),*);
-    $crate::partial_serialize_primitives!($($ty),*);
-    $crate::varint!(@serialize $($ty),+);
-    $crate::varint!(@deserialize $($ty),+);
-    $crate::varint!(@deserialize_owned $($ty),+);
+    $crate::partial_encode_primitives!($($ty),*);
+    $crate::varint!(@encode $($ty),+);
+    $crate::varint!(@decode $($ty),+);
+    $crate::varint!(@decode_owned $($ty),+);
   };
-  (@serialize $($ty:ty), +$(,)?) => {
+  (@encode $($ty:ty), +$(,)?) => {
     $(
-      impl $crate::__private::Serialize for $ty {
-        $crate::varint!(@serialize_impl);
+      impl $crate::__private::Encode for $ty {
+        $crate::varint!(@encode_impl);
       }
     )*
   };
-  (@serialize_impl) => {
+  (@encode_impl) => {
     fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
       $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
     }
@@ -1211,14 +1211,14 @@ macro_rules! varint {
       $crate::__private::varing::Varint::encoded_len(self)
     }
   };
-  (@deserialize $($ty:ty), +$(,)?) => {
+  (@decode $($ty:ty), +$(,)?) => {
     $(
-      impl<'de> $crate::__private::Deserialize<'de> for $ty {
-        $crate::varint!(@deserialize_impl);
+      impl<'de> $crate::__private::Decode<'de> for $ty {
+        $crate::varint!(@decode_impl);
       }
     )*
   };
-  (@deserialize_impl) => {
+  (@decode_impl) => {
     fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
@@ -1227,14 +1227,14 @@ macro_rules! varint {
       $crate::__private::varing::Varint::decode(src).map_err(::core::convert::Into::into)
     }
   };
-  (@deserialize_owned $($ty:ty), +$(,)?) => {
+  (@decode_owned $($ty:ty), +$(,)?) => {
     $(
-      impl $crate::__private::DeserializeOwned for $ty {
-        $crate::varint!(@deserialize_owned_impl);
+      impl $crate::__private::DecodeOwned for $ty {
+        $crate::varint!(@decode_owned_impl);
       }
     )*
   };
-  (@deserialize_owned_impl) => {
+  (@decode_owned_impl) => {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
@@ -1287,7 +1287,7 @@ macro_rules! phantom {
         };
       }
 
-      impl<T: ?::core::marker::Sized> $crate::__private::Serialize for $ty {
+      impl<T: ?::core::marker::Sized> $crate::__private::Encode for $ty {
         #[inline]
         fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
@@ -1299,7 +1299,7 @@ macro_rules! phantom {
         }
       }
 
-      impl<'de, T: ?::core::marker::Sized> $crate::__private::Deserialize<'de> for $ty {
+      impl<'de, T: ?::core::marker::Sized> $crate::__private::Decode<'de> for $ty {
         fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
@@ -1309,7 +1309,7 @@ macro_rules! phantom {
         }
       }
 
-      impl<T: ?::core::marker::Sized> $crate::__private::DeserializeOwned for $ty
+      impl<T: ?::core::marker::Sized> $crate::__private::DecodeOwned for $ty
       where
         Self: 'static,
       {
@@ -1327,7 +1327,7 @@ macro_rules! phantom {
         }
       }
 
-      impl<T: ?::core::marker::Sized> $crate::__private::PartialSerialize for $ty {
+      impl<T: ?::core::marker::Sized> $crate::__private::PartialEncode for $ty {
         type Selection = ();
 
         #[inline]
@@ -1342,7 +1342,7 @@ macro_rules! phantom {
       }
 
       impl<T: ?::core::marker::Sized> $crate::__private::Message for $ty {
-        type Serialized<'a>
+        type Encoded<'a>
           = Self
         where
           Self: Sized + 'a;
@@ -1352,7 +1352,7 @@ macro_rules! phantom {
         where
           Self: 'a;
 
-        type SerializedOwned
+        type EncodedOwned
           = Self
         where
           Self: Sized + 'static;

@@ -44,32 +44,32 @@ mod unknown;
 mod utils;
 mod wire_type;
 
-/// A message type that can be serialized and deserialized.
+/// A message type that can be encoded and decoded.
 ///
-/// This trait defines how output types can be serialized, deserialized,
+/// This trait defines how output types can be encoded, decoded,
 /// borrowed, and converted between different representations.
 ///
-/// * `Serialized<'a>` - A serialized representation with lifetime 'a
+/// * `Encoded<'a>` - A encoded representation with lifetime 'a
 /// * `Borrowed<'a>` - A borrowed view with lifetime 'a
-/// * `SerializedOwned` - An owned serialized representation
-pub trait Message: Serialize {
-  /// A serialized representation of this type with lifetime 'a.
+/// * `EncodedOwned` - An owned encoded representation
+pub trait Message: Encode {
+  /// A encoded representation of this type with lifetime 'a.
   ///
-  /// This type can be converted back to the original type and deserialized from raw bytes.
-  type Serialized<'a>: Copy + TypeRef<Self> + Serialize + Deserialize<'a>
+  /// This type can be converted back to the original type and decoded from raw bytes.
+  type Encoded<'a>: Copy + TypeRef<Self> + Encode + Decode<'a>
   where
     Self: Sized + 'a;
 
   /// A borrowed view of this type with lifetime 'a.
   ///
   /// This type provides a non-owned view that can be created from a reference
-  /// and serialized when needed.
-  type Borrowed<'a>: Copy + TypeBorrowed<'a, Self> + Serialize
+  /// and encoded when needed.
+  type Borrowed<'a>: Copy + TypeBorrowed<'a, Self> + Encode
   where
     Self: 'a;
 
-  /// An owned serialized representation of this type.
-  type SerializedOwned: Clone + TypeOwned<Self> + Serialize + DeserializeOwned
+  /// An owned encoded representation of this type.
+  type EncodedOwned: Clone + TypeOwned<Self> + Encode + DecodeOwned
   where
     Self: Sized + 'static;
 }
@@ -86,8 +86,8 @@ pub trait IntoTarget<T> {
 
 /// A trait for types that can be converted to another type.
 ///
-/// This trait enables bidirectional conversion between serialized
-/// representations and their corresponding deserialized types.
+/// This trait enables bidirectional conversion between encoded
+/// representations and their corresponding decoded types.
 ///
 /// * `T` - The target type to convert to
 pub trait TypeRef<T>: IntoTarget<T> {
@@ -101,8 +101,8 @@ pub trait TypeRef<T>: IntoTarget<T> {
 
 /// A trait for types that can be converted to another type.
 ///
-/// This trait enables bidirectional conversion between serialized
-/// representations and their corresponding deserialized types.
+/// This trait enables bidirectional conversion between encoded
+/// representations and their corresponding decoded types.
 ///
 /// * `T` - The target type to convert to
 pub trait TypeBorrowed<'a, T: ?Sized> {
@@ -122,8 +122,8 @@ impl<'a, T: ?Sized> TypeBorrowed<'a, T> for &'a T {
 
 /// A trait for types that can be converted to another type.
 ///
-/// This trait enables bidirectional conversion between serialized
-/// representations and their corresponding deserialized types.
+/// This trait enables bidirectional conversion between encoded
+/// representations and their corresponding decoded types.
 ///
 /// * `T` - The target type to convert to
 pub trait TypeOwned<T>: IntoTarget<T> {
@@ -147,13 +147,13 @@ pub trait Wirable {
   const WIRE_TYPE: WireType = WireType::LengthDelimited;
 }
 
-/// A trait for types that can be deserialized from bytes with a lifetime.
+/// A trait for types that can be decoded from bytes with a lifetime.
 ///
 /// This trait provides methods to decode data from byte slices,
 /// with support for both direct and length-prefixed decoding.
 ///
 /// * `'de` - The lifetime of the input data
-pub trait Deserialize<'de>: Wirable {
+pub trait Decode<'de>: Wirable {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
@@ -196,14 +196,14 @@ pub trait Deserialize<'de>: Wirable {
   }
 }
 
-/// A marker trait for types that can be deserialized without borrowing data.
+/// A marker trait for types that can be decoded without borrowing data.
 ///
-/// Types implementing this trait can be deserialized into owned values
+/// Types implementing this trait can be decoded into owned values
 /// without maintaining a borrow of the original data.
 ///
 /// This is useful for deserialization scenarios where the input data
-/// may not outlive the deserialized value.
-pub trait DeserializeOwned: Deserialize<'static> + 'static {
+/// may not outlive the decoded value.
+pub trait DecodeOwned: Decode<'static> + 'static {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
@@ -257,12 +257,12 @@ pub trait DeserializeOwned: Deserialize<'static> + 'static {
 ///
 /// This trait provides methods to encode data into binary representations,
 /// calculate required buffer sizes, and handle length-delimited encoding.
-pub trait Serialize: Wirable {
+pub trait Encode: Wirable {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
-  /// [`Serialize::encoded_len`] can be used to determine the required buffer size.
+  /// [`Encode::encoded_len`] can be used to determine the required buffer size.
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError>;
 
   /// Returns the number of bytes needed to encode the message.
@@ -274,7 +274,7 @@ pub trait Serialize: Wirable {
   ///
   /// For `WireType::LengthDelimited`, this includes the varint-encoded length
   /// prefix followed by the actual data length. For other wire types, this is
-  /// equivalent to [`Serialize::encoded_len`].
+  /// equivalent to [`Encode::encoded_len`].
   fn encoded_len_with_prefix(&self) -> usize {
     let len = self.encoded_len();
     match Self::WIRE_TYPE {
@@ -300,7 +300,7 @@ pub trait Serialize: Wirable {
   /// Encodes the message with a length-delimiter prefix to a buffer.
   ///
   /// For `WireType::LengthDelimited`, this prepends a varint-encoded length
-  /// before the message data. For other wire types, this behaves the same as [`Serialize::encode`].
+  /// before the message data. For other wire types, this behaves the same as [`Encode::encode`].
   ///
   /// An error will be returned if the buffer does not have sufficient capacity.
   fn encode_with_prefix(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -342,16 +342,16 @@ pub trait Serialize: Wirable {
 ///
 /// This trait provides methods to encode data into binary representations,
 /// calculate required buffer sizes, and handle length-delimited encoding.
-pub trait PartialSerialize: Wirable {
+pub trait PartialEncode: Wirable {
   /// The selection type for the message, which determines which fields to include
-  /// in the serialized output.
+  /// in the encoded output.
   type Selection;
 
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
-  /// [`Serialize::encoded_len`] can be used to determine the required buffer size.
+  /// [`Encode::encoded_len`] can be used to determine the required buffer size.
   fn partial_encode(
     &self,
     selection: &Self::Selection,
@@ -367,7 +367,7 @@ pub trait PartialSerialize: Wirable {
   ///
   /// For `WireType::LengthDelimited`, this includes the varint-encoded length
   /// prefix followed by the actual data length. For other wire types, this is
-  /// equivalent to [`Serialize::encoded_len`].
+  /// equivalent to [`Encode::encoded_len`].
   fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> usize {
     let len = self.partial_encoded_len(selection);
     match Self::WIRE_TYPE {
@@ -399,7 +399,7 @@ pub trait PartialSerialize: Wirable {
   /// Encodes the message with a length-delimiter prefix to a buffer.
   ///
   /// For `WireType::LengthDelimited`, this prepends a varint-encoded length
-  /// before the message data. For other wire types, this behaves the same as [`Serialize::encode`].
+  /// before the message data. For other wire types, this behaves the same as [`Encode::encode`].
   ///
   /// An error will be returned if the buffer does not have sufficient capacity.
   fn partial_encode_with_prefix(
@@ -458,9 +458,9 @@ where
   const WIRE_TYPE: WireType = T::WIRE_TYPE;
 }
 
-impl<T> Serialize for &T
+impl<T> Encode for &T
 where
-  T: Serialize + ?Sized,
+  T: Encode + ?Sized,
 {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     (*self).encode(buf)
@@ -562,10 +562,12 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
-  pub use bytes_1 as bytes;
-  pub use simdutf8;
-  pub use smol_str_0_3 as smol_str;
   pub use varing;
+
+  #[cfg(feature = "bytes")]
+  pub use bytes_1 as bytes;
+  #[cfg(feature = "smol_str")]
+  pub use smol_str_0_3 as smol_str;
 
   #[cfg(not(feature = "simdutf8"))]
   pub use ::core::str::from_utf8;

@@ -3,7 +3,7 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable, WireType,
+  DecodeError, Decode, DecodeOwned, EncodeError, Encode, Tag, Wirable, WireType,
   merge, split,
 };
 
@@ -26,7 +26,7 @@ macro_rules! impl_codec {
     paste::paste! {
       impl Wirable for [< SocketAddr $variant >] {}
 
-      impl Serialize for [< SocketAddr $variant >] {
+      impl Encode for [< SocketAddr $variant >] {
         fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
           Helper::[< from_ip $variant:snake >](*self.ip(), self.port()).encode(buf)
         }
@@ -36,7 +36,7 @@ macro_rules! impl_codec {
         }
       }
 
-      impl<'de> Deserialize<'de> for [< SocketAddr $variant >] {
+      impl<'de> Decode<'de> for [< SocketAddr $variant >] {
         fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
         where
           Self: Sized + 'de,
@@ -54,7 +54,7 @@ macro_rules! impl_codec {
         }
       }
 
-      impl DeserializeOwned for [< SocketAddr $variant >] {
+      impl DecodeOwned for [< SocketAddr $variant >] {
         #[cfg(any(feature = "std", feature = "alloc"))]
         fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
         where
@@ -79,7 +79,7 @@ macro_rules! impl_codec {
 impl_codec!(V4(u32));
 impl_codec!(V6(u128, 0, 0));
 
-partial_serialize_primitives!(SocketAddr, SocketAddrV4, SocketAddrV6);
+partial_encode_primitives!(SocketAddr, SocketAddrV4, SocketAddrV6);
 
 struct Helper<const N: usize> {
   ip: [u8; N],
@@ -180,7 +180,7 @@ impl<'de, const N: usize> Helper<N> {
 
 impl Wirable for SocketAddr {}
 
-impl Serialize for SocketAddr {
+impl Encode for SocketAddr {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let buf_len = buf.len();
     match self {
@@ -211,7 +211,7 @@ impl Serialize for SocketAddr {
   }
 }
 
-impl<'de> Deserialize<'de> for SocketAddr {
+impl<'de> Decode<'de> for SocketAddr {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
@@ -221,7 +221,7 @@ impl<'de> Deserialize<'de> for SocketAddr {
   }
 }
 
-impl DeserializeOwned for SocketAddr {
+impl DecodeOwned for SocketAddr {
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
   where

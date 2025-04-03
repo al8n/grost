@@ -3,7 +3,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::U32VarintBuffer;
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Serialize, Tag, Wirable, WireType,
+  DecodeError, Decode, DecodeOwned, EncodeError, Encode, Tag, Wirable, WireType,
   merge, split,
 };
 
@@ -26,7 +26,7 @@ macro_rules! impl_codec {
       const WIRE_TYPE: WireType = WireType::$wire_ty;
     }
 
-    impl Serialize for $ty {
+    impl Encode for $ty {
       fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
         let buf_len = buf.len();
         if buf_len < $size {
@@ -42,7 +42,7 @@ macro_rules! impl_codec {
       }
     }
 
-    impl<'de> Deserialize<'de> for $ty {
+    impl<'de> Decode<'de> for $ty {
       fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
@@ -57,7 +57,7 @@ macro_rules! impl_codec {
       }
     }
 
-    impl DeserializeOwned for $ty {
+    impl DecodeOwned for $ty {
       #[cfg(any(feature = "std", feature = "alloc"))]
       fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
       where
@@ -80,7 +80,7 @@ impl_codec!(Ipv4Addr::Fixed32::IPV4_LEN::u32);
 
 impl Wirable for IpAddr {}
 
-impl Serialize for IpAddr {
+impl Encode for IpAddr {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     macro_rules! encode_ip_variant {
       ($variant:ident($buf:ident, $ip:ident)) => {{
@@ -145,7 +145,7 @@ macro_rules! decode_ip {
   }};
 }
 
-impl<'de> Deserialize<'de> for IpAddr {
+impl<'de> Decode<'de> for IpAddr {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
@@ -155,7 +155,7 @@ impl<'de> Deserialize<'de> for IpAddr {
   }
 }
 
-impl DeserializeOwned for IpAddr {
+impl DecodeOwned for IpAddr {
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
   where
@@ -166,4 +166,4 @@ impl DeserializeOwned for IpAddr {
   }
 }
 
-partial_serialize_primitives!(Ipv4Addr, Ipv6Addr, IpAddr);
+partial_encode_primitives!(Ipv4Addr, Ipv6Addr, IpAddr);

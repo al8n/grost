@@ -1,7 +1,7 @@
 use ruint_1::Uint;
 
 use crate::{
-  Deserialize, DeserializeOwned, IntoTarget, Message, PartialSerialize, Serialize, TypeOwned,
+  Decode, DecodeOwned, IntoTarget, Message, PartialEncode, Encode, TypeOwned,
   TypeRef, Wirable,
 };
 
@@ -9,16 +9,16 @@ impl<const BITS: usize, const LMITS: usize> Wirable for Uint<BITS, LMITS> {
   wirable!(@varint);
 }
 
-impl<const BITS: usize, const LMITS: usize> Serialize for Uint<BITS, LMITS> {
-  varint!(@serialize_impl);
+impl<const BITS: usize, const LMITS: usize> Encode for Uint<BITS, LMITS> {
+  varint!(@encode_impl);
 }
 
-impl<'de, const BITS: usize, const LMITS: usize> Deserialize<'de> for Uint<BITS, LMITS> {
-  varint!(@deserialize_impl);
+impl<'de, const BITS: usize, const LMITS: usize> Decode<'de> for Uint<BITS, LMITS> {
+  varint!(@decode_impl);
 }
 
-impl<const BITS: usize, const LMITS: usize> DeserializeOwned for Uint<BITS, LMITS> {
-  varint!(@deserialize_owned_impl);
+impl<const BITS: usize, const LMITS: usize> DecodeOwned for Uint<BITS, LMITS> {
+  varint!(@decode_owned_impl);
 }
 
 impl<const BITS: usize, const LMITS: usize> Message for Uint<BITS, LMITS> {
@@ -37,6 +37,6 @@ impl<const BITS: usize, const LMITS: usize> IntoTarget<Self> for Uint<BITS, LMIT
   into_target!(@impl);
 }
 
-impl<const BITS: usize, const LMITS: usize> PartialSerialize for Uint<BITS, LMITS> {
-  partial_serialize_primitives!(@impl);
+impl<const BITS: usize, const LMITS: usize> PartialEncode for Uint<BITS, LMITS> {
+  partial_encode_primitives!(@impl);
 }

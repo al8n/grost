@@ -177,8 +177,8 @@ impl<B> Unknown<B> {
     self.data.as_ref()
   }
 
-  /// Serializes the unknown data type.
-  pub fn serialize(&self, dst: &mut [u8]) -> Result<usize, EncodeError>
+  /// Encodes the unknown data type.
+  pub fn encode(&self, dst: &mut [u8]) -> Result<usize, EncodeError>
   where
     B: AsRef<[u8]>,
   {
@@ -193,8 +193,8 @@ impl<B> Unknown<B> {
     Ok(data_len)
   }
 
-  /// Deserializes the unknown data type.
-  pub fn deserialize<'a>(buf: &'a [u8]) -> Result<(usize, Self), DecodeError>
+  /// Decodes the unknown data type.
+  pub fn decode<'a>(buf: &'a [u8]) -> Result<(usize, Self), DecodeError>
   where
     B: From<&'a [u8]>,
   {
@@ -300,8 +300,8 @@ impl<B> Unknown<B>
 where
   B: super::Buffer,
 {
-  /// Deserializes the unknown data type.
-  pub fn deserialize_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
+  /// Decodes the unknown data type.
+  pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
     let buf_ref = buf.as_ref();
     let (mut data_offset, merged) = varing::decode_u32_varint(buf_ref)?;
     let (wire_type, tag) = split(merged);
@@ -476,8 +476,8 @@ impl<'a> UnknownRef<'a> {
     }
   }
 
-  /// Serializes the unknown data type.
-  pub fn serialize(&self, dst: &mut [u8]) -> Result<usize, EncodeError> {
+  /// Encodes the unknown data type.
+  pub fn encode(&self, dst: &mut [u8]) -> Result<usize, EncodeError> {
     let data_len = self.data.len();
     let dst_len = dst.len();
     if data_len > dst_len {
@@ -494,8 +494,8 @@ impl<'a> UnknownRef<'a> {
     self.data.len()
   }
 
-  /// Deserializes the unknown data type.
-  pub fn deserialize(buf: &'a [u8]) -> Result<(usize, Self), DecodeError> {
+  /// Decodes the unknown data type.
+  pub fn decode(buf: &'a [u8]) -> Result<(usize, Self), DecodeError> {
     let (mut data_offset, merged) = varing::decode_u32_varint(buf)?;
     let (wire_type, tag) = split(merged);
 

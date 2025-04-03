@@ -1,7 +1,7 @@
 use varing::{decode_u32_varint, encode_u32_varint_to};
 
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, IntoTarget, Message, Serialize,
+  DecodeError, Decode, DecodeOwned, EncodeError, IntoTarget, Message, Encode,
   TypeOwned, TypeRef, Wirable, WireType,
 };
 
@@ -19,7 +19,7 @@ impl<const N: usize> Wirable for [u8; N] {
   };
 }
 
-impl<const N: usize> Serialize for [u8; N] {
+impl<const N: usize> Encode for [u8; N] {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if N == 0 {
       return Ok(0);
@@ -62,7 +62,7 @@ impl<const N: usize> Serialize for [u8; N] {
   }
 }
 
-impl<'de, const N: usize> Deserialize<'de> for [u8; N] {
+impl<'de, const N: usize> Decode<'de> for [u8; N] {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
@@ -80,7 +80,7 @@ impl<'de, const N: usize> Deserialize<'de> for [u8; N] {
   }
 }
 
-impl<const N: usize> DeserializeOwned for [u8; N] {
+impl<const N: usize> DecodeOwned for [u8; N] {
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
   where
@@ -110,7 +110,7 @@ impl<const N: usize> TypeOwned<Self> for [u8; N] {
 }
 
 impl<const N: usize> Message for [u8; N] {
-  type Serialized<'a>
+  type Encoded<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;
@@ -120,7 +120,7 @@ impl<const N: usize> Message for [u8; N] {
   where
     Self: 'a;
 
-  type SerializedOwned
+  type EncodedOwned
     = Self
   where
     Self: Sized + 'static;

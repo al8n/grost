@@ -4,7 +4,7 @@ str_bridge!(SmolStr {
   from_str: |val| Ok(SmolStr::new(val));
   to_str: SmolStr::as_str;
 
-  type SerializedOwned = SmolStr {
+  type EncodedOwned = SmolStr {
     from_ref: |val: &SmolStr| Ok(val.clone());
     from: |val: SmolStr| Ok(val);
   }

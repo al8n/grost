@@ -8,7 +8,7 @@ use varing::U32VarintBuffer;
 use crate::{IntoTarget, TypeBorrowed};
 
 use super::{
-  DecodeError, Deserialize, DeserializeOwned, EncodeError, Message, Serialize, Tag, TypeOwned,
+  DecodeError, Decode, DecodeOwned, EncodeError, Message, Encode, Tag, TypeOwned,
   TypeRef, Unknown, UnknownBuffer, UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
 };
 
@@ -64,8 +64,8 @@ where
   S: Message,
   B: for<'a> From<&'a [u8]> + AsRef<[u8]> + Clone,
 {
-  type Serialized<'a>
-    = SerializedSelectionSet<'a, S::Serialized<'a>>
+  type Encoded<'a>
+    = EncodedSelectionSet<'a, S::Encoded<'a>>
   where
     Self: Sized + 'a;
 
@@ -74,8 +74,8 @@ where
   where
     Self: 'a;
 
-  type SerializedOwned
-    = SelectionSet<S::SerializedOwned, bytes::Bytes>
+  type EncodedOwned
+    = SelectionSet<S::EncodedOwned, bytes::Bytes>
   where
     Self: Sized + 'static;
 }
@@ -115,7 +115,7 @@ macro_rules! encode {
         set.encode_with_prefix(&mut $buf[Self::SET_MERGED_ENCODED_LEN..])?;
         Ok(total)
       }
-      Self::Unknown(unknown) => unknown.serialize($buf),
+      Self::Unknown(unknown) => unknown.encode($buf),
     }
   }};
 }
@@ -157,9 +157,9 @@ macro_rules! decode {
   }};
 }
 
-impl<S, B> Serialize for SelectionSet<S, B>
+impl<S, B> Encode for SelectionSet<S, B>
 where
-  S: Serialize,
+  S: Encode,
   B: AsRef<[u8]>,
 {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -171,29 +171,29 @@ where
   }
 }
 
-impl<'a, S, U> Deserialize<'a> for SelectionSet<S, U>
+impl<'a, S, U> Decode<'a> for SelectionSet<S, U>
 where
-  S: Deserialize<'a> + 'a,
+  S: Decode<'a> + 'a,
   U: From<&'a [u8]>,
 {
   fn decode<B>(buf: &'a [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
   where
     B: super::UnknownRefBuffer<'a>,
   {
-    decode!(UnknownRef::deserialize(buf, unknown_buffer, to_owned))
+    decode!(UnknownRef::decode(buf, unknown_buffer, to_owned))
   }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-pub enum SerializedSelectionSet<'a, S> {
+pub enum EncodedSelectionSet<'a, S> {
   All,
   None,
   Set(S),
   Unknown(UnknownRef<'a>),
 }
 
-impl<S> SerializedSelectionSet<'_, S>
+impl<S> EncodedSelectionSet<'_, S>
 where
   S: Wirable,
 {
@@ -202,11 +202,11 @@ where
   const SET_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(Self::SET_MERGED);
 }
 
-impl<S> Wirable for SerializedSelectionSet<'_, S> {}
+impl<S> Wirable for EncodedSelectionSet<'_, S> {}
 
-impl<S> Serialize for SerializedSelectionSet<'_, S>
+impl<S> Encode for EncodedSelectionSet<'_, S>
 where
-  S: Serialize,
+  S: Encode,
 {
   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
     encode!(self(buf))
@@ -217,20 +217,20 @@ where
   }
 }
 
-impl<'de, S> Deserialize<'de> for SerializedSelectionSet<'de, S>
+impl<'de, S> Decode<'de> for EncodedSelectionSet<'de, S>
 where
-  S: Deserialize<'de>,
+  S: Decode<'de>,
 {
   fn decode<B>(buf: &'de [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     B: UnknownRefBuffer<'de>,
   {
-    decode!(UnknownRef::deserialize(buf, unknown_buffer))
+    decode!(UnknownRef::decode(buf, unknown_buffer))
   }
 }
 
-impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for SerializedSelectionSet<'a, S::Serialized<'a>>
+impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Encoded<'a>>
 where
   S: Message,
   B: From<&'a [u8]>,
@@ -245,7 +245,7 @@ where
   }
 }
 
-impl<'a, S, B> TypeRef<SelectionSet<S, B>> for SerializedSelectionSet<'a, S::Serialized<'a>>
+impl<'a, S, B> TypeRef<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Encoded<'a>>
 where
   S: Message,
   B: From<&'a [u8]>,
@@ -276,7 +276,7 @@ where
   }
 }
 
-impl<S, B> IntoTarget<SelectionSet<S, B>> for SelectionSet<S::SerializedOwned, bytes::Bytes>
+impl<S, B> IntoTarget<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, bytes::Bytes>
 where
   S: Message,
   B: for<'a> From<&'a [u8]>,
@@ -291,7 +291,7 @@ where
   }
 }
 
-impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::SerializedOwned, bytes::Bytes>
+impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, bytes::Bytes>
 where
   S: Message,
   B: for<'a> From<&'a [u8]>,
@@ -306,9 +306,9 @@ where
   }
 }
 
-impl<S> DeserializeOwned for SelectionSet<S, bytes::Bytes>
+impl<S> DecodeOwned for SelectionSet<S, bytes::Bytes>
 where
-  S: DeserializeOwned,
+  S: DecodeOwned,
 {
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn decode_from_bytes<U>(
@@ -330,7 +330,7 @@ where
         Ok((offset, Self::Set(set)))
       }
       _ => {
-        let (readed, unknown) = Unknown::deserialize_owned(&buf)?;
+        let (readed, unknown) = Unknown::decode_owned(&buf)?;
         if unknown_buffer.push(unknown.clone()).is_some() {
           return Err(DecodeError::unknown_buffer_overflow(
             unknown_buffer.len(),

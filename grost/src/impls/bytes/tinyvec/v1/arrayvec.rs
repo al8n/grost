@@ -2,7 +2,7 @@ use tinyvec_1::{Array, ArrayVec};
 
 use super::larger_than_array_capacity;
 use crate::{
-  DecodeError, Deserialize, DeserializeOwned, IntoTarget, Message, Serialize, TypeOwned, TypeRef,
+  DecodeError, Decode, DecodeOwned, IntoTarget, Message, Encode, TypeOwned, TypeRef,
   Wirable, WireType,
 };
 
@@ -18,7 +18,7 @@ where
   };
 }
 
-impl<A> Serialize for ArrayVec<A>
+impl<A> Encode for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
@@ -39,7 +39,7 @@ where
   }
 }
 
-impl<'de, A> Deserialize<'de> for ArrayVec<A>
+impl<'de, A> Decode<'de> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
@@ -52,7 +52,7 @@ where
   }
 }
 
-impl<A> DeserializeOwned for ArrayVec<A>
+impl<A> DecodeOwned for ArrayVec<A>
 where
   A: Array<Item = u8> + 'static,
 {
@@ -70,7 +70,7 @@ impl<A> Message for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
-  type Serialized<'a>
+  type Encoded<'a>
     = &'a [A::Item]
   where
     Self: Sized + 'a;
@@ -80,7 +80,7 @@ where
   where
     Self: 'a;
 
-  type SerializedOwned
+  type EncodedOwned
     = Self
   where
     Self: Sized + 'static;
