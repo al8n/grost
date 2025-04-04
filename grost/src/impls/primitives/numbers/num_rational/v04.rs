@@ -45,14 +45,16 @@ const _: () = {
     };
   }
 
-  impl_!(BUintD8, BUintD16, BUintD32, BUint, BIntD8, BIntD16, BIntD32, BInt);
+  impl_!(
+    BUintD8, BUintD16, BUintD32, BUint, BIntD8, BIntD16, BIntD32, BInt
+  );
 };
 
 macro_rules! impl_ {
   ($($ty:ty), +$(,)?) => {
     $(
       varint!(Ratio<$ty>);
-    )*   
+    )*
   };
 }
 
@@ -75,10 +77,10 @@ const _: () = {
       to_bytes: |this: &Self, buf: &mut [u8]| {
         let numer = this.numer().to_le_bytes();
         let denom = this.denom().to_le_bytes();
-  
+
         buf[..2].copy_from_slice(&numer);
         buf[2..].copy_from_slice(&denom);
-  
+
         Ok(())
       },
     }),

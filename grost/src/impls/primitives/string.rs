@@ -1,3 +1,4 @@
+#[cfg(any(feature = "std", feature = "alloc"))]
 macro_rules! from_str {
   ($ty:ident::$new:ident.$try_push_str:ident($src: expr)) => {{
     let mut string = $ty::$new();
@@ -8,6 +9,7 @@ macro_rules! from_str {
   }};
 }
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 macro_rules! decode_str {
   ($ty:ident::$new:ident.$try_push_str:ident($src:expr)) => {{
     $crate::__private::from_utf8($src)

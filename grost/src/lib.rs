@@ -6,11 +6,11 @@ extern crate alloc as std;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(all(
-  not(any(feature = "std", feature = "alloc")),
-  not(feature = "heapless")
-))]
-compile_error!("`heapless` feature must be enabled when both `std` and `alloc` are disabled");
+// #[cfg(all(
+//   not(any(feature = "std", feature = "alloc")),
+//   not(feature = "heapless")
+// ))]
+// compile_error!("`heapless` feature must be enabled when both `std` and `alloc` are disabled");
 
 pub use buffer::Buffer;
 pub use error::{DecodeError, EncodeError};

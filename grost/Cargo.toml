@@ -28,8 +28,7 @@ std = [
   "varing/default",
   "smol_str_0_3/default",
   "thiserror/default",
-  "arrayvec_0_7?/default",
-  "bigdecimal_0_4?/default",
+  "arrayvec_0_7?/default", 
   "chrono_0_4?/default",
   "chrono-tz_0_10?/default",
   "hashbrown_0_15?/default",
@@ -58,9 +57,6 @@ bnum = ["bnum_0_13"]
 
 bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
 bytes = ["bytes_1"]
-
-bigdecimal_0_4 = ["dep:bigdecimal_0_4"]
-bigdecimal = ["bigdecimal_0_4"]
 
 chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
 chrono = ["chrono_0_4"]
@@ -144,7 +140,6 @@ arbitrary = { version = "1", optional = true, features = ["derive"] }
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
-bigdecimal_0_4 = { package = "bigdecimal", version = "0.4", default-features = false, optional = true }
 chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }

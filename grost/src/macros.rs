@@ -1184,6 +1184,32 @@ macro_rules! wirable {
   }
 }
 
+#[cfg(any(feature = "alloc", feature = "std"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __varint_decode_owned_impl {
+  () => {
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      _: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+    {
+      $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(&src))
+        .map_err(::core::convert::Into::into)
+    }
+  };
+}
+
+#[cfg(not(any(feature = "alloc", feature = "std")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __varint_decode_owned_impl {
+  () => {};
+}
+
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! varint {
@@ -1231,7 +1257,15 @@ macro_rules! varint {
     }
   };
   (@decode_owned_impl) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
+    $crate::__varint_decode_owned_impl!();
+  };
+}
+
+#[cfg(any(feature = "alloc", feature = "std"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __fixed_decode_owned_impl {
+  (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -1240,32 +1274,45 @@ macro_rules! varint {
       Self: ::core::marker::Sized + 'static,
       U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
     {
-      $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(&src)).map_err(::core::convert::Into::into)
+      const SIZE: ::core::primitive::usize = $size / 8;
+
+      if src.len() < SIZE {
+        return Err($crate::__private::DecodeError::buffer_underflow());
+      }
+
+      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
     }
   };
 }
 
+#[cfg(not(any(feature = "alloc", feature = "std")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __fixed_decode_owned_impl {
+  (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {};
+}
+
 /// A macro emits traits implementations for primitive types whose [`WireType`](crate::WireType) is `Fixed*` and implement [`Copy`](::core::marker::Copy).
-/// 
+///
 /// - `to_bytes`: An expr that takes `&self` and `&mut [u8]` and returns a `Result<(), EncodeError>`.
 ///   the buf size is promised to be the same as the size of the `WireType::Fixed*`.
-/// 
+///
 /// - `from_bytes`: An expr that takes `&[u8]` and returns a `Result<Self, DecodeError>`.
 ///   the buf size is promised to be the same as the size of the `WireType::Fixed*`.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use grost::fixed;
-/// 
+///
 /// #[derive(Debug, Clone, Copy)]
 /// struct MyF32(f32);
 /// #[derive(Debug, Clone, Copy)]
 /// struct MyF64(f64);
-/// 
+///
 /// #[derive(Debug, Clone, Copy)]
 /// struct MyFixedU32(u32);
-/// 
+///
 /// fixed!(
 ///   32(
 ///     MyF32 {
@@ -1369,23 +1416,7 @@ macro_rules! fixed {
     }
   };
   (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      const SIZE: ::core::primitive::usize = $size / 8;
-
-      if src.len() < SIZE {
-        return Err($crate::__private::DecodeError::buffer_underflow());
-      }
-
-      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
-    }
+    $crate::__fixed_decode_owned_impl!(@decode_owned_impl $size { $from_slice });
   };
 }
 

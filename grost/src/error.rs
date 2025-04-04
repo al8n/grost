@@ -48,8 +48,14 @@ impl EncodeError {
         required,
         remaining,
       },
+      #[cfg(any(feature = "std", feature = "alloc"))]
       varing::EncodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+      #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      varing::EncodeError::Custom(e) => Self::Custom(e),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      _ => Self::Custom("unknown error"),
     }
   }
 
@@ -238,8 +244,14 @@ impl DecodeError {
     match e {
       varing::DecodeError::Underflow => Self::BufferUnderflow,
       varing::DecodeError::Overflow => Self::LengthDelimitedOverflow,
+      #[cfg(any(feature = "std", feature = "alloc"))]
       varing::DecodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+      #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      varing::DecodeError::Custom(e) => Self::Custom(e),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      _ => Self::Custom("unknown error"),
     }
   }
 

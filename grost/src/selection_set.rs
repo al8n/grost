@@ -9,7 +9,7 @@ use crate::{IntoTarget, TypeBorrowed};
 
 use super::{
   Decode, DecodeError, DecodeOwned, Encode, EncodeError, Message, Tag, TypeOwned, TypeRef, Unknown,
-  UnknownBuffer, UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
+  UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
 };
 
 /// A selection set.
@@ -76,8 +76,15 @@ where
   where
     Self: 'a;
 
+  #[cfg(any(feature = "std", feature = "alloc"))]
   type EncodedOwned
     = SelectionSet<S::EncodedOwned, bytes::Bytes>
+  where
+    Self: Sized + 'static;
+
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  type EncodedOwned
+    = SelectionSet<S::EncodedOwned, B>
   where
     Self: Sized + 'static;
 }
@@ -278,6 +285,7 @@ where
   }
 }
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 impl<S, B> IntoTarget<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, bytes::Bytes>
 where
   S: Message,
@@ -293,6 +301,23 @@ where
   }
 }
 
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+impl<S, B> IntoTarget<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, B>
+where
+  S: Message,
+  B: for<'a> From<&'a [u8]>,
+{
+  fn into_target(self) -> Result<SelectionSet<S, B>, DecodeError> {
+    Ok(match self {
+      Self::All => SelectionSet::All,
+      Self::None => SelectionSet::None,
+      Self::Set(set) => return set.into_target().map(SelectionSet::Set),
+      Self::Unknown(unknown) => SelectionSet::Unknown(unknown),
+    })
+  }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
 impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, bytes::Bytes>
 where
   S: Message,
@@ -308,6 +333,23 @@ where
   }
 }
 
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+impl<S, B> TypeOwned<SelectionSet<S, B>> for SelectionSet<S::EncodedOwned, B>
+where
+  S: Message,
+  B: for<'a> From<&'a [u8]> + Clone,
+{
+  fn to(&self) -> Result<SelectionSet<S, B>, DecodeError> {
+    Ok(match self {
+      Self::All => SelectionSet::All,
+      Self::None => SelectionSet::None,
+      Self::Set(set) => return set.to().map(SelectionSet::Set),
+      Self::Unknown(unknown) => SelectionSet::Unknown(unknown.clone()),
+    })
+  }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
 impl<S> DecodeOwned for SelectionSet<S, bytes::Bytes>
 where
   S: DecodeOwned,
@@ -318,7 +360,7 @@ where
     unknown_buffer: &mut U,
   ) -> Result<(usize, Self), DecodeError>
   where
-    U: UnknownBuffer<bytes::Bytes>,
+    U: crate::UnknownBuffer<bytes::Bytes>,
   {
     let (mut offset, merged) = varing::decode_u32_varint(&buf)?;
 
@@ -343,4 +385,12 @@ where
       }
     }
   }
+}
+
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+impl<S, B> DecodeOwned for SelectionSet<S, B>
+where
+  S: DecodeOwned,
+  B: for<'a> From<&'a [u8]> + Clone + 'static,
+{
 }
