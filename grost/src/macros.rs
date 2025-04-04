@@ -334,11 +334,11 @@ macro_rules! bridge {
 /// str_bridge!(
 ///   MyString {
 ///     from_str: |s: &str| Ok(MyString(s.to_string()));
-///     to_str: MyString::as_str,
+///     to_str: MyString::as_str;
 ///
 ///     type EncodedOwned = SmolStr {
-///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string())),
-///       from: |s: SmolStr| Ok(MyString(s.to_string())),
+///       from_ref: |s: &SmolStr| Ok(MyString(s.to_string()));
+///       from: |s: SmolStr| Ok(MyString(s.to_string()));
 ///     }
 ///   }
 /// );
@@ -490,11 +490,11 @@ macro_rules! str_bridge {
 /// bytes_bridge!(
 ///   MyVec {
 ///     from_bytes: |s: &str| Ok(MyVec(s.to_vec()));
-///     to_bytes: MyVec::as_bytes,
+///     to_bytes: MyVec::as_bytes;
 ///
 ///     type EncodedOwned = Bytes {
-///       from_ref: |s: &Bytes| Ok(MyVec(s.to_vec())),
-///       from: |s: Bytes| Ok(MyVec(s)),
+///       from_ref: |s: &Bytes| Ok(MyVec(s.to_vec()));
+///       from: |s: Bytes| Ok(MyVec(s));
 ///     }
 ///   }
 /// );
