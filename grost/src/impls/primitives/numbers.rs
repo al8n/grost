@@ -4,11 +4,34 @@ mod arbitrary_int;
 mod bigdecimal;
 mod bnum;
 mod decimal;
+mod half;
 mod num_rational;
 mod num_complex;
 mod ruint;
 
 varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
+
+fixed!(
+  32(f32 {
+    from_bytes: |src: &[u8]| {
+      Ok(f32::from_le_bytes(src.try_into().unwrap()))
+    },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      buf.copy_from_slice(&this.to_le_bytes());
+      Ok(())
+    },
+  }),
+  64(f64 {
+    from_bytes: |src: &[u8]| {
+      Ok(f64::from_le_bytes(src.try_into().unwrap()))
+    },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      buf.copy_from_slice(&this.to_le_bytes());
+      Ok(())
+    },
+  }),
+);
+
 message!(u8, i8, bool);
 
 wirable!((@byte) <=> (u8));

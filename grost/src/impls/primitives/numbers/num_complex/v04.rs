@@ -60,3 +60,62 @@ impl_!(u8, u16, u32, u64, i8, i16, i32, i64);
 
 #[cfg(any(feature = "bnum_0_13", feature = "ruint_1"))]
 impl_!(i128, u128);
+
+#[cfg(feature = "half_2")]
+const _: () = {
+  use half_2::f16;
+
+  fixed!(
+    32(Complex<f16> {
+      from_bytes: |src: &[u8]| {
+        let re = f16::from_le_bytes(src[..2].try_into().unwrap());
+        let im = f16::from_le_bytes(src[2..].try_into().unwrap());
+        Ok(Complex { re, im })
+      },
+      to_bytes: |this: &Self, buf: &mut [u8]| {
+        let re = this.re.to_le_bytes();
+        let im = this.im.to_le_bytes();
+  
+        buf[..2].copy_from_slice(&re);
+        buf[2..].copy_from_slice(&im);
+  
+        Ok(())
+      },
+    }),
+  );
+};
+
+fixed!(
+  64(Complex<f32> {
+    from_bytes: |src: &[u8]| {
+      let re = f32::from_le_bytes(src[..4].try_into().unwrap());
+      let im = f32::from_le_bytes(src[4..].try_into().unwrap());
+      Ok(Complex { re, im })
+    },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      let re = this.re.to_le_bytes();
+      let im = this.im.to_le_bytes();
+
+      buf[..4].copy_from_slice(&re);
+      buf[4..].copy_from_slice(&im);
+
+      Ok(())
+    },
+  }),
+  128(Complex<f64> {
+    from_bytes: |src: &[u8]| {
+      let re = f64::from_le_bytes(src[..8].try_into().unwrap());
+      let im = f64::from_le_bytes(src[8..].try_into().unwrap());
+      Ok(Complex { re, im })
+    },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      let re = this.re.to_le_bytes();
+      let im = this.im.to_le_bytes();
+
+      buf[..8].copy_from_slice(&re);
+      buf[8..].copy_from_slice(&im);
+
+      Ok(())
+    },
+  }),
+);

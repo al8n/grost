@@ -14,7 +14,6 @@ compile_error!("`heapless` feature must be enabled when both `std` and `alloc` a
 
 pub use buffer::Buffer;
 pub use error::{DecodeError, EncodeError};
-pub use impls::*;
 
 pub use selection_set::SelectionSet;
 pub use tag::Tag;
@@ -468,6 +467,25 @@ where
 
   fn encoded_len(&self) -> usize {
     (*self).encoded_len()
+  }
+}
+
+impl<T> PartialEncode for &T
+where
+  T: PartialEncode + ?Sized,
+{
+  type Selection = T::Selection;
+
+  fn partial_encode(
+    &self,
+    selection: &Self::Selection,
+    buf: &mut [u8],
+  ) -> Result<usize, EncodeError> {
+    (*self).partial_encode(selection, buf)
+  }
+
+  fn partial_encoded_len(&self, selection: &Self::Selection) -> usize {
+    (*self).partial_encoded_len(selection)
   }
 }
 

@@ -985,14 +985,14 @@ macro_rules! __array_bytes_decoded_owned_impl {
 macro_rules! type_ref {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::TypeRef<Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<Self> for $ty {
         $crate::type_ref!(@copy_impl);
       }
     )*
   };
   (@clone $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::TypeRef<Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<Self> for $ty {
         $crate::type_ref!(@clone_impl);
       }
     )*
@@ -1014,14 +1014,14 @@ macro_rules! type_ref {
 macro_rules! type_owned {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
         $crate::type_ref!(@copy_impl);
       }
     )*
   };
   (@clone $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<Self> for $ty {
         $crate::type_ref!(@clone_impl);
       }
     )*
@@ -1043,7 +1043,7 @@ macro_rules! type_owned {
 macro_rules! into_target {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::IntoTarget<Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<Self> for $ty {
         $crate::into_target!(@impl);
       }
     )*
@@ -1077,7 +1077,7 @@ macro_rules! conversion {
 macro_rules! message {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::Message for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message for $ty {
         $crate::message!(@impl);
       }
     )*
@@ -1118,7 +1118,7 @@ macro_rules! partial_encode_primitives {
   };
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g:usize),* > )? $crate::__private::PartialEncode for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialEncode for $ty {
         $crate::partial_encode_primitives!(@impl);
       }
     )*
@@ -1176,7 +1176,7 @@ macro_rules! wirable {
   ),+$(,)?) => {
     $(
       $(
-        impl$( < $(const $g:usize),* > )? $crate::Wirable for $ty {
+        impl$( < $(const $g: ::core::primitive::usize),* > )? $crate::Wirable for $ty {
           $crate::wirable!(@$wire_varint);
         }
       )*
@@ -1187,7 +1187,9 @@ macro_rules! wirable {
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! varint {
-  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+  ($(
+    $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
+  ),+$(,)?) => {
     $($crate::wirable!((@varint) <=> ($ty $([ $(const $g: usize),* ])?));)*
     $($crate::message!($ty $([$(const $g: usize),*])?);)*
     $($crate::partial_encode_primitives!($ty $([ $(const $g: usize),* ])?);)*
@@ -1196,7 +1198,7 @@ macro_rules! varint {
     $($crate::varint!(@decode_owned $ty $([ $(const $g: usize),* ])?);)*
   };
   (@encode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $( < $(const $g:usize),* > )? $crate::__private::Encode for $ty {
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode for $ty {
       $crate::varint!(@encode_impl);
     }
   };
@@ -1210,7 +1212,7 @@ macro_rules! varint {
     }
   };
   (@decode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl<'de, $($(const $g:usize),*)?> $crate::__private::Decode<'de> for $ty {
+    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de> for $ty {
       $crate::varint!(@decode_impl);
     }
   };
@@ -1224,7 +1226,7 @@ macro_rules! varint {
     }
   };
   (@decode_owned $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $( < $(const $g:usize),* > )? $crate::__private::DecodeOwned for $ty {
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::DecodeOwned for $ty {
       $crate::varint!(@decode_owned_impl);
     }
   };
@@ -1239,6 +1241,150 @@ macro_rules! varint {
       U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
     {
       $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(&src)).map_err(::core::convert::Into::into)
+    }
+  };
+}
+
+/// A macro emits traits implementations for primitive types whose [`WireType`](crate::WireType) is `Fixed*` and implement [`Copy`](::core::marker::Copy).
+/// 
+/// - `to_bytes`: An expr that takes `&self` and `&mut [u8]` and returns a `Result<(), EncodeError>`.
+///   the buf size is promised to be the same as the size of the `WireType::Fixed*`.
+/// 
+/// - `from_bytes`: An expr that takes `&[u8]` and returns a `Result<Self, DecodeError>`.
+///   the buf size is promised to be the same as the size of the `WireType::Fixed*`.
+/// 
+/// ## Example
+/// 
+/// ```rust
+/// use grost::fixed;
+/// 
+/// #[derive(Debug, Clone, Copy)]
+/// struct MyF32(f32);
+/// #[derive(Debug, Clone, Copy)]
+/// struct MyF64(f64);
+/// 
+/// #[derive(Debug, Clone, Copy)]
+/// struct MyFixedU32(u32);
+/// 
+/// fixed!(
+///   32(
+///     MyF32 {
+///       from_bytes: |src: &[u8]| {
+///         Ok(MyF32(f32::from_le_bytes(src.try_into().unwrap())))
+///       },
+///       to_bytes: |this: &Self, buf: &mut [u8]| {
+///         buf.copy_from_slice(&this.0.to_le_bytes());
+///         Ok(())
+///       },
+///     },
+///     MyFixedU32 {
+///       from_bytes: |src: &[u8]| {
+///         Ok(MyFixedU32(u32::from_le_bytes(src.try_into().unwrap())))
+///       },
+///       to_bytes: |this: &Self, buf: &mut [u8]| {
+///         buf.copy_from_slice(&this.0.to_le_bytes());
+///         Ok(())
+///       },
+///     },
+///   ),
+///   64(MyF64 {
+///     from_bytes: |src: &[u8]| {
+///       Ok(MyF64(f64::from_le_bytes(src.try_into().unwrap())))
+///     },
+///     to_bytes: |this: &Self, buf: &mut [u8]| {
+///       buf.copy_from_slice(&this.0.to_le_bytes());
+///       Ok(())
+///     },
+///   }),
+/// );
+/// ```
+#[macro_export]
+macro_rules! fixed {
+  ($(
+    $size:literal(
+      $(
+        $ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
+          from_bytes: $from_bytes:expr,
+          to_bytes: $to_bytes:expr,
+        }
+      ), +$(,)?
+    )
+  ),+$(,)?) => {
+    $(
+      paste::paste!($($crate::wirable!((@[<fixed $size>]) <=> ($ty $([ $(const $g: usize),* ])?));)*);
+      $($crate::message!($ty $([$(const $g: usize),*])?);)*
+      $($crate::partial_encode_primitives!($ty $([ $(const $g: usize),* ])?);)*
+      $($crate::fixed!(@encode $size ($ty $([ $(const $g: usize),* ])? { to_bytes: $to_bytes }));)*
+      $($crate::fixed!(@decode $size ($ty $([ $(const $g: usize),* ])? { from_bytes: $from_bytes }));)*
+      $($crate::fixed!(@decode_owned $size ($ty $([ $(const $g: usize),* ])? { from_bytes: $from_bytes } ));)*
+    )*
+  };
+  (@encode $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
+    to_bytes: $to_bytes:expr $(,)?
+  })) => {
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode for $ty {
+      $crate::fixed!(@encode_impl $size { $to_bytes });
+    }
+  };
+  (@encode_impl $size:literal { $to_slice:expr $(,)? }) => {
+    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      const SIZE: ::core::primitive::usize = $size / 8;
+
+      let buf_len = buf.len();
+      if buf_len < $size {
+        return Err($crate::__private::EncodeError::insufficient_buffer($size, buf_len));
+      }
+
+      $to_slice(self, &mut buf[..SIZE]).map(|_| SIZE)
+    }
+
+    fn encoded_len(&self) -> ::core::primitive::usize {
+      const SIZE: ::core::primitive::usize = $size / 8;
+      SIZE
+    }
+  };
+  (@decode $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {
+    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de> for $ty {
+      $crate::fixed!(@decode_impl $size { $from_bytes });
+    }
+  };
+  (@decode_impl $size:literal { $from_slice:expr $(,)? }) => {
+    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'de,
+      B: $crate::__private::UnknownRefBuffer<'de>,
+    {
+      const SIZE: ::core::primitive::usize = $size / 8;
+
+      if src.len() < SIZE {
+        return Err($crate::__private::DecodeError::buffer_underflow());
+      }
+
+      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
+    }
+  };
+  (@decode_owned $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::DecodeOwned for $ty {
+      $crate::fixed!(@decode_owned_impl $size { $from_bytes });
+    }
+  };
+  (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      _: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+    {
+      const SIZE: ::core::primitive::usize = $size / 8;
+
+      if src.len() < SIZE {
+        return Err($crate::__private::DecodeError::buffer_underflow());
+      }
+
+      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
     }
   };
 }
