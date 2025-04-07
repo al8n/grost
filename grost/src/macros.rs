@@ -58,7 +58,7 @@ macro_rules! zst {
       $crate::into_target!($ty);
 
       impl $crate::Wirable for $ty {
-        const WIRE_TYPE: $crate::WireType = $crate::WireType::Merged;
+        const WIRE_TYPE: $crate::WireType = $crate::WireType::Zst;
       }
 
       impl $crate::__private::Encode for $ty {
@@ -138,14 +138,14 @@ macro_rules! zst {
 /// bridge! {
 ///   u8 {
 ///     MyU8 {
-///       from: |v: u8| Self(v),
-///       to: |v: &Self| v.0,
+///       from: |v: u8| Self(v);
+///       to: |v: &Self| v.0;
 ///     }
 ///   },
 ///   u32 {
 ///     MyU32 {
-///       from: |v: u32| Self(v),
-///       to: |v: &Self| v.0,
+///       from: |v: u32| Self(v);
+///       to: |v: &Self| v.0;
 ///     },
 ///     MyOtherU32 {
 ///       from: |v: u32| {
@@ -153,10 +153,10 @@ macro_rules! zst {
 ///           low: v as u16,
 ///           high: (v >> 16) as u16,
 ///         }
-///       },
+///       };
 ///       to: |v: &Self| {
 ///         (v.low as u32) | ((v.high as u32) << 16)
-///       },
+///       };
 ///     }
 ///   }
 /// }
@@ -166,8 +166,8 @@ macro_rules! bridge {
   ($(
     $bridge: ty {
       $($ty:ty {
-        from: $from:expr,
-        to: $to:expr $(,)?
+        from: $from:expr;
+        to: $to:expr $(;)?
       }), +$(,)?
     }
   ),+$(,)?) => {
@@ -277,16 +277,7 @@ macro_rules! bridge {
     )*
   };
   (@decode_owned_impl $from:expr => $bridge:ty) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      ub: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
-      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).map(|(n, v)| (n, $from(v)))
-    }
+    $crate::__bridge_owned_impl!($from => $bridge);
   };
   (@decode_owned $(
     $bridge:ty {
@@ -312,6 +303,204 @@ macro_rules! bridge {
       }
     )*
   };
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __bridge_owned_impl {
+  ($from:expr => $bridge:ty) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      ub: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
+      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).map(|(n, v)| (n, $from(v)))
+    }
+  };
+}
+
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __bridge_owned_impl {
+  ($from:expr => $bridge:ty) => {};
+}
+
+/// A macro emits traits implementations for a type that through a bridge to another type.
+///
+/// This macro is similar to `bridge!`, but it uses a `TryFrom` pattern for decoding.
+#[macro_export]
+macro_rules! try_from_bridge {
+  ($(
+    $bridge: ty {
+      $($ty:ty {
+        try_from: $try_from:expr;
+        to: $to:expr $(;)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        $crate::try_from_bridge!(@wirable $bridge {
+          $ty,
+        });
+
+        $crate::try_from_bridge!(@encode $bridge {
+          $ty {
+            to: $to,
+          }
+        });
+
+        $crate::try_from_bridge!(@partial_encode $bridge {
+          $ty {
+            to: $to,
+          }
+        });
+
+        $crate::try_from_bridge!(@decode $bridge {
+          $ty {
+            from: $try_from,
+          }
+        });
+
+        $crate::try_from_bridge!(@decode_owned $bridge {
+          $ty {
+            from: $try_from,
+          }
+        });
+      )*
+    )*
+  };
+  (@encode_impl $bridge:ty => $to:expr) => {
+    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::Encode>::encode(&$to(self), buf)
+    }
+
+    fn encoded_len(&self) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self))
+    }
+  };
+  (@encode $(
+    $bridge:ty {
+      $($ty:ty {
+        to: $to:expr $(,)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        impl $crate::__private::Encode for $ty {
+          $crate::try_from_bridge!(@encode_impl $bridge => $to);
+        }
+      )*
+    )*
+  };
+  (@partial_encode_impl $bridge:ty => $to:expr) => {
+    fn partial_encode(&self, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), selection, buf)
+    }
+
+    fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
+    }
+  };
+  (@partial_encode $(
+    $bridge:ty {
+      $($ty:ty {
+        to: $to:expr $(,)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        impl $crate::__private::PartialEncode for $ty {
+          type Selection = <$bridge as $crate::__private::PartialEncode>::Selection;
+
+          $crate::try_from_bridge!(@partial_encode_impl $bridge => $to);
+        }
+      )*
+    )*
+  };
+  (@decode_impl $try_from:expr => $bridge:ty) => {
+    fn decode<B>(src: &'de [::core::primitive::u8], ub: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      where
+        Self: ::core::marker::Sized + 'de,
+        B: $crate::__private::UnknownRefBuffer<'de> {
+      <$bridge as $crate::__private::Decode>::decode(src, ub)
+        .and_then(|(n, v)| $try_from(v).map(|v| (n, v)))
+    }
+  };
+  (@decode $(
+    $bridge:ty {
+      $($ty:ty {
+        from: $from:expr $(,)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        impl<'de> $crate::__private::Decode<'de> for $ty {
+          $crate::try_from_bridge!(@decode_impl $from => $bridge);
+        }
+      )*
+    )*
+  };
+  (@decode_owned_impl $from:expr => $bridge:ty) => {
+    $crate::__try_from_bridge_owned_impl!($from => $bridge);
+  };
+  (@decode_owned $(
+    $bridge:ty {
+      $($ty:ty {
+        from: $from:expr $(,)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        impl $crate::__private::DecodeOwned for $ty {
+          $crate::try_from_bridge!(@decode_owned_impl $from => $bridge);
+        }
+      )*
+    )*
+  };
+  (@wirable $bridge:ty {
+    $($ty:ty), +$(,)?
+  }) => {
+    $(
+      impl $crate::Wirable for $ty {
+        const WIRE_TYPE: $crate::WireType = <$bridge as $crate::Wirable>::WIRE_TYPE;
+      }
+    )*
+  };
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __try_from_bridge_owned_impl {
+  ($from:expr => $bridge:ty) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
+    fn decode_from_bytes<U>(
+      src: $crate::__private::bytes::Bytes,
+      ub: &mut U,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
+      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+    }
+  };
+}
+
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __try_from_bridge_owned_impl {
+  ($from:expr => $bridge:ty) => {};
 }
 
 /// A macro emits traits implementation for types underlying is a `&str`.
@@ -639,7 +828,7 @@ macro_rules! array_str {
     impl<const $g: ::core::primitive::usize> $crate::__private::Wirable for $ty {
       const WIRE_TYPE: $crate::__private::WireType = {
         match N {
-          0 => $crate::__private::WireType::Merged,
+          0 => $crate::__private::WireType::Varint,
           _ => $crate::__private::WireType::LengthDelimited,
         }
       };
@@ -769,6 +958,7 @@ macro_rules! array_str {
 #[macro_export]
 macro_rules! __array_str_decoded_owned_impl {
   ($new:expr, $decode:expr) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -816,7 +1006,7 @@ macro_rules! array_bytes {
     impl<const $g: ::core::primitive::usize> $crate::__private::Wirable for $ty {
       const WIRE_TYPE: $crate::__private::WireType = {
         match N {
-          0 => $crate::__private::WireType::Merged,
+          0 => $crate::__private::WireType::Zst,
           _ => $crate::__private::WireType::LengthDelimited,
         }
       };
@@ -950,6 +1140,7 @@ macro_rules! array_bytes {
 #[macro_export]
 macro_rules! __array_bytes_decoded_owned_impl {
   ($new:expr, $decode:expr) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -1156,8 +1347,8 @@ macro_rules! wirable {
   (@length_delimited) => {
     const WIRE_TYPE: $crate::WireType = $crate::WireType::LengthDelimited;
   };
-  (@nothing) => {
-    const WIRE_TYPE: $crate::WireType = $crate::WireType::Merged;
+  (@merged) => {
+    const WIRE_TYPE: $crate::WireType = $crate::WireType::Zst;
   };
   (@fixed16) => {
     const WIRE_TYPE: $crate::WireType = $crate::WireType::Fixed16;
@@ -1189,6 +1380,7 @@ macro_rules! wirable {
 #[macro_export]
 macro_rules! __varint_decode_owned_impl {
   () => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -1266,6 +1458,7 @@ macro_rules! varint {
 #[macro_export]
 macro_rules! __fixed_decode_owned_impl {
   (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
+    #[cfg(any(feature = "std", feature = "alloc"))]
     fn decode_from_bytes<U>(
       src: $crate::__private::bytes::Bytes,
       _: &mut U,
@@ -1454,7 +1647,7 @@ macro_rules! phantom {
         const WIRE_TYPE: $crate::WireType = {
           assert!(::core::mem::size_of::<Self>() == 0, "Not a zero-sized type");
 
-          $crate::WireType::Merged
+          $crate::WireType::Zst
         };
       }
 

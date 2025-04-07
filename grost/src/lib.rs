@@ -6,15 +6,10 @@ extern crate alloc as std;
 #[cfg(feature = "std")]
 extern crate std;
 
-// #[cfg(all(
-//   not(any(feature = "std", feature = "alloc")),
-//   not(feature = "heapless")
-// ))]
-// compile_error!("`heapless` feature must be enabled when both `std` and `alloc` are disabled");
-
 pub use buffer::Buffer;
 pub use error::{DecodeError, EncodeError};
 
+pub use impls::*;
 pub use selection_set::SelectionSet;
 pub use tag::Tag;
 
@@ -543,7 +538,7 @@ pub const fn skip(src: &[u8]) -> Result<usize, DecodeError> {
     WireType::Fixed32 => offset + 4,
     WireType::Fixed64 => offset + 8,
     WireType::Fixed128 => offset + 16,
-    WireType::Merged => offset,
+    WireType::Zst => offset,
   };
 
   if val > buf_len {

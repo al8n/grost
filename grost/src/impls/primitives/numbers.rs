@@ -35,12 +35,12 @@ partial_encode_primitives!(u8);
 bridge!(
   u8 {
     i8 {
-      from: convert_u8_to_i8,
-      to: convert_i8_to_u8,
+      from: convert_u8_to_i8;
+      to: convert_i8_to_u8;
     },
     bool {
-      from: convert_u8_to_bool,
-      to: convert_bool_to_u8,
+      from: convert_u8_to_bool;
+      to: convert_bool_to_u8;
     }
   },
 );

@@ -5,7 +5,9 @@
 #[display("{str}", str = "as_str()")]
 pub enum WireType {
   /// Zero size wire type.
-  Merged = 0,
+  /// 
+  /// This wire type requires no information included.
+  Zst = 0,
   /// A varint wire type, which is a variable-length encoding for integers.
   Varint = 1,
   /// A length-delimited wire type.
@@ -34,7 +36,7 @@ impl WireType {
       4 => Self::Fixed32,
       5 => Self::Fixed64,
       6 => Self::Fixed128,
-      7 => Self::Merged,
+      7 => Self::Zst,
       _ => return Err(value),
     })
   }
@@ -56,7 +58,7 @@ impl WireType {
       Self::Fixed32 => "fixed32",
       Self::Fixed64 => "fixed64",
       Self::Fixed128 => "fixed128",
-      Self::Merged => "nothing",
+      Self::Zst => "nothing",
     }
   }
 
@@ -72,7 +74,7 @@ impl WireType {
       4 => Self::Fixed32,
       5 => Self::Fixed64,
       6 => Self::Fixed128,
-      7 => Self::Merged,
+      7 => Self::Zst,
       _ => panic!("invalid wire type value"),
     }
   }

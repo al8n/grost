@@ -138,6 +138,7 @@ quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck"]
 varing.workspace = true
 derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "try_unwrap"] }
 paste = "1"
+ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
 thiserror = { version = "2", default-features = false }
 

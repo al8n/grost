@@ -259,7 +259,7 @@ impl<B> Unknown<B> {
       WireType::Fixed32 => consume_fixed!(4),
       WireType::Fixed64 => consume_fixed!(8),
       WireType::Fixed128 => consume_fixed!(16),
-      WireType::Merged => consume_fixed!(0),
+      WireType::Zst => consume_fixed!(0),
     }
   }
 
@@ -365,7 +365,7 @@ where
       WireType::Fixed32 => consume_fixed!(4),
       WireType::Fixed64 => consume_fixed!(8),
       WireType::Fixed128 => consume_fixed!(16),
-      WireType::Merged => consume_fixed!(0),
+      WireType::Zst => consume_fixed!(0),
     }
   }
 
@@ -557,7 +557,7 @@ impl<'a> UnknownRef<'a> {
       WireType::Fixed32 => consume_fixed!(4),
       WireType::Fixed64 => consume_fixed!(8),
       WireType::Fixed128 => consume_fixed!(16),
-      WireType::Merged => consume_fixed!(0),
+      WireType::Zst => consume_fixed!(0),
     }
   }
 }

@@ -8,7 +8,7 @@ use crate::{
 impl<const N: usize> Wirable for [u8; N] {
   const WIRE_TYPE: crate::WireType = {
     match N {
-      0 => WireType::Merged,
+      0 => WireType::Zst,
       1 => WireType::Byte,
       2 => WireType::Fixed16,
       4 => WireType::Fixed32,

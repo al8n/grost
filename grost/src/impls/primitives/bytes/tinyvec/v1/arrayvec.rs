@@ -12,7 +12,7 @@ where
 {
   const WIRE_TYPE: WireType = {
     match A::CAPACITY {
-      0 => WireType::Merged,
+      0 => WireType::Zst,
       _ => WireType::LengthDelimited,
     }
   };
