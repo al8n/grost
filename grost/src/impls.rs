@@ -6,5 +6,4 @@ mod net;
 mod primitives;
 mod regex;
 mod repeated;
-mod set;
 mod time;
