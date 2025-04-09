@@ -7,7 +7,18 @@ mod duration;
 mod time;
 
 /// Months of the year
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::IsVariant, derive_more::Display)]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Hash,
+  derive_more::IsVariant,
+  derive_more::Display,
+)]
 #[repr(u8)]
 pub enum Month {
   /// January
@@ -59,7 +70,18 @@ impl TryFrom<u8> for Month {
 }
 
 /// Days of the week
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::IsVariant, derive_more::Display)]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Hash,
+  derive_more::IsVariant,
+  derive_more::Display,
+)]
 #[repr(u8)]
 pub enum Weekday {
   /// Monday
@@ -90,7 +112,7 @@ impl TryFrom<u8> for Weekday {
       5 => Self::Friday,
       6 => Self::Saturday,
       7 => Self::Sunday,
-      _ => return Err(DecodeError::custom("unknown weekday value")),  
+      _ => return Err(DecodeError::custom("unknown weekday value")),
     })
   }
 }

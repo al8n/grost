@@ -1,6 +1,9 @@
-use hostaddr_0_1::{Domain, Buffer};
+use hostaddr_0_1::{Buffer, Domain};
 
-use crate::{Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, PartialEncode, TypeOwned, TypeRef, UnknownRefBuffer, Wirable, WireType};
+use crate::{
+  Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, PartialEncode, TypeOwned, TypeRef,
+  UnknownRefBuffer, Wirable, WireType,
+};
 
 impl Wirable for Buffer {}
 
@@ -45,12 +48,16 @@ where
   type Selection = ();
 
   #[inline]
-  fn partial_encode(&self, _: &Self::Selection, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
+  fn partial_encode(
+    &self,
+    _: &Self::Selection,
+    buf: &mut [u8],
+  ) -> Result<usize, crate::EncodeError> {
     self.encode(buf)
   }
 
   #[inline]
-  fn partial_encoded_len(&self, _: &Self::Selection,) -> usize {
+  fn partial_encoded_len(&self, _: &Self::Selection) -> usize {
     self.encoded_len()
   }
 }
@@ -59,7 +66,7 @@ impl<'de> Decode<'de> for &'de Domain<str> {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>
+    B: UnknownRefBuffer<'de>,
   {
     Domain::<[u8]>::try_from_ascii_bytes(src)
       .map(|domain| (src.len(), domain.as_str()))
@@ -71,7 +78,7 @@ impl<'de> Decode<'de> for &'de Domain<[u8]> {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>
+    B: UnknownRefBuffer<'de>,
   {
     Domain::<[u8]>::try_from_ascii_bytes(src)
       .map(|domain| (src.len(), domain))
@@ -83,9 +90,9 @@ impl<'de> Decode<'de> for Domain<&'de str> {
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>
+    B: UnknownRefBuffer<'de>,
   {
-    <&'de Domain::<str>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
+    <&'de Domain<str>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
   }
 }
 
@@ -93,9 +100,9 @@ impl<'de> Decode<'de> for Domain<&'de [u8]> {
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>
+    B: UnknownRefBuffer<'de>,
   {
-    <&'de Domain::<[u8]>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
+    <&'de Domain<[u8]>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
   }
 }
 
@@ -149,7 +156,7 @@ macro_rules! impl_message {
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
+
       impl $(<const $g: usize>)? TypeRef<Domain<$ty>> for Domain<&str> {
         fn to(&self) -> Result<Domain<$ty>, DecodeError> {
           Domain::<$ty>::try_from(self.into_inner())
@@ -157,30 +164,30 @@ macro_rules! impl_message {
         }
       }
 
-      impl $(<const $g: usize>)? IntoTarget<Domain<$ty>> for crate::smol_str::SmolStr {
+      impl $(<const $g: usize>)? IntoTarget<Domain<$ty>> for Domain<crate::smol_str::SmolStr> {
         fn into_target(self) -> Result<Domain<$ty>, DecodeError> {
-          Domain::<$ty>::try_from(self.as_str())
+          Domain::<$ty>::try_from(self.into_inner().as_str())
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
-      impl $(<const $g: usize>)? TypeOwned<Domain<$ty>> for crate::smol_str::SmolStr {
+
+      impl $(<const $g: usize>)? TypeOwned<Domain<$ty>> for Domain<crate::smol_str::SmolStr> {
         fn to(&self) -> Result<Domain<$ty>, DecodeError> {
-          Domain::<$ty>::try_from(self.as_str())
+          Domain::<$ty>::try_from(self.as_inner().as_str())
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
+
       impl $(<const $g: usize>)? Message for Domain<$ty> {
         type Encoded<'a> = Domain<&'a str>
         where
           Self: Sized + 'a;
-      
+
         type Borrowed<'a> = &'a Self
         where
           Self: 'a;
-      
-        type EncodedOwned = crate::smol_str::SmolStr
+
+        type EncodedOwned = Domain<crate::smol_str::SmolStr>
         where
           Self: Sized + 'static;
       }
@@ -194,7 +201,7 @@ macro_rules! impl_message {
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
+
       impl $(<const $g: usize>)? TypeRef<Domain<$ty>> for Domain<&[u8]> {
         fn to(&self) -> Result<Domain<$ty>, DecodeError> {
           Domain::<$ty>::try_from(self.into_inner())
@@ -202,30 +209,30 @@ macro_rules! impl_message {
         }
       }
 
-      impl $(<const $g: usize>)? IntoTarget<Domain<$ty>> for crate::bytes::Bytes {
+      impl $(<const $g: usize>)? IntoTarget<Domain<$ty>> for Domain<crate::bytes::Bytes> {
         fn into_target(self) -> Result<Domain<$ty>, DecodeError> {
-          Domain::<$ty>::try_from(self.as_ref())
+          Domain::<$ty>::try_from(self.into_inner().as_ref())
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
-      impl $(<const $g: usize>)? TypeOwned<Domain<$ty>> for crate::bytes::Bytes {
+
+      impl $(<const $g: usize>)? TypeOwned<Domain<$ty>> for Domain<crate::bytes::Bytes> {
         fn to(&self) -> Result<Domain<$ty>, DecodeError> {
-          Domain::<$ty>::try_from(self.as_ref())
+          Domain::<$ty>::try_from(self.as_inner().as_ref())
             .map_err(|e| DecodeError::custom(e.as_str()))
         }
       }
-      
+
       impl $(<const $g: usize>)? Message for Domain<$ty> {
-        type Encoded<'a> = Domain<&'a [u8]> 
+        type Encoded<'a> = Domain<&'a [u8]>
         where
           Self: Sized + 'a;
-      
+
         type Borrowed<'a> = &'a Self
         where
           Self: 'a;
-      
-        type EncodedOwned = crate::bytes::Bytes
+
+        type EncodedOwned = Domain<crate::bytes::Bytes>
         where
           Self: Sized + 'static;
       }
@@ -235,17 +242,15 @@ macro_rules! impl_message {
 
 impl_decode!(@both Buffer);
 
-impl IntoTarget<Domain<Buffer>> for &[u8] {
+impl IntoTarget<Domain<Buffer>> for &Domain<[u8]> {
   fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
-    Domain::<Buffer>::try_from(self)
-      .map_err(|e| DecodeError::custom(e.as_str()))
+    Ok(self.into())
   }
 }
 
-impl IntoTarget<Domain<Buffer>> for &str {
+impl IntoTarget<Domain<Buffer>> for &Domain<str> {
   fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
-    Domain::<Buffer>::try_from(self)
-      .map_err(|e| DecodeError::custom(e.as_str()))
+    Ok(self.into())
   }
 }
 
@@ -280,15 +285,13 @@ const _: () = {
 
   impl IntoTarget<Domain<Buffer>> for crate::smol_str::SmolStr {
     fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
-      Domain::<Buffer>::try_from(self.as_str())
-        .map_err(|e| DecodeError::custom(e.as_str()))
+      Domain::<Buffer>::try_from(self.as_str()).map_err(|e| DecodeError::custom(e.as_str()))
     }
   }
-  
+
   impl IntoTarget<Domain<Buffer>> for crate::bytes::Bytes {
     fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
-      Domain::<Buffer>::try_from(self.as_ref())
-        .map_err(|e| DecodeError::custom(e.as_str()))
+      Domain::<Buffer>::try_from(self.as_ref()).map_err(|e| DecodeError::custom(e.as_str()))
     }
   }
 };

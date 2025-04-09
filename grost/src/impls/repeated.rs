@@ -1,12 +1,12 @@
 use ref_cast::RefCast;
 use varing::{encode_u32_varint_to, encoded_u32_varint_len};
 
-use crate::{merge, Encode, EncodeError, Tag, Wirable, WireType};
+use crate::{Encode, EncodeError, Tag, Wirable, WireType, merge};
 
 mod map;
 
 /// A wrapper type for repeated fields.
-/// 
+///
 /// This type is used to implement `Encode` and `Decode` traits for collections
 /// of items. It is a transparent wrapper around the inner type collection `T`.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, RefCast)]
@@ -104,7 +104,10 @@ where
         }
         WireType::Fixed128 => {
           let written = item.encode(&mut buf[offset..])?;
-          debug_assert_eq!(written, 16, "Fixed128 wire type should write exactly 16 bytes");
+          debug_assert_eq!(
+            written, 16,
+            "Fixed128 wire type should write exactly 16 bytes"
+          );
           offset += written;
         }
       }
@@ -116,7 +119,7 @@ where
   /// Encodes the collection into the provided buffer with tag, wire type, and length delimited.
   pub fn encode_with_prefix(&self, tag: Tag, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let encoded_len = self.encoded_len(tag);
-    
+
     match <T::Item<'_> as Wirable>::WIRE_TYPE {
       WireType::LengthDelimited => self.encode(tag, buf),
       _ => {
@@ -130,7 +133,7 @@ where
         written += encode_u32_varint_to(encoded_len as u32, &mut buf[written..])?;
         written += self.encode(tag, &mut buf[written..])?;
         Ok(written)
-      },
+      }
     }
   }
 
@@ -142,10 +145,12 @@ where
       WireType::LengthDelimited => {
         let merged = merge(WireType::LengthDelimited, tag);
         let merged_len = encoded_u32_varint_len(merged);
-        self.0.iter().map(|item| {
-          merged_len + item.encoded_len_with_prefix()
-        }).sum()
-      },
+        self
+          .0
+          .iter()
+          .map(|item| merged_len + item.encoded_len_with_prefix())
+          .sum()
+      }
       WireType::Byte => self.0.len(),
       WireType::Fixed16 => self.0.len() * 2,
       WireType::Fixed32 => self.0.len() * 4,
@@ -157,7 +162,7 @@ where
   /// Returns the number of bytes required to encode the collection with tag, wire type, and length delimited.
   pub fn encoded_len_with_prefix(&self, tag: Tag) -> usize {
     let encoded_len = self.encoded_len(tag);
-    
+
     match <T::Item<'_> as Wirable>::WIRE_TYPE {
       WireType::LengthDelimited => encoded_len,
       _ => {
@@ -165,14 +170,16 @@ where
         let merged_len = encoded_u32_varint_len(merged);
         let encoded_len_size = encoded_u32_varint_len(encoded_len as u32);
         merged_len + encoded_len_size + encoded_len
-      },
+      }
     }
   }
 }
 
 /// A trait for types which can be encoded as repeated fields.
 pub trait Repeated {
-  type Item<'a> where Self: 'a;
+  type Item<'a>
+  where
+    Self: 'a;
 
   /// Returns the number of items in the collection.
   fn len(&self) -> usize;
@@ -185,7 +192,8 @@ pub trait Repeated {
 }
 
 impl<T: Repeated> Repeated for &T {
-  type Item<'a> = T::Item<'a>
+  type Item<'a>
+    = T::Item<'a>
   where
     Self: 'a;
 
@@ -212,19 +220,19 @@ macro_rules! impl_repeated {
         type Item<'a> = &'a T
         where
           Self: 'a;
-      
+
         #[inline]
         fn len(&self) -> usize {
           let s: &[T] = self.as_ref();
           s.len()
         }
-      
+
         #[inline]
         fn is_empty(&self) -> bool {
           let s: &[T] = self.as_ref();
           s.is_empty()
         }
-      
+
         #[inline]
         fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
           let s: &[T] = self.as_ref();
@@ -239,17 +247,17 @@ macro_rules! impl_repeated {
         type Item<'a> = (&'a K, &'a V)
         where
           Self: 'a;
-      
+
         #[inline]
         fn len(&self) -> usize {
           <$ty>::len(self)
         }
-      
+
         #[inline]
         fn is_empty(&self) -> bool {
           <$ty>::is_empty(self)
         }
-      
+
         #[inline]
         fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
           <$ty>::iter(self)
@@ -263,17 +271,17 @@ macro_rules! impl_repeated {
         type Item<'a> = (&'a K, &'a V)
         where
           Self: 'a;
-      
+
         #[inline]
         fn len(&self) -> usize {
           <$ty>::len(self)
         }
-      
+
         #[inline]
         fn is_empty(&self) -> bool {
           <$ty>::is_empty(self)
         }
-      
+
         #[inline]
         fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
           <$ty>::iter(self)
@@ -287,17 +295,17 @@ macro_rules! impl_repeated {
         type Item<'a> = &'a T
         where
           Self: 'a;
-      
+
         #[inline]
         fn len(&self) -> usize {
           <$ty>::len(self)
         }
-      
+
         #[inline]
         fn is_empty(&self) -> bool {
           <$ty>::is_empty(self)
         }
-      
+
         #[inline]
         fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
           <$ty>::iter(self)
@@ -311,17 +319,17 @@ macro_rules! impl_repeated {
         type Item<'a> = &'a T
         where
           Self: 'a;
-      
+
         #[inline]
         fn len(&self) -> usize {
           <$ty>::len(self)
         }
-      
+
         #[inline]
         fn is_empty(&self) -> bool {
           <$ty>::is_empty(self)
         }
-      
+
         #[inline]
         fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
           <$ty>::iter(self)
@@ -364,7 +372,6 @@ const _: () = {
   impl_repeated!(@hash_set indexmap_2::IndexSet<T, S>);
 };
 
-
 #[cfg(feature = "heapless_0_8")]
 const _: () = {
   impl_repeated!(heapless_0_8::Vec<T, N> [const N: usize]);
@@ -386,32 +393,34 @@ const _: () = {
 const _: () = {
   #[cfg(any(feature = "std", feature = "alloc"))]
   impl<T: Default, const N: usize> Repeated for tinyvec_1::TinyVec<[T; N]> {
-    type Item<'a> = &'a T
+    type Item<'a>
+      = &'a T
     where
       Self: 'a;
-    
+
     fn len(&self) -> usize {
-      self.len()  
+      self.len()
     }
-    
+
     fn is_empty(&self) -> bool {
       self.is_empty()
     }
-    
+
     fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
       self.as_ref().iter()
     }
   }
 
   impl<T: Default, const N: usize> Repeated for tinyvec_1::ArrayVec<[T; N]> {
-    type Item<'a> = &'a T
+    type Item<'a>
+      = &'a T
     where
       Self: 'a;
 
     fn len(&self) -> usize {
-      self.len()  
+      self.len()
     }
-    
+
     fn is_empty(&self) -> bool {
       self.is_empty()
     }

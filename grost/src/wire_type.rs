@@ -5,7 +5,7 @@
 #[display("{str}", str = "as_str()")]
 pub enum WireType {
   /// Zero size wire type.
-  /// 
+  ///
   /// This wire type requires no information included.
   Zst = 0,
   /// A varint wire type, which is a variable-length encoding for integers.

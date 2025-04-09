@@ -317,8 +317,10 @@ macro_rules! __bridge_owned_impl {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
-      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).map(|(n, v)| (n, $from(v)))
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+    {
+      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub)
+        .map(|(n, v)| (n, $from(v)))
     }
   };
 }
@@ -490,8 +492,10 @@ macro_rules! __try_from_bridge_owned_impl {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes> {
-      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+    {
+      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub)
+        .and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
   };
 }
