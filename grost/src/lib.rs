@@ -348,8 +348,8 @@ pub trait PartialEncode: Wirable {
   /// [`Encode::encoded_len`] can be used to determine the required buffer size.
   fn partial_encode(
     &self,
-    selection: &Self::Selection,
     buf: &mut [u8],
+    selection: &Self::Selection,
   ) -> Result<usize, EncodeError>;
 
   /// Returns the number of bytes needed to encode the message.
@@ -377,7 +377,7 @@ pub trait PartialEncode: Wirable {
     selection: &Self::Selection,
   ) -> Result<std::vec::Vec<u8>, error::EncodeError> {
     let mut buf = std::vec![0; self.partial_encoded_len(selection)];
-    self.partial_encode(selection, &mut buf)?;
+    self.partial_encode(&mut buf, selection)?;
     Ok(buf)
   }
 
@@ -398,11 +398,11 @@ pub trait PartialEncode: Wirable {
   /// An error will be returned if the buffer does not have sufficient capacity.
   fn partial_encode_with_prefix(
     &self,
-    selection: &Self::Selection,
     buf: &mut [u8],
+    selection: &Self::Selection,
   ) -> Result<usize, EncodeError> {
     if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return self.partial_encode(selection, buf);
+      return self.partial_encode(buf, selection);
     }
 
     let len = self.partial_encoded_len(selection);
@@ -412,7 +412,7 @@ pub trait PartialEncode: Wirable {
 
     let mut offset = 0;
     offset += varing::encode_u32_varint_to(len as u32, buf)?;
-    offset += self.partial_encode(selection, &mut buf[offset..])?;
+    offset += self.partial_encode(&mut buf[offset..], selection)?;
 
     #[cfg(debug_assertions)]
     debug_assert_write_eq::<Self>(offset, self.partial_encoded_len_with_prefix(selection));
@@ -429,7 +429,7 @@ pub trait PartialEncode: Wirable {
     let len = self.partial_encoded_len_with_prefix(selection);
     let mut vec = ::std::vec![0; len];
     self
-      .partial_encode_with_prefix(selection, &mut vec)
+      .partial_encode_with_prefix(&mut vec, selection)
       .map(|_| vec)
   }
 
@@ -473,10 +473,10 @@ where
 
   fn partial_encode(
     &self,
-    selection: &Self::Selection,
     buf: &mut [u8],
+    selection: &Self::Selection,
   ) -> Result<usize, EncodeError> {
-    (*self).partial_encode(selection, buf)
+    (*self).partial_encode(buf, selection)
   }
 
   fn partial_encoded_len(&self, selection: &Self::Selection) -> usize {

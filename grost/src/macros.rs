@@ -105,7 +105,7 @@ macro_rules! zst {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn partial_encode(&self, _: &mut [u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 
@@ -228,12 +228,20 @@ macro_rules! bridge {
     )*
   };
   (@partial_encode_impl $bridge:ty => $to:expr) => {
-    fn partial_encode(&self, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), selection, buf)
+    fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), buf, selection)
+    }
+
+    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_prefix(&$to(self), buf, selection)
     }
 
     fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
       <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
+    }
+
+    fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_prefix(&$to(self), selection)
     }
   };
   (@partial_encode $(
@@ -402,12 +410,20 @@ macro_rules! try_from_bridge {
     )*
   };
   (@partial_encode_impl $bridge:ty => $to:expr) => {
-    fn partial_encode(&self, selection: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), selection, buf)
+    fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), buf, selection)
+    }
+
+    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_prefix(&$to(self), buf, selection)
     }
 
     fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
       <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
+    }
+
+    fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_prefix(&$to(self), selection)
     }
   };
   (@partial_encode $(
@@ -1303,12 +1319,20 @@ macro_rules! partial_encode_primitives {
   (@impl) => {
     type Selection = ();
 
-    fn partial_encode(&self, _: &Self::Selection, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+    fn partial_encode(&self, buf: &mut [::core::primitive::u8],  _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
       <Self as $crate::__private::Encode>::encode(self, buf)
+    }
+
+    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <Self as $crate::__private::Encode>::encode_with_prefix(self, buf)
     }
 
     fn partial_encoded_len(&self, _: &Self::Selection) -> ::core::primitive::usize {
       <Self as $crate::__private::Encode>::encoded_len(self)
+    }
+
+    fn partial_encoded_len_with_prefix(&self, _: &Self::Selection) -> ::core::primitive::usize {
+      <Self as $crate::__private::Encode>::encoded_len_with_prefix(self)
     }
   };
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
@@ -1699,7 +1723,7 @@ macro_rules! phantom {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: &Self::Selection, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn partial_encode(&self, _: &mut [u8], _: &Self::Selection,) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 

@@ -50,8 +50,8 @@ where
   #[inline]
   fn partial_encode(
     &self,
-    _: &Self::Selection,
     buf: &mut [u8],
+    _: &Self::Selection,
   ) -> Result<usize, crate::EncodeError> {
     self.encode(buf)
   }
