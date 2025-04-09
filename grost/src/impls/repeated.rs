@@ -378,7 +378,9 @@ const _: () = {
 };
 
 #[cfg(feature = "triomphe_0_1")]
-impl_repeated!(triomphe_0_1::Arc<[T]>);
+const _: () = {
+  impl_repeated!(triomphe_0_1::Arc<[T]>);
+};
 
 #[cfg(feature = "tinyvec_1")]
 const _: () = {
@@ -419,4 +421,3 @@ const _: () = {
     }
   }
 };
-
