@@ -40,6 +40,20 @@ pub trait UnknownRefBuffer<'a>: AsRef<[UnknownRef<'a>]> {
   }
 }
 
+impl<'a> UnknownRefBuffer<'a> for [UnknownRef<'a>; 0] {
+  fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
+    Some(value)
+  }
+
+  fn capacity(&self) -> usize {
+    0
+  }
+
+  fn len(&self) -> usize {
+    0
+  }
+}
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
   use std::vec::Vec;

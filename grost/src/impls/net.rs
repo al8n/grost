@@ -1,6 +1,4 @@
-mod domain;
-mod host;
-mod host_addr;
+mod hostaddr;
 mod ip_addr;
 mod socket_addr;
 mod url;

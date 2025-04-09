@@ -3,8 +3,6 @@ use varing::{encode_u32_varint_to, encoded_u32_varint_len};
 
 use crate::{Encode, EncodeError, Tag, Wirable, WireType, merge};
 
-mod map;
-
 /// A wrapper type for repeated fields.
 ///
 /// This type is used to implement `Encode` and `Decode` traits for collections
@@ -241,54 +239,6 @@ macro_rules! impl_repeated {
       }
     )*
   };
-  (@hash_map $($ty:ty $([ const $g:ident: usize ])?),+$(,)?) => {
-    $(
-      impl<K, V, S, $(const $g: usize)?> Repeated for $ty {
-        type Item<'a> = (&'a K, &'a V)
-        where
-          Self: 'a;
-
-        #[inline]
-        fn len(&self) -> usize {
-          <$ty>::len(self)
-        }
-
-        #[inline]
-        fn is_empty(&self) -> bool {
-          <$ty>::is_empty(self)
-        }
-
-        #[inline]
-        fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
-          <$ty>::iter(self)
-        }
-      }
-    )*
-  };
-  (@map $($ty:ty $([ const $g:ident: usize ])?),+$(,)?) => {
-    $(
-      impl<K, V, $(const $g: usize)?> Repeated for $ty {
-        type Item<'a> = (&'a K, &'a V)
-        where
-          Self: 'a;
-
-        #[inline]
-        fn len(&self) -> usize {
-          <$ty>::len(self)
-        }
-
-        #[inline]
-        fn is_empty(&self) -> bool {
-          <$ty>::is_empty(self)
-        }
-
-        #[inline]
-        fn iter(&self) -> impl Iterator<Item = Self::Item<'_>> {
-          <$ty>::iter(self)
-        }
-      }
-    )*
-  };
   (@hash_set $($ty:ty $([ const $g:ident: usize ])?),+$(,)?) => {
     $(
       impl<T, S, $(const $g: usize)?> Repeated for $ty {
@@ -350,32 +300,27 @@ const _: () = {
     std::rc::Rc<[T]>,
   );
 
-  impl_repeated!(@map std::collections::BTreeMap<K, V>);
   impl_repeated!(@set std::collections::BTreeSet<T>);
 };
 
 #[cfg(feature = "std")]
 const _: () = {
-  impl_repeated!(@hash_map std::collections::HashMap<K, V, S>);
   impl_repeated!(@hash_set std::collections::HashSet<T, S>);
 };
 
 #[cfg(feature = "hashbrown_0_15")]
 const _: () = {
-  impl_repeated!(@hash_map hashbrown_0_15::HashMap<K, V, S>);
   impl_repeated!(@hash_set hashbrown_0_15::HashSet<T, S>);
 };
 
 #[cfg(feature = "indexmap_2")]
 const _: () = {
-  impl_repeated!(@hash_map indexmap_2::IndexMap<K, V, S>);
   impl_repeated!(@hash_set indexmap_2::IndexSet<T, S>);
 };
 
 #[cfg(feature = "heapless_0_8")]
 const _: () = {
   impl_repeated!(heapless_0_8::Vec<T, N> [const N: usize]);
-  impl_repeated!(@hash_map heapless_0_8::IndexMap<K, V, S, N> [const N: usize]);
   impl_repeated!(@hash_set heapless_0_8::IndexSet<T, S, N> [const N: usize]);
 };
 
