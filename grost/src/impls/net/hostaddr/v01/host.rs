@@ -3,7 +3,10 @@ use core::net::IpAddr;
 use hostaddr_0_1::{Domain, Host};
 use varing::{encode_u32_varint, encoded_u32_varint_len};
 
-use crate::{merge, Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, PartialEncode, Tag, TypeRef, Wirable, WireType};
+use crate::{
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, PartialEncode, Tag,
+  TypeRef, Wirable, WireType, merge,
+};
 
 impl<S> Wirable for Host<S> {}
 
@@ -63,9 +66,11 @@ where
 
         buf[..DOMAIN_MERGED_ENCODED_LEN].copy_from_slice(DOMAIN_MERGED_BUFFER);
         let mut offset = DOMAIN_MERGED_ENCODED_LEN;
-        offset += d.encode(&mut buf[offset..]).map_err(|e| e.update(DOMAIN_MERGED_ENCODED_LEN + d.encoded_len(), buf_len))?;
+        offset += d
+          .encode(&mut buf[offset..])
+          .map_err(|e| e.update(DOMAIN_MERGED_ENCODED_LEN + d.encoded_len(), buf_len))?;
         Ok(offset)
-      },
+      }
     }
   }
 
@@ -106,7 +111,7 @@ macro_rules! decode {
         return Err(DecodeError::buffer_underflow());
       }
       let ip = <$ty>::from_le_bytes($src[ [< IPV $kind _MERGED_ENCODED_LEN >]..][.. [< IPV $kind _LEN >]].try_into().unwrap());
-      
+
       Ok(([< IPV $kind _ENCODED_LEN >], Host::Ip(IpAddr::[< V $kind >](ip.into()))))
     }
   }};
@@ -119,21 +124,24 @@ where
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>
+    B: crate::UnknownRefBuffer<'de>,
   {
     let buf_len = src.len();
     if buf_len == 0 {
       return Err(DecodeError::buffer_underflow());
     }
-  
+
     // as u32 is safe here as we know valid identifier within the 0..127
     match src[0] as u32 {
       IPV4_MERGED => decode!(u32(src, 4)),
       IPV6_MERGED => decode!(u128(src, 6)),
       DOMAIN_MERGED => {
         let (offset, domain) = Domain::<S>::decode(&src[DOMAIN_MERGED_ENCODED_LEN..], ub)?;
-        Ok((DOMAIN_MERGED_ENCODED_LEN + offset, Host::Domain(domain.into_inner())))
-      },
+        Ok((
+          DOMAIN_MERGED_ENCODED_LEN + offset,
+          Host::Domain(domain.into_inner()),
+        ))
+      }
       _ => Err(DecodeError::custom("unknown identifier of Host")),
     }
   }
@@ -150,7 +158,7 @@ where
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    U: crate::UnknownBuffer<crate::bytes::Bytes>
+    U: crate::UnknownBuffer<crate::bytes::Bytes>,
   {
     let buf_len = src.len();
     if buf_len == 0 {
@@ -162,16 +170,20 @@ where
       IPV4_MERGED => decode!(u32(src, 4)),
       IPV6_MERGED => decode!(u128(src, 6)),
       DOMAIN_MERGED => {
-        let (offset, domain) = Domain::<S>::decode_from_bytes(src.split_to(DOMAIN_MERGED_ENCODED_LEN), ub)?;
-        Ok((DOMAIN_MERGED_ENCODED_LEN + offset, Host::Domain(domain.into_inner())))
-      },
+        let (offset, domain) =
+          Domain::<S>::decode_from_bytes(src.split_to(DOMAIN_MERGED_ENCODED_LEN), ub)?;
+        Ok((
+          DOMAIN_MERGED_ENCODED_LEN + offset,
+          Host::Domain(domain.into_inner()),
+        ))
+      }
       _ => Err(DecodeError::custom("unknown identifier of Host")),
     }
   }
 }
 
 #[cfg(feature = "bytes_1")]
-const _:() = {
+const _: () = {
   use bytes_1::Bytes;
 
   conversion!(@clone Host<Bytes>);
@@ -184,7 +196,7 @@ const _:() = {
       }
     }
   }
-  
+
   impl TypeRef<Host<Bytes>> for Host<&[u8]> {
     fn to(&self) -> Result<Host<Bytes>, DecodeError> {
       match self {
@@ -195,15 +207,18 @@ const _:() = {
   }
 
   impl Message for Host<Bytes> {
-    type Encoded<'a> = Host<&'a [u8]>
+    type Encoded<'a>
+      = Host<&'a [u8]>
     where
       Self: Sized + 'a;
-  
-    type Borrowed<'a> = &'a Self
+
+    type Borrowed<'a>
+      = &'a Self
     where
       Self: 'a;
-  
-    type EncodedOwned = Host<Bytes>
+
+    type EncodedOwned
+      = Host<Bytes>
     where
       Self: Sized + 'static;
   }

@@ -1,7 +1,6 @@
 use std::num::NonZeroI128;
 
-use super::{DefaultGenerator, Enum, EnumVariant, EnumRepr, Generator, SafeIdent};
-
+use super::{DefaultGenerator, Enum, EnumRepr, EnumVariant, Generator, SafeIdent};
 
 #[test]
 fn test_enum_generate() {

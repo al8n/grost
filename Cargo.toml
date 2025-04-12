@@ -2,6 +2,7 @@
 members = [
   "grost",
   "grost-codegen",
+  "grost-codegen-test",
 ]
 resolver = "3"
 exclude = ["guides"]

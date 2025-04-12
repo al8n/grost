@@ -267,23 +267,19 @@ const _: () = {
 
   impl DecodeOwned for Domain<Bytes> {
     #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: Bytes,
-      _: &mut U,
-    ) -> Result<(usize, Self), DecodeError>
+    fn decode_from_bytes<U>(src: Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
     where
       Self: Sized + 'static,
-      U: crate::UnknownBuffer<Bytes>
+      U: crate::UnknownBuffer<Bytes>,
     {
       let len = src.len();
-      Self::try_from(src).map(|domain| (len, domain))
+      Self::try_from(src)
+        .map(|domain| (len, domain))
         .map_err(|e| DecodeError::custom(e.as_str()))
     }
   }
 
-  impl_decode!(
-    Bytes,
-  );
+  impl_decode!(Bytes,);
 
   conversion!(@clone Domain<Bytes>);
 };
@@ -295,10 +291,7 @@ const _: () = {
     triomphe_0_1::Arc<str>,
   );
 
-  impl_message!(
-    triomphe_0_1::Arc<[u8]>,
-    triomphe_0_1::Arc<str>,
-  );
+  impl_message!(triomphe_0_1::Arc<[u8]>, triomphe_0_1::Arc<str>,);
 };
 
 #[cfg(feature = "tinyvec_1")]

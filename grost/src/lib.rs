@@ -575,6 +575,7 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
+  pub use either;
   pub use varing;
 
   #[cfg(feature = "bytes")]
@@ -586,6 +587,13 @@ pub mod __private {
   pub use ::core::str::from_utf8;
   #[cfg(feature = "simdutf8")]
   pub use simdutf8::basic::from_utf8;
+
+  #[cfg(feature = "quickcheck")]
+  pub use quickcheck;
+  #[cfg(feature = "arbitrary")]
+  pub use arbitrary;
+
+  pub use thiserror;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {

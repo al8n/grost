@@ -1,4 +1,4 @@
-use quote::{format_ident, ToTokens};
+use quote::{ToTokens, format_ident};
 use smol_str::SmolStr;
 use syn::Ident;
 

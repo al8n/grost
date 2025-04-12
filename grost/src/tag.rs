@@ -28,9 +28,9 @@ impl Tag {
   }
 
   /// Create a new tag.
-  /// 
+  ///
   /// ## Panics
-  /// 
+  ///
   /// This function will panic if the value is not in range `1..=536870911`.
   #[inline]
   pub const fn new(tag: u32) -> Self {

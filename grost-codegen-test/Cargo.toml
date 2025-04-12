@@ -1,0 +1,16 @@
+[package]
+name = "grost-codegen-test"
+version = "0.1.0"
+edition.workspace = true
+publish = false
+
+[features]
+quickcheck = ["grost/quickcheck"]
+
+[dependencies]
+grost = { path = "../grost", version = "0.1", features = ["quickcheck"] }
+
+[build-dependencies]
+grost-codegen = { path = "../grost-codegen", version = "0.1", features = ["quickcheck"] }
+prettyplease = { version = "0.2" }
+syn = { version = "2", features = ["full"] }

@@ -2,8 +2,6 @@ use std::collections::HashSet;
 
 use heck::*;
 
-
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, derive_more::IsVariant)]
 pub enum Heck {
   AsciiLower,

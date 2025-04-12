@@ -1,4 +1,4 @@
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 
 pub use case::*;
 pub use enum_::*;
@@ -56,10 +56,16 @@ impl Generator for DefaultGenerator {
   fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = enum_.enum_defination();
     let as_str = enum_.enum_as_str();
-    let from_str = enum_.enum_from_str(&self.grost_path);
+    let from_str = enum_.enum_from_str();
     let is_variant = enum_.enum_is_variant();
+    #[cfg(feature = "quickcheck")]
     let quickcheck = enum_.enum_quickcheck(&self.grost_path);
+    #[cfg(not(feature = "quickcheck"))]
+    let quickcheck = quote! {};
+    #[cfg(feature = "arbitrary")]
     let arbitrary = enum_.enum_arbitrary(&self.grost_path);
+    #[cfg(not(feature = "arbitrary"))]
+    let arbitrary = quote! {};
     let repr_conversion = enum_.enum_repr_conversion(&self.grost_path);
     let codec = enum_.enum_codec(&self.grost_path);
 
