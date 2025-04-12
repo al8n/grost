@@ -1,0 +1,30 @@
+[package]
+name = "grost-codegen"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+no-std = []
+no-alloc = []
+
+[dependencies]
+derive_more = { version = "2", features = ["unwrap", "from", "display", "is_variant"] }
+either = "1"
+heck = "0.5"
+indexmap = "2"
+proc-macro2 = "1"
+prettyplease = { version = "0.2" }
+paste = "1"
+smol_str = "0.3"
+syn = { version = "2", features = ["full"] }
+thiserror = "2"
+anyhow = "1"
+quote = "1"
+varing.workspace = true

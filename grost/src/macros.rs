@@ -105,7 +105,7 @@ macro_rules! zst {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: &mut [u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn partial_encode(&self, _: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 

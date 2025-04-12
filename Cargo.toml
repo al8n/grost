@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "grost",
+  "grost-codegen",
 ]
 resolver = "3"
 exclude = ["guides"]
