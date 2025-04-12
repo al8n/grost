@@ -75,7 +75,7 @@ impl EnumRepr {
     }
   }
 
-  fn to_encoded_len_fn(&self, path_to_grost: &syn::Path) -> syn::Path {
+  fn to_encode_len_fn(&self, path_to_grost: &syn::Path) -> syn::Path {
     match self {
       Self::U8 => parse_quote! { #path_to_grost::__private::varing::encoded_u8_varint_len },
       Self::U16 => parse_quote! { #path_to_grost::__private::varing::encoded_u16_varint_len },
@@ -129,7 +129,7 @@ impl EnumRepr {
     quote! { 1usize }
   }
 
-  fn to_encoded(&self, tag: i128) -> proc_macro2::TokenStream {
+  fn to_encode(&self, tag: i128) -> proc_macro2::TokenStream {
     match self {
       Self::U8 => {
         let tag = tag as u8;
@@ -182,7 +182,7 @@ impl EnumRepr {
     }
   }
 
-  fn to_encoded_len(&self, tag: i128) -> proc_macro2::TokenStream {
+  fn to_encode_len(&self, tag: i128) -> proc_macro2::TokenStream {
     match self {
       Self::U8 => {
         let tag = tag as u8;
@@ -620,6 +620,9 @@ impl Enum {
     let name_ident = &self.name;
     let variants = self.variants.iter().map(|v| &v.name);
 
+    let quickcheck_test_mod = format_ident!("__quickcheck_fuzzy__{}", name_ident.name_str().to_snake_case());
+    let quickcheck_fn = format_ident!("quickcheck_fuzzy_{}", name_ident.name_str().to_snake_case());
+
     #[cfg(feature = "quickcheck")]
     let output = quote! {
       #[cfg(feature = "quickcheck")]
@@ -638,6 +641,20 @@ impl Enum {
           }
         }
       };
+
+      #[cfg(test)]
+      mod #quickcheck_test_mod {
+        use super::#name_ident;
+        use #path_to_grost::__private::{Encode, Decode};
+
+        #path_to_grost::__private::quickcheck::quickcheck! {
+          fn #quickcheck_fn(value: #name_ident) -> bool {
+            let encoded_len = value.encoded_len();
+
+
+          }
+        }
+      }
     };
 
     #[cfg(not(feature = "quickcheck"))]
@@ -684,7 +701,7 @@ impl Enum {
 
     let repr_encode_fn = repr.to_encode_fn(path_to_grost);
     let repr_decode_fn = repr.to_decode_fn(path_to_grost);
-    let repr_encoded_len_fn = repr.to_encoded_len_fn(path_to_grost);
+    let repr_encoded_len_fn = repr.to_encode_len_fn(path_to_grost);
 
     let repr_max_encoded_len = repr.to_max_encoded_len();
     let repr_min_encoded_len = repr.to_min_encoded_len();
@@ -694,16 +711,37 @@ impl Enum {
 
     let const_encode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded = repr.to_encoded(v.tag());
+      let encoded = repr.to_encode(v.tag());
 
       quote! {
         Self::#variant_name_ident => &#encoded,
       }
     });
 
+    let const_encode_to_branches = self.variants.iter().map(|v| {
+      let variant_name_ident = &v.name;
+      let encoded = repr.to_encode(v.tag());
+
+      quote! {
+        Self::#variant_name_ident => {
+          let val = &#encoded;
+          let val_len = val.len();
+          let buf_len = buf.len();
+          if buf_len < val_len {
+            return ::core::result::Result::Err(::grost::__private::EncodeError::insufficient_buffer(val_len, buf_len));
+          }
+
+          let (b, _) = buf.split_at_mut(val_len);
+          b.copy_from_slice(val);
+
+          ::core::result::Result::Ok(val_len)
+        },
+      }
+    });
+
     let const_decode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded = repr.to_encoded(v.tag());
+      let encoded = repr.to_encode(v.tag());
 
       quote! {
         #encoded => (#encoded.len(), Self::#variant_name_ident),
@@ -712,7 +750,7 @@ impl Enum {
 
     let const_encoded_len_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded_len = repr.to_encoded_len(v.tag());
+      let encoded_len = repr.to_encode_len(v.tag());
 
       quote! {
         Self::#variant_name_ident => #encoded_len,
@@ -755,16 +793,37 @@ impl Enum {
       impl<'a> ::core::convert::TryFrom<&'a [::core::primitive::u8]> for #name_ident {
         type Error = #path_to_grost::__private::DecodeError;
 
+        #[inline]
         fn try_from(src: &'a [::core::primitive::u8]) -> ::core::result::Result<Self, Self::Error> {
           Self::const_decode(src).map(|(_, this)| this)
         }
       }
 
+      impl #path_to_grost::__private::varing::Varint for #name_ident {
+        const MAX_ENCODED_LEN: ::core::primitive::usize = #repr_max_encoded_len;
+        const MIN_ENCODED_LEN: ::core::primitive::usize = #repr_min_encoded_len;
+
+        #[inline]
+        fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::varing::EncodeError> {
+          self.const_encode_to(buf)
+        }
+
+        #[inline]
+        fn encoded_len(&self) -> ::core::primitive::usize {
+          self.const_encoded_len()
+        }
+
+        #[inline]
+        fn decode(src: &[::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError> {
+          Self::const_decode(src)
+        }
+      }
+
       impl #name_ident {
         /// The maximum encoded length in bytes.
-        pub const MAX_ENCODED_LEN: usize = #repr_max_encoded_len;
+        pub const MAX_ENCODED_LEN: ::core::primitive::usize = #repr_max_encoded_len;
         /// The minimum encoded length in bytes.
-        pub const MIN_ENCODED_LEN: usize = #repr_min_encoded_len;
+        pub const MIN_ENCODED_LEN: ::core::primitive::usize = #repr_min_encoded_len;
 
         /// Returns the enum variant from the raw representation.
         #[inline]
@@ -796,6 +855,18 @@ impl Enum {
               return ::either::Either::Right(#repr_encode_fn(*val));
             },
           })
+        }
+
+        /// Returns the encoded bytes of the enum variant.
+        #[inline]
+        pub const fn const_encode_to(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, #path_to_grost::__private::EncodeError> {
+          match self {
+            #(#const_encode_to_branches)*
+            Self::Unknown(val) => match #repr_encode_fn(*val) {
+              ::core::result::Result::Ok(len) => ::core::result::Result::Ok(len),
+              ::core::result::Result::Err(e) => ::core::result::Result::Err(#path_to_grost::__private::EncodeError::from_varint_error(e)),
+            },
+          }
         }
 
         /// Decodes the enum variant from the encoded bytes.
@@ -858,20 +929,14 @@ impl Enum {
       }
 
       impl #path_to_grost::__private::Encode for #name_ident {
+        #[inline]
         fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
-          let encoded = self.const_encode();
-          let len = encoded.len();
-          let buf_len = buf.len();
-          if buf_len < len {
-            return ::core::result::Result::Err(::grost::__private::EncodeError::insufficient_buffer(len, buf_len));
-          }
-          buf[..len].copy_from_slice(encoded);
-          ::core::result::Result::Ok(len)
+          #path_to_grost::__private::varing::Varint::encode(self, buf)
         }
 
         #[inline]
         fn encoded_len(&self) -> ::core::primitive::usize {
-          self.const_encoded_len()
+          #path_to_grost::__private::varing::Varint::encoded_len(self)
         }
       }
 
@@ -892,31 +957,35 @@ impl Enum {
       impl<'de> #path_to_grost::__private::Decode<'de> for #name_ident {
         #[inline]
         fn decode(src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError> {
-          Self::const_decode(src)
+          #path_to_grost::__private::varing::Varint::decode(src)
         }
       }
 
       #decode_owned 
 
       impl #path_to_grost::__private::IntoTarget<Self> for #name_ident {
+        #[inline]
         fn into_target(self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
           ::core::result::Result::Ok(self)
         }
       }
 
       impl #path_to_grost::__private::TypeRef<Self> for #name_ident {
+        #[inline]
         fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
           ::core::result::Result::Ok(*self)
         }
       }
 
       impl #path_to_grost::__private::TypeOwned<Self> for #name_ident {
+        #[inline]
         fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
           ::core::result::Result::Ok(*self)
         }
       }
 
       impl<'a> ::core::convert::From<&'a Self> for #name_ident {
+        #[inline]
         fn from(e: &'a Self) -> Self {
           *e
         }
