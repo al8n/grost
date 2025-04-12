@@ -1,8 +1,9 @@
 #![allow(clippy::wrong_self_convention)]
 
-use std::{borrow::Cow, collections::HashSet};
+use std::{borrow::Cow, num::NonZeroI128, sync::Arc};
 
 use heck::ToSnakeCase as _;
+use indexmap::IndexSet;
 use quote::{format_ident, quote, ToTokens};
 use smol_str::SmolStr;
 use syn::{parse_quote, Visibility};
@@ -279,31 +280,142 @@ impl ToTokens for EnumRepr {
   }
 }
 
-pub struct Variant {
+#[derive(Clone)]
+pub struct EnumVariant {
   name: SafeIdent,
   description: Option<SmolStr>,
   as_str_case: Option<Heck>,
   default: bool,
-  tag: i128,
+  tag: NonZeroI128,
 }
 
-impl Variant {
+impl PartialEq for EnumVariant {
+  fn eq(&self, other: &Self) -> bool {
+    self.tag == other.tag && self.name == other.name
+  }
+}
+
+impl Eq for EnumVariant {}
+
+impl core::hash::Hash for EnumVariant {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    self.name.hash(state);
+    self.tag.hash(state);
+  }
+}
+
+impl EnumVariant {
+  /// Creates a new enum variant.
+  pub fn new(name: SafeIdent, tag: NonZeroI128) -> Self {
+    Self {
+      name,
+      description: None,
+      as_str_case: None,
+      default: false,
+      tag,
+    }
+  }
+
+  /// Marks the enum variant is default or not.
+  pub fn with_default(mut self, default: bool) -> Self {
+    self.default = default;
+    self
+  }
+
+  /// Sets the description of the enum variant.
+  pub fn with_description(mut self, description: Option<SmolStr>) -> Self {
+    self.description = description;
+    self
+  }
+
+  /// Sets the as_str_case of the enum variant.
+  pub fn with_as_str_case(mut self, as_str_case: Option<Heck>) -> Self {
+    self.as_str_case = as_str_case;
+    self
+  }
+
   /// Returns the description of the enum.
   pub fn description(&self) -> Option<&str> {
     self.description.as_deref()
   }
+
+  /// Returns the tag of the enum variant.
+  pub fn tag(&self) -> i128 {
+    self.tag.get()
+  }
+
+  /// Returns the name of the enum variant.
+  pub fn name(&self) -> &SafeIdent {
+    &self.name
+  }
+
+  /// Returns the case of the enum variant.
+  pub fn as_str_case(&self) -> Option<&Heck> {
+    self.as_str_case.as_ref()
+  }
+
+  /// Returns the default of the enum variant.
+  pub fn default(&self) -> bool {
+    self.default
+  }
 }
 
+#[derive(Clone)]
 pub struct Enum {
   name: SafeIdent,
   description: Option<SmolStr>,
   vis: Visibility,
   repr: EnumRepr,
-  variants: Vec<Variant>,
+  variants: Arc<[EnumVariant]>,
   as_str_case: Option<Heck>,
 }
 
 impl Enum {
+  /// Creates a new enum.
+  pub fn new(name: SafeIdent, repr: EnumRepr, variants: Vec<EnumVariant>) -> Self {
+    Self {
+      name,
+      description: None,
+      vis: parse_quote! { pub },
+      repr,
+      variants: Arc::from(variants),
+      as_str_case: None,
+    }
+  }
+
+  /// Sets the visibility of the enum.
+  pub fn with_visibility(mut self, vis: Visibility) -> Self {
+    self.vis = vis;
+    self
+  }
+
+  /// Sets the description of the enum.
+  pub fn with_description(mut self, description: Option<SmolStr>) -> Self {
+    self.description = description;
+    self
+  }
+
+  /// Sets the as_str_case of the enum.
+  pub fn with_as_str_case(mut self, as_str_case: Option<Heck>) -> Self {
+    self.as_str_case = as_str_case;
+    self
+  }
+
+  /// Returns the variants of the enum.
+  pub fn variants(&self) -> &[EnumVariant] {
+    &self.variants
+  }
+
+  /// Returns the visibility of the enum.
+  pub fn visibility(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the `as_str_case` of the enum.
+  pub fn as_str_case(&self) -> Option<&Heck> {
+    self.as_str_case.as_ref()
+  }
+
   /// Returns the description of the enum.
   pub fn description(&self) -> Option<&str> {
     self.description.as_deref()
@@ -413,6 +525,7 @@ impl Enum {
     let name_ident = &self.name;
     let parse_error_name = format_ident!("Parse{}Error", name_ident.name_str());
     let parse_error_comment = format!("The error type returned when parsing [`{}`]", name_ident.name_str());
+    #[cfg(not(feature = "no-alloc"))]
     let parse_error_display = format!("Fail to parse `{}`, unknown {{}}", name_ident.name_str());
     let no_string_parse_error_display =
       format!("Fail to parse `{}`, unknown variant string", name_ident.name_str());
@@ -421,7 +534,7 @@ impl Enum {
       let name_strs = Heck::all_cases(v.name.original_str())
         .into_iter()
         .chain(Heck::all_cases(v.name.name_str()))
-        .collect::<HashSet<_>>()
+        .collect::<IndexSet<_>>()
         .into_iter();
       let variant_name_ident = &v.name;
 
@@ -430,21 +543,22 @@ impl Enum {
       }
     });
 
-    let no_string_err_branch = quote! {
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      _ => ::core::result::Result::Err(#parse_error_name {
-        _priv: (),
-      }),
-    };
-
-    let string_err_branch = quote! {
-      #[cfg(any(feature = "std", feature = "alloc"))]
+    #[cfg(not(feature = "no-alloc"))]
+    let err_branch = quote! {
       _ => ::core::result::Result::Err(#parse_error_name {
         _priv: ::std::string::ToString::to_string(src),
       }),
     };
 
-    quote! {
+    #[cfg(feature = "no-alloc")]
+    let err_branch = quote! {
+      _ => ::core::result::Result::Err(#parse_error_name {
+        _priv: (),
+      }),
+    };
+
+    #[cfg(not(feature = "no-alloc"))]
+    let def = quote! {
       #[derive(
         ::core::clone::Clone,
         ::core::fmt::Debug,
@@ -455,11 +569,13 @@ impl Enum {
       )]
       #[error(#parse_error_display, _priv)]
       #[doc = #parse_error_comment]
-      #[cfg(any(feature = "std", feature = "alloc"))]
       pub struct #parse_error_name {
         _priv: ::std::string::String,
       }
+    };
 
+    #[cfg(feature = "no-alloc")]
+    let def = quote! {
       #[derive(
         ::core::marker::Copy,
         ::core::clone::Clone,
@@ -471,19 +587,21 @@ impl Enum {
       )]
       #[error(#no_string_parse_error_display)]
       #[doc = #parse_error_comment]
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
       pub struct #parse_error_name {
         _priv: (),
       }
+    };
+
+    quote! {
+      #def
 
       impl ::core::str::FromStr for #name_ident {
         type Err = #parse_error_name;
 
         fn from_str(src: &::core::primitive::str) -> ::core::result::Result<Self, Self::Err> {
-          match src {
+          match src.trim() {
             #(#try_from_branch)*
-            #no_string_err_branch
-            #string_err_branch
+            #err_branch
           }
         }
       }
@@ -502,7 +620,8 @@ impl Enum {
     let name_ident = &self.name;
     let variants = self.variants.iter().map(|v| &v.name);
 
-    quote! {
+    #[cfg(feature = "quickcheck")]
+    let output = quote! {
       #[cfg(feature = "quickcheck")]
       const _: () = {
         use #path_to_grost::__private::quickcheck::{Arbitrary, Gen};
@@ -519,14 +638,20 @@ impl Enum {
           }
         }
       };
-    }
+    };
+
+    #[cfg(not(feature = "quickcheck"))]
+    let output = quote! {};
+
+    output
   }
 
   pub(super) fn enum_arbitrary(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name_ident = &self.name;
     let variants = self.variants.iter().map(|v| &v.name);
 
-    quote! {
+    #[cfg(feature = "arbitrary")]
+    let output = quote! {
       #[cfg(feature = "arbitrary")]
       const _: () = {
         use #path_to_grost::__private::arbitrary::{Arbitrary, Unstructured, Error};
@@ -543,7 +668,12 @@ impl Enum {
           }
         }
       };
-    }
+    };
+
+    #[cfg(not(feature = "arbitrary"))]
+    let output = quote! {};
+
+    output
   }
 
   pub(super) fn enum_repr_conversion(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
@@ -564,7 +694,7 @@ impl Enum {
 
     let const_encode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded = repr.to_encoded(v.tag);
+      let encoded = repr.to_encoded(v.tag());
 
       quote! {
         Self::#variant_name_ident => &#encoded,
@@ -573,7 +703,7 @@ impl Enum {
 
     let const_decode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded = repr.to_encoded(v.tag);
+      let encoded = repr.to_encoded(v.tag());
 
       quote! {
         #encoded => (#encoded.len(), Self::#variant_name_ident),
@@ -582,7 +712,7 @@ impl Enum {
 
     let const_encoded_len_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let encoded_len = repr.to_encoded_len(v.tag);
+      let encoded_len = repr.to_encoded_len(v.tag());
 
       quote! {
         Self::#variant_name_ident => #encoded_len,
@@ -591,7 +721,7 @@ impl Enum {
 
     let from_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let value = repr.to_value(v.tag);
+      let value = repr.to_value(v.tag());
 
       quote! {
         #value => Self::#variant_name_ident,
@@ -600,7 +730,7 @@ impl Enum {
 
     let to_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let value = repr.to_value(v.tag);
+      let value = repr.to_value(v.tag());
 
       quote! {
         Self::#variant_name_ident => #value,
@@ -710,7 +840,7 @@ impl Enum {
         ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'static,
-          U: #path_to_grost::__private::UnknownBuffer<::grost::__private::bytes::Bytes>,
+          U: #path_to_grost::__private::UnknownBuffer<#path_to_grost::__private::bytes::Bytes>,
         {
           Self::const_decode(&src)
         }
@@ -745,11 +875,11 @@ impl Enum {
         }
       }
 
-      impl #path_to_grost::__private::PartialEncode for $ty {
+      impl #path_to_grost::__private::PartialEncode for #name_ident {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn partial_encode(&self, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
           #path_to_grost::__private::Encode::encode(self, buf)
         }
 
@@ -768,23 +898,21 @@ impl Enum {
 
       #decode_owned 
 
-      impl #path_to_grost::__private::TypeRef<Self> for #name_ident {
-        fn to_target(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
-          ::core::result::Result::Ok(*self)
-        }
-
+      impl #path_to_grost::__private::IntoTarget<Self> for #name_ident {
         fn into_target(self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
           ::core::result::Result::Ok(self)
         }
       }
 
-      impl #path_to_grost::__private::TypeOwned<Self> for #name_ident {
-        fn to_target(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
+      impl #path_to_grost::__private::TypeRef<Self> for #name_ident {
+        fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
           ::core::result::Result::Ok(*self)
         }
+      }
 
-        fn into_target(self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
-          ::core::result::Result::Ok(self)
+      impl #path_to_grost::__private::TypeOwned<Self> for #name_ident {
+        fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
+          ::core::result::Result::Ok(*self)
         }
       }
 

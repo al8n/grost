@@ -11,8 +11,11 @@ categories.workspace = true
 metadata.workspace = true
 
 [features]
+default = []
 no-std = []
 no-alloc = []
+quickcheck = []
+arbitrary = []
 
 [dependencies]
 derive_more = { version = "2", features = ["unwrap", "from", "display", "is_variant"] }

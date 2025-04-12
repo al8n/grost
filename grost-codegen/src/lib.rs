@@ -30,6 +30,18 @@ impl Default for DefaultGenerator {
   }
 }
 
+impl DefaultGenerator {
+  /// Returns a new `DefaultGenerator`
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  /// Returns a new `DefaultGenerator` with the given `grost_path`
+  pub fn with_grost_path(grost_path: syn::Path) -> Self {
+    Self { grost_path }
+  }
+}
+
 impl core::fmt::Debug for DefaultGenerator {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("DefaultGenerator")
@@ -63,3 +75,6 @@ impl Generator for DefaultGenerator {
     })
   }
 }
+
+#[cfg(test)]
+mod tests;
