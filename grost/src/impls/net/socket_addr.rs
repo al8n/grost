@@ -3,7 +3,7 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use varing::utils::Buffer;
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, merge, split,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, Identifier,
 };
 
 type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
@@ -11,14 +11,14 @@ type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
 const PORT_LEN: usize = 2;
 const V4_LEN: usize = 4;
 const V6_LEN: usize = 16;
-const V4_TAG: Tag = Tag(4);
-const V6_TAG: Tag = Tag(6);
-const V4_MERGED: u32 = merge(WireType::Fixed32, V4_TAG);
-const V6_MERGED: u32 = merge(WireType::Fixed128, V6_TAG);
-const V4_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(V4_MERGED);
-const V6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(V6_MERGED);
-const V4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V4_MERGED);
-const V6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(V6_MERGED);
+const V4_TAG: Tag = Tag::new(4);
+const V6_TAG: Tag = Tag::new(6);
+const V4_MERGED: Identifier = Identifier::new(WireType::Fixed32, V4_TAG);
+const V6_MERGED: Identifier = Identifier::new(WireType::Fixed128, V6_TAG);
+const V4_MERGED_ENCODED_LEN: usize = V4_MERGED.encoded_len();
+const V6_MERGED_ENCODED_LEN: usize = V6_MERGED.encoded_len();
+const V4_MERGED_ENCODED: U32VarintBuffer = V4_MERGED.encode();
+const V6_MERGED_ENCODED: U32VarintBuffer = V6_MERGED.encode();
 
 message!(SocketAddr, SocketAddrV4, SocketAddrV6,);
 
@@ -234,7 +234,7 @@ impl DecodeOwned for SocketAddr {
 }
 
 fn decode(src: &[u8]) -> Result<(usize, SocketAddr), DecodeError> {
-  let (len, merged) = varing::decode_u32_varint(src)?;
+  let (len, merged) = Identifier::decode(src)?;
   match merged {
     V4_MERGED => {
       let (offset, addr) = Helper::<V4_LEN>::decode(&src[len..])?;
@@ -258,9 +258,8 @@ fn decode(src: &[u8]) -> Result<(usize, SocketAddr), DecodeError> {
         )),
       ))
     }
-    merged => {
-      let (_, tag) = split(merged);
-      Err(DecodeError::unknown_tag("SocketAddr", tag))
+    val => {
+      Err(DecodeError::unknown_identifier("SocketAddr", val))
     }
   }
 }

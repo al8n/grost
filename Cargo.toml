@@ -1,6 +1,8 @@
 [workspace]
 members = [
   "grost",
+  "grost-derive",
+  "grost-types",
   "grost-codegen",
   "grost-codegen-test",
 ]
@@ -21,6 +23,18 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [workspace.dependencies]
+derive_more = { version = "2", default-features = false }
+either = { version = "1", default-features = false }
+heck = { version = "0.5", default-features = false }
+paste = "1"
+proc-macro2 = { version = "1", default-features = false }
+prettyplease = { version = "0.2", default-features = false }
+quote = { version = "1", default-features = false }
+syn = "2"
+smol_str = { version = "0.3", default-features = false }
+thiserror = { version = "2", default-features = false }
 varing = { version = "0.5", default-features = false }
 
-graphrpc-types = { path = "graphrpc-types", version = "0.1", default-features = false }
+grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }
+grost-types = { version = "0.1", path = "./grost-types", default-features = false }
+grost-codegen = { version = "0.1", path = "./grost-codegen", default-features = false }

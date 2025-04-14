@@ -3,21 +3,21 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::utils::Buffer;
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, merge, split,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, Identifier, 
 };
 
 type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
-const IPV4_TAG: Tag = Tag(4);
-const IPV6_TAG: Tag = Tag(6);
-const IPV4_MERGED: u32 = merge(WireType::Fixed32, IPV4_TAG);
-const IPV6_MERGED: u32 = merge(WireType::Fixed128, IPV6_TAG);
-const IPV4_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(IPV4_MERGED);
-const IPV6_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(IPV6_MERGED);
-const IPV4_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV4_MERGED);
-const IPV6_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(IPV6_MERGED);
+const IPV4_TAG: Tag = Tag::new(4);
+const IPV6_TAG: Tag = Tag::new(6);
+const IPV4_MERGED: Identifier = Identifier::new(WireType::Fixed32, IPV4_TAG);
+const IPV6_MERGED: Identifier = Identifier::new(WireType::Fixed128, IPV6_TAG);
+const IPV4_MERGED_ENCODED_LEN: usize = IPV4_MERGED.encoded_len();
+const IPV6_MERGED_ENCODED_LEN: usize = IPV6_MERGED.encoded_len();
+const IPV4_MERGED_ENCODED: U32VarintBuffer = IPV4_MERGED.encode();
+const IPV6_MERGED_ENCODED: U32VarintBuffer = IPV6_MERGED.encode();
 
 message!(IpAddr, Ipv4Addr, Ipv6Addr,);
 
@@ -115,7 +115,7 @@ impl Encode for IpAddr {
 
 macro_rules! decode_ip {
   ($buf:expr) => {{
-    let (offset, merged) = varing::decode_u32_varint($buf)?;
+    let (offset, merged) = Identifier::decode($buf)?;
 
     match merged {
       IPV4_MERGED => {
@@ -137,10 +137,7 @@ macro_rules! decode_ip {
         Ok((offset + IPV6_LEN, IpAddr::V6(ip)))
       }
       val => {
-        // I do not think we need to handle unknown tags here
-        // If someday we have IpAddr::V8, we may have already retired, and do not code anymore :)
-        let (_, tag) = split(val);
-        Err(DecodeError::unknown_tag("IpAddr", tag))
+        Err(DecodeError::unknown_identifier("IpAddr", val))
       }
     }
   }};

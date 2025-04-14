@@ -1,4 +1,6 @@
-use super::{DecodeError, EncodeError, Tag, WireType, split};
+use grost_types::Identifier;
+
+use super::{error::{DecodeError, EncodeError}, Tag, WireType};
 
 /// A buffer that stores the [`Unknown`] data type.
 ///
@@ -212,8 +214,8 @@ impl<B> Unknown<B> {
   where
     B: From<&'a [u8]>,
   {
-    let (mut data_offset, merged) = varing::decode_u32_varint(buf)?;
-    let (wire_type, tag) = split(merged);
+    let (mut data_offset, merged) = Identifier::decode(buf)?;
+    let (wire_type, tag) = merged.into_components();
 
     macro_rules! consume_fixed {
       ($size:literal) => {{
@@ -234,7 +236,7 @@ impl<B> Unknown<B> {
       }};
     }
 
-    match wire_type {
+    match merged.wire_type() {
       WireType::LengthDelimited => {
         let (size_len, size) = varing::decode_u32_varint(&buf[data_offset..])?;
         data_offset += size_len;
@@ -317,8 +319,8 @@ where
   /// Decodes the unknown data type.
   pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
     let buf_ref = buf.as_ref();
-    let (mut data_offset, merged) = varing::decode_u32_varint(buf_ref)?;
-    let (wire_type, tag) = split(merged);
+    let (mut data_offset, merged) = Identifier::decode(buf_ref)?;
+    let (wire_type, tag) = merged.into_components();
 
     macro_rules! consume_fixed {
       ($size:literal) => {{
@@ -510,8 +512,8 @@ impl<'a> UnknownRef<'a> {
 
   /// Decodes the unknown data type.
   pub fn decode(buf: &'a [u8]) -> Result<(usize, Self), DecodeError> {
-    let (mut data_offset, merged) = varing::decode_u32_varint(buf)?;
-    let (wire_type, tag) = split(merged);
+    let (mut data_offset, merged) = Identifier::decode(buf)?;
+    let (wire_type, tag) = merged.into_components();
 
     macro_rules! consume_fixed {
       ($size:literal) => {{

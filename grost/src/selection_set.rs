@@ -3,13 +3,14 @@ use core::num::NonZeroUsize;
 #[cfg(feature = "bytes_1")]
 use bytes_1 as bytes;
 
+use grost_types::Identifier;
 use varing::{Varint, utils::Buffer};
 
 use crate::{IntoTarget, TypeBorrowed};
 
 use super::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Message, Tag, TypeOwned, TypeRef, Unknown,
-  UnknownRef, UnknownRefBuffer, Wirable, WireType, merge,
+  Decode, DecodeOwned, Encode, Message, Tag, TypeOwned, TypeRef, Unknown,
+  UnknownRef, UnknownRefBuffer, Wirable, WireType, error::{EncodeError, DecodeError},
 };
 
 /// A selection set.
@@ -42,23 +43,23 @@ pub enum SelectionSet<S, B> {
 
 type U32VarintBuffer = Buffer<{ <u32 as Varint>::MAX_ENCODED_LEN + 1 }>;
 
-const ALL_TAG: Tag = Tag(1);
-const NONE_TAG: Tag = Tag(2);
-const SET_TAG: Tag = Tag(3);
-const ALL_MERGED: u32 = merge(WireType::Zst, ALL_TAG);
-const NONE_MERGED: u32 = merge(WireType::Zst, NONE_TAG);
-const ALL_ENCODED_LEN: usize = varing::encoded_u32_varint_len(ALL_MERGED);
-const NONE_ENCODED_LEN: usize = varing::encoded_u32_varint_len(NONE_MERGED);
-const ALL_ENCODED: U32VarintBuffer = varing::encode_u32_varint(ALL_MERGED);
-const NONE_ENCODED: U32VarintBuffer = varing::encode_u32_varint(NONE_MERGED);
+const ALL_TAG: Tag = Tag::new(1);
+const NONE_TAG: Tag = Tag::new(2);
+const SET_TAG: Tag = Tag::new(3);
+const ALL_MERGED: Identifier = Identifier::new(WireType::Zst, ALL_TAG);
+const NONE_MERGED: Identifier = Identifier::new(WireType::Zst, NONE_TAG);
+const ALL_ENCODED_LEN: usize = ALL_MERGED.encoded_len();
+const NONE_ENCODED_LEN: usize = NONE_MERGED.encoded_len();
+const ALL_ENCODED: U32VarintBuffer = ALL_MERGED.encode();
+const NONE_ENCODED: U32VarintBuffer = NONE_MERGED.encode();
 
 impl<S, B> SelectionSet<S, B>
 where
   S: Wirable,
 {
-  const SET_MERGED: u32 = merge(S::WIRE_TYPE, SET_TAG);
-  const SET_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(Self::SET_MERGED);
-  const SET_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(Self::SET_MERGED);
+  const SET_MERGED: Identifier = Identifier::new(S::WIRE_TYPE, SET_TAG);
+  const SET_MERGED_ENCODED_LEN: usize = Self::SET_MERGED.encoded_len();
+  const SET_MERGED_ENCODED: U32VarintBuffer = Self::SET_MERGED.encode();
 }
 
 impl<S, B> Message for SelectionSet<S, B>
@@ -142,7 +143,7 @@ macro_rules! encoded_len {
 
 macro_rules! decode {
   ($ty:ident::$de:ident($buf:ident,$unknown_buffer:ident $(, $converter:ident)?)) => {{
-    let (mut offset, merged) = varing::decode_u32_varint($buf)?;
+    let (mut offset, merged) = Identifier::decode($buf)?;
 
     match merged {
       ALL_MERGED => Ok((offset, Self::All)),
@@ -206,9 +207,9 @@ impl<S> EncodedSelectionSet<'_, S>
 where
   S: Wirable,
 {
-  const SET_MERGED: u32 = merge(S::WIRE_TYPE, SET_TAG);
-  const SET_MERGED_ENCODED_LEN: usize = varing::encoded_u32_varint_len(Self::SET_MERGED);
-  const SET_MERGED_ENCODED: U32VarintBuffer = varing::encode_u32_varint(Self::SET_MERGED);
+  const SET_MERGED: Identifier = Identifier::new(S::WIRE_TYPE, SET_TAG);
+  const SET_MERGED_ENCODED_LEN: usize = Self::SET_MERGED.encoded_len();
+  const SET_MERGED_ENCODED: U32VarintBuffer = Self::SET_MERGED.encode();
 }
 
 impl<S> Wirable for EncodedSelectionSet<'_, S> {}
@@ -362,7 +363,7 @@ where
   where
     U: crate::UnknownBuffer<bytes::Bytes>,
   {
-    let (mut offset, merged) = varing::decode_u32_varint(&buf)?;
+    let (mut offset, merged) = Identifier::decode(&buf)?;
 
     match merged {
       ALL_MERGED => Ok((offset, Self::All)),

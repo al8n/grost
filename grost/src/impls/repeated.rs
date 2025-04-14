@@ -1,7 +1,8 @@
+use grost_types::Identifier;
 use ref_cast::RefCast;
 use varing::{encode_u32_varint_to, encoded_u32_varint_len};
 
-use crate::{Encode, EncodeError, Tag, Wirable, WireType, merge};
+use crate::{Encode, error::EncodeError, Tag, Wirable, WireType};
 
 /// A wrapper type for repeated fields.
 ///
@@ -75,8 +76,7 @@ where
           offset += item.encode(&mut buf[offset..])?;
         }
         WireType::LengthDelimited => {
-          let merged = merge(WireType::LengthDelimited, tag);
-          let merged_len = encode_u32_varint_to(merged, &mut buf[offset..])?;
+          let merged_len = Identifier::new(WireType::LengthDelimited, tag).encode_to(&mut buf[offset..])?;
           offset += merged_len;
           offset += item.encode_with_prefix(&mut buf[offset..])?;
         }
@@ -121,8 +121,7 @@ where
     match <T::Item<'_> as Wirable>::WIRE_TYPE {
       WireType::LengthDelimited => self.encode(tag, buf),
       _ => {
-        let merged = merge(WireType::LengthDelimited, tag);
-        let mut written = encode_u32_varint_to(merged, buf)?;
+        let mut written = Identifier::new(WireType::LengthDelimited, tag).encode_to(buf)?;
 
         if encoded_len > u32::MAX as usize {
           return Err(EncodeError::TooLarge);
@@ -141,8 +140,7 @@ where
       WireType::Zst => encoded_u32_varint_len(self.0.len() as u32),
       WireType::Varint => self.0.iter().map(|e| Encode::encoded_len(&e)).sum(),
       WireType::LengthDelimited => {
-        let merged = merge(WireType::LengthDelimited, tag);
-        let merged_len = encoded_u32_varint_len(merged);
+        let merged_len = Identifier::new(WireType::LengthDelimited, tag).encoded_len();
         self
           .0
           .iter()
@@ -164,8 +162,7 @@ where
     match <T::Item<'_> as Wirable>::WIRE_TYPE {
       WireType::LengthDelimited => encoded_len,
       _ => {
-        let merged = merge(WireType::LengthDelimited, tag);
-        let merged_len = encoded_u32_varint_len(merged);
+        let merged_len = Identifier::new(WireType::LengthDelimited, tag).encoded_len();
         let encoded_len_size = encoded_u32_varint_len(encoded_len as u32);
         merged_len + encoded_len_size + encoded_len
       }

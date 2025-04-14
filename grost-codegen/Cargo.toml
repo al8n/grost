@@ -24,27 +24,23 @@ bnum_0_13 = []
 # support types from `ruint = "1"`
 ruint_1 = []
 
-
 # generate quichcheck implementations and quickcheck unit tests
 quickcheck = []
 # generate code for the `arbitrary` crate
 arbitrary = []
 
-
-
-
 [dependencies]
 cfg-if = "1"
-derive_more = { version = "2", features = ["unwrap", "from", "display", "is_variant"] }
-either = "1"
-heck = "0.5"
+derive_more = { workspace = true, features = ["unwrap", "from", "display", "is_variant"] }
+either.workspace = true
+heck.workspace = true
 indexmap = "2"
-proc-macro2 = "1"
-prettyplease = { version = "0.2" }
-paste = "1"
-smol_str = "0.3"
-syn = { version = "2", features = ["full"] }
-thiserror = "2"
-anyhow = "1"
-quote = "1"
+grost-types.workspace = true
+paste.workspace = true
+prettyplease.workspace = true
+proc-macro2 = { workspace = true, features = ["default"] }
+quote = { workspace = true, features = ["default"] }
+syn = { workspace = true, features = ["full"] }
+smol_str.workspace = true
+thiserror.workspace = true
 varing.workspace = true

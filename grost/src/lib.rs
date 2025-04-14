@@ -7,14 +7,12 @@ extern crate alloc as std;
 extern crate std;
 
 pub use buffer::Buffer;
-pub use error::{DecodeError, EncodeError};
-
+pub use grost_types::{WireType, Tag, Identifier, skip};
 pub use impls::*;
 pub use selection_set::SelectionSet;
-pub use tag::Tag;
-
 pub use unknown::*;
-pub use wire_type::WireType;
+
+use error::{DecodeError, EncodeError};
 
 #[cfg(feature = "bytes_1")]
 pub use bytes_1 as bytes;
@@ -27,16 +25,14 @@ pub use tinyvec_1 as tinyvec;
 
 mod buffer;
 /// The error module contains all the error types used in the `Grost`.
-mod error;
+pub mod error;
 #[macro_use]
 mod macros;
 /// Traits implemented for primitive types and common types.
 mod impls;
 mod selection_set;
-mod tag;
 mod unknown;
 mod utils;
-mod wire_type;
 
 /// A message type that can be encoded and decoded.
 ///
@@ -484,70 +480,6 @@ where
   }
 }
 
-/// Merge wire type and tag into a byte.
-#[inline]
-pub const fn merge(ty: WireType, tag: Tag) -> u32 {
-  (tag.get() << 3) | (ty as u8 as u32)
-}
-
-/// Split a merged `u32` into wire type and tag.
-#[inline]
-pub const fn split(val: u32) -> (WireType, Tag) {
-  let wire_type = val & 0b111; // Get last 3 bits for wire type
-  let tag = val >> 3; // Shift right to get the tag
-  // Using from_u8_unchecked since we know wire_type is within 0-7
-  (WireType::from_u8_unchecked(wire_type as u8), Tag(tag))
-}
-
-/// Skip a field in the buffer.
-#[inline]
-pub const fn skip(src: &[u8]) -> Result<usize, DecodeError> {
-  let buf_len = src.len();
-  if buf_len == 0 {
-    return Ok(0);
-  }
-
-  let mut offset = 0;
-  let (wire_type, _) = match varing::decode_u32_varint(src) {
-    Ok((bytes_read, val)) => {
-      offset += bytes_read;
-      split(val)
-    }
-    Err(e) => return Err(DecodeError::from_varint_error(e)),
-  };
-
-  let (_, src) = src.split_at(offset);
-  let val = match wire_type {
-    WireType::Varint => match varing::consume_varint(src) {
-      Ok(bytes_read) => offset + bytes_read,
-      Err(e) => return Err(DecodeError::from_varint_error(e)),
-    },
-    WireType::LengthDelimited => {
-      // Skip length-delimited field by reading the length and skipping the payload
-      if src.is_empty() {
-        return Err(DecodeError::buffer_underflow());
-      }
-
-      match varing::decode_u32_varint(src) {
-        Ok((bytes_read, length)) => offset + bytes_read + length as usize,
-        Err(e) => return Err(DecodeError::from_varint_error(e)),
-      }
-    }
-    WireType::Byte => offset + 1,
-    WireType::Fixed16 => offset + 2,
-    WireType::Fixed32 => offset + 4,
-    WireType::Fixed64 => offset + 8,
-    WireType::Fixed128 => offset + 16,
-    WireType::Zst => offset,
-  };
-
-  if val > buf_len {
-    return Ok(buf_len);
-  }
-
-  Ok(val)
-}
-
 #[doc(hidden)]
 #[cfg(debug_assertions)]
 #[inline]
@@ -575,6 +507,7 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
+  pub use error::*;
   pub use either;
   pub use varing;
 

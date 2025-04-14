@@ -3,7 +3,7 @@ const _: () = {
   use regex_1::{Regex, bytes::Regex as BytesRegex};
   use smol_str_0_3::SmolStr;
 
-  use crate::DecodeError;
+  use crate::error::DecodeError;
 
   str_bridge!(
     Regex {

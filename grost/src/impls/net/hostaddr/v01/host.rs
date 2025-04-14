@@ -1,11 +1,10 @@
 use core::net::IpAddr;
 
 use hostaddr_0_1::{Domain, Host};
-use varing::{encode_u32_varint, encoded_u32_varint_len};
 
 use crate::{
   Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, PartialEncode, Tag,
-  TypeRef, Wirable, WireType, merge,
+  TypeRef, Wirable, WireType, Identifier,
 };
 
 impl<S> Wirable for Host<S> {}
@@ -17,17 +16,17 @@ const IPV4_TAG: Tag = Tag::new(4);
 const IPV6_TAG: Tag = Tag::new(6);
 const DOMAIN_TAG: Tag = Tag::new(1);
 
-const IPV4_MERGED: u32 = merge(WireType::Fixed32, IPV4_TAG);
-const IPV6_MERGED: u32 = merge(WireType::Fixed128, IPV6_TAG);
-const DOMAIN_MERGED: u32 = merge(WireType::LengthDelimited, DOMAIN_TAG);
+const IPV4_MERGED: Identifier = Identifier::new(WireType::Fixed32, IPV4_TAG);
+const IPV6_MERGED: Identifier = Identifier::new(WireType::Fixed128, IPV6_TAG);
+const DOMAIN_MERGED: Identifier = Identifier::new(WireType::LengthDelimited, DOMAIN_TAG);
 
-const IPV4_MERGED_ENCODED_LEN: usize = encoded_u32_varint_len(IPV4_MERGED);
-const IPV6_MERGED_ENCODED_LEN: usize = encoded_u32_varint_len(IPV6_MERGED);
-const DOMAIN_MERGED_ENCODED_LEN: usize = encoded_u32_varint_len(DOMAIN_MERGED);
+const IPV4_MERGED_ENCODED_LEN: usize = IPV4_MERGED.encoded_len();
+const IPV6_MERGED_ENCODED_LEN: usize = IPV6_MERGED.encoded_len();
+const DOMAIN_MERGED_ENCODED_LEN: usize = DOMAIN_MERGED.encoded_len();
 
-const IPV4_MERGED_BUFFER: &[u8] = encode_u32_varint(IPV4_MERGED).as_slice();
-const IPV6_MERGED_BUFFER: &[u8] = encode_u32_varint(IPV6_MERGED).as_slice();
-const DOMAIN_MERGED_BUFFER: &[u8] = encode_u32_varint(DOMAIN_MERGED).as_slice();
+const IPV4_MERGED_BUFFER: &[u8] = IPV4_MERGED.encode().as_slice();
+const IPV6_MERGED_BUFFER: &[u8] = IPV6_MERGED.encode().as_slice();
+const DOMAIN_MERGED_BUFFER: &[u8] = DOMAIN_MERGED.encode().as_slice();
 
 const IPV4_ENCODED_LEN: usize = IPV4_MERGED_ENCODED_LEN + 4;
 const IPV6_ENCODED_LEN: usize = IPV6_MERGED_ENCODED_LEN + 16;
@@ -131,8 +130,9 @@ where
       return Err(DecodeError::buffer_underflow());
     }
 
-    // as u32 is safe here as we know valid identifier within the 0..127
-    match src[0] as u32 {
+    let (read, id) = Identifier::decode(src)?;
+    let src = &src[read..];
+    match id {
       IPV4_MERGED => decode!(u32(src, 4)),
       IPV6_MERGED => decode!(u128(src, 6)),
       DOMAIN_MERGED => {
@@ -160,16 +160,20 @@ where
     Self: Sized + 'static,
     U: crate::UnknownBuffer<crate::bytes::Bytes>,
   {
+    use bytes_1::Buf;
+
     let buf_len = src.len();
     if buf_len == 0 {
       return Err(DecodeError::buffer_underflow());
     }
 
-    // as u32 is safe here as we know valid identifier within the 0..127
-    match src[0] as u32 {
-      IPV4_MERGED => decode!(u32(src, 4)),
-      IPV6_MERGED => decode!(u128(src, 6)),
+    let (read, id) = Identifier::decode(&src)?;
+    let buf = &src[read..];
+    match id {
+      IPV4_MERGED => decode!(u32(buf, 4)),
+      IPV6_MERGED => decode!(u128(buf, 6)),
       DOMAIN_MERGED => {
+        src.advance(read);
         let (offset, domain) =
           Domain::<S>::decode_from_bytes(src.split_to(DOMAIN_MERGED_ENCODED_LEN), ub)?;
         Ok((

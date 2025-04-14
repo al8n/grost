@@ -1,4 +1,4 @@
-use crate::DecodeError;
+use crate::error::DecodeError;
 
 mod chrono;
 mod chrono_tz;
