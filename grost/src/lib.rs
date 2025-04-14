@@ -593,6 +593,8 @@ pub mod __private {
   #[cfg(feature = "arbitrary")]
   pub use arbitrary;
 
+  pub use memchr;
+
   pub use thiserror;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]

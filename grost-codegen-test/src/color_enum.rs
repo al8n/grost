@@ -28,7 +28,7 @@ impl ::core::fmt::Display for Color {
     }
 }
 impl Color {
-    /// Returns the string representation of the enum variant.
+    /// Try to return the enum variant as a `str`, if the variant is unknown, it will return the value of the unknown variant.
     #[inline]
     pub const fn try_as_str(
         &self,
@@ -69,10 +69,24 @@ impl ::core::str::FromStr for Color {
         src: &::core::primitive::str,
     ) -> ::core::result::Result<Self, Self::Err> {
         match src.trim() {
-            "RED" | "Red" | "red" => ::core::result::Result::Ok(Self::Red),
-            "GREEN" | "Green" | "green" => ::core::result::Result::Ok(Self::Green),
+            "red" | "RED" | "Red" => ::core::result::Result::Ok(Self::Red),
+            "green" | "GREEN" | "Green" => ::core::result::Result::Ok(Self::Green),
             "blue" | "BLUE" | "Blue" => ::core::result::Result::Ok(Self::Blue),
-            _ => {
+            val => {
+                if let ::core::option::Option::Some(remaining) = val
+                    .strip_prefix("Unknown(")
+                    .or_else(|| val.strip_prefix("unknown("))
+                {
+                    if let ::core::option::Option::Some(remaining) = remaining
+                        .strip_suffix(')')
+                    {
+                        if let ::core::result::Result::Ok(val) = <::core::primitive::u32 as ::core::str::FromStr>::from_str(
+                            remaining,
+                        ) {
+                            return ::core::result::Result::Ok(Self::Unknown(val));
+                        }
+                    }
+                }
                 ::core::result::Result::Err(ParseColorError {
                     _priv: ::std::string::ToString::to_string(src),
                 })

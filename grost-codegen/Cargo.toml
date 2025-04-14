@@ -11,10 +11,14 @@ categories.workspace = true
 metadata.workspace = true
 
 [features]
-default = []
-no-std = []
-no-alloc = []
+default = ["std"]
+# generate code for std environment
+std = []
+# generate code for alloc environment
+alloc = []
+# generate quichcheck implementations and quickcheck unit tests
 quickcheck = []
+# generate code for the `arbitrary` crate
 arbitrary = []
 
 [dependencies]

@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-
 use heck::*;
+use indexmap::IndexSet;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, derive_more::IsVariant)]
 pub enum Heck {
@@ -19,7 +18,7 @@ pub enum Heck {
 }
 
 impl Heck {
-  pub fn all_cases(s: &str) -> HashSet<String> {
+  pub fn all_cases(s: &str) -> IndexSet<String> {
     [
       Self::AsciiLower.convert(s),
       Self::AsciiUpper.convert(s),

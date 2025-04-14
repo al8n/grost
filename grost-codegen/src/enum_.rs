@@ -512,7 +512,7 @@ impl Enum {
       }
 
       impl #name_ident {
-        /// Returns the string representation of the enum variant.
+        /// Try to return the enum variant as a `str`, if the variant is unknown, it will return the value of the unknown variant. 
         #[inline]
         pub const fn try_as_str(&self) -> ::core::result::Result<&'static ::core::primitive::str, #repr_ty> {
           ::core::result::Result::Ok(match self {
@@ -558,14 +558,14 @@ impl Enum {
       "The error type returned when parsing [`{}`]",
       name_ident.name_str()
     );
-    #[cfg(not(feature = "no-alloc"))]
+    #[cfg(any(feature = "alloc", feature = "std"))]
     let error_display = {
       let err_display = format!("Fail to parse `{}`, unknown {{}}", name_ident.name_str());
       quote! {
         ::core::write!(f, #err_display, self._priv)
       }
     };
-    #[cfg(feature = "no-alloc")]
+    #[cfg(not(any(feature = "alloc", feature = "std")))]
     let error_display = {
       let err_display = format!(
         "Fail to parse `{}`, unknown variant string",
@@ -589,21 +589,43 @@ impl Enum {
       }
     });
 
-    #[cfg(not(feature = "no-alloc"))]
+    let repr_ty = self.repr.to_full_qualified_ty();
+
+    #[cfg(any(feature = "alloc", feature = "std"))]
     let err_branch = quote! {
-      _ => ::core::result::Result::Err(#parse_error_name {
-        _priv: ::std::string::ToString::to_string(src),
-      }),
+      val => {
+        if let ::core::option::Option::Some(remaining) = val.strip_prefix("Unknown(").or_else(|| val.strip_prefix("unknown(")) {
+          if let ::core::option::Option::Some(remaining) = remaining.strip_suffix(')') {
+            if let ::core::result::Result::Ok(val) = <#repr_ty as ::core::str::FromStr>::from_str(remaining) {
+              return ::core::result::Result::Ok(Self::Unknown(val));
+            }
+          }
+        }
+
+        ::core::result::Result::Err(#parse_error_name {
+          _priv: ::std::string::ToString::to_string(src),
+        })
+      },
     };
 
-    #[cfg(feature = "no-alloc")]
+    #[cfg(not(any(feature = "alloc", feature = "std")))]
     let err_branch = quote! {
-      _ => ::core::result::Result::Err(#parse_error_name {
-        _priv: (),
-      }),
+      val => {
+        if let ::core::option::Option::Some(remaining) = val.strip_prefix("Unknown(").or_else(|| val.strip_prefix("unknown(")) {
+          if let ::core::option::Option::Some(remaining) = remaining.strip_suffix(')') {
+            if let ::core::result::Result::Ok(val) = <#repr_ty as ::core::str::FromStr>::from_str(remaining) {
+              return ::core::result::Result::Ok(Self::Unknown(val));
+            }
+          }
+        }
+
+        ::core::result::Result::Err(#parse_error_name {
+          _priv: (),
+        })
+      },
     };
 
-    #[cfg(not(feature = "no-alloc"))]
+    #[cfg(any(feature = "alloc", feature = "std"))]
     let def = quote! {
       #[derive(
         ::core::clone::Clone,
@@ -618,7 +640,7 @@ impl Enum {
       }
     };
 
-    #[cfg(feature = "no-alloc")]
+    #[cfg(not(any(feature = "alloc", feature = "std")))]
     let def = quote! {
       #[derive(
         ::core::marker::Copy,
@@ -952,7 +974,7 @@ impl Enum {
   pub(super) fn enum_codec(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name_ident = &self.name;
 
-    #[cfg(not(feature = "no-alloc"))]
+    #[cfg(any(feature = "alloc", feature = "std"))]
     let decode_owned = quote! {
       impl #path_to_grost::__private::DecodeOwned for #name_ident
       {
@@ -970,7 +992,7 @@ impl Enum {
       }
     };
 
-    #[cfg(feature = "no-alloc")]
+    #[cfg(not(any(feature = "alloc", feature = "std")))]
     let decode_owned = quote! {
       impl #path_to_grost::__private::DecodeOwned for #name_ident {}
     };
