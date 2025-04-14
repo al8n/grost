@@ -494,7 +494,10 @@ impl Enum {
     });
 
     let name_ident = &self.name;
-    let unknown_str = self.as_str_case.unwrap_or(Heck::UpperCamel).convert("Unknown");
+    let unknown_str = self
+      .as_str_case
+      .unwrap_or(Heck::UpperCamel)
+      .convert("Unknown");
     let unknown = format!("{unknown_str}({{}})");
 
     quote! {
@@ -512,7 +515,7 @@ impl Enum {
       }
 
       impl #name_ident {
-        /// Try to return the enum variant as a `str`, if the variant is unknown, it will return the value of the unknown variant. 
+        /// Try to return the enum variant as a `str`, if the variant is unknown, it will return the value of the unknown variant.
         #[inline]
         pub const fn try_as_str(&self) -> ::core::result::Result<&'static ::core::primitive::str, #repr_ty> {
           ::core::result::Result::Ok(match self {

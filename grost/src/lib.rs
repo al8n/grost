@@ -588,10 +588,10 @@ pub mod __private {
   #[cfg(feature = "simdutf8")]
   pub use simdutf8::basic::from_utf8;
 
-  #[cfg(feature = "quickcheck")]
-  pub use quickcheck;
   #[cfg(feature = "arbitrary")]
   pub use arbitrary;
+  #[cfg(feature = "quickcheck")]
+  pub use quickcheck;
 
   pub use memchr;
 

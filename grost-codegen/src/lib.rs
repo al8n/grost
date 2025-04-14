@@ -3,16 +3,23 @@ use quote::{ToTokens, quote};
 pub use case::*;
 pub use enum_::*;
 pub use safe_ident::*;
+pub use struct_::*;
 
 mod case;
 mod safe_ident;
 
 /// Enum structs
 mod enum_;
+/// structs
+mod struct_;
+
+/// Types for the generator
+pub mod ty;
 
 pub trait Generator {
   type Error;
 
+  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error>;
   fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error>;
 }
 
@@ -52,6 +59,14 @@ impl core::fmt::Debug for DefaultGenerator {
 
 impl Generator for DefaultGenerator {
   type Error = ();
+
+  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
+    let basic = struct_.struct_basic();
+
+    Ok(quote! {
+      #basic
+    })
+  }
 
   fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = enum_.enum_defination();

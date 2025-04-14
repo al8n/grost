@@ -16,12 +16,25 @@ default = ["std"]
 std = []
 # generate code for alloc environment
 alloc = []
+
+# support types from `arbitrary-int = "1"`
+arbitrary-int_1 = []
+# support types from `bnum = "0.13"`
+bnum_0_13 = []
+# support types from `ruint = "1"`
+ruint_1 = []
+
+
 # generate quichcheck implementations and quickcheck unit tests
 quickcheck = []
 # generate code for the `arbitrary` crate
 arbitrary = []
 
+
+
+
 [dependencies]
+cfg-if = "1"
 derive_more = { version = "2", features = ["unwrap", "from", "display", "is_variant"] }
 either = "1"
 heck = "0.5"
