@@ -1,3 +1,4 @@
+use grost_types::WireType;
 use quote::ToTokens;
 use smol_str::SmolStr;
 use syn::Type;
@@ -39,77 +40,45 @@ pub enum Dependency {
 #[derive(Clone)]
 pub struct Ty {
   ty: Type,
-  debug: bool,
+  wire_ty: Option<WireType>,
   copy: bool,
-  partial_eq: bool,
-  partial_ord: bool,
-  eq: bool,
-  ord: bool,
-  hash: bool,
-  clone: bool,
 }
 
 impl Ty {
+  /// Creates a new [`Ty`] with the given [`Type`]
   pub fn new(ty: Type) -> Self {
     Self {
       ty,
-      debug: false,
+      wire_ty: None,
       copy: false,
-      partial_eq: false,
-      partial_ord: false,
-      eq: false,
-      ord: false,
-      hash: false,
-      clone: false
     }
   }
 
-  /// Sets this ty implements `Copy`, `Clone`.
+  /// Sets the [`WireType`] of this type
+  pub fn with_wire_ty(mut self, wire_ty: Option<WireType>) -> Self {
+    self.wire_ty = wire_ty;
+    self
+  }
+
+  /// Sets if this ty implements `Copy`
   pub fn with_copy(mut self) -> Self {
     self.copy = true;
-    self.clone = true;
     self
   }
 
-  pub fn with_clone(mut self, clone: bool) -> Self {
-    self.clone = clone;
-    self
-  }
-
-  pub fn debug(&self) -> bool {
-    self.debug
-  }
-
+  /// Gets if this ty implements `Copy`
   pub fn copy(&self) -> bool {
     self.copy
   }
 
-  pub fn partial_eq(&self) -> bool {
-    self.partial_eq
-  }
-
-  pub fn partial_ord(&self) -> bool {
-    self.partial_ord
-  }
-
-  pub fn eq(&self) -> bool {
-    self.eq
-  }
-
-  pub fn ord(&self) -> bool {
-    self.ord
-  }
-
-  pub fn hash(&self) -> bool {
-    self.hash
-  }
-
-  pub fn clonable(&self) -> bool {
-    self.clone
-  }
-
-  pub fn ty(&self) -> &Type {
+  /// Returns the [`Type`] of this ty
+  pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the [`WireType`] of this ty
+  pub const fn wire_type(&self) -> Option<WireType> {
+    self.wire_ty
   }
 }
 

@@ -1,3 +1,4 @@
+use grost_types::WireType;
 use quote::{ToTokens, quote};
 
 pub use case::*;
@@ -61,7 +62,7 @@ impl Generator for DefaultGenerator {
   type Error = ();
 
   fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
-    let basic = struct_.struct_basic();
+    let basic = struct_.struct_basic(&self.grost_path);
 
     Ok(quote! {
       #basic
@@ -94,6 +95,39 @@ impl Generator for DefaultGenerator {
       #quickcheck
       #arbitrary
     })
+  }
+}
+
+trait WireTypeExt {
+  fn raw(&self) -> &'static str;
+  fn to_tokens(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream;
+}
+
+impl WireTypeExt for WireType {
+  fn raw(&self) -> &'static str {
+    match self {
+      Self::Zst => "WireType::Zst",
+      Self::Varint => "WireType::Varint",
+      Self::LengthDelimited => "WireType::LengthDelimited",
+      Self::Byte => "WireType::Byte",
+      Self::Fixed16 => "WireType::Fixed16",
+      Self::Fixed32 => "WireType::Fixed32",
+      Self::Fixed64 => "WireType::Fixed64",
+      Self::Fixed128 => "WireType::Fixed128",
+    }
+  }
+
+  fn to_tokens(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    match self {
+      Self::Zst => quote! { #path_to_grost::__private::WireType::Zst },
+      Self::Varint => quote! { #path_to_grost::__private::WireType::Varint },
+      Self::LengthDelimited => quote! { #path_to_grost::__private::WireType::LengthDelimited },
+      Self::Byte => quote! { #path_to_grost::__private::WireType::Byte },
+      Self::Fixed16 => quote! { #path_to_grost::__private::WireType::Fixed16 },
+      Self::Fixed32 => quote! { #path_to_grost::__private::WireType::Fixed32 },
+      Self::Fixed64 => quote! { #path_to_grost::__private::WireType::Fixed64 },
+      Self::Fixed128 => quote! { #path_to_grost::__private::WireType::Fixed128 },
+    }
   }
 }
 

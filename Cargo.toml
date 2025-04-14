@@ -1,10 +1,11 @@
 [workspace]
 members = [
   "grost",
-  "grost-derive",
-  "grost-types",
   "grost-codegen",
   "grost-codegen-test",
+  "grost-derive",
+  "grost-parser",
+  "grost-types",
 ]
 resolver = "3"
 exclude = ["guides"]
@@ -35,6 +36,7 @@ smol_str = { version = "0.3", default-features = false }
 thiserror = { version = "2", default-features = false }
 varing = { version = "0.5", default-features = false }
 
-grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }
-grost-types = { version = "0.1", path = "./grost-types", default-features = false }
 grost-codegen = { version = "0.1", path = "./grost-codegen", default-features = false }
+grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }
+grost-parser = { version = "0.1", path = "./grost-parser", default-features = false }
+grost-types = { version = "0.1", path = "./grost-types", default-features = false }
