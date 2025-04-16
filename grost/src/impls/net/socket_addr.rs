@@ -3,7 +3,7 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use varing::utils::Buffer;
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, Identifier,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Identifier, Tag, Wirable, WireType,
 };
 
 type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
@@ -258,8 +258,6 @@ fn decode(src: &[u8]) -> Result<(usize, SocketAddr), DecodeError> {
         )),
       ))
     }
-    val => {
-      Err(DecodeError::unknown_identifier("SocketAddr", val))
-    }
+    val => Err(DecodeError::unknown_identifier("SocketAddr", val)),
   }
 }

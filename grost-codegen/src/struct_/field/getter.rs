@@ -1,7 +1,7 @@
 use either::Either;
-use quote::{format_ident, quote, ToTokens};
-use smol_str::{format_smolstr, SmolStr};
-use syn::{parse_quote, Type, Visibility};
+use quote::{ToTokens, format_ident, quote};
+use smol_str::{SmolStr, format_smolstr};
+use syn::{Type, Visibility, parse_quote};
 
 use crate::SafeIdent;
 
@@ -83,7 +83,7 @@ impl Getter {
   }
 
   /// Sets the copy of the getter function
-  /// 
+  ///
   /// If this is set to `true`, the getter function will return a copy of the field
   /// instead of a reference.
   pub fn with_copy(mut self, copy: bool) -> Self {
@@ -130,7 +130,7 @@ impl Getter {
     self.const_fn = const_fn;
     self
   }
-  
+
   /// Returns the attributes of the getter function
   pub fn attributes(&self) -> &[syn::Attribute] {
     &self.attributes
@@ -164,13 +164,15 @@ impl Getter {
   /// Returns the output type of the getter function
   pub fn output(&self) -> Type {
     match &self.data {
-      Either::Left(ty) => if self.mutable {
-        parse_quote! { &mut #ty }
-      } else if self.copy {
-        ty.clone()
-      } else {
-        parse_quote! { &#ty }
-      },
+      Either::Left(ty) => {
+        if self.mutable {
+          parse_quote! { &mut #ty }
+        } else if self.copy {
+          ty.clone()
+        } else {
+          parse_quote! { &#ty }
+        }
+      }
       Either::Right(converter) => converter.ty().clone(),
     }
   }
@@ -209,7 +211,7 @@ impl ToTokens for Getter {
       let s = s.as_str();
       quote! {#[doc = #s]}
     });
-    let const_fn = self.const_fn().then_some(quote!{const});
+    let const_fn = self.const_fn().then_some(quote! {const});
     let mutable = self.mutable().then_some(quote! { mut });
     let attrs = &self.attributes;
     let body = match &self.data {

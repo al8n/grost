@@ -1,4 +1,5 @@
-use varing::{decode_u32_varint, encode_u32_varint_to};
+use grost_types::Identifier;
+use varing::decode_u32_varint;
 
 use crate::{
   Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, TypeOwned, TypeRef,
@@ -37,27 +38,17 @@ impl<const N: usize> Encode for [u8; N] {
     N
   }
 
-  fn encoded_len_with_prefix(&self) -> usize {
+  fn encoded_len_with_identifier(&self, identifier: Identifier) -> usize {
     match N {
       0 | 1 | 2 | 4 | 8 | 16 => N,
-      _ => self.as_slice().encoded_len_with_prefix(),
+      _ => self.as_slice().encoded_len_with_identifier(identifier),
     }
   }
 
-  fn encode_with_prefix(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode_with_identifier(&self, identifier: Identifier, buf: &mut [u8]) -> Result<usize, EncodeError> {
     match N {
       0 | 1 | 2 | 4 | 8 | 16 => self.encode(buf),
-      _ => {
-        let len_size = encode_u32_varint_to(N as u32, buf)
-          .map_err(|e| EncodeError::from(e).update(self.encoded_len(), buf.len()))?;
-        if len_size + N > buf.len() {
-          return Err(EncodeError::insufficient_buffer(len_size + N, buf.len()));
-        }
-
-        buf[len_size..len_size + N].copy_from_slice(self.as_slice());
-
-        Ok(len_size + N)
-      }
+      _ => self.as_slice().encode_with_identifier(identifier, buf),
     }
   }
 }

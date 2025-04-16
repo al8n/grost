@@ -1,1 +1,1 @@
-pub use grost_types::{EncodeError, DecodeError};
+pub use grost_types::{DecodeError, EncodeError};

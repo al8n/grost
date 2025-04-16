@@ -3,6 +3,7 @@ use std::{fs::OpenOptions, io::Write, num::NonZeroI128, path::PathBuf};
 use grost_codegen::*;
 
 const ENUM_FILE_NAME: &str = "color_enum";
+const STRUCT_FILE_NAME: &str = "user_struct";
 
 fn main() {
   enum_codegen_test(ENUM_FILE_NAME);
@@ -13,8 +14,11 @@ fn main() {
     .truncate(true)
     .open("src/lib.rs")
     .unwrap();
+  // lib
+  //   .write_all(format!("mod {ENUM_FILE_NAME};").as_bytes())
+  //   .unwrap();
   lib
-    .write_all(format!("mod {ENUM_FILE_NAME};").as_bytes())
+    .write_all(format!("mod {STRUCT_FILE_NAME};").as_bytes())
     .unwrap();
 }
 

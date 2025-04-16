@@ -3,7 +3,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use varing::utils::Buffer;
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Tag, Wirable, WireType, Identifier, 
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Identifier, Tag, Wirable, WireType,
 };
 
 type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
@@ -136,9 +136,7 @@ macro_rules! decode_ip {
         ));
         Ok((offset + IPV6_LEN, IpAddr::V6(ip)))
       }
-      val => {
-        Err(DecodeError::unknown_identifier("IpAddr", val))
-      }
+      val => Err(DecodeError::unknown_identifier("IpAddr", val)),
     }
   }};
 }

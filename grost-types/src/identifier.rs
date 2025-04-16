@@ -2,7 +2,6 @@ use varing::Varint;
 
 use super::{Tag, WireType};
 
-
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Identifier {
@@ -113,9 +112,8 @@ impl Varint for Identifier {
   #[inline]
   fn decode(buf: &[u8]) -> Result<(usize, Self), varing::DecodeError>
   where
-    Self: Sized
+    Self: Sized,
   {
     Self::decode_inner(buf)
   }
 }
-

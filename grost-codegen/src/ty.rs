@@ -40,15 +40,17 @@ pub enum Dependency {
 #[derive(Clone)]
 pub struct Ty {
   ty: Type,
+  schema_type: SmolStr,
   wire_ty: WireType,
   copy: bool,
 }
 
 impl Ty {
   /// Creates a new [`Ty`] with the given [`Type`]
-  pub fn new(ty: Type, wire_ty: WireType) -> Self {
+  pub fn new(ty: Type, schema_type: SmolStr, wire_ty: WireType) -> Self {
     Self {
       ty,
+      schema_type,
       wire_ty,
       copy: false,
     }
@@ -79,6 +81,11 @@ impl Ty {
   /// Returns the [`WireType`] of this ty
   pub const fn wire_type(&self) -> WireType {
     self.wire_ty
+  }
+
+  /// Returns the schema type of this ty
+  pub fn schema_type(&self) -> &str {
+    &self.schema_type
   }
 }
 

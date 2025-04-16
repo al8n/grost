@@ -16,6 +16,185 @@ mod identifier;
 mod tag;
 mod wire_type;
 
+#[doc(hidden)]
+pub struct StructInfoBuilder {
+  pub name: &'static str,
+  pub ty: &'static str,
+  pub schema_name: &'static str,
+  pub schema_type: &'static str,
+  pub fields: &'static [FieldInfo],
+}
+
+impl StructInfoBuilder {
+  #[inline]
+  pub const fn build(self) -> StructInfo {
+    StructInfo {
+      name: self.name,
+      ty: self.ty,
+      schema_name: self.schema_name,
+      schema_type: self.schema_type,
+      fields: self.fields,
+    }
+  }
+}
+
+/// The struct information of an object in the Graph protocol buffer
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct StructInfo {
+  name: &'static str,
+  ty: &'static str,
+  schema_name: &'static str,
+  schema_type: &'static str,
+  fields: &'static [FieldInfo],
+}
+
+impl StructInfo {
+  /// Get the name of the struct
+  #[inline]
+  pub const fn name(&self) -> &'static str {
+    self.name
+  }
+
+  /// Get the rust type of the struct, the type must be a full quailified.
+  ///
+  /// See [`schema_type`](StructInfo::schema_type) for the type in the Graph protocol buffer file.
+  #[inline]
+  pub const fn ty(&self) -> &'static str {
+    self.ty
+  }
+
+  /// Get the schema name of the struct.
+  ///
+  /// This will returns the name in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_name(&self) -> &'static str {
+    self.schema_name
+  }
+
+  /// Get the schema type of the struct.
+  ///
+  /// This will returns the type in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_type(&self) -> &'static str {
+    self.schema_type
+  }
+
+  /// Get the fields of this struct
+  #[inline]
+  pub const fn fields(&self) -> &'static [FieldInfo] {
+    self.fields
+  }
+}
+
+#[doc(hidden)]
+pub struct FieldInfoBuilder {
+  pub name: &'static str,
+  pub ty: &'static str,
+  pub schema_name: &'static str,
+  pub schema_type: &'static str,
+  pub identifier: Identifier,
+  pub encoded_identifier: &'static [u8],
+  pub encoded_identifier_len: usize,
+}
+
+impl FieldInfoBuilder {
+  #[inline]
+  pub const fn build(self) -> FieldInfo {
+    FieldInfo {
+      name: self.name,
+      ty: self.ty,
+      schema_name: self.schema_name,
+      schema_type: self.schema_type,
+      identifier: self.identifier,
+      encoded_identifier: self.encoded_identifier,
+      encoded_identifier_len: self.encoded_identifier_len,
+    }
+  }
+}
+
+/// The information of a field in the Graph protocol buffer
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct FieldInfo {
+  name: &'static str,
+  ty: &'static str,
+  schema_name: &'static str,
+  schema_type: &'static str,
+  identifier: Identifier,
+  encoded_identifier: &'static [u8],
+  encoded_identifier_len: usize,
+}
+
+impl FieldInfo {
+  #[doc(hidden)]
+  pub const fn __init__(
+    name: &'static str,
+    ty: &'static str,
+    schema_name: &'static str,
+    schema_type: &'static str,
+    identifier: Identifier,
+    encoded_identifier: &'static [u8],
+    encoded_identifier_len: usize,
+  ) -> Self {
+    Self {
+      name,
+      ty,
+      schema_name,
+      schema_type,
+      identifier,
+      encoded_identifier,
+      encoded_identifier_len,
+    }
+  }
+
+  /// Get the name of the field
+  #[inline]
+  pub const fn name(&self) -> &'static str {
+    self.name
+  }
+
+  /// Get the rust type of the field, the type must be a full quailified.
+  ///
+  /// See [`schema_type`](FieldInfo::schema_type) for the type in the Graph protocol buffer file.
+  #[inline]
+  pub const fn ty(&self) -> &'static str {
+    self.ty
+  }
+
+  /// Get the schema name of the field.
+  ///
+  /// This will returns the name in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_name(&self) -> &'static str {
+    self.schema_name
+  }
+
+  /// Get the schema type of the field.
+  ///
+  /// This will returns the type in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_type(&self) -> &'static str {
+    self.schema_type
+  }
+
+  /// Get the identifier of the field
+  #[inline]
+  pub const fn identifier(&self) -> Identifier {
+    self.identifier
+  }
+
+  /// Get the encoded identifier of the field
+  #[inline]
+  pub const fn encoded_identifier(&self) -> &'static [u8] {
+    self.encoded_identifier
+  }
+
+  /// Get the encoded identifier length of the field
+  #[inline]
+  pub const fn encoded_identifier_len(&self) -> usize {
+    self.encoded_identifier_len
+  }
+}
+
 /// Skip a field from the Graph protocol buffer
 #[inline]
 pub const fn skip(src: &[u8]) -> Result<usize, DecodeError> {

@@ -3,8 +3,8 @@ use core::net::IpAddr;
 use hostaddr_0_1::{Domain, Host};
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, PartialEncode, Tag,
-  TypeRef, Wirable, WireType, Identifier,
+  Decode, DecodeError, DecodeOwned, Encode, EncodeError, Identifier, IntoTarget, Message,
+  PartialEncode, Tag, TypeRef, Wirable, WireType,
 };
 
 impl<S> Wirable for Host<S> {}

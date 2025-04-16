@@ -7,9 +7,12 @@ extern crate alloc as std;
 extern crate std;
 
 pub use buffer::Buffer;
-pub use grost_types::{WireType, Tag, Identifier, skip};
+pub use context::Context;
+pub use decode::*;
+pub use encode::*;
+pub use grost_types::{FieldInfo, Identifier, StructInfo, Tag, WireType, skip};
 pub use impls::*;
-pub use selection_set::SelectionSet;
+// pub use selection_set::SelectionSet;
 pub use unknown::*;
 
 use error::{DecodeError, EncodeError};
@@ -24,6 +27,10 @@ pub use smol_str_0_3 as smol_str;
 pub use tinyvec_1 as tinyvec;
 
 mod buffer;
+mod context;
+mod decode;
+mod encode;
+
 /// The error module contains all the error types used in the `Grost`.
 pub mod error;
 #[macro_use]
@@ -46,7 +53,7 @@ pub trait Message: Encode {
   /// A encoded representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and decoded from raw bytes.
-  type Encoded<'a>: Copy + TypeRef<Self> + Encode + Decode<'a>
+  type Encoded<'a>: Copy + TypeRef<Self> + Encode + Decode<'a, Self::Encoded<'a>>
   where
     Self: Sized + 'a;
 
@@ -59,7 +66,7 @@ pub trait Message: Encode {
     Self: 'a;
 
   /// An owned encoded representation of this type.
-  type EncodedOwned: Clone + TypeOwned<Self> + Encode + DecodeOwned
+  type EncodedOwned: Clone + TypeOwned<Self> + Encode + Decode<'static, Self::EncodedOwned>
   where
     Self: Sized + 'static;
 }
@@ -137,349 +144,6 @@ pub trait Wirable {
   const WIRE_TYPE: WireType = WireType::LengthDelimited;
 }
 
-/// A trait for types that can be decoded from bytes with a lifetime.
-///
-/// This trait provides methods to decode data from byte slices,
-/// with support for both direct and length-prefixed decoding.
-///
-/// * `'de` - The lifetime of the input data
-pub trait Decode<'de>: Wirable {
-  /// Decodes an instance of this type from a byte buffer.
-  ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
-  fn decode<B>(src: &'de [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
-  where
-    Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>;
-
-  /// Decodes a length-prefixed instance of this type from a byte buffer.
-  ///
-  /// The function first reads a length prefix, then uses that to determine
-  /// how many bytes to consume for the actual data.
-  fn decode_length_prefix<B>(
-    src: &'de [u8],
-    unknown_buffer: &mut B,
-  ) -> Result<(usize, Self), DecodeError>
-  where
-    Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>,
-  {
-    if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return Self::decode(src, unknown_buffer);
-    }
-
-    let (mut offset, len) = varing::decode_u32_varint(src)?;
-    let len = len as usize;
-    if len + offset > src.len() {
-      return Err(DecodeError::buffer_underflow());
-    }
-
-    let src = &src[offset..offset + len];
-    let (bytes_read, value) = Self::decode(src, unknown_buffer)?;
-
-    #[cfg(debug_assertions)]
-    debug_assert_read_eq::<Self>(bytes_read, len);
-
-    offset += bytes_read;
-    Ok((offset, value))
-  }
-}
-
-/// A marker trait for types that can be decoded without borrowing data.
-///
-/// Types implementing this trait can be decoded into owned values
-/// without maintaining a borrow of the original data.
-///
-/// This is useful for deserialization scenarios where the input data
-/// may not outlive the decoded value.
-pub trait DecodeOwned: Decode<'static> + 'static {
-  /// Decodes an instance of this type from a byte buffer.
-  ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  #[cfg_attr(docsrs, doc(cfg(any(feature = "std", feature = "alloc"))))]
-  fn decode_from_bytes<U>(
-    src: bytes::Bytes,
-    unknown_buffer: &mut U,
-  ) -> Result<(usize, Self), DecodeError>
-  where
-    Self: Sized + 'static,
-    U: UnknownBuffer<bytes::Bytes>;
-
-  /// Decodes a length-prefixed instance of this type from a byte buffer.
-  ///
-  /// The function first reads a length prefix, then uses that to determine
-  /// how many bytes to consume for the actual data.
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  #[cfg_attr(docsrs, doc(cfg(any(feature = "std", feature = "alloc"))))]
-  fn decode_length_prefix_from_bytes<U>(
-    src: bytes::Bytes,
-    unknown_buffer: &mut U,
-  ) -> Result<(usize, Self), DecodeError>
-  where
-    Self: Sized + 'static,
-    U: UnknownBuffer<bytes::Bytes>,
-  {
-    if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return Self::decode_from_bytes(src, unknown_buffer);
-    }
-
-    let (mut offset, len) = varing::decode_u32_varint(&src)?;
-    let len = len as usize;
-    if len + offset > src.len() {
-      return Err(DecodeError::buffer_underflow());
-    }
-
-    let src = src.slice(offset..offset + len);
-    let (bytes_read, value) = Self::decode_from_bytes(src, unknown_buffer)?;
-
-    #[cfg(debug_assertions)]
-    debug_assert_read_eq::<Self>(bytes_read, len);
-
-    offset += bytes_read;
-    Ok((offset, value))
-  }
-}
-
-/// A trait for serializing data to binary format with support for various wire types.
-///
-/// This trait provides methods to encode data into binary representations,
-/// calculate required buffer sizes, and handle length-delimited encoding.
-pub trait Encode: Wirable {
-  /// Encodes the message into the provided buffer.
-  ///
-  /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// [`Encode::encoded_len`] can be used to determine the required buffer size.
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError>;
-
-  /// Returns the number of bytes needed to encode the message.
-  ///
-  /// This is used to determine the buffer size required for encoding.
-  fn encoded_len(&self) -> usize;
-
-  /// Returns the encoded length of the data including the length delimiter prefix.
-  ///
-  /// For `WireType::LengthDelimited`, this includes the varint-encoded length
-  /// prefix followed by the actual data length. For other wire types, this is
-  /// equivalent to [`Encode::encoded_len`].
-  fn encoded_len_with_prefix(&self) -> usize {
-    let len = self.encoded_len();
-    match Self::WIRE_TYPE {
-      WireType::LengthDelimited => varing::encoded_u32_varint_len(len as u32) + len,
-      _ => len,
-    }
-  }
-
-  /// Encodes the message into a [`Vec`](std::vec::Vec).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec(&self) -> Result<std::vec::Vec<u8>, error::EncodeError> {
-    let mut buf = std::vec![0; self.encoded_len()];
-    self.encode(&mut buf)?;
-    Ok(buf)
-  }
-
-  /// Encodes the message into a [`Bytes`](::bytes::Bytes).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes(&self) -> Result<bytes::Bytes, EncodeError> {
-    self.encode_to_vec().map(Into::into)
-  }
-
-  /// Encodes the message with a length-delimiter prefix to a buffer.
-  ///
-  /// For `WireType::LengthDelimited`, this prepends a varint-encoded length
-  /// before the message data. For other wire types, this behaves the same as [`Encode::encode`].
-  ///
-  /// An error will be returned if the buffer does not have sufficient capacity.
-  fn encode_with_prefix(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return self.encode(buf);
-    }
-
-    let len = self.encoded_len();
-    if len > u32::MAX as usize {
-      return Err(EncodeError::TooLarge);
-    }
-
-    let mut offset = 0;
-    offset += varing::encode_u32_varint_to(len as u32, buf)?;
-    offset += self.encode(&mut buf[offset..])?;
-
-    #[cfg(debug_assertions)]
-    debug_assert_write_eq::<Self>(offset, self.encoded_len_with_prefix());
-
-    Ok(offset)
-  }
-
-  /// Encodes the message with a length-delimiter into a new [`std::vec::Vec<u8>`].
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec_with_prefix(&self) -> Result<::std::vec::Vec<u8>, EncodeError> {
-    let len = self.encoded_len_with_prefix();
-    let mut vec = ::std::vec![0; len];
-    self.encode_with_prefix(&mut vec).map(|_| vec)
-  }
-
-  /// Encodes the message with a length-delimiter into a [`Bytes`](::bytes::Bytes).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes_with_prefix(&self) -> Result<bytes::Bytes, EncodeError> {
-    self.encode_to_vec_with_prefix().map(Into::into)
-  }
-}
-
-/// A trait for serializing data to binary format with support for various wire types.
-///
-/// This trait provides methods to encode data into binary representations,
-/// calculate required buffer sizes, and handle length-delimited encoding.
-pub trait PartialEncode: Wirable {
-  /// The selection type for the message, which determines which fields to include
-  /// in the encoded output.
-  type Selection;
-
-  /// Encodes the message into the provided buffer.
-  ///
-  /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// [`Encode::encoded_len`] can be used to determine the required buffer size.
-  fn partial_encode(
-    &self,
-    buf: &mut [u8],
-    selection: &Self::Selection,
-  ) -> Result<usize, EncodeError>;
-
-  /// Returns the number of bytes needed to encode the message.
-  ///
-  /// This is used to determine the buffer size required for encoding.
-  fn partial_encoded_len(&self, selection: &Self::Selection) -> usize;
-
-  /// Returns the encoded length of the data including the length delimiter prefix.
-  ///
-  /// For `WireType::LengthDelimited`, this includes the varint-encoded length
-  /// prefix followed by the actual data length. For other wire types, this is
-  /// equivalent to [`Encode::encoded_len`].
-  fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> usize {
-    let len = self.partial_encoded_len(selection);
-    match Self::WIRE_TYPE {
-      WireType::LengthDelimited => varing::encoded_u32_varint_len(len as u32) + len,
-      _ => len,
-    }
-  }
-
-  /// Encodes the message into a [`Vec`](std::vec::Vec).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_vec(
-    &self,
-    selection: &Self::Selection,
-  ) -> Result<std::vec::Vec<u8>, error::EncodeError> {
-    let mut buf = std::vec![0; self.partial_encoded_len(selection)];
-    self.partial_encode(&mut buf, selection)?;
-    Ok(buf)
-  }
-
-  /// Encodes the message into a [`Bytes`](::bytes::Bytes).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_bytes(
-    &self,
-    selection: &Self::Selection,
-  ) -> Result<bytes::Bytes, EncodeError> {
-    self.partial_encode_to_vec(selection).map(Into::into)
-  }
-
-  /// Encodes the message with a length-delimiter prefix to a buffer.
-  ///
-  /// For `WireType::LengthDelimited`, this prepends a varint-encoded length
-  /// before the message data. For other wire types, this behaves the same as [`Encode::encode`].
-  ///
-  /// An error will be returned if the buffer does not have sufficient capacity.
-  fn partial_encode_with_prefix(
-    &self,
-    buf: &mut [u8],
-    selection: &Self::Selection,
-  ) -> Result<usize, EncodeError> {
-    if Self::WIRE_TYPE != WireType::LengthDelimited {
-      return self.partial_encode(buf, selection);
-    }
-
-    let len = self.partial_encoded_len(selection);
-    if len > u32::MAX as usize {
-      return Err(EncodeError::TooLarge);
-    }
-
-    let mut offset = 0;
-    offset += varing::encode_u32_varint_to(len as u32, buf)?;
-    offset += self.partial_encode(&mut buf[offset..], selection)?;
-
-    #[cfg(debug_assertions)]
-    debug_assert_write_eq::<Self>(offset, self.partial_encoded_len_with_prefix(selection));
-
-    Ok(offset)
-  }
-
-  /// Encodes the message with a length-delimiter into a new [`std::vec::Vec<u8>`].
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_vec_with_prefix(
-    &self,
-    selection: &Self::Selection,
-  ) -> Result<::std::vec::Vec<u8>, EncodeError> {
-    let len = self.partial_encoded_len_with_prefix(selection);
-    let mut vec = ::std::vec![0; len];
-    self
-      .partial_encode_with_prefix(&mut vec, selection)
-      .map(|_| vec)
-  }
-
-  /// Encodes the message with a length-delimiter into a [`Bytes`](::bytes::Bytes).
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn partial_encode_to_bytes_with_prefix(
-    &self,
-    selection: &Self::Selection,
-  ) -> Result<bytes::Bytes, EncodeError> {
-    self
-      .partial_encode_to_vec_with_prefix(selection)
-      .map(Into::into)
-  }
-}
-
-impl<T> Wirable for &T
-where
-  T: Wirable + ?Sized,
-{
-  const WIRE_TYPE: WireType = T::WIRE_TYPE;
-}
-
-impl<T> Encode for &T
-where
-  T: Encode + ?Sized,
-{
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    (*self).encode(buf)
-  }
-
-  fn encoded_len(&self) -> usize {
-    (*self).encoded_len()
-  }
-}
-
-impl<T> PartialEncode for &T
-where
-  T: PartialEncode + ?Sized,
-{
-  type Selection = T::Selection;
-
-  fn partial_encode(
-    &self,
-    buf: &mut [u8],
-    selection: &Self::Selection,
-  ) -> Result<usize, EncodeError> {
-    (*self).partial_encode(buf, selection)
-  }
-
-  fn partial_encoded_len(&self, selection: &Self::Selection) -> usize {
-    (*self).partial_encoded_len(selection)
-  }
-}
-
 #[doc(hidden)]
 #[cfg(debug_assertions)]
 #[inline]
@@ -507,8 +171,9 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
-  pub use error::*;
   pub use either;
+  pub use error::*;
+  pub use grost_types::{FieldInfoBuilder, StructInfoBuilder};
   pub use varing;
 
   #[cfg(feature = "bytes")]

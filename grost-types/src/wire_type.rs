@@ -25,7 +25,7 @@ pub enum WireType {
 
 impl WireType {
   /// Decode a wire type from a byte.
-  /// 
+  ///
   /// ## Panics
   ///
   /// Panics if the value is not a valid wire type.

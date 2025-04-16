@@ -1,7 +1,7 @@
 use either::Either;
-use quote::{format_ident, quote, ToTokens};
-use smol_str::{format_smolstr, SmolStr};
-use syn::{parse_quote, Type, Visibility};
+use quote::{ToTokens, format_ident, quote};
+use smol_str::{SmolStr, format_smolstr};
+use syn::{Type, Visibility, parse_quote};
 
 use crate::SafeIdent;
 
@@ -115,7 +115,7 @@ impl Setter {
     self.const_fn = const_fn;
     self
   }
-  
+
   /// Returns the attributes of the setter function
   pub fn attributes(&self) -> &[syn::Attribute] {
     &self.attributes
@@ -188,7 +188,7 @@ impl ToTokens for Setter {
       quote! {#[doc = #s]}
     });
     let const_fn = self.const_fn().then_some(quote! { const });
-    let take = (!self.take()).then_some(quote! { &mut });
+    let take = (!self.take()).then_some(quote! { & });
     let attrs = &self.attributes;
     let body = match &self.data {
       Either::Left(_) => {
@@ -210,7 +210,7 @@ impl ToTokens for Setter {
       #description
       #(#attrs)*
       #[inline]
-      #vis #const_fn fn #fn_name(#take self, #field_name: #input) -> #take Self {
+      #vis #const_fn fn #fn_name(#take mut self, #field_name: #input) -> #take Self {
         #body
       }
     });

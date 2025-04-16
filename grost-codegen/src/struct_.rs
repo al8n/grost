@@ -1,7 +1,6 @@
-use smol_str::SmolStr;
-use syn::{parse_quote, Attribute, Visibility};
 use quote::quote;
-
+use smol_str::SmolStr;
+use syn::{Attribute, Visibility, parse_quote};
 
 use crate::SafeIdent;
 
@@ -12,6 +11,7 @@ pub mod field;
 
 pub struct Struct {
   name: SafeIdent,
+  selection_name: SafeIdent,
   description: Option<SmolStr>,
   fields: Vec<Field>,
   attrs: Vec<Attribute>,
@@ -21,12 +21,19 @@ pub struct Struct {
 impl Struct {
   pub fn new(name: SafeIdent) -> Self {
     Self {
+      selection_name: SafeIdent::new(format!("{}Selection", name.name_str()).as_str()),
       name,
       description: None,
       fields: Vec::new(),
       attrs: Vec::new(),
       visibility: Some(parse_quote!(pub)),
     }
+  }
+
+  /// Change the default selection type name
+  pub fn with_selection_type_name(mut self, name: SafeIdent) -> Self {
+    self.selection_name = name;
+    self
   }
 
   pub fn with_description(mut self, description: impl Into<SmolStr>) -> Self {
@@ -108,6 +115,51 @@ impl Struct {
         }
 
         #(#accessors)*
+      }
+    }
+  }
+
+  pub(crate) fn struct_message(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    let name = &self.name;
+    let selection_name = &self.selection_name;
+
+    quote! {
+      impl #path_to_grost::__private::Wirable for #name {}
+
+      impl #path_to_grost::__private::Encode for #name {
+        #[inline]
+        fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
+          ::core::todo!()
+        }
+
+        #[inline]
+        fn encoded_len(&self) -> ::core::primitive::usize {
+          ::core::todo!()
+        }
+      }
+
+      impl #path_to_grost::__private::PartialEncode for #name {
+        type Selection = #selection_name;
+
+        #[inline]
+        fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
+          ::core::todo!()
+        }
+
+        #[inline]
+        fn partial_encoded_len(&self, selection: &Self::Selection,) -> ::core::primitive::usize {
+          ::core::todo!()
+        }
+      }
+
+      impl<'de> #path_to_grost::__private::Decode<'de> for #name {
+        #[inline]
+        fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
+        where
+          B: #path_to_grost::__private::UnknownRefBuffer<'de>,
+        {
+          ::core::todo!()
+        }
       }
     }
   }

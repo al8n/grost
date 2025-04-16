@@ -33,6 +33,7 @@ std = [
   "varing/default",
   "smol_str_0_3/default",
   "thiserror/default",
+  "bitflags/std",
   "arrayvec_0_7?/default", 
   "bstr_1?/default",
   "chrono_0_4?/default",
@@ -140,6 +141,7 @@ quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck"]
 
 [dependencies]
 varing.workspace = true
+bitflags = { version = "2", default-features = false }
 derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "try_unwrap"] }
 either = { version = "1", default-features = false }
 grost-types.workspace = true

@@ -204,12 +204,12 @@ macro_rules! bridge {
     )*
   };
   (@encode_impl $bridge:ty => $to:expr) => {
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::Encode>::encode(&$to(self), buf)
+    fn encode(&self, context: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::Encode>::encode(&$to(self), context, buf)
     }
 
-    fn encoded_len(&self) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self))
+    fn encoded_len(&self, context: &$crate::__private::Context,) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self), context)
     }
   };
   (@encode $(
@@ -228,20 +228,12 @@ macro_rules! bridge {
     )*
   };
   (@partial_encode_impl $bridge:ty => $to:expr) => {
-    fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), buf, selection)
+    fn partial_encode(&self, context: &$crate::__private::Context, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), context, buf, selection)
     }
 
-    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_prefix(&$to(self), buf, selection)
-    }
-
-    fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
-    }
-
-    fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_prefix(&$to(self), selection)
+    fn partial_encoded_len(&self, context: &$crate::__private::Context, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), context, selection)
     }
   };
   (@partial_encode $(
@@ -262,11 +254,12 @@ macro_rules! bridge {
     )*
   };
   (@decode_impl $from:expr => $bridge:ty) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], ub: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<B, UB>(context: &$crate::__private::Context, src: &'de B, ub: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        B: $crate::__private::UnknownRefBuffer<'de> {
-      <$bridge as $crate::__private::Decode>::decode(src, ub).map(|(n, v)| (n, $from(v)))
+        B: $crate::__private::Buffer,
+        UB: $crate::__private::UnknownRefBuffer<'de> {
+      <$bridge as $crate::__private::Decode>::decode(context, src, ub).map(|(n, v)| (n, $from(v)))
     }
   };
   (@decode $(
@@ -414,16 +407,16 @@ macro_rules! try_from_bridge {
       <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), buf, selection)
     }
 
-    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_prefix(&$to(self), buf, selection)
+    fn partial_encode_with_identifier(&self, identifier: $crate::__private::Identifier, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_identifier(&$to(self), identifier, buf, selection)
     }
 
     fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
       <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
     }
 
-    fn partial_encoded_len_with_prefix(&self, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_prefix(&$to(self), selection)
+    fn partial_encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_identifier(&$to(self), identifier, selection)
     }
   };
   (@partial_encode $(
@@ -875,23 +868,24 @@ macro_rules! array_str {
         $crate::__private::Encode::encoded_len(&self.as_bytes())
       }
 
-      fn encoded_len_with_prefix(&self) -> ::core::primitive::usize {
+      fn encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier) -> ::core::primitive::usize {
         if N == 0 {
           return 0;
         }
 
-        $crate::__private::Encode::encoded_len_with_prefix(&self.as_bytes())
+        $crate::__private::Encode::encoded_len_with_identifier(&self.as_bytes(), identifier)
       }
 
-      fn encode_with_prefix(
+      fn encode_with_identifier(
         &self,
+        identifier: $crate::__private::Identifier,
         buf: &mut [::core::primitive::u8],
       ) -> Result<::core::primitive::usize, $crate::__private::EncodeError> {
         if N == 0 {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Encode::encode_with_prefix(&self.as_bytes(), buf)
+        $crate::__private::Encode::encode_with_identifier(&self.as_bytes(), identifier, buf)
       }
     }
 
@@ -1053,23 +1047,24 @@ macro_rules! array_bytes {
         $crate::__private::Encode::encoded_len(&$as_bytes(self))
       }
 
-      fn encoded_len_with_prefix(&self) -> ::core::primitive::usize {
+      fn encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier) -> ::core::primitive::usize {
         if N == 0 {
           return 0;
         }
 
-        $crate::__private::Encode::encoded_len_with_prefix(&$as_bytes(self))
+        $crate::__private::Encode::encoded_len_with_identifier(&$as_bytes(self), identifier)
       }
 
-      fn encode_with_prefix(
+      fn encode_with_identifier(
         &self,
+        identifier: $crate::__private::Identifier,
         buf: &mut [::core::primitive::u8],
-      ) -> Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
         if N == 0 {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Encode::encode_with_prefix(&$as_bytes(self), buf)
+        $crate::__private::Encode::encode_with_identifier(&$as_bytes(self), identifier, buf)
       }
     }
 
@@ -1081,7 +1076,7 @@ macro_rules! array_bytes {
       fn decode<B>(
         src: &'de [::core::primitive::u8],
         _: &mut B,
-      ) -> Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
         B: $crate::__private::UnknownRefBuffer<'de>,
@@ -1319,20 +1314,12 @@ macro_rules! partial_encode_primitives {
   (@impl) => {
     type Selection = ();
 
-    fn partial_encode(&self, buf: &mut [::core::primitive::u8],  _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <Self as $crate::__private::Encode>::encode(self, buf)
+    fn partial_encode(&self, context: &$crate::__private::Context, buf: &mut [::core::primitive::u8],  _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <Self as $crate::__private::Encode>::encode(self, context, buf)
     }
 
-    fn partial_encode_with_prefix(&self, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <Self as $crate::__private::Encode>::encode_with_prefix(self, buf)
-    }
-
-    fn partial_encoded_len(&self, _: &Self::Selection) -> ::core::primitive::usize {
-      <Self as $crate::__private::Encode>::encoded_len(self)
-    }
-
-    fn partial_encoded_len_with_prefix(&self, _: &Self::Selection) -> ::core::primitive::usize {
-      <Self as $crate::__private::Encode>::encoded_len_with_prefix(self)
+    fn partial_encoded_len(&self, context: &$crate::__private::Context, _: &Self::Selection) -> ::core::primitive::usize {
+      <Self as $crate::__private::Encode>::encoded_len(self, context)
     }
   };
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
@@ -1449,11 +1436,11 @@ macro_rules! varint {
     }
   };
   (@encode_impl) => {
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
+    fn encode(&self, _: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
       $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
     }
 
-    fn encoded_len(&self) -> ::core::primitive::usize {
+    fn encoded_len(&self, _: &$crate::__private::Context,) -> ::core::primitive::usize {
       $crate::__private::varing::Varint::encoded_len(self)
     }
   };
@@ -1463,12 +1450,13 @@ macro_rules! varint {
     }
   };
   (@decode_impl) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<B, UB>(_: &$crate::__private::Context, src: &'de B, _: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::UnknownRefBuffer<'de>,
+      B: $crate::__private::Buffer,
+      UB: $crate::__private::UnknownRefBuffer<'de>,
     {
-      $crate::__private::varing::Varint::decode(src).map_err(::core::convert::Into::into)
+      $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(src)).map_err(::core::convert::Into::into)
     }
   };
   (@decode_owned $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
@@ -1595,7 +1583,7 @@ macro_rules! fixed {
     }
   };
   (@encode_impl $size:literal { $to_slice:expr $(,)? }) => {
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+    fn encode(&self, _: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
       const SIZE: ::core::primitive::usize = $size / 8;
 
       let buf_len = buf.len();
@@ -1606,7 +1594,7 @@ macro_rules! fixed {
       $to_slice(self, &mut buf[..SIZE]).map(|_| SIZE)
     }
 
-    fn encoded_len(&self) -> ::core::primitive::usize {
+    fn encoded_len(&self, _: &$crate::__private::Context) -> ::core::primitive::usize {
       const SIZE: ::core::primitive::usize = $size / 8;
       SIZE
     }
@@ -1617,12 +1605,14 @@ macro_rules! fixed {
     }
   };
   (@decode_impl $size:literal { $from_slice:expr $(,)? }) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<B, UB>(_: &$crate::__private::Context, src: &'de B, _: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::UnknownRefBuffer<'de>,
+      B: $crate::__private::Buffer,
+      UB: $crate::__private::UnknownRefBuffer<'de>,
     {
       const SIZE: ::core::primitive::usize = $size / 8;
+      let src = ::core::convert::AsRef::as_ref(src);
 
       if src.len() < SIZE {
         return Err($crate::__private::DecodeError::buffer_underflow());

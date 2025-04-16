@@ -1,14 +1,22 @@
 use grost_types::Identifier;
 
-use super::{error::{DecodeError, EncodeError}, Tag, WireType};
+use crate::Buffer;
+
+use super::{
+  Tag, WireType,
+  error::{DecodeError, EncodeError},
+};
 
 /// A buffer that stores the [`Unknown`] data type.
 ///
 /// This trait is used for forward and backward compatibility for structs.
-pub trait UnknownBuffer<B>: AsRef<[Unknown<B>]> {
+pub trait UnknownBuffer<B: ?Sized> {
+  /// Creates a new buffer.
+  fn new() -> Self;
+
   /// Pushes the unknown data type to the buffer, if the buffer is full,
   /// the given value will be returned back.
-  fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>>;
+  fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>> where B: Sized;
 
   /// Returns the capacity of the buffer.
   fn capacity(&self) -> usize;
@@ -16,25 +24,8 @@ pub trait UnknownBuffer<B>: AsRef<[Unknown<B>]> {
   /// Returns the length of the buffer.
   fn len(&self) -> usize;
 
-  /// Returns `true` if the buffer is empty.
-  fn is_empty(&self) -> bool {
-    self.len() == 0
-  }
-}
-
-/// A buffer that stores the [`UnknownRef`] data type.
-///
-/// This trait is used for forward and backward compatibility for structs.
-pub trait UnknownRefBuffer<'a>: AsRef<[UnknownRef<'a>]> {
-  /// Pushes the unknown data type to the buffer, if the buffer is full,
-  /// the given value will be returned back.
-  fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>>;
-
-  /// Returns the capacity of the buffer.
-  fn capacity(&self) -> usize;
-
-  /// Returns the length of the buffer.
-  fn len(&self) -> usize;
+  /// Returns a slice of the unknown data type.
+  fn as_slice(&self) -> &[Unknown<B>] where B: Sized;
 
   /// Returns `true` if the buffer is empty.
   fn is_empty(&self) -> bool {
@@ -42,25 +33,72 @@ pub trait UnknownRefBuffer<'a>: AsRef<[UnknownRef<'a>]> {
   }
 }
 
-impl<'a> UnknownRefBuffer<'a> for [UnknownRef<'a>; 0] {
-  fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
-    Some(value)
-  }
+impl<B: ?Sized> UnknownBuffer<B> for () {
+  fn new() -> Self {}
 
-  fn capacity(&self) -> usize {
-    0
-  }
+    fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>>
+    where 
+      B: Sized,
+    {
+        Some(value)
+    }
 
-  fn len(&self) -> usize {
-    0
-  }
+    fn capacity(&self) -> usize {
+        0
+    }
+
+    fn len(&self) -> usize {
+        0
+    }
+
+    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
+        &[]
+    }
 }
+
+// /// A buffer that stores the [`UnknownRef`] data type.
+// ///
+// /// This trait is used for forward and backward compatibility for structs.
+// pub trait UnknownRefBuffer<'a>: AsRef<[UnknownRef<'a>]> {
+//   /// Pushes the unknown data type to the buffer, if the buffer is full,
+//   /// the given value will be returned back.
+//   fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>>;
+
+//   /// Returns the capacity of the buffer.
+//   fn capacity(&self) -> usize;
+
+//   /// Returns the length of the buffer.
+//   fn len(&self) -> usize;
+
+//   /// Returns `true` if the buffer is empty.
+//   fn is_empty(&self) -> bool {
+//     self.len() == 0
+//   }
+// }
+
+// impl<'a> UnknownRefBuffer<'a> for [UnknownRef<'a>; 0] {
+//   fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
+//     Some(value)
+//   }
+
+//   fn capacity(&self) -> usize {
+//     0
+//   }
+
+//   fn len(&self) -> usize {
+//     0
+//   }
+// }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
   use std::vec::Vec;
 
   impl<B> UnknownBuffer<B> for Vec<Unknown<B>> {
+    fn new() -> Self {
+      Vec::new()
+    }
+
     fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>> {
       self.push(value);
       None
@@ -74,29 +112,33 @@ const _: () = {
       self.len()
     }
 
-    fn is_empty(&self) -> bool {
-      self.is_empty()
-    }
-  }
-
-  impl<'a> UnknownRefBuffer<'a> for Vec<UnknownRef<'a>> {
-    fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
-      self.push(value);
-      None
-    }
-
-    fn capacity(&self) -> usize {
-      self.capacity()
-    }
-
-    fn len(&self) -> usize {
-      self.len()
+    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
+      self.as_slice()
     }
 
     fn is_empty(&self) -> bool {
       self.is_empty()
     }
   }
+
+  // impl<'a> UnknownRefBuffer<'a> for Vec<UnknownRef<'a>> {
+  //   fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
+  //     self.push(value);
+  //     None
+  //   }
+
+  //   fn capacity(&self) -> usize {
+  //     self.capacity()
+  //   }
+
+  //   fn len(&self) -> usize {
+  //     self.len()
+  //   }
+
+  //   fn is_empty(&self) -> bool {
+  //     self.is_empty()
+  //   }
+  // }
 };
 
 #[cfg(feature = "heapless_0_8")]
@@ -104,6 +146,10 @@ const _: () = {
   use heapless_0_8::Vec;
 
   impl<B, const N: usize> UnknownBuffer<B> for Vec<Unknown<B>, N> {
+    fn new() -> Self {
+      Vec::new()
+    }
+
     fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>> {
       self.push(value).err()
     }
@@ -112,22 +158,8 @@ const _: () = {
       self.capacity()
     }
 
-    fn len(&self) -> usize {
-      self.as_slice().len()
-    }
-
-    fn is_empty(&self) -> bool {
-      self.is_empty()
-    }
-  }
-
-  impl<'a, const N: usize> UnknownRefBuffer<'a> for Vec<UnknownRef<'a>, N> {
-    fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
-      self.push(value).err()
-    }
-
-    fn capacity(&self) -> usize {
-      self.capacity()
+    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
+      self.as_ref()
     }
 
     fn len(&self) -> usize {
@@ -138,6 +170,24 @@ const _: () = {
       self.is_empty()
     }
   }
+
+  // impl<'a, const N: usize> UnknownRefBuffer<'a> for Vec<UnknownRef<'a>, N> {
+  //   fn push(&mut self, value: UnknownRef<'a>) -> Option<UnknownRef<'a>> {
+  //     self.push(value).err()
+  //   }
+
+  //   fn capacity(&self) -> usize {
+  //     self.capacity()
+  //   }
+
+  //   fn len(&self) -> usize {
+  //     self.as_slice().len()
+  //   }
+
+  //   fn is_empty(&self) -> bool {
+  //     self.is_empty()
+  //   }
+  // }
 };
 
 /// The unknown type, used for forward and backward compatibility.
@@ -149,24 +199,17 @@ const _: () = {
 /// trying to forward the data, the data stored in this variant will be forwarded
 /// as is.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Unknown<B> {
-  wire_type: WireType,
-  tag: Tag,
+pub struct Unknown<B: ?Sized> {
+  identifier: Identifier,
   data_offset: usize,
   data: B,
 }
 
-impl<B> Unknown<B> {
-  /// Returns the [`WireType`] of the unknown data type.
+impl<B: ?Sized> Unknown<B> {
+  /// Returns the [`Identifier`] of the unknown data type.
   #[inline]
-  pub const fn wire_type(&self) -> WireType {
-    self.wire_type
-  }
-
-  /// Returns the tag of the unknown data type.
-  #[inline]
-  pub const fn tag(&self) -> Tag {
-    self.tag
+  pub const fn identifier(&self) -> Identifier {
+    self.identifier
   }
 
   /// Returns the actual data of the unknown data type.
@@ -188,9 +231,9 @@ impl<B> Unknown<B> {
   #[inline]
   pub fn raw(&self) -> &[u8]
   where
-    B: AsRef<[u8]>,
+    B: Buffer,
   {
-    self.data.as_ref()
+    self.data.as_bytes()
   }
 
   /// Encodes the unknown data type.
@@ -210,72 +253,89 @@ impl<B> Unknown<B> {
   }
 
   /// Decodes the unknown data type.
-  pub fn decode<'a>(buf: &'a [u8]) -> Result<(usize, Self), DecodeError>
+  pub fn decode(identifier: Identifier, buf: B) -> Result<(usize, Self), DecodeError>
   where
-    B: From<&'a [u8]>,
+    B: Buffer + Sized,
   {
-    let (mut data_offset, merged) = Identifier::decode(buf)?;
-    let (wire_type, tag) = merged.into_components();
+    macro_rules! slice {
+      ($end:ident, $buf_len:ident, $buf:ident) => {{
+        if $end == $buf_len {
+          $buf  
+        } else {
+          $buf.slice(..$end)
+        }
+      }};
+    }
 
     macro_rules! consume_fixed {
-      ($size:literal) => {{
-        let end = data_offset + $size;
-        if end > buf.len() {
+      ($size:literal, $identifier_len:ident) => {{
+        let end = $identifier_len + $size;
+        let buf_len = buf.len();
+        if end > buf_len {
           return Err(DecodeError::buffer_underflow());
         }
 
         Ok((
           end,
           Self {
-            wire_type,
-            tag,
-            data_offset,
-            data: B::from(&buf[..end]),
+            identifier,
+            data_offset: $identifier_len,
+            data: slice!(end, buf_len, buf),
           },
         ))
       }};
     }
 
-    match merged.wire_type() {
+    let src = buf.as_bytes();
+    let identifier_len = identifier.encoded_len();
+    let mut offset = 0;
+    match identifier.wire_type() {
       WireType::LengthDelimited => {
-        let (size_len, size) = varing::decode_u32_varint(&buf[data_offset..])?;
-        data_offset += size_len;
-        let end = data_offset + size as usize;
-
-        if end > buf.len() {
+        if identifier_len >= src.len() {
           return Err(DecodeError::buffer_underflow());
         }
 
-        let data = B::from(&buf[..end]);
+        let (size_len, size) = varing::decode_u32_varint(&src[identifier_len..])?;
+        offset += size_len;
+        let end = offset + size as usize;
+
+        if end > src.len() {
+          return Err(DecodeError::buffer_underflow());
+        }
+
+        let data = buf.slice(..end);
         Ok((
           end,
           Self {
-            wire_type,
-            tag,
-            data_offset,
+            identifier,
+            data_offset: identifier_len + size_len,
             data,
           },
         ))
       }
       WireType::Varint => {
-        let size_len = varing::consume_varint(&buf[data_offset..])?;
-        let end = data_offset + size_len;
+        let buf_len = buf.len();
+        if identifier_len >= buf_len {
+          return Err(DecodeError::buffer_underflow());
+        }
+
+        let size_len = varing::consume_varint(&src[identifier_len..])?;
+        let end = identifier_len + size_len;
         Ok((
           end,
           Self {
-            wire_type,
-            tag,
-            data_offset,
-            data: B::from(&buf[..end]),
+            identifier,
+            data_offset: identifier_len,
+            data: slice!(end, buf_len, buf),
           },
         ))
       }
-      WireType::Byte => consume_fixed!(1),
-      WireType::Fixed16 => consume_fixed!(2),
-      WireType::Fixed32 => consume_fixed!(4),
-      WireType::Fixed64 => consume_fixed!(8),
-      WireType::Fixed128 => consume_fixed!(16),
-      WireType::Zst => consume_fixed!(0),
+      WireType::Byte => consume_fixed!(1, identifier_len),
+      WireType::Fixed16 => consume_fixed!(2, identifier_len),
+      WireType::Fixed32 => consume_fixed!(4, identifier_len),
+      WireType::Fixed64 => consume_fixed!(8, identifier_len),
+      WireType::Fixed128 => consume_fixed!(16, identifier_len),
+      WireType::Zst => consume_fixed!(0, identifier_len),
     }
   }
 
@@ -294,8 +354,8 @@ impl<B> Unknown<B> {
     B: AsRef<[u8]>,
   {
     UnknownRef {
-      wire_type: self.wire_type,
-      tag: self.tag,
+      wire_type: self.identifier.wire_type(),
+      tag: self.identifier.tag(),
       data_offset: self.data_offset,
       data: self.data.as_ref(),
     }
@@ -304,8 +364,7 @@ impl<B> Unknown<B> {
   /// Converts the unknown data type to an borrowed type.
   pub fn borrow(&self) -> Unknown<&B> {
     Unknown {
-      wire_type: self.wire_type,
-      tag: self.tag,
+      identifier: self.identifier,
       data_offset: self.data_offset,
       data: &self.data,
     }
@@ -316,74 +375,74 @@ impl<B> Unknown<B>
 where
   B: super::Buffer,
 {
-  /// Decodes the unknown data type.
-  pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
-    let buf_ref = buf.as_ref();
-    let (mut data_offset, merged) = Identifier::decode(buf_ref)?;
-    let (wire_type, tag) = merged.into_components();
+//   /// Decodes the unknown data type.
+//   pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
+//     let buf_ref = buf.as_bytes();
+//     let (mut data_offset, merged) = Identifier::decode(buf_ref)?;
+//     let (wire_type, tag) = merged.into_components();
 
-    macro_rules! consume_fixed {
-      ($size:literal) => {{
-        let end = data_offset + $size;
-        if end > buf_ref.len() {
-          return Err(DecodeError::buffer_underflow());
-        }
+//     macro_rules! consume_fixed {
+//       ($size:literal) => {{
+//         let end = data_offset + $size;
+//         if end > buf_ref.len() {
+//           return Err(DecodeError::buffer_underflow());
+//         }
 
-        Ok((
-          end,
-          Self {
-            wire_type,
-            tag,
-            data_offset,
-            data: buf.slice(..end),
-          },
-        ))
-      }};
-    }
+//         Ok((
+//           end,
+//           Self {
+//             wire_type,
+//             tag,
+//             data_offset,
+//             data: buf.slice(..end),
+//           },
+//         ))
+//       }};
+//     }
 
-    match wire_type {
-      WireType::LengthDelimited => {
-        let (size_len, size) = varing::decode_u32_varint(&buf_ref[data_offset..])?;
-        data_offset += size_len;
-        let end = data_offset + size as usize;
+//     match wire_type {
+//       WireType::LengthDelimited => {
+//         let (size_len, size) = varing::decode_u32_varint(&buf_ref[data_offset..])?;
+//         data_offset += size_len;
+//         let end = data_offset + size as usize;
 
-        if end > buf_ref.len() {
-          return Err(DecodeError::buffer_underflow());
-        }
+//         if end > buf_ref.len() {
+//           return Err(DecodeError::buffer_underflow());
+//         }
 
-        let data = buf.slice(..end);
-        Ok((
-          end,
-          Self {
-            wire_type,
-            tag,
-            data_offset,
-            data,
-          },
-        ))
-      }
-      WireType::Varint => {
-        let size_len = varing::consume_varint(&buf_ref[data_offset..])?;
-        let end = data_offset + size_len;
-        let data = buf.slice(..end);
-        Ok((
-          end,
-          Self {
-            wire_type,
-            tag,
-            data_offset,
-            data,
-          },
-        ))
-      }
-      WireType::Byte => consume_fixed!(1),
-      WireType::Fixed16 => consume_fixed!(2),
-      WireType::Fixed32 => consume_fixed!(4),
-      WireType::Fixed64 => consume_fixed!(8),
-      WireType::Fixed128 => consume_fixed!(16),
-      WireType::Zst => consume_fixed!(0),
-    }
-  }
+//         let data = buf.slice(..end);
+//         Ok((
+//           end,
+//           Self {
+//             wire_type,
+//             tag,
+//             data_offset,
+//             data,
+//           },
+//         ))
+//       }
+//       WireType::Varint => {
+//         let size_len = varing::consume_varint(&buf_ref[data_offset..])?;
+//         let end = data_offset + size_len;
+//         let data = buf.slice(..end);
+//         Ok((
+//           end,
+//           Self {
+//             wire_type,
+//             tag,
+//             data_offset,
+//             data,
+//           },
+//         ))
+//       }
+//       WireType::Byte => consume_fixed!(1),
+//       WireType::Fixed16 => consume_fixed!(2),
+//       WireType::Fixed32 => consume_fixed!(4),
+//       WireType::Fixed64 => consume_fixed!(8),
+//       WireType::Fixed128 => consume_fixed!(16),
+//       WireType::Zst => consume_fixed!(0),
+//     }
+//   }
 
   /// Converts the `Unknown<B>` to `Unknown<N>`.
   pub fn map<'a, N>(&'a self) -> Unknown<N>
@@ -391,8 +450,7 @@ where
     N: From<&'a [u8]>,
   {
     Unknown {
-      wire_type: self.wire_type,
-      tag: self.tag,
+      identifier: self.identifier,
       data_offset: self.data_offset,
       data: N::from(self.raw()),
     }
@@ -404,8 +462,7 @@ where
     N: From<B>,
   {
     Unknown {
-      wire_type: self.wire_type,
-      tag: self.tag,
+      identifier: self.identifier,
       data_offset: self.data_offset,
       data: N::from(self.data),
     }
@@ -485,8 +542,7 @@ impl<'a> UnknownRef<'a> {
     B: From<&'a [u8]>,
   {
     Unknown {
-      wire_type: self.wire_type(),
-      tag: self.tag(),
+      identifier: Identifier::new(self.wire_type, self.tag),
       data_offset: self.data_offset,
       data: B::from(self.raw()),
     }
