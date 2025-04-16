@@ -81,7 +81,7 @@ impl Struct {
     });
 
     let accessors = self.fields.iter().map(|f| f.field_accessors());
-    let consts = self.fields.iter().map(|f| f.field_consts(&self.name, path_to_grost));
+    let consts = self.fields.iter().map(|f| f.field_consts(path_to_grost));
 
     quote! {
       #[derive(::core::fmt::Debug, ::core::clone::Clone)]

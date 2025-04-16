@@ -40,22 +40,22 @@ pub enum Dependency {
 #[derive(Clone)]
 pub struct Ty {
   ty: Type,
-  wire_ty: Option<WireType>,
+  wire_ty: WireType,
   copy: bool,
 }
 
 impl Ty {
   /// Creates a new [`Ty`] with the given [`Type`]
-  pub fn new(ty: Type) -> Self {
+  pub fn new(ty: Type, wire_ty: WireType) -> Self {
     Self {
       ty,
-      wire_ty: None,
+      wire_ty,
       copy: false,
     }
   }
 
   /// Sets the [`WireType`] of this type
-  pub fn with_wire_ty(mut self, wire_ty: Option<WireType>) -> Self {
+  pub fn with_wire_ty(mut self, wire_ty: WireType) -> Self {
     self.wire_ty = wire_ty;
     self
   }
@@ -77,7 +77,7 @@ impl Ty {
   }
 
   /// Returns the [`WireType`] of this ty
-  pub const fn wire_type(&self) -> Option<WireType> {
+  pub const fn wire_type(&self) -> WireType {
     self.wire_ty
   }
 }

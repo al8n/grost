@@ -1,6 +1,6 @@
 use grost_types::Tag;
 use heck::ToShoutySnakeCase;
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility};
 
@@ -306,89 +306,30 @@ impl Field {
     }
   }
 
-  pub(crate) fn field_consts(&self, struct_name: &SafeIdent, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(crate) fn field_consts(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();
     let tag_const_name = format_ident!("{}_TAG", name);
     let tag = self.tag.get();
-    let ty = self.ty.ty();
 
-    let mut consts = vec![];
-    if let Some(wt) = self.ty.wire_type() {
-      let identifier_name = format_ident!("{}_IDENTIFIER", name);
-      let identifier_encoded_len_name = format_ident!("{}_IDENTIFIER_ENCODED_LEN", name);
-      let identifier_encode_name = format_ident!("ENCODED_{}_IDENTIFIER", name);
-      let identifier_fn_name = format_ident!("{}_identifier", field_name);
-      let identifier_encode_fn_name = format_ident!("encoded_{}_identifier", field_name);
-      let identifier_encoded_len_fn_name = format_ident!("{}_encoded_len", field_name);
-      let wt_tokens = wt.to_tokens(path_to_grost);
-      let assert_msg = format!("`{}.{}`: the wire type from derive setting is `{}`, which does not match the actaul wire type `<{} as {}::Wirable>::WIRE_TYPE`", struct_name.name_str(), field_name, wt.raw(), ty.to_token_stream(), path_to_grost.to_token_stream());
-
-      consts.push(quote! {
-        /// The identifier of the field
-        pub const #identifier_name: #path_to_grost::__private::Identifier = const {
-          ::core::assert!(<#ty as #path_to_grost::__private::Wirable>::WIRE_TYPE == #wt_tokens, #assert_msg);
-
-          #path_to_grost::__private::Identifier::new(#wt_tokens, Self::#tag_const_name)
-        };
-        /// The encoded length of the identifier
-        pub const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
-        /// The identifier in encoded
-        pub const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
-
-        /// Returns the identifier of the field
-        #[inline]
-        pub const fn #identifier_fn_name() -> #path_to_grost::__private::Identifier {
-          Self::#identifier_name
-        }
-
-        /// Returns the encoded length of the identifier
-        #[inline]
-        pub const fn #identifier_encoded_len_fn_name() -> ::core::primitive::usize {
-          Self::#identifier_encoded_len_name
-        }
-
-        /// Returns the encoded identifier
-        #[inline]
-        pub const fn #identifier_encode_fn_name() -> &[::core::primitive::u8] {
-          Self::#identifier_encode_name
-        }
-      });
-    } else {
-      let identifier_fn_name = format_ident!("{}_identifier", field_name);
-      let identifier_encode_fn_name = format_ident!("encoded_{}_identifier", field_name);
-      let identifier_encoded_len_fn_name = format_ident!("{}_encoded_len", field_name);
-
-      let identifier_encode_name = format_ident!("ENCODED_{}_IDENTIFIER", name);
-
-      consts.push(quote! {
-        /// Returns the identifier of the field
-        #[inline]
-        pub const fn #identifier_fn_name() -> #path_to_grost::__private::Identifier {
-          #path_to_grost::__private::Identifier::new(<#ty as #path_to_grost::__private::Wirable>::WIRE_TYPE, Self::#tag_const_name)
-        }
-
-        /// Returns the encoded length of the identifier
-        #[inline]
-        pub const fn #identifier_encoded_len_fn_name() -> ::core::primitive::usize {
-          Self::#identifier_fn_name().encoded_len()
-        }
-
-        /// Returns the encoded identifier
-        #[inline]
-        pub const fn #identifier_encode_fn_name() -> &'static [::core::primitive::u8] {
-          const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_fn_name().encode().as_slice();
-
-          #identifier_encode_name
-        }
-      });
-    }
+    let identifier_name = format_ident!("{}_IDENTIFIER", name);
+    let identifier_encoded_len_name = format_ident!("{}_IDENTIFIER_ENCODED_LEN", name);
+    let identifier_encode_name = format_ident!("ENCODED_{}_IDENTIFIER", name);
+    let tag_doc = format!("The tag of the field `{field_name}`");
+    let identifier_doc = format!("The identifier of the field `{field_name}`");
+    let encoded_len_doc = format!("The encoded length of the identifier of the field `{field_name}`");
+    let encode_doc = format!("The encoded identifier of the field `{field_name}`");
+    let wt_tokens = self.ty.wire_type().to_tokens(path_to_grost);
 
     quote! {
-      /// The tag of the field
+      #[doc = #tag_doc]
       pub const #tag_const_name: #path_to_grost::__private::Tag = #path_to_grost::__private::Tag::new(#tag);
-
-      #(#consts)*
+      #[doc = #identifier_doc]
+      pub const #identifier_name: #path_to_grost::__private::Identifier = #path_to_grost::__private::Identifier::new(#wt_tokens, Self::#tag_const_name);
+      #[doc = #encoded_len_doc]
+      pub const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
+      #[doc = #encode_doc]
+      pub const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
     }
   }
 
