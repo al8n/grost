@@ -195,6 +195,119 @@ impl FieldInfo {
   }
 }
 
+#[doc(hidden)]
+pub struct EnumVariantInfoBuilder<T: 'static> {
+  pub name: &'static str,
+  pub schema_name: &'static str,
+  pub description: &'static str,
+  pub value: T,
+}
+
+impl<T: Copy + 'static> EnumVariantInfoBuilder<T> {
+  #[inline]
+  pub const fn build(self) -> EnumVariantInfo<T> {
+    EnumVariantInfo {
+      name: self.name,
+      schema_name: self.schema_name,
+      description: self.description,
+      value: self.value,
+    }
+  }
+}
+
+/// The information of a variant of enum in the Graph protocol buffer
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct EnumVariantInfo<T: 'static> {
+  name: &'static str,
+  schema_name: &'static str,
+  description: &'static str,
+  value: T,
+}
+
+impl<T: 'static> EnumVariantInfo<T> {
+  /// Get the name of the variant
+  #[inline]
+  pub const fn name(&self) -> &'static str {
+    self.name
+  }
+
+  /// Get the schema name of the variant
+  #[inline]
+  pub const fn schema_name(&self) -> &'static str {
+    self.schema_name
+  }
+
+  /// Get the value of the variant
+  #[inline]
+  pub const fn value(&self) -> T
+  where
+    T: Copy,
+  {
+    self.value
+  }
+
+  /// Get the description of the variant
+  #[inline]
+  pub const fn description(&self) -> &'static str {
+    self.description
+  }
+}
+
+#[doc(hidden)]
+pub struct EnumInfoBuilder<T: 'static> {
+  pub name: &'static str,
+  pub schema_name: &'static str,
+  pub variants: &'static [EnumVariantInfo<T>],
+  pub description: &'static str,
+}
+
+impl<T: 'static> EnumInfoBuilder<T> {
+  #[inline]
+  pub const fn build(self) -> EnumInfo<T> {
+    EnumInfo {
+      name: self.name,
+      schema_name: self.schema_name,
+      variants: self.variants,
+      description: self.description,
+    }
+  }
+}
+
+/// The information of an enum in the Graph protocol buffer
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct EnumInfo<T: 'static> {
+  name: &'static str,
+  schema_name: &'static str,
+  description: &'static str,
+  variants: &'static [EnumVariantInfo<T>],
+}
+
+impl<T: 'static> EnumInfo<T> {
+  /// Get the name of the enum
+  #[inline]
+  pub const fn name(&self) -> &'static str {
+    self.name
+  }
+
+  /// Get the schema name of the enum
+  #[inline]
+  pub const fn schema_name(&self) -> &'static str {
+    self.schema_name
+  }
+
+  /// Get the variants of the enum
+  #[inline]
+  pub const fn variants(&self) -> &'static [EnumVariantInfo<T>] {
+    self.variants
+  }
+
+  /// Get the description of the enum
+  #[inline]
+  pub const fn description(&self) -> &'static str {
+    self.description
+  }
+}
+
 /// Skip a field from the Graph protocol buffer
 #[inline]
 pub const fn skip(src: &[u8]) -> Result<usize, DecodeError> {

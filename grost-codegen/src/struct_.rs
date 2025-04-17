@@ -61,7 +61,7 @@ impl Struct {
     self
   }
 
-  pub(crate) fn struct_basic(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let description = self.description.as_ref().map(|d| {
       let s = d.as_str();
@@ -73,6 +73,18 @@ impl Struct {
     let attrs = &self.attrs;
     let fields = self.fields.iter().map(|f| f.field_defination());
 
+    quote! {
+      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+      #description
+      #(#attrs)*
+      #visibility struct #name {
+        #(#fields),*
+      }
+    }
+  }
+
+  pub(crate) fn struct_basic(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    let name = &self.name;
     let default_fields = self.fields.iter().map(|f| {
       let name = f.name();
       let default = f.default();
@@ -91,13 +103,6 @@ impl Struct {
     let consts = self.fields.iter().map(|f| f.field_consts(path_to_grost));
 
     quote! {
-      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-      #description
-      #(#attrs)*
-      #visibility struct #name {
-        #(#fields),*
-      }
-
       impl ::core::default::Default for #name {
         fn default() -> Self {
           Self::new()

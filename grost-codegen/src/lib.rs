@@ -28,12 +28,14 @@ pub trait Generator {
 #[derive(Clone)]
 pub struct DefaultGenerator {
   grost_path: syn::Path,
+  derive: bool,
 }
 
 impl Default for DefaultGenerator {
   fn default() -> Self {
     Self {
       grost_path: syn::parse_str("::grost").unwrap(),
+      derive: false,
     }
   }
 }
@@ -45,8 +47,15 @@ impl DefaultGenerator {
   }
 
   /// Returns a new `DefaultGenerator` with the given `grost_path`
-  pub fn with_grost_path(grost_path: syn::Path) -> Self {
-    Self { grost_path }
+  pub fn with_grost_path(mut self, grost_path: syn::Path) -> Self {
+    self.grost_path = grost_path;
+    self
+  }
+
+  /// Sets the generator to adapt derive macros
+  pub fn with_derive(mut self) -> Self {
+    self.derive = true;
+    self
   }
 }
 
@@ -54,6 +63,7 @@ impl core::fmt::Debug for DefaultGenerator {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("DefaultGenerator")
       .field("grost_path", &self.grost_path.to_token_stream().to_string())
+      .field("derive", &self.derive)
       .finish()
   }
 }
@@ -62,18 +72,22 @@ impl Generator for DefaultGenerator {
   type Error = ();
 
   fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
+    let defination = (!self.derive).then(|| struct_.struct_defination());
     let basic = struct_.struct_basic(&self.grost_path);
 
     Ok(quote! {
+      #defination
       #basic
     })
   }
 
   fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error> {
-    let defination = enum_.enum_defination();
+    let defination = (!self.derive).then(|| enum_.enum_defination());
+    let name = enum_.name();
     let as_str = enum_.enum_as_str();
     let from_str = enum_.enum_from_str();
     let is_variant = enum_.enum_is_variant();
+    let info = enum_.generate_info(&self.grost_path);
     #[cfg(feature = "quickcheck")]
     let quickcheck = enum_.enum_quickcheck(&self.grost_path);
     #[cfg(not(feature = "quickcheck"))]
@@ -87,6 +101,11 @@ impl Generator for DefaultGenerator {
 
     Ok(quote! {
       #defination
+
+      impl #name {
+        #info
+      }
+
       #as_str
       #from_str
       #repr_conversion

@@ -19,6 +19,48 @@ pub enum Color {
     /// An unknown variant of the enum, used for backwards and forwards compatibility.
     Unknown(::core::primitive::u32),
 }
+impl Color {
+    /// The relection information of the [`Color::Red`] enum variant
+    pub const RED_REFLECTION: ::grost::__private::EnumVariantInfo<
+        ::core::primitive::u32,
+    > = ::grost::__private::EnumVariantInfoBuilder::<::core::primitive::u32> {
+        name: "Red",
+        schema_name: "Red",
+        description: "",
+        value: 1u32,
+    }
+        .build();
+    /// The relection information of the [`Color::Green`] enum variant
+    pub const GREEN_REFLECTION: ::grost::__private::EnumVariantInfo<
+        ::core::primitive::u32,
+    > = ::grost::__private::EnumVariantInfoBuilder::<::core::primitive::u32> {
+        name: "Green",
+        schema_name: "Green",
+        description: "",
+        value: 2u32,
+    }
+        .build();
+    /// The relection information of the [`Color::Blue`] enum variant
+    pub const BLUE_REFLECTION: ::grost::__private::EnumVariantInfo<
+        ::core::primitive::u32,
+    > = ::grost::__private::EnumVariantInfoBuilder::<::core::primitive::u32> {
+        name: "Blue",
+        schema_name: "Blue",
+        description: "",
+        value: 3u32,
+    }
+        .build();
+    /// The relection information of the [`Color`] enum
+    pub const REFLECTION: ::grost::__private::EnumInfo<::core::primitive::u32> = ::grost::__private::EnumInfoBuilder::<
+        ::core::primitive::u32,
+    > {
+        name: "Color",
+        schema_name: "Color",
+        description: "",
+        variants: &[Self::RED_REFLECTION, Self::GREEN_REFLECTION, Self::BLUE_REFLECTION],
+    }
+        .build();
+}
 impl ::core::fmt::Display for Color {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         match self.try_as_str() {
@@ -83,9 +125,16 @@ impl ::core::str::FromStr for Color {
                         if let ::core::result::Result::Ok(val) = <::core::primitive::u32 as ::core::str::FromStr>::from_str(
                             remaining,
                         ) {
-                            return ::core::result::Result::Ok(Self::Unknown(val));
+                            return ::core::result::Result::Ok(
+                                ::core::convert::From::from(val),
+                            );
                         }
                     }
+                }
+                if let ::core::result::Result::Ok(val) = <::core::primitive::u32 as ::core::str::FromStr>::from_str(
+                    val,
+                ) {
+                    return ::core::result::Result::Ok(::core::convert::From::from(val));
                 }
                 ::core::result::Result::Err(ParseColorError {
                     _priv: ::std::string::ToString::to_string(src),
@@ -136,59 +185,7 @@ impl ::grost::__private::varing::Varint for Color {
         ::core::primitive::usize,
         ::grost::__private::varing::EncodeError,
     > {
-        match self {
-            Self::Red => {
-                let val = &[1u8];
-                let val_len = val.len();
-                let buf_len = buf.len();
-                if buf_len < val_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::varing::EncodeError::underflow(
-                            val_len,
-                            buf_len,
-                        ),
-                    );
-                }
-                let (b, _) = buf.split_at_mut(val_len);
-                b.copy_from_slice(val);
-                ::core::result::Result::Ok(val_len)
-            }
-            Self::Green => {
-                let val = &[2u8];
-                let val_len = val.len();
-                let buf_len = buf.len();
-                if buf_len < val_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::varing::EncodeError::underflow(
-                            val_len,
-                            buf_len,
-                        ),
-                    );
-                }
-                let (b, _) = buf.split_at_mut(val_len);
-                b.copy_from_slice(val);
-                ::core::result::Result::Ok(val_len)
-            }
-            Self::Blue => {
-                let val = &[3u8];
-                let val_len = val.len();
-                let buf_len = buf.len();
-                if buf_len < val_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::varing::EncodeError::underflow(
-                            val_len,
-                            buf_len,
-                        ),
-                    );
-                }
-                let (b, _) = buf.split_at_mut(val_len);
-                b.copy_from_slice(val);
-                ::core::result::Result::Ok(val_len)
-            }
-            Self::Unknown(val) => {
-                ::grost::__private::varing::encode_u32_varint_to(*val, buf)
-            }
-        }
+        self.const_encode_to(buf)
     }
     #[inline]
     fn encoded_len(&self) -> ::core::primitive::usize {
@@ -209,6 +206,24 @@ impl Color {
     pub const MAX_ENCODED_LEN: ::core::primitive::usize = 5usize;
     /// The minimum encoded length in bytes.
     pub const MIN_ENCODED_LEN: ::core::primitive::usize = 1usize;
+    /// The encoded length of the enum variant [`Color::Red`]
+    pub const ENCODED_RED_LEN: ::core::primitive::usize = Self::ENCODED_RED.len();
+    /// The encoded bytes of the enum variant [`Color::Red`]
+    pub const ENCODED_RED: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> = ::grost::__private::varing::encode_u32_varint(
+        1u32,
+    );
+    /// The encoded length of the enum variant [`Color::Green`]
+    pub const ENCODED_GREEN_LEN: ::core::primitive::usize = Self::ENCODED_GREEN.len();
+    /// The encoded bytes of the enum variant [`Color::Green`]
+    pub const ENCODED_GREEN: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> = ::grost::__private::varing::encode_u32_varint(
+        2u32,
+    );
+    /// The encoded length of the enum variant [`Color::Blue`]
+    pub const ENCODED_BLUE_LEN: ::core::primitive::usize = Self::ENCODED_BLUE.len();
+    /// The encoded bytes of the enum variant [`Color::Blue`]
+    pub const ENCODED_BLUE: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> = ::grost::__private::varing::encode_u32_varint(
+        3u32,
+    );
     /// Returns the enum variant from the raw representation.
     #[inline]
     pub const fn from_u32(repr: ::core::primitive::u32) -> Self {
@@ -230,28 +245,73 @@ impl Color {
         }
     }
     /// Returns the encoded bytes of the enum variant.
-    ///
-    /// If self is not `Unknown`, then `Either::Left` will be returned,
-    /// Otherwise, `Either::Right` will be returned.
     #[inline]
     pub const fn const_encode(
         &self,
-    ) -> ::grost::__private::either::Either<
-        &'static [::core::primitive::u8],
-        ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }>,
+    ) -> ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> {
+        match self {
+            Self::Red => Self::ENCODED_RED,
+            Self::Green => Self::ENCODED_GREEN,
+            Self::Blue => Self::ENCODED_BLUE,
+            Self::Unknown(val) => ::grost::__private::varing::encode_u32_varint(*val),
+        }
+    }
+    /// Returns the encoded bytes of the enum variant.
+    #[inline]
+    pub const fn const_encode_to(
+        &self,
+        buf: &mut [::core::primitive::u8],
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::varing::EncodeError,
     > {
-        ::grost::__private::either::Either::Left(
-            match self {
-                Self::Red => &[1u8],
-                Self::Green => &[2u8],
-                Self::Blue => &[3u8],
-                Self::Unknown(val) => {
-                    return ::grost::__private::either::Either::Right(
-                        ::grost::__private::varing::encode_u32_varint(*val),
+        match self {
+            Self::Red => {
+                let buf_len = buf.len();
+                if buf_len < Self::ENCODED_RED_LEN {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::varing::EncodeError::underflow(
+                            Self::ENCODED_RED_LEN,
+                            buf_len,
+                        ),
                     );
                 }
-            },
-        )
+                let (b, _) = buf.split_at_mut(Self::ENCODED_RED_LEN);
+                b.copy_from_slice(Self::ENCODED_RED.as_slice());
+                ::core::result::Result::Ok(Self::ENCODED_RED_LEN)
+            }
+            Self::Green => {
+                let buf_len = buf.len();
+                if buf_len < Self::ENCODED_GREEN_LEN {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::varing::EncodeError::underflow(
+                            Self::ENCODED_GREEN_LEN,
+                            buf_len,
+                        ),
+                    );
+                }
+                let (b, _) = buf.split_at_mut(Self::ENCODED_GREEN_LEN);
+                b.copy_from_slice(Self::ENCODED_GREEN.as_slice());
+                ::core::result::Result::Ok(Self::ENCODED_GREEN_LEN)
+            }
+            Self::Blue => {
+                let buf_len = buf.len();
+                if buf_len < Self::ENCODED_BLUE_LEN {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::varing::EncodeError::underflow(
+                            Self::ENCODED_BLUE_LEN,
+                            buf_len,
+                        ),
+                    );
+                }
+                let (b, _) = buf.split_at_mut(Self::ENCODED_BLUE_LEN);
+                b.copy_from_slice(Self::ENCODED_BLUE.as_slice());
+                ::core::result::Result::Ok(Self::ENCODED_BLUE_LEN)
+            }
+            Self::Unknown(val) => {
+                ::grost::__private::varing::encode_u32_varint_to(*val, buf)
+            }
+        }
     }
     /// Decodes the enum variant from the encoded bytes.
     ///
@@ -283,9 +343,9 @@ impl Color {
     #[inline]
     pub const fn const_encoded_len(&self) -> ::core::primitive::usize {
         match self {
-            Self::Red => 1usize,
-            Self::Green => 1usize,
-            Self::Blue => 1usize,
+            Self::Red => Self::ENCODED_RED_LEN,
+            Self::Green => Self::ENCODED_GREEN_LEN,
+            Self::Blue => Self::ENCODED_BLUE_LEN,
             Self::Unknown(val) => {
                 ::grost::__private::varing::encoded_u32_varint_len(*val)
             }
@@ -299,6 +359,7 @@ impl ::grost::__private::Encode for Color {
     #[inline]
     fn encode(
         &self,
+        _: &::grost::__private::Context,
         buf: &mut [::core::primitive::u8],
     ) -> ::core::result::Result<
         ::core::primitive::usize,
@@ -308,7 +369,7 @@ impl ::grost::__private::Encode for Color {
             .map_err(::core::convert::Into::into)
     }
     #[inline]
-    fn encoded_len(&self) -> ::core::primitive::usize {
+    fn encoded_len(&self, _: &::grost::__private::Context) -> ::core::primitive::usize {
         self.const_encoded_len()
     }
 }
@@ -317,48 +378,54 @@ impl ::grost::__private::PartialEncode for Color {
     #[inline]
     fn partial_encode(
         &self,
+        context: &::grost::__private::Context,
         buf: &mut [::core::primitive::u8],
         _: &Self::Selection,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         ::grost::__private::EncodeError,
     > {
-        ::grost::__private::Encode::encode(self, buf)
+        ::grost::__private::Encode::encode(self, context, buf)
     }
     #[inline]
-    fn partial_encoded_len(&self, _: &Self::Selection) -> ::core::primitive::usize {
-        ::grost::__private::Encode::encoded_len(self)
+    fn partial_encoded_len(
+        &self,
+        context: &::grost::__private::Context,
+        _: &Self::Selection,
+    ) -> ::core::primitive::usize {
+        ::grost::__private::Encode::encoded_len(self, context)
     }
 }
-impl<'de> ::grost::__private::Decode<'de> for Color {
+impl<'de> ::grost::__private::Decode<'de, Self> for Color {
     #[inline]
-    fn decode<B>(
+    fn decode<UB>(
+        _: &::grost::__private::Context,
         src: &'de [::core::primitive::u8],
-        _: &mut B,
     ) -> ::core::result::Result<
         (::core::primitive::usize, Self),
         ::grost::__private::DecodeError,
     >
     where
-        B: ::grost::__private::UnknownRefBuffer<'de>,
+        UB: ::grost::__private::UnknownBuffer<&'de [u8]>,
     {
         Self::const_decode(src).map_err(::core::convert::Into::into)
     }
 }
-impl ::grost::__private::DecodeOwned for Color {
+impl ::grost::__private::DecodeOwned<Self> for Color {
     #[inline]
-    fn decode_from_bytes<U>(
-        src: ::grost::__private::bytes::Bytes,
-        _: &mut U,
+    fn decode_owned<B, UB>(
+        ctx: &::grost::__private::Context,
+        src: B,
     ) -> ::core::result::Result<
         (::core::primitive::usize, Self),
         ::grost::__private::DecodeError,
     >
     where
         Self: ::core::marker::Sized + 'static,
-        U: ::grost::__private::UnknownBuffer<::grost::__private::bytes::Bytes>,
+        B: ::grost::__private::Buffer + 'static,
+        UB: ::grost::__private::UnknownBuffer<B> + 'static,
     {
-        Self::const_decode(&src).map_err(::core::convert::Into::into)
+        <Self as ::grost::__private::Decode<'_, Self>>::decode::<()>(ctx, src.as_bytes())
     }
 }
 impl ::grost::__private::IntoTarget<Self> for Color {
@@ -392,7 +459,14 @@ impl<'a> ::core::convert::From<&'a Self> for Color {
         *e
     }
 }
+impl ::grost::__private::PartialMessage for Color {
+    type UnknownBuffer<B: ?::core::marker::Sized> = ();
+    type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
+    type Borrowed<'a> = Self where Self: 'a;
+    type EncodedOwned = Self where Self: ::core::marker::Sized;
+}
 impl ::grost::__private::Message for Color {
+    type Partial = Self;
     type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
     type Borrowed<'a> = Self where Self: 'a;
     type EncodedOwned = Self where Self: ::core::marker::Sized;
@@ -432,12 +506,13 @@ mod __quickcheck_fuzzy__color {
     use super::Color;
     use ::grost::__private::{Encode, Decode};
     ::grost::__private::quickcheck::quickcheck! {
-        fn quickcheck_fuzzy_color(value : Color) -> bool { let encoded_len = value
-        .encoded_len(); let mut buf = [0u8; Color::MAX_ENCODED_LEN]; let
-        ::core::result::Result::Ok(written) = value.encode(& mut buf) else { return
-        false; }; if written != encoded_len { return false; } let
-        ::core::result::Result::Ok((read, decoded)) = Color::decode(& buf[..encoded_len],
-        & mut ::std::vec![]) else { return false; }; if decoded != value || read !=
+        fn quickcheck_fuzzy_color(value : Color) -> bool { let ctx =
+        ::grost::__private::Context::new(); let encoded_len = value.encoded_len(& ctx);
+        let mut buf = [0u8; Color::MAX_ENCODED_LEN]; let
+        ::core::result::Result::Ok(written) = value.encode(& ctx, & mut buf) else {
+        return false; }; if written != encoded_len { return false; } let
+        ::core::result::Result::Ok((read, decoded)) = Color::decode:: < () > (& ctx, &
+        buf[..encoded_len]) else { return false; }; if decoded != value || read !=
         written { return false; } true }
     }
 }

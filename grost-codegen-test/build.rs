@@ -14,9 +14,9 @@ fn main() {
     .truncate(true)
     .open("src/lib.rs")
     .unwrap();
-  // lib
-  //   .write_all(format!("mod {ENUM_FILE_NAME};").as_bytes())
-  //   .unwrap();
+  lib
+    .write_all(format!("mod {ENUM_FILE_NAME};").as_bytes())
+    .unwrap();
   lib
     .write_all(format!("mod {STRUCT_FILE_NAME};").as_bytes())
     .unwrap();

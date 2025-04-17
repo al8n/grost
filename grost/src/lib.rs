@@ -10,7 +10,7 @@ pub use buffer::Buffer;
 pub use context::Context;
 pub use decode::*;
 pub use encode::*;
-pub use grost_types::{FieldInfo, Identifier, StructInfo, Tag, WireType, skip};
+pub use grost_types::{FieldInfo, EnumInfo, EnumVariantInfo, Identifier, StructInfo, Tag, WireType, skip};
 pub use impls::*;
 // pub use selection_set::SelectionSet;
 pub use unknown::*;
@@ -200,7 +200,7 @@ pub mod __private {
   pub use super::*;
   pub use either;
   pub use error::*;
-  pub use grost_types::{FieldInfoBuilder, StructInfoBuilder};
+  pub use grost_types::*;
   pub use varing;
 
   #[cfg(feature = "bytes")]
