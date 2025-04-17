@@ -14,17 +14,17 @@ varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 
 fixed!(
   32(f32 {
-    from_bytes: |src: &[u8]| { Ok(f32::from_le_bytes(src.try_into().unwrap())) },
+    from_bytes: |src: &[u8]| { Ok((4, f32::from_le_bytes(src.try_into().unwrap()))) },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       buf.copy_from_slice(&this.to_le_bytes());
-      Ok(())
+      Ok(4)
     },
   }),
   64(f64 {
-    from_bytes: |src: &[u8]| { Ok(f64::from_le_bytes(src.try_into().unwrap())) },
+    from_bytes: |src: &[u8]| { Ok((8, f64::from_le_bytes(src.try_into().unwrap()))) },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       buf.copy_from_slice(&this.to_le_bytes());
-      Ok(())
+      Ok(8)
     },
   }),
 );

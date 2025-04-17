@@ -72,7 +72,7 @@ const _: () = {
       from_bytes: |src: &[u8]| {
         let numer = f16::from_le_bytes(src[..2].try_into().unwrap());
         let denum = f16::from_le_bytes(src[2..].try_into().unwrap());
-        Ok(Ratio::new_raw(numer, denum))
+        Ok((4, Ratio::new_raw(numer, denum)))
       },
       to_bytes: |this: &Self, buf: &mut [u8]| {
         let numer = this.numer().to_le_bytes();
@@ -81,7 +81,7 @@ const _: () = {
         buf[..2].copy_from_slice(&numer);
         buf[2..].copy_from_slice(&denom);
 
-        Ok(())
+        Ok(4)
       },
     }),
   );
@@ -92,7 +92,7 @@ fixed!(
     from_bytes: |src: &[u8]| {
       let numer = f32::from_le_bytes(src[..4].try_into().unwrap());
       let denum = f32::from_le_bytes(src[4..].try_into().unwrap());
-      Ok(Ratio::new_raw(numer, denum))
+      Ok((8, Ratio::new_raw(numer, denum)))
     },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       let numer = this.numer().to_le_bytes();
@@ -101,14 +101,14 @@ fixed!(
       buf[..4].copy_from_slice(&numer);
       buf[4..].copy_from_slice(&denom);
 
-      Ok(())
+      Ok(8)
     },
   }),
   128(Ratio<f64> {
     from_bytes: |src: &[u8]| {
       let numer = f64::from_le_bytes(src[..8].try_into().unwrap());
       let denum = f64::from_le_bytes(src[8..].try_into().unwrap());
-      Ok(Ratio::new_raw(numer, denum))
+      Ok((16, Ratio::new_raw(numer, denum)))
     },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       let numer = this.numer().to_le_bytes();
@@ -117,7 +117,7 @@ fixed!(
       buf[..8].copy_from_slice(&numer);
       buf[8..].copy_from_slice(&denom);
 
-      Ok(())
+      Ok(16)
     },
   }),
 );

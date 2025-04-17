@@ -84,23 +84,23 @@ macro_rules! zst {
 
       impl $crate::__private::Encode for $ty {
         #[inline]
-        fn encode(&self, ctx: &$crate::__private::Context, src: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-          $crate::__private::encode_zst(ctx, src)
+        fn encode(&self, _: &$crate::__private::Context, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+          ::core::result::Result::Ok(0)
         }
 
         #[inline]
-        fn encoded_len(&self, ctx: &$crate::__private::Context) -> ::core::primitive::usize {
-          $crate::__private::encoded_zst_len(ctx)
+        fn encoded_len(&self, _: &$crate::__private::Context) -> ::core::primitive::usize {
+          0
         }
       }
 
       impl<'de> $crate::__private::Decode<'de, Self> for $ty {
-        fn decode<UB>(ctx: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+        fn decode<UB>(_: &$crate::__private::Context, _: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
           UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
         {
-          $crate::__private::decode_zst(ctx, src).map(|(n, _)| (n, ::core::default::Default::default()))
+          ::core::result::Result::Ok((0, ::core::default::Default::default()))
         }
       }
 
@@ -901,11 +901,13 @@ macro_rules! array_str {
           return ::core::result::Result::Ok((0, $new()));
         }
 
-        if src.len() > N {
-          return ::core::result::Result::Err($crate::__private::larger_than_str_capacity::<N>());
-        }
+        $crate::__private::network::decode(context, src, |src| {
+          if src.len() > N {
+            return ::core::result::Result::Err($crate::__private::larger_than_str_capacity::<N>());
+          }
 
-        $decode(src)
+          $decode(src)
+        })
       }
     }
 
@@ -1056,11 +1058,13 @@ macro_rules! array_bytes {
           return ::core::result::Result::Ok((0, $new()));
         }
 
-        if src.len() > N {
-          return ::core::result::Result::Err($crate::__private::larger_than_array_capacity::<N>());
-        }
+        $crate::__private::network::decode(context, src, |src| {
+          if src.len() > N {
+            return ::core::result::Result::Err($crate::__private::larger_than_array_capacity::<N>());
+          }
 
-        $decode(src)
+          $decode(src)
+        })
       }
     }
 
@@ -1400,11 +1404,17 @@ macro_rules! varint {
   };
   (@encode_impl) => {
     fn encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
-      $crate::__private::encode_varint(ctx, self, buf)
+      $crate::__private::network::encode(
+        ctx,
+        self,
+        buf,
+        |val, buf| $crate::__private::varing::Varint::encode(val, buf).map_err(::core::convert::Into::into),
+        $crate::__private::varing::Varint::encoded_len,
+      )
     }
 
     fn encoded_len(&self, ctx: &$crate::__private::Context,) -> ::core::primitive::usize {
-      $crate::__private::encoded_varint_len(ctx, self)
+      $crate::__private::network::encoded_len(ctx, self, $crate::__private::varing::Varint::encoded_len)
     }
   };
   (@decode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
@@ -1418,7 +1428,7 @@ macro_rules! varint {
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
-      $crate::__private::decode_varint(ctx, src)
+      $crate::__private::network::decode(ctx, src, |buf| $crate::__private::varing::Varint::decode(buf).map_err(::core::convert::Into::into))
     }
   };
   (@decode_owned $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
@@ -1522,12 +1532,12 @@ macro_rules! fixed {
   (@encode_impl $size:literal { $to_slice:expr $(,)? }) => {
     fn encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
       const SIZE: ::core::primitive::usize = $size / 8;
-      $crate::__private::encode_fixed::<_, _, SIZE>(ctx, self, buf, $to_slice)
+      $crate::__private::network::encode(ctx, self, buf, $to_slice, |_| SIZE)
     }
 
     fn encoded_len(&self, ctx: &$crate::__private::Context) -> ::core::primitive::usize {
       const SIZE: ::core::primitive::usize = $size / 8;
-      $crate::__private::encoded_fixed_len::<SIZE>(ctx)
+      $crate::__private::network::encoded_len(ctx, self, |_| SIZE)
     }
   };
   (@decode $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {
@@ -1541,9 +1551,7 @@ macro_rules! fixed {
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
-      const SIZE: ::core::primitive::usize = $size / 8;
-
-      $crate::__private::decode_fixed::<_, _, SIZE>(ctx, src, $from_slice)
+      $crate::__private::network::decode(ctx, src, $from_slice)
     }
   };
   (@decode_owned $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {

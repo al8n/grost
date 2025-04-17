@@ -3,6 +3,4 @@ pub use ::core::str::from_utf8;
 #[cfg(feature = "simdutf8")]
 pub use simdutf8::basic::from_utf8;
 
-pub(crate) mod fixed;
-pub(crate) mod varint;
-pub(crate) mod zst;
+pub mod network;

@@ -20,7 +20,14 @@ pub fn encode_zst(ctx: &Context, buf: &mut [u8]) -> Result<usize, grost_types::E
   }
 }
 
-pub fn decode_zst(ctx: &Context, src: &[u8]) -> Result<(usize, ()), grost_types::DecodeError> {
+pub fn decode_zst<T, F>(
+  ctx: &Context,
+  src: &[u8],
+  f: F,
+) -> Result<(usize, T), grost_types::DecodeError>
+where
+  F: FnOnce() -> Result<(usize, T), grost_types::DecodeError>,
+{
   if let Some(tag) = ctx.tag() {
     let identifier = Identifier::new(WireType::Zst, tag);
     let (offset, decoded_identifier) = Identifier::decode(src)?;
@@ -30,8 +37,8 @@ pub fn decode_zst(ctx: &Context, src: &[u8]) -> Result<(usize, ()), grost_types:
         decoded_identifier,
       ));
     }
-    Ok((offset, ()))
+    f().map(|(_, v)| (offset, v))
   } else {
-    Ok((0, ()))
+    f().map(|(_, v)| (0, v))
   }
 }

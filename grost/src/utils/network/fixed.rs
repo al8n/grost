@@ -9,8 +9,8 @@ pub fn encode_fixed<V, F, const N: usize>(
   f: F,
 ) -> Result<usize, EncodeError>
 where
-  F: FnOnce(&V, &mut [u8]) -> Result<(), EncodeError>,
-  V: Wirable,
+  F: FnOnce(&V, &mut [u8]) -> Result<usize, EncodeError>,
+  V: Wirable + ?Sized,
 {
   if let Some(tag) = ctx.tag() {
     let mut offset = 0;
@@ -48,13 +48,13 @@ pub fn encoded_fixed_len<const N: usize>(ctx: &Context) -> usize {
   }
 }
 
-pub fn decode_fixed<V, F, const N: usize>(
+pub fn decode_fixed<'a, V, F, const N: usize>(
   ctx: &Context,
-  buf: &[u8],
+  buf: &'a [u8],
   f: F,
 ) -> Result<(usize, V), DecodeError>
 where
-  F: FnOnce(&[u8]) -> Result<V, DecodeError>,
+  F: FnOnce(&'a [u8]) -> Result<(usize, V), DecodeError>,
 {
   if let Some(tag) = ctx.tag() {
     let identifier = Identifier::new(WireType::Varint, tag);
@@ -70,12 +70,12 @@ where
       return Err(DecodeError::buffer_underflow());
     }
 
-    f(&buf[offset..offset + N]).map(|v| (offset + N, v))
+    f(&buf[offset..offset + N]).map(|(_, v)| (offset + N, v))
   } else {
     if buf.len() < N {
       return Err(DecodeError::buffer_underflow());
     }
 
-    f(&buf[..N]).map(|v| (N, v))
+    f(&buf[..N]).map(|(_, v)| (N, v))
   }
 }

@@ -222,9 +222,7 @@ pub mod __private {
 
   pub use thiserror;
 
-  pub use utils::fixed::*;
-  pub use utils::varint::*;
-  pub use utils::zst::*;
+  pub use utils::network;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {

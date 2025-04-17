@@ -4,6 +4,6 @@ pub use time::*;
 // mod map;
 // mod net;
 mod primitives;
-// mod regex;
+mod regex;
 // mod repeated;
 mod time;

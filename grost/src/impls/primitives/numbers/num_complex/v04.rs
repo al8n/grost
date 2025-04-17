@@ -72,7 +72,7 @@ const _: () = {
       from_bytes: |src: &[u8]| {
         let re = f16::from_le_bytes(src[..2].try_into().unwrap());
         let im = f16::from_le_bytes(src[2..].try_into().unwrap());
-        Ok(Complex { re, im })
+        Ok((4, Complex { re, im }))
       },
       to_bytes: |this: &Self, buf: &mut [u8]| {
         let re = this.re.to_le_bytes();
@@ -81,7 +81,7 @@ const _: () = {
         buf[..2].copy_from_slice(&re);
         buf[2..].copy_from_slice(&im);
 
-        Ok(())
+        Ok(4)
       },
     }),
   );
@@ -92,7 +92,7 @@ fixed!(
     from_bytes: |src: &[u8]| {
       let re = f32::from_le_bytes(src[..4].try_into().unwrap());
       let im = f32::from_le_bytes(src[4..].try_into().unwrap());
-      Ok(Complex { re, im })
+      Ok((8, Complex { re, im }))
     },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       let re = this.re.to_le_bytes();
@@ -101,14 +101,14 @@ fixed!(
       buf[..4].copy_from_slice(&re);
       buf[4..].copy_from_slice(&im);
 
-      Ok(())
+      Ok(8)
     },
   }),
   128(Complex<f64> {
     from_bytes: |src: &[u8]| {
       let re = f64::from_le_bytes(src[..8].try_into().unwrap());
       let im = f64::from_le_bytes(src[8..].try_into().unwrap());
-      Ok(Complex { re, im })
+      Ok((16, Complex { re, im }))
     },
     to_bytes: |this: &Self, buf: &mut [u8]| {
       let re = this.re.to_le_bytes();
@@ -117,7 +117,7 @@ fixed!(
       buf[..8].copy_from_slice(&re);
       buf[8..].copy_from_slice(&im);
 
-      Ok(())
+      Ok(16)
     },
   }),
 );

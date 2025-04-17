@@ -1,5 +1,3 @@
-use varing::decode_u32_varint;
-
 use crate::{
   Context, Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message,
   PartialMessage, TypeOwned, TypeRef, Wirable, WireType,
@@ -25,16 +23,28 @@ impl<const N: usize> Encode for [u8; N] {
       return Ok(0);
     }
 
-    if buf.len() < N {
-      return Err(EncodeError::insufficient_buffer(N, buf.len()));
-    }
+    crate::__private::network::encode(
+      ctx,
+      self,
+      buf,
+      |val, buf| {
+        if buf.len() < N {
+          return Err(EncodeError::insufficient_buffer(N, buf.len()));
+        }
 
-    buf[..N].copy_from_slice(self.as_slice());
-    Ok(N)
+        buf[..N].copy_from_slice(val.as_slice());
+        Ok(N)
+      },
+      |_| N,
+    )
   }
 
+  #[inline]
   fn encoded_len(&self, ctx: &Context) -> usize {
-    N
+    if N == 0 {
+      return 0;
+    }
+    crate::__private::network::encoded_len(ctx, self, |_| N)
   }
 }
 
@@ -44,7 +54,11 @@ impl<'de, const N: usize> Decode<'de, Self> for [u8; N] {
     Self: Sized + 'de,
     UB: crate::UnknownBuffer<&'de [u8]>,
   {
-    decode(src)
+    if N == 0 {
+      return Ok((0, [0; N]));
+    }
+
+    crate::__private::network::decode(ctx, src, decode)
   }
 }
 
@@ -55,8 +69,7 @@ impl<const N: usize> DecodeOwned<Self> for [u8; N] {
     B: crate::Buffer + 'static,
     UB: crate::UnknownBuffer<B> + 'static,
   {
-    let buf = src.as_bytes();
-    decode(buf)
+    <Self as Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
   }
 }
 
@@ -126,28 +139,4 @@ fn decode<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
     .try_into()
     .map(|arr| (N, arr))
     .map_err(|_| DecodeError::buffer_underflow())
-}
-
-#[inline]
-fn decode_length_prefix<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
-  if N == 0 {
-    return Ok((0, [0; N]));
-  }
-
-  match N {
-    1 | 2 | 4 | 8 | 16 => decode(src),
-    _ => {
-      let (readed, len) = decode_u32_varint(src)?;
-      let len = len as usize;
-      let total = len + readed;
-      if total > src.len() {
-        return Err(DecodeError::buffer_underflow());
-      }
-
-      src[readed..total]
-        .try_into()
-        .map(|arr| (total, arr))
-        .map_err(|_| DecodeError::buffer_underflow())
-    }
-  }
 }

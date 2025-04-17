@@ -4,19 +4,27 @@ impl Wirable for [u8] {}
 
 impl Encode for [u8] {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let this_len = self.len();
-    let buf_len = buf.len();
+    crate::__private::network::encode(
+      context,
+      self,
+      buf,
+      |val, buf| {
+        let this_len = val.len();
+        let buf_len = buf.len();
 
-    if this_len > buf_len {
-      return Err(EncodeError::insufficient_buffer(this_len, buf_len));
-    }
+        if this_len > buf_len {
+          return Err(EncodeError::insufficient_buffer(this_len, buf_len));
+        }
 
-    Ok(this_len)
+        Ok(this_len)
+      },
+      |val| val.len(),
+    )
   }
 
   #[inline]
   fn encoded_len(&self, context: &Context) -> usize {
-    self.len()
+    crate::__private::network::encoded_len(context, self, |val| val.len())
   }
 }
 
@@ -28,7 +36,7 @@ impl<'de> Decode<'de, Self> for &'de [u8] {
     Self: Sized + 'de,
     UB: crate::UnknownBuffer<&'de [u8]> + 'de,
   {
-    Ok((src.len(), src))
+    crate::__private::network::decode(ctx, src, |src| Ok((src.len(), src)))
   }
 }
 
