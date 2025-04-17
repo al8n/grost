@@ -1,9 +1,8 @@
-use grost_types::Identifier;
 use varing::decode_u32_varint;
 
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message, TypeOwned, TypeRef,
-  Wirable, WireType,
+  Context, Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message,
+  PartialMessage, TypeOwned, TypeRef, Wirable, WireType,
 };
 
 impl<const N: usize> Wirable for [u8; N] {
@@ -21,7 +20,7 @@ impl<const N: usize> Wirable for [u8; N] {
 }
 
 impl<const N: usize> Encode for [u8; N] {
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if N == 0 {
       return Ok(0);
     }
@@ -34,51 +33,30 @@ impl<const N: usize> Encode for [u8; N] {
     Ok(N)
   }
 
-  fn encoded_len(&self) -> usize {
+  fn encoded_len(&self, ctx: &Context) -> usize {
     N
-  }
-
-  fn encoded_len_with_identifier(&self, identifier: Identifier) -> usize {
-    match N {
-      0 | 1 | 2 | 4 | 8 | 16 => N,
-      _ => self.as_slice().encoded_len_with_identifier(identifier),
-    }
-  }
-
-  fn encode_with_identifier(&self, identifier: Identifier, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    match N {
-      0 | 1 | 2 | 4 | 8 | 16 => self.encode(buf),
-      _ => self.as_slice().encode_with_identifier(identifier, buf),
-    }
   }
 }
 
-impl<'de, const N: usize> Decode<'de> for [u8; N] {
-  fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
+impl<'de, const N: usize> Decode<'de, Self> for [u8; N] {
+  fn decode<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    UB: crate::UnknownBuffer<&'de [u8]>,
   {
     decode(src)
   }
-
-  fn decode_length_prefix<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
-  where
-    Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
-  {
-    decode_length_prefix(src)
-  }
 }
 
-impl<const N: usize> DecodeOwned for [u8; N] {
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
+impl<const N: usize> DecodeOwned<Self> for [u8; N] {
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    U: crate::UnknownBuffer<bytes_1::Bytes>,
+    B: crate::Buffer + 'static,
+    UB: crate::UnknownBuffer<B> + 'static,
   {
-    decode_length_prefix(&src)
+    let buf = src.as_bytes();
+    decode(buf)
   }
 }
 
@@ -100,7 +78,28 @@ impl<const N: usize> TypeOwned<Self> for [u8; N] {
   }
 }
 
+impl<const N: usize> PartialMessage for [u8; N] {
+  type UnknownBuffer<B: ?Sized> = ();
+
+  type Encoded<'a>
+    = &'a [u8]
+  where
+    Self: Sized + 'a;
+
+  type Borrowed<'a>
+    = &'a [u8; N]
+  where
+    Self: 'a;
+
+  type EncodedOwned
+    = Self
+  where
+    Self: Sized + 'static;
+}
+
 impl<const N: usize> Message for [u8; N] {
+  type Partial = Self;
+
   type Encoded<'a>
     = &'a [u8]
   where

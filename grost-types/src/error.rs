@@ -159,12 +159,21 @@ pub enum DecodeError {
   },
 
   /// Returned when there is a unknown wire type.
-  #[error("unknown identifier(wire_type: {wire_type}, tag: {tag}) when decoding {ty}", wire_type = identifier.wire_type(), tag = identifier.tag())]
+  #[error("unknown identifier({identifier}) when decoding {ty}")]
   UnknownIdentifier {
     /// The type of the message.
     ty: &'static str,
     /// The identifier
     identifier: Identifier,
+  },
+
+  /// Returned when there is a unknown wire type.
+  #[error("identifier mismatch: expect {expect}, actual {actual}")]
+  IdentifierMismatch {
+    /// The type of the message.
+    expect: Identifier,
+    /// The identifier
+    actual: Identifier,
   },
 
   /// Returned when fail to decode the length-delimited
@@ -221,6 +230,12 @@ impl DecodeError {
   #[inline]
   pub const fn unknown_identifier(ty: &'static str, identifier: Identifier) -> Self {
     Self::UnknownIdentifier { ty, identifier }
+  }
+
+  /// Creates a new identifier mismatch decoding error.
+  #[inline]
+  pub const fn identifier_mismatch(expect: Identifier, actual: Identifier) -> Self {
+    Self::IdentifierMismatch { expect, actual }
   }
 
   /// Creates a new decoding error from [`varing::DecodeError`].

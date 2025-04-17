@@ -1,9 +1,9 @@
-use crate::{Decode, DecodeError, Encode, EncodeError, Wirable};
+use crate::{Context, Decode, DecodeError, Encode, EncodeError, Wirable};
 
 impl Wirable for str {}
 
 impl Encode for str {
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let this_len = self.len();
     let buf_len = buf.len();
 
@@ -16,18 +16,18 @@ impl Encode for str {
     Ok(this_len)
   }
 
-  fn encoded_len(&self) -> usize {
+  fn encoded_len(&self, _: &Context) -> usize {
     self.len()
   }
 }
 
 partial_encode_primitives!(str);
 
-impl<'de> Decode<'de> for &'de str {
-  fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
+impl<'de> Decode<'de, Self> for &'de str {
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    UB: crate::UnknownBuffer<&'de [u8]> + 'de,
   {
     decode_str(src)
   }

@@ -26,7 +26,28 @@ macro_rules! zst {
         __assert::<$ty>();
       };
 
+      impl $crate::__private::PartialMessage for $ty {
+        type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
       impl $crate::__private::Message for $ty {
+        type Partial = Self;
+
         type Encoded<'a>
           = Self
         where
@@ -63,41 +84,35 @@ macro_rules! zst {
 
       impl $crate::__private::Encode for $ty {
         #[inline]
-        fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-          ::core::result::Result::Ok(0)
+        fn encode(&self, ctx: &$crate::__private::Context, src: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+          $crate::__private::encode_zst(ctx, src)
         }
 
         #[inline]
-        fn encoded_len(&self) -> ::core::primitive::usize {
-          0
+        fn encoded_len(&self, ctx: &$crate::__private::Context) -> ::core::primitive::usize {
+          $crate::__private::encoded_zst_len(ctx)
         }
       }
 
-      impl<'de> $crate::__private::Decode<'de> for $ty {
-        fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      impl<'de> $crate::__private::Decode<'de, Self> for $ty {
+        fn decode<UB>(ctx: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
-          B: $crate::__private::UnknownRefBuffer<'de>,
+          UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
         {
-          ::core::result::Result::Ok((0, ::core::default::Default::default()))
+          $crate::__private::decode_zst(ctx, src).map(|(n, _)| (n, ::core::default::Default::default()))
         }
       }
 
-      impl $crate::__private::DecodeOwned for $ty
-      where
-        Self: 'static,
-      {
-        #[cfg(any(feature = "std", feature = "alloc"))]
-        #[inline]
-        fn decode_from_bytes<U>(
-          _: $crate::__private::bytes::Bytes,
-          _: &mut U,
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      impl $crate::__private::DecodeOwned<Self> for $ty {
+        fn decode_owned<B, UB>(ctx: &$crate::__private::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'static,
-          U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+          B: $crate::__private::Buffer + 'static,
+          UB: $crate::__private::UnknownBuffer<B> + 'static,
         {
-          ::core::result::Result::Ok((0, ::core::default::Default::default()))
+          <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, src.as_bytes())
+            .map(|(n, _)| (n, ::core::default::Default::default()))
         }
       }
 
@@ -105,13 +120,13 @@ macro_rules! zst {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-          ::core::result::Result::Ok(0)
+        fn partial_encode(&self, ctx: &$crate::__private::Context, src: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+          <Self as $crate::__private::Encode>::encode(self, ctx, src)
         }
 
         #[inline]
-        fn partial_encoded_len(&self, _: &Self::Selection,) -> ::core::primitive::usize {
-          0
+        fn partial_encoded_len(&self, ctx: &$crate::__private::Context, _: &Self::Selection,) -> ::core::primitive::usize {
+          <Self as $crate::__private::Encode>::encoded_len(self, ctx)
         }
       }
     )*
@@ -254,12 +269,12 @@ macro_rules! bridge {
     )*
   };
   (@decode_impl $from:expr => $bridge:ty) => {
-    fn decode<B, UB>(context: &$crate::__private::Context, src: &'de B, ub: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-      where
-        Self: ::core::marker::Sized + 'de,
-        B: $crate::__private::Buffer,
-        UB: $crate::__private::UnknownRefBuffer<'de> {
-      <$bridge as $crate::__private::Decode>::decode(context, src, ub).map(|(n, v)| (n, $from(v)))
+    fn decode<UB>(context: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'de,
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+    {
+      <$bridge as $crate::__private::Decode<$bridge>>::decode::<UB>(context, src).map(|(n, v)| (n, $from(v)))
     }
   };
   (@decode $(
@@ -271,14 +286,25 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de> $crate::__private::Decode<'de> for $ty {
+        impl<'de> $crate::__private::Decode<'de, Self> for $ty {
           $crate::bridge!(@decode_impl $from => $bridge);
         }
       )*
     )*
   };
   (@decode_owned_impl $from:expr => $bridge:ty) => {
-    $crate::__bridge_owned_impl!($from => $bridge);
+    fn decode_owned<B, UB>(
+      ctx: &$crate::__private::Context,
+      src: B,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
+    {
+      <$bridge as $crate::__private::DecodeOwned<$bridge>>::decode_owned::<B, UB>(ctx, src)
+        .map(|(n, v)| (n, $from(v)))
+    }
   };
   (@decode_owned $(
     $bridge:ty {
@@ -289,7 +315,10 @@ macro_rules! bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::DecodeOwned for $ty {
+        impl $crate::__private::DecodeOwned<Self> for $ty
+        where
+          $bridge: $crate::__private::DecodeOwned<$bridge>,
+        {
           $crate::bridge!(@decode_owned_impl $from => $bridge);
         }
       )*
@@ -304,33 +333,6 @@ macro_rules! bridge {
       }
     )*
   };
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __bridge_owned_impl {
-  ($from:expr => $bridge:ty) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      ub: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub)
-        .map(|(n, v)| (n, $from(v)))
-    }
-  };
-}
-
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __bridge_owned_impl {
-  ($from:expr => $bridge:ty) => {};
 }
 
 /// A macro emits traits implementations for a type that through a bridge to another type.
@@ -379,12 +381,12 @@ macro_rules! try_from_bridge {
     )*
   };
   (@encode_impl $bridge:ty => $to:expr) => {
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::Encode>::encode(&$to(self), buf)
+    fn encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::Encode>::encode(&$to(self), ctx, buf)
     }
 
-    fn encoded_len(&self) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self))
+    fn encoded_len(&self, ctx: &$crate::__private::Context) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::Encode>::encoded_len(&$to(self), ctx)
     }
   };
   (@encode $(
@@ -403,20 +405,12 @@ macro_rules! try_from_bridge {
     )*
   };
   (@partial_encode_impl $bridge:ty => $to:expr) => {
-    fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), buf, selection)
+    fn partial_encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <$bridge as $crate::__private::PartialEncode>::partial_encode(&$to(self), ctx, buf, selection)
     }
 
-    fn partial_encode_with_identifier(&self, identifier: $crate::__private::Identifier, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <$bridge as $crate::__private::PartialEncode>::partial_encode_with_identifier(&$to(self), identifier, buf, selection)
-    }
-
-    fn partial_encoded_len(&self, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), selection)
-    }
-
-    fn partial_encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier, selection: &Self::Selection) -> ::core::primitive::usize {
-      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len_with_identifier(&$to(self), identifier, selection)
+    fn partial_encoded_len(&self, ctx: &$crate::__private::Context, selection: &Self::Selection) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode>::partial_encoded_len(&$to(self), ctx, selection)
     }
   };
   (@partial_encode $(
@@ -437,11 +431,12 @@ macro_rules! try_from_bridge {
     )*
   };
   (@decode_impl $try_from:expr => $bridge:ty) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], ub: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-      where
-        Self: ::core::marker::Sized + 'de,
-        B: $crate::__private::UnknownRefBuffer<'de> {
-      <$bridge as $crate::__private::Decode>::decode(src, ub)
+    fn decode<UB>(ctx: &$crate::__private::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'de,
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+    {
+      <$bridge as $crate::__private::Decode<'_, $bridge>>::decode::<UB>(ctx, src)
         .and_then(|(n, v)| $try_from(v).map(|v| (n, v)))
     }
   };
@@ -454,14 +449,28 @@ macro_rules! try_from_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de> $crate::__private::Decode<'de> for $ty {
+        impl<'de> $crate::__private::Decode<'de, Self> for $ty
+        where
+          $bridge: $crate::__private::Decode<'de, $bridge>,
+        {
           $crate::try_from_bridge!(@decode_impl $from => $bridge);
         }
       )*
     )*
   };
   (@decode_owned_impl $from:expr => $bridge:ty) => {
-    $crate::__try_from_bridge_owned_impl!($from => $bridge);
+    fn decode_owned<B, UB>(
+      ctx: &$crate::__private::Context,
+      src: B,
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
+    {
+      <$bridge as $crate::__private::DecodeOwned<$bridge>>::decode_owned::<B, UB>(ctx, src)
+        .and_then(|(n, v)| $from(v).map(|v| (n, v)))
+    }
   };
   (@decode_owned $(
     $bridge:ty {
@@ -472,7 +481,10 @@ macro_rules! try_from_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::DecodeOwned for $ty {
+        impl $crate::__private::DecodeOwned<Self> for $ty
+        where
+          $bridge: $crate::__private::DecodeOwned<$bridge>,
+        {
           $crate::try_from_bridge!(@decode_owned_impl $from => $bridge);
         }
       )*
@@ -487,33 +499,6 @@ macro_rules! try_from_bridge {
       }
     )*
   };
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __try_from_bridge_owned_impl {
-  ($from:expr => $bridge:ty) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      ub: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      <$bridge as $crate::__private::DecodeOwned>::decode_from_bytes(src, ub)
-        .and_then(|(n, v)| $from(v).map(|v| (n, v)))
-    }
-  };
-}
-
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __try_from_bridge_owned_impl {
-  ($from:expr => $bridge:ty) => {};
 }
 
 /// A macro emits traits implementation for types underlying is a `&str`.
@@ -545,8 +530,6 @@ macro_rules! __try_from_bridge_owned_impl {
 ///   }
 /// );
 /// ```
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "alloc", feature = "std"))))]
 #[macro_export]
 macro_rules! str_bridge {
   ($($ty:ty {
@@ -589,7 +572,25 @@ macro_rules! str_bridge {
         $crate::str_bridge!(@to_impl $ty: $from_ref);
       }
 
+      impl $crate::__private::PartialMessage for $ty {
+        type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+        type Encoded<'a> = &'a ::core::primitive::str
+        where
+          Self: ::core::marker::Sized + 'a;
+
+        type Borrowed<'a> = &'a $ty
+        where
+          Self: 'a;
+
+        type EncodedOwned = $owned_ty
+        where
+          Self: ::core::marker::Sized + 'static;
+      }
+
       impl $crate::__private::Message for $ty {
+        type Partial = Self;
+
         type Encoded<'a> = &'a ::core::primitive::str
         where
           Self: ::core::marker::Sized + 'a;
@@ -611,48 +612,46 @@ macro_rules! str_bridge {
   };
   (@encode_impl $to_str:expr) => {
     #[inline]
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <&::core::primitive::str as $crate::__private::Encode>::encode(&$to_str(self), buf)
+    fn encode(&self, context: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <&::core::primitive::str as $crate::__private::Encode>::encode(&$to_str(self), context, buf)
     }
 
     #[inline]
-    fn encoded_len(&self) -> ::core::primitive::usize {
-      <&::core::primitive::str as $crate::__private::Encode>::encoded_len(&$to_str(self))
+    fn encoded_len(&self, context: &$crate::__private::Context) -> ::core::primitive::usize {
+      <&::core::primitive::str as $crate::__private::Encode>::encoded_len(&$to_str(self), context)
     }
   };
   (@decode $ty:ty: $from_str:expr) => {
-    impl<'de> $crate::__private::Decode<'de> for $ty {
+    impl<'de> $crate::__private::Decode<'de, Self> for $ty {
       $crate::str_bridge!(@decode_impl $from_str);
     }
   };
   (@decode_impl $from_str:expr) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<UB>(context: &$crate::__private::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::UnknownRefBuffer<'de>
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
-      $crate::__private::from_utf8(&src)
-        .map_err(|_| $crate::__private::DecodeError::custom("invalid UTF-8"))
-        .and_then(|val| $from_str(val).map(|v| (src.len(), v)))
+      <&::core::primitive::str as $crate::__private::Decode<'de, &str>>::decode::<UB>(context, src)
+        .and_then(|(read, val)| $from_str(val).map(|v| (read, v)))
     }
   };
   (@decode_owned $ty:ty: $from_str:expr) => {
-    impl $crate::__private::DecodeOwned for $ty {
+    impl $crate::__private::DecodeOwned<Self> for $ty {
       $crate::str_bridge!(@decode_owned_impl $from_str);
     }
   };
   (@decode_owned_impl $from_str:expr) => {
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
+    fn decode_owned<B, UB>(
+      context: &$crate::__private::Context,
+      src: B,
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
     {
-      $crate::__private::from_utf8(&src)
-        .map_err(|_| $crate::__private::DecodeError::custom("invalid UTF-8"))
-        .and_then(|val| $from_str(val).map(|v| (src.len(), v)))
+      <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
     }
   };
   (@into_target_impl $ty:ty: $from:expr) => {
@@ -701,8 +700,6 @@ macro_rules! str_bridge {
 ///   }
 /// );
 /// ```
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "alloc", feature = "std"))))]
 #[macro_export]
 macro_rules! bytes_bridge {
   ($($ty:ty $([const $g:ident: usize])? {
@@ -719,7 +716,6 @@ macro_rules! bytes_bridge {
 
       $crate::bytes_bridge!(@encode $ty $([const $g: usize])?: $to_bytes);
       $crate::bytes_bridge!(@decode $ty $([const $g: usize])?: $from_bytes);
-      $crate::bytes_bridge!(@decode_owned  $ty $([const $g: usize])?: $from_bytes);
 
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialEncode for $ty {
         $crate::partial_encode_primitives!(@impl);
@@ -745,7 +741,25 @@ macro_rules! bytes_bridge {
         $crate::bytes_bridge!(@to_impl $ty: $from_ref);
       }
 
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialMessage for $ty {
+        type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+        type Encoded<'a> = &'a [::core::primitive::u8]
+        where
+          Self: ::core::marker::Sized + 'a;
+
+        type Borrowed<'a> = &'a $ty
+        where
+          Self: 'a;
+
+        type EncodedOwned = $owned_ty
+        where
+          Self: ::core::marker::Sized + 'static;
+      }
+
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::Message for $ty {
+        type Partial = Self;
+
         type Encoded<'a> = &'a [::core::primitive::u8]
         where
           Self: ::core::marker::Sized + 'a;
@@ -767,44 +781,44 @@ macro_rules! bytes_bridge {
   };
   (@encode_impl $to_bytes:expr) => {
     #[inline]
-    fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-      <&[::core::primitive::u8] as $crate::__private::Encode>::encode(&$to_bytes(self), buf)
+    fn encode(&self, context: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+      <&[::core::primitive::u8] as $crate::__private::Encode>::encode(&$to_bytes(self), context, buf)
     }
 
     #[inline]
-    fn encoded_len(&self) -> ::core::primitive::usize {
-      <&[::core::primitive::u8] as $crate::__private::Encode>::encoded_len(&$to_bytes(self))
+    fn encoded_len(&self, context: &$crate::__private::Context) -> ::core::primitive::usize {
+      <&[::core::primitive::u8] as $crate::__private::Encode>::encoded_len(&$to_bytes(self), context)
     }
   };
   (@decode $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl<'de, $(const $g: usize)?> $crate::__private::Decode<'de> for $ty {
+    impl<'de, $(const $g: usize)?> $crate::__private::Decode<'de, Self> for $ty {
       $crate::bytes_bridge!(@decode_impl $from_bytes);
     }
   };
   (@decode_impl $from_bytes:expr) => {
-    fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<UB>(context: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::UnknownRefBuffer<'de>
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
-      $from_bytes(src).map(|v| (src.len(), v))
+      <&[::core::primitive::u8] as $crate::__private::Decode<'de, &[u8]>>::decode::<UB>(context, src)
+        .and_then(|(read, val)| $from_bytes(val).map(|v| (read, v)))
     }
   };
   (@decode_owned $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl$(<const $g: ::core::primitive::usize>)? $crate::__private::DecodeOwned for $ty {
+    impl $(< const $g: usize >)? $crate::__private::Decode<'de, Self> for $ty {
       $crate::bytes_bridge!(@decode_owned_impl $from_bytes);
     }
   };
   (@decode_owned_impl $from_bytes:expr) => {
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode_owned<B, UB>(context: &$crate::__private::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
     {
-      $from_bytes(&src).map(|v| (src.len(), v))
+      <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
+        .and_then(|(read, val)| $from_bytes(val).map(|v| (read, v)))
     }
   };
   (@into_target_impl $ty:ty: $from:expr) => {
@@ -850,42 +864,23 @@ macro_rules! array_str {
     impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
       fn encode(
         &self,
+        context: &$crate::__private::Context,
         buf: &mut [::core::primitive::u8],
       ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
         if N == 0 {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Encode::encode(&self.as_bytes(), buf)
+        $crate::__private::Encode::encode(&self.as_bytes(), context, buf)
       }
 
       #[inline]
-      fn encoded_len(&self) -> ::core::primitive::usize {
+      fn encoded_len(&self, context: &$crate::__private::Context) -> ::core::primitive::usize {
         if N == 0 {
           return 0;
         }
 
-        $crate::__private::Encode::encoded_len(&self.as_bytes())
-      }
-
-      fn encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier) -> ::core::primitive::usize {
-        if N == 0 {
-          return 0;
-        }
-
-        $crate::__private::Encode::encoded_len_with_identifier(&self.as_bytes(), identifier)
-      }
-
-      fn encode_with_identifier(
-        &self,
-        identifier: $crate::__private::Identifier,
-        buf: &mut [::core::primitive::u8],
-      ) -> Result<::core::primitive::usize, $crate::__private::EncodeError> {
-        if N == 0 {
-          return ::core::result::Result::Ok(0);
-        }
-
-        $crate::__private::Encode::encode_with_identifier(&self.as_bytes(), identifier, buf)
+        $crate::__private::Encode::encoded_len(&self.as_bytes(), context)
       }
     }
 
@@ -893,14 +888,14 @@ macro_rules! array_str {
       $crate::partial_encode_primitives!(@impl);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de> for $ty {
-      fn decode<B>(
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, Self> for $ty {
+      fn decode<UB>(
+        context: &$crate::__private::Context,
         src: &'de [::core::primitive::u8],
-        _: &mut B,
       ) -> Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        B: $crate::__private::UnknownRefBuffer<'de>,
+        UB: $crate::__private::UnknownBuffer<&'de [u8]>,
       {
         if N == 0 {
           return ::core::result::Result::Ok((0, $new()));
@@ -914,8 +909,18 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned for $ty {
-      $crate::__array_str_decoded_owned_impl!($new, $decode);
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<Self> for $ty {
+      fn decode_owned<B, UB>(
+        ctx: &$crate::__private::Context,
+        src: B,
+      ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      where
+        Self: ::core::marker::Sized + 'static,
+        B: $crate::__private::Buffer + 'static,
+        UB: $crate::__private::UnknownBuffer<B> + 'static,
+      {
+        <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
+      }
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
@@ -948,7 +953,28 @@ macro_rules! array_str {
       }
     }
 
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage for $ty {
+      type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+      type Encoded<'a>
+        = &'a ::core::primitive::str
+      where
+        Self: ::core::marker::Sized + 'a;
+
+      type Borrowed<'a>
+        = &'a Self
+      where
+        Self: 'a;
+
+      type EncodedOwned
+        = Self
+      where
+        Self: ::core::marker::Sized + 'static;
+    }
+
     impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
+      type Partial = Self;
+
       type Encoded<'a>
         = &'a ::core::primitive::str
       where
@@ -965,42 +991,6 @@ macro_rules! array_str {
         Self: ::core::marker::Sized + 'static;
     }
   };
-}
-
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __array_str_decoded_owned_impl {
-  ($new:expr, $decode:expr) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      if N == 0 {
-        return ::core::result::Result::Ok((0, $new()));
-      }
-
-      if src.len() > N {
-        return ::core::result::Result::Err($crate::__private::larger_than_str_capacity::<N>());
-      }
-
-      $decode(::core::convert::AsRef::<[::core::primitive::u8]>::as_ref(
-        &src,
-      ))
-    }
-  };
-}
-
-#[cfg(not(any(feature = "alloc", feature = "std")))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __array_str_decoded_owned_impl {
-  ($new:expr, $decode:expr) => {};
 }
 
 /// A macro emits traits implementations for a array-style `[u8]` type.
@@ -1029,42 +1019,23 @@ macro_rules! array_bytes {
     impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
       fn encode(
         &self,
+        context: &$crate::__private::Context,
         buf: &mut [::core::primitive::u8],
       ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
         if N == 0 {
           return ::core::result::Result::Ok(0);
         }
 
-        $crate::__private::Encode::encode(&$as_bytes(self), buf)
+        $crate::__private::Encode::encode(&$as_bytes(self), context, buf)
       }
 
       #[inline]
-      fn encoded_len(&self) -> ::core::primitive::usize {
+      fn encoded_len(&self, context: &$crate::__private::Context) -> ::core::primitive::usize {
         if N == 0 {
           return 0;
         }
 
-        $crate::__private::Encode::encoded_len(&$as_bytes(self))
-      }
-
-      fn encoded_len_with_identifier(&self, identifier: $crate::__private::Identifier) -> ::core::primitive::usize {
-        if N == 0 {
-          return 0;
-        }
-
-        $crate::__private::Encode::encoded_len_with_identifier(&$as_bytes(self), identifier)
-      }
-
-      fn encode_with_identifier(
-        &self,
-        identifier: $crate::__private::Identifier,
-        buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
-        if N == 0 {
-          return ::core::result::Result::Ok(0);
-        }
-
-        $crate::__private::Encode::encode_with_identifier(&$as_bytes(self), identifier, buf)
+        $crate::__private::Encode::encoded_len(&$as_bytes(self), context)
       }
     }
 
@@ -1072,14 +1043,14 @@ macro_rules! array_bytes {
       $crate::partial_encode_primitives!(@impl);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de> for $ty {
-      fn decode<B>(
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, Self> for $ty {
+      fn decode<UB>(
+        context: &$crate::__private::Context,
         src: &'de [::core::primitive::u8],
-        _: &mut B,
       ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        B: $crate::__private::UnknownRefBuffer<'de>,
+        UB: $crate::__private::UnknownBuffer<&'de [u8]>,
       {
         if N == 0 {
           return ::core::result::Result::Ok((0, $new()));
@@ -1093,8 +1064,18 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned for $ty {
-      $crate::__array_bytes_decoded_owned_impl!($new, $decode);
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<Self> for $ty {
+      fn decode_owned<B, UB>(
+        ctx: &$crate::__private::Context,
+        src: B,
+      ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      where
+        Self: ::core::marker::Sized + 'static,
+        B: $crate::__private::Buffer + 'static,
+        UB: $crate::__private::UnknownBuffer<B>,
+      {
+        <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
+      }
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
@@ -1131,7 +1112,28 @@ macro_rules! array_bytes {
       }
     }
 
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage for $ty {
+      type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+      type Encoded<'a>
+        = &'a [::core::primitive::u8]
+      where
+        Self: ::core::marker::Sized + 'a;
+
+      type Borrowed<'a>
+        = &'a Self
+      where
+        Self: 'a;
+
+      type EncodedOwned
+        = Self
+      where
+        Self: ::core::marker::Sized + 'static;
+    }
+
     impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
+      type Partial = Self;
+
       type Encoded<'a>
         = &'a [::core::primitive::u8]
       where
@@ -1148,42 +1150,6 @@ macro_rules! array_bytes {
         Self: ::core::marker::Sized + 'static;
     }
   };
-}
-
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __array_bytes_decoded_owned_impl {
-  ($new:expr, $decode:expr) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      if N == 0 {
-        return ::core::result::Result::Ok((0, $new()));
-      }
-
-      if src.len() > N {
-        return ::core::result::Result::Err($crate::__private::larger_than_array_capacity::<N>());
-      }
-
-      $decode(::core::convert::AsRef::<[::core::primitive::u8]>::as_ref(
-        &src,
-      ))
-    }
-  };
-}
-
-#[cfg(not(any(feature = "alloc", feature = "std")))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __array_bytes_decoded_owned_impl {
-  ($new:expr, $decode:expr) => {};
 }
 
 /// A macro emits [`TypeRef`](super::TypeRef) implementations for `Self`
@@ -1286,11 +1252,35 @@ macro_rules! message {
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message for $ty {
         $crate::message!(@impl);
       }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage for $ty {
+        $crate::message!(@impl_partial);
+      }
     )*
 
     $($crate::conversion!($ty $([ $(const $g: usize),* ])? );)*
   };
   (@impl) => {
+    type Partial = Self;
+
+    type Encoded<'a>
+      = Self
+    where
+      Self: ::core::marker::Sized + 'a;
+
+    type Borrowed<'a>
+      = &'a Self
+    where
+      Self: 'a;
+
+    type EncodedOwned
+      = Self
+    where
+      Self: ::core::marker::Sized + 'static;
+  };
+  (@impl_partial) => {
+    type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
     type Encoded<'a>
       = Self
     where
@@ -1362,7 +1352,7 @@ macro_rules! wirable {
   (@length_delimited) => {
     const WIRE_TYPE: $crate::WireType = $crate::WireType::LengthDelimited;
   };
-  (@merged) => {
+  (@zst) => {
     const WIRE_TYPE: $crate::WireType = $crate::WireType::Zst;
   };
   (@fixed16) => {
@@ -1390,33 +1380,6 @@ macro_rules! wirable {
   }
 }
 
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __varint_decode_owned_impl {
-  () => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-    where
-      Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
-    {
-      $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(&src))
-        .map_err(::core::convert::Into::into)
-    }
-  };
-}
-
-#[cfg(not(any(feature = "alloc", feature = "std")))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __varint_decode_owned_impl {
-  () => {};
-}
-
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! varint {
@@ -1436,69 +1399,43 @@ macro_rules! varint {
     }
   };
   (@encode_impl) => {
-    fn encode(&self, _: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
-      $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
+    fn encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<usize, $crate::__private::EncodeError> {
+      $crate::__private::encode_varint(ctx, self, buf)
     }
 
-    fn encoded_len(&self, _: &$crate::__private::Context,) -> ::core::primitive::usize {
-      $crate::__private::varing::Varint::encoded_len(self)
+    fn encoded_len(&self, ctx: &$crate::__private::Context,) -> ::core::primitive::usize {
+      $crate::__private::encoded_varint_len(ctx, self)
     }
   };
   (@decode $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de> for $ty {
+    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de, Self> for $ty {
       $crate::varint!(@decode_impl);
     }
   };
   (@decode_impl) => {
-    fn decode<B, UB>(_: &$crate::__private::Context, src: &'de B, _: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<UB>(ctx: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::Buffer,
-      UB: $crate::__private::UnknownRefBuffer<'de>,
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
-      $crate::__private::varing::Varint::decode(::core::convert::AsRef::as_ref(src)).map_err(::core::convert::Into::into)
+      $crate::__private::decode_varint(ctx, src)
     }
   };
   (@decode_owned $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::DecodeOwned for $ty {
+    impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::DecodeOwned<Self> for $ty {
       $crate::varint!(@decode_owned_impl);
     }
   };
   (@decode_owned_impl) => {
-    $crate::__varint_decode_owned_impl!();
-  };
-}
-
-#[cfg(any(feature = "alloc", feature = "std"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __fixed_decode_owned_impl {
-  (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn decode_from_bytes<U>(
-      src: $crate::__private::bytes::Bytes,
-      _: &mut U,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode_owned<B, UB>(ctx: &$crate::__private::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
-      U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
     {
-      const SIZE: ::core::primitive::usize = $size / 8;
-
-      if src.len() < SIZE {
-        return Err($crate::__private::DecodeError::buffer_underflow());
-      }
-
-      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
+      <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
     }
   };
-}
-
-#[cfg(not(any(feature = "alloc", feature = "std")))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __fixed_decode_owned_impl {
-  (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {};
 }
 
 /// A macro emits traits implementations for primitive types whose [`WireType`](crate::WireType) is `Fixed*` and implement [`Copy`](::core::marker::Copy).
@@ -1583,51 +1520,49 @@ macro_rules! fixed {
     }
   };
   (@encode_impl $size:literal { $to_slice:expr $(,)? }) => {
-    fn encode(&self, _: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+    fn encode(&self, ctx: &$crate::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
       const SIZE: ::core::primitive::usize = $size / 8;
-
-      let buf_len = buf.len();
-      if buf_len < $size {
-        return Err($crate::__private::EncodeError::insufficient_buffer($size, buf_len));
-      }
-
-      $to_slice(self, &mut buf[..SIZE]).map(|_| SIZE)
+      $crate::__private::encode_fixed::<_, _, SIZE>(ctx, self, buf, $to_slice)
     }
 
-    fn encoded_len(&self, _: &$crate::__private::Context) -> ::core::primitive::usize {
+    fn encoded_len(&self, ctx: &$crate::__private::Context) -> ::core::primitive::usize {
       const SIZE: ::core::primitive::usize = $size / 8;
-      SIZE
+      $crate::__private::encoded_fixed_len::<SIZE>(ctx)
     }
   };
   (@decode $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {
-    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de> for $ty {
+    impl<'de, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de, Self> for $ty {
       $crate::fixed!(@decode_impl $size { $from_bytes });
     }
   };
   (@decode_impl $size:literal { $from_slice:expr $(,)? }) => {
-    fn decode<B, UB>(_: &$crate::__private::Context, src: &'de B, _: &mut UB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    fn decode<UB>(ctx: &$crate::__private::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::Buffer,
-      UB: $crate::__private::UnknownRefBuffer<'de>,
+      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
     {
       const SIZE: ::core::primitive::usize = $size / 8;
-      let src = ::core::convert::AsRef::as_ref(src);
 
-      if src.len() < SIZE {
-        return Err($crate::__private::DecodeError::buffer_underflow());
-      }
-
-      $from_slice(&src[..SIZE]).map(|val| (SIZE, val))
+      $crate::__private::decode_fixed::<_, _, SIZE>(ctx, src, $from_slice)
     }
   };
   (@decode_owned $size:literal($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? { from_bytes: $from_bytes:expr $(,)? })) => {
-    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::DecodeOwned for $ty {
+    impl $(< $(const $g: ::core::primitive::usize),* >)? $crate::__private::DecodeOwned<Self> for $ty {
       $crate::fixed!(@decode_owned_impl $size { $from_bytes });
     }
   };
   (@decode_owned_impl $size:literal { $from_slice:expr $(,)? }) => {
-    $crate::__fixed_decode_owned_impl!(@decode_owned_impl $size { $from_slice });
+    fn decode_owned<B, UB>(ctx: &$crate::__private::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+    where
+      Self: ::core::marker::Sized + 'static,
+      B: $crate::__private::Buffer + 'static,
+      UB: $crate::__private::UnknownBuffer<B> + 'static,
+    {
+      <Self as $crate::__private::Decode<'_, _>>::decode::<()>(
+        ctx,
+        $crate::__private::Buffer::as_bytes(&src),
+      )
+    }
   };
 }
 
@@ -1671,39 +1606,21 @@ macro_rules! phantom {
 
       impl<T: ?::core::marker::Sized> $crate::__private::Encode for $ty {
         #[inline]
-        fn encode(&self, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn encode(&self, _: &$crate::__private::Context, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 
         #[inline]
-        fn encoded_len(&self) -> ::core::primitive::usize {
+        fn encoded_len(&self, _: &$crate::__private::Context) -> ::core::primitive::usize {
           0
         }
       }
 
-      impl<'de, T: ?::core::marker::Sized> $crate::__private::Decode<'de> for $ty {
-        fn decode<B>(_: &'de [u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
+      impl<'de, T: ?::core::marker::Sized> $crate::__private::Decode<'de, Self> for $ty {
+        fn decode<UB>(_: &$crate::__private::Context, _: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
-          B: $crate::__private::UnknownRefBuffer<'de>,
-        {
-          ::core::result::Result::Ok((0, ::core::default::Default::default()))
-        }
-      }
-
-      impl<T: ?::core::marker::Sized> $crate::__private::DecodeOwned for $ty
-      where
-        Self: 'static,
-      {
-        #[cfg(any(feature = "std", feature = "alloc"))]
-        #[inline]
-        fn decode_from_bytes<U>(
-          _: $crate::__private::bytes::Bytes,
-          _: &mut U,
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::DecodeError>
-        where
-          Self: ::core::marker::Sized + 'static,
-          U: $crate::__private::UnknownBuffer<$crate::__private::bytes::Bytes>,
+          UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
         {
           ::core::result::Result::Ok((0, ::core::default::Default::default()))
         }
@@ -1713,17 +1630,38 @@ macro_rules! phantom {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, _: &mut [u8], _: &Self::Selection,) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
+        fn partial_encode(&self, _: &$crate::__private::Context, _: &mut [u8], _: &Self::Selection,) -> ::core::result::Result<::core::primitive::usize, $crate::__private::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 
         #[inline]
-        fn partial_encoded_len(&self, _: &Self::Selection,) -> ::core::primitive::usize {
+        fn partial_encoded_len(&self, _: &$crate::__private::Context, _: &Self::Selection,) -> ::core::primitive::usize {
           0
         }
       }
 
+      impl<T: ?::core::marker::Sized> $crate::__private::PartialMessage for $ty {
+        type UnknownBuffer<B: ?::core::marker::Sized> = ();
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
       impl<T: ?::core::marker::Sized> $crate::__private::Message for $ty {
+        type Partial = Self;
+
         type Encoded<'a>
           = Self
         where

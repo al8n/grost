@@ -1,26 +1,27 @@
 use std::num::NonZeroUsize;
 
-use grost::{Buffer, Decode, Encode, Identifier, Unknown, Wirable};
+use grost::{Buffer, Decode, Encode, Identifier, Message, Unknown, Wirable, skip};
 
 pub struct PartialUserRef<'a, UB> {
+  // name: Option<<String as Message>::Encoded<'a>>,
   name: Option<&'a str>,
-  age: Option<u32>,
+  age: Option<<<u32 as Message>::Partial as Message>::Encoded<'a>>,
   email: Option<&'a str>,
-  unknown_buffer: UB,
+  unknown_buffer: Option<UB>,
 }
-
-
 
 impl Wirable for User {}
 
 impl<'de, UB> Decode<'de, PartialUserRef<'de, UB>> for User {
-  type UnknownBuffer<B> = UB;
+  // type UnknownBuffer<B: ?Sized> = UB;
 
-  fn decode<B>(context: &grost::Context, src: B) -> Result<(usize, PartialUserRef<'de, Self::UnknownBuffer<B>>), grost::error::DecodeError>
+  fn decode<UB>(
+    context: &grost::Context,
+    src: &'de [u8],
+  ) -> Result<(usize, PartialUserRef<'de, UB>), grost::error::DecodeError>
   where
     Self: Sized + 'de,
-    B: grost::Buffer + 'de,
-    Self::UnknownBuffer<B>: grost::UnknownBuffer<B>,
+    UB: grost::UnknownBuffer<&'de [u8]>,
   {
     let buf = src.as_bytes();
     let buf_len = buf.len();
@@ -29,39 +30,51 @@ impl<'de, UB> Decode<'de, PartialUserRef<'de, UB>> for User {
     let mut name: Option<&str> = None;
     let mut age: Option<u32> = None;
     let mut email: Option<&str> = None;
-    let mut unknowns = Self::UnknownBuffer::<B>::new();
+    let mut unknowns = None;
+    let skip_unknown = context.skip_unknown();
 
     while offset < buf_len {
       let (readed, identifier) = Identifier::decode(&buf[offset..])?;
 
       match identifier {
         Self::AGE_IDENTIFIER => {
-          let (readed, val) = u8::decode::<B>(context, src.slice(offset + readed..))?;
+          let (readed, val) = <<<u32 as Message>::Partial as Message>::Encoded<'de> as Decode<
+            'de,
+            _,
+          >>::decode::<B>(context, src.slice(offset + readed..))?;
           offset += readed;
-          age = Some(val as _);
-        },
-        Self::EMAIL_IDENTIFIER => {
-        
-        },
-        Self::NAME_IDENTIFIER => {
-        
+          age = Some(val);
         }
+        Self::EMAIL_IDENTIFIER => {}
+        Self::NAME_IDENTIFIER => {}
         _ => {
-          let (readed, u) = Unknown::decode(identifier, src.slice(offset..))?;
-          offset += readed;
-          if unknowns.push(u).is_some() {
-            return Err(grost::error::DecodeError::unknown_buffer_overflow(unknowns.len(), NonZeroUsize::new(unknowns.len() + 1).unwrap()));
+          if !skip_unknown {
+            let (readed, u) = Unknown::decode(identifier, src.slice(offset..))?;
+            offset += readed;
+            let unknowns = unknowns.get_or_insert_with(|| Self::UnknownBuffer::<B>::new());
+            if unknowns.push(u).is_some() {
+              return Err(grost::error::DecodeError::unknown_buffer_overflow(
+                unknowns.len(),
+                NonZeroUsize::new(unknowns.len() + 1).unwrap(),
+              ));
+            }
+          } else {
+            let (readed, _) = Unknown::decode(identifier, &buf[offset..])?;
+            offset += readed;
           }
         }
       }
     }
 
-    Ok((offset, PartialUserRef {
-      name,
-      age,
-      email,
-      unknown_buffer: unknowns,
-    }))
+    Ok((
+      offset,
+      PartialUserRef {
+        name,
+        age,
+        email,
+        unknown_buffer: unknowns,
+      },
+    ))
   }
 }
 

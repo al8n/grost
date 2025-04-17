@@ -41,6 +41,30 @@ mod selection_set;
 mod unknown;
 mod utils;
 
+pub trait PartialMessage {
+  type UnknownBuffer<B: ?Sized>: UnknownBuffer<B>;
+
+  /// A encoded representation of this type with lifetime 'a.
+  ///
+  /// This type can be converted back to the original type and decoded from raw bytes.
+  type Encoded<'a>: Copy + TypeRef<Self> + Encode + Decode<'a, Self::Encoded<'a>>
+  where
+    Self: Sized + 'a;
+
+  /// A borrowed view of this type with lifetime 'a.
+  ///
+  /// This type provides a non-owned view that can be created from a reference
+  /// and encoded when needed.
+  type Borrowed<'a>: Copy + TypeBorrowed<'a, Self> + Encode
+  where
+    Self: 'a;
+
+  /// An owned encoded representation of this type.
+  type EncodedOwned: Clone + TypeOwned<Self> + Encode + Decode<'static, Self::EncodedOwned>
+  where
+    Self: Sized + 'static;
+}
+
 /// A message type that can be encoded and decoded.
 ///
 /// This trait defines how output types can be encoded, decoded,
@@ -50,6 +74,9 @@ mod utils;
 /// * `Borrowed<'a>` - A borrowed view with lifetime 'a
 /// * `EncodedOwned` - An owned encoded representation
 pub trait Message: Encode {
+  /// The partial type of this message.
+  type Partial: PartialMessage;
+
   /// A encoded representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and decoded from raw bytes.
@@ -194,6 +221,10 @@ pub mod __private {
   pub use memchr;
 
   pub use thiserror;
+
+  pub use utils::fixed::*;
+  pub use utils::varint::*;
+  pub use utils::zst::*;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_str_capacity<const N: usize>() -> crate::DecodeError {

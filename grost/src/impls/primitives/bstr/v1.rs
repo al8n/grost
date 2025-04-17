@@ -1,28 +1,29 @@
 use bstr_1::BStr;
 
-use crate::{Decode, DecodeError, Encode, EncodeError, Wirable};
+use crate::{Context, Decode, DecodeError, Encode, EncodeError, Wirable};
 
 impl Wirable for BStr {}
 
 impl Encode for BStr {
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    <[u8] as Encode>::encode(self, buf)
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    <[u8] as Encode>::encode(self, context, buf)
   }
 
-  fn encoded_len(&self) -> usize {
-    <[u8] as Encode>::encoded_len(self)
+  fn encoded_len(&self, context: &Context) -> usize {
+    <[u8] as Encode>::encoded_len(self, context)
   }
 }
 
 partial_encode_primitives!(BStr);
 
-impl<'de> Decode<'de> for &'de BStr {
-  fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
+impl<'de> Decode<'de, Self> for &'de BStr {
+  fn decode<UB>(context: &crate::Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    UB: crate::UnknownBuffer<&'de [u8]> + 'de,
   {
-    <&'de [u8] as Decode<'de>>::decode(src, ub).map(|(len, slice)| (len, BStr::new(slice)))
+    <&'de [u8] as Decode<'de, &'de [u8]>>::decode::<()>(context, src)
+      .map(|(len, slice)| (len, BStr::new(slice)))
   }
 }
 

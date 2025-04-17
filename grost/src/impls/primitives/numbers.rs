@@ -1,49 +1,50 @@
-use crate::{Buffer, Context, Decode, Encode};
+use grost_types::DecodeError;
 
-// mod arbitrary_int;
-// mod bnum;
-// mod decimal;
-// mod half;
-// mod num_complex;
-// mod num_rational;
-// mod ruint;
+use crate::{Context, Decode, DecodeOwned, Encode};
 
-// varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
+mod arbitrary_int;
+mod bnum;
+mod decimal;
+mod half;
+mod num_complex;
+mod num_rational;
+mod ruint;
 
-// fixed!(
-//   32(f32 {
-//     from_bytes: |src: &[u8]| { Ok(f32::from_le_bytes(src.try_into().unwrap())) },
-//     to_bytes: |this: &Self, buf: &mut [u8]| {
-//       buf.copy_from_slice(&this.to_le_bytes());
-//       Ok(())
-//     },
-//   }),
-//   64(f64 {
-//     from_bytes: |src: &[u8]| { Ok(f64::from_le_bytes(src.try_into().unwrap())) },
-//     to_bytes: |this: &Self, buf: &mut [u8]| {
-//       buf.copy_from_slice(&this.to_le_bytes());
-//       Ok(())
-//     },
-//   }),
-// );
+varint!(u16, u32, u64, u128, i16, i32, i64, i128, char);
 
-// message!(u8, i8, bool);
+fixed!(
+  32(f32 {
+    from_bytes: |src: &[u8]| { Ok(f32::from_le_bytes(src.try_into().unwrap())) },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      buf.copy_from_slice(&this.to_le_bytes());
+      Ok(())
+    },
+  }),
+  64(f64 {
+    from_bytes: |src: &[u8]| { Ok(f64::from_le_bytes(src.try_into().unwrap())) },
+    to_bytes: |this: &Self, buf: &mut [u8]| {
+      buf.copy_from_slice(&this.to_le_bytes());
+      Ok(())
+    },
+  }),
+);
 
+message!(u8);
 wirable!((@byte) <=> (u8));
-// partial_encode_primitives!(u8);
+partial_encode_primitives!(u8);
 
-// bridge!(
-//   u8 {
-//     i8 {
-//       from: convert_u8_to_i8;
-//       to: convert_i8_to_u8;
-//     },
-//     bool {
-//       from: convert_u8_to_bool;
-//       to: convert_bool_to_u8;
-//     }
-//   },
-// );
+bridge!(
+  u8 {
+    i8 {
+      from: convert_u8_to_i8;
+      to: convert_i8_to_u8;
+    },
+    bool {
+      from: convert_u8_to_bool;
+      to: convert_bool_to_u8;
+    }
+  },
+);
 
 impl Encode for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
@@ -61,15 +62,24 @@ impl Encode for u8 {
 }
 
 impl<'de> Decode<'de, Self> for u8 {
-  type UnknownBuffer<B> = ();
-
-  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), crate::DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), crate::DecodeError>
   where
     Self: Sized + 'de,
-    B: Buffer + 'de,
-    Self::UnknownBuffer<B>: crate::UnknownBuffer<B>,
+    UB: crate::UnknownBuffer<&'de [u8]>,
   {
-    decode_u8_in(src.as_bytes())
+    decode_u8_in(src)
+  }
+}
+
+impl DecodeOwned<Self> for u8 {
+  fn decode_owned<B, UB>(_: &Context, src: B) -> Result<(usize, Self), DecodeError>
+  where
+    Self: Sized + 'static,
+    B: crate::Buffer + 'static,
+    UB: crate::UnknownBuffer<B> + 'static,
+  {
+    let buf = src.as_bytes();
+    decode_u8_in(buf)
   }
 }
 
@@ -116,11 +126,11 @@ mod tests {
       let bytes_written = u8::encode(&val, &ctx, &mut buf).unwrap();
       assert_eq!(bytes_written, encoded_len);
 
-      let (bytes_read, decoded) = u8::decode::<_>(&ctx, buf.as_slice()).unwrap();
+      let (bytes_read, decoded) = u8::decode::<()>(&ctx, buf.as_slice()).unwrap();
       assert_eq!(bytes_read, bytes_written);
       assert_eq!(decoded, val);
 
-      let (bytes_read, decoded) = u8::decode::<_>(&ctx, Bytes::from(buf)).unwrap();
+      let (bytes_read, decoded) = u8::decode_owned::<_, ()>(&ctx, Bytes::from(buf)).unwrap();
       assert_eq!(bytes_read, bytes_written);
       assert_eq!(decoded, val);
 

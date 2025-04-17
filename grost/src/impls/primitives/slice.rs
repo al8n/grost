@@ -1,9 +1,9 @@
-use crate::{Decode, DecodeError, Encode, EncodeError, IntoTarget, TypeRef, Wirable};
+use crate::{Context, Decode, DecodeError, Encode, EncodeError, IntoTarget, TypeRef, Wirable};
 
 impl Wirable for [u8] {}
 
 impl Encode for [u8] {
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let this_len = self.len();
     let buf_len = buf.len();
 
@@ -15,18 +15,18 @@ impl Encode for [u8] {
   }
 
   #[inline]
-  fn encoded_len(&self) -> usize {
+  fn encoded_len(&self, context: &Context) -> usize {
     self.len()
   }
 }
 
 partial_encode_primitives!([u8]);
 
-impl<'de> Decode<'de> for &'de [u8] {
-  fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
+impl<'de> Decode<'de, Self> for &'de [u8] {
+  fn decode<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    UB: crate::UnknownBuffer<&'de [u8]> + 'de,
   {
     Ok((src.len(), src))
   }

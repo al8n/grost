@@ -3,7 +3,8 @@ use varing::Varint;
 use super::{Tag, WireType};
 
 /// An identifier for a field in a graph protocol buffer message.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("({wire_type}, {tag})")]
 pub struct Identifier {
   wire_type: WireType,
   tag: Tag,

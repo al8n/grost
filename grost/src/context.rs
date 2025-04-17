@@ -5,8 +5,8 @@ bitflags::bitflags! {
   struct Flags: u8 {
     /// The length delimiter is set
     const LENGTH_DELIMITER = 0b0000_0001;
-    /// The fixed flag is set
-    const FIXED = 0b0000_0010;
+    /// Should skip the unknown identifier
+    const SKIP_UNKNOWN = 0b0000_0010;
   }
 }
 
@@ -115,37 +115,37 @@ impl Context {
     self.flags.contains(Flags::LENGTH_DELIMITER)
   }
 
-  /// Sets the fixed flag for the context.
+  /// Sets the skip unknown flag for the context.
   #[inline]
-  pub const fn set_fixed(&mut self) -> &mut Self {
-    self.flags = self.flags.union(Flags::FIXED);
+  pub const fn set_skip_unknown(&mut self) -> &mut Self {
+    self.flags = self.flags.union(Flags::SKIP_UNKNOWN);
     self
   }
 
-  /// Sets the fixed flag for the context.
+  /// Sets the skip unknown flag for the context.
   #[inline]
-  pub const fn with_fixed(mut self) -> Self {
-    self.flags = self.flags.union(Flags::FIXED);
+  pub const fn with_skip_unknown(mut self) -> Self {
+    self.flags = self.flags.union(Flags::SKIP_UNKNOWN);
     self
   }
 
-  /// Unsets the fixed flag for the context.
+  /// Unsets the skip unknown flag for the context.
   #[inline]
-  pub const fn unset_fixed(&mut self) -> &mut Self {
-    self.flags = self.flags.difference(Flags::FIXED);
+  pub const fn unset_skip_unknown(&mut self) -> &mut Self {
+    self.flags = self.flags.difference(Flags::SKIP_UNKNOWN);
     self
   }
 
-  /// Unsets the fixed flag for the context.
+  /// Unsets the skip unknown flag for the context.
   #[inline]
-  pub const fn without_fixed(mut self) -> Self {
-    self.flags = self.flags.difference(Flags::FIXED);
+  pub const fn without_skip_unknown(mut self) -> Self {
+    self.flags = self.flags.difference(Flags::SKIP_UNKNOWN);
     self
   }
 
-  /// Gets if the fixed flag is set for the context.
+  /// Gets if the skip unknown flag is set for the context.
   #[inline]
-  pub const fn fixed(&self) -> bool {
-    self.flags.contains(Flags::FIXED)
+  pub const fn skip_unknown(&self) -> bool {
+    self.flags.contains(Flags::SKIP_UNKNOWN)
   }
 }

@@ -1,6 +1,5 @@
+use super::{Context, Wirable};
 use grost_types::{EncodeError, WireType};
-use super::{Wirable, Context};
-
 
 /// A trait for serializing data to binary format with support for various wire types.
 ///
@@ -71,7 +70,7 @@ pub trait Encode: Wirable {
   //       $e.update($this.encoded_len_with_identifier($identifier), $buf_len)
   //     }};
   //   }
-    
+
   //   macro_rules! check_bound {
   //     ($this:ident($identifier:ident, $offset:ident, $buf_len:ident)) => {{
   //       if $offset >= $buf_len {
@@ -176,7 +175,9 @@ pub trait PartialEncode: Wirable {
     context: &Context,
     selection: &Self::Selection,
   ) -> Result<super::bytes::Bytes, EncodeError> {
-    self.partial_encode_to_vec(context, selection).map(Into::into)
+    self
+      .partial_encode_to_vec(context, selection)
+      .map(Into::into)
   }
 
   // /// Encodes the message with an identifier to a buffer.
@@ -202,7 +203,7 @@ pub trait PartialEncode: Wirable {
   //       $e.update($this.partial_encoded_len_with_identifier($identifier, selection), $buf_len)
   //     }};
   //   }
-    
+
   //   macro_rules! check_bound {
   //     ($this:ident($identifier:ident, $offset:ident, $buf_len:ident)) => {{
   //       if $offset >= $buf_len {

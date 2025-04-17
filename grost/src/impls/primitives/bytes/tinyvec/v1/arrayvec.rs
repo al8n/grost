@@ -2,8 +2,8 @@ use tinyvec_1::{Array, ArrayVec};
 
 use super::larger_than_array_capacity;
 use crate::{
-  Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, TypeOwned, TypeRef, Wirable,
-  WireType,
+  Context, Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, PartialMessage,
+  TypeOwned, TypeRef, Wirable, WireType,
 };
 
 impl<A> Wirable for ArrayVec<A>
@@ -22,54 +22,78 @@ impl<A> Encode for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
     if A::CAPACITY == 0 {
       return Ok(0);
     }
 
-    self.as_slice().encode(buf)
+    self.as_slice().encode(context, buf)
   }
 
-  fn encoded_len(&self) -> usize {
+  fn encoded_len(&self, context: &Context) -> usize {
     if A::CAPACITY == 0 {
       return 0;
     }
 
-    self.as_slice().encoded_len()
+    self.as_slice().encoded_len(context)
   }
 }
 
-impl<'de, A> Decode<'de> for ArrayVec<A>
+impl<'de, A> Decode<'de, Self> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
+  fn decode<B>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    B: crate::UnknownBuffer<&'de [u8]>,
   {
     decode_to_array(src)
   }
 }
 
-impl<A> DecodeOwned for ArrayVec<A>
+impl<A> DecodeOwned<Self> for ArrayVec<A>
 where
   A: Array<Item = u8> + 'static,
 {
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  fn decode_from_bytes<U>(src: bytes_1::Bytes, _: &mut U) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    U: crate::UnknownBuffer<bytes_1::Bytes>,
+    B: crate::Buffer + 'static,
+    UB: crate::UnknownBuffer<B> + 'static,
   {
-    decode_to_array(src.as_ref())
+    <Self as Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
   }
+}
+
+impl<A> PartialMessage for ArrayVec<A>
+where
+  A: Array<Item = u8> + Clone,
+{
+  type UnknownBuffer<B: ?Sized> = ();
+
+  type Encoded<'a>
+    = &'a [A::Item]
+  where
+    Self: Sized + 'a;
+
+  type Borrowed<'a>
+    = &'a Self
+  where
+    Self: 'a;
+
+  type EncodedOwned
+    = Self
+  where
+    Self: Sized + 'static;
 }
 
 impl<A> Message for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
+  type Partial = Self;
+
   type Encoded<'a>
     = &'a [A::Item]
   where

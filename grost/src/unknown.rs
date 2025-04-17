@@ -16,7 +16,9 @@ pub trait UnknownBuffer<B: ?Sized> {
 
   /// Pushes the unknown data type to the buffer, if the buffer is full,
   /// the given value will be returned back.
-  fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>> where B: Sized;
+  fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>>
+  where
+    B: Sized;
 
   /// Returns the capacity of the buffer.
   fn capacity(&self) -> usize;
@@ -25,7 +27,9 @@ pub trait UnknownBuffer<B: ?Sized> {
   fn len(&self) -> usize;
 
   /// Returns a slice of the unknown data type.
-  fn as_slice(&self) -> &[Unknown<B>] where B: Sized;
+  fn as_slice(&self) -> &[Unknown<B>]
+  where
+    B: Sized;
 
   /// Returns `true` if the buffer is empty.
   fn is_empty(&self) -> bool {
@@ -36,24 +40,27 @@ pub trait UnknownBuffer<B: ?Sized> {
 impl<B: ?Sized> UnknownBuffer<B> for () {
   fn new() -> Self {}
 
-    fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>>
-    where 
-      B: Sized,
-    {
-        Some(value)
-    }
+  fn push(&mut self, value: Unknown<B>) -> Option<Unknown<B>>
+  where
+    B: Sized,
+  {
+    Some(value)
+  }
 
-    fn capacity(&self) -> usize {
-        0
-    }
+  fn capacity(&self) -> usize {
+    0
+  }
 
-    fn len(&self) -> usize {
-        0
-    }
+  fn len(&self) -> usize {
+    0
+  }
 
-    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
-        &[]
-    }
+  fn as_slice(&self) -> &[Unknown<B>]
+  where
+    B: Sized,
+  {
+    &[]
+  }
 }
 
 // /// A buffer that stores the [`UnknownRef`] data type.
@@ -112,7 +119,10 @@ const _: () = {
       self.len()
     }
 
-    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
+    fn as_slice(&self) -> &[Unknown<B>]
+    where
+      B: Sized,
+    {
       self.as_slice()
     }
 
@@ -158,7 +168,10 @@ const _: () = {
       self.capacity()
     }
 
-    fn as_slice(&self) -> &[Unknown<B>] where B: Sized {
+    fn as_slice(&self) -> &[Unknown<B>]
+    where
+      B: Sized,
+    {
       self.as_ref()
     }
 
@@ -260,7 +273,7 @@ impl<B: ?Sized> Unknown<B> {
     macro_rules! slice {
       ($end:ident, $buf_len:ident, $buf:ident) => {{
         if $end == $buf_len {
-          $buf  
+          $buf
         } else {
           $buf.slice(..$end)
         }
@@ -375,74 +388,74 @@ impl<B> Unknown<B>
 where
   B: super::Buffer,
 {
-//   /// Decodes the unknown data type.
-//   pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
-//     let buf_ref = buf.as_bytes();
-//     let (mut data_offset, merged) = Identifier::decode(buf_ref)?;
-//     let (wire_type, tag) = merged.into_components();
+  //   /// Decodes the unknown data type.
+  //   pub fn decode_owned(buf: &B) -> Result<(usize, Self), DecodeError> {
+  //     let buf_ref = buf.as_bytes();
+  //     let (mut data_offset, merged) = Identifier::decode(buf_ref)?;
+  //     let (wire_type, tag) = merged.into_components();
 
-//     macro_rules! consume_fixed {
-//       ($size:literal) => {{
-//         let end = data_offset + $size;
-//         if end > buf_ref.len() {
-//           return Err(DecodeError::buffer_underflow());
-//         }
+  //     macro_rules! consume_fixed {
+  //       ($size:literal) => {{
+  //         let end = data_offset + $size;
+  //         if end > buf_ref.len() {
+  //           return Err(DecodeError::buffer_underflow());
+  //         }
 
-//         Ok((
-//           end,
-//           Self {
-//             wire_type,
-//             tag,
-//             data_offset,
-//             data: buf.slice(..end),
-//           },
-//         ))
-//       }};
-//     }
+  //         Ok((
+  //           end,
+  //           Self {
+  //             wire_type,
+  //             tag,
+  //             data_offset,
+  //             data: buf.slice(..end),
+  //           },
+  //         ))
+  //       }};
+  //     }
 
-//     match wire_type {
-//       WireType::LengthDelimited => {
-//         let (size_len, size) = varing::decode_u32_varint(&buf_ref[data_offset..])?;
-//         data_offset += size_len;
-//         let end = data_offset + size as usize;
+  //     match wire_type {
+  //       WireType::LengthDelimited => {
+  //         let (size_len, size) = varing::decode_u32_varint(&buf_ref[data_offset..])?;
+  //         data_offset += size_len;
+  //         let end = data_offset + size as usize;
 
-//         if end > buf_ref.len() {
-//           return Err(DecodeError::buffer_underflow());
-//         }
+  //         if end > buf_ref.len() {
+  //           return Err(DecodeError::buffer_underflow());
+  //         }
 
-//         let data = buf.slice(..end);
-//         Ok((
-//           end,
-//           Self {
-//             wire_type,
-//             tag,
-//             data_offset,
-//             data,
-//           },
-//         ))
-//       }
-//       WireType::Varint => {
-//         let size_len = varing::consume_varint(&buf_ref[data_offset..])?;
-//         let end = data_offset + size_len;
-//         let data = buf.slice(..end);
-//         Ok((
-//           end,
-//           Self {
-//             wire_type,
-//             tag,
-//             data_offset,
-//             data,
-//           },
-//         ))
-//       }
-//       WireType::Byte => consume_fixed!(1),
-//       WireType::Fixed16 => consume_fixed!(2),
-//       WireType::Fixed32 => consume_fixed!(4),
-//       WireType::Fixed64 => consume_fixed!(8),
-//       WireType::Fixed128 => consume_fixed!(16),
-//       WireType::Zst => consume_fixed!(0),
-//     }
-//   }
+  //         let data = buf.slice(..end);
+  //         Ok((
+  //           end,
+  //           Self {
+  //             wire_type,
+  //             tag,
+  //             data_offset,
+  //             data,
+  //           },
+  //         ))
+  //       }
+  //       WireType::Varint => {
+  //         let size_len = varing::consume_varint(&buf_ref[data_offset..])?;
+  //         let end = data_offset + size_len;
+  //         let data = buf.slice(..end);
+  //         Ok((
+  //           end,
+  //           Self {
+  //             wire_type,
+  //             tag,
+  //             data_offset,
+  //             data,
+  //           },
+  //         ))
+  //       }
+  //       WireType::Byte => consume_fixed!(1),
+  //       WireType::Fixed16 => consume_fixed!(2),
+  //       WireType::Fixed32 => consume_fixed!(4),
+  //       WireType::Fixed64 => consume_fixed!(8),
+  //       WireType::Fixed128 => consume_fixed!(16),
+  //       WireType::Zst => consume_fixed!(0),
+  //     }
+  //   }
 
   /// Converts the `Unknown<B>` to `Unknown<N>`.
   pub fn map<'a, N>(&'a self) -> Unknown<N>

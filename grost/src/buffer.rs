@@ -110,7 +110,7 @@ impl<const N: usize> Buffer for heapless_0_8::Vec<u8, N> {
   }
 
   fn len(&self) -> usize {
-    self.len()
+    <[u8]>::len(self)
   }
 
   fn slice(&self, range: impl RangeBounds<usize>) -> Self {
