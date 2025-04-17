@@ -64,10 +64,7 @@ where
       let buf_len = buf.len();
       let mut offset = 0;
       offset += varing::encode_u32_varint_to(len as u32, &mut buf[offset..]).map_err(|_| {
-        insufficient_buffer!(
-          { varing::encoded_u32_varint_len(len as u32) + len },
-          buf_len
-        )
+        insufficient_buffer!(varing::encoded_u32_varint_len(len as u32) + len, buf_len)
       })?;
 
       check_bound!(
@@ -127,14 +124,24 @@ where
           decoded_identifier,
         ));
       }
-      let (offset, len) = varing::decode_u32_varint(src[offset..].as_ref())?;
-      let (offset, val) = f(&src[offset..])?;
-      Ok((offset + len as usize, val))
+      let (mut offset, len) = varing::decode_u32_varint(src[offset..].as_ref())?;
+      let (read, val) = f(&src[offset..])?;
+      offset += read;
+
+      #[cfg(debug_assertions)]
+      crate::debug_assert_read_eq::<V>(read, len as usize);
+
+      Ok((offset, val))
     }
     (None, true) => {
-      let (offset, len) = varing::decode_u32_varint(src)?;
-      let (offset, val) = f(&src[offset..])?;
-      Ok((offset + len as usize, val))
+      let (mut offset, len) = varing::decode_u32_varint(src)?;
+      let (read, val) = f(&src[offset..])?;
+      offset += read;
+
+      #[cfg(debug_assertions)]
+      crate::debug_assert_read_eq::<V>(read, len as usize);
+
+      Ok((offset, val))
     }
     _ => f(src),
   }

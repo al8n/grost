@@ -1,4 +1,4 @@
-use super::{Buffer, Context, DecodeError, UnknownBuffer, Wirable, WireType, debug_assert_read_eq};
+use super::{Buffer, Context, DecodeError, UnknownBuffer, Wirable};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
