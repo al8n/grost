@@ -313,9 +313,13 @@ fn generate_bitflags_iter(
 
       #[inline]
       fn next(&mut self) -> ::core::option::Option<Self::Item> {
-        self.iter.next().map(|f| {
-          #struct_name::REFLECTION.fields()[f.bits().trailing_zeros() as ::core::primitive::usize]
-        })
+        for f in ::core::iter::Iterator::by_ref(&mut self.iter) {
+          if let ::core::option::Option::Some(val) = #struct_name::REFLECTION.fields().get(f.bits().trailing_zeros() as ::core::primitive::usize) {
+            return ::core::option::Option::Some(*val);
+          }
+        }
+
+        ::core::option::Option::None
       }
     }
 
@@ -360,29 +364,29 @@ fn generate_selection_flags(
   };
 
   match num_fields {
-    // ..=8 => {
-    //   let flags = flags_declare(fields, |idx| 1u8 << idx);
-    //   let flag_ops = flag_ops(fields);
-    //   let iter = generate_bitflags_iter(path_to_grost, vis, struct_name, name, selection_flags_iter_name);
-    //   quote! {
-    //     #path_to_grost::__private::bitflags::bitflags! {
-    //       #derives
-    //       struct #name: ::core::primitive::u8 {
-    //         #(#flags)*
-    //       }
-    //     }
+    ..=8 => {
+      let flags = flags_declare(fields, |idx| 1u8 << idx);
+      let flag_ops = flag_ops(fields);
+      let iter = generate_bitflags_iter(path_to_grost, vis, struct_name, name, selection_flags_iter_name);
+      quote! {
+        #path_to_grost::__private::bitflags::bitflags! {
+          #derives
+          struct #name: ::core::primitive::u8 {
+            #(#flags)*
+          }
+        }
 
-    //     impl #name {
-    //       #(#flag_ops)*
+        impl #name {
+          #(#flag_ops)*
 
-    //       #merge
+          #merge
 
-    //       #iter_fn
-    //     }
+          #iter_fn
+        }
 
-    //     #iter
-    //   }
-    // }
+        #iter
+      }
+    }
     9..=16 => {
       let flags = flags_declare(fields, |idx| 1u16 << idx);
       let flag_ops = flag_ops(fields);
@@ -599,7 +603,9 @@ fn generate_selection_flags(
           fn next(&mut self) -> ::core::option::Option<Self::Item> {
             while self.idx < #name::MAX_BIT_POSITION {
               if self.selection.0.bit(self.idx) {
-                return ::core::option::Option::Some(#struct_name::REFLECTION.fields()[self.idx as ::core::primitive::usize]);
+                if let ::core::option::Option::Some(val) = #struct_name::REFLECTION.fields().get(self.idx as ::core::primitive::usize) {
+                  return ::core::option::Option::Some(*val);
+                }
               }
 
               self.idx += 1;
