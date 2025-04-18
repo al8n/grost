@@ -4,10 +4,7 @@ use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility};
 
-use crate::{
-  SafeIdent, WireTypeExt, field,
-  ty::{self, Ty},
-};
+use crate::{SafeIdent, WireTypeExt, ty::Ty};
 use getter::Getter;
 use setter::Setter;
 
@@ -16,6 +13,7 @@ pub mod getter;
 /// The setter related types to a field
 pub mod setter;
 
+#[derive(Clone)]
 pub struct Field {
   name: SafeIdent,
   schema_name: SmolStr,
@@ -311,7 +309,7 @@ impl Field {
     let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();
     let tag_const_name = format_ident!("__{}_TAG__", name);
-    let field_info_name = format_ident!("{}_FIELD_INFO", name);
+    let field_info_name = format_ident!("{}_REFLECTION", name);
     let field_info_doc = format!(" The reflection information of the `{field_name}` field");
     let tag = self.tag.get();
     let ty_name = self.ty.ty().to_token_stream().to_string().replace(" ", "");
@@ -330,7 +328,7 @@ impl Field {
       const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
 
       #[doc = #field_info_doc]
-      pub const #field_info_name: #path_to_grost::__private::FieldInfo = #path_to_grost::__private::FieldInfoBuilder {
+      pub const #field_info_name: #path_to_grost::__private::FieldRelection = #path_to_grost::__private::FieldRelectionBuilder {
         identifier: Self::#identifier_name,
         encoded_identifier_len: Self::#identifier_encoded_len_name,
         encoded_identifier: Self::#identifier_encode_name,

@@ -17,22 +17,18 @@ mod tag;
 mod wire_type;
 
 #[doc(hidden)]
-pub struct StructInfoBuilder {
+pub struct StructReflectionBuilder {
   pub name: &'static str,
-  pub ty: &'static str,
   pub schema_name: &'static str,
-  pub schema_type: &'static str,
-  pub fields: &'static [FieldInfo],
+  pub fields: &'static [FieldRelection],
 }
 
-impl StructInfoBuilder {
+impl StructReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> StructInfo {
-    StructInfo {
+  pub const fn build(self) -> StructReflection {
+    StructReflection {
       name: self.name,
-      ty: self.ty,
       schema_name: self.schema_name,
-      schema_type: self.schema_type,
       fields: self.fields,
     }
   }
@@ -40,27 +36,17 @@ impl StructInfoBuilder {
 
 /// The struct information of an object in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct StructInfo {
+pub struct StructReflection {
   name: &'static str,
-  ty: &'static str,
   schema_name: &'static str,
-  schema_type: &'static str,
-  fields: &'static [FieldInfo],
+  fields: &'static [FieldRelection],
 }
 
-impl StructInfo {
+impl StructReflection {
   /// Get the name of the struct
   #[inline]
   pub const fn name(&self) -> &'static str {
     self.name
-  }
-
-  /// Get the rust type of the struct, the type must be a full quailified.
-  ///
-  /// See [`schema_type`](StructInfo::schema_type) for the type in the Graph protocol buffer file.
-  #[inline]
-  pub const fn ty(&self) -> &'static str {
-    self.ty
   }
 
   /// Get the schema name of the struct.
@@ -71,23 +57,15 @@ impl StructInfo {
     self.schema_name
   }
 
-  /// Get the schema type of the struct.
-  ///
-  /// This will returns the type in the Graph protocol buffer schema file.
-  #[inline]
-  pub const fn schema_type(&self) -> &'static str {
-    self.schema_type
-  }
-
   /// Get the fields of this struct
   #[inline]
-  pub const fn fields(&self) -> &'static [FieldInfo] {
+  pub const fn fields(&self) -> &'static [FieldRelection] {
     self.fields
   }
 }
 
 #[doc(hidden)]
-pub struct FieldInfoBuilder {
+pub struct FieldRelectionBuilder {
   pub name: &'static str,
   pub ty: &'static str,
   pub schema_name: &'static str,
@@ -97,10 +75,10 @@ pub struct FieldInfoBuilder {
   pub encoded_identifier_len: usize,
 }
 
-impl FieldInfoBuilder {
+impl FieldRelectionBuilder {
   #[inline]
-  pub const fn build(self) -> FieldInfo {
-    FieldInfo {
+  pub const fn build(self) -> FieldRelection {
+    FieldRelection {
       name: self.name,
       ty: self.ty,
       schema_name: self.schema_name,
@@ -114,7 +92,7 @@ impl FieldInfoBuilder {
 
 /// The information of a field in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct FieldInfo {
+pub struct FieldRelection {
   name: &'static str,
   ty: &'static str,
   schema_name: &'static str,
@@ -124,7 +102,7 @@ pub struct FieldInfo {
   encoded_identifier_len: usize,
 }
 
-impl FieldInfo {
+impl FieldRelection {
   #[doc(hidden)]
   pub const fn __init__(
     name: &'static str,
@@ -154,7 +132,7 @@ impl FieldInfo {
 
   /// Get the rust type of the field, the type must be a full quailified.
   ///
-  /// See [`schema_type`](FieldInfo::schema_type) for the type in the Graph protocol buffer file.
+  /// See [`schema_type`](FieldRelection::schema_type) for the type in the Graph protocol buffer file.
   #[inline]
   pub const fn ty(&self) -> &'static str {
     self.ty
@@ -196,17 +174,17 @@ impl FieldInfo {
 }
 
 #[doc(hidden)]
-pub struct EnumVariantInfoBuilder<T: 'static> {
+pub struct EnumVariantReflectionBuilder<T: 'static> {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub description: &'static str,
   pub value: T,
 }
 
-impl<T: Copy + 'static> EnumVariantInfoBuilder<T> {
+impl<T: Copy + 'static> EnumVariantReflectionBuilder<T> {
   #[inline]
-  pub const fn build(self) -> EnumVariantInfo<T> {
-    EnumVariantInfo {
+  pub const fn build(self) -> EnumVariantReflection<T> {
+    EnumVariantReflection {
       name: self.name,
       schema_name: self.schema_name,
       description: self.description,
@@ -217,14 +195,14 @@ impl<T: Copy + 'static> EnumVariantInfoBuilder<T> {
 
 /// The information of a variant of enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct EnumVariantInfo<T: 'static> {
+pub struct EnumVariantReflection<T: 'static> {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
   value: T,
 }
 
-impl<T: 'static> EnumVariantInfo<T> {
+impl<T: 'static> EnumVariantReflection<T> {
   /// Get the name of the variant
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -254,17 +232,17 @@ impl<T: 'static> EnumVariantInfo<T> {
 }
 
 #[doc(hidden)]
-pub struct EnumInfoBuilder<T: 'static> {
+pub struct EnumReflectionBuilder<T: 'static> {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub variants: &'static [EnumVariantInfo<T>],
+  pub variants: &'static [EnumVariantReflection<T>],
   pub description: &'static str,
 }
 
-impl<T: 'static> EnumInfoBuilder<T> {
+impl<T: 'static> EnumReflectionBuilder<T> {
   #[inline]
-  pub const fn build(self) -> EnumInfo<T> {
-    EnumInfo {
+  pub const fn build(self) -> EnumReflection<T> {
+    EnumReflection {
       name: self.name,
       schema_name: self.schema_name,
       variants: self.variants,
@@ -275,14 +253,14 @@ impl<T: 'static> EnumInfoBuilder<T> {
 
 /// The information of an enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct EnumInfo<T: 'static> {
+pub struct EnumReflection<T: 'static> {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
-  variants: &'static [EnumVariantInfo<T>],
+  variants: &'static [EnumVariantReflection<T>],
 }
 
-impl<T: 'static> EnumInfo<T> {
+impl<T: 'static> EnumReflection<T> {
   /// Get the name of the enum
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -297,7 +275,7 @@ impl<T: 'static> EnumInfo<T> {
 
   /// Get the variants of the enum
   #[inline]
-  pub const fn variants(&self) -> &'static [EnumVariantInfo<T>] {
+  pub const fn variants(&self) -> &'static [EnumVariantReflection<T>] {
     self.variants
   }
 

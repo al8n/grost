@@ -1,4 +1,5 @@
-use quote::quote;
+use heck::ToShoutySnakeCase;
+use quote::{format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Visibility, parse_quote};
 
@@ -9,8 +10,11 @@ pub use field::Field;
 /// The field of a struct
 pub mod field;
 
+mod selection;
+
 pub struct Struct {
   name: SafeIdent,
+  schema_name: SmolStr,
   selection_name: SafeIdent,
   description: Option<SmolStr>,
   fields: Vec<Field>,
@@ -22,6 +26,7 @@ impl Struct {
   pub fn new(name: SafeIdent) -> Self {
     Self {
       selection_name: SafeIdent::new(format!("{}Selection", name.name_str()).as_str()),
+      schema_name: name.original_str().into(),
       name,
       description: None,
       fields: Vec::new(),
@@ -30,8 +35,13 @@ impl Struct {
     }
   }
 
+  pub fn with_schema_name(mut self, name: impl Into<SmolStr>) -> Self {
+    self.schema_name = name.into();
+    self
+  }
+
   /// Change the default selection type name
-  pub fn with_selection_type_name(mut self, name: SafeIdent) -> Self {
+  pub fn with_selection_name(mut self, name: SafeIdent) -> Self {
     self.selection_name = name;
     self
   }
@@ -61,6 +71,18 @@ impl Struct {
     self
   }
 
+  pub fn selection_name(&self) -> &SafeIdent {
+    &self.selection_name
+  }
+
+  pub fn name(&self) -> &SafeIdent {
+    &self.name
+  }
+
+  pub fn schema_name(&self) -> &str {
+    &self.schema_name
+  }
+
   pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let description = self.description.as_ref().map(|d| {
@@ -85,7 +107,10 @@ impl Struct {
 
   pub(crate) fn struct_basic(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = &self.name;
-    let default_fields = self.fields.iter().map(|f| {
+    let mut fields = self.fields.clone();
+    fields.sort_by_key(|f| f.tag());
+
+    let default_fields = fields.iter().map(|f| {
       let name = f.name();
       let default = f.default();
       if let Some(default) = default {
@@ -99,8 +124,15 @@ impl Struct {
       }
     });
 
-    let accessors = self.fields.iter().map(|f| f.field_accessors());
-    let consts = self.fields.iter().map(|f| f.field_consts(path_to_grost));
+    let accessors = fields.iter().map(|f| f.field_accessors());
+    let consts = fields.iter().map(|f| f.field_consts(path_to_grost));
+    let field_reflections = fields.iter().map(|f| {
+      let ident = format_ident!("{}_REFLECTION", f.name().name_str().to_shouty_snake_case());
+      quote! { Self::#ident }
+    });
+
+    let name_str = self.name.name_str();
+    let schema_name = self.schema_name.as_str();
 
     quote! {
       impl ::core::default::Default for #name {
@@ -111,6 +143,15 @@ impl Struct {
 
       impl #name {
         #(#consts)*
+
+        /// The reflection of the struct
+        pub const REFLECTION: #path_to_grost::__private::StructReflection = #path_to_grost::__private::StructReflectionBuilder {
+          name: #name_str,
+          schema_name: #schema_name,
+          fields: &[
+            #(#field_reflections),*
+          ],
+        }.build();
 
         /// Returns a new default instance of the struct
         pub fn new() -> Self {

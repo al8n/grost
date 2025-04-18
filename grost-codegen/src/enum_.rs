@@ -6,7 +6,7 @@ use heck::{ToShoutySnakeCase, ToSnakeCase as _};
 use indexmap::IndexSet;
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
-use syn::{parse_quote, Ident, Visibility};
+use syn::{Ident, Visibility, parse_quote};
 
 use super::{Heck, SafeIdent};
 
@@ -376,7 +376,7 @@ impl EnumVariant {
   }
 
   /// Returns the const variant name of the enum variant.
-  /// 
+  ///
   /// e.g. `Color::Red` will be `RED`
   pub fn const_variant_name(&self) -> Ident {
     format_ident!("{}", self.name.name_str().to_shouty_snake_case())
@@ -475,7 +475,8 @@ impl Enum {
   /// Returns the generated enum variant info
   pub fn generate_info(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let repr_ty = self.repr.to_full_qualified_ty();
-    let variant_relection_name = |v: &EnumVariant| format_ident!("{}_REFLECTION", v.const_variant_name());
+    let variant_relection_name =
+      |v: &EnumVariant| format_ident!("{}_REFLECTION", v.const_variant_name());
 
     let variant_info_consts = self.variants.iter().map(|v| {
       let const_name = variant_relection_name(v);
@@ -492,7 +493,7 @@ impl Enum {
       let description = v.description.as_deref().unwrap_or_default();
       quote! {
         #[doc = #doc]
-        pub const #const_name: #path_to_grost::__private::EnumVariantInfo<#repr_ty> = #path_to_grost::__private::EnumVariantInfoBuilder::<#repr_ty> {
+        pub const #const_name: #path_to_grost::__private::EnumVariantReflection<#repr_ty> = #path_to_grost::__private::EnumVariantReflectionBuilder::<#repr_ty> {
           name: #name,
           schema_name: #schema_name,
           description: #description,
@@ -500,7 +501,6 @@ impl Enum {
         }.build();
       }
     });
-
 
     let name = self.name.name_str();
     let schema_name = self.schema_name();
@@ -511,7 +511,7 @@ impl Enum {
       #(#variant_infos)*
 
       #[doc = #doc]
-      pub const REFLECTION: #path_to_grost::__private::EnumInfo<#repr_ty> = #path_to_grost::__private::EnumInfoBuilder::<#repr_ty> {
+      pub const REFLECTION: #path_to_grost::__private::EnumReflection<#repr_ty> = #path_to_grost::__private::EnumReflectionBuilder::<#repr_ty> {
         name: #name,
         schema_name: #schema_name,
         description: #description,

@@ -10,7 +10,10 @@ pub use buffer::Buffer;
 pub use context::Context;
 pub use decode::*;
 pub use encode::*;
-pub use grost_types::{FieldInfo, EnumInfo, EnumVariantInfo, Identifier, StructInfo, Tag, WireType, skip};
+pub use grost_types::{
+  EnumReflection, EnumVariantReflection, FieldRelection, Identifier, StructReflection, Tag,
+  WireType, skip,
+};
 pub use impls::*;
 // pub use selection_set::SelectionSet;
 pub use unknown::*;
@@ -198,11 +201,14 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::*;
+  pub use bitflags;
   pub use either;
   pub use error::*;
   pub use grost_types::*;
   pub use varing;
 
+  #[cfg(feature = "bnum_0_13")]
+  pub use bnum_0_13 as bnum;
   #[cfg(feature = "bytes")]
   pub use bytes_1 as bytes;
   #[cfg(feature = "smol_str")]

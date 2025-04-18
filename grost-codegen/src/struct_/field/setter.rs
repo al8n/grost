@@ -30,6 +30,7 @@ impl Converter {
 }
 
 /// Setter for a field
+#[derive(Clone)]
 pub struct Setter {
   fn_name: Option<SafeIdent>,
   field_name: SafeIdent,

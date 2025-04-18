@@ -33,6 +33,7 @@ impl Converter {
 }
 
 /// Getter fn for a field
+#[derive(Clone)]
 pub struct Getter {
   fn_name: Option<SafeIdent>,
   field_name: SafeIdent,

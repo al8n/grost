@@ -4,7 +4,7 @@
 pub struct TagError(u32);
 
 /// Tag in a graph protocol buffer message.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[display("{_0}")]
 pub struct Tag(pub(super) u32);
 
