@@ -15,6 +15,7 @@ default = ["std"]
 alloc = ["bytes_1"]
 std = ["thiserror/std", "bytes_1/default"]
 sql = []
+quickcheck = ["dep:quickcheck"]
 
 [dependencies]
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
@@ -22,4 +23,5 @@ bitflags = { version = "2", default-features = false }
 derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
 heapless_0_8 = { package = "heapless", version = "0.8", default-features = false, optional = true }
 varing.workspace = true
+quickcheck = { version = "1", optional = true }
 thiserror.workspace = true

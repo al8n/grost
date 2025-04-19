@@ -30,17 +30,17 @@ pub enum UnitEnumVariantReflectionValue {
 }
 
 #[doc(hidden)]
-pub struct UnitEnumVariantReflectionReflectionBuilder {
+pub struct UnitEnumVariantReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub description: &'static str,
   pub value: UnitEnumVariantReflectionValue,
 }
 
-impl UnitEnumVariantReflectionReflectionBuilder {
+impl UnitEnumVariantReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> UnitEnumVariantReflectionReflection {
-    UnitEnumVariantReflectionReflection {
+  pub const fn build(self) -> UnitEnumVariantReflection {
+    UnitEnumVariantReflection {
       name: self.name,
       schema_name: self.schema_name,
       description: self.description,
@@ -51,14 +51,14 @@ impl UnitEnumVariantReflectionReflectionBuilder {
 
 /// The information of a variant of enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct UnitEnumVariantReflectionReflection {
+pub struct UnitEnumVariantReflection {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
   value: UnitEnumVariantReflectionValue,
 }
 
-impl UnitEnumVariantReflectionReflection {
+impl UnitEnumVariantReflection {
   /// Get the name of the variant
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -88,7 +88,7 @@ impl UnitEnumVariantReflectionReflection {
 pub struct UnitEnumReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub variants: &'static [UnitEnumVariantReflectionReflection],
+  pub variants: &'static [UnitEnumVariantReflection],
   pub description: &'static str,
 }
 
@@ -110,7 +110,7 @@ pub struct UnitEnumReflection {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
-  variants: &'static [UnitEnumVariantReflectionReflection],
+  variants: &'static [UnitEnumVariantReflection],
 }
 
 impl UnitEnumReflection {
@@ -128,7 +128,7 @@ impl UnitEnumReflection {
 
   /// Get the variants of the enum
   #[inline]
-  pub const fn variants(&self) -> &'static [UnitEnumVariantReflectionReflection] {
+  pub const fn variants(&self) -> &'static [UnitEnumVariantReflection] {
     self.variants
   }
 

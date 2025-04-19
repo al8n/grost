@@ -1,5 +1,8 @@
 use super::buffer::Buffer;
 
+/// The network flavor
+pub mod network;
+
 /// The identifier
 pub trait Identifier<F: Flavor>: Copy + core::fmt::Debug + core::fmt::Display {
   /// The wire type used for this identifier.
@@ -27,7 +30,12 @@ pub trait Flavor: 'static {
   /// The tag used for this flavor.
   type Tag: Copy + core::fmt::Debug + core::fmt::Display;
   /// The context used for this flavor.
+  #[cfg(not(feature = "quickcheck"))]
   type Context;
+  /// The context used for this flavor.
+  #[cfg(feature = "quickcheck")]
+  type Context: quickcheck::Arbitrary;
+
   /// The encode error for this flavor.
   type EncodeError: core::error::Error;
   /// The decode error for this flavor.

@@ -6,16 +6,12 @@ use grost_proto::{
 
 pub use context::Context;
 pub use error::*;
-
+pub use grost_proto::flavors::network::{Tag, WireType};
 pub use identifier::Identifier;
-pub use tag::Tag;
-pub use wire_type::WireType;
 
 mod context;
 mod error;
 mod identifier;
-mod tag;
-mod wire_type;
 
 /// The network flavor
 #[derive(Debug, Default, Clone, Copy)]

@@ -1,96 +1,96 @@
-use grost_proto::WireType;
-use quote::ToTokens;
-use smol_str::SmolStr;
-use syn::Type;
+// use grost_proto::WireType;
+// use quote::ToTokens;
+// use smol_str::SmolStr;
+// use syn::Type;
 
-pub use int::Int;
-pub use uint::Uint;
+// pub use int::Int;
+// pub use uint::Uint;
 
-mod int;
-mod uint;
+// mod int;
+// mod uint;
 
-#[derive(Debug, Clone, derive_more::Display)]
-#[display("{}", name)]
-pub struct Feature {
-  name: SmolStr,
-}
+// #[derive(Debug, Clone, derive_more::Display)]
+// #[display("{}", name)]
+// pub struct Feature {
+//   name: SmolStr,
+// }
 
-impl Feature {
-  pub fn new(name: impl Into<SmolStr>) -> Self {
-    Self { name: name.into() }
-  }
+// impl Feature {
+//   pub fn new(name: impl Into<SmolStr>) -> Self {
+//     Self { name: name.into() }
+//   }
 
-  pub fn name(&self) -> &str {
-    &self.name
-  }
-}
+//   pub fn name(&self) -> &str {
+//     &self.name
+//   }
+// }
 
-#[derive(Debug, Clone)]
-pub enum Dependency {
-  /// Requires nothing, which means supports `no-std` and `no-alloc`
-  None,
-  /// Requires `alloc`
-  Alloc,
-  /// Requires `std`
-  Std,
-  /// Requries third party crate
-  External(Feature),
-}
+// #[derive(Debug, Clone)]
+// pub enum Dependency {
+//   /// Requires nothing, which means supports `no-std` and `no-alloc`
+//   None,
+//   /// Requires `alloc`
+//   Alloc,
+//   /// Requires `std`
+//   Std,
+//   /// Requries third party crate
+//   External(Feature),
+// }
 
-#[derive(Clone)]
-pub struct Ty {
-  ty: Type,
-  schema_type: SmolStr,
-  wire_ty: WireType,
-  copy: bool,
-}
+// #[derive(Clone)]
+// pub struct Ty {
+//   ty: Type,
+//   schema_type: SmolStr,
+//   wire_ty: WireType,
+//   copy: bool,
+// }
 
-impl Ty {
-  /// Creates a new [`Ty`] with the given [`Type`]
-  pub fn new(ty: Type, schema_type: SmolStr, wire_ty: WireType) -> Self {
-    Self {
-      ty,
-      schema_type,
-      wire_ty,
-      copy: false,
-    }
-  }
+// impl Ty {
+//   /// Creates a new [`Ty`] with the given [`Type`]
+//   pub fn new(ty: Type, schema_type: SmolStr, wire_ty: WireType) -> Self {
+//     Self {
+//       ty,
+//       schema_type,
+//       wire_ty,
+//       copy: false,
+//     }
+//   }
 
-  /// Sets the [`WireType`] of this type
-  pub fn with_wire_ty(mut self, wire_ty: WireType) -> Self {
-    self.wire_ty = wire_ty;
-    self
-  }
+//   /// Sets the [`WireType`] of this type
+//   pub fn with_wire_ty(mut self, wire_ty: WireType) -> Self {
+//     self.wire_ty = wire_ty;
+//     self
+//   }
 
-  /// Sets if this ty implements `Copy`
-  pub fn with_copy(mut self) -> Self {
-    self.copy = true;
-    self
-  }
+//   /// Sets if this ty implements `Copy`
+//   pub fn with_copy(mut self) -> Self {
+//     self.copy = true;
+//     self
+//   }
 
-  /// Gets if this ty implements `Copy`
-  pub fn copy(&self) -> bool {
-    self.copy
-  }
+//   /// Gets if this ty implements `Copy`
+//   pub fn copy(&self) -> bool {
+//     self.copy
+//   }
 
-  /// Returns the [`Type`] of this ty
-  pub const fn ty(&self) -> &Type {
-    &self.ty
-  }
+//   /// Returns the [`Type`] of this ty
+//   pub const fn ty(&self) -> &Type {
+//     &self.ty
+//   }
 
-  /// Returns the [`WireType`] of this ty
-  pub const fn wire_type(&self) -> WireType {
-    self.wire_ty
-  }
+//   /// Returns the [`WireType`] of this ty
+//   pub const fn wire_type(&self) -> WireType {
+//     self.wire_ty
+//   }
 
-  /// Returns the schema type of this ty
-  pub fn schema_type(&self) -> &str {
-    &self.schema_type
-  }
-}
+//   /// Returns the schema type of this ty
+//   pub fn schema_type(&self) -> &str {
+//     &self.schema_type
+//   }
+// }
 
-impl ToTokens for Ty {
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    self.ty.to_tokens(tokens);
-  }
-}
+// impl ToTokens for Ty {
+//   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+//     self.ty.to_tokens(tokens);
+//   }
+// }

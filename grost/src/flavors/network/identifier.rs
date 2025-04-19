@@ -51,7 +51,7 @@ impl Identifier {
     let wire_type = val & 0b111; // Get last 3 bits for wire type
     let tag = val >> 3; // Shift right to get the tag
     // Using from_u8_unchecked since we know wire_type is within 0-7
-    Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag(tag))
+    Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag::new(tag))
   }
 
   /// Encodes the identifier.

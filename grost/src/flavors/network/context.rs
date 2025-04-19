@@ -17,6 +17,18 @@ pub struct Context {
   flags: Flags,
 }
 
+#[cfg(feature = "quickcheck")]
+const _: () = {
+  use quickcheck::{Arbitrary, Gen};
+
+  impl Arbitrary for Context {
+    fn arbitrary(g: &mut Gen) -> Self {
+      let flags = Flags::from_bits_truncate(*g.choose(&[1, 2]).unwrap());
+      Self { tag: None, flags }
+    }
+  }
+};
+
 impl Default for Context {
   fn default() -> Self {
     Self::new()

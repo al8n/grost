@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, num::NonZeroI128, sync::Arc};
 
-use heck::{ToShoutySnakeCase, ToSnakeCase as _};
+use heck::{ToShoutySnakeCase, ToSnakeCase as _, ToUpperCamelCase};
 use indexmap::IndexSet;
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
@@ -195,47 +195,43 @@ impl EnumRepr {
     }
   }
 
-  fn to_encode_len(&self, tag: i128) -> proc_macro2::TokenStream {
+  fn to_enum_variant_reflection_value(
+    &self,
+    path_to_grost: &syn::Path,
+    tag: i128,
+  ) -> proc_macro2::TokenStream {
     match self {
       Self::U8 => {
         let tag = tag as u8;
-        let len = varing::encoded_u8_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::U8(#tag) }
       }
       Self::U16 => {
         let tag = tag as u16;
-        let len = varing::encoded_u16_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::U16(#tag) }
       }
       Self::U32 => {
         let tag = tag as u32;
-        let len = varing::encoded_u32_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::U32(#tag) }
       }
       Self::U64 => {
         let tag = tag as u64;
-        let len = varing::encoded_u64_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::U64(#tag) }
       }
       Self::I8 => {
         let tag = tag as i8;
-        let len = varing::encoded_i8_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::I8(#tag) }
       }
       Self::I16 => {
         let tag = tag as i16;
-        let len = varing::encoded_i16_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::I16(#tag) }
       }
       Self::I32 => {
         let tag = tag as i32;
-        let len = varing::encoded_i32_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::I32(#tag) }
       }
       Self::I64 => {
         let tag = tag as i64;
-        let len = varing::encoded_i64_varint_len(tag);
-        quote! { #len }
+        quote! { #path_to_grost::__private::reflection::UnitEnumVariantReflectionValue::I64(#tag) }
       }
     }
   }
@@ -473,10 +469,21 @@ impl Enum {
   }
 
   /// Returns the generated enum variant info
-  pub fn generate_info(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-    let repr_ty = self.repr.to_full_qualified_ty();
-    let variant_relection_name =
-      |v: &EnumVariant| format_ident!("{}_REFLECTION", v.const_variant_name());
+  pub fn generate_info(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
+    let flavor_name_ssc = flavor.name().to_shouty_snake_case();
+    let flavor_name = flavor.name().to_upper_camel_case();
+    let flavor_ty = flavor.ty().to_token_stream().to_string().replace(" ", "");
+    let variant_relection_name = |v: &EnumVariant| {
+      format_ident!(
+        "{}_REFLECTION_{}_FLAVOR",
+        v.const_variant_name(),
+        flavor_name_ssc
+      )
+    };
 
     let variant_info_consts = self.variants.iter().map(|v| {
       let const_name = variant_relection_name(v);
@@ -488,12 +495,12 @@ impl Enum {
       let const_name = variant_relection_name(v);
       let name = v.name.name_str();
       let schema_name = v.schema_name.as_str();
-      let doc = format!(" The relection information of the [`{}::{}`] enum variant", self.name.name_str(), v.name.name_str());
-      let val = self.repr.to_value(v.tag());
+      let doc = format!(" The relection information of the [`{}::{}`] enum variant for [`{}`]({}) flavor.", self.name.name_str(), v.name.name_str(), flavor_name, flavor_ty);
+      let val = self.repr.to_enum_variant_reflection_value(path_to_grost, v.tag());
       let description = v.description.as_deref().unwrap_or_default();
       quote! {
         #[doc = #doc]
-        pub const #const_name: #path_to_grost::__private::EnumVariantReflection<#repr_ty> = #path_to_grost::__private::EnumVariantReflectionBuilder::<#repr_ty> {
+        pub const #const_name: #path_to_grost::__private::reflection::UnitEnumVariantReflection = #path_to_grost::__private::reflection::UnitEnumVariantReflectionBuilder {
           name: #name,
           schema_name: #schema_name,
           description: #description,
@@ -504,14 +511,18 @@ impl Enum {
 
     let name = self.name.name_str();
     let schema_name = self.schema_name();
-    let doc = format!(" The relection information of the [`{}`] enum", name);
+    let reflection_name = format_ident!("{}_FLAVOR_REFLECTION", flavor_name_ssc);
+    let doc = format!(
+      " The relection information of the [`{}`] enum for [`{}`]({}) flavor.",
+      name, flavor_name, flavor_ty
+    );
     let description = self.description.as_deref().unwrap_or_default();
 
     quote! {
       #(#variant_infos)*
 
       #[doc = #doc]
-      pub const REFLECTION: #path_to_grost::__private::EnumReflection<#repr_ty> = #path_to_grost::__private::EnumReflectionBuilder::<#repr_ty> {
+      pub const #reflection_name: #path_to_grost::__private::reflection::UnitEnumReflection = #path_to_grost::__private::reflection::UnitEnumReflectionBuilder {
         name: #name,
         schema_name: #schema_name,
         description: #description,
@@ -788,15 +799,21 @@ impl Enum {
   }
 
   #[cfg(feature = "quickcheck")]
-  pub(super) fn enum_quickcheck(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(super) fn enum_quickcheck(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
     let name_ident = &self.name;
     let variants = self.variants.iter().map(|v| &v.name);
 
     let quickcheck_test_mod = format_ident!(
-      "__quickcheck_fuzzy__{}",
+      "__quickcheck_fuzzy_{}_{}__",
+      flavor.name().to_snake_case(),
       name_ident.name_str().to_snake_case()
     );
     let quickcheck_fn = format_ident!("quickcheck_fuzzy_{}", name_ident.name_str().to_snake_case());
+    let flavor_ty = flavor.ty();
 
     quote! {
       #[cfg(feature = "quickcheck")]
@@ -823,10 +840,11 @@ impl Enum {
         use #path_to_grost::__private::{Encode, Decode};
 
         #path_to_grost::__private::quickcheck::quickcheck! {
-          fn #quickcheck_fn(value: #name_ident) -> bool {
-            let ctx = #path_to_grost::__private::Context::new();
+          fn #quickcheck_fn(ctx: <#flavor_ty as #path_to_grost::__private::Flavor>::Context, value: #name_ident) -> bool {
+            extern crate std;
+
             let encoded_len = value.encoded_len(&ctx);
-            let mut buf = [0u8; #name_ident::MAX_ENCODED_LEN];
+            let mut buf = ::std::vec![0u8; encoded_len];
             let ::core::result::Result::Ok(written) = value.encode(&ctx, &mut buf) else {
               return false;
             };
@@ -892,11 +910,14 @@ impl Enum {
     let from_fn_name = format_ident!("from_{}", repr_ty);
     let to_fn_name = format_ident!("as_{}", repr_ty);
 
+    let varint_encoded_len_name = |name: &Ident| format_ident!("{}_VARINT_ENCODED_LEN", name);
+    let varint_encoded_name = |name: &Ident| format_ident!("{}_VARINT_ENCODED", name);
+
     let consts = self.variants.iter().map(|v| {
       let name = v.const_variant_name();
-      let variant_encoded_len_name = format_ident!("ENCODED_{}_LEN", name);
+      let variant_encoded_len_name = varint_encoded_len_name(&name);
       let variant_encoded_len_doc = format!(" The encoded length of the enum variant [`{}::{}`]", self.name.name_str(), v.name.name_str());
-      let encoded_variant_name = format_ident!("ENCODED_{}", name);
+      let encoded_variant_name = varint_encoded_name(&name);
       let encoded_variant_len_doc = format!(" The encoded bytes of the enum variant [`{}::{}`]", self.name.name_str(), v.name.name_str());
       let value = repr.to_value(v.tag());
 
@@ -911,7 +932,7 @@ impl Enum {
     let const_encode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
       let name = v.const_variant_name();
-      let encoded_variant_name = format_ident!("ENCODED_{}", name);
+      let encoded_variant_name = varint_encoded_name(&name);
 
       quote! {
         Self::#variant_name_ident => Self::#encoded_variant_name,
@@ -921,8 +942,8 @@ impl Enum {
     let const_encode_to_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
       let name = v.const_variant_name();
-      let encoded_variant_name = format_ident!("ENCODED_{}", name);
-      let variant_encoded_len_name = format_ident!("ENCODED_{}_LEN", name);
+      let encoded_variant_name = varint_encoded_name(&name);
+      let variant_encoded_len_name = varint_encoded_len_name(&name);
 
       quote! {
         Self::#variant_name_ident => {
@@ -952,12 +973,15 @@ impl Enum {
       let variant_name_ident = &v.name;
 
       let name = v.const_variant_name();
-      let variant_encoded_len_name = format_ident!("ENCODED_{}_LEN", name);
+      let variant_encoded_len_name = varint_encoded_len_name(&name);
 
       quote! {
         Self::#variant_name_ident => Self::#variant_encoded_len_name,
       }
     });
+
+    let max_encoded_len_name = format_ident!("MAX_VARINT_ENCODED_LEN");
+    let min_encoded_len_name = format_ident!("MIN_VARINT_ENCODED_LEN");
 
     let from_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
@@ -993,11 +1017,11 @@ impl Enum {
       }
 
       impl<'a> ::core::convert::TryFrom<&'a [::core::primitive::u8]> for #name_ident {
-        type Error = #path_to_grost::__private::DecodeError;
+        type Error = #path_to_grost::__private::varing::DecodeError;
 
         #[inline]
         fn try_from(src: &'a [::core::primitive::u8]) -> ::core::result::Result<Self, Self::Error> {
-          Self::const_decode(src).map(|(_, this)| this).map_err(::core::convert::Into::into)
+          Self::const_decode(src).map(|(_, this)| this)
         }
       }
 
@@ -1023,9 +1047,9 @@ impl Enum {
 
       impl #name_ident {
         /// The maximum encoded length in bytes.
-        pub const MAX_ENCODED_LEN: ::core::primitive::usize = #repr_max_encoded_len;
+        pub const #max_encoded_len_name: ::core::primitive::usize = #repr_max_encoded_len;
         /// The minimum encoded length in bytes.
-        pub const MIN_ENCODED_LEN: ::core::primitive::usize = #repr_min_encoded_len;
+        pub const #min_encoded_len_name: ::core::primitive::usize = #repr_min_encoded_len;
 
         #(#consts)*
 
@@ -1093,91 +1117,101 @@ impl Enum {
     }
   }
 
-  pub(super) fn enum_codec(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(super) fn enum_codec(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
     let name_ident = &self.name;
+    let flavor_ty = &flavor.ty;
+    let repr_fqty = self.repr.to_full_qualified_ty();
+    let repr_ty = self.repr.to_ty();
+    let from_fn_name = format_ident!("from_{}", repr_ty);
+    let to_fn_name = format_ident!("as_{}", repr_ty);
 
     quote! {
-      impl #path_to_grost::__private::Wirable for #name_ident {
-        const WIRE_TYPE: #path_to_grost::__private::WireType = #path_to_grost::__private::WireType::Varint;
+      impl #path_to_grost::__private::Wirable<#flavor_ty> for #name_ident {
+        const WIRE_TYPE: <#flavor_ty as #path_to_grost::__private::Flavor>::WireType = <#repr_fqty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE;
       }
 
-      impl #path_to_grost::__private::Encode for #name_ident {
+      impl #path_to_grost::__private::Encode<#flavor_ty> for #name_ident {
         #[inline]
-        fn encode(&self, _: &#path_to_grost::__private::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
-          #path_to_grost::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
+        fn encode(&self, ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#flavor_ty as #path_to_grost::__private::Flavor>::EncodeError> {
+          <#repr_fqty as #path_to_grost::__private::Encode<#flavor_ty>>::encode(&self.#to_fn_name(), ctx, buf)
         }
 
         #[inline]
-        fn encoded_len(&self, _: &#path_to_grost::__private::Context) -> ::core::primitive::usize {
-          self.const_encoded_len()
+        fn encoded_len(&self, ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context) -> ::core::primitive::usize {
+          <#repr_fqty as #path_to_grost::__private::Encode<#flavor_ty>>::encoded_len(&self.#to_fn_name(), ctx)
         }
       }
 
-      impl #path_to_grost::__private::PartialEncode for #name_ident {
+      impl #path_to_grost::__private::PartialEncode<#flavor_ty> for #name_ident {
         type Selection = ();
 
         #[inline]
-        fn partial_encode(&self, context: &#path_to_grost::__private::Context, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
-          #path_to_grost::__private::Encode::encode(self, context, buf)
+        fn partial_encode(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, <#flavor_ty as #path_to_grost::__private::Flavor>::EncodeError> {
+          #path_to_grost::__private::Encode::<#flavor_ty>::encode(self, context, buf)
         }
 
         #[inline]
-        fn partial_encoded_len(&self, context: &#path_to_grost::__private::Context, _: &Self::Selection,) -> ::core::primitive::usize {
-          #path_to_grost::__private::Encode::encoded_len(self, context)
+        fn partial_encoded_len(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, _: &Self::Selection,) -> ::core::primitive::usize {
+          #path_to_grost::__private::Encode::<#flavor_ty>::encoded_len(self, context)
         }
       }
 
-      impl<'de> #path_to_grost::__private::Decode<'de, Self> for #name_ident {
+      impl<'de> #path_to_grost::__private::Decode<'de, #flavor_ty, Self> for #name_ident {
         #[inline]
         fn decode<UB>(
-          _: &#path_to_grost::__private::Context,
+          ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context,
           src: &'de [::core::primitive::u8],
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError>
         where
-          UB: #path_to_grost::__private::UnknownBuffer<&'de [u8]>,
+          UB: #path_to_grost::__private::UnknownBuffer<#flavor_ty, &'de [::core::primitive::u8]> + 'de,
         {
-          Self::const_decode(src).map_err(::core::convert::Into::into)
+          <#repr_fqty as #path_to_grost::__private::Decode<'de, #flavor_ty, #repr_fqty>>::decode::<UB>(ctx, src)
+            .map(|(read, val)| (read, Self::#from_fn_name(val)))
         }
       }
 
-      impl #path_to_grost::__private::DecodeOwned<Self> for #name_ident
+      impl #path_to_grost::__private::DecodeOwned<#flavor_ty, Self> for #name_ident
       {
         #[inline]
         fn decode_owned<B, UB>(
-          ctx: &#path_to_grost::__private::Context,
+          ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context,
           src: B,
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError>
         where
           Self: ::core::marker::Sized + 'static,
           B: #path_to_grost::__private::Buffer + 'static,
-          UB: #path_to_grost::__private::UnknownBuffer<B> + 'static,
+          UB: #path_to_grost::__private::UnknownBuffer<#flavor_ty, B> + 'static,
         {
-          <Self as #path_to_grost::__private::Decode<'_, Self>>::decode::<()>(ctx, src.as_bytes())
+          <Self as #path_to_grost::__private::Decode<'_, #flavor_ty, Self>>::decode::<()>(ctx, src.as_bytes())
         }
       }
 
-      impl #path_to_grost::__private::IntoTarget<Self> for #name_ident {
+      impl #path_to_grost::__private::IntoTarget<#flavor_ty, Self> for #name_ident {
         #[inline]
-        fn into_target(self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
+        fn into_target(self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError> {
           ::core::result::Result::Ok(self)
         }
       }
 
-      impl #path_to_grost::__private::TypeRef<Self> for #name_ident {
+      impl #path_to_grost::__private::TypeRef<#flavor_ty, Self> for #name_ident {
         #[inline]
-        fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
+        fn to(&self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError> {
           ::core::result::Result::Ok(*self)
         }
       }
 
-      impl #path_to_grost::__private::TypeOwned<Self> for #name_ident {
+      impl #path_to_grost::__private::TypeOwned<#flavor_ty, Self> for #name_ident {
         #[inline]
-        fn to(&self) -> ::core::result::Result<Self, #path_to_grost::__private::DecodeError> {
+        fn to(&self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError> {
           ::core::result::Result::Ok(*self)
         }
       }
 
-      impl<'a> #path_to_grost::__private::TypeBorrowed<'a, Self> for #name_ident {
+      impl<'a> #path_to_grost::__private::TypeBorrowed<'a, #flavor_ty, Self> for #name_ident {
         fn from_borrow(val: &'a Self) -> Self {
           *val
         }
@@ -1190,14 +1224,14 @@ impl Enum {
         }
       }
 
-      impl #path_to_grost::__private::PartialMessage for #name_ident {
+      impl #path_to_grost::__private::PartialMessage<#flavor_ty> for #name_ident {
         type UnknownBuffer<B: ?::core::marker::Sized> = ();
         type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
         type Borrowed<'a> = Self where Self: 'a;
         type EncodedOwned = Self where Self: ::core::marker::Sized;
       }
 
-      impl #path_to_grost::__private::Message for #name_ident {
+      impl #path_to_grost::__private::Message<#flavor_ty> for #name_ident {
         type Partial = Self;
         type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
         type Borrowed<'a> = Self where Self: 'a;
