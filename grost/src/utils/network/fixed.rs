@@ -1,6 +1,4 @@
-use grost_types::{DecodeError, EncodeError, Identifier, WireType};
-
-use crate::{Context, Wirable};
+use crate::{Wirable, flavors::network::{Context, DecodeError, EncodeError, Network, Identifier, WireType}};
 
 pub fn encode_fixed<V, F, const N: usize>(
   ctx: &Context,
@@ -10,7 +8,7 @@ pub fn encode_fixed<V, F, const N: usize>(
 ) -> Result<usize, EncodeError>
 where
   F: FnOnce(&V, &mut [u8]) -> Result<usize, EncodeError>,
-  V: Wirable + ?Sized,
+  V: Wirable<Network> + ?Sized,
 {
   if let Some(tag) = ctx.tag() {
     let mut offset = 0;

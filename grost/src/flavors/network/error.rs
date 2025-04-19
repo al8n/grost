@@ -1,8 +1,6 @@
 use core::num::NonZeroUsize;
 
-use crate::Identifier;
-
-use super::Tag;
+use super::{Identifier, Tag};
 
 /// A data encoding error
 #[derive(Debug, thiserror::Error)]

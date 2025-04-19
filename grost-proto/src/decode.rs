@@ -1,4 +1,4 @@
-use super::{Buffer, Flavor, UnknownBuffer, Wirable};
+use super::{buffer::Buffer, flavors::Flavor, unknown::UnknownBuffer, Wirable};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
@@ -17,7 +17,7 @@ where
   fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<&'de [u8]> + 'de;
+    UB: UnknownBuffer<F, &'de [u8]> + 'de;
 }
 
 /// A marker trait for types that can be decoded without borrowing data.
@@ -39,5 +39,5 @@ where
   where
     Self: Sized + 'static,
     B: Buffer + 'static,
-    UB: UnknownBuffer<B> + 'static;
+    UB: UnknownBuffer<F, B> + 'static;
 }

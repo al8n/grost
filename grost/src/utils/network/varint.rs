@@ -1,6 +1,4 @@
-use grost_types::{DecodeError, EncodeError, Identifier, WireType};
-
-use crate::{Context, Wirable};
+use crate::{flavors::network::{Context, DecodeError, EncodeError, Network, Identifier, WireType}, Wirable};
 
 pub fn encode_varint<V, E, EL>(
   ctx: &Context,
@@ -10,7 +8,7 @@ pub fn encode_varint<V, E, EL>(
   encoded_len_fn: EL,
 ) -> Result<usize, EncodeError>
 where
-  V: Wirable + ?Sized,
+  V: Wirable<Network> + ?Sized,
   E: FnOnce(&V, &mut [u8]) -> Result<usize, EncodeError>,
   EL: FnOnce(&V) -> usize,
 {
@@ -43,7 +41,7 @@ where
 
 pub fn encoded_varint_len<V, F>(ctx: &Context, val: &V, f: F) -> usize
 where
-  V: Wirable + ?Sized,
+  V: Wirable<Network> + ?Sized,
   F: FnOnce(&V) -> usize,
 {
   if let Some(tag) = ctx.tag() {

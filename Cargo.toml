@@ -5,7 +5,7 @@ members = [
   "grost-codegen-test",
   "grost-derive",
   "grost-parser",
-  "grost-types",
+  "grost-proto",
 ]
 resolver = "3"
 exclude = ["guides"]
@@ -39,4 +39,4 @@ varing = { version = "0.5", default-features = false }
 grost-codegen = { version = "0.1", path = "./grost-codegen", default-features = false }
 grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }
 grost-parser = { version = "0.1", path = "./grost-parser", default-features = false }
-grost-types = { version = "0.1", path = "./grost-types", default-features = false }
+grost-proto = { version = "0.1", path = "./grost-proto", default-features = false }

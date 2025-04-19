@@ -1,6 +1,5 @@
-use grost_types::{EncodeError, Identifier, WireType};
+use crate::flavors::network::{Context, DecodeError, EncodeError, Identifier, WireType};
 
-use crate::Context;
 
 pub fn encode_length_delimiter<V, F, EL>(
   ctx: &Context,
@@ -109,17 +108,17 @@ pub fn decode_length_delimiter<'a, V, F>(
   ctx: &Context,
   src: &'a [u8],
   f: F,
-) -> Result<(usize, V), grost_types::DecodeError>
+) -> Result<(usize, V), DecodeError>
 where
   V: Sized,
-  F: FnOnce(&'a [u8]) -> Result<(usize, V), grost_types::DecodeError>,
+  F: FnOnce(&'a [u8]) -> Result<(usize, V), DecodeError>,
 {
   match (ctx.tag(), ctx.length_delimiter()) {
     (Some(tag), _) => {
       let identifier = Identifier::new(WireType::LengthDelimited, tag);
       let (offset, decoded_identifier) = Identifier::decode(src)?;
       if identifier != decoded_identifier {
-        return Err(grost_types::DecodeError::identifier_mismatch(
+        return Err(DecodeError::identifier_mismatch(
           identifier,
           decoded_identifier,
         ));

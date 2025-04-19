@@ -14,7 +14,7 @@ metadata.workspace = true
 default = ["std", "simdutf8"]
 alloc = [
   "bytes",
-  "grost-types/alloc",
+  "grost-proto/alloc",
   "memchr/alloc",
   "smol_str",
   "bstr_1?/alloc",
@@ -28,7 +28,7 @@ alloc = [
 ]
 std = [
   "bytes_1/default",
-  "grost-types/default",
+  "grost-proto/default",
   "memchr/default",
   "varing/default",
   "smol_str_0_3/default",
@@ -144,7 +144,7 @@ varing.workspace = true
 bitflags = { version = "2", default-features = false }
 derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "try_unwrap"] }
 either = { version = "1", default-features = false }
-grost-types.workspace = true
+grost-proto.workspace = true
 memchr = { version = "2", default-features = false }
 paste = "1"
 ref-cast = { version = "1", default-features = false }

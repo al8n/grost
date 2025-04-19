@@ -1,0 +1,25 @@
+[package]
+name = "grost-proto"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+default = ["std"]
+alloc = ["bytes_1"]
+std = ["thiserror/std", "bytes_1/default"]
+sql = []
+
+[dependencies]
+bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
+bitflags = { version = "2", default-features = false }
+derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
+heapless_0_8 = { package = "heapless", version = "0.8", default-features = false, optional = true }
+varing.workspace = true
+thiserror.workspace = true

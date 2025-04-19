@@ -1,4 +1,4 @@
-use super::{Flavor, Wirable};
+use super::{flavors::Flavor, Wirable};
 
 /// A trait for serializing data to binary format with support for various wire types.
 ///

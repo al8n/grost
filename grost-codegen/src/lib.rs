@@ -1,4 +1,4 @@
-use grost_types::WireType;
+use grost_proto::WireType;
 use quote::{ToTokens, quote};
 
 pub use case::*;

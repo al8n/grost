@@ -1,4 +1,4 @@
-use grost_types::Tag;
+use super::Tag;
 
 bitflags::bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

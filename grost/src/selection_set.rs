@@ -3,7 +3,7 @@
 // #[cfg(feature = "bytes_1")]
 // use bytes_1 as bytes;
 
-// use grost_types::Identifier;
+// use grost_proto::Identifier;
 // use varing::{Varint, utils::Buffer};
 
 // use crate::{IntoTarget, TypeBorrowed};

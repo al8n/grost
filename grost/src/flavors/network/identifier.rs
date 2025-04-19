@@ -118,3 +118,29 @@ impl Varint for Identifier {
     Self::decode_inner(buf)
   }
 }
+
+impl grost_proto::flavors::Identifier<super::Network> for Identifier {
+  fn wire_type(&self) -> WireType {
+    self.wire_type()
+  }
+
+  fn tag(&self) -> Tag {
+    self.tag()
+  }
+
+  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+    self.encode_to(dst)
+  }
+
+  fn encoded_len(&self) -> usize {
+    self.encoded_len()
+  }
+
+  fn decode<B>(buf: B) -> Result<(usize, Self), super::DecodeError>
+  where
+    B: crate::buffer::Buffer + Sized,
+    Self: Sized,
+  {
+    Self::decode(buf.as_bytes())
+  }
+}

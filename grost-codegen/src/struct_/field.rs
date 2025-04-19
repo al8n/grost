@@ -1,4 +1,4 @@
-use grost_types::Tag;
+use grost_proto::Tag;
 use heck::ToShoutySnakeCase;
 use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};

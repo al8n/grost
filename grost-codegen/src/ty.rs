@@ -1,4 +1,4 @@
-use grost_types::WireType;
+use grost_proto::WireType;
 use quote::ToTokens;
 use smol_str::SmolStr;
 use syn::Type;

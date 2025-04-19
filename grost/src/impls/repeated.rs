@@ -1,4 +1,4 @@
-// use grost_types::Identifier;
+// use grost_proto::Identifier;
 // use ref_cast::RefCast;
 // use varing::{encode_u32_varint_to, encoded_u32_varint_len};
 

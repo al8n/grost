@@ -367,7 +367,13 @@ fn generate_selection_flags(
     ..=8 => {
       let flags = flags_declare(fields, |idx| 1u8 << idx);
       let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(path_to_grost, vis, struct_name, name, selection_flags_iter_name);
+      let iter = generate_bitflags_iter(
+        path_to_grost,
+        vis,
+        struct_name,
+        name,
+        selection_flags_iter_name,
+      );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
           #derives

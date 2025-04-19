@@ -1,6 +1,4 @@
-use grost_types::{DecodeError, EncodeError, WireType};
-
-use crate::{Context, Wirable};
+use crate::{flavors::network::{DecodeError, EncodeError, WireType, Context, Network}, Wirable};
 
 pub(crate) mod fixed;
 pub(crate) mod length_delimited;
@@ -15,7 +13,7 @@ pub fn encode<T, E, EL>(
   encoded_len_fn: EL,
 ) -> Result<usize, EncodeError>
 where
-  T: Wirable + ?Sized,
+  T: Wirable<Network> + ?Sized,
   E: FnOnce(&T, &mut [u8]) -> Result<usize, EncodeError>,
   EL: FnOnce(&T) -> usize,
 {
@@ -35,7 +33,7 @@ where
 
 pub fn encoded_len<T, F>(ctx: &Context, val: &T, f: F) -> usize
 where
-  T: Wirable + ?Sized,
+  T: Wirable<Network> + ?Sized,
   F: FnOnce(&T) -> usize,
 {
   match T::WIRE_TYPE {
@@ -52,7 +50,7 @@ where
 
 pub fn decode<'a, T, F>(ctx: &Context, src: &'a [u8], f: F) -> Result<(usize, T), DecodeError>
 where
-  T: Wirable,
+  T: Wirable<Network>,
   F: FnOnce(&'a [u8]) -> Result<(usize, T), DecodeError>,
 {
   match T::WIRE_TYPE {

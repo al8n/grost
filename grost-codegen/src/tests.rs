@@ -1,6 +1,6 @@
 use std::num::NonZeroI128;
 
-use grost_types::{Tag, WireType};
+use grost_proto::{Tag, WireType};
 use syn::parse_quote;
 
 use crate::{Field, Struct, field::getter, ty::Ty};
