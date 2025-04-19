@@ -20,8 +20,8 @@ pub enum Color {
     Unknown(::core::primitive::u32),
 }
 impl Color {
-    /// The relection information of the [`Color::Red`] enum variant for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const RED_REFLECTION_NETWORK_FLAVOR: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    /// The relection information of the [`Color::Red`] enum variant.
+    pub const RED_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
         name: "Red",
         schema_name: "Red",
         description: "",
@@ -30,8 +30,8 @@ impl Color {
         ),
     }
         .build();
-    /// The relection information of the [`Color::Green`] enum variant for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const GREEN_REFLECTION_NETWORK_FLAVOR: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    /// The relection information of the [`Color::Green`] enum variant.
+    pub const GREEN_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
         name: "Green",
         schema_name: "Green",
         description: "",
@@ -40,8 +40,8 @@ impl Color {
         ),
     }
         .build();
-    /// The relection information of the [`Color::Blue`] enum variant for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const BLUE_REFLECTION_NETWORK_FLAVOR: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    /// The relection information of the [`Color::Blue`] enum variant.
+    pub const BLUE_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
         name: "Blue",
         schema_name: "Blue",
         description: "",
@@ -50,16 +50,12 @@ impl Color {
         ),
     }
         .build();
-    /// The relection information of the [`Color`] enum for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_REFLECTION: ::grost::__private::reflection::UnitEnumReflection = ::grost::__private::reflection::UnitEnumReflectionBuilder {
+    /// The relection information of the [`Color`] enum
+    pub const REFLECTION: ::grost::__private::reflection::UnitEnumReflection = ::grost::__private::reflection::UnitEnumReflectionBuilder {
         name: "Color",
         schema_name: "Color",
         description: "",
-        variants: &[
-            Self::RED_REFLECTION_NETWORK_FLAVOR,
-            Self::GREEN_REFLECTION_NETWORK_FLAVOR,
-            Self::BLUE_REFLECTION_NETWORK_FLAVOR,
-        ],
+        variants: &[Self::RED_REFLECTION, Self::GREEN_REFLECTION, Self::BLUE_REFLECTION],
         repr: ::grost::__private::reflection::UnitEnumRepr::U32,
     }
         .build();
@@ -374,32 +370,26 @@ impl Color {
     }
 }
 impl ::grost::__private::Wirable<::grost::__private::flavors::Network> for Color {
-    const WIRE_TYPE: <::grost::__private::flavors::Network as ::grost::__private::Flavor>::WireType = <::core::primitive::u32 as ::grost::__private::Wirable<
-        ::grost::__private::flavors::Network,
-    >>::WIRE_TYPE;
+    const WIRE_TYPE: ::grost::__private::flavors::network::WireType = ::grost::__private::flavors::network::WireType::Varint;
 }
 impl ::grost::__private::Encode<::grost::__private::flavors::Network> for Color {
     #[inline]
     fn encode(
         &self,
-        ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        _: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::Network as ::grost::__private::Flavor>::EncodeError,
     > {
-        <::core::primitive::u32 as ::grost::__private::Encode<
-            ::grost::__private::flavors::Network,
-        >>::encode(&self.as_u32(), ctx, buf)
+        self.const_encode_to(buf).map_err(::core::convert::Into::into)
     }
     #[inline]
     fn encoded_len(
         &self,
-        ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        _: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
     ) -> ::core::primitive::usize {
-        <::core::primitive::u32 as ::grost::__private::Encode<
-            ::grost::__private::flavors::Network,
-        >>::encoded_len(&self.as_u32(), ctx)
+        self.const_encoded_len()
     }
 }
 impl ::grost::__private::PartialEncode<::grost::__private::flavors::Network> for Color {
@@ -433,7 +423,7 @@ impl<'de> ::grost::__private::Decode<'de, ::grost::__private::flavors::Network, 
 for Color {
     #[inline]
     fn decode<UB>(
-        ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        _: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
         src: &'de [::core::primitive::u8],
     ) -> ::core::result::Result<
         (::core::primitive::usize, Self),
@@ -445,12 +435,7 @@ for Color {
                 &'de [::core::primitive::u8],
             > + 'de,
     {
-        <::core::primitive::u32 as ::grost::__private::Decode<
-            'de,
-            ::grost::__private::flavors::Network,
-            ::core::primitive::u32,
-        >>::decode::<UB>(ctx, src)
-            .map(|(read, val)| (read, Self::from_u32(val)))
+        Self::const_decode(src).map_err(::core::convert::Into::into)
     }
 }
 impl ::grost::__private::DecodeOwned<::grost::__private::flavors::Network, Self>

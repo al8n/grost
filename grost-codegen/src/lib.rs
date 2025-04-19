@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use quote::{ToTokens, quote};
 
 pub use case::*;
@@ -24,20 +26,59 @@ pub trait Generator {
   fn generate_unit_enum(&self, enum_: &UnitEnum) -> Result<proc_macro2::TokenStream, Self::Error>;
 }
 
+
+pub trait UnitEnumCodecGenerator {
+  /// Generates the codec for the unit enum
+  fn generate_unit_enum_codec(&self, path_to_grost: &syn::Path, enum_: &UnitEnum) -> proc_macro2::TokenStream;
+}
+
 /// The flavor wants to be generated
 #[derive(Clone)]
 pub struct Flavor {
   ty: syn::Type,
   name: SmolStr,
+  unit_enum_codec_generator: Option<Arc<dyn UnitEnumCodecGenerator>>
 }
 
 impl Flavor {
   /// Returns a new `Flavor`
   pub fn new(ty: syn::Type, name: impl Into<SmolStr>) -> Self {
+    let name = name.into();
     Self {
       ty,
-      name: name.into(),
+      unit_enum_codec_generator: if name.eq("network") {
+        Some(Arc::new(UnitEnumCodecNetworkFlavorGenerator))
+      } else {
+        None
+      },
+      name,
     }
+  }
+
+  /// Returns the `Network` flavor
+  pub fn network(path_to_grost: &syn::Path) -> Self {
+    Self::new(
+      syn::parse_quote!(#path_to_grost::__private::flavors::Network),
+      "network",
+    )
+  }
+
+  /// Sets the codec generator for the unit enum
+  pub fn set_unit_enum_codec_generator(
+    &mut self,
+    unit_enum_codec_generator: impl UnitEnumCodecGenerator + 'static,
+  ) -> &mut Self {
+    self.unit_enum_codec_generator = Some(Arc::new(unit_enum_codec_generator));
+    self
+  }
+
+  /// Sets the codec generator for the unit enum
+  pub fn with_unit_enum_codec_generator(
+    mut self,
+    unit_enum_codec_generator: impl UnitEnumCodecGenerator + 'static,
+  ) -> Self {
+    self.unit_enum_codec_generator = Some(Arc::new(unit_enum_codec_generator));
+    self
   }
 
   /// Returns the type of the flavor
@@ -73,10 +114,7 @@ impl Default for DefaultGenerator {
   fn default() -> Self {
     let grost_path = syn::parse_str("::grost").unwrap();
     Self {
-      flavors: vec![Flavor::new(
-        syn::parse_quote!(#grost_path::__private::flavors::Network),
-        "network",
-      )],
+      flavors: vec![Flavor::network(&grost_path)],
       grost_path,
       derive: false,
     }
@@ -92,6 +130,12 @@ impl DefaultGenerator {
   /// Returns a new `DefaultGenerator` with the given `grost_path`
   pub fn with_grost_path(mut self, grost_path: syn::Path) -> Self {
     self.grost_path = grost_path;
+    for f in self.flavors.iter_mut() {
+      if f.name.eq("network") {
+        let path = &self.grost_path;
+        f.set_ty(syn::parse_quote!(#path::__private::flavors::Network));
+      }
+    }
     self
   }
 
@@ -132,10 +176,7 @@ impl Generator for DefaultGenerator {
     let as_str = enum_.enum_as_str();
     let from_str = enum_.enum_from_str();
     let is_variant = enum_.enum_is_variant();
-    let reflections = self
-      .flavors
-      .iter()
-      .map(|f| enum_.generate_reflection(&self.grost_path, f));
+    let reflection = enum_.generate_reflection(&self.grost_path);
     #[cfg(feature = "quickcheck")]
     let quickcheck = self
       .flavors
@@ -151,7 +192,9 @@ impl Generator for DefaultGenerator {
     let codecs = self
       .flavors
       .iter()
-      .map(|f| enum_.enum_codec(&self.grost_path, f));
+      .map(|f| if let Some(ref g) = f.unit_enum_codec_generator {
+        g.generate_unit_enum_codec(&self.grost_path, enum_)
+      } else { enum_.enum_codec(&self.grost_path, f)});
     let conversions = self.flavors.iter().map(|f| {
       enum_.enum_conversion(&self.grost_path, f)
     });
@@ -160,7 +203,7 @@ impl Generator for DefaultGenerator {
       #defination
 
       impl #name {
-        #(#reflections)*
+        #reflection
       }
 
       #as_str
