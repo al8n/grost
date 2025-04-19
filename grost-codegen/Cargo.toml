@@ -35,7 +35,7 @@ derive_more = { workspace = true, features = ["unwrap", "from", "display", "is_v
 either.workspace = true
 heck.workspace = true
 indexmap = "2"
-grost-proto.workspace = true
+grost-proto = { workspace = true, features = ["codegen"] }
 paste.workspace = true
 prettyplease.workspace = true
 proc-macro2 = { workspace = true, features = ["default"] }

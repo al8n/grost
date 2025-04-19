@@ -17,6 +17,9 @@ std = ["thiserror/std", "bytes_1/default"]
 sql = []
 quickcheck = ["dep:quickcheck"]
 
+# Enable `syn`, `proc-macro2`, and `quote` features for code generation
+codegen = ["dep:syn", "dep:proc-macro2", "dep:quote", "dep:paste"]
+
 [dependencies]
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bitflags = { version = "2", default-features = false }
@@ -25,3 +28,8 @@ heapless_0_8 = { package = "heapless", version = "0.8", default-features = false
 varing.workspace = true
 quickcheck = { version = "1", optional = true }
 thiserror.workspace = true
+
+syn = { workspace = true, optional = true }
+proc-macro2 = { version = "1", optional = true }
+quote = { version = "1", optional = true }
+paste = { workspace = true, optional = true }

@@ -1,7 +1,7 @@
 use quote::{ToTokens, quote};
 
 pub use case::*;
-pub use enum_::*;
+pub use unit_enum::*;
 pub use safe_ident::*;
 use smol_str::SmolStr;
 // pub use struct_::*;
@@ -10,7 +10,7 @@ mod case;
 mod safe_ident;
 
 /// Enum structs
-mod enum_;
+mod unit_enum;
 // / structs
 // mod struct_;
 
@@ -21,7 +21,7 @@ pub trait Generator {
   type Error;
 
   // fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error>;
-  fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error>;
+  fn generate_unit_enum(&self, enum_: &UnitEnum) -> Result<proc_macro2::TokenStream, Self::Error>;
 }
 
 /// The flavor wants to be generated
@@ -126,16 +126,16 @@ impl Generator for DefaultGenerator {
   //   })
   // }
 
-  fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error> {
+  fn generate_unit_enum(&self, enum_: &UnitEnum) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = (!self.derive).then(|| enum_.enum_defination());
     let name = enum_.name();
     let as_str = enum_.enum_as_str();
     let from_str = enum_.enum_from_str();
     let is_variant = enum_.enum_is_variant();
-    let infos = self
+    let reflections = self
       .flavors
       .iter()
-      .map(|f| enum_.generate_info(&self.grost_path, f));
+      .map(|f| enum_.generate_reflection(&self.grost_path, f));
     #[cfg(feature = "quickcheck")]
     let quickcheck = self
       .flavors
@@ -152,19 +152,24 @@ impl Generator for DefaultGenerator {
       .flavors
       .iter()
       .map(|f| enum_.enum_codec(&self.grost_path, f));
+    let conversions = self.flavors.iter().map(|f| {
+      enum_.enum_conversion(&self.grost_path, f)
+    });
 
     Ok(quote! {
       #defination
 
       impl #name {
-        #(#infos)*
+        #(#reflections)*
       }
 
       #as_str
       #from_str
-      #repr_conversion
-      #(#codecs)*
       #is_variant
+      #repr_conversion
+
+      #(#codecs)*
+      #(#conversions)*
       #(#quickcheck)*
       #arbitrary
     })

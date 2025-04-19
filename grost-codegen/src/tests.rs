@@ -1,26 +1,26 @@
-use std::num::NonZeroI128;
+use std::num::NonZeroU8;
 
+use grost_proto::reflection::{UnitEnumRepr, UnitEnumVariantValue};
 // use grost_proto::{Tag, WireType};
-use syn::parse_quote;
 
 // use crate::{Field, Struct, field::getter, ty::Ty};
 
-use super::{DefaultGenerator, Enum, EnumRepr, EnumVariant, Generator, SafeIdent};
+use super::{DefaultGenerator, UnitEnum, UnitEnumVariant, Generator, SafeIdent};
 
 #[test]
 fn test_enum_generate() {
   let generator = DefaultGenerator::new();
-  let enum_ = Enum::new(
+  let enum_ = UnitEnum::new(
     SafeIdent::new("Color"),
-    EnumRepr::U32,
+    UnitEnumRepr::U32,
     vec![
-      EnumVariant::new(SafeIdent::new("Red"), NonZeroI128::new(1).unwrap()),
-      EnumVariant::new(SafeIdent::new("Green"), NonZeroI128::new(2).unwrap()),
-      EnumVariant::new(SafeIdent::new("Blue"), NonZeroI128::new(3).unwrap()),
+      UnitEnumVariant::new(SafeIdent::new("Red"), UnitEnumVariantValue::U8(NonZeroU8::new(1).unwrap())),
+      UnitEnumVariant::new(SafeIdent::new("Green"), UnitEnumVariantValue::U8(NonZeroU8::new(2).unwrap())),
+      UnitEnumVariant::new(SafeIdent::new("Blue"), UnitEnumVariantValue::U8(NonZeroU8::new(3).unwrap())),
     ],
   );
 
-  let generated = generator.generate_enum(&enum_).unwrap();
+  let generated = generator.generate_unit_enum(&enum_).unwrap();
   let file: syn::File = syn::parse2(generated).unwrap();
   let output = prettyplease::unparse(&file);
   println!("{}", output);

@@ -1,4 +1,4 @@
-use std::{fs::OpenOptions, io::Write, num::NonZeroI128, path::PathBuf};
+use std::{fs::OpenOptions, io::Write, num::NonZeroU32, path::PathBuf};
 
 use grost_codegen::*;
 
@@ -24,17 +24,17 @@ fn main() {
 
 fn enum_codegen_test(name: &str) {
   let generator = DefaultGenerator::new();
-  let enum_ = Enum::new(
+  let enum_ = UnitEnum::new(
     SafeIdent::new("Color"),
-    EnumRepr::U32,
+    UnitEnumRepr::U32,
     vec![
-      EnumVariant::new(SafeIdent::new("Red"), NonZeroI128::new(1).unwrap()).with_default(true),
-      EnumVariant::new(SafeIdent::new("Green"), NonZeroI128::new(2).unwrap()),
-      EnumVariant::new(SafeIdent::new("Blue"), NonZeroI128::new(3).unwrap()),
+      UnitEnumVariant::new(SafeIdent::new("Red"), UnitEnumVariantValue::U32(NonZeroU32::new(1).unwrap())).with_default(true),
+      UnitEnumVariant::new(SafeIdent::new("Green"), UnitEnumVariantValue::U32(NonZeroU32::new(2).unwrap())),
+      UnitEnumVariant::new(SafeIdent::new("Blue"), UnitEnumVariantValue::U32(NonZeroU32::new(3).unwrap())),
     ],
   );
 
-  let generated = generator.generate_enum(&enum_).unwrap();
+  let generated = generator.generate_unit_enum(&enum_).unwrap();
   let file: syn::File = syn::parse2(generated).unwrap();
   let output = prettyplease::unparse(&file);
 
