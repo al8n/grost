@@ -1,10 +1,10 @@
-use std::rc::Rc;
-
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
+  use crate::flavors::network::{Network, WireType};
   use smol_str_0_3::SmolStr;
+  use std::rc::Rc;
 
-  str_bridge!(Rc<str> {
+  str_bridge!(Network:(WireType::LengthDelimited):Rc<str> {
     from_str: |val: &str| Ok(Rc::<str>::from(val));
     to_str: AsRef::as_ref;
   

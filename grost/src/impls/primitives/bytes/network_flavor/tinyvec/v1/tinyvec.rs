@@ -1,3 +1,4 @@
+use crate::flavors::network::{Network, WireType};
 use tinyvec_1::TinyVec;
 
 #[cfg(feature = "bytes_1")]
@@ -5,7 +6,7 @@ const _: () = {
   use bytes_1::Bytes;
 
   bytes_bridge!(
-    TinyVec<[u8; N]> [const N: usize] {
+    Network: (WireType::LengthDelimited): TinyVec<[u8; N]> [const N: usize] {
       from_bytes: |bytes: &[u8]| Ok(TinyVec::from(bytes));
       to_bytes: TinyVec::as_slice;
 

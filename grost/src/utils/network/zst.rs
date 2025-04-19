@@ -1,4 +1,4 @@
-use crate::flavors::network::{Context, Identifier, WireType, DecodeError, EncodeError};
+use crate::flavors::network::{Context, DecodeError, EncodeError, Identifier, WireType};
 
 pub fn encoded_zst_len(ctx: &Context) -> usize {
   if let Some(tag) = ctx.tag() {
@@ -18,11 +18,7 @@ pub fn encode_zst(ctx: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
   }
 }
 
-pub fn decode_zst<T, F>(
-  ctx: &Context,
-  src: &[u8],
-  f: F,
-) -> Result<(usize, T), DecodeError>
+pub fn decode_zst<T, F>(ctx: &Context, src: &[u8], f: F) -> Result<(usize, T), DecodeError>
 where
   F: FnOnce() -> Result<(usize, T), DecodeError>,
 {

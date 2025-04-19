@@ -1,6 +1,5 @@
 use crate::flavors::network::{Context, DecodeError, EncodeError, Identifier, WireType};
 
-
 pub fn encode_length_delimiter<V, F, EL>(
   ctx: &Context,
   val: &V,

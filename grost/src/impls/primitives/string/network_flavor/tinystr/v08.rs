@@ -1,6 +1,6 @@
 use tinystr_0_8::{ParseError, TinyAsciiStr};
 
-use crate::DecodeError;
+use crate::flavors::network::DecodeError;
 
 array_str!(impl<const N: usize> TinyAsciiStr<N> {
   fn new = || TinyAsciiStr::try_from_raw([0; N]).expect("empty TinyAsciiStr should always be valid");

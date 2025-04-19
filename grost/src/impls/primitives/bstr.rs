@@ -1,2 +1,1 @@
-#[cfg(feature = "bstr_1")]
-mod v1;
+mod network_flavor;

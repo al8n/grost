@@ -1,4 +1,4 @@
-use super::{buffer::Buffer, flavors::Flavor, unknown::UnknownBuffer, Wirable};
+use super::{Wirable, buffer::Buffer, flavors::Flavor, unknown::UnknownBuffer};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///

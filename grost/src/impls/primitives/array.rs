@@ -1,10 +1,12 @@
 use crate::{
-  Context, Decode, DecodeError, DecodeOwned, Encode, EncodeError, IntoTarget, Message,
-  PartialMessage, TypeOwned, TypeRef, Wirable, WireType,
+  Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
+  buffer::Buffer,
+  flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
+  unknown::UnknownBuffer,
 };
 
-impl<const N: usize> Wirable for [u8; N] {
-  const WIRE_TYPE: crate::WireType = {
+impl<const N: usize> Wirable<Network> for [u8; N] {
+  const WIRE_TYPE: WireType = {
     match N {
       0 => WireType::Zst,
       1 => WireType::Byte,
@@ -17,7 +19,7 @@ impl<const N: usize> Wirable for [u8; N] {
   };
 }
 
-impl<const N: usize> Encode for [u8; N] {
+impl<const N: usize> Encode<Network> for [u8; N] {
   fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if N == 0 {
       return Ok(0);
@@ -48,11 +50,11 @@ impl<const N: usize> Encode for [u8; N] {
   }
 }
 
-impl<'de, const N: usize> Decode<'de, Self> for [u8; N] {
+impl<'de, const N: usize> Decode<'de, Network, Self> for [u8; N] {
   fn decode<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::UnknownBuffer<&'de [u8]>,
+    UB: UnknownBuffer<Network, &'de [u8]>,
   {
     if N == 0 {
       return Ok((0, [0; N]));
@@ -62,36 +64,36 @@ impl<'de, const N: usize> Decode<'de, Self> for [u8; N] {
   }
 }
 
-impl<const N: usize> DecodeOwned<Self> for [u8; N] {
+impl<const N: usize> DecodeOwned<Network, Self> for [u8; N] {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: crate::Buffer + 'static,
-    UB: crate::UnknownBuffer<B> + 'static,
+    B: Buffer + 'static,
+    UB: UnknownBuffer<Network, B> + 'static,
   {
-    <Self as Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
+    <Self as Decode<'_, Network, Self>>::decode::<()>(context, src.as_bytes())
   }
 }
 
-impl<const N: usize> IntoTarget<Self> for [u8; N] {
+impl<const N: usize> IntoTarget<Network, Self> for [u8; N] {
   fn into_target(self) -> Result<Self, DecodeError> {
     Ok(self)
   }
 }
 
-impl<const N: usize> TypeRef<Self> for [u8; N] {
+impl<const N: usize> TypeRef<Network, Self> for [u8; N] {
   fn to(&self) -> Result<Self, DecodeError> {
     Ok(*self)
   }
 }
 
-impl<const N: usize> TypeOwned<Self> for [u8; N] {
+impl<const N: usize> TypeOwned<Network, Self> for [u8; N] {
   fn to(&self) -> Result<Self, DecodeError> {
     Ok(*self)
   }
 }
 
-impl<const N: usize> PartialMessage for [u8; N] {
+impl<const N: usize> PartialMessage<Network> for [u8; N] {
   type UnknownBuffer<B: ?Sized> = ();
 
   type Encoded<'a>
@@ -110,7 +112,7 @@ impl<const N: usize> PartialMessage for [u8; N] {
     Self: Sized + 'static;
 }
 
-impl<const N: usize> Message for [u8; N] {
+impl<const N: usize> Message<Network> for [u8; N] {
   type Partial = Self;
 
   type Encoded<'a>

@@ -1,4 +1,4 @@
-use super::{flavors::Flavor, buffer::Buffer};
+use super::{buffer::Buffer, flavors::Flavor};
 
 /// A buffer that stores the [`Unknown`] data type.
 ///

@@ -1,4 +1,7 @@
-use crate::{Wirable, flavors::network::{Context, DecodeError, EncodeError, Network, Identifier, WireType}};
+use crate::{
+  Wirable,
+  flavors::network::{Context, DecodeError, EncodeError, Identifier, Network, WireType},
+};
 
 pub fn encode_fixed<V, F, const N: usize>(
   ctx: &Context,

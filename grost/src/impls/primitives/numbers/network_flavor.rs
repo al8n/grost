@@ -1,5 +1,9 @@
-
-use crate::{buffer::Buffer, flavors::network::{Context, EncodeError, DecodeError, Network}, unknown::UnknownBuffer, Encode, Decode, DecodeOwned};
+use crate::{
+  Decode, DecodeOwned, Encode,
+  buffer::Buffer,
+  flavors::network::{Context, DecodeError, EncodeError, Network},
+  unknown::UnknownBuffer,
+};
 
 mod arbitrary_int;
 mod bnum;

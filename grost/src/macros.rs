@@ -84,7 +84,7 @@ macro_rules! zst {
 
       impl $crate::__private::Encode for $ty {
         #[inline]
-        fn encode(&self, _: &$crate::__private::flavors::network::Context, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        fn encode(&self, _: &$crate::__private::flavors::network::Context, _: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 
@@ -95,10 +95,10 @@ macro_rules! zst {
       }
 
       impl<'de> $crate::__private::Decode<'de, Self> for $ty {
-        fn decode<UB>(_: &$crate::__private::flavors::network::Context, _: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+        fn decode<UB>(_: &$crate::__private::flavors::network::Context, _: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
-          UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+          UB: $crate::__private::UnknownBuffer<&'de [::core::primitive::u8]> + 'de,
         {
           ::core::result::Result::Ok((0, ::core::default::Default::default()))
         }
@@ -269,10 +269,10 @@ macro_rules! bridge {
     )*
   };
   (@decode_impl $flavor:ty: $from:expr => $bridge:ty) => {
-    fn decode<UB>(context: &<$flavor as $crate::__private::Flavor>::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
+    fn decode<UB>(context: &<$flavor as $crate::__private::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<$flavor, &'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<$flavor, &'de [::core::primitive::u8]> + 'de,
     {
       <$bridge as $crate::__private::Decode<$flavor, $bridge>>::decode::<UB>(context, src).map(|(n, v)| (n, $from(v)))
     }
@@ -434,7 +434,7 @@ macro_rules! try_from_bridge {
     fn decode<UB>(ctx: &$crate::__private::flavors::network::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<&'de [::core::primitive::u8]> + 'de,
     {
       <$bridge as $crate::__private::Decode<'_, $bridge>>::decode::<UB>(ctx, src)
         .and_then(|(n, v)| $try_from(v).map(|v| (n, v)))
@@ -532,7 +532,7 @@ macro_rules! try_from_bridge {
 /// ```
 #[macro_export]
 macro_rules! str_bridge {
-  ($($ty:ty {
+  ($flavor:ty: $(($wire_type:expr):$ty:ty {
     from_str: $from_str: expr;
     to_str: $to_str: expr;
 
@@ -542,37 +542,39 @@ macro_rules! str_bridge {
     } $(;)?
   }), +$(,)?) => {
     $(
-      impl $crate::Wirable for $ty {}
-
-      $crate::str_bridge!(@encode $ty: $to_str);
-      $crate::str_bridge!(@decode $ty: $from_str);
-      $crate::str_bridge!(@decode_owned $ty: $from_str);
-
-      impl $crate::__private::PartialEncode for $ty {
-        $crate::partial_encode_primitives!(@impl);
+      impl $crate::Wirable<$flavor> for $ty {
+        const WIRE_TYPE: <$flavor as $crate::__private::Flavor>::WireType = $wire_type;
       }
 
-      impl $crate::__private::IntoTarget<$ty> for &::core::primitive::str {
-        $crate::str_bridge!(@into_target_impl $ty: $from_str);
+      $crate::str_bridge!(@encode $flavor: $ty: $to_str);
+      $crate::str_bridge!(@decode $flavor: $ty: $from_str);
+      $crate::str_bridge!(@decode_owned $flavor: $ty: $from_str);
+
+      impl $crate::__private::PartialEncode<$flavor> for $ty {
+        $crate::partial_encode_primitives!(@impl $flavor);
       }
 
-      impl $crate::__private::TypeRef<$ty> for &::core::primitive::str {
-        $crate::str_bridge!(@str_to_impl $ty: $from_str);
+      impl $crate::__private::IntoTarget<$flavor, $ty> for &::core::primitive::str {
+        $crate::str_bridge!(@into_target_impl $flavor: $ty: $from_str);
       }
 
-      impl $crate::__private::TypeOwned<$ty> for &::core::primitive::str {
-        $crate::str_bridge!(@str_to_impl $ty: $from_str);
+      impl $crate::__private::TypeRef<$flavor, $ty> for &::core::primitive::str {
+        $crate::str_bridge!(@str_to_impl $flavor: $ty: $from_str);
       }
 
-      impl $crate::__private::IntoTarget<$ty> for $owned_ty {
-        $crate::str_bridge!(@into_target_impl $ty: $from);
+      impl $crate::__private::TypeOwned<$flavor, $ty> for &::core::primitive::str {
+        $crate::str_bridge!(@str_to_impl $flavor: $ty: $from_str);
       }
 
-      impl $crate::__private::TypeOwned<$ty> for $owned_ty {
-        $crate::str_bridge!(@to_impl $ty: $from_ref);
+      impl $crate::__private::IntoTarget<$flavor, $ty> for $owned_ty {
+        $crate::str_bridge!(@into_target_impl $flavor: $ty: $from);
       }
 
-      impl $crate::__private::PartialMessage for $ty {
+      impl $crate::__private::TypeOwned<$flavor, $ty> for $owned_ty {
+        $crate::str_bridge!(@to_impl $flavor: $ty: $from_ref);
+      }
+
+      impl $crate::__private::PartialMessage<$flavor> for $ty {
         type UnknownBuffer<B: ?::core::marker::Sized> = ();
 
         type Encoded<'a> = &'a ::core::primitive::str
@@ -588,7 +590,7 @@ macro_rules! str_bridge {
           Self: ::core::marker::Sized + 'static;
       }
 
-      impl $crate::__private::Message for $ty {
+      impl $crate::__private::Message<$flavor> for $ty {
         type Partial = Self;
 
         type Encoded<'a> = &'a ::core::primitive::str
@@ -605,67 +607,67 @@ macro_rules! str_bridge {
       }
     )*
   };
-  (@encode $ty:ty: $to_str:expr) => {
-    impl $crate::__private::Encode for $ty {
-      $crate::str_bridge!(@encode_impl $to_str);
+  (@encode $flavor:ty: $ty:ty: $to_str:expr) => {
+    impl $crate::__private::Encode<$flavor> for $ty {
+      $crate::str_bridge!(@encode_impl $flavor: $to_str);
     }
   };
-  (@encode_impl $to_str:expr) => {
+  (@encode_impl $flavor:ty: $to_str:expr) => {
     #[inline]
-    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
-      <&::core::primitive::str as $crate::__private::Encode>::encode(&$to_str(self), context, buf)
+    fn encode(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
+      <&::core::primitive::str as $crate::__private::Encode<$flavor>>::encode(&$to_str(self), context, buf)
     }
 
     #[inline]
-    fn encoded_len(&self, context: &$crate::__private::flavors::network::Context) -> ::core::primitive::usize {
-      <&::core::primitive::str as $crate::__private::Encode>::encoded_len(&$to_str(self), context)
+    fn encoded_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context) -> ::core::primitive::usize {
+      <&::core::primitive::str as $crate::__private::Encode<$flavor>>::encoded_len(&$to_str(self), context)
     }
   };
-  (@decode $ty:ty: $from_str:expr) => {
-    impl<'de> $crate::__private::Decode<'de, Self> for $ty {
-      $crate::str_bridge!(@decode_impl $from_str);
+  (@decode $flavor:ty: $ty:ty: $from_str:expr) => {
+    impl<'de> $crate::__private::Decode<'de, $flavor, Self> for $ty {
+      $crate::str_bridge!(@decode_impl $flavor: $from_str);
     }
   };
-  (@decode_impl $from_str:expr) => {
-    fn decode<UB>(context: &$crate::__private::flavors::network::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+  (@decode_impl $flavor:ty: $from_str:expr) => {
+    fn decode<UB>(context: &<$flavor as $crate::__private::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<$flavor, &'de [::core::primitive::u8]> + 'de,
     {
-      <&::core::primitive::str as $crate::__private::Decode<'de, &str>>::decode::<UB>(context, src)
+      <&::core::primitive::str as $crate::__private::Decode<'de, $flavor, &::core::primitive::str>>::decode::<UB>(context, src)
         .and_then(|(read, val)| $from_str(val).map(|v| (read, v)))
     }
   };
-  (@decode_owned $ty:ty: $from_str:expr) => {
-    impl $crate::__private::DecodeOwned<Self> for $ty {
-      $crate::str_bridge!(@decode_owned_impl $from_str);
+  (@decode_owned $flavor:ty: $ty:ty: $from_str:expr) => {
+    impl $crate::__private::DecodeOwned<$flavor, Self> for $ty {
+      $crate::str_bridge!(@decode_owned_impl $flavor: $from_str);
     }
   };
-  (@decode_owned_impl $from_str:expr) => {
+  (@decode_owned_impl $flavor:ty: $from_str:expr) => {
     fn decode_owned<B, UB>(
-      context: &$crate::__private::flavors::network::Context,
+      context: &<$flavor as $crate::__private::Flavor>::Context,
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::Buffer + 'static,
-      UB: $crate::__private::UnknownBuffer<B> + 'static,
+      UB: $crate::__private::UnknownBuffer<$flavor, B> + 'static,
     {
-      <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
+      <Self as $crate::__private::Decode<'_, $flavor, Self>>::decode::<()>(context, $crate::__private::Buffer::as_bytes(&src))
     }
   };
-  (@into_target_impl $ty:ty: $from:expr) => {
-    fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@into_target_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn into_target(self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(self)
     }
   };
-  (@str_to_impl $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@str_to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(*self)
     }
   };
-  (@to_impl $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(self)
     }
   };
@@ -702,7 +704,7 @@ macro_rules! str_bridge {
 /// ```
 #[macro_export]
 macro_rules! bytes_bridge {
-  ($($ty:ty $([const $g:ident: usize])? {
+  ($flavor:ty: $(($wire_type:expr): $ty:ty $([const $g:ident: usize])? {
     from_bytes: $from_bytes: expr;
     to_bytes: $to_bytes: expr;
 
@@ -712,36 +714,38 @@ macro_rules! bytes_bridge {
     } $(;)?
   }), +$(,)?) => {
     $(
-      impl$(<const $g: ::core::primitive::usize>)? $crate::Wirable for $ty {}
-
-      $crate::bytes_bridge!(@encode $ty $([const $g: usize])?: $to_bytes);
-      $crate::bytes_bridge!(@decode $ty $([const $g: usize])?: $from_bytes);
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialEncode for $ty {
-        $crate::partial_encode_primitives!(@impl);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::Wirable<$flavor> for $ty {
+        const WIRE_TYPE: <$flavor as $crate::__private::Flavor>::WireType = $wire_type;
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@into_target_impl $ty: $from_bytes);
+      $crate::bytes_bridge!(@encode $flavor: $ty $([const $g: usize])?: $to_bytes);
+      $crate::bytes_bridge!(@decode $flavor: $ty $([const $g: usize])?: $from_bytes);
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialEncode<$flavor> for $ty {
+        $crate::partial_encode_primitives!(@impl $flavor);
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeRef<$ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from_bytes);
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@str_to_impl $ty: $from_bytes);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeRef<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@str_to_impl $flavor: $ty: $from_bytes);
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$ty> for $owned_ty {
-        $crate::bytes_bridge!(@into_target_impl $ty: $from);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@str_to_impl $flavor: $ty: $from_bytes);
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$ty> for $owned_ty {
-        $crate::bytes_bridge!(@to_impl $ty: $from_ref);
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for $owned_ty {
+        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from);
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialMessage for $ty {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for $owned_ty {
+        $crate::bytes_bridge!(@to_impl $flavor: $ty: $from_ref);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialMessage<$flavor> for $ty {
         type UnknownBuffer<B: ?::core::marker::Sized> = ();
 
         type Encoded<'a> = &'a [::core::primitive::u8]
@@ -757,7 +761,7 @@ macro_rules! bytes_bridge {
           Self: ::core::marker::Sized + 'static;
       }
 
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::Message for $ty {
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::Message<$flavor> for $ty {
         type Partial = Self;
 
         type Encoded<'a> = &'a [::core::primitive::u8]
@@ -774,65 +778,65 @@ macro_rules! bytes_bridge {
       }
     )*
   };
-  (@encode $ty:ty $([const $g:ident: usize])?: $to_bytes:expr) => {
-    impl $(<const $g: ::core::primitive::usize>)? $crate::__private::Encode for $ty {
-      $crate::bytes_bridge!(@encode_impl $to_bytes);
+  (@encode $flavor:ty: $ty:ty $([const $g:ident: usize])?: $to_bytes:expr) => {
+    impl $(<const $g: ::core::primitive::usize>)? $crate::__private::Encode<$flavor> for $ty {
+      $crate::bytes_bridge!(@encode_impl $flavor: $to_bytes);
     }
   };
-  (@encode_impl $to_bytes:expr) => {
+  (@encode_impl $flavor:ty: $to_bytes:expr) => {
     #[inline]
-    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
-      <&[::core::primitive::u8] as $crate::__private::Encode>::encode(&$to_bytes(self), context, buf)
+    fn encode(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
+      <&[::core::primitive::u8] as $crate::__private::Encode<$flavor>>::encode(&$to_bytes(self), context, buf)
     }
 
     #[inline]
-    fn encoded_len(&self, context: &$crate::__private::flavors::network::Context) -> ::core::primitive::usize {
-      <&[::core::primitive::u8] as $crate::__private::Encode>::encoded_len(&$to_bytes(self), context)
+    fn encoded_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context) -> ::core::primitive::usize {
+      <&[::core::primitive::u8] as $crate::__private::Encode<$flavor>>::encoded_len(&$to_bytes(self), context)
     }
   };
-  (@decode $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl<'de, $(const $g: usize)?> $crate::__private::Decode<'de, Self> for $ty {
-      $crate::bytes_bridge!(@decode_impl $from_bytes);
+  (@decode $flavor:ty: $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
+    impl<'de, $(const $g: usize)?> $crate::__private::Decode<'de, $flavor, Self> for $ty {
+      $crate::bytes_bridge!(@decode_impl $flavor: $from_bytes);
     }
   };
-  (@decode_impl $from_bytes:expr) => {
-    fn decode<UB>(context: &$crate::__private::flavors::network::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+  (@decode_impl $flavor:ty: $from_bytes:expr) => {
+    fn decode<UB>(context: &<$flavor as $crate::__private::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<$flavor, &'de [::core::primitive::u8]> + 'de,
     {
-      <&[::core::primitive::u8] as $crate::__private::Decode<'de, &[u8]>>::decode::<UB>(context, src)
+      <&[::core::primitive::u8] as $crate::__private::Decode<'de, $flavor, &[::core::primitive::u8]>>::decode::<UB>(context, src)
         .and_then(|(read, val)| $from_bytes(val).map(|v| (read, v)))
     }
   };
-  (@decode_owned $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
-    impl $(< const $g: usize >)? $crate::__private::Decode<'de, Self> for $ty {
+  (@decode_owned $flavor:ty: $ty:ty $([const $g:ident: usize])?: $from_bytes:expr) => {
+    impl $(< const $g: usize >)? $crate::__private::Decode<'de, $flavor, Self> for $ty {
       $crate::bytes_bridge!(@decode_owned_impl $from_bytes);
     }
   };
-  (@decode_owned_impl $from_bytes:expr) => {
-    fn decode_owned<B, UB>(context: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+  (@decode_owned_impl $flavor:ty: $from_bytes:expr) => {
+    fn decode_owned<B, UB>(context: &<$flavor as $crate::__private::Flavor>::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::Flavor>::DecodeError>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::Buffer + 'static,
-      UB: $crate::__private::UnknownBuffer<B> + 'static,
+      UB: $crate::__private::UnknownBuffer<$flavor, B> + 'static,
     {
-      <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
+      <Self as $crate::__private::Decode<'_, $flavor, Self>>::decode::<()>(context, src.as_bytes())
         .and_then(|(read, val)| $from_bytes(val).map(|v| (read, v)))
     }
   };
-  (@into_target_impl $ty:ty: $from:expr) => {
-    fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@into_target_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn into_target(self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(self)
     }
   };
-  (@str_to_impl $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@str_to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(*self)
     }
   };
-  (@to_impl $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
+  (@to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $from(self)
     }
   };
@@ -852,16 +856,16 @@ macro_rules! array_str {
       fn as_bytes = $as_bytes:expr;
     }
   ) => {
-    impl<const $g: ::core::primitive::usize> $crate::__private::Wirable for $ty {
-      const WIRE_TYPE: $crate::__private::WireType = {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Wirable<$crate::__private::flavors::Network> for $ty {
+      const WIRE_TYPE: $crate::__private::flavors::network::WireType = {
         match N {
-          0 => $crate::__private::WireType::Varint,
-          _ => $crate::__private::WireType::LengthDelimited,
+          0 => $crate::__private::flavors::network::WireType::Varint,
+          _ => $crate::__private::flavors::network::WireType::LengthDelimited,
         }
       };
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Encode<$crate::__private::flavors::Network> for $ty {
       fn encode(
         &self,
         context: &$crate::__private::flavors::network::Context,
@@ -884,18 +888,18 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode for $ty {
-      $crate::partial_encode_primitives!(@impl);
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
+      $crate::partial_encode_primitives!(@impl $crate::__private::flavors::Network);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, Self> for $ty {
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
       fn decode<UB>(
         context: &$crate::__private::flavors::network::Context,
         src: &'de [::core::primitive::u8],
       ) -> Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        UB: $crate::__private::UnknownBuffer<&'de [u8]>,
+        UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [::core::primitive::u8]>,
       {
         if N == 0 {
           return ::core::result::Result::Ok((0, $new()));
@@ -911,7 +915,7 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<$crate::__private::flavors::Network, Self> for $ty {
       fn decode_owned<B, UB>(
         ctx: &$crate::__private::flavors::network::Context,
         src: B,
@@ -919,43 +923,43 @@ macro_rules! array_str {
       where
         Self: ::core::marker::Sized + 'static,
         B: $crate::__private::Buffer + 'static,
-        UB: $crate::__private::UnknownBuffer<B> + 'static,
+        UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, B> + 'static,
       {
-        <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
+        <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, Self> for $ty {
       fn into_target(self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(self)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, Self> for $ty {
       fn to(&self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(::core::clone::Clone::clone(self))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeOwned<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeOwned<$crate::__private::flavors::Network, Self> for $ty {
       fn to(&self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(::core::clone::Clone::clone(self))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$ty> for &str {
+    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, $ty> for &str {
       fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
         $from_str(self)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$ty> for &str {
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, $ty> for &str {
       fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
         $from_str(*self)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage<$crate::__private::flavors::Network> for $ty {
       type UnknownBuffer<B: ?::core::marker::Sized> = ();
 
       type Encoded<'a>
@@ -974,7 +978,7 @@ macro_rules! array_str {
         Self: ::core::marker::Sized + 'static;
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Message<$crate::__private::flavors::Network> for $ty {
       type Partial = Self;
 
       type Encoded<'a>
@@ -995,7 +999,7 @@ macro_rules! array_str {
   };
 }
 
-/// A macro emits traits implementations for a array-style `[u8]` type.
+/// A macro emits traits implementations for a array-style `[u8]` type for [`Network`](crate::flavors::Network) flavor.
 #[macro_export]
 macro_rules! array_bytes {
   (
@@ -1009,16 +1013,16 @@ macro_rules! array_bytes {
       fn as_bytes = $as_bytes:expr;
     }
   ) => {
-    impl<const $g: ::core::primitive::usize> $crate::__private::Wirable for $ty {
-      const WIRE_TYPE: $crate::__private::WireType = {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Wirable<$crate::__private::flavors::network::Network> for $ty {
+      const WIRE_TYPE: $crate::__private::flavors::network::WireType = {
         match N {
-          0 => $crate::__private::WireType::Zst,
-          _ => $crate::__private::WireType::LengthDelimited,
+          0 => $crate::__private::flavors::network::WireType::Zst,
+          _ => $crate::__private::flavors::network::WireType::LengthDelimited,
         }
       };
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Encode for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Encode<$crate::__private::flavors::Network> for $ty {
       fn encode(
         &self,
         context: &$crate::__private::flavors::network::Context,
@@ -1041,18 +1045,18 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode for $ty {
-      $crate::partial_encode_primitives!(@impl);
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
+      $crate::partial_encode_primitives!(@impl $crate::__private::flavors::Network);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, Self> for $ty {
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
       fn decode<UB>(
         context: &$crate::__private::flavors::network::Context,
         src: &'de [::core::primitive::u8],
       ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        UB: $crate::__private::UnknownBuffer<&'de [u8]>,
+        UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [::core::primitive::u8]>,
       {
         if N == 0 {
           return ::core::result::Result::Ok((0, $new()));
@@ -1068,7 +1072,7 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<$crate::__private::flavors::Network, Self> for $ty {
       fn decode_owned<B, UB>(
         ctx: &$crate::__private::flavors::network::Context,
         src: B,
@@ -1076,31 +1080,31 @@ macro_rules! array_bytes {
       where
         Self: ::core::marker::Sized + 'static,
         B: $crate::__private::Buffer + 'static,
-        UB: $crate::__private::UnknownBuffer<B>,
+        UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, B>,
       {
-        <Self as $crate::__private::Decode<'_, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
+        <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode::<()>(ctx, $crate::__private::Buffer::as_bytes(&src))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, Self> for $ty {
       fn into_target(self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(self)
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, Self> for $ty {
       fn to(&self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(::core::clone::Clone::clone(self))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeOwned<Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeOwned<$crate::__private::flavors::Network, Self> for $ty {
       fn to(&self) -> ::core::result::Result<Self, $crate::__private::flavors::network::DecodeError> {
         ::core::result::Result::Ok(::core::clone::Clone::clone(self))
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$ty>
+    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, $ty>
       for &[::core::primitive::u8]
     {
       fn into_target(self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
@@ -1108,7 +1112,7 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$ty>
+    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, $ty>
       for &[::core::primitive::u8]
     {
       fn to(&self) -> ::core::result::Result<$ty, $crate::__private::flavors::network::DecodeError> {
@@ -1116,7 +1120,7 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage<$crate::__private::flavors::Network> for $ty {
       type UnknownBuffer<B: ?::core::marker::Sized> = ();
 
       type Encoded<'a>
@@ -1135,7 +1139,7 @@ macro_rules! array_bytes {
         Self: ::core::marker::Sized + 'static;
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Message for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Message<$crate::__private::flavors::Network> for $ty {
       type Partial = Self;
 
       type Encoded<'a>
@@ -1423,10 +1427,10 @@ macro_rules! varint {
     }
   };
   (@decode_impl) => {
-    fn decode<UB>(ctx: &$crate::__private::flavors::network::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+    fn decode<UB>(ctx: &$crate::__private::flavors::network::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [::core::primitive::u8]> + 'de,
     {
       $crate::__private::network::decode(ctx, src, |buf| $crate::__private::varing::Varint::decode(buf).map_err(::core::convert::Into::into))
     }
@@ -1546,10 +1550,10 @@ macro_rules! fixed {
     }
   };
   (@decode_impl $size:literal { $from_slice:expr $(,)? }) => {
-    fn decode<UB>(ctx: &$crate::__private::flavors::network::Context, src: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+    fn decode<UB>(ctx: &$crate::__private::flavors::network::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
     where
       Self: ::core::marker::Sized + 'de,
-      UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [u8]> + 'de,
+      UB: $crate::__private::UnknownBuffer<$crate::__private::flavors::Network, &'de [::core::primitive::u8]> + 'de,
     {
       $crate::__private::network::decode(ctx, src, $from_slice)
     }
@@ -1614,7 +1618,7 @@ macro_rules! phantom {
 
       impl<T: ?::core::marker::Sized> $crate::__private::Encode for $ty {
         #[inline]
-        fn encode(&self, _: &$crate::__private::flavors::network::Context, _: &mut [u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        fn encode(&self, _: &$crate::__private::flavors::network::Context, _: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
           ::core::result::Result::Ok(0)
         }
 
@@ -1625,10 +1629,10 @@ macro_rules! phantom {
       }
 
       impl<'de, T: ?::core::marker::Sized> $crate::__private::Decode<'de, Self> for $ty {
-        fn decode<UB>(_: &$crate::__private::flavors::network::Context, _: &'de [u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
+        fn decode<UB>(_: &$crate::__private::flavors::network::Context, _: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::flavors::network::DecodeError>
         where
           Self: ::core::marker::Sized + 'de,
-          UB: $crate::__private::UnknownBuffer<&'de [u8]> + 'de,
+          UB: $crate::__private::UnknownBuffer<&'de [::core::primitive::u8]> + 'de,
         {
           ::core::result::Result::Ok((0, ::core::default::Default::default()))
         }

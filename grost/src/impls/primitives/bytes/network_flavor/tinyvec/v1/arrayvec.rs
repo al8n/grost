@@ -2,11 +2,13 @@ use tinyvec_1::{Array, ArrayVec};
 
 use super::larger_than_array_capacity;
 use crate::{
-  Context, Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, PartialMessage,
-  TypeOwned, TypeRef, Wirable, WireType,
+  Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
+  buffer::Buffer,
+  flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
+  unknown::UnknownBuffer,
 };
 
-impl<A> Wirable for ArrayVec<A>
+impl<A> Wirable<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
@@ -18,11 +20,11 @@ where
   };
 }
 
-impl<A> Encode for ArrayVec<A>
+impl<A> Encode<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if A::CAPACITY == 0 {
       return Ok(0);
     }
@@ -39,34 +41,34 @@ where
   }
 }
 
-impl<'de, A> Decode<'de, Self> for ArrayVec<A>
+impl<'de, A> Decode<'de, Network, Self> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
   fn decode<B>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownBuffer<&'de [u8]>,
+    B: UnknownBuffer<Network, &'de [u8]>,
   {
     decode_to_array(src)
   }
 }
 
-impl<A> DecodeOwned<Self> for ArrayVec<A>
+impl<A> DecodeOwned<Network, Self> for ArrayVec<A>
 where
   A: Array<Item = u8> + 'static,
 {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: crate::Buffer + 'static,
-    UB: crate::UnknownBuffer<B> + 'static,
+    B: Buffer + 'static,
+    UB: UnknownBuffer<Network, B> + 'static,
   {
-    <Self as Decode<'_, Self>>::decode::<()>(context, src.as_bytes())
+    <Self as Decode<'_, Network, Self>>::decode::<()>(context, src.as_bytes())
   }
 }
 
-impl<A> PartialMessage for ArrayVec<A>
+impl<A> PartialMessage<Network> for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
@@ -88,7 +90,7 @@ where
     Self: Sized + 'static;
 }
 
-impl<A> Message for ArrayVec<A>
+impl<A> Message<Network> for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
@@ -110,7 +112,7 @@ where
     Self: Sized + 'static;
 }
 
-impl<A> IntoTarget<Self> for ArrayVec<A>
+impl<A> IntoTarget<Network, Self> for ArrayVec<A>
 where
   A: Array,
 {
@@ -119,7 +121,7 @@ where
   }
 }
 
-impl<A> TypeOwned<Self> for ArrayVec<A>
+impl<A> TypeOwned<Network, Self> for ArrayVec<A>
 where
   A: Array,
   A::Item: Clone,
@@ -131,7 +133,7 @@ where
   }
 }
 
-impl<A> IntoTarget<ArrayVec<A>> for &[A::Item]
+impl<A> IntoTarget<Network, ArrayVec<A>> for &[A::Item]
 where
   A: Array,
   A::Item: Clone,
@@ -141,7 +143,7 @@ where
   }
 }
 
-impl<A> TypeRef<ArrayVec<A>> for &[A::Item]
+impl<A> TypeRef<Network, ArrayVec<A>> for &[A::Item]
 where
   A: Array,
   A::Item: Clone,

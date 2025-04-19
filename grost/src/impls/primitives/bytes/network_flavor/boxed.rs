@@ -1,10 +1,11 @@
+use crate::flavors::network::{Network, WireType};
 use std::boxed::Box;
 
 #[cfg(feature = "bytes_1")]
 const _: () = {
   use bytes_1::Bytes;
 
-  bytes_bridge!(Box<[u8]> {
+  bytes_bridge!(Network: (WireType::LengthDelimited): Box<[u8]> {
     from_bytes: |val: &[u8]| Ok(Box::<[u8]>::from(val));
     to_bytes: AsRef::as_ref;
   

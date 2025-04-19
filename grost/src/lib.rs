@@ -6,21 +6,17 @@ extern crate alloc as std;
 #[cfg(feature = "std")]
 extern crate std;
 
-
 // pub use decode::*;
 // pub use encode::*;
-pub use grost_proto::{
-  reflection,
-  buffer,
-  unknown,
-  encode::{Encode, PartialEncode},
-  decode::{Decode, DecodeOwned},
-  Wirable, Message, PartialMessage, TypeBorrowed, TypeOwned, TypeRef, IntoTarget,
-};
 pub use flavors::Flavor;
+pub use grost_proto::{
+  IntoTarget, Message, PartialMessage, TypeBorrowed, TypeOwned, TypeRef, Wirable, buffer,
+  decode::{Decode, DecodeOwned},
+  encode::{Encode, PartialEncode},
+  reflection, unknown,
+};
 // pub use impls::*;
 // pub use selection_set::SelectionSet;
-
 
 #[cfg(feature = "bytes_1")]
 pub use bytes_1 as bytes;
@@ -40,7 +36,6 @@ mod utils;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
-
 
 #[doc(hidden)]
 #[cfg(debug_assertions)]
@@ -70,10 +65,10 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 pub mod __private {
   pub use super::*;
   pub use bitflags;
-  pub use either;
-  pub use varing;
   pub use buffer::Buffer;
+  pub use either;
   pub use unknown::*;
+  pub use varing;
 
   #[cfg(feature = "bnum_0_13")]
   pub use bnum_0_13 as bnum;

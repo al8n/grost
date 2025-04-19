@@ -1,6 +1,7 @@
+use crate::flavors::network::{Network, WireType};
 use ::smol_str_0_3::SmolStr;
 
-str_bridge!(SmolStr {
+str_bridge!(Network:(WireType::LengthDelimited):SmolStr {
   from_str: |val| Ok(SmolStr::new(val));
   to_str: SmolStr::as_str;
 

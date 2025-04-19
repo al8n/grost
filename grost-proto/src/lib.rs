@@ -40,4 +40,3 @@ pub trait Wirable<F: flavors::Flavor> {
   /// The wire type of the data, which determines how the data is encoded.
   const WIRE_TYPE: F::WireType;
 }
-

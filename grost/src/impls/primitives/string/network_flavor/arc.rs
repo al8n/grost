@@ -1,10 +1,10 @@
-use triomphe_0_1::Arc;
-
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
+  use crate::flavors::network::{Network, WireType};
   use smol_str_0_3::SmolStr;
+  use std::sync::Arc;
 
-  str_bridge!(Arc<str> {
+  str_bridge!(Network:(WireType::LengthDelimited):Arc<str> {
     from_str: |val: &str| Ok(Arc::<str>::from(val));
     to_str: AsRef::as_ref;
   

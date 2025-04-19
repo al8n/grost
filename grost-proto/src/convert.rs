@@ -1,4 +1,4 @@
-use super::{flavors::Flavor, unknown, encode::Encode, decode::Decode};
+use super::{decode::Decode, encode::Encode, flavors::Flavor, unknown};
 
 pub trait PartialMessage<F: Flavor> {
   type UnknownBuffer<B: ?Sized>: unknown::UnknownBuffer<F, B>;

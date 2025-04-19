@@ -1,4 +1,7 @@
-use crate::{flavors::network::{Context, DecodeError, EncodeError, Network, Identifier, WireType}, Wirable};
+use crate::{
+  Wirable,
+  flavors::network::{Context, DecodeError, EncodeError, Identifier, Network, WireType},
+};
 
 pub fn encode_varint<V, E, EL>(
   ctx: &Context,

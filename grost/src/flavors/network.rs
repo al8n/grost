@@ -1,6 +1,6 @@
 use grost_proto::{
-  flavors::Flavor,
   buffer::Buffer,
+  flavors::Flavor,
   unknown::{Unknown, UnknownDecode, UnknownEncode},
 };
 

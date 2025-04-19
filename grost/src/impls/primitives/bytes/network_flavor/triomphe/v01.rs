@@ -1,10 +1,11 @@
+use crate::flavors::network::{Network, WireType};
 use triomphe_0_1::Arc;
 
 #[cfg(feature = "bytes_1")]
 const _: () = {
   use bytes_1::Bytes;
 
-  bytes_bridge!(Arc<[u8]> {
+  bytes_bridge!(Network:(WireType::LengthDelimited):Arc<[u8]> {
     from_bytes: |val: &[u8]| Ok(Arc::<[u8]>::from(val));
     to_bytes: AsRef::as_ref;
   

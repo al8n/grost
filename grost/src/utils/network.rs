@@ -1,4 +1,7 @@
-use crate::{flavors::network::{DecodeError, EncodeError, WireType, Context, Network}, Wirable};
+use crate::{
+  Wirable,
+  flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
+};
 
 pub(crate) mod fixed;
 pub(crate) mod length_delimited;
