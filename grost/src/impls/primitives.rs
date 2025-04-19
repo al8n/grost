@@ -1,5 +1,5 @@
-// zst!((), ::core::marker::PhantomPinned);
-// phantom!(::core::marker::PhantomData<T>);
+zst!((), ::core::marker::PhantomPinned);
+phantom!(::core::marker::PhantomData<T>);
 
 mod array;
 mod bstr;
