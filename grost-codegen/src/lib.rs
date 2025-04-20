@@ -1,20 +1,22 @@
 use std::sync::Arc;
 
-use quote::{ToTokens, quote};
+use heck::ToShoutySnakeCase;
+use quote::{ToTokens, format_ident, quote};
 
 pub use case::*;
-pub use unit_enum::*;
 pub use safe_ident::*;
 use smol_str::SmolStr;
-// pub use struct_::*;
+pub use struct_::*;
+use syn::Ident;
+pub use unit_enum::*;
 
 mod case;
 mod safe_ident;
 
+/// structs
+mod struct_;
 /// Enum structs
 mod unit_enum;
-// / structs
-// mod struct_;
 
 /// Types for the generator
 pub mod ty;
@@ -22,14 +24,17 @@ pub mod ty;
 pub trait Generator {
   type Error;
 
-  // fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error>;
+  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error>;
   fn generate_unit_enum(&self, enum_: &UnitEnum) -> Result<proc_macro2::TokenStream, Self::Error>;
 }
 
-
 pub trait UnitEnumCodecGenerator {
   /// Generates the codec for the unit enum
-  fn generate_unit_enum_codec(&self, path_to_grost: &syn::Path, enum_: &UnitEnum) -> proc_macro2::TokenStream;
+  fn generate_unit_enum_codec(
+    &self,
+    path_to_grost: &syn::Path,
+    enum_: &UnitEnum,
+  ) -> proc_macro2::TokenStream;
 }
 
 /// The flavor wants to be generated
@@ -37,7 +42,7 @@ pub trait UnitEnumCodecGenerator {
 pub struct Flavor {
   ty: syn::Type,
   name: SmolStr,
-  unit_enum_codec_generator: Option<Arc<dyn UnitEnumCodecGenerator>>
+  unit_enum_codec_generator: Option<Arc<dyn UnitEnumCodecGenerator>>,
 }
 
 impl Flavor {
@@ -100,6 +105,19 @@ impl Flavor {
   pub fn set_name(&mut self, name: SmolStr) {
     self.name = name;
   }
+
+  fn field_reflection_name(&self, field_name: &str) -> Ident {
+    let flavor_name_ssc = self.name().to_shouty_snake_case();
+    format_ident!(
+      "{flavor_name_ssc}_FLAVOR_{}_REFLECTION",
+      field_name.to_shouty_snake_case()
+    )
+  }
+
+  fn struct_reflection_name(&self) -> Ident {
+    let flavor_name_ssc = self.name().to_shouty_snake_case();
+    format_ident!("{flavor_name_ssc}_FLAVOR_REFLECTION")
+  }
 }
 
 /// The default generator
@@ -158,17 +176,22 @@ impl core::fmt::Debug for DefaultGenerator {
 impl Generator for DefaultGenerator {
   type Error = ();
 
-  // fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
-  //   let defination = (!self.derive).then(|| struct_.struct_defination());
-  //   let basic = struct_.struct_basic(&self.grost_path);
-  //   let selection = struct_.generate_selection(&self.grost_path);
+  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
+    let defination = (!self.derive).then(|| struct_.struct_defination());
+    let basic = struct_.struct_basic(&self.grost_path);
+    let selection = struct_.generate_selection(&self.grost_path, &self.flavors);
+    let reflections = self
+      .flavors
+      .iter()
+      .map(|f| struct_.generate_reflection(&self.grost_path, f));
 
-  //   Ok(quote! {
-  //     #defination
-  //     #basic
-  //     #selection
-  //   })
-  // }
+    Ok(quote! {
+      #defination
+      #(#reflections)*
+      #basic
+      #selection
+    })
+  }
 
   fn generate_unit_enum(&self, enum_: &UnitEnum) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = (!self.derive).then(|| enum_.enum_defination());
@@ -189,15 +212,17 @@ impl Generator for DefaultGenerator {
     #[cfg(not(feature = "arbitrary"))]
     let arbitrary = quote! {};
     let repr_conversion = enum_.enum_repr_conversion(&self.grost_path);
-    let codecs = self
+    let codecs = self.flavors.iter().map(|f| {
+      if let Some(ref g) = f.unit_enum_codec_generator {
+        g.generate_unit_enum_codec(&self.grost_path, enum_)
+      } else {
+        enum_.enum_codec(&self.grost_path, f)
+      }
+    });
+    let conversions = self
       .flavors
       .iter()
-      .map(|f| if let Some(ref g) = f.unit_enum_codec_generator {
-        g.generate_unit_enum_codec(&self.grost_path, enum_)
-      } else { enum_.enum_codec(&self.grost_path, f)});
-    let conversions = self.flavors.iter().map(|f| {
-      enum_.enum_conversion(&self.grost_path, f)
-    });
+      .map(|f| enum_.enum_conversion(&self.grost_path, f));
 
     Ok(quote! {
       #defination

@@ -1,7 +1,9 @@
-use core::num::{NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
+use core::num::{
+  NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64,
+};
 
 /// The `repr` for unit enum
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant,)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant)]
 pub enum UnitEnumRepr {
   /// `repr(u8)` representation
   U8,
@@ -70,7 +72,7 @@ impl UnitEnumRepr {
 
 #[cfg(feature = "codegen")]
 const _: () = {
-  use quote::{format_ident, quote, ToTokens};
+  use quote::{ToTokens, format_ident, quote};
 
   impl UnitEnumRepr {
     /// Returns the attribute of the corresponding repr
@@ -123,7 +125,7 @@ const _: () = {
     /// Returns the variant ident of the corresponding repr
     ///
     /// e.g.
-    /// 
+    ///
     /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the ident will be `U8`.
     pub fn to_variant_ident(&self) -> syn::Ident {
       match self {
@@ -139,7 +141,7 @@ const _: () = {
     }
 
     /// Returns the varint encoded value of the corresponding repr
-    /// 
+    ///
     /// e.g. If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be the output `::grost::__private::flavors::varint::encode_u8_varint(1)` (`[1u8]` in this example)
     pub fn to_encoded_value_varint(&self) -> syn::Expr {
       macro_rules! to_expr {
@@ -166,9 +168,9 @@ const _: () = {
     }
 
     /// Returns the literal to the value.
-    /// 
-    /// e.g. 
-    /// 
+    ///
+    /// e.g.
+    ///
     /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be `1u8`
     #[inline]
     pub fn to_value(&self) -> syn::Lit {
@@ -194,9 +196,9 @@ const _: () = {
     }
 
     /// Returns the expr to the value.
-    /// 
-    /// e.g. 
-    /// 
+    ///
+    /// e.g.
+    ///
     /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be `::core::num::NonZeroU8::new(1).unwrap()`
     #[inline]
     pub fn to_non_zero_value(&self) -> syn::Expr {
@@ -220,7 +222,7 @@ const _: () = {
         Self::I64(value) => to_expr!(NonZeroI64, value),
       }
     }
-  } 
+  }
 };
 
 /// The value of an unit enum variant

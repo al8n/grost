@@ -88,6 +88,7 @@ impl Color {
     }
 }
 #[derive(
+    ::core::marker::Copy,
     ::core::clone::Clone,
     ::core::fmt::Debug,
     ::core::cmp::PartialEq,
@@ -96,11 +97,11 @@ impl Color {
 )]
 ///The error type returned when parsing [`Color`]
 pub struct ParseColorError {
-    _priv: ::std::string::String,
+    _priv: (),
 }
 impl ::core::fmt::Display for ParseColorError {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-        ::core::write!(f, "Fail to parse `Color`, unknown {}", self._priv)
+        ::core::write!(f, "Fail to parse `Color`, unknown variant string")
     }
 }
 impl ::core::error::Error for ParseColorError {}
@@ -135,9 +136,7 @@ impl ::core::str::FromStr for Color {
                 ) {
                     return ::core::result::Result::Ok(::core::convert::From::from(val));
                 }
-                ::core::result::Result::Err(ParseColorError {
-                    _priv: ::std::string::ToString::to_string(src),
-                })
+                ::core::result::Result::Err(ParseColorError { _priv: () })
             }
         }
     }

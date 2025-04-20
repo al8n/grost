@@ -1,5 +1,5 @@
-use heck::ToShoutySnakeCase;
-use quote::{format_ident, quote};
+use heck::{ToShoutySnakeCase, ToUpperCamelCase};
+use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Visibility, parse_quote};
 
@@ -23,13 +23,14 @@ pub struct Struct {
 }
 
 impl Struct {
-  pub fn new(name: SafeIdent) -> Self {
+  pub fn new(name: SafeIdent, mut fields: Vec<Field>) -> Self {
+    fields.sort_by_key(|f| f.tag());
     Self {
       selection_name: SafeIdent::new(format!("{}Selection", name.name_str()).as_str()),
       schema_name: name.original_str().into(),
       name,
       description: None,
-      fields: Vec::new(),
+      fields,
       attrs: Vec::new(),
       visibility: Some(parse_quote!(pub)),
     }
@@ -83,6 +84,47 @@ impl Struct {
     &self.schema_name
   }
 
+  pub fn generate_reflection(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
+    let name = self.name.name();
+    let name_str = self.name.name_str();
+    let schema_name = self.schema_name.as_str();
+    let fields = &self.fields;
+    let fields_reflection_defination = fields
+      .iter()
+      .map(|f| f.field_reflections(path_to_grost, flavor));
+    let field_reflections = fields.iter().map(|f| {
+      let ident = flavor.field_reflection_name(f.name().name_str());
+      quote! { Self::#ident }
+    });
+
+    let reflection_name = flavor.struct_reflection_name();
+    let reflection_doc = format!(
+      " The reflection of the struct `{name_str}` for [`{}`]({}) flavor.",
+      flavor.name.to_upper_camel_case(),
+      flavor.ty().to_token_stream().to_string().replace(" ", "")
+    );
+    let flavor_ty = flavor.ty();
+
+    quote! {
+      impl #name {
+        #(#fields_reflection_defination)*
+
+        #[doc = #reflection_doc]
+        pub const #reflection_name: #path_to_grost::__private::reflection::StructReflection<#flavor_ty> = #path_to_grost::__private::reflection::StructReflectionBuilder::<#flavor_ty> {
+          name: #name_str,
+          schema_name: #schema_name,
+          fields: &[
+            #(#field_reflections),*
+          ],
+        }.build();
+      }
+    }
+  }
+
   pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let description = self.description.as_ref().map(|d| {
@@ -107,9 +149,7 @@ impl Struct {
 
   pub(crate) fn struct_basic(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = &self.name;
-    let mut fields = self.fields.clone();
-    fields.sort_by_key(|f| f.tag());
-
+    let fields = &self.fields;
     let default_fields = fields.iter().map(|f| {
       let name = f.name();
       let default = f.default();
@@ -125,11 +165,6 @@ impl Struct {
     });
 
     let accessors = fields.iter().map(|f| f.field_accessors());
-    let consts = fields.iter().map(|f| f.field_consts(path_to_grost));
-    let field_reflections = fields.iter().map(|f| {
-      let ident = format_ident!("{}_REFLECTION", f.name().name_str().to_shouty_snake_case());
-      quote! { Self::#ident }
-    });
 
     let name_str = self.name.name_str();
     let schema_name = self.schema_name.as_str();
@@ -142,17 +177,6 @@ impl Struct {
       }
 
       impl #name {
-        #(#consts)*
-
-        /// The reflection of the struct
-        pub const REFLECTION: #path_to_grost::__private::StructReflection = #path_to_grost::__private::StructReflectionBuilder {
-          name: #name_str,
-          schema_name: #schema_name,
-          fields: &[
-            #(#field_reflections),*
-          ],
-        }.build();
-
         /// Returns a new default instance of the struct
         pub fn new() -> Self {
           Self {

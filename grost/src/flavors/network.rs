@@ -6,7 +6,7 @@ use grost_proto::{
 
 pub use context::Context;
 pub use error::*;
-pub use grost_proto::flavors::network::{Tag, WireType};
+pub use grost_proto::{Tag, flavors::network::WireType};
 pub use identifier::Identifier;
 
 mod context;
@@ -20,7 +20,6 @@ pub struct Network;
 impl Flavor for Network {
   type Context = Context;
   type WireType = WireType;
-  type Tag = Tag;
   type EncodeError = EncodeError;
   type DecodeError = DecodeError;
 }

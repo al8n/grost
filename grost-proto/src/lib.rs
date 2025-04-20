@@ -6,7 +6,11 @@ extern crate alloc as std;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "bytes_1")]
+pub use bytes_1 as bytes;
+
 pub use convert::*;
+pub use tag::Tag;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
@@ -26,10 +30,8 @@ pub mod encode;
 /// The decoding trait
 pub mod decode;
 
-#[cfg(feature = "bytes_1")]
-pub use bytes_1 as bytes;
-
 mod convert;
+mod tag;
 
 /// A trait for types that can be encoded with a specific wire format.
 ///

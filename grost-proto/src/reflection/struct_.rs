@@ -1,4 +1,6 @@
-use super::{Flavor, TypeReflection};
+use crate::Tag;
+
+use super::{Flavor, Type};
 
 #[doc(hidden)]
 pub struct StructReflectionBuilder<F: Flavor> {
@@ -19,12 +21,20 @@ impl<F: Flavor> StructReflectionBuilder<F> {
 }
 
 /// The struct information of an object in the Graph protocol buffer
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub struct StructReflection<F: Flavor> {
   name: &'static str,
   schema_name: &'static str,
   fields: &'static [FieldRelection<F>],
 }
+
+impl<F: Flavor> Clone for StructReflection<F> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<F: Flavor> Copy for StructReflection<F> {}
 
 impl<F: Flavor> StructReflection<F> {
   /// Get the name of the struct
@@ -51,13 +61,14 @@ impl<F: Flavor> StructReflection<F> {
 #[doc(hidden)]
 pub struct FieldRelectionBuilder<F: Flavor> {
   pub name: &'static str,
-  pub ty: TypeReflection<F>,
+  /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
+  pub ty: fn() -> &'static str,
   pub schema_name: &'static str,
-  pub schema_type: &'static str,
-  pub tag: F::Tag,
+  pub schema_type: Type<F>,
+  pub tag: Tag,
   pub wire_type: F::WireType,
-  pub encoded_identifier: &'static [u8],
-  pub encoded_identifier_len: usize,
+  // pub encoded_identifier: &'static [u8],
+  // pub encoded_identifier_len: usize,
 }
 
 impl<F: Flavor> FieldRelectionBuilder<F> {
@@ -70,24 +81,33 @@ impl<F: Flavor> FieldRelectionBuilder<F> {
       schema_type: self.schema_type,
       tag: self.tag,
       wire_type: self.wire_type,
-      encoded_identifier: self.encoded_identifier,
-      encoded_identifier_len: self.encoded_identifier_len,
+      // encoded_identifier: self.encoded_identifier,
+      // encoded_identifier_len: self.encoded_identifier_len,
     }
   }
 }
 
 /// The information of a field in the Graph protocol buffer
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub struct FieldRelection<F: Flavor> {
   name: &'static str,
-  ty: TypeReflection<F>,
+  /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
+  ty: fn() -> &'static str,
   schema_name: &'static str,
-  schema_type: &'static str,
-  tag: F::Tag,
+  schema_type: Type<F>,
+  tag: Tag,
   wire_type: F::WireType,
-  encoded_identifier: &'static [u8],
-  encoded_identifier_len: usize,
+  // encoded_identifier: &'static [u8],
+  // encoded_identifier_len: usize,
 }
+
+impl<F: Flavor> Clone for FieldRelection<F> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<F: Flavor> Copy for FieldRelection<F> {}
 
 impl<F: Flavor> FieldRelection<F> {
   /// Get the name of the field
@@ -96,12 +116,10 @@ impl<F: Flavor> FieldRelection<F> {
     self.name
   }
 
-  /// Get the rust type of the field, the type must be a full quailified.
-  ///
-  /// See [`schema_type`](FieldRelection::schema_type) for the type in the Graph protocol buffer file.
-  #[inline]
-  pub const fn ty(&self) -> &TypeReflection<F> {
-    &self.ty
+  /// Returns the name of the field type
+  // TODO(al8n): make this const if https://github.com/rust-lang/rust/issues/63084 const stable
+  pub fn ty(&self) -> &'static str {
+    (self.ty)()
   }
 
   /// Get the schema name of the field.
@@ -116,13 +134,13 @@ impl<F: Flavor> FieldRelection<F> {
   ///
   /// This will returns the type in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_type(&self) -> &'static str {
-    self.schema_type
+  pub const fn schema_type(&self) -> &Type<F> {
+    &self.schema_type
   }
 
   /// Get the tag of the field
   #[inline]
-  pub const fn tag(&self) -> F::Tag {
+  pub const fn tag(&self) -> Tag {
     self.tag
   }
 
@@ -132,15 +150,15 @@ impl<F: Flavor> FieldRelection<F> {
     self.wire_type
   }
 
-  /// Get the encoded identifier of the field
-  #[inline]
-  pub const fn encoded_identifier(&self) -> &'static [u8] {
-    self.encoded_identifier
-  }
+  // /// Get the encoded identifier of the field
+  // #[inline]
+  // pub const fn encoded_identifier(&self) -> &'static [u8] {
+  //   self.encoded_identifier
+  // }
 
-  /// Get the encoded identifier length of the field
-  #[inline]
-  pub const fn encoded_identifier_len(&self) -> usize {
-    self.encoded_identifier_len
-  }
+  // /// Get the encoded identifier length of the field
+  // #[inline]
+  // pub const fn encoded_identifier_len(&self) -> usize {
+  //   self.encoded_identifier_len
+  // }
 }

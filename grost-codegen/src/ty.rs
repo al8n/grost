@@ -1,96 +1,279 @@
-// use grost_proto::WireType;
-// use quote::ToTokens;
-// use smol_str::SmolStr;
-// use syn::Type;
+use quote::{ToTokens, quote};
+use smol_str::{SmolStr, format_smolstr};
+use syn::Type;
 
-// pub use int::Int;
-// pub use uint::Uint;
+pub use int::Int;
+pub use uint::Uint;
 
-// mod int;
-// mod uint;
+use crate::SafeIdent;
 
-// #[derive(Debug, Clone, derive_more::Display)]
-// #[display("{}", name)]
-// pub struct Feature {
-//   name: SmolStr,
-// }
+mod int;
+mod uint;
 
-// impl Feature {
-//   pub fn new(name: impl Into<SmolStr>) -> Self {
-//     Self { name: name.into() }
-//   }
+#[derive(Debug, Clone, derive_more::Display)]
+#[display("{}", name)]
+pub struct Feature {
+  name: SmolStr,
+}
 
-//   pub fn name(&self) -> &str {
-//     &self.name
-//   }
-// }
+impl Feature {
+  pub fn new(name: impl Into<SmolStr>) -> Self {
+    Self { name: name.into() }
+  }
 
-// #[derive(Debug, Clone)]
-// pub enum Dependency {
-//   /// Requires nothing, which means supports `no-std` and `no-alloc`
-//   None,
-//   /// Requires `alloc`
-//   Alloc,
-//   /// Requires `std`
-//   Std,
-//   /// Requries third party crate
-//   External(Feature),
-// }
+  pub fn name(&self) -> &str {
+    &self.name
+  }
+}
 
-// #[derive(Clone)]
-// pub struct Ty {
-//   ty: Type,
-//   schema_type: SmolStr,
-//   wire_ty: WireType,
-//   copy: bool,
-// }
+#[derive(Debug, Clone)]
+pub enum Dependency {
+  /// Requires nothing, which means supports `no-std` and `no-alloc`
+  None,
+  /// Requires `alloc`
+  Alloc,
+  /// Requires `std`
+  Std,
+  /// Requries third party crate
+  External(Feature),
+}
 
-// impl Ty {
-//   /// Creates a new [`Ty`] with the given [`Type`]
-//   pub fn new(ty: Type, schema_type: SmolStr, wire_ty: WireType) -> Self {
-//     Self {
-//       ty,
-//       schema_type,
-//       wire_ty,
-//       copy: false,
-//     }
-//   }
+#[derive(Clone, derive_more::IsVariant)]
+pub(crate) enum TyRepr {
+  Primitive(Type),
+  List {
+    ty: Type,
+    item: Box<Ty>,
+  },
+  Map {
+    ty: Type,
+    key: Box<Ty>,
+    value: Box<Ty>,
+  },
+  Optional(Box<Ty>),
+  UnitEnum(Type),
+  Struct(Type),
+  Union(Type),
+  Interface(Type),
+}
 
-//   /// Sets the [`WireType`] of this type
-//   pub fn with_wire_ty(mut self, wire_ty: WireType) -> Self {
-//     self.wire_ty = wire_ty;
-//     self
-//   }
+impl TyRepr {
+  pub fn ty(&self) -> &Type {
+    match self {
+      Self::Primitive(ty) => ty,
+      Self::List { ty, .. } => ty,
+      Self::Map { ty, .. } => ty,
+      Self::UnitEnum(ty) => ty,
+      Self::Struct(ty) => ty,
+      Self::Union(ty) => ty,
+      Self::Interface(ty) => ty,
+      Self::Optional(ty) => ty.ty(),
+    }
+  }
+}
 
-//   /// Sets if this ty implements `Copy`
-//   pub fn with_copy(mut self) -> Self {
-//     self.copy = true;
-//     self
-//   }
+#[derive(Clone)]
+pub struct Ty {
+  repr: TyRepr,
+  schema_type: SmolStr,
+  description: Option<SmolStr>,
+  copy: bool,
+}
 
-//   /// Gets if this ty implements `Copy`
-//   pub fn copy(&self) -> bool {
-//     self.copy
-//   }
+impl Ty {
+  /// Creates a new primitive [`Ty`].
+  ///
+  /// - The `name` is the schema name of the type, which is used in the Graph protocol buffer schema file.
+  /// - The `ty` is the Rust type of the type, which is used in the Rust code.
+  pub fn primitive(ty: Type, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::Primitive(ty),
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
 
-//   /// Returns the [`Type`] of this ty
-//   pub const fn ty(&self) -> &Type {
-//     &self.ty
-//   }
+  /// Creates a new list [`Ty`].
+  pub fn list(ty: Type, item: Ty, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::List {
+        ty,
+        item: Box::new(item),
+      },
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
 
-//   /// Returns the [`WireType`] of this ty
-//   pub const fn wire_type(&self) -> WireType {
-//     self.wire_ty
-//   }
+  /// Creates a new map [`Ty`].
+  pub fn map(ty: Type, key: Ty, value: Ty, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::Map {
+        ty,
+        key: Box::new(key),
+        value: Box::new(value),
+      },
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
 
-//   /// Returns the schema type of this ty
-//   pub fn schema_type(&self) -> &str {
-//     &self.schema_type
-//   }
-// }
+  /// Creates a new unit enum [`Ty`].
+  pub fn unit_enum(ty: Type, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::UnitEnum(ty),
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
 
-// impl ToTokens for Ty {
-//   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-//     self.ty.to_tokens(tokens);
-//   }
-// }
+  /// Creates a new struct [`Ty`].
+  pub fn struct_(ty: Type, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::Struct(ty),
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
+
+  /// Creates a new union [`Ty`].
+  pub fn union(ty: Type, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::Union(ty),
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
+
+  /// Creates a new interface [`Ty`].
+  pub fn interface(ty: Type, schema_type: &str) -> Self {
+    Self {
+      repr: TyRepr::Interface(ty),
+      schema_type: required_schema_type(schema_type),
+      copy: false,
+      description: None,
+    }
+  }
+
+  /// Creates a new optional [`Ty`].
+  pub fn optional(mut typ: Self) -> Self {
+    match typ.repr {
+      TyRepr::Optional(ty) => *ty,
+      _ => {
+        typ.schema_type = typ.schema_type.trim_end_matches("!").into();
+        Self {
+          schema_type: typ.schema_type.trim_end_matches("!").into(),
+          copy: typ.copy,
+          description: typ.description.clone(),
+          repr: TyRepr::Optional(Box::new(typ)),
+        }
+      }
+    }
+  }
+
+  /// Sets if this ty implements `Copy`
+  pub fn with_copy(mut self) -> Self {
+    self.copy = true;
+    self
+  }
+
+  /// Gets if this ty implements `Copy`
+  pub fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the [`Type`] of this ty
+  pub fn ty(&self) -> &Type {
+    self.repr.ty()
+  }
+
+  /// Returns the schema type of this ty
+  pub fn schema_type(&self) -> &str {
+    &self.schema_type
+  }
+
+  /// Returns the description of this ty
+  pub fn description(&self) -> Option<&str> {
+    self.description.as_deref()
+  }
+
+  pub(crate) fn repr(&self) -> &TyRepr {
+    &self.repr
+  }
+
+  pub(crate) fn to_type_reflection(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
+    let flavor_ty = flavor.ty();
+    match &self.repr {
+      TyRepr::Primitive(ty) => {
+        let description = self.description().unwrap_or_default();
+        let name = self.schema_type();
+
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Primitive {
+            name: #name,
+            description: #description,
+          }
+        }
+      }
+      TyRepr::List { ty, item } => {
+        let inner = item.to_type_reflection(path_to_grost, flavor);
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::List(&#inner)
+        }
+      }
+      TyRepr::Map { ty, key, value } => {
+        let inner_key = key.to_type_reflection(path_to_grost, flavor);
+        let inner_value = value.to_type_reflection(path_to_grost, flavor);
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Map {
+            key: &#inner_key,
+            value: &#inner_value,
+          }
+        }
+      }
+      TyRepr::UnitEnum(ty) => {
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
+        }
+      }
+      TyRepr::Struct(ty) => {
+        let reflection_name = flavor.struct_reflection_name();
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Struct(<#ty>::#reflection_name)
+        }
+      }
+      TyRepr::Union(_) => todo!(),
+      TyRepr::Interface(_) => todo!(),
+      TyRepr::Optional(ty) => {
+        let inner = ty.to_type_reflection(path_to_grost, flavor);
+        quote! {
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Optional(&#inner)
+        }
+      }
+    }
+  }
+}
+
+impl ToTokens for Ty {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    self.ty().to_tokens(tokens);
+  }
+}
+
+fn required_schema_type(schema_type: &str) -> SmolStr {
+  if schema_type.ends_with('!') {
+    schema_type.into()
+  } else {
+    format_smolstr!("{}!", schema_type)
+  }
+}

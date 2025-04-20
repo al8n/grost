@@ -1,11 +1,11 @@
 #![allow(clippy::wrong_self_convention)]
 
-use std::{borrow::Cow, sync::Arc};
 use heck::{ToShoutySnakeCase, ToSnakeCase as _};
 use indexmap::IndexSet;
 use quote::{format_ident, quote};
 use smol_str::SmolStr;
-use syn::{parse_quote, Ident, Visibility};
+use std::{borrow::Cow, sync::Arc};
+use syn::{Ident, Visibility, parse_quote};
 
 use super::{Heck, SafeIdent};
 
@@ -14,7 +14,11 @@ pub use grost_proto::reflection::{UnitEnumRepr, UnitEnumVariantValue};
 pub(super) struct UnitEnumCodecNetworkFlavorGenerator;
 
 impl super::UnitEnumCodecGenerator for UnitEnumCodecNetworkFlavorGenerator {
-  fn generate_unit_enum_codec(&self, path_to_grost: &syn::Path, enum_: &UnitEnum) -> proc_macro2::TokenStream {
+  fn generate_unit_enum_codec(
+    &self,
+    path_to_grost: &syn::Path,
+    enum_: &UnitEnum,
+  ) -> proc_macro2::TokenStream {
     let name_ident = &enum_.name;
 
     quote! {
@@ -364,16 +368,9 @@ impl UnitEnum {
   }
 
   /// Returns the generated enum variant info
-  pub fn generate_reflection(
-    &self,
-    path_to_grost: &syn::Path,
-  ) -> proc_macro2::TokenStream {
-    let variant_relection_name = |v: &UnitEnumVariant| {
-      format_ident!(
-        "{}_REFLECTION",
-        v.const_variant_name(),
-      )
-    };
+  pub fn generate_reflection(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    let variant_relection_name =
+      |v: &UnitEnumVariant| format_ident!("{}_REFLECTION", v.const_variant_name(),);
 
     let variant_reflection_consts = self.variants.iter().map(|v| {
       let const_name = variant_relection_name(v);
@@ -406,10 +403,7 @@ impl UnitEnum {
 
     let name = self.name.name_str();
     let schema_name = self.schema_name();
-    let doc = format!(
-      " The relection information of the [`{}`] enum",
-      name,
-    );
+    let doc = format!(" The relection information of the [`{}`] enum", name,);
     let description = self.description.as_deref().unwrap_or_default();
     let repr_variant = self.repr.to_variant_ident();
     quote! {
@@ -1013,7 +1007,11 @@ impl UnitEnum {
     }
   }
 
-  pub(super) fn enum_conversion(&self, path_to_grost: &syn::Path, flavor: &super::Flavor,) -> proc_macro2::TokenStream {
+  pub(super) fn enum_conversion(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &super::Flavor,
+  ) -> proc_macro2::TokenStream {
     let name_ident = &self.name;
     let flavor_ty = &flavor.ty;
 

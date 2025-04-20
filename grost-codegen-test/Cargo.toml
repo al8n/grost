@@ -11,6 +11,7 @@ quickcheck = ["grost/quickcheck"]
 grost = { path = "../grost", version = "0.1", default-features = false, features = ["quickcheck"] }
 
 [build-dependencies]
-grost-codegen = { path = "../grost-codegen", version = "0.1", features = ["quickcheck"] }
+grost-codegen = { path = "../grost-codegen", workspace = true, features = ["quickcheck"] }
+grost-proto = { path = "../grost-proto", workspace = true }
 prettyplease = { version = "0.2" }
 syn = { version = "2", features = ["full"] }

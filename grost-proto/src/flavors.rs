@@ -7,8 +7,6 @@ pub mod network;
 pub trait Identifier<F: Flavor>: Copy + core::fmt::Debug + core::fmt::Display {
   /// The wire type used for this identifier.
   fn wire_type(&self) -> F::WireType;
-  /// The tag used for this identifier.
-  fn tag(&self) -> F::Tag;
 
   /// Encode the identifier into a buffer.
   fn encode(&self, dst: &mut [u8]) -> Result<usize, F::EncodeError>;
@@ -27,8 +25,6 @@ pub trait Identifier<F: Flavor>: Copy + core::fmt::Debug + core::fmt::Display {
 pub trait Flavor: 'static {
   /// The wire type used for this flavor.
   type WireType: Copy + core::fmt::Debug + core::fmt::Display;
-  /// The tag used for this flavor.
-  type Tag: Copy + core::fmt::Debug + core::fmt::Display;
   /// The context used for this flavor.
   #[cfg(not(feature = "quickcheck"))]
   type Context;

@@ -2,23 +2,29 @@ use heck::ToShoutySnakeCase;
 use quote::{ToTokens, format_ident};
 use syn::Ident;
 
+use crate::Flavor;
+
 use super::*;
 
 impl Struct {
-  pub(crate) fn generate_selection(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(crate) fn generate_selection(
+    &self,
+    path_to_grost: &syn::Path,
+    flavors: &[Flavor],
+  ) -> proc_macro2::TokenStream {
     let name = self.selection_name();
     let selection_flags_name = format_ident!("{}Flags", name.name_str());
     let selection_flags_iter_name = format_ident!("{}Iter", selection_flags_name);
-    let mut fields = self.fields.clone();
-    fields.sort_by_key(|v| v.tag());
+    let fields = &self.fields;
 
     let selection_flags = generate_selection_flags(
       self.visibility.as_ref(),
       self.name.name(),
       &selection_flags_name,
       &selection_flags_iter_name,
-      &fields,
+      fields,
       path_to_grost,
+      flavors,
     );
     let fns = fields.iter().map(move |f| {
       let field_name = f.name();
@@ -178,7 +184,7 @@ impl Struct {
 
         /// Returns an iterator over the selected fields, the iterator will yield the `FieldRelection` of the selected fields.
         #[inline]
-        pub const fn iter(&self) -> #selection_flags_iter_name {
+        pub const fn iter<F: ?::core::marker::Sized>(&self) -> #selection_flags_iter_name<F> {
           self.flags.select_field_reflection_iter()
         }
 
@@ -294,36 +300,49 @@ fn generate_bitflags_iter(
   struct_name: &Ident,
   flags_name: &Ident,
   flags_iter_name: &Ident,
+  flavors: &[Flavor],
 ) -> proc_macro2::TokenStream {
+  let impl_iterators = flavors.iter().map(|f| {
+    let flavor_ty = f.ty();
+    let reflection_name = f.struct_reflection_name();
+    quote! {
+      impl ::core::iter::Iterator for #flags_iter_name<#flavor_ty> {
+        type Item = #path_to_grost::__private::reflection::FieldRelection<#flavor_ty>;
+
+        #[inline]
+        fn next(&mut self) -> ::core::option::Option<Self::Item> {
+          for f in ::core::iter::Iterator::by_ref(&mut self.iter) {
+            if let ::core::option::Option::Some(val) = #struct_name::#reflection_name.fields().get(f.bits().trailing_zeros() as ::core::primitive::usize) {
+              return ::core::option::Option::Some(*val);
+            }
+          }
+
+          ::core::option::Option::None
+        }
+      }
+
+      impl ::core::iter::FusedIterator for #flags_iter_name<#flavor_ty> {}
+    }
+  });
+
   quote! {
     /// Yield a set of selected fields.
-    #vis struct #flags_iter_name {
+    #vis struct #flags_iter_name<F: ?::core::marker::Sized> {
       iter: #path_to_grost::__private::bitflags::iter::Iter<#flags_name>,
+      _m: ::core::marker::PhantomData<F>,
     }
 
-    impl #flags_iter_name {
+    impl<F> #flags_iter_name<F>
+    where
+      F: ?::core::marker::Sized,
+    {
       #[inline]
       const fn new(iter: #path_to_grost::__private::bitflags::iter::Iter<#flags_name>) -> Self {
-        Self { iter }
+        Self { iter, _m: ::core::marker::PhantomData }
       }
     }
 
-    impl ::core::iter::Iterator for #flags_iter_name {
-      type Item = #path_to_grost::__private::FieldRelection;
-
-      #[inline]
-      fn next(&mut self) -> ::core::option::Option<Self::Item> {
-        for f in ::core::iter::Iterator::by_ref(&mut self.iter) {
-          if let ::core::option::Option::Some(val) = #struct_name::REFLECTION.fields().get(f.bits().trailing_zeros() as ::core::primitive::usize) {
-            return ::core::option::Option::Some(*val);
-          }
-        }
-
-        ::core::option::Option::None
-      }
-    }
-
-    impl ::core::iter::FusedIterator for #flags_iter_name {}
+    #(#impl_iterators)*
   }
 }
 
@@ -334,6 +353,7 @@ fn generate_selection_flags(
   selection_flags_iter_name: &Ident,
   fields: &[Field],
   path_to_grost: &syn::Path,
+  flavors: &[Flavor],
 ) -> proc_macro2::TokenStream {
   let num_fields = fields.len();
 
@@ -358,7 +378,7 @@ fn generate_selection_flags(
 
   let iter_fn = quote! {
     #[inline]
-    const fn select_field_reflection_iter(&self) -> #selection_flags_iter_name {
+    const fn select_field_reflection_iter<F: ?::core::marker::Sized>(&self) -> #selection_flags_iter_name<F> {
       #selection_flags_iter_name::new(self.iter())
     }
   };
@@ -373,6 +393,7 @@ fn generate_selection_flags(
         struct_name,
         name,
         selection_flags_iter_name,
+        flavors,
       );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
@@ -402,6 +423,7 @@ fn generate_selection_flags(
         struct_name,
         name,
         selection_flags_iter_name,
+        flavors,
       );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
@@ -431,6 +453,7 @@ fn generate_selection_flags(
         struct_name,
         name,
         selection_flags_iter_name,
+        flavors,
       );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
@@ -460,6 +483,7 @@ fn generate_selection_flags(
         struct_name,
         name,
         selection_flags_iter_name,
+        flavors,
       );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
@@ -489,6 +513,7 @@ fn generate_selection_flags(
         struct_name,
         name,
         selection_flags_iter_name,
+        flavors,
       );
       quote! {
         #path_to_grost::__private::bitflags::bitflags! {
@@ -588,40 +613,52 @@ fn generate_selection_flags(
         }
       });
 
-      quote! {
-        /// Yield a set of selected fields.
-        #vis struct #selection_flags_iter_name {
-          idx: ::core::primitive::u32,
-          selection: #name,
-        }
+      let impl_iterator = flavors.iter().map(|f| {
+        let flavor_ty = f.ty();
+        let reflection_name = f.struct_reflection_name();
+        quote! {
+          impl ::core::iter::Iterator for #selection_flags_iter_name<#flavor_ty> {
+            type Item = #path_to_grost::__private::reflection::FieldRelection<#flavor_ty>;
 
-        impl #selection_flags_iter_name {
-          #[inline]
-          const fn new(idx: ::core::primitive::u32, selection: #name) -> Self {
-            Self { idx, selection }
-          }
-        }
-
-        impl ::core::iter::Iterator for #selection_flags_iter_name {
-          type Item = #path_to_grost::__private::FieldRelection;
-
-          #[inline]
-          fn next(&mut self) -> ::core::option::Option<Self::Item> {
-            while self.idx < #name::MAX_BIT_POSITION {
-              if self.selection.0.bit(self.idx) {
-                if let ::core::option::Option::Some(val) = #struct_name::REFLECTION.fields().get(self.idx as ::core::primitive::usize) {
-                  return ::core::option::Option::Some(*val);
+            #[inline]
+            fn next(&mut self) -> ::core::option::Option<Self::Item> {
+              while self.idx < #name::MAX_BIT_POSITION {
+                if self.selection.0.bit(self.idx) {
+                  if let ::core::option::Option::Some(val) = #struct_name::#reflection_name.fields().get(self.idx as ::core::primitive::usize) {
+                    return ::core::option::Option::Some(*val);
+                  }
                 }
+
+                self.idx += 1;
               }
 
-              self.idx += 1;
+              ::core::option::Option::None
             }
+          }
 
-            ::core::option::Option::None
+          impl ::core::iter::FusedIterator for #selection_flags_iter_name<#flavor_ty> {}
+        }
+      });
+
+      quote! {
+        /// Yield a set of selected fields.
+        #vis struct #selection_flags_iter_name<F: ?::core::marker::Sized> {
+          idx: ::core::primitive::u32,
+          selection: #name,
+          _m: ::core::marker::PhantomData<F>,
+        }
+
+        impl<F> #selection_flags_iter_name<F>
+        where
+          F: ?::core::marker::Sized,
+        {
+          #[inline]
+          const fn new(idx: ::core::primitive::u32, selection: #name) -> Self {
+            Self { idx, selection, _m: ::core::marker::PhantomData }
           }
         }
 
-        impl ::core::iter::FusedIterator for #selection_flags_iter_name {}
+        #(#impl_iterator)*
 
         #derives
         struct #name(#path_to_grost::__private::bnum::BUint<#digits>);

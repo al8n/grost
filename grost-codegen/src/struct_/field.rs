@@ -1,10 +1,13 @@
 use grost_proto::Tag;
-use heck::ToShoutySnakeCase;
+use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility};
 
-use crate::{SafeIdent, WireTypeExt, ty::Ty};
+use crate::{
+  Flavor, SafeIdent,
+  ty::{Ty, TyRepr},
+};
 use getter::Getter;
 use setter::Setter;
 
@@ -305,37 +308,46 @@ impl Field {
     }
   }
 
-  pub(crate) fn field_consts(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(crate) fn field_reflections(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &Flavor,
+  ) -> proc_macro2::TokenStream {
     let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();
-    let tag_const_name = format_ident!("__{}_TAG__", name);
-    let field_info_name = format_ident!("{}_REFLECTION", name);
-    let field_info_doc = format!(" The reflection information of the `{field_name}` field");
+    let flavor_ty = flavor.ty();
+    let flavor_name_ssc = flavor.name().to_shouty_snake_case();
+    let field_reflection_name = flavor.field_reflection_name(field_name);
+    let field_reflection_doc = format!(
+      " The reflection information of the `{field_name}` field for [`{}`]({}) flavor.",
+      flavor.name.to_upper_camel_case(),
+      flavor_ty.to_token_stream().to_string().replace(" ", "")
+    );
     let tag = self.tag.get();
-    let ty_name = self.ty.ty().to_token_stream().to_string().replace(" ", "");
+    let field_ty = self.ty.ty();
     let schema_name = self.schema_name();
-    let schema_ty_name = self.ty.schema_type();
+    let relection_ty = self.ty.to_type_reflection(path_to_grost, flavor);
 
-    let identifier_name = format_ident!("__{}_IDENTIFIER__", name);
-    let identifier_encoded_len_name = format_ident!("__{}_IDENTIFIER_ENCODED_LEN__", name);
-    let identifier_encode_name = format_ident!("__ENCODED_{}_IDENTIFIER__", name);
-    let wt_tokens = self.ty.wire_type().to_tokens(path_to_grost);
+    let identifier_name = format_ident!("__{flavor_name_ssc}_FLAVOR_{name}_IDENTIFIER__");
+    // let identifier_encoded_len_name = format_ident!("__{}_IDENTIFIER_ENCODED_LEN__", name);
+    // let identifier_encode_name = format_ident!("__ENCODED_{}_IDENTIFIER__", name);
 
     quote! {
-      const #tag_const_name: #path_to_grost::__private::Tag = #path_to_grost::__private::Tag::new(#tag);
-      const #identifier_name: #path_to_grost::__private::Identifier = #path_to_grost::__private::Identifier::new(#wt_tokens, Self::#tag_const_name);
-      const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
-      const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
+      // const #identifier_name: #path_to_grost::__private::Identifier<#flavor_ty> = #path_to_grost::__private::Identifier::new(<#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE, #path_to_grost::__private::Tag::new(#tag));
+      // const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
+      // const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
 
-      #[doc = #field_info_doc]
-      pub const #field_info_name: #path_to_grost::__private::FieldRelection = #path_to_grost::__private::FieldRelectionBuilder {
-        identifier: Self::#identifier_name,
-        encoded_identifier_len: Self::#identifier_encoded_len_name,
-        encoded_identifier: Self::#identifier_encode_name,
+      #[doc = #field_reflection_doc]
+      pub const #field_reflection_name: #path_to_grost::__private::reflection::FieldRelection<#flavor_ty> = #path_to_grost::__private::reflection::FieldRelectionBuilder::<#flavor_ty> {
+        // identifier: Self::#identifier_name,
+        tag: #path_to_grost::__private::Tag::new(#tag),
+        wire_type: <#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE,
+        // encoded_identifier_len: Self::#identifier_encoded_len_name,
+        // encoded_identifier: Self::#identifier_encode_name,
         name: #field_name,
-        ty: #ty_name,
+        ty: ::core::any::type_name::<#field_ty>,
         schema_name: #schema_name,
-        schema_type: #schema_ty_name,
+        schema_type: #relection_ty,
       }.build();
     }
   }

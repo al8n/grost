@@ -124,10 +124,6 @@ impl grost_proto::flavors::Identifier<super::Network> for Identifier {
     self.wire_type()
   }
 
-  fn tag(&self) -> Tag {
-    self.tag()
-  }
-
   fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
     self.encode_to(dst)
   }

@@ -1,3 +1,5 @@
+use crate::Tag;
+
 use super::{buffer::Buffer, flavors::Flavor};
 
 /// A buffer that stores the [`Unknown`] data type.
@@ -141,7 +143,7 @@ pub trait UnknownEncode<F: Flavor, B: ?Sized>: sealed::Sealed {
 /// The trait for encoding unknown data type.
 pub trait UnknownDecode<F: Flavor, B: ?Sized>: sealed::Sealed {
   /// Decodes the unknown data type.
-  fn decode(wire_type: F::WireType, tag: F::Tag, buf: B) -> Result<(usize, Self), F::DecodeError>
+  fn decode(wire_type: F::WireType, tag: Tag, buf: B) -> Result<(usize, Self), F::DecodeError>
   where
     B: Buffer + Sized,
     Self: Sized;
@@ -163,7 +165,7 @@ mod sealed {
 /// as is.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Unknown<F: Flavor, B: ?Sized> {
-  tag: F::Tag,
+  tag: Tag,
   wire_type: F::WireType,
   data_offset: usize,
   data: B,
@@ -172,7 +174,7 @@ pub struct Unknown<F: Flavor, B: ?Sized> {
 impl<B: ?Sized, F: Flavor> Unknown<F, B> {
   /// Creates a new unknown
   #[inline]
-  pub const fn new(tag: F::Tag, wire_type: F::WireType, data_offset: usize, data: B) -> Self
+  pub const fn new(tag: Tag, wire_type: F::WireType, data_offset: usize, data: B) -> Self
   where
     B: Sized,
   {
@@ -186,7 +188,7 @@ impl<B: ?Sized, F: Flavor> Unknown<F, B> {
 
   /// Returns the tag of the unknown data type.
   #[inline]
-  pub const fn tag(&self) -> F::Tag {
+  pub const fn tag(&self) -> Tag {
     self.tag
   }
 
