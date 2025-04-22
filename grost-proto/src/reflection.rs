@@ -1,13 +1,14 @@
 use super::flavors::Flavor;
 
 pub use struct_::*;
-pub use unit_enum::*;
+pub use enum_::*;
 
 mod struct_;
-mod unit_enum;
+mod enum_;
 
+/// The type in the Graph protocol schema
 #[derive(Debug)]
-pub enum Type<F: Flavor> {
+pub enum Type<F: Flavor + ?Sized> {
   Primitive {
     name: &'static str,
     description: &'static str,
@@ -19,15 +20,15 @@ pub enum Type<F: Flavor> {
   },
   Optional(&'static Type<F>),
   Struct(StructReflection<F>),
-  UintEnum(UnitEnumReflection),
+  UintEnum(EnumReflection),
   Union(),
   Interface(),
 }
 
-impl<F: Flavor> Clone for Type<F> {
+impl<F: Flavor + ?Sized> Clone for Type<F> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor> Copy for Type<F> {}
+impl<F: Flavor + ?Sized> Copy for Type<F> {}

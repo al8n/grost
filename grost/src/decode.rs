@@ -1,4 +1,4 @@
-use super::{Buffer, Flavor, UnknownBuffer, Wirable};
+use super::{BytesBuffer, Flavor, UnknownBuffer, Wirable};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
@@ -38,6 +38,6 @@ where
   fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, Self), F::DecodeError>
   where
     Self: Sized + 'static,
-    B: Buffer + 'static,
+    B: BytesBuffer + 'static,
     UB: UnknownBuffer<B> + 'static;
 }

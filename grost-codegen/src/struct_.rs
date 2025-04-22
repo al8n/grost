@@ -3,7 +3,7 @@ use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Visibility, parse_quote};
 
-use crate::SafeIdent;
+use crate::{SafeIdent, flavor::FlavorExt};
 
 pub use field::Field;
 
@@ -84,11 +84,14 @@ impl Struct {
     &self.schema_name
   }
 
-  pub fn generate_reflection(
+  pub fn generate_reflection<F>(
     &self,
     path_to_grost: &syn::Path,
-    flavor: &super::Flavor,
-  ) -> proc_macro2::TokenStream {
+    flavor: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: super::Flavor + ?Sized,
+  {
     let name = self.name.name();
     let name_str = self.name.name_str();
     let schema_name = self.schema_name.as_str();
@@ -104,7 +107,7 @@ impl Struct {
     let reflection_name = flavor.struct_reflection_name();
     let reflection_doc = format!(
       " The reflection of the struct `{name_str}` for [`{}`]({}) flavor.",
-      flavor.name.to_upper_camel_case(),
+      flavor.name().to_upper_camel_case(),
       flavor.ty().to_token_stream().to_string().replace(" ", "")
     );
     let flavor_ty = flavor.ty();
@@ -226,7 +229,7 @@ impl Struct {
         #[inline]
         fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
         where
-          B: #path_to_grost::__private::UnknownRefBuffer<'de>,
+          B: #path_to_grost::__private::UnknownRefBytesBuffer<'de>,
         {
           ::core::todo!()
         }

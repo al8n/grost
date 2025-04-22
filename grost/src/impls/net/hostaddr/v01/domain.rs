@@ -1,13 +1,13 @@
-use hostaddr_0_1::{Buffer, Domain};
+use hostaddr_0_1::{BytesBuffer, Domain};
 
 use crate::{
   Decode, DecodeError, DecodeOwned, Encode, IntoTarget, Message, PartialEncode, TypeOwned, TypeRef,
-  UnknownRefBuffer, Wirable, WireType,
+  UnknownRefBytesBuffer, Wirable, WireType,
 };
 
-impl Wirable for Buffer {}
+impl Wirable for BytesBuffer {}
 
-impl Encode for Buffer {
+impl Encode for BytesBuffer {
   #[inline]
   fn encode(&self, buf: &mut [u8]) -> Result<usize, crate::EncodeError> {
     self.as_bytes().encode(buf)
@@ -66,7 +66,7 @@ impl<'de> Decode<'de> for &'de Domain<str> {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>,
+    B: UnknownRefBytesBuffer<'de>,
   {
     Domain::<[u8]>::try_from_ascii_bytes(src)
       .map(|domain| (src.len(), domain.as_str()))
@@ -78,7 +78,7 @@ impl<'de> Decode<'de> for &'de Domain<[u8]> {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>,
+    B: UnknownRefBytesBuffer<'de>,
   {
     Domain::<[u8]>::try_from_ascii_bytes(src)
       .map(|domain| (src.len(), domain))
@@ -90,7 +90,7 @@ impl<'de> Decode<'de> for Domain<&'de str> {
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>,
+    B: UnknownRefBytesBuffer<'de>,
   {
     <&'de Domain<str>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
   }
@@ -100,7 +100,7 @@ impl<'de> Decode<'de> for Domain<&'de [u8]> {
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownRefBuffer<'de>,
+    B: UnknownRefBytesBuffer<'de>,
   {
     <&'de Domain<[u8]>>::decode(src, ub).map(|(read, v)| (read, v.as_ref()))
   }
@@ -117,7 +117,7 @@ macro_rules! impl_decode {
         fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
         where
           Self: Sized + 'de,
-          B: UnknownRefBuffer<'de>
+          B: UnknownRefBytesBuffer<'de>
         {
           Self::try_from(src)
             .map(|domain| (src.len(), domain))
@@ -209,21 +209,21 @@ macro_rules! impl_message {
   };
 }
 
-impl_decode!(@both Buffer);
+impl_decode!(@both BytesBuffer);
 
-impl IntoTarget<Domain<Buffer>> for &Domain<[u8]> {
-  fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
+impl IntoTarget<Domain<BytesBuffer>> for &Domain<[u8]> {
+  fn into_target(self) -> Result<Domain<BytesBuffer>, DecodeError> {
     Ok(self.into())
   }
 }
 
-impl IntoTarget<Domain<Buffer>> for &Domain<str> {
-  fn into_target(self) -> Result<Domain<Buffer>, DecodeError> {
+impl IntoTarget<Domain<BytesBuffer>> for &Domain<str> {
+  fn into_target(self) -> Result<Domain<BytesBuffer>, DecodeError> {
     Ok(self.into())
   }
 }
 
-conversion!(Domain<Buffer>);
+conversion!(Domain<BytesBuffer>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {

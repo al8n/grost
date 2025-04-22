@@ -1,4 +1,6 @@
-use super::{Wirable, buffer::Buffer, flavors::Flavor, unknown::UnknownBuffer};
+use crate::unknown::Unknown;
+
+use super::{Wirable, buffer::{BytesBuffer, Buffer}, flavors::Flavor};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
@@ -17,7 +19,7 @@ where
   fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<F, &'de [u8]> + 'de;
+    UB: Buffer<Unknown<F, &'de [u8]>> + 'de;
 }
 
 /// A marker trait for types that can be decoded without borrowing data.
@@ -38,6 +40,6 @@ where
   fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, Self), F::DecodeError>
   where
     Self: Sized + 'static,
-    B: Buffer + 'static,
-    UB: UnknownBuffer<F, B> + 'static;
+    B: BytesBuffer + 'static,
+    UB: Buffer<Unknown<F, B>> + 'static;
 }

@@ -123,7 +123,7 @@ where
   fn decode<B>(src: &'de [u8], ub: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    B: crate::UnknownRefBytesBuffer<'de>,
   {
     let buf_len = src.len();
     if buf_len == 0 {

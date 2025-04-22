@@ -1,11 +1,11 @@
-use quote::{ToTokens, quote};
+use quote::{format_ident, quote, ToTokens};
 use smol_str::{SmolStr, format_smolstr};
-use syn::Type;
+use syn::{parse_quote, Lifetime, Type};
 
 pub use int::Int;
 pub use uint::Uint;
 
-use crate::SafeIdent;
+use crate::{flavor::FlavorExt, SafeIdent};
 
 mod int;
 mod uint;
@@ -51,23 +51,43 @@ pub(crate) enum TyRepr {
     value: Box<Ty>,
   },
   Optional(Box<Ty>),
-  UnitEnum(Type),
+  Enum(Type),
   Struct(Type),
   Union(Type),
   Interface(Type),
 }
 
 impl TyRepr {
-  pub fn ty(&self) -> &Type {
+  pub fn ty(&self) -> Type {
     match self {
-      Self::Primitive(ty) => ty,
-      Self::List { ty, .. } => ty,
-      Self::Map { ty, .. } => ty,
-      Self::UnitEnum(ty) => ty,
-      Self::Struct(ty) => ty,
-      Self::Union(ty) => ty,
-      Self::Interface(ty) => ty,
-      Self::Optional(ty) => ty.ty(),
+      Self::Primitive(ty) => ty.clone(),
+      Self::List { ty, .. } => ty.clone(),
+      Self::Map { ty, .. } => ty.clone(),
+      Self::Enum(ty) => ty.clone(),
+      Self::Struct(ty) => ty.clone(),
+      Self::Union(ty) => ty.clone(),
+      Self::Interface(ty) => ty.clone(),
+      Self::Optional(ty) => {
+        let ty = ty.ty();
+        parse_quote!(::core::option::Option<#ty>)
+      },
+    }
+  }
+
+  pub fn ref_ty(&self, mutable: bool, lifetime: Option<Lifetime>) -> Type {
+    let mutability = mutable.then_some(format_ident!("mut"));
+    match self {
+      Self::Primitive(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::List { ty, .. } => parse_quote!(& #lifetime #mutability #ty),
+      Self::Map { ty, .. } => parse_quote!(& #lifetime #mutability #ty),
+      Self::Enum(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::Struct(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::Union(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::Interface(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::Optional(ty) => {
+        let ty = ty.ty();
+        parse_quote!(::core::option::Option<& #lifetime #mutability #ty>)
+      },
     }
   }
 }
@@ -122,9 +142,9 @@ impl Ty {
   }
 
   /// Creates a new unit enum [`Ty`].
-  pub fn unit_enum(ty: Type, schema_type: &str) -> Self {
+  pub fn enum_(ty: Type, schema_type: &str) -> Self {
     Self {
-      repr: TyRepr::UnitEnum(ty),
+      repr: TyRepr::Enum(ty),
       schema_type: required_schema_type(schema_type),
       copy: false,
       description: None,
@@ -164,6 +184,7 @@ impl Ty {
   /// Creates a new optional [`Ty`].
   pub fn optional(mut typ: Self) -> Self {
     match typ.repr {
+      // nested optional type is not allowed
       TyRepr::Optional(ty) => *ty,
       _ => {
         typ.schema_type = typ.schema_type.trim_end_matches("!").into();
@@ -189,7 +210,7 @@ impl Ty {
   }
 
   /// Returns the [`Type`] of this ty
-  pub fn ty(&self) -> &Type {
+  pub fn ty(&self) -> Type {
     self.repr.ty()
   }
 
@@ -207,11 +228,14 @@ impl Ty {
     &self.repr
   }
 
-  pub(crate) fn to_type_reflection(
+  pub(crate) fn to_type_reflection<F>(
     &self,
     path_to_grost: &syn::Path,
-    flavor: &super::Flavor,
-  ) -> proc_macro2::TokenStream {
+    flavor: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: super::Flavor + ?Sized,
+  {
     let flavor_ty = flavor.ty();
     match &self.repr {
       TyRepr::Primitive(ty) => {
@@ -241,7 +265,7 @@ impl Ty {
           }
         }
       }
-      TyRepr::UnitEnum(ty) => {
+      TyRepr::Enum(ty) => {
         quote! {
           #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
         }

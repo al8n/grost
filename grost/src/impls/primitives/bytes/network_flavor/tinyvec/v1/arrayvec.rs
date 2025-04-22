@@ -1,11 +1,12 @@
+use grost_proto::buffer::Buffer;
 use tinyvec_1::{Array, ArrayVec};
 
 use super::larger_than_array_capacity;
 use crate::{
   Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
-  buffer::Buffer,
+  buffer::BytesBuffer,
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::UnknownBuffer,
+  unknown::Unknown,
 };
 
 impl<A> Wirable<Network> for ArrayVec<A>
@@ -48,7 +49,7 @@ where
   fn decode<B>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: UnknownBuffer<Network, &'de [u8]>,
+    B: Buffer<Unknown<Network, &'de [u8]>>,
   {
     decode_to_array(src)
   }
@@ -61,8 +62,8 @@ where
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: Buffer + 'static,
-    UB: UnknownBuffer<Network, B> + 'static,
+    B: BytesBuffer + 'static,
+    UB: Buffer<Unknown<Network, B>> + 'static,
   {
     <Self as Decode<'_, Network, Self>>::decode::<()>(context, src.as_bytes())
   }
@@ -72,7 +73,7 @@ impl<A> PartialMessage<Network> for ArrayVec<A>
 where
   A: Array<Item = u8> + Clone,
 {
-  type UnknownBuffer<B: ?Sized> = ();
+  type UnknownBuffer<B> = ();
 
   type Encoded<'a>
     = &'a [A::Item]

@@ -134,7 +134,7 @@ impl grost_proto::flavors::Identifier<super::Network> for Identifier {
 
   fn decode<B>(buf: B) -> Result<(usize, Self), super::DecodeError>
   where
-    B: crate::buffer::Buffer + Sized,
+    B: crate::buffer::BytesBuffer + Sized,
     Self: Sized,
   {
     Self::decode(buf.as_bytes())

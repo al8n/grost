@@ -1,5 +1,5 @@
 use grost_proto::{
-  buffer::Buffer,
+  buffer::BytesBuffer,
   flavors::Flavor,
   unknown::{Unknown, UnknownDecode, UnknownEncode},
 };
@@ -27,7 +27,7 @@ impl Flavor for Network {
 impl<B: ?Sized> UnknownDecode<Network, B> for Unknown<Network, B> {
   fn decode(wire_type: WireType, tag: Tag, buf: B) -> Result<(usize, Self), DecodeError>
   where
-    B: Buffer + Sized,
+    B: BytesBuffer + Sized,
     Self: Sized,
   {
     let identifier = Identifier::new(wire_type, tag);
@@ -105,7 +105,7 @@ impl<B: ?Sized> UnknownDecode<Network, B> for Unknown<Network, B> {
 impl<B: ?Sized> UnknownEncode<Network, B> for Unknown<Network, B> {
   fn encode(&self, dst: &mut [u8]) -> Result<usize, EncodeError>
   where
-    B: Buffer,
+    B: BytesBuffer,
   {
     let data = self.raw();
     let data_len = data.len();
@@ -120,7 +120,7 @@ impl<B: ?Sized> UnknownEncode<Network, B> for Unknown<Network, B> {
 
   fn encoded_len(&self) -> usize
   where
-    B: Buffer,
+    B: BytesBuffer,
   {
     self.raw().len()
   }

@@ -1,4 +1,4 @@
-use super::buffer::Buffer;
+use super::buffer::BytesBuffer;
 
 /// The network flavor
 pub mod network;
@@ -17,12 +17,12 @@ pub trait Identifier<F: Flavor>: Copy + core::fmt::Debug + core::fmt::Display {
   /// Decode the identifier from a buffer.
   fn decode<B>(buf: B) -> Result<(usize, Self), F::DecodeError>
   where
-    B: Buffer + Sized,
+    B: BytesBuffer + Sized,
     Self: Sized;
 }
 
 /// The flavor of the encoding and decoding.
-pub trait Flavor: 'static {
+pub trait Flavor: core::fmt::Debug + 'static {
   /// The wire type used for this flavor.
   type WireType: Copy + core::fmt::Debug + core::fmt::Display;
   /// The context used for this flavor.
@@ -33,7 +33,7 @@ pub trait Flavor: 'static {
   type Context: quickcheck::Arbitrary;
 
   /// The encode error for this flavor.
-  type EncodeError: core::error::Error;
+  type EncodeError: core::error::Error + From<super::EncodeError>;
   /// The decode error for this flavor.
-  type DecodeError: core::error::Error;
+  type DecodeError: core::error::Error + From<super::DecodeError<Self>>;
 }

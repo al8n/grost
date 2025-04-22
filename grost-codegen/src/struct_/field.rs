@@ -2,10 +2,11 @@ use grost_proto::Tag;
 use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
-use syn::{Attribute, Expr, Visibility};
+use syn::{Attribute, Expr, Visibility, parse_quote};
 
 use crate::{
   Flavor, SafeIdent,
+  flavor::FlavorExt,
   ty::{Ty, TyRepr},
 };
 use getter::Getter;
@@ -113,7 +114,16 @@ impl Field {
     self.getter = Some(
       converter
         .map(|converter| Getter::new_with_converter(self.name.clone(), converter))
-        .unwrap_or(Getter::new(self.name.clone(), self.ty.ty().clone()))
+        .unwrap_or_else(|| {
+          if self.ty.repr().is_optional() {
+            Getter::new_with_converter(self.name.clone(), getter::Converter::new(
+              parse_quote!(::core::option::Option::as_ref),
+              self.ty.repr().ref_ty(false, None),
+            ))
+          } else {
+            Getter::new(self.name.clone(), self.ty.ty().clone())
+          }
+        })
         .with_mutable(false)
         .with_const_fn(if self.ty.copy() { true } else { const_fn })
         .with_description(doc)
@@ -145,7 +155,16 @@ impl Field {
     self.mutable_getter = Some(
       converter
         .map(|converter| Getter::new_with_converter(self.name.clone(), converter))
-        .unwrap_or(Getter::new(self.name.clone(), self.ty.ty().clone()))
+        .unwrap_or_else(|| {
+          if self.ty.repr().is_optional() {
+            Getter::new_with_converter(self.name.clone(), getter::Converter::new(
+              parse_quote!(::core::option::Option::as_mut),
+              self.ty.repr().ref_ty(true, None),
+            ))
+          } else {
+            Getter::new(self.name.clone(), self.ty.ty().clone())
+          }
+        })
         .with_mutable(true)
         .with_const_fn(if self.ty.copy() { true } else { const_fn })
         .with_description(doc)
@@ -308,11 +327,14 @@ impl Field {
     }
   }
 
-  pub(crate) fn field_reflections(
+  pub(crate) fn field_reflections<F>(
     &self,
     path_to_grost: &syn::Path,
-    flavor: &Flavor,
-  ) -> proc_macro2::TokenStream {
+    flavor: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: Flavor + ?Sized,
+  {
     let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();
     let flavor_ty = flavor.ty();
@@ -320,7 +342,7 @@ impl Field {
     let field_reflection_name = flavor.field_reflection_name(field_name);
     let field_reflection_doc = format!(
       " The reflection information of the `{field_name}` field for [`{}`]({}) flavor.",
-      flavor.name.to_upper_camel_case(),
+      flavor.name().to_upper_camel_case(),
       flavor_ty.to_token_stream().to_string().replace(" ", "")
     );
     let tag = self.tag.get();

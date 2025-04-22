@@ -1,7 +1,9 @@
+use grost_proto::buffer::Buffer;
+
 use crate::{
   Decode, Encode, IntoTarget, TypeRef, Wirable,
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::UnknownBuffer,
+  unknown::Unknown,
 };
 
 impl Wirable<Network> for [u8] {
@@ -40,7 +42,7 @@ impl<'de> Decode<'de, Network, Self> for &'de [u8] {
   fn decode<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<Network, &'de [u8]> + 'de,
+    UB: Buffer<Unknown<Network, &'de [u8]>> + 'de,
   {
     crate::__private::network::decode(ctx, src, |src| Ok((src.len(), src)))
   }

@@ -1,6 +1,6 @@
 use core::ops::{Bound, RangeBounds};
 
-pub trait Buffer {
+pub trait BytesBuffer {
   /// Returns the length of the buffer.
   fn len(&self) -> usize;
 
@@ -19,7 +19,7 @@ pub trait Buffer {
   fn slice(&self, range: impl RangeBounds<usize>) -> Self;
 }
 
-impl Buffer for &[u8] {
+impl BytesBuffer for &[u8] {
   fn is_empty(&self) -> bool {
     <[u8]>::is_empty(self)
   }
@@ -52,7 +52,7 @@ impl Buffer for &[u8] {
 }
 
 #[cfg(feature = "bytes_1")]
-impl Buffer for bytes_1::Bytes {
+impl BytesBuffer for bytes_1::Bytes {
   fn len(&self) -> usize {
     self.len()
   }
@@ -71,7 +71,7 @@ impl Buffer for bytes_1::Bytes {
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-impl Buffer for Vec<u8> {
+impl BytesBuffer for Vec<u8> {
   fn len(&self) -> usize {
     self.len()
   }
@@ -104,7 +104,7 @@ impl Buffer for Vec<u8> {
 }
 
 #[cfg(feature = "heapless_0_8")]
-impl<const N: usize> Buffer for heapless_0_8::Vec<u8, N> {
+impl<const N: usize> BytesBuffer for heapless_0_8::Vec<u8, N> {
   fn is_empty(&self) -> bool {
     self.is_empty()
   }

@@ -1,6 +1,114 @@
 use core::ops::{Bound, RangeBounds};
 
-pub trait Buffer {
+/// A buffer that stores the `T`.
+pub trait Buffer<T> {
+  /// Creates a new buffer.
+  fn new() -> Self;
+
+  /// Pushes the unknown data type to the buffer, if the buffer is full,
+  /// the given value will be returned back.
+  fn push(&mut self, value: T) -> Option<T>;
+
+  /// Returns the capacity of the buffer.
+  fn capacity(&self) -> usize;
+
+  /// Returns the length of the buffer.
+  fn len(&self) -> usize;
+
+  /// Returns a slice of the unknown data type.
+  fn as_slice(&self) -> &[T];
+
+  /// Returns `true` if the buffer is empty.
+  fn is_empty(&self) -> bool {
+    self.len() == 0
+  }
+}
+
+
+impl<T> Buffer<T> for () {
+  fn new() -> Self {}
+
+  fn push(&mut self, value: T) -> Option<T> {
+    Some(value)
+  }
+
+  fn capacity(&self) -> usize {
+    0
+  }
+
+  fn len(&self) -> usize {
+    0
+  }
+
+  fn as_slice(&self) -> &[T] {
+    &[]
+  }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+const _: () = {
+  use std::vec::Vec;
+
+  impl<T> Buffer<T> for Vec<T> {
+    fn new() -> Self {
+      Vec::new()
+    }
+
+    fn push(&mut self, value: T) -> Option<T> {
+      if self.len() < self.capacity() {
+        self.push(value);
+        None
+      } else {
+        Some(value)
+      }
+    }
+
+    fn capacity(&self) -> usize {
+      self.capacity()
+    }
+
+    fn len(&self) -> usize {
+      self.len()
+    }
+
+    fn as_slice(&self) -> &[T] {
+      self.as_slice()
+    }
+  }
+};
+
+#[cfg(feature = "heapless_0_8")]
+const _: () = {
+  use heapless_0_8::Vec;
+
+  impl<T, const N: usize> Buffer<T> for Vec<T, N> {
+    fn new() -> Self {
+      Vec::new()
+    }
+
+    fn push(&mut self, value: T) -> Option<T> {
+      self.push(value).err()
+    }
+
+    fn capacity(&self) -> usize {
+      self.capacity()
+    }
+
+    fn len(&self) -> usize {
+      <[T]>::len(self)
+    }
+
+    fn is_empty(&self) -> bool {
+      <[T]>::is_empty(self)
+    }
+
+    fn as_slice(&self) -> &[T] {
+      self.as_slice()
+    }
+  }
+};
+
+pub trait BytesBuffer {
   /// Returns the length of the buffer.
   fn len(&self) -> usize;
 
@@ -19,7 +127,7 @@ pub trait Buffer {
   fn slice(&self, range: impl RangeBounds<usize>) -> Self;
 }
 
-impl Buffer for &[u8] {
+impl BytesBuffer for &[u8] {
   fn is_empty(&self) -> bool {
     <[u8]>::is_empty(self)
   }
@@ -52,7 +160,7 @@ impl Buffer for &[u8] {
 }
 
 #[cfg(feature = "bytes_1")]
-impl Buffer for bytes_1::Bytes {
+impl BytesBuffer for bytes_1::Bytes {
   fn len(&self) -> usize {
     self.len()
   }
@@ -71,7 +179,7 @@ impl Buffer for bytes_1::Bytes {
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-impl Buffer for Vec<u8> {
+impl BytesBuffer for Vec<u8> {
   fn len(&self) -> usize {
     self.len()
   }
@@ -104,7 +212,7 @@ impl Buffer for Vec<u8> {
 }
 
 #[cfg(feature = "heapless_0_8")]
-impl<const N: usize> Buffer for heapless_0_8::Vec<u8, N> {
+impl<const N: usize> BytesBuffer for heapless_0_8::Vec<u8, N> {
   fn is_empty(&self) -> bool {
     self.is_empty()
   }
@@ -114,7 +222,7 @@ impl<const N: usize> Buffer for heapless_0_8::Vec<u8, N> {
   }
 
   fn slice(&self, range: impl RangeBounds<usize>) -> Self {
-    let len = self.len();
+    let len = BytesBuffer::len(self);
 
     let begin = match range.start_bound() {
       Bound::Included(&n) => n,

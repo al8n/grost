@@ -4,7 +4,7 @@ use core::num::{
 
 /// The `repr` for unit enum
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant)]
-pub enum UnitEnumRepr {
+pub enum EnumRepr {
   /// `repr(u8)` representation
   U8,
   /// `repr(u16)` representation
@@ -23,7 +23,7 @@ pub enum UnitEnumRepr {
   I64,
 }
 
-impl UnitEnumRepr {
+impl EnumRepr {
   /// Returns the meta repr
   #[inline]
   pub const fn to_attribute_str(&self) -> &'static str {
@@ -74,7 +74,7 @@ impl UnitEnumRepr {
 const _: () = {
   use quote::{ToTokens, format_ident, quote};
 
-  impl UnitEnumRepr {
+  impl EnumRepr {
     /// Returns the attribute of the corresponding repr
     #[inline]
     pub fn to_attribute(&self) -> syn::Attribute {
@@ -93,7 +93,7 @@ const _: () = {
     /// Returns the variant ident of the corresponding repr
     ///
     /// e.g.
-    /// If the value is `UnitEnumRepr::U8`, the ident will be `U8`.
+    /// If the value is `EnumRepr::U8`, the ident will be `U8`.
     #[inline]
     pub fn to_variant_ident(&self) -> syn::Ident {
       match self {
@@ -121,12 +121,12 @@ const _: () = {
     }
   }
 
-  impl UnitEnumVariantValue {
+  impl EnumVariantValue {
     /// Returns the variant ident of the corresponding repr
     ///
     /// e.g.
     ///
-    /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the ident will be `U8`.
+    /// If the value is `EnumVariantValue::U8(NonZeroU8(1))`, the ident will be `U8`.
     pub fn to_variant_ident(&self) -> syn::Ident {
       match self {
         Self::U8(_) => format_ident!("U8"),
@@ -142,7 +142,7 @@ const _: () = {
 
     /// Returns the varint encoded value of the corresponding repr
     ///
-    /// e.g. If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be the output `::grost::__private::flavors::varint::encode_u8_varint(1)` (`[1u8]` in this example)
+    /// e.g. If the value is `EnumVariantValue::U8(NonZeroU8(1))`, the expr will be the output `::grost::__private::flavors::varint::encode_u8_varint(1)` (`[1u8]` in this example)
     pub fn to_encoded_value_varint(&self) -> syn::Expr {
       macro_rules! to_expr {
         ($ty:ident::$value:ident) => {{
@@ -171,7 +171,7 @@ const _: () = {
     ///
     /// e.g.
     ///
-    /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be `1u8`
+    /// If the value is `EnumVariantValue::U8(NonZeroU8(1))`, the expr will be `1u8`
     #[inline]
     pub fn to_value(&self) -> syn::Lit {
       macro_rules! to_expr {
@@ -199,7 +199,7 @@ const _: () = {
     ///
     /// e.g.
     ///
-    /// If the value is `UnitEnumVariantValue::U8(NonZeroU8(1))`, the expr will be `::core::num::NonZeroU8::new(1).unwrap()`
+    /// If the value is `EnumVariantValue::U8(NonZeroU8(1))`, the expr will be `::core::num::NonZeroU8::new(1).unwrap()`
     #[inline]
     pub fn to_non_zero_value(&self) -> syn::Expr {
       macro_rules! to_expr {
@@ -237,7 +237,7 @@ const _: () = {
   derive_more::Unwrap,
   derive_more::TryUnwrap,
 )]
-pub enum UnitEnumVariantValue {
+pub enum EnumVariantValue {
   /// `u8` value, `repr(u8)`
   U8(NonZeroU8),
   /// `u16` value, `repr(u16)`
@@ -257,17 +257,17 @@ pub enum UnitEnumVariantValue {
 }
 
 #[doc(hidden)]
-pub struct UnitEnumVariantReflectionBuilder {
+pub struct EnumVariantReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub description: &'static str,
-  pub value: UnitEnumVariantValue,
+  pub value: EnumVariantValue,
 }
 
-impl UnitEnumVariantReflectionBuilder {
+impl EnumVariantReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> UnitEnumVariantReflection {
-    UnitEnumVariantReflection {
+  pub const fn build(self) -> EnumVariantReflection {
+    EnumVariantReflection {
       name: self.name,
       schema_name: self.schema_name,
       description: self.description,
@@ -278,14 +278,14 @@ impl UnitEnumVariantReflectionBuilder {
 
 /// The information of a variant of enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct UnitEnumVariantReflection {
+pub struct EnumVariantReflection {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
-  value: UnitEnumVariantValue,
+  value: EnumVariantValue,
 }
 
-impl UnitEnumVariantReflection {
+impl EnumVariantReflection {
   /// Get the name of the variant
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -300,7 +300,7 @@ impl UnitEnumVariantReflection {
 
   /// Get the value of the variant
   #[inline]
-  pub const fn value(&self) -> UnitEnumVariantValue {
+  pub const fn value(&self) -> EnumVariantValue {
     self.value
   }
 
@@ -312,18 +312,18 @@ impl UnitEnumVariantReflection {
 }
 
 #[doc(hidden)]
-pub struct UnitEnumReflectionBuilder {
+pub struct EnumReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub variants: &'static [UnitEnumVariantReflection],
+  pub variants: &'static [EnumVariantReflection],
   pub description: &'static str,
-  pub repr: UnitEnumRepr,
+  pub repr: EnumRepr,
 }
 
-impl UnitEnumReflectionBuilder {
+impl EnumReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> UnitEnumReflection {
-    UnitEnumReflection {
+  pub const fn build(self) -> EnumReflection {
+    EnumReflection {
       name: self.name,
       schema_name: self.schema_name,
       variants: self.variants,
@@ -335,15 +335,15 @@ impl UnitEnumReflectionBuilder {
 
 /// The information of an enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct UnitEnumReflection {
+pub struct EnumReflection {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
-  variants: &'static [UnitEnumVariantReflection],
-  repr: UnitEnumRepr,
+  variants: &'static [EnumVariantReflection],
+  repr: EnumRepr,
 }
 
-impl UnitEnumReflection {
+impl EnumReflection {
   /// Get the name of the enum
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -358,7 +358,7 @@ impl UnitEnumReflection {
 
   /// Get the variants of the enum
   #[inline]
-  pub const fn variants(&self) -> &'static [UnitEnumVariantReflection] {
+  pub const fn variants(&self) -> &'static [EnumVariantReflection] {
     self.variants
   }
 
@@ -370,7 +370,7 @@ impl UnitEnumReflection {
 
   /// Get the representation of the enum
   #[inline]
-  pub const fn repr(&self) -> UnitEnumRepr {
+  pub const fn repr(&self) -> EnumRepr {
     self.repr
   }
 }

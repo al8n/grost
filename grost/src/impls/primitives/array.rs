@@ -1,8 +1,8 @@
 use crate::{
   Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
-  buffer::Buffer,
+  buffer::{BytesBuffer, Buffer},
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::UnknownBuffer,
+  unknown::Unknown,
 };
 
 impl<const N: usize> Wirable<Network> for [u8; N] {
@@ -54,7 +54,7 @@ impl<'de, const N: usize> Decode<'de, Network, Self> for [u8; N] {
   fn decode<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<Network, &'de [u8]>,
+    UB: Buffer<Unknown<Network, &'de [u8]>>,
   {
     if N == 0 {
       return Ok((0, [0; N]));
@@ -68,8 +68,8 @@ impl<const N: usize> DecodeOwned<Network, Self> for [u8; N] {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: Buffer + 'static,
-    UB: UnknownBuffer<Network, B> + 'static,
+    B: BytesBuffer + 'static,
+    UB: Buffer<Unknown<Network, B>> + 'static,
   {
     <Self as Decode<'_, Network, Self>>::decode::<()>(context, src.as_bytes())
   }
@@ -94,7 +94,7 @@ impl<const N: usize> TypeOwned<Network, Self> for [u8; N] {
 }
 
 impl<const N: usize> PartialMessage<Network> for [u8; N] {
-  type UnknownBuffer<B: ?Sized> = ();
+  type UnknownBuffer<B> = ();
 
   type Encoded<'a>
     = &'a [u8]

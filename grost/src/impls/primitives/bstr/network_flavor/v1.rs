@@ -1,9 +1,10 @@
 use bstr_1::BStr;
+use grost_proto::buffer::Buffer;
 
 use crate::{
   Decode, Encode, Wirable,
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::UnknownBuffer,
+  unknown::Unknown,
 };
 
 impl Wirable<Network> for BStr {
@@ -26,7 +27,7 @@ impl<'de> Decode<'de, Network, Self> for &'de BStr {
   fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<Network, &'de [u8]> + 'de,
+    UB: Buffer<Unknown<Network, &'de [u8]>> + 'de,
   {
     <&'de [u8] as Decode<'de, Network, &'de [u8]>>::decode::<()>(context, src)
       .map(|(len, slice)| (len, BStr::new(slice)))

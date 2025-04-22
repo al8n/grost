@@ -27,27 +27,27 @@ fn main() {
 
 fn enum_codegen_test(name: &str) {
   let generator = DefaultGenerator::new();
-  let enum_ = UnitEnum::new(
+  let enum_ = Enum::new(
     SafeIdent::new("Color"),
-    UnitEnumRepr::U32,
+    EnumRepr::U32,
     vec![
-      UnitEnumVariant::new(
+      EnumVariant::new(
         SafeIdent::new("Red"),
-        UnitEnumVariantValue::U32(NonZeroU32::new(1).unwrap()),
+        EnumVariantValue::U32(NonZeroU32::new(1).unwrap()),
       )
       .with_default(true),
-      UnitEnumVariant::new(
+      EnumVariant::new(
         SafeIdent::new("Green"),
-        UnitEnumVariantValue::U32(NonZeroU32::new(2).unwrap()),
+        EnumVariantValue::U32(NonZeroU32::new(2).unwrap()),
       ),
-      UnitEnumVariant::new(
+      EnumVariant::new(
         SafeIdent::new("Blue"),
-        UnitEnumVariantValue::U32(NonZeroU32::new(3).unwrap()),
+        EnumVariantValue::U32(NonZeroU32::new(3).unwrap()),
       ),
     ],
   );
 
-  let generated = generator.generate_unit_enum(&enum_).unwrap();
+  let generated = generator.generate_enum(&enum_).unwrap();
   let file: syn::File = syn::parse2(generated).unwrap();
   let output = prettyplease::unparse(&file);
 
@@ -82,20 +82,20 @@ fn struct_codegen_test(name: &str) {
     Field::new(
       SafeIdent::new("email"),
       Ty::optional(Ty::primitive(
-        parse_quote!(::core::option::Option<::std::string::String>),
+        parse_quote!(::std::string::String),
         "String",
       )),
       Tag::new(3),
-    )
-    .with_getter(
-      None,
-      Option::<&str>::None,
-      Some(getter::Converter::new(
-        parse_quote!(::core::option::Option::as_deref),
-        parse_quote!(::core::option::Option<&str>),
-      )),
-      false,
     ),
+    // .with_getter(
+    //   None,
+    //   Option::<&str>::None,
+    //   Some(getter::Converter::new(
+    //     parse_quote!(::core::option::Option::as_deref),
+    //     parse_quote!(::core::option::Option<&str>),
+    //   )),
+    //   false,
+    // ),
   ];
   let struct_ = Struct::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")

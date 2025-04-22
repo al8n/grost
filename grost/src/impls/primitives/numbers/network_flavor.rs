@@ -1,8 +1,10 @@
+use grost_proto::buffer::Buffer;
+
 use crate::{
   Decode, DecodeOwned, Encode,
-  buffer::Buffer,
+  buffer::BytesBuffer,
   flavors::network::{Context, DecodeError, EncodeError, Network},
-  unknown::UnknownBuffer,
+  unknown::Unknown,
 };
 
 mod arbitrary_int;
@@ -68,7 +70,7 @@ impl<'de> Decode<'de, Network, Self> for u8 {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<Network, &'de [u8]>,
+    UB: Buffer<Unknown<Network, &'de [u8]>>,
   {
     decode_u8_in(src)
   }
@@ -78,8 +80,8 @@ impl DecodeOwned<Network, Self> for u8 {
   fn decode_owned<B, UB>(_: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: Buffer + 'static,
-    UB: UnknownBuffer<Network, B> + 'static,
+    B: BytesBuffer + 'static,
+    UB: Buffer<Unknown<Network, B>> + 'static,
   {
     let buf = src.as_bytes();
     decode_u8_in(buf)

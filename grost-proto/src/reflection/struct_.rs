@@ -3,13 +3,13 @@ use crate::Tag;
 use super::{Flavor, Type};
 
 #[doc(hidden)]
-pub struct StructReflectionBuilder<F: Flavor> {
+pub struct StructReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub fields: &'static [FieldRelection<F>],
 }
 
-impl<F: Flavor> StructReflectionBuilder<F> {
+impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
   #[inline]
   pub const fn build(self) -> StructReflection<F> {
     StructReflection {
@@ -22,21 +22,21 @@ impl<F: Flavor> StructReflectionBuilder<F> {
 
 /// The struct information of an object in the Graph protocol buffer
 #[derive(Debug)]
-pub struct StructReflection<F: Flavor> {
+pub struct StructReflection<F: Flavor + ?Sized> {
   name: &'static str,
   schema_name: &'static str,
   fields: &'static [FieldRelection<F>],
 }
 
-impl<F: Flavor> Clone for StructReflection<F> {
+impl<F: Flavor + ?Sized> Clone for StructReflection<F> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor> Copy for StructReflection<F> {}
+impl<F: Flavor + ?Sized> Copy for StructReflection<F> {}
 
-impl<F: Flavor> StructReflection<F> {
+impl<F: Flavor + ?Sized> StructReflection<F> {
   /// Get the name of the struct
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -59,7 +59,7 @@ impl<F: Flavor> StructReflection<F> {
 }
 
 #[doc(hidden)]
-pub struct FieldRelectionBuilder<F: Flavor> {
+pub struct FieldRelectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
@@ -71,7 +71,7 @@ pub struct FieldRelectionBuilder<F: Flavor> {
   // pub encoded_identifier_len: usize,
 }
 
-impl<F: Flavor> FieldRelectionBuilder<F> {
+impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
   #[inline]
   pub const fn build(self) -> FieldRelection<F> {
     FieldRelection {
@@ -89,7 +89,7 @@ impl<F: Flavor> FieldRelectionBuilder<F> {
 
 /// The information of a field in the Graph protocol buffer
 #[derive(Debug)]
-pub struct FieldRelection<F: Flavor> {
+pub struct FieldRelection<F: Flavor + ?Sized> {
   name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   ty: fn() -> &'static str,

@@ -190,6 +190,7 @@ impl ToTokens for Setter {
     });
     let const_fn = self.const_fn().then_some(quote! { const });
     let take = (!self.take()).then_some(quote! { & });
+    let output_mutability = (!self.take()).then_some(quote! { &mut });
     let attrs = &self.attributes;
     let body = match &self.data {
       Either::Left(_) => {
@@ -211,7 +212,7 @@ impl ToTokens for Setter {
       #description
       #(#attrs)*
       #[inline]
-      #vis #const_fn fn #fn_name(#take mut self, #field_name: #input) -> #take Self {
+      #vis #const_fn fn #fn_name(#take mut self, #field_name: #input) -> #output_mutability Self {
         #body
       }
     });

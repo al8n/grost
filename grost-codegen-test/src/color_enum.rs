@@ -21,42 +21,42 @@ pub enum Color {
 }
 impl Color {
     /// The relection information of the [`Color::Red`] enum variant.
-    pub const RED_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    pub const RED_REFLECTION: ::grost::__private::reflection::EnumVariantReflection = ::grost::__private::reflection::EnumVariantReflectionBuilder {
         name: "Red",
         schema_name: "Red",
         description: "",
-        value: ::grost::__private::reflection::UnitEnumVariantValue::U32(
+        value: ::grost::__private::reflection::EnumVariantValue::U32(
             ::core::num::NonZeroU32::new(1u32).unwrap(),
         ),
     }
         .build();
     /// The relection information of the [`Color::Green`] enum variant.
-    pub const GREEN_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    pub const GREEN_REFLECTION: ::grost::__private::reflection::EnumVariantReflection = ::grost::__private::reflection::EnumVariantReflectionBuilder {
         name: "Green",
         schema_name: "Green",
         description: "",
-        value: ::grost::__private::reflection::UnitEnumVariantValue::U32(
+        value: ::grost::__private::reflection::EnumVariantValue::U32(
             ::core::num::NonZeroU32::new(2u32).unwrap(),
         ),
     }
         .build();
     /// The relection information of the [`Color::Blue`] enum variant.
-    pub const BLUE_REFLECTION: ::grost::__private::reflection::UnitEnumVariantReflection = ::grost::__private::reflection::UnitEnumVariantReflectionBuilder {
+    pub const BLUE_REFLECTION: ::grost::__private::reflection::EnumVariantReflection = ::grost::__private::reflection::EnumVariantReflectionBuilder {
         name: "Blue",
         schema_name: "Blue",
         description: "",
-        value: ::grost::__private::reflection::UnitEnumVariantValue::U32(
+        value: ::grost::__private::reflection::EnumVariantValue::U32(
             ::core::num::NonZeroU32::new(3u32).unwrap(),
         ),
     }
         .build();
     /// The relection information of the [`Color`] enum
-    pub const REFLECTION: ::grost::__private::reflection::UnitEnumReflection = ::grost::__private::reflection::UnitEnumReflectionBuilder {
+    pub const REFLECTION: ::grost::__private::reflection::EnumReflection = ::grost::__private::reflection::EnumReflectionBuilder {
         name: "Color",
         schema_name: "Color",
         description: "",
         variants: &[Self::RED_REFLECTION, Self::GREEN_REFLECTION, Self::BLUE_REFLECTION],
-        repr: ::grost::__private::reflection::UnitEnumRepr::U32,
+        repr: ::grost::__private::reflection::EnumRepr::U32,
     }
         .build();
 }
@@ -429,9 +429,11 @@ for Color {
         <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
     >
     where
-        UB: ::grost::__private::UnknownBuffer<
-                ::grost::__private::flavors::Network,
-                &'de [::core::primitive::u8],
+        UB: ::grost::__private::Buffer<
+                ::grost::__private::Unknown<
+                    ::grost::__private::flavors::Network,
+                    &'de [::core::primitive::u8],
+                >,
             > + 'de,
     {
         Self::const_decode(src).map_err(::core::convert::Into::into)
@@ -449,9 +451,10 @@ for Color {
     >
     where
         Self: ::core::marker::Sized + 'static,
-        B: ::grost::__private::Buffer + 'static,
-        UB: ::grost::__private::UnknownBuffer<::grost::__private::flavors::Network, B>
-            + 'static,
+        B: ::grost::__private::BytesBuffer + 'static,
+        UB: ::grost::__private::Buffer<
+                ::grost::__private::Unknown<::grost::__private::flavors::Network, B>,
+            > + 'static,
     {
         <Self as ::grost::__private::Decode<
             '_,
@@ -508,7 +511,7 @@ impl<'a> ::core::convert::From<&'a Self> for Color {
     }
 }
 impl ::grost::__private::PartialMessage<::grost::__private::flavors::Network> for Color {
-    type UnknownBuffer<B: ?::core::marker::Sized> = ();
+    type UnknownBuffer<B> = ();
     type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
     type Borrowed<'a> = Self where Self: 'a;
     type EncodedOwned = Self where Self: ::core::marker::Sized;
@@ -533,7 +536,7 @@ const _: () = {
 };
 #[cfg(test)]
 #[allow(non_snake_case)]
-mod __quickcheck_fuzzy_network_flavor_color__ {
+mod __quickcheck_fuzzy_grost_codegen_network_network_flavor_color__ {
     use super::Color;
     use ::grost::__private::{Encode, Decode};
     ::grost::__private::quickcheck::quickcheck! {

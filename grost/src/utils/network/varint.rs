@@ -69,8 +69,8 @@ where
     let (mut offset, decoded_identifier) = Identifier::decode(src)?;
     if identifier != decoded_identifier {
       return Err(DecodeError::identifier_mismatch(
-        identifier,
-        decoded_identifier,
+        identifier.into_components(),
+        decoded_identifier.into_components(),
       ));
     }
 

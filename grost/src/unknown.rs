@@ -1,6 +1,6 @@
 // use grost_proto::flavors::Flavor;
 
-// use crate::{Buffer, Wirable};
+// use crate::{BytesBuffer, Wirable};
 
 // /// A buffer that stores the [`Unknown`] data type.
 // ///
@@ -175,7 +175,7 @@
 //   #[inline]
 //   pub fn raw(&self) -> &[u8]
 //   where
-//     B: Buffer,
+//     B: BytesBuffer,
 //   {
 //     self.data.as_bytes()
 //   }
@@ -199,7 +199,7 @@
 //   /// Decodes the unknown data type.
 //   pub fn decode(identifier: Identifier, buf: B) -> Result<(usize, Self), DecodeError>
 //   where
-//     B: Buffer + Sized,
+//     B: BytesBuffer + Sized,
 //   {
 //     macro_rules! slice {
 //       ($end:ident, $buf_len:ident, $buf:ident) => {{
@@ -305,7 +305,7 @@
 
 // impl<B, F> Unknown<B, F>
 // where
-//   B: super::Buffer,
+//   B: super::BytesBuffer,
 //   F: Flavor,
 // {
 //   /// Converts the `Unknown<B>` to `Unknown<N>`.

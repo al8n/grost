@@ -6,7 +6,7 @@ use crate::{
   Decode, DecodeError, DecodeOwned, Encode, EncodeError, Identifier, Tag, Wirable, WireType,
 };
 
-type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
+type U32VarintBytesBuffer = BytesBuffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
 
 const PORT_LEN: usize = 2;
 const V4_LEN: usize = 4;
@@ -17,8 +17,8 @@ const V4_MERGED: Identifier = Identifier::new(WireType::Fixed32, V4_TAG);
 const V6_MERGED: Identifier = Identifier::new(WireType::Fixed128, V6_TAG);
 const V4_MERGED_ENCODED_LEN: usize = V4_MERGED.encoded_len();
 const V6_MERGED_ENCODED_LEN: usize = V6_MERGED.encoded_len();
-const V4_MERGED_ENCODED: U32VarintBuffer = V4_MERGED.encode();
-const V6_MERGED_ENCODED: U32VarintBuffer = V6_MERGED.encode();
+const V4_MERGED_ENCODED: U32VarintBytesBuffer = V4_MERGED.encode();
+const V6_MERGED_ENCODED: U32VarintBytesBuffer = V6_MERGED.encode();
 
 message!(SocketAddr, SocketAddrV4, SocketAddrV6,);
 
@@ -41,7 +41,7 @@ macro_rules! impl_codec {
         fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
         where
           Self: Sized + 'de,
-          B: crate::UnknownRefBuffer<'de>,
+          B: crate::UnknownRefBytesBuffer<'de>,
         {
           let (len, helper) = Helper::<[< $variant _LEN >]>::decode(src)?;
           Ok((
@@ -216,7 +216,7 @@ impl<'de> Decode<'de> for SocketAddr {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    B: crate::UnknownRefBytesBuffer<'de>,
   {
     decode(src)
   }

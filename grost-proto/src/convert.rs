@@ -1,7 +1,7 @@
-use super::{decode::Decode, encode::Encode, flavors::Flavor, unknown};
+use super::{buffer::Buffer, decode::Decode, encode::Encode, flavors::Flavor, unknown::Unknown};
 
 pub trait PartialMessage<F: Flavor> {
-  type UnknownBuffer<B: ?Sized>: unknown::UnknownBuffer<F, B>;
+  type UnknownBuffer<B>: Buffer<Unknown<F, B>>;
 
   /// A encoded representation of this type with lifetime 'a.
   ///

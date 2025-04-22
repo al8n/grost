@@ -1,7 +1,8 @@
+use grost_proto::{buffer::Buffer, unknown::Unknown};
+
 use crate::{
   Decode, Encode, Wirable,
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::UnknownBuffer,
 };
 
 impl Wirable<Network> for str {
@@ -33,7 +34,7 @@ impl<'de> Decode<'de, Network, Self> for &'de str {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: UnknownBuffer<Network, &'de [u8]> + 'de,
+    UB: Buffer<Unknown<Network, &'de [u8]>> + 'de,
   {
     decode_str(src)
   }

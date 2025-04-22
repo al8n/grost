@@ -6,7 +6,7 @@ use crate::{
   Decode, DecodeError, DecodeOwned, Encode, EncodeError, Identifier, Tag, Wirable, WireType,
 };
 
-type U32VarintBuffer = Buffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
+type U32VarintBytesBuffer = BytesBuffer<{ <u32 as varing::Varint>::MAX_ENCODED_LEN + 1 }>;
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
@@ -16,8 +16,8 @@ const IPV4_MERGED: Identifier = Identifier::new(WireType::Fixed32, IPV4_TAG);
 const IPV6_MERGED: Identifier = Identifier::new(WireType::Fixed128, IPV6_TAG);
 const IPV4_MERGED_ENCODED_LEN: usize = IPV4_MERGED.encoded_len();
 const IPV6_MERGED_ENCODED_LEN: usize = IPV6_MERGED.encoded_len();
-const IPV4_MERGED_ENCODED: U32VarintBuffer = IPV4_MERGED.encode();
-const IPV6_MERGED_ENCODED: U32VarintBuffer = IPV6_MERGED.encode();
+const IPV4_MERGED_ENCODED: U32VarintBytesBuffer = IPV4_MERGED.encode();
+const IPV6_MERGED_ENCODED: U32VarintBytesBuffer = IPV6_MERGED.encode();
 
 message!(IpAddr, Ipv4Addr, Ipv6Addr,);
 
@@ -47,7 +47,7 @@ macro_rules! impl_codec {
       fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
-        B: crate::UnknownRefBuffer<'de>,
+        B: crate::UnknownRefBytesBuffer<'de>,
       {
         if src.len() < $size {
           return Err(DecodeError::buffer_underflow());
@@ -145,7 +145,7 @@ impl<'de> Decode<'de> for IpAddr {
   fn decode<B>(src: &'de [u8], _: &mut B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: crate::UnknownRefBuffer<'de>,
+    B: crate::UnknownRefBytesBuffer<'de>,
   {
     decode_ip!(src)
   }
