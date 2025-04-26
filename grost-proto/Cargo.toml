@@ -41,6 +41,9 @@ num-complex = ["num-complex_0_4"]
 ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
 ruint = ["ruint_1"]
 
+uuid_1 = ["dep:uuid_1"]
+uuid = ["uuid_1"]
+
 [dependencies]
 ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
@@ -61,6 +64,7 @@ num-rational_0_4 = { package = "num-rational", version = "0.4", default-features
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
 ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
 rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
 
 syn = { workspace = true, optional = true }
 proc-macro2 = { version = "1", optional = true }

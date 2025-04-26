@@ -1,6 +1,7 @@
 use crate::{
+  encode_bridge,
   flavors::network::{DecodeError, Network},
-  encode_bridge, try_decode_bridge,
+  try_decode_bridge,
 };
 
 encode_bridge!(
@@ -20,6 +21,5 @@ try_decode_bridge!(
 );
 
 fn decode_str(src: &[u8]) -> Result<&str, DecodeError> {
-  crate::utils::from_utf8(src)
-    .map_err(|_| DecodeError::custom("invalid UTF-8"))
+  crate::utils::from_utf8(src).map_err(|_| DecodeError::custom("invalid UTF-8"))
 }

@@ -433,7 +433,7 @@ macro_rules! try_from_bridge {
 macro_rules! encode_bridge {
   ($(
     $flavor:ty: $bridge: ty {
-      $($ty:ty { 
+      $($ty:ty {
         convert: $to:expr $(;)?
       }), +$(,)?
     }
@@ -777,5 +777,71 @@ macro_rules! try_decode_owned_bridge {
         }
       )*
     )*
+  };
+}
+
+#[macro_export]
+macro_rules! bytes_bridge {
+  ($flavor:ty: $($ty:ty $([const $g:ident: usize])? {
+    from_slice: $from_bytes: expr;
+    as_slice: $to_bytes: expr;
+
+    type EncodedOwned = $owned_ty:ty {
+      from_ref: $from_ref: expr;
+      from: $from: expr;
+    } $(;)?
+  }), +$(,)?) => {
+    $(
+      $crate::encode_bridge!(
+        $flavor: [::core::primitive::u8] {
+          $ty {
+            convert: $to_bytes;
+          },
+        },
+      );
+
+      $crate::decode_bridge!(
+        $flavor: &'de [::core::primitive::u8] {
+          $ty {
+            convert: $from_bytes;
+          },
+        },
+      );
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from_bytes);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeRef<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@slice_to_impl $flavor: $ty: $from_bytes);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for &[::core::primitive::u8] {
+        $crate::bytes_bridge!(@slice_to_impl $flavor: $ty: $from_bytes);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for $owned_ty {
+        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from_ref);
+      }
+
+      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for $owned_ty {
+        $crate::bytes_bridge!(@to_impl $flavor: $ty: $from);
+      }
+    )*
+  };
+  (@into_target_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn into_target(self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      ::core::result::Result::Ok($from(self))
+    }
+  };
+  (@slice_to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      ::core::result::Result::Ok($from(*self))
+    }
+  };
+  (@to_impl $flavor:ty: $ty:ty: $from:expr) => {
+    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      ::core::result::Result::Ok($from(self))
+    }
   };
 }

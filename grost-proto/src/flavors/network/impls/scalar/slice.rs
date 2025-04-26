@@ -1,5 +1,10 @@
 use crate::{
-  buffer::Buffer, decode::Decode, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Network, Unknown, WireType}, partial_encode_primitives, IntoTarget, TypeRef
+  IntoTarget, TypeRef,
+  buffer::Buffer,
+  decode::Decode,
+  encode::Encode,
+  flavors::network::{Context, DecodeError, EncodeError, Network, Unknown, WireType},
+  partial_encode_primitives,
 };
 
 impl Encode<Network> for [u8] {
@@ -25,7 +30,10 @@ impl Encode<Network> for [u8] {
       buf[..this_len].copy_from_slice(self);
       Ok(this_len)
     } else {
-      Err(EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 
@@ -39,7 +47,10 @@ impl Encode<Network> for [u8] {
 
       Ok(this_len)
     } else {
-      Err(EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 
@@ -56,12 +67,18 @@ impl Encode<Network> for [u8] {
       }
       let encoded_len = varing::encoded_u32_varint_len(this_len as u32);
       if this_len + encoded_len > maximum_msg_len {
-        return Err(EncodeError::too_large(this_len + encoded_len, maximum_msg_len));
+        return Err(EncodeError::too_large(
+          this_len + encoded_len,
+          maximum_msg_len,
+        ));
       }
 
       Ok(this_len + encoded_len)
     } else {
-      Err(EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 
@@ -92,7 +109,10 @@ impl Encode<Network> for [u8] {
       buf[offset..encoded_len].copy_from_slice(self);
       Ok(this_len)
     } else {
-      Err(EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 }
@@ -117,7 +137,10 @@ impl<'de> Decode<'de, Network, Self> for &'de [u8] {
 
       Ok((src_len, src))
     } else {
-      Err(DecodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(DecodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 
@@ -144,7 +167,10 @@ impl<'de> Decode<'de, Network, Self> for &'de [u8] {
 
       Ok((end, &src[size_len..end]))
     } else {
-      Err(DecodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(DecodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 }
