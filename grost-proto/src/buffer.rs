@@ -24,7 +24,6 @@ pub trait Buffer<T> {
   }
 }
 
-
 impl<T> Buffer<T> for () {
   fn new() -> Self {}
 

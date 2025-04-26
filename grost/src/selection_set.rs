@@ -14,7 +14,11 @@
 //   error::{DecodeError, EncodeError},
 // };
 
-use grost_proto::{flavors::{network::WireType, Flavor}, unknown::Unknown, Tag};
+use grost_proto::{
+  Tag,
+  flavors::{Flavor, network::WireType},
+  unknown::Unknown,
+};
 use varing::Varint;
 
 use crate::flavors::network::{EncodeError, Identifier};
@@ -28,7 +32,10 @@ impl<S, UB> SelectionSet<S, UB> {
   /// Creates a new selection set with the given selection and unknown buffer.
   #[inline]
   pub const fn new(selection: S, unknown_buffer: Option<UB>) -> Self {
-    Self { selection, unknown_buffer }
+    Self {
+      selection,
+      unknown_buffer,
+    }
   }
 
   /// Returns the selection set.
@@ -95,25 +102,33 @@ impl<S> SelectionEncoder<S> {
   /// Creates a new selection encoder with the given representation.
   #[inline]
   pub const fn all() -> Self {
-    Self { repr: Repr::<S>::All }
+    Self {
+      repr: Repr::<S>::All,
+    }
   }
 
   /// Creates a new selection encoder with the given representation.
   #[inline]
   pub const fn none() -> Self {
-    Self { repr: Repr::<S>::None }
+    Self {
+      repr: Repr::<S>::None,
+    }
   }
 
   /// Creates a new selection encoder with the given representation.
   #[inline]
   pub const fn select(set: S) -> Self {
-    Self { repr: Repr::<S>::Select(set) }
+    Self {
+      repr: Repr::<S>::Select(set),
+    }
   }
 
   /// Creates a new selection encoder with the given representation.
   #[inline]
   pub const fn unselect(set: S) -> Self {
-    Self { repr: Repr::<S>::Unselect(set) }
+    Self {
+      repr: Repr::<S>::Unselect(set),
+    }
   }
 }
 
@@ -127,7 +142,7 @@ where
     macro_rules! len {
       ($iter:ident, $len:ident) => {{
         let data_len = $iter.map(|t| t.get().encoded_len()).sum::<usize>();
-        let len_size = (data_len as u32).encoded_len(); 
+        let len_size = (data_len as u32).encoded_len();
         $len + len_size + data_len
       }};
     }
@@ -142,7 +157,7 @@ where
           1 => SELECT_ONE_IDENTIFIER_ENCODED_LEN + iter.next().unwrap().get().encoded_len(),
           _ => len!(iter, SELECT_IDENTIFIER_ENCODED_LEN),
         }
-      },
+      }
       Repr::Unselect(set) => {
         let mut iter = set.clone().into_iter();
         match iter.len() {
@@ -150,7 +165,7 @@ where
           1 => UNSELECT_ONE_IDENTIFIER_ENCODED_LEN + iter.next().unwrap().get().encoded_len(),
           _ => len!(iter, UNSELECT_IDENTIFIER_ENCODED_LEN),
         }
-      },
+      }
     }
   }
 
@@ -159,7 +174,10 @@ where
     macro_rules! encode {
       (@all) => {{
         if dst.len() < ALL_IDENTIFIER_ENCODED_LEN {
-          return Err(EncodeError::insufficient_buffer(ALL_IDENTIFIER_ENCODED_LEN, dst.len()));
+          return Err(EncodeError::insufficient_buffer(
+            ALL_IDENTIFIER_ENCODED_LEN,
+            dst.len(),
+          ));
         }
 
         dst[..ALL_IDENTIFIER_ENCODED_LEN].copy_from_slice(ALL_IDENTIFIER_ENCODED);
@@ -167,7 +185,10 @@ where
       }};
       (@none) => {{
         if dst.len() < NONE_IDENTIFIER_ENCODED_LEN {
-          return Err(EncodeError::insufficient_buffer(NONE_IDENTIFIER_ENCODED_LEN, dst.len()));
+          return Err(EncodeError::insufficient_buffer(
+            NONE_IDENTIFIER_ENCODED_LEN,
+            dst.len(),
+          ));
         }
 
         dst[..NONE_IDENTIFIER_ENCODED_LEN].copy_from_slice(NONE_IDENTIFIER_ENCODED);
@@ -181,7 +202,12 @@ where
           ));
         }
 
-        $iter.next().unwrap().get().encode(&mut dst[$len..]).map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))
+        $iter
+          .next()
+          .unwrap()
+          .get()
+          .encode(&mut dst[$len..])
+          .map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))
       }};
       (@many $set:ident, $iter:ident, $encoded_len:ident, $encoded:ident) => {{
         let mut offset = 0;
@@ -194,11 +220,16 @@ where
         dst[..$encoded_len].copy_from_slice($encoded);
         offset += $encoded_len;
         let data_len = $iter.map(|t| t.get().encoded_len()).sum::<usize>();
-        let write = (data_len as u32).encode(&mut dst[offset..]).map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))?;
+        let write = (data_len as u32)
+          .encode(&mut dst[offset..])
+          .map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))?;
         offset += write;
 
         for tag in $set.clone() {
-          let write = tag.get().encode(&mut dst[offset..]).map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))?;
+          let write = tag
+            .get()
+            .encode(&mut dst[offset..])
+            .map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_len(), dst.len()))?;
           offset += write;
         }
         Ok(offset)
@@ -213,17 +244,19 @@ where
         match iter.len() {
           0 => encode!(@all),
           1 => encode!(@one iter, SELECT_ONE_IDENTIFIER_ENCODED_LEN),
-          _ => encode!(@many set, iter, SELECT_IDENTIFIER_ENCODED_LEN, SELECT_IDENTIFIER_ENCODED), 
+          _ => encode!(@many set, iter, SELECT_IDENTIFIER_ENCODED_LEN, SELECT_IDENTIFIER_ENCODED),
         }
-      },
+      }
       Repr::Unselect(set) => {
         let mut iter = set.clone().into_iter();
         match iter.len() {
           0 => encode!(@none),
           1 => encode!(@one iter, UNSELECT_ONE_IDENTIFIER_ENCODED_LEN),
-          _ => encode!(@many set, iter, UNSELECT_IDENTIFIER_ENCODED_LEN, UNSELECT_IDENTIFIER_ENCODED),
+          _ => {
+            encode!(@many set, iter, UNSELECT_IDENTIFIER_ENCODED_LEN, UNSELECT_IDENTIFIER_ENCODED)
+          }
         }
-      },
+      }
     }
   }
 }
@@ -247,13 +280,13 @@ pub enum SelectionIdentifier {
   Unknown(u32),
 }
 
-pub struct SelectionDecoder {
-  
-}
+pub struct SelectionDecoder {}
 
 impl SelectionDecoder {
   /// Decodes the selection identifier from the given buffer.
-  pub fn decode_identifier<F: Flavor>(src: &[u8]) -> Result<(usize, SelectionIdentifier), grost_proto::DecodeError<F>> {
+  pub fn decode_identifier<F: Flavor>(
+    src: &[u8],
+  ) -> Result<(usize, SelectionIdentifier), grost_proto::DecodeError<F>> {
     let (read, val) = u32::decode(src)?;
     let identifier = Identifier::from_u32(val);
 

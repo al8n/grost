@@ -1,11 +1,11 @@
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
-use syn::{parse_quote, Lifetime, Type};
+use syn::{Lifetime, Type, parse_quote};
 
 pub use int::Int;
 pub use uint::Uint;
 
-use crate::{flavor::FlavorExt, SafeIdent};
+use crate::{SafeIdent, flavor::FlavorExt};
 
 mod int;
 mod uint;
@@ -70,7 +70,7 @@ impl TyRepr {
       Self::Optional(ty) => {
         let ty = ty.ty();
         parse_quote!(::core::option::Option<#ty>)
-      },
+      }
     }
   }
 
@@ -87,7 +87,7 @@ impl TyRepr {
       Self::Optional(ty) => {
         let ty = ty.ty();
         parse_quote!(::core::option::Option<& #lifetime #mutability #ty>)
-      },
+      }
     }
   }
 }

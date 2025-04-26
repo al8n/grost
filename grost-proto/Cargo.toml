@@ -20,7 +20,32 @@ quickcheck = ["dep:quickcheck"]
 # Enable `syn`, `proc-macro2`, and `quote` features for code generation
 codegen = ["dep:syn", "dep:proc-macro2", "dep:quote", "dep:paste"]
 
+arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
+arbitrary-int = ["arbitrary-int_1"]
+
+bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
+bnum = ["bnum_0_13"]
+
+decimal_1 = ["dep:rust_decimal_1"]
+decimal = ["decimal_1"]
+
+half_2 = ["dep:half_2"]
+half = ["half_2"]
+
+num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
+num-rational = ["num-rational_0_4"]
+
+num-complex_0_4 = ["dep:num-complex_0_4", "varing/num-complex_0_4"]
+num-complex = ["num-complex_0_4"]
+
+ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
+ruint = ["ruint_1"]
+
 [dependencies]
+ref-cast = { version = "1", default-features = false }
+seq-macro = "0.3"
+simdutf8 = { version = "0.1", default-features = false, optional = true }
+
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bitflags = { version = "2", default-features = false }
 derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
@@ -28,6 +53,14 @@ heapless_0_8 = { package = "heapless", version = "0.8", default-features = false
 varing.workspace = true
 quickcheck = { version = "1", optional = true }
 thiserror.workspace = true
+
+arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
+half_2 = { package = "half", version = "2", default-features = false, optional = true }
+num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
+num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
+ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
+rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
 
 syn = { workspace = true, optional = true }
 proc-macro2 = { version = "1", optional = true }

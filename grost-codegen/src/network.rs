@@ -1,7 +1,7 @@
-use smol_str::SmolStr;
 use quote::quote;
+use smol_str::SmolStr;
 
-use super::{Flavor, Enum, Struct};
+use super::{Enum, Flavor, Struct};
 
 #[derive(Clone)]
 pub struct Network {
@@ -13,7 +13,10 @@ impl Network {
   /// Returns a new `Network` flavor
   pub fn new(path_to_grost: &syn::Path) -> Self {
     let ty = syn::parse_quote!(#path_to_grost::__private::flavors::Network);
-    Self { ty, name: core::any::type_name::<Self>().into() }
+    Self {
+      ty,
+      name: core::any::type_name::<Self>().into(),
+    }
   }
 }
 
@@ -125,7 +128,7 @@ impl Flavor for Network {
           }
         }
 
-        
+
       };
     }
   }

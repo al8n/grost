@@ -1,6 +1,6 @@
 use crate::{
   Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
-  buffer::{BytesBuffer, Buffer},
+  buffer::{Buffer, BytesBuffer},
   flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
   unknown::Unknown,
 };

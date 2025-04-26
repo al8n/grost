@@ -1,10 +1,10 @@
 use super::flavors::Flavor;
 
-pub use struct_::*;
 pub use enum_::*;
+pub use struct_::*;
 
-mod struct_;
 mod enum_;
+mod struct_;
 
 /// The type in the Graph protocol schema
 #[derive(Debug)]

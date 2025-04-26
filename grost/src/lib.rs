@@ -10,7 +10,8 @@ extern crate std;
 // pub use encode::*;
 pub use flavors::Flavor;
 pub use grost_proto::{
-  DecodeError, EncodeError, IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned, TypeRef, Wirable, buffer,
+  DecodeError, EncodeError, IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned,
+  TypeRef, Wirable, buffer,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   reflection, unknown,
@@ -65,11 +66,11 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 pub mod __private {
   pub use super::*;
   pub use bitflags;
-  pub use buffer::{BytesBuffer, Buffer};
+  pub use buffer::{Buffer, BytesBuffer};
   pub use either;
+  pub use selection_set::SelectionSet;
   pub use unknown::*;
   pub use varing;
-  pub use selection_set::SelectionSet;
 
   #[cfg(feature = "bnum_0_13")]
   pub use bnum_0_13 as bnum;

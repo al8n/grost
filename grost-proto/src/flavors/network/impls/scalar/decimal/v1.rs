@@ -1,0 +1,21 @@
+use crate::{bridge, flavors::network::Network};
+use rust_decimal_1::Decimal as f128;
+
+bridge!(
+  Network: u128 {
+    f128 {
+      from: convert_u128_to_f128;
+      to: convert_f128_to_u128;
+    },
+  },
+);
+
+#[inline]
+const fn convert_f128_to_u128(v: &f128) -> u128 {
+  u128::from_le_bytes(v.serialize())
+}
+
+#[inline]
+fn convert_u128_to_f128(v: u128) -> f128 {
+  f128::deserialize(v.to_le_bytes())
+}

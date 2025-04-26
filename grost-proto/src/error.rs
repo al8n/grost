@@ -3,10 +3,10 @@ use core::num::NonZeroUsize;
 use super::{Tag, flavors::Flavor};
 
 /// A data encoding error
-#[derive(Debug, thiserror::Error)]
-pub enum EncodeError {
+#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
+pub enum EncodeError<F: Flavor + ?Sized> {
   /// Returned when the encoded buffer is too small to hold the bytes format of the types.
-  #[error("insufficient buffer capacity, required: {required}, remaining: {remaining}")]
+  #[display("insufficient buffer capacity, required: {required}, remaining: {remaining}")]
   InsufficientBytesBuffer {
     /// The required buffer capacity.
     required: usize,
@@ -14,20 +14,35 @@ pub enum EncodeError {
     remaining: usize,
   },
   /// Returned when the data in encoded format is larger than the maximum allowed size.
-  #[error("encoded data is too large, the maximum allowed size is {MAX} bytes", MAX = u32::MAX)]
-  TooLarge,
+  #[display("encoded data size {size} is too large, the maximum allowed size is {maximum} bytes")]
+  TooLarge {
+    /// The maximum allowed size.
+    maximum: usize,
+    /// The size of the encoded data.
+    size: usize,
+  },
+  /// Returned when the type cannot be encoded in the given wire type format
+  #[display("cannot encode {ty} in {wire_type} format")]
+  UnsupportedWireType {
+    /// The type of the value.
+    ty: &'static str,
+    /// The wire type of the value.
+    wire_type: F::WireType,
+  },
   /// A custom encoding error.
-  #[error("{0}")]
+  #[display("{_0}")]
   #[cfg(any(feature = "std", feature = "alloc"))]
   Custom(std::borrow::Cow<'static, str>),
 
   /// A custom encoding error.
-  #[error("{0}")]
+  #[display("{_0}")]
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   Custom(&'static str),
 }
 
-impl EncodeError {
+impl<F: Flavor + ?Sized> core::error::Error for EncodeError<F> {}
+
+impl<F: Flavor + ?Sized> EncodeError<F> {
   /// Creates an insufficient buffer error.
   #[inline]
   pub const fn insufficient_buffer(required: usize, remaining: usize) -> Self {
@@ -35,6 +50,18 @@ impl EncodeError {
       required,
       remaining,
     }
+  }
+
+  /// Creates a wire type not supported error.
+  #[inline]
+  pub const fn unsupported_wire_type(ty: &'static str, wire_type: F::WireType) -> Self {
+    Self::UnsupportedWireType { ty, wire_type }
+  }
+
+  /// Creates a too large error.
+  #[inline]
+  pub const fn too_large(maximum: usize, size: usize) -> Self {
+    Self::TooLarge { maximum, size }
   }
 
   /// Creates a new encoding error from a [`varing::EncodeError`].
@@ -92,7 +119,7 @@ impl EncodeError {
   }
 }
 
-impl From<varing::EncodeError> for EncodeError {
+impl<F: Flavor + ?Sized> From<varing::EncodeError> for EncodeError<F> {
   #[inline]
   fn from(value: varing::EncodeError) -> Self {
     Self::from_varint_error(value)
@@ -100,14 +127,14 @@ impl From<varing::EncodeError> for EncodeError {
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-impl From<std::borrow::Cow<'static, str>> for EncodeError {
+impl<F: Flavor + ?Sized> From<std::borrow::Cow<'static, str>> for EncodeError<F> {
   fn from(value: std::borrow::Cow<'static, str>) -> Self {
     Self::Custom(value)
   }
 }
 
 #[cfg(not(any(feature = "std", feature = "alloc")))]
-impl From<&'static str> for EncodeError {
+impl<F: Flavor + ?Sized> From<&'static str> for EncodeError<F> {
   fn from(value: &'static str) -> Self {
     Self::Custom(value)
   }
@@ -168,6 +195,15 @@ pub enum DecodeError<F: Flavor + ?Sized> {
     tag: Tag,
   },
 
+  /// Returned when the type cannot be encoded in the given wire type format
+  #[display("cannot encode {ty} in {wire_type} format")]
+  UnsupportedWireType {
+    /// The type of the value.
+    ty: &'static str,
+    /// The wire type of the value.
+    wire_type: F::WireType,
+  },
+
   /// Returned when there is a unknown wire type.
   #[display("identifier mismatch: expect (wire_type: {}, tag: {}), actual (wire_type: {}, tag: {})", expect.0, expect.1, actual.0, actual.1)]
   IdentifierMismatch {
@@ -219,20 +255,46 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
 
   /// Creates a new missing field decoding error.
   #[inline]
-  pub const fn field_not_found(ty: &'static str, field: &'static str, wire_type: F::WireType, tag: Tag) -> Self {
-    Self::FieldNotFound { ty, field, wire_type, tag }
+  pub const fn field_not_found(
+    ty: &'static str,
+    field: &'static str,
+    wire_type: F::WireType,
+    tag: Tag,
+  ) -> Self {
+    Self::FieldNotFound {
+      ty,
+      field,
+      wire_type,
+      tag,
+    }
   }
 
   /// Creates a new duplicate field decoding error.
   #[inline]
-  pub const fn duplicate_field(ty: &'static str, field: &'static str, wire_type: F::WireType, tag: Tag) -> Self {
-    Self::DuplicateField { ty, field, wire_type, tag }
+  pub const fn duplicate_field(
+    ty: &'static str,
+    field: &'static str,
+    wire_type: F::WireType,
+    tag: Tag,
+  ) -> Self {
+    Self::DuplicateField {
+      ty,
+      field,
+      wire_type,
+      tag,
+    }
   }
 
   /// Creates a new unknown wire type decoding error.
   #[inline]
   pub const fn unknown_identifier(ty: &'static str, wire_type: F::WireType, tag: Tag) -> Self {
     Self::UnknownIdentifier { ty, wire_type, tag }
+  }
+
+  /// Creates a wire type not supported error.
+  #[inline]
+  pub const fn unsupported_wire_type(ty: &'static str, wire_type: F::WireType) -> Self {
+    Self::UnsupportedWireType { ty, wire_type }
   }
 
   /// Creates a new identifier mismatch decoding error.

@@ -116,10 +116,13 @@ impl Field {
         .map(|converter| Getter::new_with_converter(self.name.clone(), converter))
         .unwrap_or_else(|| {
           if self.ty.repr().is_optional() {
-            Getter::new_with_converter(self.name.clone(), getter::Converter::new(
-              parse_quote!(::core::option::Option::as_ref),
-              self.ty.repr().ref_ty(false, None),
-            ))
+            Getter::new_with_converter(
+              self.name.clone(),
+              getter::Converter::new(
+                parse_quote!(::core::option::Option::as_ref),
+                self.ty.repr().ref_ty(false, None),
+              ),
+            )
           } else {
             Getter::new(self.name.clone(), self.ty.ty().clone())
           }
@@ -157,10 +160,13 @@ impl Field {
         .map(|converter| Getter::new_with_converter(self.name.clone(), converter))
         .unwrap_or_else(|| {
           if self.ty.repr().is_optional() {
-            Getter::new_with_converter(self.name.clone(), getter::Converter::new(
-              parse_quote!(::core::option::Option::as_mut),
-              self.ty.repr().ref_ty(true, None),
-            ))
+            Getter::new_with_converter(
+              self.name.clone(),
+              getter::Converter::new(
+                parse_quote!(::core::option::Option::as_mut),
+                self.ty.repr().ref_ty(true, None),
+              ),
+            )
           } else {
             Getter::new(self.name.clone(), self.ty.ty().clone())
           }

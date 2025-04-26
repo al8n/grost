@@ -11,7 +11,7 @@ use syn::parse_quote;
 
 use crate::{Field, Struct, field::getter, ty::Ty};
 
-use super::{DefaultGenerator, Generator, SafeIdent, Enum, EnumVariant};
+use super::{DefaultGenerator, Enum, EnumVariant, Generator, SafeIdent};
 
 #[test]
 fn test_enum_generate() {
@@ -70,9 +70,9 @@ fn test_struct_generate() {
     //     parse_quote!(core::option::Option::as_deref),
     //     parse_quote!(Option<&str>),
     //   )),
-      //   false,
-      // ),
-    ];
+    //   false,
+    // ),
+  ];
   let struct_ = Struct::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")
     .with_visibility(parse_quote!(pub));

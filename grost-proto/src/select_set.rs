@@ -9,7 +9,11 @@ impl<S, UT, UB> SelectionSet<S, UT, UB> {
   /// Creates a new selection set with the given selection and unknown buffer.
   #[inline]
   pub const fn new(selection: S, unknown_tags: Option<UT>, unknown_buffer: Option<UB>) -> Self {
-    Self { selection, unknown_tags, unknown_buffer }
+    Self {
+      selection,
+      unknown_tags,
+      unknown_buffer,
+    }
   }
 
   /// Returns the selection set.

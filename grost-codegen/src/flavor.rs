@@ -4,7 +4,6 @@ use syn::Ident;
 
 use super::{Enum, Struct};
 
-
 /// The flavor
 pub trait Flavor {
   /// Returns the full qualify path of the flavor type.
@@ -124,7 +123,9 @@ impl<F: Flavor + ?Sized> Flavor for Box<F> {
     path_to_grost: &syn::Path,
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
-    self.as_ref().generate_selection_codec(path_to_grost, struct_)
+    self
+      .as_ref()
+      .generate_selection_codec(path_to_grost, struct_)
   }
 }
 
@@ -143,7 +144,4 @@ pub trait FlavorExt: Flavor {
   }
 }
 
-impl<F> FlavorExt for F
-where
-  F: Flavor + ?Sized,
-{}
+impl<F> FlavorExt for F where F: Flavor + ?Sized {}

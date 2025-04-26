@@ -7,20 +7,19 @@ use indexmap::IndexMap;
 pub use safe_ident::*;
 pub use struct_::*;
 
-
 use heck::ToShoutySnakeCase;
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::Ident;
 
 mod case;
-mod safe_ident;
-/// structs
-mod struct_;
 /// Enum structs
 mod enum_;
 mod flavor;
 mod network;
+mod safe_ident;
+/// structs
+mod struct_;
 
 /// Types for the generator
 pub mod ty;
@@ -40,7 +39,6 @@ pub trait EnumCodecGenerator {
     enum_: &Enum,
   ) -> proc_macro2::TokenStream;
 }
-
 
 // /// The flavor wants to be generated
 // #[derive(Clone)]
@@ -96,14 +94,10 @@ pub trait EnumCodecGenerator {
 //     &self.ty
 //   }
 
-
-
 //   /// Returns the name of the flavor
 //   pub fn name(&self) -> &str {
 //     &self.name
 //   }
-
-
 
 //   fn field_reflection_name(&self, field_name: &str) -> Ident {
 //     let flavor_name_ssc = self.name().to_shouty_snake_case();
@@ -216,9 +210,10 @@ impl Generator for DefaultGenerator {
     #[cfg(not(feature = "arbitrary"))]
     let arbitrary = quote! {};
     let repr_conversion = enum_.enum_repr_conversion(&self.grost_path);
-    let codecs = self.flavors.iter().map(|(_, f)| {
-      f.generate_enum_codec(&self.grost_path, enum_)
-    });
+    let codecs = self
+      .flavors
+      .iter()
+      .map(|(_, f)| f.generate_enum_codec(&self.grost_path, enum_));
     let conversions = self
       .flavors
       .iter()

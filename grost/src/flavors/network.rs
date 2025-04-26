@@ -20,6 +20,7 @@ pub struct Network;
 impl Flavor for Network {
   type Context = Context;
   type WireType = WireType;
+  type Identifier = Identifier;
   type EncodeError = EncodeError;
   type DecodeError = DecodeError;
 }

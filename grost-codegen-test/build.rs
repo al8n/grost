@@ -81,10 +81,7 @@ fn struct_codegen_test(name: &str) {
     ),
     Field::new(
       SafeIdent::new("email"),
-      Ty::optional(Ty::primitive(
-        parse_quote!(::std::string::String),
-        "String",
-      )),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
       Tag::new(3),
     ),
     // .with_getter(

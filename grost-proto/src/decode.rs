@@ -1,6 +1,7 @@
-use crate::unknown::Unknown;
-
-use super::{Wirable, buffer::{BytesBuffer, Buffer}, flavors::Flavor};
+use super::{
+  buffer::{Buffer, BytesBuffer},
+  flavors::Flavor,
+};
 
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
@@ -8,18 +9,35 @@ use super::{Wirable, buffer::{BytesBuffer, Buffer}, flavors::Flavor};
 /// with support for both direct and length-prefixed decoding.
 ///
 /// * `'de` - The lifetime of the input data
-pub trait Decode<'de, F, O>: Wirable<F>
+pub trait Decode<'de, F, O>
 where
-  F: Flavor,
+  F: Flavor + ?Sized,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
+  fn decode<UB>(
+    context: &F::Context,
+    wire_type: F::WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, O), F::DecodeError>
   where
     Self: Sized + 'de,
-    UB: Buffer<Unknown<F, &'de [u8]>> + 'de;
+    UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
+
+  /// Decodes an instance of this type from a length-delimited byte buffer.
+  ///
+  /// The function consumes the entire buffer and returns both the
+  /// number of bytes consumed and the decoded instance.
+  fn decode_length_delimited<UB>(
+    context: &F::Context,
+    wire_type: F::WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, O), F::DecodeError>
+  where
+    Self: Sized + 'de,
+    UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
 }
 
 /// A marker trait for types that can be decoded without borrowing data.
@@ -31,15 +49,33 @@ where
 /// may not outlive the decoded value.
 pub trait DecodeOwned<F, O>: Decode<'static, F, O> + 'static
 where
-  F: Flavor,
+  F: Flavor + ?Sized,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, Self), F::DecodeError>
+  fn decode_owned<B, UB>(
+    context: &F::Context,
+    wire_type: F::WireType,
+    src: B,
+  ) -> Result<(usize, Self), F::DecodeError>
   where
     Self: Sized + 'static,
     B: BytesBuffer + 'static,
-    UB: Buffer<Unknown<F, B>> + 'static;
+    UB: Buffer<F::Unknown<B>> + 'static;
+
+  /// Decodes an instance of this type from a length-delimited byte buffer.
+  ///
+  /// The function consumes the entire buffer and returns both the
+  /// number of bytes consumed and the decoded instance.
+  fn decode_length_delimited_owned<B, UB>(
+    context: &F::Context,
+    wire_type: F::WireType,
+    src: B,
+  ) -> Result<(usize, Self), F::DecodeError>
+  where
+    Self: Sized + 'static,
+    B: BytesBuffer + 'static,
+    UB: Buffer<F::Unknown<B>> + 'static;
 }

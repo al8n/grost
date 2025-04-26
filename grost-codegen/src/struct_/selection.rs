@@ -138,7 +138,9 @@ impl Struct {
 
     let vis = self.visibility.as_ref();
     let doc = format!(" The selection type for {}", self.name.name_str());
-    let codecs = flavors.iter().map(|(_, f)| self.generate_codec(path_to_grost, f));
+    let codecs = flavors
+      .iter()
+      .map(|(_, f)| self.generate_codec(path_to_grost, f));
 
     quote! {
       #selection_flags
@@ -233,11 +235,7 @@ impl Struct {
     }
   }
 
-  fn generate_codec<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavors: &F,
-  ) -> proc_macro2::TokenStream
+  fn generate_codec<F>(&self, path_to_grost: &syn::Path, flavors: &F) -> proc_macro2::TokenStream
   where
     F: Flavor + ?Sized,
   {
@@ -251,11 +249,11 @@ impl Struct {
         const SELECT_TAG: ::core::primitive::u8 = 3;
         const UNSELECT_TAG: ::core::primitive::u8 = 4;
         const SELECT_ONE_TAG: ::core::primitive::u8 = 5;
-        const UNSELECT_ONE_TAG: ::core::primitive::u8 = 6;        
-  
+        const UNSELECT_ONE_TAG: ::core::primitive::u8 = 6;
+
         impl #name {
           /// Encode the selection into a buffer.
-          /// 
+          ///
           /// Returns the number of bytes written to the buffer.
           #[inline]
           pub fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
@@ -338,7 +336,7 @@ impl Struct {
               (@many $fn:ident) => {{
                 let data_size = self.$fn::<#flavor_ty>().map(|f| #path_to_grost::__private::varing::encoded_u32_varint_len(f.tag().get())).sum::<::core::primitive::usize>();
                 let data_size_len = #path_to_grost::__private::varing::encoded_u32_varint_len(data_size as ::core::primitive::u32);
-                1 + data_size_len + data_size 
+                1 + data_size_len + data_size
               }};
               (@single $fn:ident) => {{
                 let selected = self.$fn::<#flavor_ty>().next().unwrap().tag().get();
@@ -371,7 +369,7 @@ impl Struct {
           }
 
           /// Decodes the selection from a buffer.
-          pub fn decode<'a, F, UB>(src: &'a [u8]) -> ::core::result::Result<(::core::primitive::usize, #path_to_grost::__private::SelectionSet<Self, UB>), #path_to_grost::__private::DecodeError<F>> 
+          pub fn decode<'a, F, UB>(src: &'a [u8]) -> ::core::result::Result<(::core::primitive::usize, #path_to_grost::__private::SelectionSet<Self, UB>), #path_to_grost::__private::DecodeError<F>>
           where
             F: #path_to_grost::__private::Flavor + ?::core::marker::Sized,
             UB: #path_to_grost::__private::Buffer<#path_to_grost::__private::Unknown<F, &'a [::core::primitive::u8]>> + 'a,
@@ -398,12 +396,12 @@ impl Struct {
                 }
 
                 let mut selection = Self::empty();
-                
+
                 while offset < total {
                   let (read, tag) = #path_to_grost::__private::varing::decode_u32_varint(&src[offset..])?;
                   offset += read;
 
-                  
+
                 }
 
                 ::core::result::Result::Ok((total, #path_to_grost::__private::SelectionSet::new(selection, ::core::option::Option::None)))
@@ -426,7 +424,7 @@ impl Struct {
                 ::core::todo!()
               },
               _ => {
-              
+
               }
             }
           }
