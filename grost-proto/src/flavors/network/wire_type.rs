@@ -1,7 +1,7 @@
 /// A wire type for encoding and decoding messages.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
 #[repr(u8)]
-#[display("{str}", str = "as_str()")]
+#[display("{str}", str = self.as_str())]
 pub enum WireType {
   /// Zero size wire type.
   ///

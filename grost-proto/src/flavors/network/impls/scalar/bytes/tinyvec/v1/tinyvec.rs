@@ -2,7 +2,7 @@
 const _: () = {
   use crate::flavors::network::Network;
   use bytes_1::Bytes;
-  use tinyvec_1::TinyVec;
+  use ::tinyvec_1::TinyVec;
 
   use crate::{bytes_bridge, into_target, type_owned, type_ref};
 

@@ -196,7 +196,7 @@ pub enum DecodeError<F: Flavor + ?Sized> {
   },
 
   /// Returned when the type cannot be encoded in the given wire type format
-  #[display("cannot encode {ty} in {wire_type} format")]
+  #[display("cannot decode {ty} in {wire_type} format")]
   UnsupportedWireType {
     /// The type of the value.
     ty: &'static str,

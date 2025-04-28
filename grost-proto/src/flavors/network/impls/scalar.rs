@@ -1,4 +1,3 @@
-mod array;
 mod arbitrary_int;
 mod bnum;
 mod bool;

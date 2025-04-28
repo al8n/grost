@@ -35,6 +35,8 @@ macro_rules! bytes_message {
   };
 }
 
+mod array;
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod arc;
 
