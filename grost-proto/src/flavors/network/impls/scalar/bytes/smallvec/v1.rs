@@ -1,19 +1,34 @@
-use crate::flavors::network::{Network, WireType};
-use smallvec_1::SmallVec;
-
 #[cfg(feature = "bytes_1")]
 const _: () = {
+  use crate::flavors::network::Network;
   use bytes_1::Bytes;
+  use smallvec_1::SmallVec;
 
-  bytes_bridge!(
-    Network: (WireType::LengthDelimited) : SmallVec<[u8; N]> [const N: usize] {
-      from_bytes: |bytes: &[u8]| Ok(SmallVec::from_slice(bytes));
-      to_bytes: SmallVec::as_slice;
+  use crate::{bytes_bridge, into_target, type_owned, type_ref};
 
-      type EncodedOwned = Bytes {
-        from_ref: |s: &Bytes| Ok(SmallVec::from_slice(s));
-        from: |s: Bytes| Ok(SmallVec::from_slice(&s));
-      };
+  bytes_bridge!(Network: SmallVec<[u8; N]> [const N: usize] {
+    from_slice: |val: &[u8]| SmallVec::<[u8; N]>::from(val);
+    as_slice: AsRef::as_ref;
+  
+    type EncodedOwned = Bytes {
+      from_ref: |s: &Bytes| Ok(SmallVec::<[u8; N]>::from(s.as_ref()));
+      from: |s: Bytes| Ok(Vec::from(s).into());
     }
-  );
+  },);
+
+  into_target!(Network: Bytes => SmallVec<[u8; N]> {
+    |val: Bytes| Ok(Vec::from(val).into())
+  } [const N: usize]);
+  into_target!(Network: &[u8] => SmallVec<[u8; N]> {
+    |val: &[u8]| Ok(SmallVec::from(val))
+  } [const N: usize]);
+  into_target!(@self Network: SmallVec<[u8; N]> [const N: usize]);
+  type_ref!(@mapping Network: &[u8] => SmallVec<[u8; N]> {
+    |val: &[u8]| Ok(SmallVec::from(val))
+  } [const N: usize]);
+  type_owned!(@mapping Network: Bytes => SmallVec<[u8; N]> {
+    |val: &Bytes| Ok(SmallVec::from(val.as_ref()))
+  } [const N: usize]);
+  type_owned!(@clone Network: SmallVec<[u8; N]> [const N: usize]);
+  bytes_message!(SmallVec<[u8; N]> => Bytes [const N: usize]);
 };

@@ -1,5 +1,9 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_bridge, encode_bridge, flavors::network::{Context, DecodeError, Network, Unknown, WireType}, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef
+  Message, PartialMessage,
+  decode::{Decode, DecodeOwned},
+  decode_bridge, encode_bridge,
+  flavors::network::{Context, DecodeError, Network, Unknown, WireType},
+  into_target, type_owned, type_ref,
 };
 use bytes_1::Bytes;
 
@@ -18,6 +22,15 @@ decode_bridge!(
     },
   },
 );
+
+into_target!(@self Network: Bytes);
+into_target!(Network: &[u8] => Bytes {
+  |val: &[u8]| Ok(Bytes::copy_from_slice(val))
+});
+type_ref!(@mapping Network: &[u8] => Bytes {
+  |val: &[u8]| Ok(Bytes::copy_from_slice(val))
+});
+type_owned!(@clone Network: Bytes);
 
 impl DecodeOwned<Network, Self> for Bytes {
   fn decode_owned<B, UB>(
@@ -50,30 +63,6 @@ impl DecodeOwned<Network, Self> for Bytes {
       src.as_bytes(),
     )
     .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
-  }
-}
-
-impl IntoTarget<Network, Self> for Bytes {
-  fn into_target(self) -> Result<Self, <Network as crate::flavors::Flavor>::DecodeError> {
-    Ok(self)
-  }
-}
-
-impl IntoTarget<Network, Bytes> for &[u8] {
-  fn into_target(self) -> Result<Bytes, <Network as crate::flavors::Flavor>::DecodeError> {
-    Ok(Bytes::copy_from_slice(self))
-  }
-}
-
-impl TypeRef<Network, Bytes> for &[u8] {
-  fn to(&self) -> Result<Bytes, <Network as crate::flavors::Flavor>::DecodeError> {
-    Ok(Bytes::copy_from_slice(self))
-  }
-}
-
-impl TypeOwned<Network, Self> for Bytes {
-  fn to(&self) -> Result<Self, <Network as crate::flavors::Flavor>::DecodeError> {
-    Ok(self.clone())
   }
 }
 

@@ -158,7 +158,19 @@ macro_rules! type_ref {
     fn to(&self) -> ::core::result::Result<Self, <$flavor as $crate::__private::Flavor>::DecodeError> {
       ::core::result::Result::Ok(::core::clone::Clone::clone(self))
     }
-  }
+  };
+  (@mapping $flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $(
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<$flavor, $target> for $ty {
+        $crate::type_ref!(@mapping_impl $flavor: $target { $expr });
+      }
+    )*
+  };
+  (@mapping_impl $flavor:ty: $target:ty { $expr: expr }) => {
+    fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      $expr(self)
+    }
+  };
 }
 
 /// A macro emits [`TypeOwned`](super::TypeOwned) implementations for `Self`
@@ -167,14 +179,14 @@ macro_rules! type_owned {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, Self> for $ty {
-        $crate::type_ref!(@copy_impl $flavor);
+        $crate::type_owned!(@copy_impl $flavor);
       }
     )*
   };
   (@clone $flavor:ty: $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, Self> for $ty {
-        $crate::type_ref!(@clone_impl);
+        $crate::type_owned!(@clone_impl $flavor);
       }
     )*
   };
@@ -187,22 +199,46 @@ macro_rules! type_owned {
     fn to(&self) -> ::core::result::Result<Self, <$flavor as $crate::__private::Flavor>::DecodeError> {
       ::core::result::Result::Ok(::core::clone::Clone::clone(self))
     }
-  }
+  };
+  (@mapping $flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $(
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, $target> for $ty {
+        $crate::type_owned!(@mapping_impl $flavor: $target { $expr });
+      }
+    )*
+  };
+  (@mapping_impl $flavor:ty: $target:ty { $expr: expr }) => {
+    fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      $expr(self)
+    }
+  };
 }
 
 /// A macro emits [`IntoTarget`](super::IntoTarget) implementations for `Self`
 #[macro_export]
 macro_rules! into_target {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
+  (@self $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, Self> for $ty {
-        $crate::into_target!(@impl $flavor);
+        $crate::into_target!(@self_impl $flavor);
       }
     )*
   };
-  (@impl $flavor:ty) => {
+  (@self_impl $flavor:ty) => {
     fn into_target(self) -> ::core::result::Result<Self, <$flavor as $crate::__private::Flavor>::DecodeError> {
       ::core::result::Result::Ok(self)
+    }
+  };
+  ($flavor:ty: $($ty:ty => $target:ty { $expr:expr } $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
+    $(
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, $target> for $ty {
+        $crate::into_target!(@impl $flavor: $target { $expr });
+      }
+    )*
+  };
+  (@impl $flavor:ty: $target:ty { $expr:expr }) => {
+    fn into_target(self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      $expr(self)
     }
   }
 }
@@ -213,12 +249,12 @@ macro_rules! conversion {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $crate::type_ref!($flavor: $($ty $([ $(const $g: usize),* ])?),+);
     $crate::type_owned!($flavor: $($ty $([ $(const $g: usize),* ])?),+);
-    $crate::into_target!($flavor: $($ty $([ $(const $g: usize),* ])?),+);
+    $crate::into_target!(@self $flavor: $($ty $([ $(const $g: usize),* ])?),+);
   };
   (@clone $flavor:ty: $ty:ty $($([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $crate::type_ref!(@clone $flavor: $($ty $([ $(const $g: usize),* ])?),+);
     $crate::type_owned!(@clone $flavor: $($ty $([ $(const $g: usize),* ])?),+);
-    $crate::into_target!($($ty $flavor: $([ $(const $g: usize),* ])?),+);
+    $crate::into_target!(@self $($ty $flavor: $([ $(const $g: usize),* ])?),+);
   };
 }
 
@@ -433,7 +469,7 @@ macro_rules! try_from_bridge {
 macro_rules! encode_bridge {
   ($(
     $flavor:ty: $bridge: ty {
-      $($ty:ty {
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
         convert: $to:expr $(;)?
       }), +$(,)?
     }
@@ -441,13 +477,13 @@ macro_rules! encode_bridge {
     $(
       $(
         $crate::encode_bridge!(@encode $flavor: $bridge {
-          $ty {
+          $ty $([ $(const $g: usize),* ])? {
             to: $to;
           }
         });
 
         $crate::encode_bridge!(@partial_encode $flavor: $bridge {
-          $ty {
+          $ty $([ $(const $g: usize),* ])? {
             to: $to;
           }
         });
@@ -483,14 +519,14 @@ macro_rules! encode_bridge {
   };
   (@encode $flavor:ty: $(
     $bridge:ty {
-      $($ty:ty {
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
         to: $to:expr $(;)?
       }), +$(,)?
     }
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::Encode<$flavor> for $ty {
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$flavor> for $ty {
           $crate::encode_bridge!(@encode_impl $flavor: $bridge => $to);
         }
       )*
@@ -535,14 +571,14 @@ macro_rules! encode_bridge {
   };
   (@partial_encode $flavor:ty: $(
     $bridge:ty {
-      $($ty:ty {
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
         to: $to:expr $(;)?
       }), +$(,)?
     }
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::PartialEncode<$flavor> for $ty {
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialEncode<$flavor> for $ty {
           type Selection = <$bridge as $crate::__private::PartialEncode<$flavor>>::Selection;
 
           $crate::encode_bridge!(@partial_encode_impl $flavor: $bridge => $to);
@@ -557,14 +593,14 @@ macro_rules! encode_bridge {
 macro_rules! decode_bridge {
   ($(
     $flavor:ty: $bridge: ty {
-      $($ty:ty {
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
         convert: $from:expr $(;)?
       }), +$(,)?
     }
   ),+$(,)?) => {
     $(
       $(
-        impl<'de> $crate::__private::Decode<'de, $flavor, Self> for $ty {
+        impl<'de, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Decode<'de, $flavor, Self> for $ty {
           $crate::decode_bridge!(@decode_impl $flavor: $from => $bridge);
         }
       )*
@@ -602,14 +638,14 @@ macro_rules! decode_bridge {
 macro_rules! decode_owned_bridge {
   ($(
     $flavor:ty: $bridge: ty {
-      $($ty:ty {
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
         convert: $from:expr $(;)?
       }), +$(,)?
     }
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::__private::DecodeOwned<$flavor, Self> for $ty
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::DecodeOwned<$flavor, Self> for $ty
         where
           $bridge: $crate::__private::DecodeOwned<$flavor, $bridge>,
         {
@@ -782,7 +818,7 @@ macro_rules! try_decode_owned_bridge {
 
 #[macro_export]
 macro_rules! bytes_bridge {
-  ($flavor:ty: $($ty:ty $([const $g:ident: usize])? {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
     from_slice: $from_bytes: expr;
     as_slice: $to_bytes: expr;
 
@@ -794,7 +830,7 @@ macro_rules! bytes_bridge {
     $(
       $crate::encode_bridge!(
         $flavor: [::core::primitive::u8] {
-          $ty {
+          $ty $([ $(const $g: usize),* ])? {
             convert: $to_bytes;
           },
         },
@@ -802,46 +838,11 @@ macro_rules! bytes_bridge {
 
       $crate::decode_bridge!(
         $flavor: &'de [::core::primitive::u8] {
-          $ty {
+          $ty $([ $(const $g: usize),* ])? {
             convert: $from_bytes;
           },
         },
       );
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from_bytes);
-      }
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeRef<$flavor, $ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@slice_to_impl $flavor: $ty: $from_bytes);
-      }
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for &[::core::primitive::u8] {
-        $crate::bytes_bridge!(@slice_to_impl $flavor: $ty: $from_bytes);
-      }
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for $owned_ty {
-        $crate::bytes_bridge!(@into_target_impl $flavor: $ty: $from_ref);
-      }
-
-      impl$(<const $g: ::core::primitive::usize>)? $crate::__private::TypeOwned<$flavor, $ty> for $owned_ty {
-        $crate::bytes_bridge!(@to_impl $flavor: $ty: $from);
-      }
     )*
-  };
-  (@into_target_impl $flavor:ty: $ty:ty: $from:expr) => {
-    fn into_target(self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
-      ::core::result::Result::Ok($from(self))
-    }
-  };
-  (@slice_to_impl $flavor:ty: $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
-      ::core::result::Result::Ok($from(*self))
-    }
-  };
-  (@to_impl $flavor:ty: $ty:ty: $from:expr) => {
-    fn to(&self) -> ::core::result::Result<$ty, <$flavor as $crate::__private::Flavor>::DecodeError> {
-      ::core::result::Result::Ok($from(self))
-    }
   };
 }

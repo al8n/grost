@@ -1,17 +1,34 @@
-use crate::flavors::network::{Network, WireType};
-use std::rc::Rc;
-
 #[cfg(feature = "bytes_1")]
 const _: () = {
+  use crate::flavors::network::Network;
   use bytes_1::Bytes;
+  use std::rc::Rc;
 
-  bytes_bridge!(Network: (WireType::LengthDelimited): Rc<[u8]> {
-    from_bytes: |val: &[u8]| Ok(Rc::<[u8]>::from(val));
-    to_bytes: AsRef::as_ref;
+  use crate::{bytes_bridge, into_target, type_owned, type_ref};
+
+  bytes_bridge!(Network: Rc<[u8]> {
+    from_slice: |val: &[u8]| Rc::<[u8]>::from(val);
+    as_slice: AsRef::as_ref;
   
     type EncodedOwned = Bytes {
       from_ref: |s: &Bytes| Ok(Rc::<[u8]>::from(s.as_ref()));
       from: |s: Bytes| Ok(Rc::from(s.as_ref()));
     }
   },);
+
+  into_target!(Network: Bytes => Rc<[u8]> {
+    |val: Bytes| Ok(Rc::from(val.as_ref()))
+  });
+  into_target!(Network: &[u8] => Rc<[u8]> {
+    |val: &[u8]| Ok(Rc::from(val))
+  });
+  into_target!(@self Network: Rc<[u8]>);
+  type_ref!(@mapping Network: &[u8] => Rc<[u8]> {
+    |val: &[u8]| Ok(Rc::from(val))
+  });
+  type_owned!(@mapping Network: Bytes => Rc<[u8]> {
+    |val: &Bytes| Ok(Rc::from(val.as_ref()))
+  });
+  type_owned!(@clone Network: Rc<[u8]>);
+  bytes_message!(Rc<[u8]> => Bytes);
 };

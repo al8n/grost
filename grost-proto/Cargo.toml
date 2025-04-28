@@ -26,6 +26,9 @@ arbitrary-int = ["arbitrary-int_1"]
 bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
 bnum = ["bnum_0_13"]
 
+bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
+bytes = ["bytes_1"]
+
 decimal_1 = ["dep:rust_decimal_1"]
 decimal = ["decimal_1"]
 
@@ -40,6 +43,18 @@ num-complex = ["num-complex_0_4"]
 
 ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
 ruint = ["ruint_1"]
+
+smallvec_1 = ["dep:smallvec_1", "hostaddr_0_1?/smallvec_1"]
+smallvec = ["smallvec_1"]
+
+triomphe_0_1 = ["dep:triomphe_0_1", "hostaddr_0_1?/triomphe_0_1"]
+triomphe = ["triomphe_0_1"]
+
+tinystr_0_8 = ["dep:tinystr_0_8"]
+tinystr = ["tinystr_0_8"]
+
+tinyvec_1 = ["dep:tinyvec_1"]
+tinyvec = ["tinyvec_1"]
 
 uuid_1 = ["dep:uuid_1"]
 uuid = ["uuid_1"]
@@ -60,10 +75,15 @@ thiserror.workspace = true
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
+hostaddr_0_1 = { package = "hostaddr", version = "0.1", default-features = false, optional = true }
 num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
 ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
 rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true }
+tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
+tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
+triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
 uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
 
 syn = { workspace = true, optional = true }

@@ -1,44 +1,104 @@
-use grost_proto::buffer::Buffer;
 use tinyvec_1::{Array, ArrayVec};
 
-use super::larger_than_array_capacity;
 use crate::{
-  Decode, DecodeOwned, Encode, IntoTarget, Message, PartialMessage, TypeOwned, TypeRef, Wirable,
-  buffer::BytesBuffer,
-  flavors::network::{Context, DecodeError, EncodeError, Network, WireType},
-  unknown::Unknown,
+  IntoTarget, Message, PartialMessage, TypeOwned, TypeRef,
+  decode::{Decode, DecodeOwned},
+  encode::Encode,
+  flavors::{
+    Network,
+    network::{Context, DecodeError, EncodeError, Unknown, WireType},
+  },
 };
 
-impl<A> Wirable<Network> for ArrayVec<A>
-where
-  A: Array<Item = u8>,
-{
-  const WIRE_TYPE: WireType = {
-    match A::CAPACITY {
-      0 => WireType::Zst,
-      _ => WireType::LengthDelimited,
-    }
-  };
-}
+use super::larger_than_array_capacity;
 
 impl<A> Encode<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    if A::CAPACITY == 0 {
-      return Ok(0);
-    }
+  fn encode(
+    &self,
+    _: &Context,
+    wire_type: WireType,
+    buf: &mut [u8],
+  ) -> Result<usize, EncodeError> {
+    Ok(match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => 0,
+      WireType::LengthDelimited => {
+        let this_len = self.len();
+        let buf_len = buf.len();
+        if buf_len < this_len {
+          return Err(EncodeError::insufficient_buffer(this_len, buf_len));
+        }
 
-    self.as_slice().encode(context, buf)
+        buf[..this_len].copy_from_slice(self.as_slice());
+        this_len
+      },
+      val => return Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        val,
+      )),
+    })
   }
 
-  fn encoded_len(&self, context: &Context) -> usize {
-    if A::CAPACITY == 0 {
-      return 0;
-    }
+  fn encoded_len(&self, _: &Context, wire_type: WireType) -> Result<usize, EncodeError> {
+    Ok(match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => 0,
+      WireType::LengthDelimited => self.len(),
+      val => return Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        val,
+      )),
+    })
+  }
 
-    self.as_slice().encoded_len(context)
+  fn encoded_length_delimited_len(
+    &self,
+    _: &Context,
+    wire_type: WireType,
+  ) -> Result<usize, EncodeError> {
+    Ok(match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => 0,
+      WireType::LengthDelimited => {
+        let this_len = self.len();
+        let len_size = varing::encoded_u32_varint_len(this_len as u32);
+        len_size + this_len
+      },
+      val => return Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        val,
+      )),
+    })
+  }
+
+  fn encode_length_delimited(
+    &self,
+    _: &Context,
+    wire_type: WireType,
+    buf: &mut [u8],
+  ) -> Result<usize, EncodeError> {
+    Ok(match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => 0,
+      WireType::LengthDelimited => {
+        let this_len = self.len();
+        let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
+        let buf_len = buf.len();
+        if buf_len < offset + this_len {
+          return Err(EncodeError::insufficient_buffer(
+            this_len + offset,
+            buf_len,
+          ));
+        }
+
+        buf[offset..offset + this_len].copy_from_slice(self.as_slice());
+        offset += this_len;
+        offset
+      },
+      _ => return Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      )),
+    })
   }
 }
 
@@ -46,12 +106,42 @@ impl<'de, A> Decode<'de, Network, Self> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn decode<B>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(
+    _: &Context,
+    wire_type: WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<Network, &'de [u8]>>,
+    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
-    decode_to_array(src)
+    match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => Ok((0, ArrayVec::new())),
+      WireType::LengthDelimited => decode_to_array(src),
+      val => Err(DecodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        val,
+      )),
+    }
+  }
+
+  fn decode_length_delimited<UB>(
+    _: &Context,
+    wire_type: WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, Self), DecodeError>
+  where
+    Self: Sized + 'de,
+    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+  {
+    match wire_type {
+      WireType::Zst if A::CAPACITY == 0 => Ok((0, ArrayVec::new())),
+      WireType::LengthDelimited => decode_length_delimited_to_array(src),
+      val => Err(DecodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        val,
+      )),
+    }
   }
 }
 
@@ -59,13 +149,30 @@ impl<A> DecodeOwned<Network, Self> for ArrayVec<A>
 where
   A: Array<Item = u8> + 'static,
 {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(
+    context: &Context,
+    wire_type: WireType,
+    src: B,
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
-    B: BytesBuffer + 'static,
-    UB: Buffer<Unknown<Network, B>> + 'static,
+    B: crate::buffer::BytesBuffer + 'static,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    <Self as Decode<'_, Network, Self>>::decode::<()>(context, src.as_bytes())
+    Self::decode::<()>(context, wire_type, src.as_bytes())
+  }
+
+  fn decode_length_delimited_owned<B, UB>(
+    context: &Context,
+    wire_type: WireType,
+    src: B,
+  ) -> Result<(usize, Self), DecodeError>
+  where
+    Self: Sized + 'static,
+    B: crate::buffer::BytesBuffer + 'static,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+  {
+    Self::decode_length_delimited::<()>(context, wire_type, src.as_bytes())
   }
 }
 
@@ -172,4 +279,28 @@ where
   arr.extend_from_slice(src);
 
   Ok((src.len(), arr))
+}
+
+#[inline]
+fn decode_length_delimited_to_array<A>(
+  src: &[u8],
+) -> Result<(usize, ArrayVec<A>), DecodeError>
+where
+  A: Array<Item = u8>,
+  A::Item: Clone,
+{
+  if A::CAPACITY == 0 {
+    return Ok((0, ArrayVec::new()));
+  }
+
+  let (offset, data_len) = varing::decode_u32_varint(src)?;
+  if data_len as usize > A::CAPACITY {
+    return Err(larger_than_array_capacity::<A>());
+  }
+  let total = offset + data_len as usize;
+
+  let mut arr = ArrayVec::new();
+  arr.extend_from_slice(&src[offset..total]);
+
+  Ok((total, arr))
 }
