@@ -76,11 +76,11 @@ const _: () = {
   }
 };
 
-#[cfg(feature = "heapless_0_8")]
+#[cfg(feature = "heapless_0_9")]
 const _: () = {
-  use heapless_0_8::Vec;
+  use heapless_0_9::{LenType, Vec};
 
-  impl<T, const N: usize> Buffer<T> for Vec<T, N> {
+  impl<T, const N: usize, L: LenType> Buffer<T> for Vec<T, N, L> {
     fn new() -> Self {
       Vec::new()
     }
@@ -210,8 +210,8 @@ impl BytesBuffer for Vec<u8> {
   }
 }
 
-#[cfg(feature = "heapless_0_8")]
-impl<const N: usize> BytesBuffer for heapless_0_8::Vec<u8, N> {
+#[cfg(feature = "heapless_0_9")]
+impl<const N: usize, L: heapless_0_9::LenType> BytesBuffer for heapless_0_9::Vec<u8, N, L> {
   fn is_empty(&self) -> bool {
     self.is_empty()
   }
@@ -236,7 +236,7 @@ impl<const N: usize> BytesBuffer for heapless_0_8::Vec<u8, N> {
     };
 
     // Safety: the slice is guaranteed to be within the bounds of the original buffer
-    heapless_0_8::Vec::from_slice(&self[begin..end]).unwrap()
+    heapless_0_9::Vec::from_slice(&self[begin..end]).unwrap()
   }
 
   fn as_bytes(&self) -> &[u8] {

@@ -28,6 +28,12 @@ bnum = ["bnum_0_13"]
 bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
 bytes = ["bytes_1"]
 
+chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
+chrono = ["chrono_0_4"]
+
+chrono-tz_0_10 = ["dep:chrono-tz_0_10", "varing/chrono-tz_0_10"]
+chrono-tz = ["chrono-tz_0_10"]
+
 decimal_1 = ["dep:rust_decimal_1"]
 decimal = ["decimal_1"]
 
@@ -48,6 +54,9 @@ smol_str = ["smol_str_0_3"]
 
 smallvec_1 = ["dep:smallvec_1", "hostaddr_0_1?/smallvec_1"]
 smallvec = ["smallvec_1"]
+
+time_0_3 = ["dep:time_0_3", "varing/time_0_3"]
+time = ["time_0_3"]
 
 triomphe_0_1 = ["dep:triomphe_0_1", "hostaddr_0_1?/triomphe_0_1"]
 triomphe = ["triomphe_0_1"]
@@ -86,6 +95,8 @@ thiserror.workspace = true
 arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
+chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
+chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
 heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
 hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
@@ -95,6 +106,7 @@ ruint_1 = { package = "ruint", version = "1", default-features = false, optional
 rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
 smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
 smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true, features = ["const_generics"] }
+time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
 tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
 tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
 triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
