@@ -23,7 +23,7 @@ where
     src: &'de [u8],
   ) -> Result<(usize, O), F::DecodeError>
   where
-    Self: Sized + 'de,
+    O: Sized + 'de,
     UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
@@ -36,11 +36,11 @@ where
     src: &'de [u8],
   ) -> Result<(usize, O), F::DecodeError>
   where
-    Self: Sized + 'de,
+    O: Sized + 'de,
     UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
 }
 
-/// A marker trait for types that can be decoded without borrowing data.
+/// A trait for types that can be decoded without borrowing data.
 ///
 /// Types implementing this trait can be decoded into owned values
 /// without maintaining a borrow of the original data.
@@ -59,9 +59,9 @@ where
     context: &F::Context,
     wire_type: F::WireType,
     src: B,
-  ) -> Result<(usize, Self), F::DecodeError>
+  ) -> Result<(usize, O), F::DecodeError>
   where
-    Self: Sized + 'static,
+    O: Sized + 'static,
     B: BytesBuffer + 'static,
     UB: Buffer<F::Unknown<B>> + 'static;
 
@@ -73,9 +73,9 @@ where
     context: &F::Context,
     wire_type: F::WireType,
     src: B,
-  ) -> Result<(usize, Self), F::DecodeError>
+  ) -> Result<(usize, O), F::DecodeError>
   where
-    Self: Sized + 'static,
+    O: Sized + 'static,
     B: BytesBuffer + 'static,
     UB: Buffer<F::Unknown<B>> + 'static;
 }

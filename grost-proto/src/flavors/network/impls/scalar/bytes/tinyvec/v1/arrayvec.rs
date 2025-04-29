@@ -16,12 +16,7 @@ impl<A> Encode<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  fn encode(
-    &self,
-    _: &Context,
-    wire_type: WireType,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, wire_type: WireType, buf: &mut [u8]) -> Result<usize, EncodeError> {
     Ok(match wire_type {
       WireType::Zst if A::CAPACITY == 0 => 0,
       WireType::LengthDelimited => {
@@ -33,11 +28,13 @@ where
 
         buf[..this_len].copy_from_slice(self.as_slice());
         this_len
-      },
-      val => return Err(EncodeError::unsupported_wire_type(
-        core::any::type_name::<Self>(),
-        val,
-      )),
+      }
+      val => {
+        return Err(EncodeError::unsupported_wire_type(
+          core::any::type_name::<Self>(),
+          val,
+        ));
+      }
     })
   }
 
@@ -45,10 +42,12 @@ where
     Ok(match wire_type {
       WireType::Zst if A::CAPACITY == 0 => 0,
       WireType::LengthDelimited => self.len(),
-      val => return Err(EncodeError::unsupported_wire_type(
-        core::any::type_name::<Self>(),
-        val,
-      )),
+      val => {
+        return Err(EncodeError::unsupported_wire_type(
+          core::any::type_name::<Self>(),
+          val,
+        ));
+      }
     })
   }
 
@@ -63,11 +62,13 @@ where
         let this_len = self.len();
         let len_size = varing::encoded_u32_varint_len(this_len as u32);
         len_size + this_len
-      },
-      val => return Err(EncodeError::unsupported_wire_type(
-        core::any::type_name::<Self>(),
-        val,
-      )),
+      }
+      val => {
+        return Err(EncodeError::unsupported_wire_type(
+          core::any::type_name::<Self>(),
+          val,
+        ));
+      }
     })
   }
 
@@ -84,20 +85,19 @@ where
         let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
         let buf_len = buf.len();
         if buf_len < offset + this_len {
-          return Err(EncodeError::insufficient_buffer(
-            this_len + offset,
-            buf_len,
-          ));
+          return Err(EncodeError::insufficient_buffer(this_len + offset, buf_len));
         }
 
         buf[offset..offset + this_len].copy_from_slice(self.as_slice());
         offset += this_len;
         offset
-      },
-      _ => return Err(EncodeError::unsupported_wire_type(
-        core::any::type_name::<Self>(),
-        wire_type,
-      )),
+      }
+      _ => {
+        return Err(EncodeError::unsupported_wire_type(
+          core::any::type_name::<Self>(),
+          wire_type,
+        ));
+      }
     })
   }
 }
@@ -282,9 +282,7 @@ where
 }
 
 #[inline]
-fn decode_length_delimited_to_array<A>(
-  src: &[u8],
-) -> Result<(usize, ArrayVec<A>), DecodeError>
+fn decode_length_delimited_to_array<A>(src: &[u8]) -> Result<(usize, ArrayVec<A>), DecodeError>
 where
   A: Array<Item = u8>,
   A::Item: Clone,

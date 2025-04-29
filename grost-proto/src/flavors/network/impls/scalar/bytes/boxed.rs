@@ -4,16 +4,13 @@ const _: () = {
   use bytes_1::Bytes;
   use std::boxed::Box;
 
-  use crate::{bytes_bridge, into_target, type_owned, type_ref};
+  use crate::{into_target, type_owned, type_ref};
 
   bytes_bridge!(Network: Box<[u8]> {
     from_slice: |val: &[u8]| Box::<[u8]>::from(val);
     as_slice: AsRef::as_ref;
   
-    type EncodedOwned = Bytes {
-      from_ref: |s: &Bytes| Ok(Box::<[u8]>::from(s.as_ref()));
-      from: |s: Bytes| Ok(Box::from(s.as_ref()));
-    }
+    type EncodedOwned = Bytes;
   },);
 
   into_target!(Network: Bytes => Box<[u8]> {
@@ -30,5 +27,4 @@ const _: () = {
     |val: &Bytes| Ok(Box::from(val.as_ref()))
   });
   type_owned!(@clone Network: Box<[u8]>);
-  bytes_message!(Box<[u8]> => Bytes);
 };

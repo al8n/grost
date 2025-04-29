@@ -4,16 +4,13 @@ const _: () = {
   use bytes_1::Bytes;
   use smallvec_1::SmallVec;
 
-  use crate::{bytes_bridge, into_target, type_owned, type_ref};
+  use crate::{into_target, type_owned, type_ref};
 
   bytes_bridge!(Network: SmallVec<[u8; N]> [const N: usize] {
     from_slice: |val: &[u8]| SmallVec::<[u8; N]>::from(val);
     as_slice: AsRef::as_ref;
   
-    type EncodedOwned = Bytes {
-      from_ref: |s: &Bytes| Ok(SmallVec::<[u8; N]>::from(s.as_ref()));
-      from: |s: Bytes| Ok(Vec::from(s).into());
-    }
+    type EncodedOwned = Bytes;
   },);
 
   into_target!(Network: Bytes => SmallVec<[u8; N]> {
@@ -30,5 +27,4 @@ const _: () = {
     |val: &Bytes| Ok(SmallVec::from(val.as_ref()))
   } [const N: usize]);
   type_owned!(@clone Network: SmallVec<[u8; N]> [const N: usize]);
-  bytes_message!(SmallVec<[u8; N]> => Bytes [const N: usize]);
 };

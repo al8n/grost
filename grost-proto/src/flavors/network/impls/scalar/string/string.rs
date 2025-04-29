@@ -1,0 +1,30 @@
+#[cfg(feature = "smol_str_0_3")]
+const _: () = {
+  use crate::flavors::network::Network;
+  use smol_str_0_3::SmolStr;
+  use std::string::String;
+
+  use crate::{into_target, type_owned, type_ref};
+
+  str_bridge!(Network: String {
+    from_str: |val: &str| String::from(val);
+    as_str: AsRef::as_ref;
+  
+    type EncodedOwned = SmolStr;
+  },);
+
+  into_target!(Network: SmolStr => String {
+    |val: SmolStr| Ok(String::from(val))
+  });
+  into_target!(Network: &str => String {
+    |val: &str| Ok(String::from(val))
+  });
+  into_target!(@self Network: String);
+  type_ref!(@mapping Network: &str => String {
+    |val: &str| Ok(String::from(val))
+  });
+  type_owned!(@mapping Network: SmolStr => String {
+    |val: &SmolStr| Ok(String::from(val.clone()))
+  });
+  type_owned!(@clone Network: String);
+};

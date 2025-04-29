@@ -815,34 +815,3 @@ macro_rules! try_decode_owned_bridge {
     )*
   };
 }
-
-#[macro_export]
-macro_rules! bytes_bridge {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
-    from_slice: $from_bytes: expr;
-    as_slice: $to_bytes: expr;
-
-    type EncodedOwned = $owned_ty:ty {
-      from_ref: $from_ref: expr;
-      from: $from: expr;
-    } $(;)?
-  }), +$(,)?) => {
-    $(
-      $crate::encode_bridge!(
-        $flavor: [::core::primitive::u8] {
-          $ty $([ $(const $g: usize),* ])? {
-            convert: $to_bytes;
-          },
-        },
-      );
-
-      $crate::decode_bridge!(
-        $flavor: &'de [::core::primitive::u8] {
-          $ty $([ $(const $g: usize),* ])? {
-            convert: $from_bytes;
-          },
-        },
-      );
-    )*
-  };
-}

@@ -118,14 +118,14 @@ impl Encode<Network> for [u8] {
 
 partial_encode_primitives!(Network: [u8]);
 
-impl<'de> Decode<'de, Network, Self> for &'de [u8] {
+impl<'de> Decode<'de, Network, &'de [u8]> for [u8] {
   fn decode<UB>(
     _: &Context,
     wire_type: WireType,
     src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  ) -> Result<(usize, &'de [u8]), DecodeError>
   where
-    Self: Sized + 'de,
+    &'de [u8]: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if let WireType::LengthDelimited = wire_type {
@@ -147,9 +147,9 @@ impl<'de> Decode<'de, Network, Self> for &'de [u8] {
     _: &Context,
     wire_type: WireType,
     src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  ) -> Result<(usize, &'de [u8]), DecodeError>
   where
-    Self: Sized + 'de,
+    &'de [u8]: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if let WireType::LengthDelimited = wire_type {
@@ -171,5 +171,31 @@ impl<'de> Decode<'de, Network, Self> for &'de [u8] {
         wire_type,
       ))
     }
+  }
+}
+
+impl<'de> Decode<'de, Network, Self> for &'de [u8] {
+  fn decode<UB>(
+    context: &Context,
+    wire_type: WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, Self), DecodeError>
+  where
+    Self: Sized + 'de,
+    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+  {
+    <[u8]>::decode::<UB>(context, wire_type, src)
+  }
+
+  fn decode_length_delimited<UB>(
+    context: &Context,
+    wire_type: WireType,
+    src: &'de [u8],
+  ) -> Result<(usize, Self), DecodeError>
+  where
+    Self: Sized + 'de,
+    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+  {
+    <[u8]>::decode_length_delimited::<UB>(context, wire_type, src)
   }
 }
