@@ -1,6 +1,6 @@
 #[cfg(feature = "bytes_1")]
 const _: () = {
-  use crate::flavors::network::Network;
+  use crate::{flavors::network::Network};
   use bytes_1::Bytes;
   use triomphe_0_1::Arc;
 

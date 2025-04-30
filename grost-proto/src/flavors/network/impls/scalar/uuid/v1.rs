@@ -1,8 +1,7 @@
 use uuid_1::Uuid;
 
 use crate::{
-  bridge,
-  flavors::network::{Fixed128, Network, Varint},
+  bridge, default_wire_format, flavors::network::{Fixed128, Network, Varint}
 };
 
 bridge!(
@@ -17,3 +16,5 @@ bridge!(
     },
   },
 );
+
+default_wire_format!(Network: Uuid as Varint);

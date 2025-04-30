@@ -10,7 +10,7 @@ extern crate std;
 // pub use encode::*;
 pub use flavors::Flavor;
 pub use grost_proto::{
-  DecodeError, EncodeError, IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned,
+  IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned,
   TypeRef, buffer,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},

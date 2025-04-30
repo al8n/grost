@@ -1,8 +1,9 @@
 use crate::{
-  bridge,
-  flavors::network::{Fixed16, Network, Varint},
+  bridge, default_wire_format, flavors::network::{Fixed16, Network, Varint}
 };
 use half_2::f16;
+
+default_wire_format!(Network: f16 as Varint);
 
 bridge!(
   Network: u16 {

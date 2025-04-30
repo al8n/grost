@@ -409,3 +409,99 @@ where
     }
   }
 }
+
+#[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
+macro_rules! deref_encode_impl {
+  ($($ty:ty),+$(,)?) => {
+    $(
+      impl<F, W, T> Encode<F, W> for $ty
+      where
+        T: Encode<F, W>,
+        F: Flavor + ?Sized,
+        W: WireFormat,
+      {
+        fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
+          (**self).encode(context, buf)
+        }
+
+        fn encoded_len(&self, context: &F::Context) -> usize {
+          (**self).encoded_len(context)
+        }
+
+        fn encode_length_delimited(
+          &self,
+          context: &F::Context,
+          buf: &mut [u8],
+        ) -> Result<usize, F::EncodeError> {
+          (**self).encode_length_delimited(context, buf)
+        }
+
+        fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
+          (**self).encoded_length_delimited_len(context)
+        }
+      }
+    )*
+  };
+}
+
+#[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
+macro_rules! deref_partial_encode_impl {
+  ($($ty:ty),+$(,)?) => {{
+    $(
+      impl<F, W, T> PartialEncode<F, W> for $ty
+      where
+        T: PartialEncode<F, W>,
+        F: Flavor + ?Sized,
+        W: WireFormat,
+      {
+        type Selection = T::Selection;
+
+        fn partial_encode(
+          &self,
+          context: &F::Context,
+          buf: &mut [u8],
+          selection: &Self::Selection,
+        ) -> Result<usize, F::EncodeError> {
+          (**self).partial_encode(context, buf, selection)
+        }
+
+        fn partial_encoded_len(&self, context: &F::Context, selection: &Self::Selection) -> usize {
+          (**self).partial_encoded_len(context, selection)
+        }
+
+        fn partial_encode_length_delimited(
+          &self,
+          context: &F::Context,
+          buf: &mut [u8],
+          selection: &Self::Selection,
+        ) -> Result<usize, F::EncodeError> {
+          (**self).partial_encode_length_delimited(context, buf, selection)
+        }
+
+        fn partial_encoded_length_delimited_len(
+          &self,
+          context: &F::Context,
+          selection: &Self::Selection,
+        ) -> usize {
+          (**self).partial_encoded_length_delimited_len(context, selection)
+        }
+      }
+    )*
+  }};
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+const _: () = {
+  use std::{sync::Arc, boxed::Box, rc::Rc,};
+
+  deref_encode_impl!(Box<T>, Rc<T>, Arc<T>);
+  deref_partial_encode_impl!(Box<T>, Rc<T>, Arc<T>);
+};
+
+#[cfg(feature = "triomphe_0_1")]
+const _: () = {
+  use triomphe_0_1::Arc;
+
+  deref_encode_impl!(Arc<T>);
+  deref_partial_encode_impl!(Arc<T>);
+};

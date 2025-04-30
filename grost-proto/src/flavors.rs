@@ -20,44 +20,79 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
     Self: Sized;
 }
 
+/// The wire format used for encoding and decoding.
 pub trait WireFormat: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display {}
 
-pub trait Encode2<F: Flavor + ?Sized, W: WireFormat> {
-  /// Encode the value into a buffer.
-  fn encode<B>(&self, ctx: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError>
-  where
-    Self: Sized,
-    B: BytesBuffer;
-
-  /// Return the length of the encoded value.
-  fn encoded_len(&self, ctx: &F::Context) -> Result<usize, F::EncodeError>
-  where
-    Self: Sized;
-
-  /// Encodes the message into the provided buffer with length-delimited. If the message cannot be encoded as the given wire type,
-  /// then it will return `WireTypeNotSupported` err will be returned.
-  ///
-  /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encode_length_delimited<B>(
-    &self,
-    ctx: &F::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError>
-  where
-    Self: Sized,
-    B: BytesBuffer;
-
-  /// Returns the number of bytes needed to encode the message with length-delimited.
-  ///
-  /// This is used to determine the buffer size required for encoding.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encoded_length_delimited_len(&self, ctx: &F::Context) -> Result<usize, F::EncodeError>
-  where
-    Self: Sized;
+/// The default wire format for a type on flavor `F`.
+pub trait DefaultWireFormat<F: Flavor + ?Sized>
+where
+  Self: super::encode::Encode<F, Self::Format>,
+{
+  /// The default wire format of the type for this flavor.
+  type Format: WireFormat;
 }
+
+impl<T, F> DefaultWireFormat<F> for &T
+where
+  T: DefaultWireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type Format = T::Format;
+}
+
+impl<T, F> DefaultWireFormat<F> for Option<T>
+where
+  T: DefaultWireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type Format = T::Format;
+}
+
+#[cfg(any(feature = "alloc", feature = "std"))]
+const _: () = {
+  use std::{sync::Arc, boxed::Box, rc::Rc,};
+
+  impl<T, F> DefaultWireFormat<F> for Box<T>
+  where
+    T: DefaultWireFormat<F>,
+    F: Flavor + ?Sized,
+    Box<T>: super::encode::Encode<F, T::Format>,
+  {
+    type Format = T::Format;
+  }
+
+  impl<T, F> DefaultWireFormat<F> for Rc<T>
+  where
+    T: DefaultWireFormat<F>,
+    F: Flavor + ?Sized,
+    Rc<T>: super::encode::Encode<F, T::Format>,
+  {
+    type Format = T::Format;
+  }
+
+  impl<T, F> DefaultWireFormat<F> for Arc<T>
+  where
+    T: DefaultWireFormat<F>,
+    F: Flavor + ?Sized,
+    Arc<T>: super::encode::Encode<F, T::Format>,
+  {
+    type Format = T::Format;
+  }
+};
+
+#[cfg(feature = "triomphe_0_1")]
+const _: () = {
+  use triomphe_0_1::Arc;
+
+  impl<T, F> DefaultWireFormat<F> for Arc<T>
+  where
+    T: DefaultWireFormat<F>,
+    F: Flavor + ?Sized,
+    Arc<T>: super::encode::Encode<F, T::Format>,
+  {
+    type Format = T::Format;
+  }
+};
 
 /// The flavor of the encoding and decoding.
 pub trait Flavor: core::fmt::Debug + 'static {

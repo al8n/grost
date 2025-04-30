@@ -1,13 +1,9 @@
 use crate::{
-  buffer::Buffer,
-  conversion,
-  decode::Decode,
-  decode_owned_scalar,
-  encode::Encode,
-  flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
-  message, partial_encode_scalar, try_from_bridge,
+  buffer::Buffer, conversion, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
 };
 use core::num::NonZeroI16;
+
+default_wire_format!(Network: i16 as Varint);
 
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

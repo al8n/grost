@@ -4,6 +4,7 @@ macro_rules! network_varint {
   ($(
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
+    $($crate::default_wire_format!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::message!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::conversion!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])?);)*
     $($crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])? as $crate::__private::network::Varint);)*
@@ -221,6 +222,22 @@ macro_rules! into_target {
       $expr(self)
     }
   }
+}
+
+/// A macro emits [`DefaultWireFormat`](crate::flavors::DefaultWireFormat) implementations.
+#[macro_export]
+macro_rules! default_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty), +$(,)?
+  ),+$(,)?) => {
+    $(
+      $(
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::flavors::DefaultWireFormat<$flavor> for $ty {
+          type Format = $format;
+        }
+      )*
+    )*
+  };
 }
 
 /// A macro emits convertion traits implementations for `Self`
