@@ -355,7 +355,8 @@ mod smol_str;
 
 mod arrayvec;
 mod heapless;
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod regex;
 mod tinystr;
-
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod triomphe;

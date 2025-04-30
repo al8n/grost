@@ -454,8 +454,24 @@ macro_rules! try_from_bridge {
           convert: $from;
         })*
       });
+    )*
+  };
+  (@without_decode_owned $(
+    $flavor:ty: $bridge: ty {
+      $($ty:ty {
+        try_from: $from:expr;
+        to: $to:expr $(;)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $crate::encode_bridge!($flavor: $bridge {
+        $($ty {
+          convert: $to;
+        })*
+      });
 
-      $crate::try_decode_owned_bridge!($flavor: $bridge {
+      $crate::try_decode_bridge!(@without_decode_owned $flavor: $bridge {
         $($ty {
           convert: $from;
         })*
@@ -702,6 +718,29 @@ macro_rules! try_decode_bridge {
             try_from: $from;
           }
         });
+
+        $crate::try_decode_owned_bridge!(@decode_owned $flavor: $bridge {
+          $ty {
+            try_from: $from;
+          }
+        });
+      )*
+    )*
+  };
+  (@without_decode_owned $(
+    $flavor:ty: $bridge: ty {
+      $($ty:ty {
+        convert: $from:expr $(;)?
+      }), +$(,)?
+    }
+  ),+$(,)?) => {
+    $(
+      $(
+        $crate::try_decode_bridge!(@decode $flavor: $bridge {
+          $ty {
+            try_from: $from;
+          }
+        });
       )*
     )*
   };
@@ -812,6 +851,456 @@ macro_rules! try_decode_owned_bridge {
           $crate::try_decode_owned_bridge!(@decode_owned_impl $flavor: $from => $bridge);
         }
       )*
+    )*
+  };
+}
+
+/// A macro emits traits implementations for a zero-sized type.
+///
+/// ## Example
+///
+/// ```rust
+/// use grost_proto::network_zst;
+///
+/// #[derive(Default)]
+/// struct MyZst;
+///
+/// #[derive(Default)]
+/// #[repr(transparent)]
+/// struct MyZstTwo(MyZst);
+///
+/// network_zst!(MyZst, MyZstTwo);
+/// ```
+#[macro_export]
+macro_rules! network_zst {
+  ($($ty:ty), +$(,)?) => {
+    $(
+      const _: () = {
+        const fn __assert<T>() where T: ::core::default::Default {
+          assert!(::core::mem::size_of::<T>() == 0, "Not a zero-sized type");
+        }
+
+        __assert::<$ty>();
+      };
+
+      impl $crate::__private::PartialMessage<$crate::__private::flavors::Network> for $ty {
+        type UnknownBuffer<B> = ();
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
+      impl $crate::__private::Message<$crate::__private::flavors::Network> for $ty {
+        type Partial = Self;
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
+      impl $crate::__private::TypeOwned<$crate::__private::flavors::Network, Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      impl $crate::__private::TypeRef<$crate::__private::flavors::Network, Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      $crate::into_target!(@self $crate::__private::flavors::Network: $ty);
+
+      impl $crate::__private::Encode<$crate::__private::flavors::Network> for $ty {
+        #[inline]
+        fn encode(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [::core::primitive::u8]
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn encode_length_delimited(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [::core::primitive::u8]
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn encoded_len(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn encoded_length_delimited_len(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+      }
+
+      impl<'de> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
+        fn decode<UB>(
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'de,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
+        {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok((0, ::core::default::Default::default()))
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::DecodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        fn decode_length_delimited<UB>(
+          ctx: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          src: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'de,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
+        {
+          Self::decode::<UB>(ctx, wt, src)
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+      }
+
+      impl $crate::__private::DecodeOwned<$crate::__private::flavors::Network, Self> for $ty {
+        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, wt: $crate::__private::flavors::network::WireType, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'static,
+          B: $crate::__private::BytesBuffer + 'static,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'static,
+        {
+          <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode::<()>(ctx, wt, src.as_bytes())
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+
+        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, wt: $crate::__private::flavors::network::WireType, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'static,
+          B: $crate::__private::BytesBuffer + 'static,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'static,
+        {
+          <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode_length_delimited::<()>(ctx, wt, src.as_bytes())
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+      }
+
+      $crate::partial_encode_primitives!($crate::__private::flavors::Network: $ty);
+    )*
+  };
+}
+
+/// A macro emits traits implementations for `PhantomData<T>` like types.
+///
+/// ## Example
+///
+/// ```rust
+/// use grost_proto::network_phantom;
+/// use core::marker::PhantomData;
+///
+/// #[repr(transparent)]
+/// struct MyPhantom<T: ?Sized>(PhantomData<T>);
+///
+/// impl<T: ?Sized> Default for MyPhantom<T> {
+///   fn default() -> Self {
+///     Self(PhantomData)
+///   }
+/// }
+///
+/// impl<T: ?Sized> Clone for MyPhantom<T> {
+///  fn clone(&self) -> Self {
+///    *self
+///  }
+/// }
+///
+/// impl<T: ?Sized> Copy for MyPhantom<T> {}
+///
+/// network_phantom!(MyPhantom<T>);
+/// ```
+#[macro_export]
+macro_rules! network_phantom {
+  ($($ty:ty),+$(,)?) => {
+    $(
+      impl<T: ?::core::marker::Sized> $crate::__private::Encode<$crate::__private::flavors::Network> for $ty {
+        #[inline]
+        fn encode(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [::core::primitive::u8],
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), $crate::__private::flavors::network::WireType::Zst))
+          }
+        }
+
+        #[inline]
+        fn encoded_len(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), $crate::__private::flavors::network::WireType::Zst))
+          }
+        }
+
+        #[inline]
+        fn encode_length_delimited(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [::core::primitive::u8],
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), $crate::__private::flavors::network::WireType::Zst))
+          }
+        }
+
+        #[inline]
+        fn encoded_length_delimited_len(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), $crate::__private::flavors::network::WireType::Zst))
+          }
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
+        type Selection = ();
+
+        #[inline]
+        fn partial_encode(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [u8],
+          _: &Self::Selection,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn partial_encoded_len(&self, _: &$crate::__private::flavors::network::Context, wt: $crate::__private::flavors::network::WireType, _: &Self::Selection,) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn partial_encode_length_delimited(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &mut [u8],
+          _: &Self::Selection,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        #[inline]
+        fn partial_encoded_length_delimited_len(
+          &self,
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &Self::Selection,
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok(0)
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+      }
+
+      impl<'de, T: ?::core::marker::Sized> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
+        fn decode<UB>(
+          _: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          _: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'de,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
+        {
+          if let $crate::__private::flavors::network::WireType::Zst = wt {
+            ::core::result::Result::Ok((0, ::core::default::Default::default()))
+          } else {
+            ::core::result::Result::Err($crate::__private::flavors::network::DecodeError::unsupported_wire_type(::core::any::type_name::<$ty>(), wt))
+          }
+        }
+
+        fn decode_length_delimited<UB>(
+          ctx: &$crate::__private::flavors::network::Context,
+          wt: $crate::__private::flavors::network::WireType,
+          src: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'de,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
+        {
+          Self::decode::<UB>(ctx, wt, src)
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+      }
+
+      impl<T: ?::core::marker::Sized + 'static> $crate::__private::DecodeOwned<$crate::__private::flavors::Network, Self> for $ty {
+        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, wt: $crate::__private::flavors::network::WireType, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'static,
+          B: $crate::__private::BytesBuffer + 'static,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'static,
+        {
+          <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode::<()>(ctx, wt, src.as_bytes())
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+
+        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, wt: $crate::__private::flavors::network::WireType, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        where
+          Self: ::core::marker::Sized + 'static,
+          B: $crate::__private::BytesBuffer + 'static,
+          UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'static,
+        {
+          <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, Self>>::decode_length_delimited::<()>(ctx, wt, src.as_bytes())
+            .map(|(n, _)| (n, ::core::default::Default::default()))
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::PartialMessage<$crate::__private::flavors::Network> for $ty {
+        type UnknownBuffer<B> = ();
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::Message<$crate::__private::flavors::Network> for $ty {
+        type Partial = Self;
+
+        type Encoded<'a>
+          = Self
+        where
+          Self: Sized + 'a;
+
+        type Borrowed<'a>
+          = &'a Self
+        where
+          Self: 'a;
+
+        type EncodedOwned
+          = Self
+        where
+          Self: Sized + 'static;
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::TypeOwned<$crate::__private::flavors::Network, Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::TypeRef<$crate::__private::flavors::Network, Self> for $ty {
+        fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
+          ::core::result::Result::Ok(::core::default::Default::default())
+        }
+      }
+
+      impl<T: ?::core::marker::Sized> $crate::__private::IntoTarget<$crate::__private::flavors::Network, Self> for $ty {
+        fn into_target(self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
+          ::core::result::Result::Ok(self)
+        }
+      }
     )*
   };
 }

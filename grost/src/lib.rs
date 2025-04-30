@@ -11,10 +11,10 @@ extern crate std;
 pub use flavors::Flavor;
 pub use grost_proto::{
   DecodeError, EncodeError, IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned,
-  TypeRef, Wirable, buffer,
+  TypeRef, buffer,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
-  reflection, unknown,
+  reflection,
 };
 // pub use impls::*;
 // pub use selection_set::SelectionSet;
@@ -30,11 +30,8 @@ pub use tinyvec_1 as tinyvec;
 
 #[macro_use]
 mod macros;
-/// Traits implemented for primitive types and common types.
-mod impls;
-mod selection_set;
-mod utils;
 
+mod selection_set;
 /// The flavors of the encoding/decoding
 pub mod flavors;
 
@@ -64,13 +61,10 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 
 #[doc(hidden)]
 pub mod __private {
-  pub use super::*;
   pub use bitflags;
-  pub use buffer::{Buffer, BytesBuffer};
   pub use either;
-  pub use selection_set::SelectionSet;
-  pub use unknown::*;
   pub use varing;
+  pub use grost_proto::__private::*;
 
   #[cfg(feature = "bnum_0_13")]
   pub use bnum_0_13 as bnum;
@@ -91,38 +85,4 @@ pub mod __private {
 
   pub use memchr;
   pub use thiserror;
-
-  pub use utils::network;
-
-  #[cfg(not(any(feature = "std", feature = "alloc")))]
-  pub fn larger_than_str_capacity<const N: usize>()
-  -> <flavors::network::Network as Flavor>::DecodeError {
-    <flavors::network::Network as Flavor>::DecodeError::custom(
-      "cannot decode string with length greater than the capacity",
-    )
-  }
-
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  pub fn larger_than_str_capacity<const N: usize>()
-  -> <flavors::network::Network as Flavor>::DecodeError {
-    <flavors::network::Network as Flavor>::DecodeError::custom(std::format!(
-      "cannot decode string with length greater than the capacity {N}"
-    ))
-  }
-
-  #[cfg(not(any(feature = "std", feature = "alloc")))]
-  pub fn larger_than_array_capacity<const N: usize>()
-  -> <flavors::network::Network as Flavor>::DecodeError {
-    <flavors::network::Network as Flavor>::DecodeError::custom(
-      "cannot decode array with length greater than the capacity",
-    )
-  }
-
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  pub fn larger_than_array_capacity<const N: usize>()
-  -> <flavors::network::Network as Flavor>::DecodeError {
-    <flavors::network::Network as Flavor>::DecodeError::custom(std::format!(
-      "cannot decode array with length greater than the capacity {N}"
-    ))
-  }
 }

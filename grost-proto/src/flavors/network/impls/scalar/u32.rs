@@ -1,9 +1,11 @@
+use core::num::NonZeroU32;
+
 use crate::{
   buffer::Buffer,
   decode::{Decode, DecodeOwned},
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, Network, Unknown, WireType},
-  message, partial_encode_primitives,
+  message, partial_encode_primitives, try_from_bridge,
 };
 
 impl Encode<Network> for u32 {
@@ -165,3 +167,12 @@ fn decode_u32(wire_type: WireType, src: &[u8]) -> Result<(usize, u32), DecodeErr
 }
 
 message!(Network: u32);
+
+try_from_bridge!(
+  Network: u32 {
+    NonZeroU32 {
+      try_from: |v: u32| NonZeroU32::new(v).ok_or_else(|| crate::error::DecodeError::custom("value cannot be zero"));
+      to: |v: &NonZeroU32| v.get();
+    }
+  },
+);

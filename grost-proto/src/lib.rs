@@ -37,6 +37,30 @@ mod tag;
 mod utils;
 
 #[doc(hidden)]
+#[cfg(debug_assertions)]
+#[inline]
+pub fn debug_assert_write_eq<T: ?Sized>(actual: usize, expected: usize) {
+  debug_assert_eq!(
+    actual,
+    expected,
+    "{}: expect writting {expected} bytes, but actual write {actual} bytes",
+    core::any::type_name::<T>()
+  );
+}
+
+#[doc(hidden)]
+#[cfg(debug_assertions)]
+#[inline]
+pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
+  debug_assert_eq!(
+    actual,
+    expected,
+    "{}: expect reading {expected} bytes, but actual read {actual} bytes",
+    core::any::type_name::<T>()
+  );
+}
+
+#[doc(hidden)]
 pub mod __private {
   pub use super::{
     DecodeError, EncodeError,

@@ -17,13 +17,16 @@ std = ["thiserror/std", "bytes_1/default", "hostaddr_0_1?/default", "tinyvec_1?/
 sql = []
 
 # Enable `syn`, `proc-macro2`, and `quote` features for code generation
-codegen = ["dep:syn", "dep:proc-macro2", "dep:quote", "dep:paste"]
+codegen = ["dep:syn", "dep:proc-macro2", "dep:quote"]
 
 arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
 arbitrary-int = ["arbitrary-int_1"]
 
 bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
 bnum = ["bnum_0_13"]
+
+bstr_1 = ["dep:bstr_1"]
+bstr = ["bstr_1"]
 
 bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
 bytes = ["bytes_1"]
@@ -45,6 +48,9 @@ num-rational = ["num-rational_0_4"]
 
 num-complex_0_4 = ["dep:num-complex_0_4", "varing/num-complex_0_4"]
 num-complex = ["num-complex_0_4"]
+
+regex_1 = ["dep:regex_1"]
+regex = ["regex_1"]
 
 ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
 ruint = ["ruint_1"]
@@ -70,6 +76,9 @@ tinyvec = ["tinyvec_1"]
 uuid_1 = ["dep:uuid_1"]
 uuid = ["uuid_1"]
 
+url_2 = ["dep:url_2"]
+url = ["url_2"]
+
 # arbitrary = [
 #   "dep:arbitrary",
 #   "chrono-tz_0_10?/arbitrary",
@@ -83,6 +92,7 @@ quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck
 [dependencies]
 ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
+paste.workspace = true
 simdutf8 = { version = "0.1", default-features = false, optional = true }
 
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
@@ -94,6 +104,7 @@ thiserror.workspace = true
 
 arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+bstr_1 = { package = "bstr", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
 chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
@@ -102,6 +113,7 @@ heapless_0_9 = { package = "heapless", version = "0.9", default-features = false
 hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
 num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
+regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
 ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
 rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
 smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
@@ -111,8 +123,9 @@ tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, 
 tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
 triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
 uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
+url_2 = { package = "url", version = "2", default-features = false, optional = true }
 
 syn = { workspace = true, optional = true }
 proc-macro2 = { version = "1", optional = true }
 quote = { version = "1", optional = true }
-paste = { workspace = true, optional = true }
+

@@ -1,9 +1,13 @@
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::{
-  decode::{Decode, DecodeOwned}, encode::Encode, flavors::{
-    network::{Context, DecodeError, EncodeError, Unknown, WireType}, Network
-  }, partial_encode_primitives,
+  decode::{Decode, DecodeOwned},
+  encode::Encode,
+  flavors::{
+    Network,
+    network::{Context, DecodeError, EncodeError, Unknown, WireType},
+  },
+  partial_encode_primitives,
 };
 
 macro_rules! ip_addr {
@@ -161,11 +165,14 @@ const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
 const IPV4_TAG: u8 = 4;
 const IPV6_TAG: u8 = 6;
-const IPV4_ENCODED_LENGTH_DELIMITED_LEN_BYTES: &[u8] = varing::encode_u32_varint(IPV4_LEN as u32).as_slice();
-const IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES: &[u8] = varing::encode_u32_varint(IPV6_LEN as u32).as_slice();
-const IPV4_ENCODED_LENGTH_DELIMITED_LEN: usize = IPV4_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV4_LEN;
-const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize = IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV6_LEN;
-
+const IPV4_ENCODED_LENGTH_DELIMITED_LEN_BYTES: &[u8] =
+  varing::encode_u32_varint(IPV4_LEN as u32).as_slice();
+const IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES: &[u8] =
+  varing::encode_u32_varint(IPV6_LEN as u32).as_slice();
+const IPV4_ENCODED_LENGTH_DELIMITED_LEN: usize =
+  IPV4_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV4_LEN;
+const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
+  IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV6_LEN;
 
 impl Encode<Network> for IpAddr {
   fn encode(
@@ -206,10 +213,12 @@ impl Encode<Network> for IpAddr {
 
   fn encoded_len(&self, _: &Context, wire_type: WireType) -> Result<usize, EncodeError> {
     if let WireType::LengthDelimited = wire_type {
-      Ok(1 + match self {
-        Self::V4(_) => IPV4_LEN,
-        Self::V6(_) => IPV6_LEN,
-      })
+      Ok(
+        1 + match self {
+          Self::V4(_) => IPV4_LEN,
+          Self::V6(_) => IPV6_LEN,
+        },
+      )
     } else {
       Err(EncodeError::unsupported_wire_type(
         core::any::type_name::<Self>(),
@@ -229,7 +238,10 @@ impl Encode<Network> for IpAddr {
         Self::V6(_) => IPV6_ENCODED_LENGTH_DELIMITED_LEN,
       })
     } else {
-      Err(EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wire_type))
+      Err(EncodeError::unsupported_wire_type(
+        core::any::type_name::<Self>(),
+        wire_type,
+      ))
     }
   }
 
@@ -288,11 +300,11 @@ impl<'de> Decode<'de, Network, Self> for IpAddr {
             if src.len() < [< IPV $variant _LEN >] + 1 {
               return Err(DecodeError::buffer_underflow());
             }
-  
+
             let ip = [< Ipv $variant Addr >]::from_bits($repr::from_le_bytes(
               src[1..[< IPV $variant _LEN >] + 1].try_into().unwrap(),
             ));
-  
+
             ([< IPV $variant _LEN >] + 1, IpAddr::from(ip))
           }
         }};
@@ -342,7 +354,7 @@ impl<'de> Decode<'de, Network, Self> for IpAddr {
 
       let (read, len) = varing::decode_u32_varint(src)?;
       match len as usize {
-        IPV4_LEN => decode_ip_variant!(IPV4(u32, read)), 
+        IPV4_LEN => decode_ip_variant!(IPV4(u32, read)),
         IPV6_LEN => decode_ip_variant!(IPV6(u128, read)),
         _ => Err(DecodeError::custom("unknown ip tag")),
       }
@@ -451,6 +463,4 @@ mod tests {
       true
     }
   }
-
-  
 }

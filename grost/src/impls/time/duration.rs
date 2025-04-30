@@ -1,1 +1,0 @@
-varint!(core::time::Duration);

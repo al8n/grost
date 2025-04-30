@@ -362,6 +362,7 @@ mod smallvec;
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod triomphe;
 
+mod bstr;
 mod tinyvec;
 
 #[cfg(any(feature = "std", feature = "alloc"))]

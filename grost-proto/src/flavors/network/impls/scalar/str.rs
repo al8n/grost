@@ -14,7 +14,7 @@ encode_bridge!(
 );
 
 try_decode_bridge!(
-  Network: &'de [u8] {
+  @without_decode_owned Network: &'de [u8] {
     &'de str {
       convert: decode_str;
     },
