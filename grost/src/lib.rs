@@ -31,9 +31,9 @@ pub use tinyvec_1 as tinyvec;
 #[macro_use]
 mod macros;
 
-mod selection_set;
 /// The flavors of the encoding/decoding
 pub mod flavors;
+mod selection_set;
 
 #[doc(hidden)]
 #[cfg(debug_assertions)]
@@ -63,8 +63,8 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 pub mod __private {
   pub use bitflags;
   pub use either;
-  pub use varing;
   pub use grost_proto::__private::*;
+  pub use varing;
 
   #[cfg(feature = "bnum_0_13")]
   pub use bnum_0_13 as bnum;

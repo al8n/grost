@@ -1,239 +1,86 @@
 use crate::{
   IntoTarget, Message, PartialMessage, TypeOwned, TypeRef,
   decode::{Decode, DecodeOwned},
+  decode_owned_scalar,
   encode::Encode,
   flavors::{
     Network,
-    network::{Context, DecodeError, EncodeError, Unknown, WireType},
+    network::{
+      Context, DecodeError, EncodeError, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128,
+      LengthDelimited, Unknown,
+    },
   },
+  partial_encode_scalar,
 };
 
-macro_rules! encode_fixed {
-  ($this:ident($buf:ident) as $fixed:literal) => {{
-    let buf_len = $buf.len();
-    if buf_len < $fixed {
-      return Err(EncodeError::insufficient_buffer($fixed, buf_len));
+impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    let this_len = self.len();
+    let buf_len = buf.len();
+    if buf_len < this_len {
+      return Err(EncodeError::insufficient_buffer(this_len, buf_len));
     }
-    $buf[..$fixed].copy_from_slice($this.as_slice());
-    $fixed
-  }};
-}
 
-impl<const N: usize> Encode<Network> for [u8; N] {
-  fn encode(&self, _: &Context, wire_type: WireType, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => 0,
-      WireType::Byte if N == 1 => {
-        if buf.is_empty() {
-          return Err(EncodeError::insufficient_buffer(1, 0));
-        }
-        buf[0] = self[0];
-        1
-      }
-      WireType::Fixed16 if N == 2 => encode_fixed!(self(buf) as 2),
-      WireType::Fixed32 if N == 4 => encode_fixed!(self(buf) as 4),
-      WireType::Fixed64 if N == 8 => encode_fixed!(self(buf) as 8),
-      WireType::Fixed128 if N == 16 => encode_fixed!(self(buf) as 16),
-      WireType::LengthDelimited => {
-        let this_len = self.len();
-        let buf_len = buf.len();
-        if buf_len < this_len {
-          return Err(EncodeError::insufficient_buffer(this_len, buf_len));
-        }
-
-        buf[..this_len].copy_from_slice(self.as_slice());
-        this_len
-      }
-      val => {
-        return Err(EncodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          val,
-        ));
-      }
-    })
+    buf[..this_len].copy_from_slice(self.as_slice());
+    Ok(this_len)
   }
 
-  fn encoded_len(&self, _: &Context, wire_type: WireType) -> Result<usize, EncodeError> {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => 0,
-      WireType::Byte if N == 1 => 1,
-      WireType::Fixed16 if N == 2 => 2,
-      WireType::Fixed32 if N == 4 => 4,
-      WireType::Fixed64 if N == 8 => 8,
-      WireType::Fixed128 if N == 16 => 16,
-      WireType::LengthDelimited => self.len(),
-      val => {
-        return Err(EncodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          val,
-        ));
-      }
-    })
+  fn encoded_len(&self, _: &Context) -> usize {
+    self.len()
   }
 
-  fn encoded_length_delimited_len(
-    &self,
-    _: &Context,
-    wire_type: WireType,
-  ) -> Result<usize, EncodeError> {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => 0,
-      WireType::Byte if N == 1 => 1,
-      WireType::Fixed16 if N == 2 => 2,
-      WireType::Fixed32 if N == 4 => 4,
-      WireType::Fixed64 if N == 8 => 8,
-      WireType::Fixed128 if N == 16 => 16,
-      WireType::LengthDelimited => {
-        let this_len = self.len();
-        let len_size = varing::encoded_u32_varint_len(this_len as u32);
-        len_size + this_len
-      }
-      val => {
-        return Err(EncodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          val,
-        ));
-      }
-    })
+  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
+    let this_len = self.len();
+    let len_size = varing::encoded_u32_varint_len(this_len as u32);
+    len_size + this_len
   }
 
-  fn encode_length_delimited(
-    &self,
-    _: &Context,
-    wire_type: WireType,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => 0,
-      WireType::Byte if N == 1 => {
-        if buf.is_empty() {
-          return Err(EncodeError::insufficient_buffer(1, 0));
-        }
-        buf[0] = self[0];
-        1
-      }
-      WireType::Fixed16 if N == 2 => encode_fixed!(self(buf) as 2),
-      WireType::Fixed32 if N == 4 => encode_fixed!(self(buf) as 4),
-      WireType::Fixed64 if N == 8 => encode_fixed!(self(buf) as 8),
-      WireType::Fixed128 if N == 16 => encode_fixed!(self(buf) as 16),
-      WireType::LengthDelimited => {
-        let this_len = self.len();
-        let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
-        let buf_len = buf.len();
-        if buf_len < offset + this_len {
-          return Err(EncodeError::insufficient_buffer(this_len + offset, buf_len));
-        }
-
-        buf[offset..offset + this_len].copy_from_slice(self.as_slice());
-        offset += this_len;
-        offset
-      }
-      _ => {
-        return Err(EncodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          wire_type,
-        ));
-      }
-    })
-  }
-}
-
-macro_rules! decode_fixed {
-  ($src:ident) => {{
-    if $src.len() < N {
-      return Err(DecodeError::buffer_underflow());
+  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+    let this_len = self.len();
+    let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
+    let buf_len = buf.len();
+    if buf_len < offset + this_len {
+      return Err(EncodeError::insufficient_buffer(this_len + offset, buf_len));
     }
-    (N, $src[..N].try_into().unwrap())
-  }};
+
+    buf[offset..offset + this_len].copy_from_slice(self.as_slice());
+    offset += this_len;
+    Ok(offset)
+  }
 }
 
-impl<'de, const N: usize> Decode<'de, Network, Self> for [u8; N] {
-  fn decode<UB>(
-    _: &Context,
-    wire_type: WireType,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+partial_encode_scalar!(Network: [u8; N] [const N: usize] as LengthDelimited);
+
+impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N] {
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => (0, [0u8; N]),
-      WireType::Byte if N == 1 => {
-        if src.is_empty() {
-          return Err(DecodeError::buffer_underflow());
-        }
-        let this_len = 1;
-        let mut buf = [0u8; N];
-        buf[0] = src[0];
-        (this_len, buf)
-      }
-      WireType::Fixed16 if N == 2 => decode_fixed!(src),
-      WireType::Fixed32 if N == 4 => decode_fixed!(src),
-      WireType::Fixed64 if N == 8 => decode_fixed!(src),
-      WireType::Fixed128 if N == 16 => decode_fixed!(src),
-      WireType::LengthDelimited => return decode_to_array::<N>(src),
-      wt => {
-        return Err(DecodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          wt,
-        ));
-      }
-    })
+    decode_to_array::<N>(src)
   }
 
-  fn decode_length_delimited<UB>(
-    _: &Context,
-    wire_type: WireType,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
-    Ok(match wire_type {
-      WireType::Zst if N == 0 => (0, [0u8; N]),
-      WireType::Byte if N == 1 => {
-        if src.is_empty() {
-          return Err(DecodeError::buffer_underflow());
-        }
-        let this_len = 1;
-        let mut buf = [0u8; N];
-        buf[0] = src[0];
-        (this_len, buf)
-      }
-      WireType::Fixed16 if N == 2 => decode_fixed!(src),
-      WireType::Fixed32 if N == 4 => decode_fixed!(src),
-      WireType::Fixed64 if N == 8 => decode_fixed!(src),
-      WireType::Fixed128 if N == 16 => decode_fixed!(src),
-      WireType::LengthDelimited => return decode_length_delimited_to_array::<N>(src),
-      _ => {
-        return Err(DecodeError::unsupported_wire_type(
-          core::any::type_name::<Self>(),
-          wire_type,
-        ));
-      }
-    })
+    decode_length_delimited_to_array::<N>(src)
   }
 }
 
-impl<const N: usize> DecodeOwned<Network, Self> for [u8; N] {
-  fn decode_owned<B, UB>(
-    context: &Context,
-    wire_type: WireType,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    Self::decode::<()>(context, wire_type, src.as_bytes())
+    Self::decode::<()>(context, src.as_bytes())
   }
 
   fn decode_length_delimited_owned<B, UB>(
     context: &Context,
-    wire_type: WireType,
     src: B,
   ) -> Result<(usize, Self), DecodeError>
   where
@@ -241,11 +88,11 @@ impl<const N: usize> DecodeOwned<Network, Self> for [u8; N] {
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    Self::decode_length_delimited::<()>(context, wire_type, src.as_bytes())
+    Self::decode_length_delimited::<()>(context, src.as_bytes())
   }
 }
 
-impl<const N: usize> PartialMessage<Network> for [u8; N] {
+impl<const N: usize> PartialMessage<Network, LengthDelimited> for [u8; N] {
   type UnknownBuffer<B> = ();
 
   type Encoded<'a>
@@ -264,7 +111,7 @@ impl<const N: usize> PartialMessage<Network> for [u8; N] {
     Self: Sized + 'static;
 }
 
-impl<const N: usize> Message<Network> for [u8; N] {
+impl<const N: usize> Message<Network, LengthDelimited> for [u8; N] {
   type Partial = Self;
 
   type Encoded<'a>
@@ -282,6 +129,87 @@ impl<const N: usize> Message<Network> for [u8; N] {
   where
     Self: Sized + 'static;
 }
+
+macro_rules! encode_fixed {
+  ($this:ident($buf:ident) as $fixed:literal) => {{
+    let buf_len = $buf.len();
+    if buf_len < $fixed {
+      return Err(EncodeError::insufficient_buffer($fixed, buf_len));
+    }
+    $buf[..$fixed].copy_from_slice($this.as_slice());
+    $fixed
+  }};
+}
+
+macro_rules! decode_fixed {
+  ($size:literal:$src:ident) => {{
+    if $src.len() < $size {
+      return Err(DecodeError::buffer_underflow());
+    }
+    ($size, $src[..$size].try_into().unwrap())
+  }};
+}
+
+macro_rules! impl_fixed {
+  ($($wt:ident($size:literal)),+$(,)?) => {
+    $(
+      impl Encode<Network, $wt> for [u8; $size] {
+        fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+          Ok(encode_fixed!(self(buf) as $size))
+        }
+
+        fn encoded_len(&self, _: &Context) -> usize {
+          $size
+        }
+
+        fn encoded_length_delimited_len(
+          &self,
+          ctx: &Context,
+        ) -> usize {
+          <Self as Encode<Network, $wt>>::encoded_len(self, ctx)
+        }
+
+        fn encode_length_delimited(
+          &self,
+          ctx: &Context,
+          buf: &mut [u8],
+        ) -> Result<usize, EncodeError> {
+          <Self as Encode<Network, $wt>>::encode(self, ctx, buf)
+        }
+      }
+
+      partial_encode_scalar!(Network: [u8; $size] as $wt);
+
+      impl<'de> Decode<'de, Network, $wt, Self> for [u8; $size] {
+        fn decode<UB>(
+          _: &Context,
+          src: &'de [u8],
+        ) -> Result<(usize, Self), DecodeError>
+        where
+          Self: Sized + 'de,
+          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+        {
+          Ok(decode_fixed!($size: src))
+        }
+
+        fn decode_length_delimited<UB>(
+          ctx: &Context,
+          src: &'de [u8],
+        ) -> Result<(usize, Self), DecodeError>
+        where
+          Self: Sized + 'de,
+          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+        {
+          <Self as Decode<'de, Network, $wt, Self>>::decode::<UB>(ctx, src)
+        }
+      }
+
+      decode_owned_scalar!(Network: [u8; $size] as $wt);
+    )*
+  };
+}
+
+impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
 
 impl<const N: usize> IntoTarget<Network, Self> for [u8; N] {
   fn into_target(self) -> Result<Self, DecodeError> {
@@ -355,7 +283,9 @@ fn larger_than_array_capacity<const N: usize>() -> DecodeError {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-  use super::{Context, Decode, Encode, WireType};
+  use crate::flavors::network::Zst;
+
+  use super::*;
 
   macro_rules! quickcheck_fixed {
     ($input:ident($len:literal, $wt:ident)) => {
@@ -366,31 +296,31 @@ mod tests {
             let mut buf = [0u8; $len];
             let context = Context::new();
 
-            let encoded = input.encode(&context, WireType::$wt, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len]>::decode::<()>(&context, WireType::$wt, &buf).unwrap();
-            let encoded_len = <[u8; $len]>::encoded_len(&input, &context, WireType::$wt).unwrap();
+            let encoded = <[u8; $len] as Encode<Network, $wt>>::encode(&input, &context, &mut buf).unwrap();
+            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, $wt, _>>::decode::<()>(&context, &buf).unwrap();
+            let encoded_len = <[u8; $len] as Encode<Network, $wt>>::encoded_len(&input, &context);
             assert_eq!(encoded, encoded_len);
             assert_eq!(encoded, decoded_len);
             assert_eq!(input, decoded);
 
             let mut buf = [0; 512];
-            let encoded = input.encode(&context, WireType::LengthDelimited, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len]>::decode::<()>(&context, WireType::LengthDelimited, &buf).unwrap();
-            let encoded_len = <[u8; $len]>::encoded_len(&input, &context, WireType::LengthDelimited).unwrap();
+            let encoded = <[u8; $len] as Encode<Network, LengthDelimited>>::encode(&input, &context, &mut buf).unwrap();
+            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, LengthDelimited, _>>::decode::<()>(&context, &buf).unwrap();
+            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_len(&input, &context,);
             assert_eq!(encoded, encoded_len);
             assert_eq!(encoded, decoded_len);
             assert_eq!(input, decoded);
 
-            let encoded = input.encode_length_delimited(&context, WireType::$wt, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len]>::decode_length_delimited::<()>(&context, WireType::$wt, &buf).unwrap();
-            let encoded_len = <[u8; $len]>::encoded_length_delimited_len(&input, &context, WireType::$wt).unwrap();
+            let encoded = <[u8; $len] as Encode<Network, $wt>>::encode_length_delimited(&input, &context, &mut buf).unwrap();
+            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, $wt, _>>::decode_length_delimited::<()>(&context, &buf).unwrap();
+            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(&input, &context);
             assert_eq!(encoded, encoded_len);
             assert_eq!(encoded, decoded_len);
             assert_eq!(input, decoded);
 
-            let encoded = input.encode_length_delimited(&context, WireType::LengthDelimited, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len]>::decode_length_delimited::<()>(&context, WireType::LengthDelimited, &buf).unwrap();
-            let encoded_len = <[u8; $len]>::encoded_length_delimited_len(&input, &context, WireType::LengthDelimited).unwrap();
+            let encoded = <[u8; $len] as Encode<Network, LengthDelimited>>::encode_length_delimited(&input, &context, &mut buf).unwrap();
+            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, LengthDelimited, _>>::decode_length_delimited::<()>(&context, &buf).unwrap();
+            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(&input, &context,);
             assert_eq!(encoded, encoded_len);
             assert_eq!(encoded, decoded_len);
             assert_eq!(input, decoded);
@@ -402,56 +332,31 @@ mod tests {
     };
   }
 
-  quickcheck_fixed!(u8(1, Byte));
+  quickcheck_fixed!(u8(1, Fixed8));
   quickcheck_fixed!(u16(2, Fixed16));
   quickcheck_fixed!(u32(4, Fixed32));
   quickcheck_fixed!(u64(8, Fixed64));
   quickcheck_fixed!(u128(16, Fixed128));
 
   #[test]
-  fn test_unsupported_wire_type() {
-    let context = Context::new();
-    let input: [u8; 4] = [1, 2, 3, 4];
-    let mut buf = [0; 512];
-    let result = input.encode_length_delimited(&context, WireType::Varint, &mut buf);
-    assert!(result.is_err());
-    assert_eq!(
-      result.unwrap_err().to_string(),
-      "cannot encode [u8; 4] in varint format"
-    );
-
-    let result = input.encoded_length_delimited_len(&context, WireType::Varint);
-    assert!(result.is_err());
-    assert_eq!(
-      result.unwrap_err().to_string(),
-      "cannot encode [u8; 4] in varint format"
-    );
-
-    let result = <[u8; 4]>::decode::<()>(&context, WireType::Varint, &buf);
-    assert!(result.is_err());
-    assert_eq!(
-      result.unwrap_err().to_string(),
-      "cannot decode [u8; 4] in varint format"
-    );
-  }
-
-  #[test]
   fn test_zst() {
     let context = Context::new();
     let input: [u8; 0] = [];
     let mut buf = [0; 512];
-    let encoded = input
-      .encode_length_delimited(&context, WireType::Zst, &mut buf)
-      .unwrap();
+    let encoded = <[u8; 0] as Encode<Network, Zst>>::encode(&input, &context, &mut buf).unwrap();
     assert_eq!(encoded, 0);
 
     let (decoded_len, decoded) =
-      <[u8; 0]>::decode_length_delimited::<()>(&context, WireType::Zst, &buf).unwrap();
+      <[u8; 0] as DecodeOwned<Network, Zst, _>>::decode_length_delimited_owned::<_, ()>(
+        &context,
+        buf.to_vec(),
+      )
+      .unwrap();
     assert_eq!(decoded_len, 0);
     assert_eq!(decoded, input);
 
     let encoded_len =
-      <[u8; 0]>::encoded_length_delimited_len(&input, &context, WireType::Zst).unwrap();
+      <[u8; 0] as Encode<Network, Zst>>::encoded_length_delimited_len(&input, &context);
     assert_eq!(encoded_len, 0);
   }
 }

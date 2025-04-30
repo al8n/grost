@@ -169,7 +169,7 @@ macro_rules! array_str {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
-      $crate::partial_encode_primitives!(@impl $crate::__private::flavors::Network);
+      $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Network);
     }
 
     impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {

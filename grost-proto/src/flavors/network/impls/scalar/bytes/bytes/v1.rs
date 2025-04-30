@@ -2,14 +2,14 @@ use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
   decode_bridge, encode_bridge,
-  flavors::network::{Context, DecodeError, Network, Unknown, WireType},
+  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target, type_owned, type_ref,
 };
 use bytes_1::Bytes;
 
 encode_bridge!(
   Network: [u8] {
-    Bytes {
+    Bytes as LengthDelimited {
       convert: Bytes::as_ref;
     },
   },
@@ -17,7 +17,7 @@ encode_bridge!(
 
 decode_bridge!(
   Network: &'de [u8] {
-    Bytes {
+    Bytes as LengthDelimited {
       convert: |src: &[u8]| Bytes::copy_from_slice(src);
     },
   },
@@ -32,24 +32,19 @@ type_ref!(@mapping Network: &[u8] => Bytes {
 });
 type_owned!(@clone Network: Bytes);
 
-impl DecodeOwned<Network, Self> for Bytes {
-  fn decode_owned<B, UB>(
-    context: &Context,
-    wire_type: WireType,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    <&[u8] as Decode<'_, Network, &[u8]>>::decode::<()>(context, wire_type, src.as_bytes())
+    <&[u8] as Decode<'_, Network, LengthDelimited, &[u8]>>::decode::<()>(context, src.as_bytes())
       .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
   }
 
   fn decode_length_delimited_owned<B, UB>(
     context: &Context,
-    wire_type: WireType,
     src: B,
   ) -> Result<(usize, Self), DecodeError>
   where
@@ -57,16 +52,15 @@ impl DecodeOwned<Network, Self> for Bytes {
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    <&[u8] as Decode<'_, Network, &[u8]>>::decode_length_delimited::<()>(
+    <&[u8] as Decode<'_, Network, LengthDelimited, &[u8]>>::decode_length_delimited::<()>(
       context,
-      wire_type,
       src.as_bytes(),
     )
     .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
   }
 }
 
-impl PartialMessage<Network> for Bytes {
+impl PartialMessage<Network, LengthDelimited> for Bytes {
   type UnknownBuffer<B> = ();
 
   type Encoded<'a>
@@ -85,7 +79,7 @@ impl PartialMessage<Network> for Bytes {
     Self: Sized + 'static;
 }
 
-impl Message<Network> for Bytes {
+impl Message<Network, LengthDelimited> for Bytes {
   type Partial = Self;
 
   type Encoded<'a>

@@ -3,7 +3,7 @@ use num_complex_0_4::Complex;
 use crate::{
   decode::{Decode, DecodeOwned}, encode::Encode, flavors::{
     network::{Context, DecodeError, EncodeError, Identifier, Unknown, WireType}, Network
-  }, message, partial_encode_primitives, Tag
+  }, message, partial_encode_scalar, Tag
 };
 
 const RE_TAG: Tag = Tag::new(1);
@@ -109,7 +109,7 @@ macro_rules! codec {
         }
       }
       
-      partial_encode_primitives!(Network: Complex<$ty>);
+      partial_encode_scalar!(Network: Complex<$ty>);
       
       impl<'de> Decode<'de, Network, Self> for Complex<$ty> {
         fn decode<UB>(

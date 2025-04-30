@@ -1,5 +1,3 @@
-use crate::Tag;
-
 use super::{Flavor, Type};
 
 #[doc(hidden)]
@@ -65,10 +63,7 @@ pub struct FieldRelectionBuilder<F: Flavor + ?Sized> {
   pub ty: fn() -> &'static str,
   pub schema_name: &'static str,
   pub schema_type: Type<F>,
-  pub tag: Tag,
-  pub wire_type: F::WireType,
-  // pub encoded_identifier: &'static [u8],
-  // pub encoded_identifier_len: usize,
+  pub identifier: F::Identifier,
 }
 
 impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
@@ -79,8 +74,7 @@ impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
       ty: self.ty,
       schema_name: self.schema_name,
       schema_type: self.schema_type,
-      tag: self.tag,
-      wire_type: self.wire_type,
+      identifier: self.identifier,
     }
   }
 }
@@ -93,8 +87,7 @@ pub struct FieldRelection<F: Flavor + ?Sized> {
   ty: fn() -> &'static str,
   schema_name: &'static str,
   schema_type: Type<F>,
-  tag: Tag,
-  wire_type: F::WireType,
+  identifier: F::Identifier,
 }
 
 impl<F: Flavor> Clone for FieldRelection<F> {
@@ -134,15 +127,9 @@ impl<F: Flavor> FieldRelection<F> {
     &self.schema_type
   }
 
-  /// Get the tag of the field
-  #[inline]
-  pub const fn tag(&self) -> Tag {
-    self.tag
-  }
-
   /// Get the wire type of the field
   #[inline]
-  pub const fn wire_type(&self) -> F::WireType {
-    self.wire_type
+  pub const fn identifier(&self) -> F::Identifier {
+    self.identifier
   }
 }

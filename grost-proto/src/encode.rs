@@ -1,3 +1,5 @@
+use crate::flavors::WireFormat;
+
 use super::flavors::Flavor;
 
 /// A trait for serializing data to binary format with support for various wire types.
@@ -35,7 +37,7 @@ use super::flavors::Flavor;
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait Encode<F: Flavor + ?Sized> {
+pub trait Encode<F: Flavor + ?Sized, W: WireFormat> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -43,12 +45,7 @@ pub trait Encode<F: Flavor + ?Sized> {
   /// [`Encode::encoded_len`] can be used to determine the required buffer size.
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encode(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError>;
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError>;
 
   /// Returns the number of bytes needed to encode the message. If the message cannot be encoded as the given wire type,
   /// then it will return `WireTypeNotSupported` err will be returned.
@@ -56,22 +53,14 @@ pub trait Encode<F: Flavor + ?Sized> {
   /// This is used to determine the buffer size required for encoding.
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError>;
+  fn encoded_len(&self, context: &F::Context) -> usize;
 
   /// Returns the number of bytes needed to encode the message with length-delimited.
   ///
   /// This is used to determine the buffer size required for encoding.
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encoded_length_delimited_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError>;
+  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize;
 
   /// Encodes the message into the provided buffer with length-delimited. If the message cannot be encoded as the given wire type,
   /// then it will return `WireTypeNotSupported` err will be returned.
@@ -82,7 +71,6 @@ pub trait Encode<F: Flavor + ?Sized> {
   fn encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
   ) -> Result<usize, F::EncodeError>;
 
@@ -90,13 +78,9 @@ pub trait Encode<F: Flavor + ?Sized> {
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
-    let mut buf = std::vec![0; self.encoded_len(context, wire_type)?];
-    self.encode(context, wire_type, &mut buf)?;
+  fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::EncodeError> {
+    let mut buf = std::vec![0; self.encoded_len(context)];
+    self.encode(context, &mut buf)?;
     Ok(buf)
   }
 
@@ -104,12 +88,8 @@ pub trait Encode<F: Flavor + ?Sized> {
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<super::bytes::Bytes, F::EncodeError> {
-    self.encode_to_vec(context, wire_type).map(Into::into)
+  fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::EncodeError> {
+    self.encode_to_vec(context).map(Into::into)
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
@@ -117,10 +97,9 @@ pub trait Encode<F: Flavor + ?Sized> {
   fn encode_length_delimited_to_vec(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
   ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
-    let mut buf = std::vec![0; self.encoded_len(context, wire_type)?];
-    self.encode_length_delimited(context, wire_type, &mut buf)?;
+    let mut buf = std::vec![0; self.encoded_len(context)];
+    self.encode_length_delimited(context, &mut buf)?;
     Ok(buf)
   }
 
@@ -129,11 +108,8 @@ pub trait Encode<F: Flavor + ?Sized> {
   fn partial_encode_length_delimited_to_bytes(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
   ) -> Result<super::bytes::Bytes, F::EncodeError> {
-    self
-      .encode_length_delimited_to_vec(context, wire_type)
-      .map(Into::into)
+    self.encode_length_delimited_to_vec(context).map(Into::into)
   }
 }
 
@@ -173,7 +149,7 @@ pub trait Encode<F: Flavor + ?Sized> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized> {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat> {
   /// The selection type for the message, which determines which fields to include
   /// in the encoded output.
   type Selection;
@@ -186,7 +162,6 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError>;
@@ -195,12 +170,7 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   /// then it will return `WireTypeNotSupported` err will be returned.
   ///
   /// This is used to determine the buffer size required for encoding.
-  fn partial_encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError>;
+  fn partial_encoded_len(&self, context: &F::Context, selection: &Self::Selection) -> usize;
 
   /// Returns the number of bytes needed to encode the message with length-delimited.
   /// If the message cannot be encoded as the given wire type,
@@ -212,9 +182,8 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encoded_length_delimited_len(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError>;
+  ) -> usize;
 
   /// Encodes the message into the provided buffer with length-delimited.
   ///
@@ -224,7 +193,6 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError>;
@@ -234,11 +202,10 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode_to_vec(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
   ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
-    let mut buf = std::vec![0; self.partial_encoded_len(context, wire_type, selection)?];
-    self.partial_encode(context, wire_type, &mut buf, selection)?;
+    let mut buf = std::vec![0; self.partial_encoded_len(context, selection)];
+    self.partial_encode(context, &mut buf, selection)?;
     Ok(buf)
   }
 
@@ -247,11 +214,10 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode_to_bytes(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
   ) -> Result<super::bytes::Bytes, F::EncodeError> {
     self
-      .partial_encode_to_vec(context, wire_type, selection)
+      .partial_encode_to_vec(context, selection)
       .map(Into::into)
   }
 
@@ -260,11 +226,10 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode_length_delimited_to_vec(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
   ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
-    let mut buf = std::vec![0; self.partial_encoded_len(context, wire_type, selection)?];
-    self.partial_encode_length_delimited(context, wire_type, &mut buf, selection)?;
+    let mut buf = std::vec![0; self.partial_encoded_len(context, selection)];
+    self.partial_encode_length_delimited(context, &mut buf, selection)?;
     Ok(buf)
   }
 
@@ -273,200 +238,160 @@ pub trait PartialEncode<F: Flavor + ?Sized> {
   fn partial_encode_length_delimited_to_bytes(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
   ) -> Result<super::bytes::Bytes, F::EncodeError> {
     self
-      .partial_encode_length_delimited_to_vec(context, wire_type, selection)
+      .partial_encode_length_delimited_to_vec(context, selection)
       .map(Into::into)
   }
 }
 
-impl<F, T> Encode<F> for &T
+impl<F, W, T> Encode<F, W> for &T
 where
-  T: Encode<F> + ?Sized,
+  T: Encode<F, W> + ?Sized,
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
-  fn encode(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError> {
-    (*self).encode(context, wire_type, buf)
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
+    (*self).encode(context, buf)
   }
 
-  fn encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError> {
-    (*self).encoded_len(context, wire_type)
+  fn encoded_len(&self, context: &F::Context) -> usize {
+    (*self).encoded_len(context)
   }
 
   fn encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
   ) -> Result<usize, F::EncodeError> {
-    (*self).encode_length_delimited(context, wire_type, buf)
+    (*self).encode_length_delimited(context, buf)
   }
 
-  fn encoded_length_delimited_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError> {
-    (*self).encoded_length_delimited_len(context, wire_type)
+  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
+    (*self).encoded_length_delimited_len(context)
   }
 }
 
-impl<F, T> Encode<F> for Option<T>
+impl<F, W, T> Encode<F, W> for Option<T>
 where
-  T: Encode<F>,
+  T: Encode<F, W>,
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
-  fn encode(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError> {
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
     if let Some(value) = self {
-      value.encode(context, wire_type, buf)
+      value.encode(context, buf)
     } else {
       Ok(0)
     }
   }
 
-  fn encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError> {
+  fn encoded_len(&self, context: &F::Context) -> usize {
     if let Some(value) = self {
-      value.encoded_len(context, wire_type)
+      value.encoded_len(context)
     } else {
-      Ok(0)
+      0
     }
   }
 
   fn encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
   ) -> Result<usize, F::EncodeError> {
     if let Some(value) = self {
-      value.encode_length_delimited(context, wire_type, buf)
+      value.encode_length_delimited(context, buf)
     } else {
       Ok(0)
     }
   }
 
-  fn encoded_length_delimited_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-  ) -> Result<usize, F::EncodeError> {
+  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
     if let Some(value) = self {
-      value.encoded_length_delimited_len(context, wire_type)
+      value.encoded_length_delimited_len(context)
     } else {
-      Ok(0)
+      0
     }
   }
 }
 
-impl<F, T> PartialEncode<F> for &T
+impl<F, W, T> PartialEncode<F, W> for &T
 where
-  T: PartialEncode<F> + ?Sized,
+  T: PartialEncode<F, W> + ?Sized,
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
   type Selection = T::Selection;
 
   fn partial_encode(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError> {
-    (*self).partial_encode(context, wire_type, buf, selection)
+    (*self).partial_encode(context, buf, selection)
   }
 
-  fn partial_encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError> {
-    (*self).partial_encoded_len(context, wire_type, selection)
+  fn partial_encoded_len(&self, context: &F::Context, selection: &Self::Selection) -> usize {
+    (*self).partial_encoded_len(context, selection)
   }
 
   fn partial_encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError> {
-    (*self).partial_encode_length_delimited(context, wire_type, buf, selection)
+    (*self).partial_encode_length_delimited(context, buf, selection)
   }
 
   fn partial_encoded_length_delimited_len(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError> {
-    (*self).partial_encoded_length_delimited_len(context, wire_type, selection)
+  ) -> usize {
+    (*self).partial_encoded_length_delimited_len(context, selection)
   }
 }
 
-impl<F, T> PartialEncode<F> for Option<T>
+impl<F, W, T> PartialEncode<F, W> for Option<T>
 where
-  T: PartialEncode<F>,
+  T: PartialEncode<F, W>,
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
   type Selection = T::Selection;
 
   fn partial_encode(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError> {
     if let Some(value) = self {
-      value.partial_encode(context, wire_type, buf, selection)
+      value.partial_encode(context, buf, selection)
     } else {
       Ok(0)
     }
   }
 
-  fn partial_encoded_len(
-    &self,
-    context: &F::Context,
-    wire_type: F::WireType,
-    selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError> {
+  fn partial_encoded_len(&self, context: &F::Context, selection: &Self::Selection) -> usize {
     if let Some(value) = self {
-      value.partial_encoded_len(context, wire_type, selection)
+      value.partial_encoded_len(context, selection)
     } else {
-      Ok(0)
+      0
     }
   }
 
   fn partial_encode_length_delimited(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     buf: &mut [u8],
     selection: &Self::Selection,
   ) -> Result<usize, F::EncodeError> {
     if let Some(value) = self {
-      value.partial_encode_length_delimited(context, wire_type, buf, selection)
+      value.partial_encode_length_delimited(context, buf, selection)
     } else {
       Ok(0)
     }
@@ -475,13 +400,12 @@ where
   fn partial_encoded_length_delimited_len(
     &self,
     context: &F::Context,
-    wire_type: F::WireType,
     selection: &Self::Selection,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> usize {
     if let Some(value) = self {
-      value.partial_encoded_length_delimited_len(context, wire_type, selection)
+      value.partial_encoded_length_delimited_len(context, selection)
     } else {
-      Ok(0)
+      0
     }
   }
 }

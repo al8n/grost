@@ -1,11 +1,15 @@
 use crate::{
-  flavors::network::{DecodeError, Network},
+  flavors::network::{DecodeError, Fixed32, Network, Varint},
   try_from_bridge,
 };
 
 try_from_bridge!(
   Network: u32 {
-    char {
+    char as Fixed32 {
+      try_from: convert_u32_to_char;
+      to: convert_char_to_u32;
+    },
+    char as Varint {
       try_from: convert_u32_to_char;
       to: convert_char_to_u32;
     },

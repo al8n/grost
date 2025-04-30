@@ -121,10 +121,6 @@ impl Varint for Identifier {
 }
 
 impl crate::flavors::Identifier<super::Network> for Identifier {
-  fn wire_type(&self) -> WireType {
-    self.wire_type()
-  }
-
   fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
     self.encode_to(dst)
   }

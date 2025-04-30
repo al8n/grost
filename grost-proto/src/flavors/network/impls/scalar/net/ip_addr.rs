@@ -7,7 +7,7 @@ use crate::{
     Network,
     network::{Context, DecodeError, EncodeError, Unknown, WireType},
   },
-  partial_encode_primitives,
+  partial_encode_scalar,
 };
 
 macro_rules! ip_addr {
@@ -159,7 +159,7 @@ macro_rules! ip_addr {
 
 ip_addr!(Ipv4Addr::Fixed32(u32));
 ip_addr!(Ipv6Addr::Fixed128(u128));
-partial_encode_primitives!(Network: Ipv4Addr, Ipv6Addr, IpAddr);
+partial_encode_scalar!(Network: Ipv4Addr, Ipv6Addr, IpAddr);
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;

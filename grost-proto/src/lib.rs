@@ -63,7 +63,6 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::{
-    DecodeError, EncodeError,
     buffer::*,
     convert::*,
     decode::*,

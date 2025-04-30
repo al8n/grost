@@ -1,13 +1,13 @@
 use crate::{
   decode::Decode,
   encode_bridge,
-  flavors::network::{Context, DecodeError, Network, Unknown, WireType},
+  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   try_decode_bridge,
 };
 
 encode_bridge!(
   Network: [u8] {
-    str {
+    str as LengthDelimited {
       convert: str::as_bytes;
     },
   },
@@ -15,7 +15,7 @@ encode_bridge!(
 
 try_decode_bridge!(
   @without_decode_owned Network: &'de [u8] {
-    &'de str {
+    &'de str as LengthDelimited {
       convert: decode_str;
     },
   },
@@ -24,29 +24,27 @@ try_decode_bridge!(
 macro_rules! impl_ {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de> Decode<'de, Network, &'de str> for $ty {
+      impl<'de> Decode<'de, Network, LengthDelimited, &'de str> for $ty {
         fn decode<UB>(
           context: &Context,
-          wire_type: WireType,
           src: &'de [u8],
         ) -> Result<(usize, &'de str), DecodeError>
         where
           &'de str: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
         {
-          <&'de str as Decode<'de, Network, &'de str>>::decode::<UB>(context, wire_type, src)
+          <&'de str as Decode<'de, Network, LengthDelimited, &'de str>>::decode::<UB>(context, src)
         }
 
         fn decode_length_delimited<UB>(
           context: &Context,
-          wire_type: WireType,
           src: &'de [u8],
         ) -> Result<(usize, &'de str), DecodeError>
         where
           &'de str: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
         {
-          <&'de str as Decode<'de, Network, &'de str>>::decode_length_delimited::<UB>(context, wire_type, src)
+          <&'de str as Decode<'de, Network, LengthDelimited, &'de str>>::decode_length_delimited::<UB>(context, src)
         }
       }
     )*

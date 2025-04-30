@@ -551,7 +551,7 @@ macro_rules! str_bridge {
       $crate::str_bridge!(@decode_owned $flavor: $ty: $from_str);
 
       impl $crate::__private::PartialEncode<$flavor> for $ty {
-        $crate::partial_encode_primitives!(@impl $flavor);
+        $crate::partial_encode_scalar!(@impl $flavor);
       }
 
       impl $crate::__private::IntoTarget<$flavor, $ty> for &::core::primitive::str {
@@ -722,7 +722,7 @@ macro_rules! bytes_bridge {
       $crate::bytes_bridge!(@decode $flavor: $ty $([const $g: usize])?: $from_bytes);
 
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::PartialEncode<$flavor> for $ty {
-        $crate::partial_encode_primitives!(@impl $flavor);
+        $crate::partial_encode_scalar!(@impl $flavor);
       }
 
       impl$(<const $g: ::core::primitive::usize>)? $crate::__private::IntoTarget<$flavor, $ty> for &[::core::primitive::u8] {
@@ -889,7 +889,7 @@ macro_rules! array_str {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
-      $crate::partial_encode_primitives!(@impl $crate::__private::flavors::Network);
+      $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Network);
     }
 
     impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
@@ -1046,7 +1046,7 @@ macro_rules! array_bytes {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network> for $ty {
-      $crate::partial_encode_primitives!(@impl $crate::__private::flavors::Network);
+      $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Network);
     }
 
     impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Self> for $ty {
@@ -1308,7 +1308,7 @@ macro_rules! message {
 
 /// A macro emits [`PartialEncode`](super::PartialEncode) implementations for primitive types.
 #[macro_export]
-macro_rules! partial_encode_primitives {
+macro_rules! partial_encode_scalar {
   (@impl $flavor:ty) => {
     type Selection = ();
 
@@ -1323,7 +1323,7 @@ macro_rules! partial_encode_primitives {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialEncode<$flavor> for $ty {
-        $crate::partial_encode_primitives!(@impl $flavor);
+        $crate::partial_encode_scalar!(@impl $flavor);
       }
     )*
   };
@@ -1396,7 +1396,7 @@ macro_rules! varint {
   ),+$(,)?) => {
     $($crate::wirable!((@varint) <=> ($ty $([ $(const $g: usize),* ])?));)*
     $($crate::message!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])?);)*
-    $($crate::partial_encode_primitives!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@encode $ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode_owned $ty $([ $(const $g: usize),* ])?);)*
@@ -1520,7 +1520,7 @@ macro_rules! fixed {
     $(
       paste::paste!($($crate::wirable!((@[<fixed $size>]) <=> ($ty $([ $(const $g: usize),* ])?));)*);
       $($crate::message!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])?);)*
-      $($crate::partial_encode_primitives!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])?);)*
+      $($crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])?);)*
       $($crate::fixed!(@encode $size ($ty $([ $(const $g: usize),* ])? { to_bytes: $to_bytes }));)*
       $($crate::fixed!(@decode $size ($ty $([ $(const $g: usize),* ])? { from_bytes: $from_bytes }));)*
       $($crate::fixed!(@decode_owned $size ($ty $([ $(const $g: usize),* ])? { from_bytes: $from_bytes } ));)*

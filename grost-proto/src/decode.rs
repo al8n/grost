@@ -1,3 +1,5 @@
+use crate::flavors::WireFormat;
+
 use super::{
   buffer::{Buffer, BytesBuffer},
   flavors::Flavor,
@@ -9,19 +11,16 @@ use super::{
 /// with support for both direct and length-prefixed decoding.
 ///
 /// * `'de` - The lifetime of the input data
-pub trait Decode<'de, F, O>
+pub trait Decode<'de, F, W, O>
 where
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode<UB>(
-    context: &F::Context,
-    wire_type: F::WireType,
-    src: &'de [u8],
-  ) -> Result<(usize, O), F::DecodeError>
+  fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
   where
     O: Sized + 'de,
     UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
@@ -32,7 +31,6 @@ where
   /// number of bytes consumed and the decoded instance.
   fn decode_length_delimited<UB>(
     context: &F::Context,
-    wire_type: F::WireType,
     src: &'de [u8],
   ) -> Result<(usize, O), F::DecodeError>
   where
@@ -47,19 +45,16 @@ where
 ///
 /// This is useful for deserialization scenarios where the input data
 /// may not outlive the decoded value.
-pub trait DecodeOwned<F, O>: Decode<'static, F, O> + 'static
+pub trait DecodeOwned<F, W, O>: Decode<'static, F, W, O> + 'static
 where
   F: Flavor + ?Sized,
+  W: WireFormat,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode_owned<B, UB>(
-    context: &F::Context,
-    wire_type: F::WireType,
-    src: B,
-  ) -> Result<(usize, O), F::DecodeError>
+  fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, O), F::DecodeError>
   where
     O: Sized + 'static,
     B: BytesBuffer + 'static,
@@ -71,7 +66,6 @@ where
   /// number of bytes consumed and the decoded instance.
   fn decode_length_delimited_owned<B, UB>(
     context: &F::Context,
-    wire_type: F::WireType,
     src: B,
   ) -> Result<(usize, O), F::DecodeError>
   where

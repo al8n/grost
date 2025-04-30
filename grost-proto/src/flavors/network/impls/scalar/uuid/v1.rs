@@ -1,10 +1,17 @@
 use uuid_1::Uuid;
 
-use crate::{bridge, flavors::network::Network};
+use crate::{
+  bridge,
+  flavors::network::{Fixed128, Network, Varint},
+};
 
 bridge!(
   Network: u128 {
-    Uuid {
+    Uuid as Fixed128 {
+      from: Uuid::from_u128;
+      to: Uuid::as_u128;
+    },
+    Uuid as Varint {
       from: Uuid::from_u128;
       to: Uuid::as_u128;
     },

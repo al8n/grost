@@ -3,7 +3,7 @@ use num_rational_0_4::Ratio;
 use crate::{
   decode::{Decode, DecodeOwned}, encode::Encode, flavors::{
     network::{Context, DecodeError, EncodeError, Identifier, Unknown, WireType}, Network
-  }, message, partial_encode_primitives, Tag
+  }, message, partial_encode_scalar, Tag
 };
 
 const NUMER_TAG: Tag = Tag::new(1);
@@ -109,7 +109,7 @@ macro_rules! codec {
         }
       }
       
-      partial_encode_primitives!(Network: Ratio<$ty>);
+      partial_encode_scalar!(Network: Ratio<$ty>);
       
       impl<'de> Decode<'de, Network, Self> for Ratio<$ty> {
         fn decode<UB>(

@@ -1,8 +1,15 @@
-use crate::{bridge, flavors::network::Network};
+use crate::{
+  bridge,
+  flavors::network::{Fixed8, Network, Varint},
+};
 
 bridge!(
   Network: u8 {
-    bool {
+    bool as Fixed8 {
+      from: convert_u8_to_bool;
+      to: convert_bool_to_u8;
+    },
+    bool as Varint {
       from: convert_u8_to_bool;
       to: convert_bool_to_u8;
     },
