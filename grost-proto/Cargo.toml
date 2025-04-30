@@ -40,7 +40,7 @@ chrono-tz = ["chrono-tz_0_10"]
 decimal_1 = ["dep:rust_decimal_1"]
 decimal = ["decimal_1"]
 
-half_2 = ["dep:half_2"]
+half_2 = ["dep:half_2", "varing/half_2"]
 half = ["half_2"]
 
 num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
@@ -109,7 +109,7 @@ bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, opti
 chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
-heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
+# heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
 hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
 num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }

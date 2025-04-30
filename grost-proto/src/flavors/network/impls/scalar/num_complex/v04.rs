@@ -250,19 +250,23 @@ macro_rules! codec {
 }
 
 codec!(
-  // Fixed32:f32,
-  // Fixed64:f64,
+  Fixed32:f32,
+  Fixed64:f64,
   Byte:u8,
   Varint:u16,
   Varint:u32,
   Varint:u64,
-  Varint:u128,
   Byte:i8,
   Varint:i16,
   Varint:i32,
   Varint:i64,
-  Varint:i128,
 );
 
-// #[cfg(feature = "half_2")]
-// codec!(Fixed16:half_2::f16);
+#[cfg(feature = "half_2")]
+codec!(Fixed16:half_2::f16);
+
+#[cfg(any(feature = "ruint_1", feature = "bnum_0_13"))]
+codec!(
+  Varint:u128,
+  Varint:i128,
+);

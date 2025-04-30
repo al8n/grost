@@ -81,8 +81,6 @@ impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
       schema_type: self.schema_type,
       tag: self.tag,
       wire_type: self.wire_type,
-      // encoded_identifier: self.encoded_identifier,
-      // encoded_identifier_len: self.encoded_identifier_len,
     }
   }
 }
@@ -97,8 +95,6 @@ pub struct FieldRelection<F: Flavor + ?Sized> {
   schema_type: Type<F>,
   tag: Tag,
   wire_type: F::WireType,
-  // encoded_identifier: &'static [u8],
-  // encoded_identifier_len: usize,
 }
 
 impl<F: Flavor> Clone for FieldRelection<F> {
@@ -149,16 +145,4 @@ impl<F: Flavor> FieldRelection<F> {
   pub const fn wire_type(&self) -> F::WireType {
     self.wire_type
   }
-
-  // /// Get the encoded identifier of the field
-  // #[inline]
-  // pub const fn encoded_identifier(&self) -> &'static [u8] {
-  //   self.encoded_identifier
-  // }
-
-  // /// Get the encoded identifier length of the field
-  // #[inline]
-  // pub const fn encoded_identifier_len(&self) -> usize {
-  //   self.encoded_identifier_len
-  // }
 }
