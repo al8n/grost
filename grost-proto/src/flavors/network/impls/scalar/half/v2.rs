@@ -1,5 +1,6 @@
 use crate::{
-  bridge, default_wire_format, flavors::network::{Fixed16, Network, Varint}
+  bridge, default_wire_format,
+  flavors::network::{Fixed16, Network, Varint},
 };
 use half_2::f16;
 

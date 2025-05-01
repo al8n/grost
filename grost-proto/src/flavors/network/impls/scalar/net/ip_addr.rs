@@ -2,11 +2,15 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::{
   decode::{Decode, DecodeOwned},
+  default_wire_format,
   encode::Encode,
   flavors::{
-    network::{Context, DecodeError, EncodeError, Fixed128, Fixed32, LengthDelimited, Unknown, Varint}, Network
+    Network,
+    network::{
+      Context, DecodeError, EncodeError, Fixed32, Fixed128, LengthDelimited, Unknown, Varint,
+    },
   },
-  partial_encode_scalar, default_wire_format,
+  partial_encode_scalar,
 };
 
 macro_rules! ip_addr {
@@ -164,11 +168,7 @@ const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
 default_wire_format!(Network: IpAddr as LengthDelimited:LengthDelimited);
 
 impl Encode<Network, LengthDelimited> for IpAddr {
-  fn encode(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     macro_rules! encode_ip_variant {
       ($variant:ident::$wt:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {
@@ -195,28 +195,21 @@ impl Encode<Network, LengthDelimited> for IpAddr {
     }
   }
 
-  fn encoded_len(&self, _: &Context,) -> usize {
+  fn encoded_len(&self, _: &Context) -> usize {
     1 + match self {
       Self::V4(_) => IPV4_LEN,
       Self::V6(_) => IPV6_LEN,
     }
   }
 
-  fn encoded_length_delimited_len(
-    &self,
-    _: &Context,
-  ) -> usize {
+  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
     match self {
       Self::V4(_) => IPV4_ENCODED_LENGTH_DELIMITED_LEN,
       Self::V6(_) => IPV6_ENCODED_LENGTH_DELIMITED_LEN,
     }
   }
 
-  fn encode_length_delimited(
-    &self,
-    _: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     macro_rules! encode_ip_variant {
       ($variant:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {
@@ -243,10 +236,7 @@ impl Encode<Network, LengthDelimited> for IpAddr {
 }
 
 impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
-  fn decode<UB>(
-    _: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -279,10 +269,7 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
     })
   }
 
-  fn decode_length_delimited<UB>(
-    _: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -311,10 +298,7 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
 }
 
 impl DecodeOwned<Network, LengthDelimited, Self> for IpAddr {
-  fn decode_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,

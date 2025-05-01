@@ -1,6 +1,9 @@
 #[cfg(feature = "bytes_1")]
 const _: () = {
-  use crate::{default_wire_format, flavors::network::{LengthDelimited, Network}};
+  use crate::{
+    default_wire_format,
+    flavors::network::{LengthDelimited, Network},
+  };
   use ::tinyvec_1::TinyVec;
   use bytes_1::Bytes;
 

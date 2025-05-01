@@ -1,5 +1,6 @@
 use crate::{
-  bridge, default_wire_format, flavors::network::{Fixed64, Network, Varint}
+  bridge, default_wire_format,
+  flavors::network::{Fixed64, Network, Varint},
 };
 
 default_wire_format!(Network: f64 as Fixed64:Fixed64);

@@ -138,13 +138,13 @@ macro_rules! deref_decode_owned_impl {
           T::decode_length_delimited_owned::<B, UB>(context, src)
         }
       }
-    )*      
+    )*
   };
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
-  use std::{sync::Arc, rc::Rc, boxed::Box};
+  use std::{boxed::Box, rc::Rc, sync::Arc};
 
   deref_decode_impl!(Box<T>, Rc<T>, Arc<T>);
   deref_decode_owned_impl!(Box<T>, Rc<T>, Arc<T>);

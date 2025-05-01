@@ -1,5 +1,7 @@
 use crate::{
-  bridge, default_wire_format, flavors::network::{DecodeError, Fixed8, Network, Varint}, try_from_bridge
+  bridge, default_wire_format,
+  flavors::network::{DecodeError, Fixed8, Network, Varint},
+  try_from_bridge,
 };
 use core::num::NonZeroI8;
 

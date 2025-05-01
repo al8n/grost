@@ -1,5 +1,9 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_bridge, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, type_ref, Message, PartialMessage
+  Message, PartialMessage,
+  decode::{Decode, DecodeOwned},
+  decode_bridge, encode_bridge,
+  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
+  into_target, type_ref,
 };
 use smol_str_0_3::SmolStr;
 
@@ -27,10 +31,7 @@ type_ref!( Network: &str => SmolStr {
 });
 
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
-  fn decode_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,

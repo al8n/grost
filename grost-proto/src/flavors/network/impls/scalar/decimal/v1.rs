@@ -1,5 +1,6 @@
 use crate::{
-  bridge, default_wire_format, flavors::network::{Fixed128, Network, Varint}
+  bridge, default_wire_format,
+  flavors::network::{Fixed128, Network, Varint},
 };
 use rust_decimal_1::Decimal as f128;
 

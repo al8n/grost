@@ -167,7 +167,7 @@ macro_rules! into_target {
 #[macro_export]
 macro_rules! default_wire_format {
   ($(
-    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty:$expr:expr), +$(,)?
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty:$expr:expr); +$(;)?
   ),+$(,)?) => {
     $(
       $(

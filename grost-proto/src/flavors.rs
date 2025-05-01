@@ -55,7 +55,7 @@ where
 
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
-  use std::{sync::Arc, boxed::Box, rc::Rc,};
+  use std::{boxed::Box, rc::Rc, sync::Arc};
 
   impl<T, F> DefaultWireFormat<F> for Box<T>
   where

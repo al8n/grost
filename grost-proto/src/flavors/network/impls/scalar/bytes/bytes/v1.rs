@@ -1,5 +1,9 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_bridge, default_wire_format, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, type_ref, Message, PartialMessage
+  Message, PartialMessage,
+  decode::{Decode, DecodeOwned},
+  decode_bridge, default_wire_format, encode_bridge,
+  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
+  into_target, type_ref,
 };
 use bytes_1::Bytes;
 

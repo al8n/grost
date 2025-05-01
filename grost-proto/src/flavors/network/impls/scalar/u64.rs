@@ -1,7 +1,12 @@
 use core::num::NonZeroU64;
 
 use crate::{
-  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
+  buffer::Buffer,
+  decode::Decode,
+  decode_owned_scalar, default_wire_format,
+  encode::Encode,
+  flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint},
+  message, partial_encode_scalar, try_from_bridge,
 };
 
 default_wire_format!(Network: u64 as Varint:Varint);

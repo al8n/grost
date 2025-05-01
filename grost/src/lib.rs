@@ -10,8 +10,7 @@ extern crate std;
 // pub use encode::*;
 pub use flavors::Flavor;
 pub use grost_proto::{
-  IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned,
-  TypeRef, buffer,
+  IntoTarget, Message, PartialMessage, Tag, TypeBorrowed, TypeOwned, TypeRef, buffer,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   reflection,
@@ -27,9 +26,6 @@ pub use smol_str_0_3 as smol_str;
 
 #[cfg(feature = "tinyvec_1")]
 pub use tinyvec_1 as tinyvec;
-
-#[macro_use]
-mod macros;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;

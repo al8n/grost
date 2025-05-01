@@ -492,7 +492,7 @@ macro_rules! deref_partial_encode_impl {
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
-  use std::{sync::Arc, boxed::Box, rc::Rc,};
+  use std::{boxed::Box, rc::Rc, sync::Arc};
 
   deref_encode_impl!(Box<T>, Rc<T>, Arc<T>);
   deref_partial_encode_impl!(Box<T>, Rc<T>, Arc<T>);

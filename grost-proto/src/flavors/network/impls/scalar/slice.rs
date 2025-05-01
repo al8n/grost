@@ -1,5 +1,10 @@
 use crate::{
-  buffer::Buffer, decode::Decode, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown}, partial_encode_scalar
+  buffer::Buffer,
+  decode::Decode,
+  default_wire_format,
+  encode::Encode,
+  flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
+  partial_encode_scalar,
 };
 
 default_wire_format!(

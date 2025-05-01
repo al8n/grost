@@ -22,6 +22,9 @@ codegen = ["dep:syn", "dep:proc-macro2", "dep:quote"]
 arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
 arbitrary-int = ["arbitrary-int_1"]
 
+arrayvec_0_7 = ["dep:arrayvec_0_7"]
+arrayvec = ["arrayvec_0_7"]
+
 bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
 bnum = ["bnum_0_13"]
 
@@ -42,6 +45,9 @@ decimal = ["decimal_1"]
 
 half_2 = ["dep:half_2", "varing/half_2"]
 half = ["half_2"]
+
+hostaddr_0_1 = ["dep:hostaddr_0_1"]
+hostaddr = ["hostaddr_0_1"]
 
 num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
 num-rational = ["num-rational_0_4"]

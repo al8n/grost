@@ -3,7 +3,9 @@ const _: () = {
   use regex_1::{Regex, bytes::Regex as BytesRegex};
   use smol_str_0_3::SmolStr;
 
-  use crate::{flavors::{Network, network::DecodeError}, into_target, type_owned, type_ref};
+  use crate::{
+    default_wire_format, flavors::{network::{DecodeError, LengthDelimited}, Network}, into_target, type_owned, type_ref
+  };
 
   const ERR_MSG: &str = "invalid regex pattern";
 
@@ -76,4 +78,9 @@ const _: () = {
   );
 
   regex_conversion!(Regex, BytesRegex,);
+
+  default_wire_format!(Network:
+    Regex as LengthDelimited:LengthDelimited;
+    BytesRegex as LengthDelimited:LengthDelimited;
+  );
 };

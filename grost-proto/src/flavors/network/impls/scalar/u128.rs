@@ -1,7 +1,12 @@
 use core::num::NonZeroU128;
 
 use crate::{
-  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
+  buffer::Buffer,
+  decode::Decode,
+  decode_owned_scalar, default_wire_format,
+  encode::Encode,
+  flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
+  message, partial_encode_scalar, try_from_bridge,
 };
 
 default_wire_format!(Network: u128 as Varint: Varint);

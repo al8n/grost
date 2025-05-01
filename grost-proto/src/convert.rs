@@ -212,7 +212,7 @@ macro_rules! wrapper_impl {
   };
   (@partial_message $($ty:ty),+$(,)?) => {
     $(
-      impl<T, F, W> PartialMessage<F, W> for $ty 
+      impl<T, F, W> PartialMessage<F, W> for $ty
       where
         T: PartialMessage<F, W> + Clone + 'static,
         for<'a> T::Encoded<'a>: TypeRef<F, $ty>,
@@ -277,12 +277,8 @@ where
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-const _:() = {
-  use std::{
-    boxed::Box,
-    rc::Rc,
-    sync::Arc,
-  };
+const _: () = {
+  use std::{boxed::Box, rc::Rc, sync::Arc};
 
   wrapper_impl!(
     @into_target

@@ -1,5 +1,6 @@
 use crate::{
-  bridge, default_wire_format, flavors::network::{Fixed8, Network, Varint}
+  bridge, default_wire_format,
+  flavors::network::{Fixed8, Network, Varint},
 };
 
 default_wire_format!(Network: bool as Fixed8:Fixed8);

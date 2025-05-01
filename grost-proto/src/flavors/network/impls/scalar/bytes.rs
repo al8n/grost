@@ -211,6 +211,11 @@ macro_rules! array_bytes {
       where
         Self: ::core::marker::Sized + 'static;
     }
+
+    $crate::default_wire_format!(
+      $crate::__private::flavors::Network:
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited:$crate::__private::flavors::network::LengthDelimited;
+    );
   };
 }
 
