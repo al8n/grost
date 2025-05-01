@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 pub use case::*;
 pub use enum_::*;
-pub use flavor::*;
+pub use flavors::*;
 use indexmap::IndexMap;
 pub use safe_ident::*;
 pub use struct_::*;
@@ -15,8 +15,7 @@ use syn::Ident;
 mod case;
 /// Enum structs
 mod enum_;
-mod flavor;
-mod network;
+mod flavors;
 mod safe_ident;
 /// structs
 mod struct_;
@@ -117,13 +116,13 @@ pub trait EnumCodecGenerator {
 pub struct DefaultGenerator {
   grost_path: syn::Path,
   derive: bool,
-  flavors: IndexMap<SmolStr, Box<dyn Flavor + 'static>>,
+  flavors: IndexMap<SmolStr, Box<dyn FlavorGenerator + 'static>>,
 }
 
 impl Default for DefaultGenerator {
   fn default() -> Self {
     let grost_path = syn::parse_str("::grost").unwrap();
-    let network = Box::new(network::Network::new(&grost_path)) as Box<dyn Flavor>;
+    let network = Box::new(network::Network::new(&grost_path)) as Box<dyn FlavorGenerator>;
     let k = core::any::type_name::<network::Network>();
     Self {
       flavors: {

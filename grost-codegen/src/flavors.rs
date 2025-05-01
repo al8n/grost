@@ -4,8 +4,12 @@ use syn::Ident;
 
 use super::{Enum, Struct};
 
+/// The network flavor code generator
+pub mod network;
+
+
 /// The flavor
-pub trait Flavor {
+pub trait FlavorGenerator {
   /// Returns the full qualify path of the flavor type.
   fn ty(&self) -> &syn::Type;
   /// Sets the type of the flavor
@@ -97,7 +101,7 @@ pub trait Flavor {
   }
 }
 
-impl<F: Flavor + ?Sized> Flavor for Box<F> {
+impl<F: FlavorGenerator + ?Sized> FlavorGenerator for Box<F> {
   fn name(&self) -> &str {
     self.as_ref().name()
   }
@@ -129,7 +133,7 @@ impl<F: Flavor + ?Sized> Flavor for Box<F> {
   }
 }
 
-pub trait FlavorExt: Flavor {
+pub trait FlavorGeneratorExt: FlavorGenerator {
   fn field_reflection_name(&self, field_name: &str) -> Ident {
     let flavor_name_ssc = self.name().to_shouty_snake_case();
     format_ident!(
@@ -144,4 +148,4 @@ pub trait FlavorExt: Flavor {
   }
 }
 
-impl<F> FlavorExt for F where F: Flavor + ?Sized {}
+impl<F> FlavorGeneratorExt for F where F: FlavorGenerator + ?Sized {}

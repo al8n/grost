@@ -122,6 +122,9 @@ pub trait Flavor: core::fmt::Debug + 'static {
   /// The decode error for this flavor.
   type DecodeError: core::error::Error;
 
+  /// The name of the flavor.
+  const NAME: &'static str;
+
   /// Encodes the unknown value into a buffer.
   fn encode_unknown<B>(
     ctx: &Self::Context,

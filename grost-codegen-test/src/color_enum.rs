@@ -368,10 +368,27 @@ impl Color {
         }
     }
 }
-impl ::grost::__private::Wirable<::grost::__private::flavors::Network> for Color {
-    const WIRE_TYPE: ::grost::__private::flavors::network::WireType = ::grost::__private::flavors::network::WireType::Varint;
-}
-impl ::grost::__private::Encode<::grost::__private::flavors::Network> for Color {
+::grost::__private::default_wire_format!(
+    ::grost::__private::flavors::Network : Color as
+    ::grost::__private::flavors::network::Varint :
+    ::grost::__private::flavors::network::Varint
+);
+::grost::__private::partial_encode_scalar!(
+    ::grost::__private::flavors::Network : Color as
+    ::grost::__private::flavors::network::Varint
+);
+::grost::__private::decode_owned_scalar!(
+    ::grost::__private::flavors::Network : Color as
+    ::grost::__private::flavors::network::Varint
+);
+::grost::__private::message!(
+    ::grost::__private::flavors::Network : Color as
+    ::grost::__private::flavors::network::Varint
+);
+impl ::grost::__private::Encode<
+    ::grost::__private::flavors::Network,
+    ::grost::__private::flavors::network::Varint,
+> for Color {
     #[inline]
     fn encode(
         &self,
@@ -390,36 +407,39 @@ impl ::grost::__private::Encode<::grost::__private::flavors::Network> for Color 
     ) -> ::core::primitive::usize {
         self.const_encoded_len()
     }
-}
-impl ::grost::__private::PartialEncode<::grost::__private::flavors::Network> for Color {
-    type Selection = ();
     #[inline]
-    fn partial_encode(
+    fn encode_length_delimited(
         &self,
-        context: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
-        _: &Self::Selection,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::Network as ::grost::__private::Flavor>::EncodeError,
     > {
-        ::grost::__private::Encode::<
+        <Self as ::grost::__private::Encode<
             ::grost::__private::flavors::Network,
-        >::encode(self, context, buf)
+            ::grost::__private::flavors::network::Varint,
+        >>::encode(self, ctx, buf)
     }
     #[inline]
-    fn partial_encoded_len(
+    fn encoded_length_delimited_len(
         &self,
-        context: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
-        _: &Self::Selection,
+        ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
     ) -> ::core::primitive::usize {
-        ::grost::__private::Encode::<
+        <Self as ::grost::__private::Encode<
             ::grost::__private::flavors::Network,
-        >::encoded_len(self, context)
+            ::grost::__private::flavors::network::Varint,
+        >>::encoded_len(self, ctx)
     }
 }
-impl<'de> ::grost::__private::Decode<'de, ::grost::__private::flavors::Network, Self>
-for Color {
+impl<
+    'de,
+> ::grost::__private::Decode<
+    'de,
+    ::grost::__private::flavors::Network,
+    ::grost::__private::flavors::network::Varint,
+    Self,
+> for Color {
     #[inline]
     fn decode<UB>(
         _: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
@@ -430,97 +450,35 @@ for Color {
     >
     where
         UB: ::grost::__private::Buffer<
-                ::grost::__private::Unknown<
-                    ::grost::__private::flavors::Network,
+                ::grost::__private::flavors::network::Unknown<
                     &'de [::core::primitive::u8],
                 >,
             > + 'de,
     {
         Self::const_decode(src).map_err(::core::convert::Into::into)
     }
-}
-impl ::grost::__private::DecodeOwned<::grost::__private::flavors::Network, Self>
-for Color {
     #[inline]
-    fn decode_owned<B, UB>(
+    fn decode_length_delimited<UB>(
         ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
-        src: B,
+        src: &'de [::core::primitive::u8],
     ) -> ::core::result::Result<
         (::core::primitive::usize, Self),
         <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
     >
     where
-        Self: ::core::marker::Sized + 'static,
-        B: ::grost::__private::BytesBuffer + 'static,
         UB: ::grost::__private::Buffer<
-                ::grost::__private::Unknown<::grost::__private::flavors::Network, B>,
-            > + 'static,
+                ::grost::__private::flavors::network::Unknown<
+                    &'de [::core::primitive::u8],
+                >,
+            > + 'de,
     {
         <Self as ::grost::__private::Decode<
-            '_,
+            'de,
             ::grost::__private::flavors::Network,
+            ::grost::__private::flavors::network::Varint,
             Self,
-        >>::decode::<()>(ctx, src.as_bytes())
+        >>::decode::<UB>(ctx, src)
     }
-}
-impl ::grost::__private::IntoTarget<::grost::__private::flavors::Network, Self>
-for Color {
-    #[inline]
-    fn into_target(
-        self,
-    ) -> ::core::result::Result<
-        Self,
-        <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
-    > {
-        ::core::result::Result::Ok(self)
-    }
-}
-impl ::grost::__private::TypeRef<::grost::__private::flavors::Network, Self> for Color {
-    #[inline]
-    fn to(
-        &self,
-    ) -> ::core::result::Result<
-        Self,
-        <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
-    > {
-        ::core::result::Result::Ok(*self)
-    }
-}
-impl ::grost::__private::TypeOwned<::grost::__private::flavors::Network, Self>
-for Color {
-    #[inline]
-    fn to(
-        &self,
-    ) -> ::core::result::Result<
-        Self,
-        <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
-    > {
-        ::core::result::Result::Ok(*self)
-    }
-}
-impl<'a> ::grost::__private::TypeBorrowed<'a, ::grost::__private::flavors::Network, Self>
-for Color {
-    fn from_borrow(val: &'a Self) -> Self {
-        *val
-    }
-}
-impl<'a> ::core::convert::From<&'a Self> for Color {
-    #[inline]
-    fn from(e: &'a Self) -> Self {
-        *e
-    }
-}
-impl ::grost::__private::PartialMessage<::grost::__private::flavors::Network> for Color {
-    type UnknownBuffer<B> = ();
-    type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
-    type Borrowed<'a> = Self where Self: 'a;
-    type EncodedOwned = Self where Self: ::core::marker::Sized;
-}
-impl ::grost::__private::Message<::grost::__private::flavors::Network> for Color {
-    type Partial = Self;
-    type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
-    type Borrowed<'a> = Self where Self: 'a;
-    type EncodedOwned = Self where Self: ::core::marker::Sized;
 }
 #[cfg(feature = "quickcheck")]
 const _: () = {
@@ -536,7 +494,7 @@ const _: () = {
 };
 #[cfg(test)]
 #[allow(non_snake_case)]
-mod __quickcheck_fuzzy_grost_codegen_network_network_flavor_color__ {
+mod __quickcheck_fuzzy_grost_codegen_flavors_network_network_flavor_color__ {
     use super::Color;
     use ::grost::__private::{Encode, Decode};
     ::grost::__private::quickcheck::quickcheck! {

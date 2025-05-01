@@ -5,8 +5,8 @@ use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility, parse_quote};
 
 use crate::{
-  Flavor, SafeIdent,
-  flavor::FlavorExt,
+  FlavorGenerator, SafeIdent,
+  flavors::FlavorGeneratorExt,
   ty::{Ty, TyRepr},
 };
 use getter::Getter;
@@ -339,7 +339,7 @@ impl Field {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: Flavor + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();

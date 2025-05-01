@@ -15,17 +15,15 @@ pub use grost_proto::{
   encode::{Encode, PartialEncode},
   reflection,
 };
+
+#[cfg(feature = "bytes")]
+pub use grost_proto::bytes;
+
+#[cfg(feature = "smol_str")]
+pub use grost_proto::smol_str;
+
 // pub use impls::*;
 // pub use selection_set::SelectionSet;
-
-#[cfg(feature = "bytes_1")]
-pub use bytes_1 as bytes;
-
-#[cfg(feature = "smol_str_0_3")]
-pub use smol_str_0_3 as smol_str;
-
-#[cfg(feature = "tinyvec_1")]
-pub use tinyvec_1 as tinyvec;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
@@ -62,12 +60,6 @@ pub mod __private {
   pub use grost_proto::__private::*;
   pub use varing;
 
-  #[cfg(feature = "bnum_0_13")]
-  pub use bnum_0_13 as bnum;
-  #[cfg(feature = "bytes")]
-  pub use bytes_1 as bytes;
-  #[cfg(feature = "smol_str")]
-  pub use smol_str_0_3 as smol_str;
 
   #[cfg(not(feature = "simdutf8"))]
   pub use ::core::str::from_utf8;
@@ -77,7 +69,7 @@ pub mod __private {
   #[cfg(feature = "arbitrary")]
   pub use arbitrary;
   #[cfg(feature = "quickcheck")]
-  pub use quickcheck;
+  pub use grost_proto::quickcheck;
 
   pub use memchr;
   pub use thiserror;

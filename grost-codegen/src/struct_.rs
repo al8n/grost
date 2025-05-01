@@ -3,7 +3,7 @@ use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Visibility, parse_quote};
 
-use crate::{SafeIdent, flavor::FlavorExt};
+use crate::{SafeIdent, flavors::FlavorGeneratorExt};
 
 pub use field::Field;
 
@@ -90,7 +90,7 @@ impl Struct {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: super::Flavor + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     let name = self.name.name();
     let name_str = self.name.name_str();

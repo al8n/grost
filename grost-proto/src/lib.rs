@@ -9,8 +9,13 @@ extern crate std;
 #[cfg(feature = "bytes_1")]
 pub use bytes_1 as bytes;
 
+#[cfg(feature = "smol_str_0_3")]
+pub use smol_str_0_3 as smol_str;
+
+#[cfg(feature = "quickcheck")]
+pub use quickcheck;
+
 pub use convert::*;
-pub use error::*;
 pub use select_set::SelectionSet;
 pub use tag::Tag;
 
@@ -29,7 +34,6 @@ pub mod decode;
 pub mod encode;
 
 mod convert;
-mod error;
 #[macro_use]
 mod macros;
 mod select_set;
@@ -68,6 +72,11 @@ pub mod __private {
     decode::*,
     encode::*,
     flavors::{self, *},
+    reflection,
+    partial_encode_scalar,
+    decode_owned_scalar,
+    default_wire_format,
+    message,
   };
   pub use varing;
 }

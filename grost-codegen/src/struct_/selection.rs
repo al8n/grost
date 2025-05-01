@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use quote::{ToTokens, format_ident};
 use syn::Ident;
 
-use crate::Flavor;
+use crate::FlavorGenerator;
 
 use super::*;
 
@@ -11,7 +11,7 @@ impl Struct {
   pub(crate) fn generate_selection(
     &self,
     path_to_grost: &syn::Path,
-    flavors: &IndexMap<SmolStr, Box<dyn Flavor>>,
+    flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
   ) -> proc_macro2::TokenStream {
     let name = self.selection_name();
     let selection_flags_name = format_ident!("{}Flags", name.name_str());
@@ -237,7 +237,7 @@ impl Struct {
 
   fn generate_codec<F>(&self, path_to_grost: &syn::Path, flavors: &F) -> proc_macro2::TokenStream
   where
-    F: Flavor + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let name = self.selection_name();
     let flavor_ty = flavors.ty();
@@ -526,7 +526,7 @@ fn generate_bitflags_iter(
   struct_name: &Ident,
   flags_name: &Ident,
   flags_iter_name: &Ident,
-  flavors: &IndexMap<SmolStr, Box<dyn Flavor>>,
+  flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
 ) -> proc_macro2::TokenStream {
   let impl_iterators = flavors.iter().map(|(_, f)| {
     let flavor_ty = f.ty();
@@ -609,7 +609,7 @@ fn generate_selection_flags(
   selection_flags_iter_name: &Ident,
   fields: &[Field],
   path_to_grost: &syn::Path,
-  flavors: &IndexMap<SmolStr, Box<dyn Flavor>>,
+  flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
 ) -> proc_macro2::TokenStream {
   let num_fields = fields.len();
 

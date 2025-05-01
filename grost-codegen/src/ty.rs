@@ -5,7 +5,7 @@ use syn::{Lifetime, Type, parse_quote};
 pub use int::Int;
 pub use uint::Uint;
 
-use crate::{SafeIdent, flavor::FlavorExt};
+use crate::{SafeIdent, flavors::FlavorGeneratorExt};
 
 mod int;
 mod uint;
@@ -234,7 +234,7 @@ impl Ty {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: super::Flavor + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     let flavor_ty = flavor.ty();
     match &self.repr {

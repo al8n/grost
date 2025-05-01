@@ -83,6 +83,8 @@ impl Flavor for Network {
   type DecodeError = DecodeError;
   type Unknown<B> = Unknown<B>;
 
+  const NAME: &'static str = "Network";
+
   fn encode_unknown<B>(
     _: &Self::Context,
     value: &Self::Unknown<B>,
