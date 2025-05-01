@@ -6,7 +6,7 @@ use crate::{
 };
 
 default_wire_format!(
-  Network: str as LengthDelimited:LengthDelimited
+  Network: str as LengthDelimited
 );
 
 encode_bridge!(

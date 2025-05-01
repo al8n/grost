@@ -4,7 +4,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Network: char as Fixed32:Fixed32);
+default_wire_format!(Network: char as Fixed32);
 
 try_from_bridge!(
   Network: u32 {

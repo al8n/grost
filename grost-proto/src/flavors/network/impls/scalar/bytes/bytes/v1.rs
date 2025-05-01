@@ -7,7 +7,7 @@ use crate::{
 };
 use bytes_1::Bytes;
 
-default_wire_format!(Network: Bytes as LengthDelimited:LengthDelimited);
+default_wire_format!(Network: Bytes as LengthDelimited);
 
 encode_bridge!(
   Network: [u8] {

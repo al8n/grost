@@ -80,7 +80,7 @@ const _: () = {
   regex_conversion!(Regex, BytesRegex,);
 
   default_wire_format!(Network:
-    Regex as LengthDelimited:LengthDelimited;
-    BytesRegex as LengthDelimited:LengthDelimited;
+    Regex as LengthDelimited;
+    BytesRegex as LengthDelimited;
   );
 };

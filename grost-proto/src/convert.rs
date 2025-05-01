@@ -8,7 +8,7 @@ use super::{
 };
 
 /// A partial message which may or may not contain all of fields of a [`Message`].
-pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat>: PartialEncode<F, W> {
+pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F, W> {
   type UnknownBuffer<B>: Buffer<F::Unknown<B>>;
 
   /// A encoded representation of this type with lifetime 'a.
@@ -43,7 +43,7 @@ pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat>: PartialEncode<F, W>
 /// * `Encoded<'a>` - A encoded representation with lifetime 'a
 /// * `Borrowed<'a>` - A borrowed view with lifetime 'a
 /// * `EncodedOwned` - An owned encoded representation
-pub trait Message<F: Flavor + ?Sized, W: WireFormat>: Encode<F, W> {
+pub trait Message<F: Flavor + ?Sized, W: WireFormat<F>>: Encode<F, W> {
   /// The partial type of this message.
   type Partial: PartialMessage<F, W>;
 
@@ -219,7 +219,7 @@ macro_rules! wrapper_impl {
         for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
         T::EncodedOwned: TypeOwned<F, $ty>,
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
       {
         type UnknownBuffer<B> = T::UnknownBuffer<B>;
 
@@ -238,7 +238,7 @@ macro_rules! wrapper_impl {
         for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
         T::EncodedOwned: TypeOwned<F, $ty>,
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
       {
         type Partial = T::Partial;
 

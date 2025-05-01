@@ -21,7 +21,10 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
 }
 
 /// The wire format used for encoding and decoding.
-pub trait WireFormat: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display {}
+pub trait WireFormat<F: Flavor + ?Sized>: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType> {
+  /// The cooresponding value to the wire type.
+  const WIRE_TYPE: F::WireType;
+}
 
 /// The default wire format for a type on flavor `F`.
 pub trait DefaultWireFormat<F: Flavor + ?Sized>
@@ -29,10 +32,7 @@ where
   Self: super::encode::Encode<F, Self::Format>,
 {
   /// The default wire format of the type for this flavor.
-  type Format: WireFormat;
-
-  /// The value of the default wire format.
-  const VALUE: Self::Format;
+  type Format: WireFormat<F>;
 }
 
 impl<T, F> DefaultWireFormat<F> for &T
@@ -41,7 +41,6 @@ where
   F: Flavor + ?Sized,
 {
   type Format = T::Format;
-  const VALUE: Self::Format = T::VALUE;
 }
 
 impl<T, F> DefaultWireFormat<F> for Option<T>
@@ -50,7 +49,6 @@ where
   F: Flavor + ?Sized,
 {
   type Format = T::Format;
-  const VALUE: Self::Format = T::VALUE;
 }
 
 #[cfg(any(feature = "alloc", feature = "std"))]
@@ -64,7 +62,6 @@ const _: () = {
     Box<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
-    const VALUE: Self::Format = T::VALUE;
   }
 
   impl<T, F> DefaultWireFormat<F> for Rc<T>
@@ -74,7 +71,6 @@ const _: () = {
     Rc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
-    const VALUE: Self::Format = T::VALUE;
   }
 
   impl<T, F> DefaultWireFormat<F> for Arc<T>
@@ -84,7 +80,6 @@ const _: () = {
     Arc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
-    const VALUE: Self::Format = T::VALUE;
   }
 };
 
@@ -99,7 +94,6 @@ const _: () = {
     Arc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
-    const VALUE: Self::Format = T::VALUE;
   }
 };
 
@@ -107,6 +101,10 @@ const _: () = {
 pub trait Flavor: core::fmt::Debug + 'static {
   /// The identifier used for this flavor.
   type Identifier: Identifier<Self>;
+  /// The wire type used for this flavor.
+  /// 
+  /// A wire type is typically a sum type of all possible [`WireFormat`]s supported by this flavor.
+  type WireType: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display;
 
   /// The context used for this flavor.
   #[cfg(not(feature = "quickcheck"))]

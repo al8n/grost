@@ -4,7 +4,7 @@ macro_rules! network_varint {
   ($(
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
-    $($crate::default_wire_format!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint: $crate::__private::network::Varint);)*
+    $($crate::default_wire_format!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::message!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])? as $crate::__private::network::Varint);)*
     $($crate::network_varint!(@encode $ty $([ $(const $g: usize),* ])?);)*
@@ -167,13 +167,12 @@ macro_rules! into_target {
 #[macro_export]
 macro_rules! default_wire_format {
   ($(
-    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty:$expr:expr); +$(;)?
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
   ),+$(,)?) => {
     $(
       $(
         impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::flavors::DefaultWireFormat<$flavor> for $ty {
           type Format = $format;
-          const VALUE: Self::Format = $expr;
         }
       )*
     )*

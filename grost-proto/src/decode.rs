@@ -14,7 +14,7 @@ use super::{
 pub trait Decode<'de, F, W, O>
 where
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
@@ -48,7 +48,7 @@ where
 pub trait DecodeOwned<F, W, O>: Decode<'static, F, W, O> + 'static
 where
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   /// Decodes an instance of this type from a byte buffer.
   ///
@@ -81,7 +81,7 @@ macro_rules! deref_decode_impl {
       impl<'de, F, W, O, T> Decode<'de, F, W, O> for $ty
       where
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
         T: Decode<'de, F, W, O> + ?Sized,
       {
         fn decode<UB>(context: &<F as Flavor>::Context, src: &'de [u8]) -> Result<(usize, O), <F as Flavor>::DecodeError>
@@ -114,7 +114,7 @@ macro_rules! deref_decode_owned_impl {
       impl<F, W, O, T> DecodeOwned<F, W, O> for $ty
       where
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
         T: DecodeOwned<F, W, O> + ?Sized,
       {
         fn decode_owned<B, UB>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::DecodeError>

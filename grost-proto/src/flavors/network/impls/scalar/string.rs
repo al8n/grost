@@ -61,6 +61,8 @@ macro_rules! str_bridge {
       );
 
       str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);
+
+      $crate::default_wire_format!(Network: $ty as $crate::__private::network::LengthDelimited);
     )*
   };
 }
@@ -236,7 +238,7 @@ macro_rules! array_str {
 
     $crate::default_wire_format!(
       $crate::__private::flavors::Network:
-        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited:$crate::__private::flavors::network::LengthDelimited;
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
   };
 }

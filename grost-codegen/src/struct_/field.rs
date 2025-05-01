@@ -1,3 +1,5 @@
+use std::{collections::HashMap, sync::Arc};
+
 use grost_proto::Tag;
 use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
@@ -31,6 +33,7 @@ pub struct Field {
   setter: Option<Setter>,
   movable_setter: Option<Setter>,
   tag: Tag,
+  wire_formats: HashMap<&'static str, syn::Type>,
 }
 
 impl Field {
@@ -48,6 +51,7 @@ impl Field {
       default: None,
       ty,
       tag,
+      wire_formats: HashMap::new(),
     }
     .with_getter(None, Option::<&str>::None, None, false)
     .with_mutable_getter(None, Option::<&str>::None, None, false)
@@ -90,6 +94,14 @@ impl Field {
   pub fn deny_movable_setter(mut self) -> Self {
     self.movable_setter = None;
     self
+  }
+
+  /// Inserts a wire type for a flavor
+  pub fn get_wire_format<F: FlavorGenerator + ?Sized>(
+    &self,
+    flavor: &F,
+  ) -> Option<&syn::Type> {
+    self.wire_formats.get(flavor.name())
   }
 
   pub fn with_getter(
@@ -360,6 +372,7 @@ impl Field {
     // let identifier_encoded_len_name = format_ident!("__{}_IDENTIFIER_ENCODED_LEN__", name);
     // let identifier_encode_name = format_ident!("__ENCODED_{}_IDENTIFIER__", name);
 
+    let identifier = flavor.generate_field_identifier(path_to_grost, self);
     quote! {
       // const #identifier_name: #path_to_grost::__private::Identifier<#flavor_ty> = #path_to_grost::__private::Identifier::new(<#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE, #path_to_grost::__private::Tag::new(#tag));
       // const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
@@ -367,9 +380,9 @@ impl Field {
 
       #[doc = #field_reflection_doc]
       pub const #field_reflection_name: #path_to_grost::__private::reflection::FieldRelection<#flavor_ty> = #path_to_grost::__private::reflection::FieldRelectionBuilder::<#flavor_ty> {
-        // identifier: Self::#identifier_name,
-        tag: #path_to_grost::__private::Tag::new(#tag),
-        wire_type: <#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE,
+        identifier: #identifier,
+        // tag: #path_to_grost::__private::Tag::new(#tag),
+        // wire_format: <#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE,
         // encoded_identifier_len: Self::#identifier_encoded_len_name,
         // encoded_identifier: Self::#identifier_encode_name,
         name: #field_name,

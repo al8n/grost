@@ -2,6 +2,8 @@ use heck::ToShoutySnakeCase;
 use quote::{format_ident, quote};
 use syn::Ident;
 
+use crate::Field;
+
 use super::{Enum, Struct};
 
 /// The network flavor code generator
@@ -14,9 +16,14 @@ pub trait FlavorGenerator {
   fn ty(&self) -> &syn::Type;
   /// Sets the type of the flavor
   fn set_ty(&mut self, ty: syn::Type);
-
-  /// Returns the name of the flavor
-  fn name(&self) -> &str;
+  /// Returns the name of the flavor this generator generates code for
+  fn name(&self) -> &'static str;
+  /// Generates the field identifier
+  fn generate_field_identifier(
+    &self,
+    path_to_grost: &syn::Path,
+    field: &Field,
+  ) -> proc_macro2::TokenStream;
 
   /// Generates the codec for the selection type
   fn generate_selection_codec(
@@ -102,16 +109,24 @@ pub trait FlavorGenerator {
 }
 
 impl<F: FlavorGenerator + ?Sized> FlavorGenerator for Box<F> {
-  fn name(&self) -> &str {
-    self.as_ref().name()
-  }
-
   fn ty(&self) -> &syn::Type {
     self.as_ref().ty()
   }
 
+  fn name(&self) -> &'static str {
+    self.as_ref().name()
+  }
+
   fn set_ty(&mut self, ty: syn::Type) {
     self.as_mut().set_ty(ty)
+  }
+
+  fn generate_field_identifier(
+    &self,
+    path_to_grost: &syn::Path,
+    field: &Field,
+  ) -> proc_macro2::TokenStream {
+    self.as_ref().generate_field_identifier(path_to_grost, field)
   }
 
   fn generate_enum_codec(

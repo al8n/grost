@@ -9,7 +9,7 @@ use crate::{
   message, partial_encode_scalar, try_from_bridge,
 };
 
-default_wire_format!(Network: u8 as Fixed8:Fixed8);
+default_wire_format!(Network: u8 as Fixed8);
 
 impl Encode<Network, Fixed8> for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

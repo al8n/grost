@@ -127,7 +127,7 @@ impl<F: Flavor> FieldRelection<F> {
     &self.schema_type
   }
 
-  /// Get the wire type of the field
+  /// Get the identifier of the field
   #[inline]
   pub const fn identifier(&self) -> F::Identifier {
     self.identifier

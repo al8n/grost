@@ -73,10 +73,12 @@ pub mod __private {
     encode::*,
     flavors::{self, *},
     reflection,
+    Tag,
     partial_encode_scalar,
     decode_owned_scalar,
     default_wire_format,
     message,
+    network_varint,
   };
   pub use varing;
 }

@@ -9,7 +9,7 @@ const _: () = {
 
   use crate::{into_target, type_owned, type_ref};
 
-  default_wire_format!(Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited:LengthDelimited);
+  default_wire_format!(Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited);
 
   bytes_bridge!(Network: TinyVec<[u8; N]> [const N: usize] {
     from_slice: |val: &[u8]| TinyVec::<[u8; N]>::from(val);

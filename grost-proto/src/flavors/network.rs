@@ -2,7 +2,7 @@ pub use context::Context;
 pub use error::{DecodeError, EncodeError};
 pub use identifier::Identifier;
 pub use unknown::Unknown;
-pub use wire_type::WireType;
+pub use wire_type::*;
 
 use super::Flavor;
 use crate::buffer::BytesBuffer;
@@ -16,62 +16,6 @@ mod wire_type;
 /// The unknown data types
 mod unknown;
 
-/// The zero-sized type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Zst")]
-pub struct Zst;
-
-impl super::WireFormat for Zst {}
-
-/// The length-delimited encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("LengthDelimited")]
-pub struct LengthDelimited;
-
-impl super::WireFormat for LengthDelimited {}
-
-/// The varint encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Varint")]
-pub struct Varint;
-
-impl super::WireFormat for Varint {}
-
-/// The fixed 8-bit length encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Fixed8")]
-pub struct Fixed8;
-
-impl super::WireFormat for Fixed8 {}
-
-/// The fixed 16-bit length encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Fixed16")]
-pub struct Fixed16;
-
-impl super::WireFormat for Fixed16 {}
-
-/// The fixed 32-bit length encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Fixed32")]
-pub struct Fixed32;
-
-impl super::WireFormat for Fixed32 {}
-
-/// The fixed 64-bit length encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Fixed64")]
-pub struct Fixed64;
-
-impl super::WireFormat for Fixed64 {}
-
-/// The fixed 128-bit length encoding/decoding wire type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
-#[display("Fixed128")]
-pub struct Fixed128;
-
-impl super::WireFormat for Fixed128 {}
-
 /// The network flavor
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Network;
@@ -79,6 +23,7 @@ pub struct Network;
 impl Flavor for Network {
   type Context = Context;
   type Identifier = Identifier;
+  type WireType = WireType;
   type EncodeError = EncodeError;
   type DecodeError = DecodeError;
   type Unknown<B> = Unknown<B>;
@@ -173,7 +118,7 @@ impl Flavor for Network {
           Unknown::new(tag, wire_type, identifier_len, slice!(end, buf_len, buf)),
         ))
       }
-      WireType::Byte => consume_fixed!(1, identifier_len),
+      WireType::Fixed8 => consume_fixed!(1, identifier_len),
       WireType::Fixed16 => consume_fixed!(2, identifier_len),
       WireType::Fixed32 => consume_fixed!(4, identifier_len),
       WireType::Fixed64 => consume_fixed!(8, identifier_len),

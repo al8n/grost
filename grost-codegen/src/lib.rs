@@ -176,7 +176,7 @@ impl Generator for DefaultGenerator {
   fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = (!self.derive).then(|| struct_.struct_defination());
     let basic = struct_.struct_basic(&self.grost_path);
-    let selection = struct_.generate_selection(&self.grost_path, &self.flavors);
+    // let selection = struct_.generate_selection(&self.grost_path, &self.flavors);
     let reflections = self
       .flavors
       .iter()
@@ -186,7 +186,7 @@ impl Generator for DefaultGenerator {
       #defination
       #(#reflections)*
       #basic
-      #selection
+      // #selection
     })
   }
 
@@ -213,10 +213,6 @@ impl Generator for DefaultGenerator {
       .flavors
       .iter()
       .map(|(_, f)| f.generate_enum_codec(&self.grost_path, enum_));
-    let conversions = self
-      .flavors
-      .iter()
-      .map(|(_, f)| enum_.enum_conversion(&self.grost_path, f));
 
     Ok(quote! {
       #defination
@@ -231,7 +227,6 @@ impl Generator for DefaultGenerator {
       #repr_conversion
 
       #(#codecs)*
-      #(#conversions)*
       #(#quickcheck)*
       #arbitrary
     })

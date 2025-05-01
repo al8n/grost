@@ -3,7 +3,7 @@ use crate::{
   flavors::network::{Fixed64, Network, Varint},
 };
 
-default_wire_format!(Network: f64 as Fixed64:Fixed64);
+default_wire_format!(Network: f64 as Fixed64);
 
 bridge!(
   Network: u64 {

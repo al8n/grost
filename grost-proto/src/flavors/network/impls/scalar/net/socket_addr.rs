@@ -141,9 +141,9 @@ decode_owned_scalar!(
     SocketAddr as LengthDelimited,
 );
 default_wire_format!(
-  Network: SocketAddrV4 as LengthDelimited: LengthDelimited;
-  SocketAddrV6 as LengthDelimited:LengthDelimited;
-  SocketAddr as LengthDelimited:LengthDelimited;
+  Network: SocketAddrV4 as LengthDelimited;
+  SocketAddrV6 as LengthDelimited;
+  SocketAddr as LengthDelimited;
 );
 
 impl Encode<Network, LengthDelimited> for SocketAddr {

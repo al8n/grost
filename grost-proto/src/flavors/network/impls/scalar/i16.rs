@@ -8,7 +8,7 @@ use crate::{
 };
 use core::num::NonZeroI16;
 
-default_wire_format!(Network: i16 as Varint:Varint);
+default_wire_format!(Network: i16 as Varint);
 
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

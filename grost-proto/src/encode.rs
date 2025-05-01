@@ -37,7 +37,7 @@ use super::flavors::Flavor;
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait Encode<F: Flavor + ?Sized, W: WireFormat> {
+pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -149,7 +149,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat> {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// The selection type for the message, which determines which fields to include
   /// in the encoded output.
   type Selection;
@@ -250,7 +250,7 @@ impl<F, W, T> Encode<F, W> for &T
 where
   T: Encode<F, W> + ?Sized,
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
     (*self).encode(context, buf)
@@ -277,7 +277,7 @@ impl<F, W, T> Encode<F, W> for Option<T>
 where
   T: Encode<F, W>,
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
     if let Some(value) = self {
@@ -320,7 +320,7 @@ impl<F, W, T> PartialEncode<F, W> for &T
 where
   T: PartialEncode<F, W> + ?Sized,
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   type Selection = T::Selection;
 
@@ -359,7 +359,7 @@ impl<F, W, T> PartialEncode<F, W> for Option<T>
 where
   T: PartialEncode<F, W>,
   F: Flavor + ?Sized,
-  W: WireFormat,
+  W: WireFormat<F>,
 {
   type Selection = T::Selection;
 
@@ -418,7 +418,7 @@ macro_rules! deref_encode_impl {
       where
         T: Encode<F, W> + ?Sized,
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
       {
         fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
           (**self).encode(context, buf)
@@ -452,7 +452,7 @@ macro_rules! deref_partial_encode_impl {
       where
         T: PartialEncode<F, W> + ?Sized,
         F: Flavor + ?Sized,
-        W: WireFormat,
+        W: WireFormat<F>,
       {
         type Selection = T::Selection;
 

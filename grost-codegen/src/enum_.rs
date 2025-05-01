@@ -941,45 +941,4 @@ impl Enum {
       }
     }
   }
-
-  pub(super) fn enum_conversion<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: super::FlavorGenerator + ?Sized,
-  {
-    let name_ident = &self.name;
-    let flavor_ty = flavor.ty();
-
-    quote! {
-      // impl<'a> #path_to_grost::__private::TypeBorrowed<'a, #flavor_ty, Self> for #name_ident {
-      //   fn from_borrow(val: &'a Self) -> Self {
-      //     *val
-      //   }
-      // }
-
-      // impl<'a> ::core::convert::From<&'a Self> for #name_ident {
-      //   #[inline]
-      //   fn from(e: &'a Self) -> Self {
-      //     *e
-      //   }
-      // }
-
-      // impl #path_to_grost::__private::PartialMessage<#flavor_ty> for #name_ident {
-      //   type UnknownBuffer<B> = ();
-      //   type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
-      //   type Borrowed<'a> = Self where Self: 'a;
-      //   type EncodedOwned = Self where Self: ::core::marker::Sized;
-      // }
-
-      // impl #path_to_grost::__private::Message<#flavor_ty> for #name_ident {
-      //   type Partial = Self;
-      //   type Encoded<'a> = Self where Self: ::core::marker::Sized + 'a;
-      //   type Borrowed<'a> = Self where Self: 'a;
-      //   type EncodedOwned = Self where Self: ::core::marker::Sized;
-      // }
-    }
-  }
 }

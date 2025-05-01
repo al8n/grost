@@ -1,4 +1,57 @@
+use crate::flavors::WireFormat;
+
+use super::Network;
+
+macro_rules! impl_from_wire_format {
+  ($(
+    $(#[$meta:meta])*
+    $ty:literal
+  ),+$(,)?) => {
+    paste::paste! {
+      $(
+        $(
+          #[$meta]
+        )*
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display)]
+        #[display($ty)]
+        pub struct [< $ty: camel >];
+
+        impl WireFormat<Network> for [< $ty: camel >] {
+          const WIRE_TYPE: WireType = WireType::[< $ty: camel >];
+        }
+
+        impl From<[< $ty: camel >]> for WireType {
+          fn from(_: [< $ty: camel >]) -> Self {
+            Self::[< $ty: camel >]
+          }
+        }
+      )*
+    }
+  };
+}
+
+impl_from_wire_format!(
+  /// The zero-sized type wire format
+  "zst",
+  /// The length-delimited encoding/decoding wire format
+  "length-delimited",
+  /// The varint encoding/decoding wire format
+  "varint",
+  /// The fixed 8-bit length encoding/decoding wire format
+  "fixed8",
+  /// The fixed 16-bit length encoding/decoding wire format
+  "fixed16",
+  /// The fixed 32-bit length encoding/decoding wire format
+  "fixed32",
+  /// The fixed 64-bit length encoding/decoding wire format
+  "fixed64",
+  /// The fixed 128-bit length encoding/decoding wire format
+  "fixed128",
+);
+
 /// A wire type for encoding and decoding messages.
+/// 
+/// This is a sum type that holds all the [`WireFormat`]s for [`Network`] flavor.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
 #[repr(u8)]
 #[display("{str}", str = self.as_str())]
@@ -12,7 +65,7 @@ pub enum WireType {
   /// A length-delimited wire type.
   LengthDelimited = 2,
   /// A fixed 8-bit wire type.
-  Byte = 3,
+  Fixed8 = 3,
   /// A fixed 16-bit wire type.
   Fixed16 = 4,
   /// A fixed 32-bit wire type.
@@ -33,7 +86,7 @@ impl WireType {
     match value {
       0 => Self::LengthDelimited,
       1 => Self::Varint,
-      2 => Self::Byte,
+      2 => Self::Fixed8,
       3 => Self::Fixed16,
       4 => Self::Fixed32,
       5 => Self::Fixed64,
@@ -49,7 +102,7 @@ impl WireType {
     Ok(match value {
       0 => Self::LengthDelimited,
       1 => Self::Varint,
-      2 => Self::Byte,
+      2 => Self::Fixed8,
       3 => Self::Fixed16,
       4 => Self::Fixed32,
       5 => Self::Fixed64,
@@ -71,7 +124,7 @@ impl WireType {
     match self {
       Self::LengthDelimited => "length-delimited",
       Self::Varint => "varint",
-      Self::Byte => "byte",
+      Self::Fixed8 => "fixed8",
       Self::Fixed16 => "fixed16",
       Self::Fixed32 => "fixed32",
       Self::Fixed64 => "fixed64",

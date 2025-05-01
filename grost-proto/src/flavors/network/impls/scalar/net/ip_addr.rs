@@ -15,7 +15,7 @@ use crate::{
 
 macro_rules! ip_addr {
   ($addr:ident::$variant:ident($convert:ident)) => {
-    default_wire_format!(Network: $addr as $variant:$variant);
+    default_wire_format!(Network: $addr as $variant);
 
     impl Encode<Network, $variant> for $addr {
       fn encode(
@@ -165,7 +165,7 @@ const IPV4_ENCODED_LENGTH_DELIMITED_LEN: usize =
 const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
   IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV6_LEN;
 
-default_wire_format!(Network: IpAddr as LengthDelimited:LengthDelimited);
+default_wire_format!(Network: IpAddr as LengthDelimited);
 
 impl Encode<Network, LengthDelimited> for IpAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

@@ -18,4 +18,4 @@ bridge!(
   },
 );
 
-default_wire_format!(Network: Uuid as Fixed128: Fixed128);
+default_wire_format!(Network: Uuid as Fixed128);
