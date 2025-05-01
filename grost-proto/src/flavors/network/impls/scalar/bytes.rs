@@ -162,24 +162,6 @@ macro_rules! array_bytes {
       $crate::decode_owned_scalar!(@impl $crate::__private::flavors::Network as $crate::__private::network::LengthDelimited);
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, Self> for $ty {
-      fn into_target(self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
-        ::core::result::Result::Ok(self)
-      }
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, Self> for $ty {
-      fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
-        ::core::result::Result::Ok(::core::clone::Clone::clone(self))
-      }
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeOwned<$crate::__private::flavors::Network, Self> for $ty {
-      fn to(&self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
-        ::core::result::Result::Ok(::core::clone::Clone::clone(self))
-      }
-    }
-
     impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, $ty> for &[u8] {
       fn into_target(self) -> ::core::result::Result<$ty, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
         $from_bytes(self)

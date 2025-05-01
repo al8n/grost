@@ -1,10 +1,10 @@
 use core::num::NonZeroU8;
 
 use crate::{
-  buffer::Buffer, conversion, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed8, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
+  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed8, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
 };
 
-default_wire_format!(Network: u8 as Fixed8);
+default_wire_format!(Network: u8 as Fixed8:Fixed8);
 
 impl Encode<Network, Fixed8> for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -106,7 +106,6 @@ impl<'de> Decode<'de, Network, Varint, Self> for u8 {
 
 decode_owned_scalar!(Network: u8 as Fixed8, u8 as Varint);
 message!(Network: u8 as Fixed8, u8 as Varint);
-conversion!(Network: u8);
 
 try_from_bridge!(
   Network: u8 {

@@ -3,7 +3,7 @@ use crate::{
 };
 use core::num::NonZeroI8;
 
-default_wire_format!(Network: i8 as Fixed8);
+default_wire_format!(Network: i8 as Fixed8:Fixed8);
 
 bridge!(
   Network: u8 {

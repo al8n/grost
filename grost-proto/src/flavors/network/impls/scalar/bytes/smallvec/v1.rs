@@ -6,7 +6,7 @@ const _: () = {
 
   use crate::{into_target, type_owned, type_ref};
 
-  default_wire_format!(Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited);
+  default_wire_format!(Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited:LengthDelimited);
 
   bytes_bridge!(Network: SmallVec<[u8; N]> [const N: usize] {
     from_slice: |val: &[u8]| SmallVec::<[u8; N]>::from(val);
@@ -21,12 +21,10 @@ const _: () = {
   into_target!(Network: &[u8] => SmallVec<[u8; N]> {
     |val: &[u8]| Ok(SmallVec::from(val))
   } [const N: usize]);
-  into_target!(@self Network: SmallVec<[u8; N]> [const N: usize]);
-  type_ref!(@mapping Network: &[u8] => SmallVec<[u8; N]> {
+  type_ref!( Network: &[u8] => SmallVec<[u8; N]> {
     |val: &[u8]| Ok(SmallVec::from(val))
   } [const N: usize]);
-  type_owned!(@mapping Network: Bytes => SmallVec<[u8; N]> {
+  type_owned!( Network: Bytes => SmallVec<[u8; N]> {
     |val: &Bytes| Ok(SmallVec::from(val.as_ref()))
   } [const N: usize]);
-  type_owned!(@clone Network: SmallVec<[u8; N]> [const N: usize]);
 };

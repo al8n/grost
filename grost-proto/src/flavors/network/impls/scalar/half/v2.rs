@@ -3,7 +3,7 @@ use crate::{
 };
 use half_2::f16;
 
-default_wire_format!(Network: f16 as Varint);
+default_wire_format!(Network: f16 as Fixed16:Fixed16);
 
 bridge!(
   Network: u16 {

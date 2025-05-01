@@ -19,12 +19,10 @@ const _: () = {
   into_target!(Network: &str => String {
     |val: &str| Ok(String::from(val))
   });
-  into_target!(@self Network: String);
-  type_ref!(@mapping Network: &str => String {
+  type_ref!( Network: &str => String {
     |val: &str| Ok(String::from(val))
   });
-  type_owned!(@mapping Network: SmolStr => String {
+  type_owned!( Network: SmolStr => String {
     |val: &SmolStr| Ok(String::from(val.clone()))
   });
-  type_owned!(@clone Network: String);
 };

@@ -81,6 +81,15 @@ pub trait IntoTarget<F: Flavor + ?Sized, T> {
   fn into_target(self) -> Result<T, F::DecodeError>;
 }
 
+impl<F, T> IntoTarget<F, T> for T
+where
+  F: Flavor + ?Sized,
+{
+  fn into_target(self) -> Result<T, F::DecodeError> {
+    Ok(self)
+  }
+}
+
 /// A trait for types that can be converted to another type.
 ///
 /// This trait enables bidirectional conversion between encoded
@@ -94,6 +103,16 @@ pub trait TypeRef<F: Flavor + ?Sized, T>: IntoTarget<F, T> {
   ///
   /// Returns a [`DecodeError`] if the conversion fails.
   fn to(&self) -> Result<T, F::DecodeError>;
+}
+
+impl<F, T> TypeRef<F, Self> for T
+where
+  F: Flavor + ?Sized,
+  T: Clone,
+{
+  fn to(&self) -> Result<T, <F as Flavor>::DecodeError> {
+    Ok(self.clone())
+  }
 }
 
 /// A trait for types that can be converted to another type.
@@ -131,3 +150,174 @@ pub trait TypeOwned<F: Flavor + ?Sized, T>: IntoTarget<F, T> {
   /// Returns a [`DecodeError`] if the conversion fails.
   fn to(&self) -> Result<T, F::DecodeError>;
 }
+
+impl<F, T> TypeOwned<F, Self> for T
+where
+  F: Flavor + ?Sized,
+  T: Clone,
+{
+  fn to(&self) -> Result<T, <F as Flavor>::DecodeError> {
+    Ok(self.clone())
+  }
+}
+
+macro_rules! wrapper_impl {
+  (@into_target $($ty:ty:$constructor:ident),+$(,)?) => {
+    $(
+      impl<F, T> IntoTarget<F, $ty> for T
+      where
+        T: IntoTarget<F, T>,
+        F: Flavor + ?Sized,
+      {
+        fn into_target(self) -> Result<$ty, F::DecodeError> {
+          Ok(<$ty>::$constructor(self))
+        }
+      }
+    )*
+  };
+  (@type_ref $($ty:ty:$constructor:ident),+$(,)?) => {
+    $(
+      impl<F, T> TypeRef<F, $ty> for T
+      where
+        T: TypeRef<F, T> + Clone,
+        F: Flavor + ?Sized,
+      {
+        fn to(&self) -> Result<$ty, F::DecodeError> {
+          Ok(<$ty>::$constructor(self.clone()))
+        }
+      }
+    )*
+  };
+  (@type_owned $($ty:ty:$constructor:ident),+$(,)?) => {
+    $(
+      impl<F, T> TypeOwned<F, $ty> for T
+      where
+        T: TypeOwned<F, T> + Clone,
+        F: Flavor + ?Sized,
+      {
+        fn to(&self) -> Result<$ty, F::DecodeError> {
+          Ok(<$ty>::$constructor(self.clone()))
+        }
+      }
+    )*
+  };
+  (@type_borrowed $($ty:ty),+$(,)?) => {
+    $(
+      impl<'a, F: Flavor, T: ?Sized> TypeBorrowed<'a, F, $ty> for &'a T {
+        fn from_borrow(val: &'a $ty) -> Self {
+          ::core::ops::Deref::deref(val)
+        }
+      }
+    )*
+  };
+  (@partial_message $($ty:ty),+$(,)?) => {
+    $(
+      impl<T, F, W> PartialMessage<F, W> for $ty 
+      where
+        T: PartialMessage<F, W> + Clone + 'static,
+        for<'a> T::Encoded<'a>: TypeRef<F, $ty>,
+        for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
+        T::EncodedOwned: TypeOwned<F, $ty>,
+        F: Flavor + ?Sized,
+        W: WireFormat,
+      {
+        type UnknownBuffer<B> = T::UnknownBuffer<B>;
+
+        type Encoded<'a> = T::Encoded<'a>;
+        type Borrowed<'a> = T::Borrowed<'a>;
+        type EncodedOwned = T::EncodedOwned;
+      }
+    )*
+  };
+  (@message $($ty:ty),+$(,)?) => {
+    $(
+      impl<T, F, W> Message<F, W> for $ty
+      where
+        T: Message<F, W> + Clone + 'static,
+        for<'a> T::Encoded<'a>: TypeRef<F, $ty>,
+        for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
+        T::EncodedOwned: TypeOwned<F, $ty>,
+        F: Flavor + ?Sized,
+        W: WireFormat,
+      {
+        type Partial = T::Partial;
+
+        type Encoded<'a> = T::Encoded<'a>;
+        type Borrowed<'a> = T::Borrowed<'a>;
+        type EncodedOwned = T::EncodedOwned;
+      }
+    )*
+  }
+}
+
+wrapper_impl!(@into_target Option<T>:Some);
+wrapper_impl!(@type_ref Option<T>:Some);
+wrapper_impl!(@type_owned Option<T>:Some);
+wrapper_impl!(@partial_message Option<T>);
+wrapper_impl!(@message Option<T>);
+
+impl<'a, T, F> TypeBorrowed<'a, F, T> for Option<&'a T>
+where
+  T: TypeBorrowed<'a, F, T>,
+  F: Flavor + ?Sized,
+{
+  fn from_borrow(val: &'a T) -> Self {
+    Some(val)
+  }
+}
+
+impl<'a, T, F> TypeBorrowed<'a, F, Option<T>> for Option<&'a T>
+where
+  T: TypeBorrowed<'a, F, T>,
+  F: Flavor + ?Sized,
+{
+  fn from_borrow(val: &'a Option<T>) -> Self {
+    val.as_ref()
+  }
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+const _:() = {
+  use std::{
+    boxed::Box,
+    rc::Rc,
+    sync::Arc,
+  };
+
+  wrapper_impl!(
+    @into_target
+    Box<T>:new,
+    Rc<T>:new,
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_ref
+    Box<T>:new,
+    Rc<T>:new,
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_owned
+    Box<T>:new,
+    Rc<T>:new,
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_borrowed
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @partial_message
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @message
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
+  );
+};

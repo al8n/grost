@@ -1,5 +1,5 @@
 use crate::{
-  IntoTarget, Message, PartialMessage, TypeOwned, TypeRef,
+  IntoTarget, Message, PartialMessage, TypeRef,
   decode::{Decode, DecodeOwned},
   decode_owned_scalar,
   encode::Encode,
@@ -211,18 +211,6 @@ macro_rules! impl_fixed {
 
 impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
 
-impl<const N: usize> IntoTarget<Network, Self> for [u8; N] {
-  fn into_target(self) -> Result<Self, DecodeError> {
-    Ok(self)
-  }
-}
-
-impl<const N: usize> TypeOwned<Network, Self> for [u8; N] {
-  fn to(&self) -> Result<Self, DecodeError> {
-    Ok(*self)
-  }
-}
-
 impl<const N: usize> IntoTarget<Network, [u8; N]> for &[u8] {
   fn into_target(self) -> Result<[u8; N], DecodeError> {
     self.try_into().map_err(|_| DecodeError::buffer_underflow())
@@ -231,7 +219,7 @@ impl<const N: usize> IntoTarget<Network, [u8; N]> for &[u8] {
 
 impl<const N: usize> TypeRef<Network, [u8; N]> for &[u8] {
   fn to(&self) -> Result<[u8; N], DecodeError> {
-    self.into_target()
+    (*self).into_target()
   }
 }
 

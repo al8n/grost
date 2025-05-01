@@ -1,10 +1,10 @@
 use core::num::NonZeroI64;
 
 use crate::{
-  buffer::Buffer, conversion, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
+  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint}, message, partial_encode_scalar, try_from_bridge
 };
 
-default_wire_format!(Network: i64 as Varint);
+default_wire_format!(Network: i64 as Varint:Varint);
 
 impl Encode<Network, Fixed64> for i64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -105,7 +105,6 @@ impl<'de> Decode<'de, Network, Varint, Self> for i64 {
 
 decode_owned_scalar!(Network: i64 as Fixed64, i64 as Varint);
 message!(Network: i64 as Fixed64, i64 as Varint);
-conversion!(Network: i64);
 
 try_from_bridge!(
   Network: i64 {

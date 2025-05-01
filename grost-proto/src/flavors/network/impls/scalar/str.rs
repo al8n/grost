@@ -3,7 +3,7 @@ use crate::{
 };
 
 default_wire_format!(
-  Network: str as LengthDelimited
+  Network: str as LengthDelimited:LengthDelimited
 );
 
 encode_bridge!(

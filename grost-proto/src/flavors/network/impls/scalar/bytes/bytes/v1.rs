@@ -1,9 +1,9 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_bridge, default_wire_format, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, type_owned, type_ref, Message, PartialMessage
+  decode::{Decode, DecodeOwned}, decode_bridge, default_wire_format, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, type_ref, Message, PartialMessage
 };
 use bytes_1::Bytes;
 
-default_wire_format!(Network: Bytes as LengthDelimited);
+default_wire_format!(Network: Bytes as LengthDelimited:LengthDelimited);
 
 encode_bridge!(
   Network: [u8] {
@@ -21,14 +21,12 @@ decode_bridge!(
   },
 );
 
-into_target!(@self Network: Bytes);
 into_target!(Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
-type_ref!(@mapping Network: &[u8] => Bytes {
+type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
-type_owned!(@clone Network: Bytes);
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>

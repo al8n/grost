@@ -6,25 +6,17 @@ const _: () = {
 
   use crate::{into_target, type_owned, type_ref};
 
-  bytes_bridge!(Network: Box<[u8]> {
-    from_slice: |val: &[u8]| Box::<[u8]>::from(val);
-    as_slice: AsRef::as_ref;
-  
-    type EncodedOwned = Bytes;
-  },);
-
   into_target!(Network: Bytes => Box<[u8]> {
     |val: Bytes| Ok(Box::from(val.as_ref()))
   });
   into_target!(Network: &[u8] => Box<[u8]> {
     |val: &[u8]| Ok(Box::from(val))
   });
-  into_target!(@self Network: Box<[u8]>);
-  type_ref!(@mapping Network: &[u8] => Box<[u8]> {
+  type_ref!( Network: &[u8] => Box<[u8]> {
     |val: &[u8]| Ok(Box::from(val))
   });
-  type_owned!(@mapping Network: Bytes => Box<[u8]> {
+  type_owned!( Network: Bytes => Box<[u8]> {
     |val: &Bytes| Ok(Box::from(val.as_ref()))
   });
-  type_owned!(@clone Network: Box<[u8]>);
+  bytes_message!(Box<[u8]> => Bytes);
 };

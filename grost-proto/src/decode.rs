@@ -74,6 +74,7 @@ where
     UB: Buffer<F::Unknown<B>> + 'static;
 }
 
+#[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_impl {
   ($($ty:ty),+$(,)?) => {
     $(
@@ -81,7 +82,7 @@ macro_rules! deref_decode_impl {
       where
         F: Flavor + ?Sized,
         W: WireFormat,
-        T: Decode<'de, F, W, O>,
+        T: Decode<'de, F, W, O> + ?Sized,
       {
         fn decode<UB>(context: &<F as Flavor>::Context, src: &'de [u8]) -> Result<(usize, O), <F as Flavor>::DecodeError>
         where
@@ -106,6 +107,7 @@ macro_rules! deref_decode_impl {
   };
 }
 
+#[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_owned_impl {
   ($($ty:ty),+$(,)?) => {
     $(
@@ -113,7 +115,7 @@ macro_rules! deref_decode_owned_impl {
       where
         F: Flavor + ?Sized,
         W: WireFormat,
-        T: DecodeOwned<F, W, O>,
+        T: DecodeOwned<F, W, O> + ?Sized,
       {
         fn decode_owned<B, UB>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::DecodeError>
         where
@@ -139,9 +141,6 @@ macro_rules! deref_decode_owned_impl {
     )*      
   };
 }
-
-deref_decode_impl!(Option<T>);
-deref_decode_owned_impl!(Option<T>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {

@@ -30,6 +30,9 @@ where
 {
   /// The default wire format of the type for this flavor.
   type Format: WireFormat;
+
+  /// The value of the default wire format.
+  const VALUE: Self::Format;
 }
 
 impl<T, F> DefaultWireFormat<F> for &T
@@ -38,6 +41,7 @@ where
   F: Flavor + ?Sized,
 {
   type Format = T::Format;
+  const VALUE: Self::Format = T::VALUE;
 }
 
 impl<T, F> DefaultWireFormat<F> for Option<T>
@@ -46,6 +50,7 @@ where
   F: Flavor + ?Sized,
 {
   type Format = T::Format;
+  const VALUE: Self::Format = T::VALUE;
 }
 
 #[cfg(any(feature = "alloc", feature = "std"))]
@@ -59,6 +64,7 @@ const _: () = {
     Box<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
+    const VALUE: Self::Format = T::VALUE;
   }
 
   impl<T, F> DefaultWireFormat<F> for Rc<T>
@@ -68,6 +74,7 @@ const _: () = {
     Rc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
+    const VALUE: Self::Format = T::VALUE;
   }
 
   impl<T, F> DefaultWireFormat<F> for Arc<T>
@@ -77,6 +84,7 @@ const _: () = {
     Arc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
+    const VALUE: Self::Format = T::VALUE;
   }
 };
 
@@ -91,6 +99,7 @@ const _: () = {
     Arc<T>: super::encode::Encode<F, T::Format>,
   {
     type Format = T::Format;
+    const VALUE: Self::Format = T::VALUE;
   }
 };
 

@@ -3,7 +3,7 @@ use crate::{
 };
 
 default_wire_format!(
-  Network: [u8] as LengthDelimited
+  Network: [u8] as LengthDelimited:LengthDelimited
 );
 
 impl Encode<Network, LengthDelimited> for [u8] {

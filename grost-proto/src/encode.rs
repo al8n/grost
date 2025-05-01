@@ -416,7 +416,7 @@ macro_rules! deref_encode_impl {
     $(
       impl<F, W, T> Encode<F, W> for $ty
       where
-        T: Encode<F, W>,
+        T: Encode<F, W> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat,
       {
@@ -450,7 +450,7 @@ macro_rules! deref_partial_encode_impl {
     $(
       impl<F, W, T> PartialEncode<F, W> for $ty
       where
-        T: PartialEncode<F, W>,
+        T: PartialEncode<F, W> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat,
       {

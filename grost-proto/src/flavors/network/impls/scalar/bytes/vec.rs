@@ -19,12 +19,10 @@ const _: () = {
   into_target!(Network: &[u8] => Vec<u8> {
     |val: &[u8]| Ok(val.to_vec())
   });
-  into_target!(@self Network: Vec<u8>);
-  type_ref!(@mapping Network: &[u8] => Vec<u8> {
+  type_ref!( Network: &[u8] => Vec<u8> {
     |val: &[u8]| Ok(val.to_vec())
   });
-  type_owned!(@mapping Network: Bytes => Vec<u8> {
+  type_owned!( Network: Bytes => Vec<u8> {
     |val: &Bytes| Ok(val.to_vec())
   });
-  type_owned!(@clone Network: Vec<u8>);
 };

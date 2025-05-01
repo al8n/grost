@@ -3,7 +3,7 @@ const _: () = {
   use regex_1::{Regex, bytes::Regex as BytesRegex};
   use smol_str_0_3::SmolStr;
 
-  use crate::{error::DecodeError, flavors::Network, into_target, type_owned, type_ref};
+  use crate::{flavors::{Network, network::DecodeError}, into_target, type_owned, type_ref};
 
   const ERR_MSG: &str = "invalid regex pattern";
 
@@ -17,7 +17,7 @@ const _: () = {
       $(
         $crate::encode_bridge!(
           $flavor: str {
-            $ty $([ $(const $g: usize),* ])? {
+            $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited {
               convert: $to_str;
             },
           },
@@ -25,7 +25,7 @@ const _: () = {
 
         $crate::try_decode_bridge!(
           @without_decode_owned $flavor: &'de str {
-            $ty $([ $(const $g: usize),* ])? {
+            $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited {
               convert: $from_str;
             },
           },
@@ -45,14 +45,12 @@ const _: () = {
         into_target!(Network: &str => $ty {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
-        into_target!(@self Network: $ty);
-        type_ref!(@mapping Network: &str => $ty {
+        type_ref!( Network: &str => $ty {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
-        type_owned!(@mapping Network: SmolStr => $ty {
+        type_owned!( Network: SmolStr => $ty {
           |val: &SmolStr| <$ty>::new(val.as_str()).map_err(|_| DecodeError::custom(ERR_MSG))
         });
-        type_owned!(@clone Network: $ty);
       )*
     };
   }

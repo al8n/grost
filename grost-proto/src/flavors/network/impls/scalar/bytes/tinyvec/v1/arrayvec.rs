@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  IntoTarget, Message, PartialMessage, TypeOwned, TypeRef,
+  IntoTarget, Message, PartialMessage, TypeRef,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   flavors::{
@@ -149,27 +149,6 @@ where
     = Self
   where
     Self: Sized + 'static;
-}
-
-impl<A> IntoTarget<Network, Self> for ArrayVec<A>
-where
-  A: Array,
-{
-  fn into_target(self) -> Result<Self, DecodeError> {
-    Ok(self)
-  }
-}
-
-impl<A> TypeOwned<Network, Self> for ArrayVec<A>
-where
-  A: Array,
-  A::Item: Clone,
-{
-  fn to(&self) -> Result<Self, DecodeError> {
-    let mut arr = ArrayVec::new();
-    arr.extend_from_slice(self.as_slice());
-    Ok(arr)
-  }
 }
 
 impl<A> IntoTarget<Network, ArrayVec<A>> for &[A::Item]

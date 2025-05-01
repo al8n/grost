@@ -17,4 +17,4 @@ bridge!(
   },
 );
 
-default_wire_format!(Network: Uuid as Varint);
+default_wire_format!(Network: Uuid as Fixed128: Fixed128);

@@ -23,13 +23,13 @@ mod i16;
 mod i32;
 mod i64;
 mod i8;
-// mod net;
+mod net;
 // mod num_complex;
 // mod num_rational;
 mod ruint;
 mod slice;
 mod str;
-// mod string;
+mod string;
 mod time;
 mod u128;
 mod u16;
@@ -38,8 +38,8 @@ mod u64;
 mod u8;
 mod uuid;
 
-// crate::network_zst!(());
-// crate::network_phantom!(core::marker::PhantomData<T>);
+crate::network_zst!(());
+crate::network_phantom!(core::marker::PhantomData<T>);
 
 impl<T> Encode<Network, Zst> for [T; 0] {
   fn encode(&self, _: &Context, _: &mut [u8]) -> Result<usize, EncodeError> {
