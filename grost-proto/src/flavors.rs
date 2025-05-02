@@ -1,5 +1,7 @@
 use super::buffer::BytesBuffer;
 
+pub use varing::{EncodeError as EncodeVarintError, DecodeError as DecodeVarintError};
+
 pub use network::Network;
 
 /// The network flavor
@@ -18,6 +20,36 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   where
     B: BytesBuffer + Sized,
     Self: Sized;
+}
+
+/// The selector used to select fields for a type which implments [`Selectable`].
+pub trait Selector<F: Flavor + ?Sized>:
+  Clone
+  + core::fmt::Debug
+  + core::fmt::Display
+  + core::hash::Hash
+  + Eq
+{}
+
+/// A trait for types that can be selected.
+pub trait Selectable<F: Flavor + ?Sized> {
+  type Selector: Selector<F>;
+}
+
+impl<T, F> Selectable<F> for &T
+where
+  T: Selectable<F> + ?Sized,
+  F: Flavor + ?Sized,
+{
+  type Selector = T::Selector;
+}
+
+impl<T, F> Selectable<F> for Option<T>
+where
+  T: Selectable<F>,
+  F: Flavor + ?Sized,
+{
+  type Selector = T::Selector;
 }
 
 /// The wire format used for encoding and decoding.

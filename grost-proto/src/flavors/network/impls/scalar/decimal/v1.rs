@@ -1,11 +1,11 @@
 use crate::{
   bridge, default_wire_format,
-  flavors::network::{Fixed128, Network, Varint},
+  flavors::network::{Fixed128, Network, Varint}, selectable_bridge,
 };
 use rust_decimal_1::Decimal as f128;
 
 default_wire_format!(Network: f128 as Fixed128);
-
+selectable_bridge!(Network: u128 [f128]);
 bridge!(
   Network: u128 {
     f128 as Fixed128 {

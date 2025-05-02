@@ -4,7 +4,7 @@ pub use identifier::Identifier;
 pub use unknown::Unknown;
 pub use wire_type::*;
 
-use super::Flavor;
+use super::{Flavor, Selector};
 use crate::buffer::BytesBuffer;
 
 mod context;
@@ -15,6 +15,8 @@ mod wire_type;
 
 /// The unknown data types
 mod unknown;
+
+impl Selector<Network> for bool {}
 
 /// The network flavor
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

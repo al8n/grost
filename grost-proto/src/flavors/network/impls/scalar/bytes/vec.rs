@@ -1,10 +1,14 @@
 #[cfg(feature = "bytes_1")]
 const _: () = {
-  use crate::flavors::network::Network;
+  use crate::{flavors::network::Network, selectable_bridge};
   use bytes_1::Bytes;
   use std::vec::Vec;
 
   use crate::{into_target, type_owned, type_ref};
+
+  selectable_bridge!(
+    Network: [u8] [Vec<u8>]
+  );
 
   bytes_bridge!(Network: Vec<u8> {
     from_slice: |val: &[u8]| val.to_vec();

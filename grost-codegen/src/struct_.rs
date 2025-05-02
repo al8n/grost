@@ -215,12 +215,12 @@ impl Struct {
         type Selection = #selection_name;
 
         #[inline]
-        fn partial_encode(&self, buf: &mut [::core::primitive::u8], selection: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
+        fn partial_encode(&self, buf: &mut [::core::primitive::u8], selector: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
           ::core::todo!()
         }
 
         #[inline]
-        fn partial_encoded_len(&self, selection: &Self::Selection,) -> ::core::primitive::usize {
+        fn partial_encoded_len(&self, selector: &Self::Selector,) -> ::core::primitive::usize {
           ::core::todo!()
         }
       }

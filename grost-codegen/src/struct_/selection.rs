@@ -572,7 +572,7 @@ fn generate_bitflags_iter(
       F: ?::core::marker::Sized,
     {
       #[inline]
-      const fn new(mut selection: #flags_name) -> Self {
+      const fn new(mut selector: #flags_name) -> Self {
         if !S {
           selection = selection.complement();
         }
@@ -952,7 +952,7 @@ fn generate_selection_flags(
         /// Yield a set of selected fields.
         #vis struct #selection_flags_iter_name<F: ?::core::marker::Sized, const S: ::core::primitive::bool = true> {
           idx: ::core::primitive::u32,
-          selection: #name,
+          selector: #name,
           yielded: ::core::primitive::usize,
           len: ::core::primitive::usize,
           _m: ::core::marker::PhantomData<F>,
@@ -963,7 +963,7 @@ fn generate_selection_flags(
           F: ?::core::marker::Sized,
         {
           #[inline]
-          const fn new(idx: ::core::primitive::u32, selection: #name) -> Self {
+          const fn new(idx: ::core::primitive::u32, selector: #name) -> Self {
             let len = if S {
               selection.num_selected()
             } else {

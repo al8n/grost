@@ -16,7 +16,7 @@ pub use smol_str_0_3 as smol_str;
 pub use quickcheck;
 
 pub use convert::*;
-pub use select_set::SelectionSet;
+// pub use select_set::SelectionSet;
 pub use tag::Tag;
 
 /// The flavors of the encoding/decoding

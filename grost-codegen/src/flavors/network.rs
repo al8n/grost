@@ -108,12 +108,12 @@ impl FlavorGenerator for Network {
           type Selection = ();
 
           #[inline]
-          fn partial_encode(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], _: &Self::Selection) -> ::core::result::Result<::core::primitive::usize, <#flavor_ty as #path_to_grost::__private::Flavor>::EncodeError> {
+          fn partial_encode(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], _: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <#flavor_ty as #path_to_grost::__private::Flavor>::EncodeError> {
             #path_to_grost::__private::Encode::<#flavor_ty>::encode(self, context, buf)
           }
 
           #[inline]
-          fn partial_encoded_len(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, _: &Self::Selection,) -> ::core::primitive::usize {
+          fn partial_encoded_len(&self, context: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context, _: &Self::Selector,) -> ::core::primitive::usize {
             #path_to_grost::__private::Encode::<#flavor_ty>::encoded_len(self, context)
           }
         }

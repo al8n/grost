@@ -94,7 +94,7 @@ impl<const N: usize, L: LenType> PartialEncode<Network> for String<N, L> {
     context: &Context,
     wire_type: WireType,
     buf: &mut [u8],
-    _: &Self::Selection,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     <Self as Encode<Network>>::encode(self, context, wire_type, buf)
   }
@@ -103,7 +103,7 @@ impl<const N: usize, L: LenType> PartialEncode<Network> for String<N, L> {
     &self,
     context: &Context,
     wire_type: WireType,
-    _: &Self::Selection,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     <Self as Encode<Network>>::encoded_len(self, context, wire_type)
   }
@@ -112,7 +112,7 @@ impl<const N: usize, L: LenType> PartialEncode<Network> for String<N, L> {
     &self,
     context: &Context,
     wire_type: WireType,
-    _: &Self::Selection,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     <Self as Encode<Network>>::encoded_length_delimited_len(self, context, wire_type)
   }
@@ -122,7 +122,7 @@ impl<const N: usize, L: LenType> PartialEncode<Network> for String<N, L> {
     context: &Context,
     wire_type: WireType,
     buf: &mut [u8],
-    _: &Self::Selection,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     <Self as Encode<Network>>::encode_length_delimited(self, context, wire_type, buf)
   }

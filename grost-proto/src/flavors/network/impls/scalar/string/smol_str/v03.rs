@@ -1,9 +1,13 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_bridge, default_wire_format, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, type_ref, Message, PartialMessage
+  decode::{Decode, DecodeOwned}, decode_bridge, default_wire_format, encode_bridge, flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown}, into_target, selectable_bridge, type_ref, Message, PartialMessage
 };
 use smol_str_0_3::SmolStr;
 
 default_wire_format!(Network: SmolStr as LengthDelimited);
+
+selectable_bridge!(
+  Network: str [SmolStr]
+);
 
 encode_bridge!(
   Network: str {

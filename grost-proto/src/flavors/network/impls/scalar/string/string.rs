@@ -1,10 +1,14 @@
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
-  use crate::flavors::network::Network;
+  use crate::{flavors::network::Network, selectable_bridge};
   use smol_str_0_3::SmolStr;
   use std::string::String;
 
   use crate::{into_target, type_owned, type_ref};
+
+  selectable_bridge!(
+    Network: str [String]
+  );
 
   str_bridge!(Network: String {
     from_str: |val: &str| String::from(val);

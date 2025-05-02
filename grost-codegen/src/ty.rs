@@ -228,6 +228,31 @@ impl Ty {
     &self.repr
   }
 
+  pub(crate) fn selection_type<F>(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &F,
+    wire_format: &syn::Type,
+  ) -> Type
+  where
+    F: super::FlavorGenerator + ?Sized,
+  {
+    match &self.repr {
+      TyRepr::Primitive(_) | TyRepr::Enum(_)=> parse_quote!(::core::primitive::bool),
+      TyRepr::Struct(ty) | TyRepr::Union(ty) | TyRepr::Interface(ty) => {
+        let flavor_ty = flavor.ty();
+        parse_quote!(<#ty as #path_to_grost::__private::PartialEncode<#flavor_ty, #wire_format>>::Selection)
+      },
+      TyRepr::List { item, .. } => item.selection_type(path_to_grost, flavor, wire_format),
+      TyRepr::Map { key, value, .. } => {
+        let key = key.selection_type(path_to_grost, flavor, wire_format);
+        let value = value.selection_type(path_to_grost, flavor, wire_format);
+        parse_quote!(#path_to_grost::__private::MapSelection<#key, #value>)
+      },
+      TyRepr::Optional(ty) => ty.selection_type(path_to_grost, flavor, wire_format),
+    }
+  }
+
   pub(crate) fn to_type_reflection<F>(
     &self,
     path_to_grost: &syn::Path,

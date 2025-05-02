@@ -33,6 +33,10 @@ const _: () = {
           },
         );
 
+        $crate::selectable_bridge!(
+          $flavor: str [$ty $([ $(const $g: usize),* ])?]
+        );
+
         str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);
       )*
     };

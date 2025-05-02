@@ -1,15 +1,11 @@
 use core::num::NonZeroI32;
 
 use crate::{
-  buffer::Buffer,
-  decode::Decode,
-  decode_owned_scalar, default_wire_format,
-  encode::Encode,
-  flavors::network::{Context, DecodeError, EncodeError, Fixed32, Network, Unknown, Varint},
-  message, partial_encode_scalar, try_from_bridge,
+  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed32, Network, Unknown, Varint}, message, partial_encode_scalar, selectable_bridge, selectable_scalar, try_from_bridge
 };
 
 default_wire_format!(Network: i32 as Varint);
+selectable_scalar!(Network: i32);
 
 impl Encode<Network, Fixed32> for i32 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -111,6 +107,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for i32 {
 decode_owned_scalar!(Network: i32 as Fixed32, i32 as Varint);
 message!(Network: i32 as Fixed32, i32 as Varint);
 
+selectable_bridge!(Network: i32 [NonZeroI32]);
 try_from_bridge!(
   Network: i32 {
     NonZeroI32 as Fixed32 {

@@ -1,16 +1,9 @@
 use crate::{
-  IntoTarget, Message, PartialMessage, TypeRef,
-  decode::{Decode, DecodeOwned},
-  decode_owned_scalar,
-  encode::Encode,
-  flavors::{
-    Network,
+  decode::{Decode, DecodeOwned}, decode_owned_scalar, encode::Encode, flavors::{
     network::{
-      Context, DecodeError, EncodeError, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128,
-      LengthDelimited, Unknown,
-    },
-  },
-  partial_encode_scalar,
+      Context, DecodeError, EncodeError, Fixed128, Fixed16, Fixed32, Fixed64, Fixed8, LengthDelimited, Unknown
+    }, Network, Selectable
+  }, partial_encode_scalar, IntoTarget, Message, PartialMessage, TypeRef
 };
 
 impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
@@ -47,6 +40,10 @@ impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
     offset += this_len;
     Ok(offset)
   }
+}
+
+impl<const N: usize> Selectable<Network> for [u8; N] {
+  type Selector = bool;
 }
 
 partial_encode_scalar!(Network: [u8; N] [const N: usize] as LengthDelimited);
@@ -271,8 +268,6 @@ fn larger_than_array_capacity<const N: usize>() -> DecodeError {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-  use crate::flavors::network::Zst;
-
   use super::*;
 
   macro_rules! quickcheck_fixed {
@@ -325,26 +320,4 @@ mod tests {
   quickcheck_fixed!(u32(4, Fixed32));
   quickcheck_fixed!(u64(8, Fixed64));
   quickcheck_fixed!(u128(16, Fixed128));
-
-  #[test]
-  fn test_zst() {
-    let context = Context::new();
-    let input: [u8; 0] = [];
-    let mut buf = [0; 512];
-    let encoded = <[u8; 0] as Encode<Network, Zst>>::encode(&input, &context, &mut buf).unwrap();
-    assert_eq!(encoded, 0);
-
-    let (decoded_len, decoded) =
-      <[u8; 0] as DecodeOwned<Network, Zst, _>>::decode_length_delimited_owned::<_, ()>(
-        &context,
-        buf.to_vec(),
-      )
-      .unwrap();
-    assert_eq!(decoded_len, 0);
-    assert_eq!(decoded, input);
-
-    let encoded_len =
-      <[u8; 0] as Encode<Network, Zst>>::encoded_length_delimited_len(&input, &context);
-    assert_eq!(encoded_len, 0);
-  }
 }

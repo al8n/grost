@@ -126,6 +126,10 @@ macro_rules! array_str {
       }
     }
 
+    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable<$crate::__private::flavors::Network> for $ty {
+      type Selector = bool;
+    }
+
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Network as $crate::__private::flavors::network::LengthDelimited);
     }

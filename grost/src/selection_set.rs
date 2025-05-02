@@ -24,14 +24,14 @@
 // use crate::flavors::network::{EncodeError, Identifier};
 
 // pub struct SelectionSet<S, UB> {
-//   selection: S,
+//   selector: S,
 //   unknown_buffer: Option<UB>,
 // }
 
 // impl<S, UB> SelectionSet<S, UB> {
 //   /// Creates a new selection set with the given selection and unknown buffer.
 //   #[inline]
-//   pub const fn new(selection: S, unknown_buffer: Option<UB>) -> Self {
+//   pub const fn new(selector: S, unknown_buffer: Option<UB>) -> Self {
 //     Self {
 //       selection,
 //       unknown_buffer,
