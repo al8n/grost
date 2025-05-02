@@ -4,7 +4,12 @@ const _: () = {
   use smol_str_0_3::SmolStr;
 
   use crate::{
-    default_wire_format, flavors::{network::{DecodeError, LengthDelimited}, Network}, into_target, type_owned, type_ref
+    default_wire_format,
+    flavors::{
+      Network,
+      network::{DecodeError, LengthDelimited},
+    },
+    into_target, type_owned, type_ref,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -34,7 +39,7 @@ const _: () = {
         );
 
         $crate::selectable_bridge!(
-          $flavor: str [$ty $([ $(const $g: usize),* ])?]
+          str [$ty $([ $(const $g: usize),* ])?]
         );
 
         str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);

@@ -3,7 +3,8 @@ use crate::{
   decode_owned_scalar,
   encode::{Encode, PartialEncode},
   flavors::{
-    network::{Context, DecodeError, EncodeError, Unknown, Zst}, Network, Selectable
+    Network, Selectable,
+    network::{Context, DecodeError, EncodeError, Unknown, Zst},
   },
   partial_encode_scalar,
 };

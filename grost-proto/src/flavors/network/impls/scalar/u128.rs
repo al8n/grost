@@ -1,11 +1,16 @@
 use core::num::NonZeroU128;
 
 use crate::{
-  buffer::Buffer, decode::Decode, decode_owned_scalar, default_wire_format, encode::Encode, flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint}, message, partial_encode_scalar, selectable_bridge, selectable_scalar, try_from_bridge
+  buffer::Buffer,
+  decode::Decode,
+  decode_owned_scalar, default_wire_format,
+  encode::Encode,
+  flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
+  message, partial_encode_scalar, selectable_bridge, selectable_scalar, try_from_bridge,
 };
 
 default_wire_format!(Network: u128 as Varint);
-selectable_scalar!(Network: u128);
+selectable_scalar!(u128);
 impl Encode<Network, Fixed128> for u128 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.len() < 16 {
@@ -106,7 +111,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for u128 {
 decode_owned_scalar!(Network: u128 as Fixed128, u128 as Varint);
 message!(Network: u128 as Fixed128, u128 as Varint);
 
-selectable_bridge!(Network: u128 [NonZeroU128]);
+selectable_bridge!(u128[NonZeroU128]);
 try_from_bridge!(
   Network: u128 {
     NonZeroU128 as Fixed128 {

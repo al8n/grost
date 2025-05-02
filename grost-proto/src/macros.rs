@@ -4,7 +4,7 @@ macro_rules! network_varint {
   ($(
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
-    $($crate::selectable_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::selectable_scalar!($ty $([ $(const $g: usize),* ])?);)*
     $($crate::default_wire_format!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::message!($crate::__private::flavors::Network: $ty $([$(const $g: usize),*])? as $crate::__private::network::Varint);)*
     $($crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty $([ $(const $g: usize),* ])? as $crate::__private::network::Varint);)*
@@ -130,9 +130,9 @@ macro_rules! partial_encode_scalar {
 /// A macro emits [`Selectable`](super::flavors::Selectable) implementations for primitive types.
 #[macro_export]
 macro_rules! selectable_scalar {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable for $ty {
         type Selector = ::core::primitive::bool;
       }
     )*
@@ -432,14 +432,14 @@ macro_rules! try_from_bridge {
 #[macro_export]
 macro_rules! selectable_bridge {
   ($(
-    $flavor:ty: $bridge: ty [
+    $bridge: ty [
       $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?), +$(,)?
     ]
   ),+$(,)?) => {
     $(
       $(
-        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
-          type Selector = <$bridge as $crate::__private::Selectable<$flavor>>::Selector;
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable for $ty {
+          type Selector = <$bridge as $crate::__private::Selectable>::Selector;
         }
       )*
     )*
@@ -1000,7 +1000,7 @@ macro_rules! network_zst {
         }
       }
 
-      $crate::selectable_scalar!($crate::__private::flavors::Network: $ty);
+      $crate::selectable_scalar!($ty);
       $crate::partial_encode_scalar!($crate::__private::flavors::Network: $ty as $crate::__private::flavors::network::Zst);
     )*
   };
@@ -1073,7 +1073,7 @@ macro_rules! network_phantom {
         }
       }
 
-      impl<T: ?::core::marker::Sized> $crate::__private::Selectable<$crate::__private::flavors::Network> for $ty {
+      impl<T: ?::core::marker::Sized> $crate::__private::Selectable for $ty {
         type Selector = ::core::primitive::bool;
       }
 

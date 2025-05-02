@@ -1,9 +1,16 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, decode_owned_scalar, encode::Encode, flavors::{
+  IntoTarget, Message, PartialMessage, TypeRef,
+  decode::{Decode, DecodeOwned},
+  decode_owned_scalar,
+  encode::Encode,
+  flavors::{
+    Network, Selectable,
     network::{
-      Context, DecodeError, EncodeError, Fixed128, Fixed16, Fixed32, Fixed64, Fixed8, LengthDelimited, Unknown
-    }, Network, Selectable
-  }, partial_encode_scalar, IntoTarget, Message, PartialMessage, TypeRef
+      Context, DecodeError, EncodeError, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128,
+      LengthDelimited, Unknown,
+    },
+  },
+  partial_encode_scalar,
 };
 
 impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
@@ -42,7 +49,7 @@ impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
   }
 }
 
-impl<const N: usize> Selectable<Network> for [u8; N] {
+impl<const N: usize> Selectable for [u8; N] {
   type Selector = bool;
 }
 

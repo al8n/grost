@@ -1,11 +1,12 @@
 use crate::{
   bridge, default_wire_format,
-  flavors::network::{Fixed8, Network, Varint}, selectable_bridge,
+  flavors::network::{Fixed8, Network, Varint},
+  selectable_bridge,
 };
 
 default_wire_format!(Network: bool as Fixed8);
 
-selectable_bridge!(Network: u8 [bool]);
+selectable_bridge!(u8[bool]);
 bridge!(
   Network: u8 {
     bool as Fixed8 {

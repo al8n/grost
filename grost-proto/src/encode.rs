@@ -1,4 +1,4 @@
-use super::flavors::{Flavor, WireFormat, Selectable};
+use super::flavors::{Flavor, Selectable, WireFormat};
 
 /// A trait for serializing data to binary format with support for various wire types.
 ///
@@ -147,7 +147,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: super::flavors::Selectable<F> {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: super::flavors::Selectable {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -312,7 +312,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for &T
 where
-  T: PartialEncode<F, W> + Selectable<F> + ?Sized,
+  T: PartialEncode<F, W> + Selectable + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -349,7 +349,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for Option<T>
 where
-  T: PartialEncode<F, W> + Selectable<F>,
+  T: PartialEncode<F, W> + Selectable,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -438,17 +438,16 @@ macro_rules! deref_encode_impl {
 macro_rules! deref_partial_encode_impl {
   ($($ty:ty),+$(,)?) => {{
     $(
-      impl<F, T> Selectable<F> for $ty
+      impl<T> Selectable for $ty
       where
-        F: Flavor + ?Sized,
-        T: ?Sized + Selectable<F>,
+        T: ?Sized + Selectable,
       {
         type Selector = T::Selector;
       }
 
       impl<F, W, T> PartialEncode<F, W> for $ty
       where
-        T: PartialEncode<F, W> + Selectable<F> + ?Sized,
+        T: PartialEncode<F, W> + Selectable + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {

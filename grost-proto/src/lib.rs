@@ -36,6 +36,7 @@ pub mod encode;
 mod convert;
 #[macro_use]
 mod macros;
+mod map;
 mod select_set;
 mod tag;
 mod utils;
@@ -67,18 +68,15 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::{
+    Tag,
     buffer::*,
     convert::*,
     decode::*,
+    decode_owned_scalar, default_wire_format,
     encode::*,
     flavors::{self, *},
-    reflection,
-    Tag,
-    partial_encode_scalar,
-    decode_owned_scalar,
-    default_wire_format,
-    message,
-    network_varint,
+    map::MapSelector,
+    message, network_varint, partial_encode_scalar, reflection,
   };
   pub use varing;
 }

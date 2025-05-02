@@ -59,7 +59,7 @@ impl FlavorGenerator for Network {
             #path_to_grost::__private::Tag::new(#tag),
           )
         }
-      },
+      }
     }
   }
 

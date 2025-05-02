@@ -5,7 +5,8 @@ use crate::{
   decode_owned_scalar, default_wire_format,
   encode::Encode,
   flavors::{
-    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown}, Network
+    Network,
+    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
   },
   partial_encode_scalar, selectable_scalar,
 };
@@ -144,7 +145,7 @@ default_wire_format!(
   SocketAddrV6 as LengthDelimited;
   SocketAddr as LengthDelimited;
 );
-selectable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
+selectable_scalar!(SocketAddrV4, SocketAddrV6, SocketAddr);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -193,16 +194,16 @@ impl Encode<Network, LengthDelimited> for SocketAddr {
     buf: &mut [u8],
   ) -> Result<usize, EncodeError> {
     match self {
-      Self::V4(addr) => <SocketAddrV4 as Encode<Network, LengthDelimited>>::encode_length_delimited(
-        addr,
-        context,
-        buf,
-      ),
-      Self::V6(addr) => <SocketAddrV6 as Encode<Network, LengthDelimited>>::encode_length_delimited(
-        addr,
-        context,
-        buf,
-      ),
+      Self::V4(addr) => {
+        <SocketAddrV4 as Encode<Network, LengthDelimited>>::encode_length_delimited(
+          addr, context, buf,
+        )
+      }
+      Self::V6(addr) => {
+        <SocketAddrV6 as Encode<Network, LengthDelimited>>::encode_length_delimited(
+          addr, context, buf,
+        )
+      }
     }
   }
 }
@@ -256,13 +257,12 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for SocketAddr {
       }};
     }
 
-    let (read, len) = varing::decode_u32_varint(src).map_err(|_| DecodeError::buffer_underflow())?;
+    let (read, len) =
+      varing::decode_u32_varint(src).map_err(|_| DecodeError::buffer_underflow())?;
     match len as usize {
       SOCKET_ADDR_V4_LEN => decode_addr!(read, 4),
       SOCKET_ADDR_V6_LEN => decode_addr!(read, 6),
-      _ => {
-        Err(DecodeError::custom("invalid socket address length"))
-      }
+      _ => Err(DecodeError::custom("invalid socket address length")),
     }
   }
 }

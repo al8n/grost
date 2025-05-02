@@ -2,7 +2,8 @@
 const _: () = {
   use crate::{
     default_wire_format,
-    flavors::network::{LengthDelimited, Network}, selectable_bridge,
+    flavors::network::{LengthDelimited, Network},
+    selectable_bridge,
   };
   use ::tinyvec_1::TinyVec;
   use bytes_1::Bytes;
@@ -12,7 +13,7 @@ const _: () = {
   default_wire_format!(Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited);
 
   selectable_bridge!(
-    Network: [u8] [TinyVec<[u8; N]> [const N: usize]] 
+    [u8] [TinyVec<[u8; N]> [const N: usize]]
   );
 
   bytes_bridge!(Network: TinyVec<[u8; N]> [const N: usize] {

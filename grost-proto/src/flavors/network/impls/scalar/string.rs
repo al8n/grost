@@ -126,7 +126,7 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable<$crate::__private::flavors::Network> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable for $ty {
       type Selector = bool;
     }
 

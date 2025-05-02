@@ -97,10 +97,7 @@ impl Field {
   }
 
   /// Inserts a wire type for a flavor
-  pub fn get_wire_format<F: FlavorGenerator + ?Sized>(
-    &self,
-    flavor: &F,
-  ) -> Option<&syn::Type> {
+  pub fn get_wire_format<F: FlavorGenerator + ?Sized>(&self, flavor: &F) -> Option<&syn::Type> {
     self.wire_formats.get(flavor.name())
   }
 

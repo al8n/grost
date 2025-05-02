@@ -9,7 +9,6 @@ use super::{Enum, Struct};
 /// The network flavor code generator
 pub mod network;
 
-
 /// The flavor
 pub trait FlavorGenerator {
   /// Returns the full qualify path of the flavor type.
@@ -61,7 +60,9 @@ impl<F: FlavorGenerator + ?Sized> FlavorGenerator for Box<F> {
     path_to_grost: &syn::Path,
     field: &Field,
   ) -> proc_macro2::TokenStream {
-    self.as_ref().generate_field_identifier(path_to_grost, field)
+    self
+      .as_ref()
+      .generate_field_identifier(path_to_grost, field)
   }
 
   fn generate_enum_codec(

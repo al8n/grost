@@ -6,9 +6,7 @@ const _: () = {
 
   use crate::{into_target, type_owned, type_ref};
 
-  selectable_bridge!(
-    Network: str [String]
-  );
+  selectable_bridge!(str[String]);
 
   str_bridge!(Network: String {
     from_str: |val: &str| String::from(val);

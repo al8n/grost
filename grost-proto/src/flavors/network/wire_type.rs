@@ -28,7 +28,7 @@ macro_rules! impl_from_wire_format {
       )*
 
       /// A wire type for encoding and decoding messages.
-      /// 
+      ///
       /// This is a sum type that holds all the [`WireFormat`]s for [`Network`] flavor.
       #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
       #[repr(u8)]
@@ -56,7 +56,7 @@ macro_rules! impl_from_wire_format {
             _ => panic!("invalid wire type value"),
           }
         }
-      
+
         /// Decode a wire type from a byte.
         #[inline]
         pub const fn try_from_u8(value: u8) -> Result<Self, u8> {
@@ -67,13 +67,13 @@ macro_rules! impl_from_wire_format {
             _ => return Err(value),
           })
         }
-      
+
         /// Convert the wire type to a byte.
         #[inline]
         pub const fn as_u8(&self) -> u8 {
           *self as u8
         }
-      
+
         /// Returns the [`WireType`] as a `&'static str`.
         #[inline]
         pub const fn as_str(&self) -> &'static str {
@@ -84,10 +84,10 @@ macro_rules! impl_from_wire_format {
           }
         }
       }
-      
+
       impl core::convert::TryFrom<u8> for WireType {
         type Error = u8;
-      
+
         #[inline]
         fn try_from(value: u8) -> Result<Self, Self::Error> {
           Self::try_from_u8(value)

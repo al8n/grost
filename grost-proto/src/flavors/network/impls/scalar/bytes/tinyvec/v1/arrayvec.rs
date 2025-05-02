@@ -1,9 +1,14 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  decode::{Decode, DecodeOwned}, encode::{Encode, PartialEncode}, flavors::{
-    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown}, Network, Selectable
-  }, partial_encode_scalar, IntoTarget, Message, PartialMessage, TypeRef
+  IntoTarget, Message, PartialMessage, TypeRef,
+  decode::{Decode, DecodeOwned},
+  encode::{Encode, PartialEncode},
+  flavors::{
+    Network, Selectable,
+    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
+  },
+  partial_encode_scalar,
 };
 
 use super::larger_than_array_capacity;
@@ -47,7 +52,7 @@ where
   }
 }
 
-impl<A> Selectable<Network> for ArrayVec<A>
+impl<A> Selectable for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {

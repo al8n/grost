@@ -7,7 +7,7 @@ const _: () = {
   use crate::{into_target, type_owned, type_ref};
 
   selectable_bridge!(
-    Network: [u8] [Vec<u8>]
+    [u8] [Vec<u8>]
   );
 
   bytes_bridge!(Network: Vec<u8> {

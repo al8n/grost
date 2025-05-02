@@ -11,7 +11,7 @@ default_wire_format!(
   Network: [u8] as LengthDelimited
 );
 
-selectable_scalar!(Network: [u8]);
+selectable_scalar!([u8]);
 
 impl Encode<Network, LengthDelimited> for [u8] {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
