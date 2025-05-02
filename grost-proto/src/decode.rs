@@ -5,6 +5,10 @@ use super::{
   flavors::Flavor,
 };
 
+pub use error::DecodeError;
+
+mod error;
+
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
 /// This trait provides methods to decode data from byte slices,

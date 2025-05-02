@@ -177,6 +177,10 @@ impl Generator for DefaultGenerator {
     let defination = (!self.derive).then(|| struct_.struct_defination());
     let basic = struct_.struct_basic(&self.grost_path);
     let selection = struct_.generate_selection(&self.grost_path, &self.flavors);
+    let selection_codecs = self
+      .flavors
+      .iter()
+      .map(|(_, f)| f.generate_selection_codec(&self.grost_path, struct_));
     let reflections = self
       .flavors
       .iter()
@@ -187,6 +191,7 @@ impl Generator for DefaultGenerator {
       #(#reflections)*
       #basic
       #selection
+      #(#selection_codecs)*
     })
   }
 

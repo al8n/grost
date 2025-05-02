@@ -22,20 +22,49 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
     Self: Sized;
 }
 
-/// The selector used to select fields for a type which implments [`Selectable`].
+/// A trait for type-based field selection within types implementing [`Selectable`].
+///
+/// `Selector` provides mechanisms to include or exclude specific fields or components
+/// within a composite type. This is useful for operations like serialization, validation,
+/// or any process where you need to specify which parts of a data structure to process.
 pub trait Selector: Clone + core::fmt::Debug + Eq {
-  /// Selects all.
+  /// Creates a selector that includes all possible fields.
+  ///
+  /// This constant provides a convenient starting point when you want to select
+  /// everything and then potentially exclude specific fields.
   const ALL: Self;
-  /// Selects nothing.
+
+  /// Creates a selector that includes no fields.
+  ///
+  /// This constant provides a convenient starting point when you want to build
+  /// a selector by gradually adding only the specific fields you need.
   const NONE: Self;
 
-  /// Merge two selectors.
+  /// Inverts the current selection.
+  ///
+  /// This method flips the selection state of all fields: previously selected fields
+  /// become unselected, and previously unselected fields become selected.
+  ///
+  /// Returns a mutable reference to self for method chaining.
+  fn flip(&mut self) -> &mut Self;
+
+  /// Combines this selector with another, typically using a union operation.
+  ///
+  /// This method incorporates the fields from `other` into the current selector.
+  /// The exact behavior depends on the implementing type, but generally results
+  /// in a union of the selected fields from both selectors.
+  ///
+  /// Returns a mutable reference to self for method chaining.
   fn merge(&mut self, other: Self) -> &mut Self;
 
-  /// Merge two selectors into a new one.
+  /// Creates a new selector by combining this selector with another.
+  ///
+  /// This is a convenience method that calls `merge` but returns a new selector
+  /// rather than modifying the original. This is useful when you want to preserve
+  /// the original selector.
   fn merge_into(mut self, other: Self) -> Self {
-    self.merge(other);
-    self
+      self.merge(other);
+      self
   }
 }
 
@@ -64,6 +93,8 @@ pub trait WireFormat<F: Flavor + ?Sized>:
 {
   /// The cooresponding value to the wire type.
   const WIRE_TYPE: F::WireType;
+  /// The name of the wire format.
+  const NAME: &'static str;
 }
 
 /// The default wire format for a type on flavor `F`.
@@ -156,9 +187,9 @@ pub trait Flavor: core::fmt::Debug + 'static {
   type Unknown<B>;
 
   /// The encode error for this flavor.
-  type EncodeError: core::error::Error;
+  type EncodeError: core::error::Error + From<super::encode::EncodeError>;
   /// The decode error for this flavor.
-  type DecodeError: core::error::Error;
+  type DecodeError: core::error::Error + From<super::decode::DecodeError>;
 
   /// The name of the flavor.
   const NAME: &'static str;

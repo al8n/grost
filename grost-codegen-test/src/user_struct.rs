@@ -212,6 +212,12 @@ impl ::grost::__private::Selectable for User {
 impl ::grost::__private::Selector for UserSelection {
     const ALL: Self = Self::all();
     const NONE: Self = Self::empty();
+    fn flip(&mut self) -> &mut Self {
+        self.name = !self.name;
+        self.age = !self.age;
+        self.email = !self.email;
+        self
+    }
     fn merge(&mut self, other: Self) -> &mut Self {
         self.name |= other.name;
         self.age |= other.age;
@@ -423,248 +429,161 @@ impl UserSelection {
     }
 }
 const _: () = {
-    const ALL_TAG: ::core::primitive::u8 = 1;
-    const NONE_TAG: ::core::primitive::u8 = 2;
-    const SELECT_TAG: ::core::primitive::u8 = 3;
-    const UNSELECT_TAG: ::core::primitive::u8 = 4;
-    const SELECT_ONE_TAG: ::core::primitive::u8 = 5;
-    const UNSELECT_ONE_TAG: ::core::primitive::u8 = 6;
-    impl UserSelection {
-        /// Encode the selection into a buffer.
-        ///
-        /// Returns the number of bytes written to the buffer.
+    const ALL_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(1);
+    const NONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(2);
+    const SELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(3);
+    const UNSELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(4);
+    const SELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(5);
+    const UNSELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(6);
+    const ALL_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::Zst,
+        ALL_TAG,
+    );
+    const NONE_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::Zst,
+        NONE_TAG,
+    );
+    const SELECT_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::LengthDelimited,
+        SELECT_TAG,
+    );
+    const UNSELECT_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::LengthDelimited,
+        UNSELECT_TAG,
+    );
+    const SELECT_ONE_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::Varint,
+        SELECT_ONE_TAG,
+    );
+    const UNSELECT_ONE_IDENTIFIER: ::grost::__private::flavors::network::Identifier = ::grost::__private::flavors::network::Identifier::new(
+        ::grost::__private::flavors::network::WireType::Varint,
+        UNSELECT_ONE_TAG,
+    );
+    const ALL_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = ALL_IDENTIFIER
+        .encoded_len();
+    const NONE_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = NONE_IDENTIFIER
+        .encoded_len();
+    const SELECT_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = SELECT_IDENTIFIER
+        .encoded_len();
+    const UNSELECT_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = UNSELECT_IDENTIFIER
+        .encoded_len();
+    const SELECT_ONE_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = SELECT_ONE_IDENTIFIER
+        .encoded_len();
+    const UNSELECT_ONE_IDENTIFIER_ENCODED_LEN: ::core::primitive::usize = UNSELECT_ONE_IDENTIFIER
+        .encoded_len();
+    const ALL_IDENTIFIER_ENCODED: &[::core::primitive::u8] = ALL_IDENTIFIER
+        .encode()
+        .as_slice();
+    const NONE_IDENTIFIER_ENCODED: &[::core::primitive::u8] = NONE_IDENTIFIER
+        .encode()
+        .as_slice();
+    const SELECT_IDENTIFIER_ENCODED: &[::core::primitive::u8] = SELECT_IDENTIFIER
+        .encode()
+        .as_slice();
+    const UNSELECT_IDENTIFIER_ENCODED: &[::core::primitive::u8] = UNSELECT_IDENTIFIER
+        .encode()
+        .as_slice();
+    const SELECT_ONE_IDENTIFIER_ENCODED: &[::core::primitive::u8] = SELECT_ONE_IDENTIFIER
+        .encode()
+        .as_slice();
+    const UNSELECT_ONE_IDENTIFIER_ENCODED: &[::core::primitive::u8] = UNSELECT_ONE_IDENTIFIER
+        .encode()
+        .as_slice();
+    impl ::grost::__private::DefaultWireFormat<::grost::__private::flavors::Network>
+    for UserSelection {
+        type Format = ::grost::__private::flavors::network::LengthDelimited;
+    }
+    ::grost::__private::selectable_scalar!(UserSelection);
+    ::grost::__private::partial_encode_scalar!(
+        ::grost::__private::flavors::Network : UserSelection as
+        ::grost::__private::flavors::network::LengthDelimited
+    );
+    ::grost::__private::decode_owned_scalar!(
+        ::grost::__private::flavors::Network : UserSelection as
+        ::grost::__private::flavors::network::LengthDelimited
+    );
+    impl ::grost::__private::Encode<
+        ::grost::__private::flavors::Network,
+        ::grost::__private::flavors::network::LengthDelimited,
+    > for UserSelection {
         #[inline]
-        pub fn encode(
+        fn encode(
             &self,
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::Flavor>::EncodeError,
         > {
-            use ::core::iter::Iterator;
-            macro_rules! encode {
-                (@ many $buf_len:ident, $fn:ident, $tag:ident) => {
-                    { buf[0] = $tag; let mut offset = 1; let data_size = self. $fn :: <
-                    ::grost::__private::flavors::Network > ().map(| f |
-                    ::grost::__private::varing::encoded_u32_varint_len(f.tag().get()))
-                    .sum:: < ::core::primitive::usize > (); let data_size_len =
-                    ::grost::__private::varing::encoded_u32_varint_len(data_size as
-                    ::core::primitive::u32); let total_len = offset + data_size_len +
-                    data_size; if $buf_len < total_len { return
-                    ::core::result::Result::Err(::grost::__private::EncodeError::insufficient_buffer(total_len,
-                    $buf_len)); } offset +=
-                    ::grost::__private::varing::encode_u32_varint_to(data_size as
-                    ::core::primitive::u32, & mut buf[offset..]).map_err(| e |
-                    ::grost::__private::EncodeError::from_varint_error(e)
-                    .update(total_len, $buf_len)) ?; for tag in self. $fn :: <
-                    ::grost::__private::flavors::Network > ().map(| f | f.tag().get()) {
-                    offset += ::grost::__private::varing::encode_u32_varint_to(tag, & mut
-                    buf[offset..]).map_err(| e |
-                    ::grost::__private::EncodeError::from_varint_error(e)
-                    .update(total_len, $buf_len)) ?; } ::core::result::Result::Ok(offset)
-                    }
-                };
-                (@ single $buf_len:ident, $fn:ident, $tag:ident) => {
-                    { buf[0] = $tag; let selected = self. $fn :: <
-                    ::grost::__private::flavors::Network > ().next().unwrap().tag()
-                    .get(); ::grost::__private::varing::encode_u32_varint_to(selected, &
-                    mut buf[1..]).map_err(| e |
-                    ::grost::__private::EncodeError::from_varint_error(e).update(self
-                    .encoded_len(), $buf_len)) }
-                };
-            }
-            if self.is_empty() {
-                if buf.is_empty() {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::EncodeError::insufficient_buffer(
-                            1,
-                            buf.len(),
-                        ),
-                    );
-                }
-                buf[0] = NONE_TAG;
-                return ::core::result::Result::Ok(1);
-            }
-            if self.is_all() {
-                if buf.is_empty() {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::EncodeError::insufficient_buffer(
-                            1,
-                            buf.len(),
-                        ),
-                    );
-                }
-                buf[0] = ALL_TAG;
-                return ::core::result::Result::Ok(1);
-            }
-            let num_selected = self.num_selected();
-            let num_unselected = self.num_unselected();
-            let buf_len = buf.len();
-            if buf_len < 2 {
-                return ::core::result::Result::Err(
-                    ::grost::__private::EncodeError::insufficient_buffer(
-                        self.encoded_len(),
-                        buf_len,
-                    ),
-                );
-            }
-            if num_selected >= num_unselected {
-                if num_selected == 1 {
-                    encode! {
-                        @ single buf_len, iter_selected, SELECT_ONE_TAG
-                    }
-                } else {
-                    encode! {
-                        @ many buf_len, iter_selected, SELECT_TAG
-                    }
-                }
-            } else if num_unselected == 1 {
-                encode! {
-                    @ single buf_len, iter_unselected, UNSELECT_ONE_TAG
-                }
-            } else {
-                encode! {
-                    @ many buf_len, iter_unselected, UNSELECT_TAG
-                }
-            }
+            ::core::todo!()
         }
-        /// Returns the length of the encoded selection.
         #[inline]
-        pub fn encoded_len(&self) -> ::core::primitive::usize {
-            use ::core::iter::Iterator;
-            macro_rules! len {
-                (@ many $fn:ident) => {
-                    { let data_size = self. $fn :: < ::grost::__private::flavors::Network
-                    > ().map(| f | ::grost::__private::varing::encoded_u32_varint_len(f
-                    .tag().get())).sum:: < ::core::primitive::usize > (); let
-                    data_size_len =
-                    ::grost::__private::varing::encoded_u32_varint_len(data_size as
-                    ::core::primitive::u32); 1 + data_size_len + data_size }
-                };
-                (@ single $fn:ident) => {
-                    { let selected = self. $fn :: < ::grost::__private::flavors::Network
-                    > ().next().unwrap().tag().get(); 1 +
-                    ::grost::__private::varing::encoded_u32_varint_len(selected) }
-                };
-            }
-            if self.is_empty() {
-                return 1;
-            }
-            if self.is_all() {
-                return 1;
-            }
-            let num_selected = self.num_selected();
-            let num_unselected = self.num_unselected();
-            if num_selected >= num_unselected {
-                if num_selected == 1 {
-                    len! {
-                        @ single iter_selected
-                    }
-                } else {
-                    len! {
-                        @ many iter_selected
-                    }
-                }
-            } else if num_unselected == 1 {
-                len! {
-                    @ single iter_unselected
-                }
-            } else {
-                len! {
-                    @ many iter_unselected
-                }
-            }
+        fn encoded_len(
+            &self,
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        ) -> ::core::primitive::usize {
+            ::core::todo!()
         }
-        /// Decodes the selection from a buffer.
-        pub fn decode<'a, F, UB>(
-            src: &'a [u8],
+        #[inline]
+        fn encoded_length_delimited_len(
+            &self,
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+        ) -> ::core::primitive::usize {
+            ::core::todo!()
+        }
+        #[inline]
+        fn encode_length_delimited(
+            &self,
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+            buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
-            (::core::primitive::usize, ::grost::__private::SelectionSet<Self, UB>),
-            ::grost::__private::DecodeError<F>,
+            ::core::primitive::usize,
+            <::grost::__private::flavors::Network as ::grost::__private::Flavor>::EncodeError,
+        > {
+            ::core::todo!()
+        }
+    }
+    impl<
+        'de,
+    > ::grost::__private::Decode<
+        'de,
+        ::grost::__private::flavors::Network,
+        ::grost::__private::flavors::network::LengthDelimited,
+        Self,
+    > for UserSelection {
+        #[inline]
+        fn decode<UB>(
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+            src: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<
+            (::core::primitive::usize, Self),
+            <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
         >
         where
-            F: ::grost::__private::Flavor + ?::core::marker::Sized,
             UB: ::grost::__private::Buffer<
-                    ::grost::__private::Unknown<F, &'a [::core::primitive::u8]>,
-                > + 'a,
+                    ::grost::__private::flavors::network::Unknown<
+                        &'de [::core::primitive::u8],
+                    >,
+                > + 'de,
         {
-            if src.is_empty() {
-                return ::core::result::Result::Err(
-                    ::grost::__private::DecodeError::buffer_underflow(),
-                );
-            }
-            let tag = src[0];
-            match tag {
-                NONE_TAG => {
-                    ::core::result::Result::Ok((
-                        1,
-                        ::grost::__private::SelectionSet::new(
-                            Self::empty(),
-                            ::core::option::Option::None,
-                        ),
-                    ))
-                }
-                ALL_TAG => {
-                    ::core::result::Result::Ok((
-                        1,
-                        ::grost::__private::SelectionSet::new(
-                            Self::all(),
-                            ::core::option::Option::None,
-                        ),
-                    ))
-                }
-                SELECT_TAG => {
-                    let (read, data_size) = ::grost::__private::varing::decode_u32_varint(
-                        &src[1..],
-                    )?;
-                    let mut offset = 1 + read;
-                    let total = offset + data_size as usize;
-                    if total > src.len() {
-                        return ::core::result::Result::Err(
-                            ::grost::__private::DecodeError::buffer_underflow(),
-                        );
-                    }
-                    let mut selection = Self::empty();
-                    while offset < total {
-                        let (read, tag) = ::grost::__private::varing::decode_u32_varint(
-                            &src[offset..],
-                        )?;
-                        offset += read;
-                    }
-                    ::core::result::Result::Ok((
-                        total,
-                        ::grost::__private::SelectionSet::new(
-                            selection,
-                            ::core::option::Option::None,
-                        ),
-                    ))
-                }
-                UNSELECT_TAG => {
-                    let (read, data_size) = ::grost::__private::varing::decode_u32_varint(
-                        &src[1..],
-                    )?;
-                    let mut offset = 1 + read;
-                    if offset + data_size as usize > src.len() {
-                        return ::core::result::Result::Err(
-                            ::grost::__private::DecodeError::buffer_underflow(),
-                        );
-                    }
-                    ::core::todo!()
-                }
-                SELECT_ONE_TAG => {
-                    let (read, tag) = ::grost::__private::varing::decode_u32_varint(
-                        &src[1..],
-                    )?;
-                    ::core::todo!()
-                }
-                UNSELECT_ONE_TAG => {
-                    let (read, tag) = ::grost::__private::varing::decode_u32_varint(
-                        &src[1..],
-                    )?;
-                    ::core::todo!()
-                }
-                _ => {}
-            }
+            ::core::todo!()
+        }
+        #[inline]
+        fn decode_length_delimited<UB>(
+            ctx: &<::grost::__private::flavors::Network as ::grost::__private::Flavor>::Context,
+            src: &'de [::core::primitive::u8],
+        ) -> ::core::result::Result<
+            (::core::primitive::usize, Self),
+            <::grost::__private::flavors::Network as ::grost::__private::Flavor>::DecodeError,
+        >
+        where
+            UB: ::grost::__private::Buffer<
+                    ::grost::__private::flavors::network::Unknown<
+                        &'de [::core::primitive::u8],
+                    >,
+                > + 'de,
+        {
+            ::core::todo!()
         }
     }
 };

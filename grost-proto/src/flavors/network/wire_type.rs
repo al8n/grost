@@ -18,6 +18,7 @@ macro_rules! impl_from_wire_format {
 
         impl WireFormat<Network> for [< $ty: camel >] {
           const WIRE_TYPE: WireType = WireType::[< $ty: camel >];
+          const NAME: &'static str = $ty;
         }
 
         impl From<[< $ty: camel >]> for WireType {

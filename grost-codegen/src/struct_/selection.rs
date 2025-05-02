@@ -182,9 +182,6 @@ impl Struct {
 
     let vis = self.visibility.as_ref();
     let doc = format!(" The selection type for {}", self.name.name_str());
-    let codecs = flavors
-      .iter()
-      .map(|(_, f)| self.generate_codec(path_to_grost, f));
 
     let selection_fields = self.fields.iter().map(|f| {
       let ty = f.ty();
@@ -316,12 +313,26 @@ impl Struct {
       }
     });
 
+    let flip = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+
+      if ty.primitive_selection_type() {
+        quote! {
+          self.#field_name = !self.#field_name;
+        }
+      } else {
+        quote! {
+          <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::flip(&mut self.#field_name);
+        }
+      }
+    });
+
     let struct_name = &self.name;
     let num_fields = self.fields.len();
 
     quote! {
-      // #selection_flags
-
       #[doc = #doc]
       #[derive(
         ::core::fmt::Debug,
@@ -342,6 +353,12 @@ impl Struct {
       impl #path_to_grost::__private::Selector for #name {
         const ALL: Self = Self::all();
         const NONE: Self = Self::empty();
+
+        fn flip(&mut self) -> &mut Self {
+          #(#flip)*
+
+          self
+        }
 
         fn merge(&mut self, other: Self) -> &mut Self {
           #(#merge)*
@@ -400,8 +417,6 @@ impl Struct {
 
         #(#fns)*
       }
-
-      #(#codecs)*
     }
   }
 

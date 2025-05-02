@@ -1,5 +1,4 @@
 use super::{Identifier, WireType};
-use crate::{encode::EncodeError as BaseEncodeError, decode::DecodeError as BaseDecodeError};
 use core::num::NonZeroUsize;
 
 /// A data encoding error
@@ -41,18 +40,6 @@ pub enum EncodeError {
 }
 
 impl core::error::Error for EncodeError {}
-
-impl From<BaseEncodeError> for EncodeError {
-  fn from(value: BaseEncodeError) -> Self {
-    match value {
-      BaseEncodeError::InsufficientBytesBuffer { required, remaining } => {
-        Self::InsufficientBytesBuffer { required, remaining }
-      }
-      BaseEncodeError::TooLarge { maximum, size } => Self::TooLarge { maximum, size },
-      BaseEncodeError::Custom(e) => Self::Custom(e),
-    }
-  }
-}
 
 impl EncodeError {
   /// Creates an insufficient buffer error.
@@ -235,19 +222,6 @@ pub enum DecodeError {
 }
 
 impl core::error::Error for DecodeError {}
-
-impl From<BaseDecodeError> for DecodeError {
-  fn from(value: BaseDecodeError) -> Self {
-    match value {
-      BaseDecodeError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
-      BaseDecodeError::BufferOverflow { available, required } => {
-        Self::BufferOverflow { available, required }
-      }
-      BaseDecodeError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
-      BaseDecodeError::Custom(e) => Self::Custom(e),
-    }
-  }
-}
 
 impl From<varing::DecodeError> for DecodeError {
   #[inline]

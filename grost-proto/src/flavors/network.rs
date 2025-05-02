@@ -20,6 +20,10 @@ impl Selector for () {
   const ALL: Self = ();
   const NONE: Self = ();
 
+  fn flip(&mut self) -> &mut Self {
+    self
+  }
+
   fn merge(&mut self, _: Self) -> &mut Self {
     self
   }

@@ -27,6 +27,13 @@ pub trait FlavorGenerator {
     field: &Field,
   ) -> proc_macro2::TokenStream;
 
+  /// Generates the codec for the struct type
+  fn generate_struct_codec(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream;
+
   /// Generates the codec for the selection type
   fn generate_selection_codec(
     &self,
@@ -63,6 +70,14 @@ impl<F: FlavorGenerator + ?Sized> FlavorGenerator for Box<F> {
     self
       .as_ref()
       .generate_field_identifier(path_to_grost, field)
+  }
+
+  fn generate_struct_codec(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream {
+    self.as_ref().generate_struct_codec(path_to_grost, struct_)
   }
 
   fn generate_enum_codec(

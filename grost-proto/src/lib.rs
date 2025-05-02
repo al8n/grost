@@ -72,7 +72,7 @@ pub mod __private {
     buffer::*,
     convert::*,
     decode::*,
-    decode_owned_scalar, default_wire_format,
+    decode_owned_scalar, default_wire_format, selectable_scalar,
     encode::*,
     flavors::{self, *},
     map::MapSelector,

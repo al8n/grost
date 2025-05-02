@@ -1,5 +1,9 @@
 use super::flavors::{Flavor, Selectable, WireFormat};
 
+pub use error::EncodeError;
+
+mod error;
+
 /// A trait for serializing data to binary format with support for various wire types.
 ///
 /// This trait provides methods to encode data into binary representations,

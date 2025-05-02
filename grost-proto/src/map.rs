@@ -26,6 +26,18 @@ impl<K, V> MapSelector<K, V> {
     self.value.as_ref()
   }
 
+  /// Returns the key selector.
+  #[inline]
+  pub const fn key_mut(&mut self) -> Option<&mut K> {
+    self.key.as_mut()
+  }
+
+  /// Returns the value selector.
+  #[inline]
+  pub const fn value_mut(&mut self) -> Option<&mut V> {
+    self.value.as_mut()
+  }
+
   /// Sets the key selector.
   #[inline]
   pub fn set_key(&mut self, key: Option<K>) -> &mut Self {
@@ -68,6 +80,17 @@ where
 {
   const ALL: Self = MapSelector::new(Some(K::ALL), Some(V::ALL));
   const NONE: Self = MapSelector::new(None, None);
+
+  fn flip(&mut self) -> &mut Self {
+    if let Some(key) = self.key_mut() {
+      key.flip();
+    }
+
+    if let Some(value) = self.value_mut() {
+      value.flip();
+    }
+    self
+  }
 
   fn merge(&mut self, other: Self) -> &mut Self {
     if let Some(key) = other.key {
