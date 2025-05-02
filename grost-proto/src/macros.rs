@@ -86,36 +86,20 @@ macro_rules! network_varint {
 #[macro_export]
 macro_rules! partial_encode_scalar {
   (@impl $flavor:ty as $format:ty) => {
-    fn partial_encode(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], selector: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
-      if *selector {
-        <Self as $crate::__private::Encode<$flavor, $format>>::encode(self, context, buf)
-      } else {
-        ::core::result::Result::Ok(0)
-      }
+    fn partial_encode(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], _: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
+      <Self as $crate::__private::Encode<$flavor, $format>>::encode(self, context, buf)
     }
 
-    fn partial_encoded_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context, selector: &Self::Selector) -> ::core::primitive::usize {
-      if *selector {
-        <Self as $crate::__private::Encode<$flavor, $format>>::encoded_len(self, context)
-      } else {
-        0
-      }
+    fn partial_encoded_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context, _: &Self::Selector) -> ::core::primitive::usize {
+      <Self as $crate::__private::Encode<$flavor, $format>>::encoded_len(self, context)
     }
 
-    fn partial_encode_length_delimited(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], selector: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
-      if *selector {
-        <Self as $crate::__private::Encode<$flavor, $format>>::encode_length_delimited(self, context, buf)
-      } else {
-        ::core::result::Result::Ok(0)
-      }
+    fn partial_encode_length_delimited(&self, context: &<$flavor as $crate::__private::Flavor>::Context, buf: &mut [::core::primitive::u8], _: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::Flavor>::EncodeError> {
+      <Self as $crate::__private::Encode<$flavor, $format>>::encode_length_delimited(self, context, buf)
     }
 
-    fn partial_encoded_length_delimited_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context, selector: &Self::Selector) -> ::core::primitive::usize {
-      if *selector {
-        <Self as $crate::__private::Encode<$flavor, $format>>::encoded_length_delimited_len(self, context)
-      } else {
-        0
-      }
+    fn partial_encoded_length_delimited_len(&self, context: &<$flavor as $crate::__private::Flavor>::Context, _: &Self::Selector) -> ::core::primitive::usize {
+      <Self as $crate::__private::Encode<$flavor, $format>>::encoded_length_delimited_len(self, context)
     }
   };
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty),+$(,)?) => {
@@ -133,7 +117,7 @@ macro_rules! selectable_scalar {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable for $ty {
-        type Selector = ::core::primitive::bool;
+        type Selector = ();
       }
     )*
   };
@@ -1074,7 +1058,7 @@ macro_rules! network_phantom {
       }
 
       impl<T: ?::core::marker::Sized> $crate::__private::Selectable for $ty {
-        type Selector = ::core::primitive::bool;
+        type Selector = ();
       }
 
       impl<T: ?::core::marker::Sized> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {

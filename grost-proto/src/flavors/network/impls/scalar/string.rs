@@ -127,7 +127,7 @@ macro_rules! array_str {
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::Selectable for $ty {
-      type Selector = bool;
+      type Selector = ();
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {

@@ -28,7 +28,9 @@ impl Struct {
       flavors,
     );
     let fns = fields.iter().map(move |f| {
+      let ty = f.ty();
       let field_name = f.name();
+      let rust_ty = ty.ty();
       let select_fn_name = format_ident!("select_{}", field_name.name_str());
       let select_fn_doc = format!(
         " Select the `{}.{}` field",
@@ -78,60 +80,102 @@ impl Struct {
         field_name.name_str()
       );
 
-      quote! {
-        #[doc = #select_fn_doc]
-        #[inline]
-        pub const fn #select_fn_name(&mut self) -> &mut Self {
-          self.flags.#select_fn_name();
-          self
-        }
+      if !ty.primitive_selection_type() {
+        let ref_fn_name = format_ident!("{}_ref", field_name.name_str());
+        let ref_fn_doc = format!(
+          " Get a reference to the selector of `{}.{}` field",
+          self.name.name_str(),
+          field_name.name_str()
+        );
+        let ref_mut_fn_name = format_ident!("{}_mut", field_name.name_str());
+        let ref_mut_fn_doc = format!(
+          " Get a mutable reference to the selector of `{}.{}` field",
+          self.name.name_str(),
+          field_name.name_str()
+        );
+        quote! {
+          #[doc = #select_fn_doc]
+          #[inline]
+          pub fn #select_fn_name(&mut self, val: <#rust_ty as #path_to_grost::__private::Selectable>::Selector) -> &mut Self {
+            self.#field_name = val;
+            self
+          }
+  
+          #[doc = #unselect_fn_doc]
+          #[inline]
+          pub fn #unselect_fn_name(&mut self) -> &mut Self {
+            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE;
+            self
+          }
 
-        #[doc = #unselect_fn_doc]
-        #[inline]
-        pub const fn #unselect_fn_name(&mut self) -> &mut Self {
-          self.flags.#unselect_fn_name();
-          self
-        }
+          #[doc = #ref_fn_doc]
+          #[inline]
+          pub const fn #ref_fn_name(&self) -> &<#rust_ty as #path_to_grost::__private::Selectable>::Selector {
+            &self.#field_name
+          }
 
-        #[doc = #update_fn_doc]
-        #[inline]
-        pub const fn #update_fn_name(&mut self, value: ::core::primitive::bool) -> &mut Self {
-          self.flags.#update_fn_name(value);
-          self
+          #[doc = #ref_mut_fn_doc]
+          #[inline]
+          pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable>::Selector {
+            &mut self.#field_name
+          }
         }
-
-        #[doc = #toggle_fn_doc]
-        #[inline]
-        pub const fn #toggle_fn_name(&mut self) -> &mut Self {
-          self.flags.#toggle_fn_name();
-          self
-        }
-
-        #[doc = #with_fn_doc]
-        #[inline]
-        pub const fn #with_fn_name(mut self) -> Self {
-          self.flags = self.flags.#with_fn_name();
-          self
-        }
-
-        #[doc = #without_fn_doc]
-        #[inline]
-        pub const fn #without_fn_name(mut self) -> Self {
-          self.flags = self.flags.#without_fn_name();
-          self
-        }
-
-        #[doc = #maybe_fn_doc]
-        #[inline]
-        pub const fn #maybe_fn_name(mut self, val: ::core::primitive::bool) -> Self {
-          self.flags = self.flags.#maybe_fn_name(val);
-          self
-        }
-
-        #[doc = #contains_fn_doc]
-        #[inline]
-        pub const fn #contains_fn_name(&self) -> ::core::primitive::bool {
-          self.flags.#contains_fn_name()
+      } else {  
+        quote! {
+          #[doc = #select_fn_doc]
+          #[inline]
+          pub const fn #select_fn_name(&mut self) -> &mut Self {
+            self.#field_name = true;
+            self
+          }
+  
+          #[doc = #unselect_fn_doc]
+          #[inline]
+          pub const fn #unselect_fn_name(&mut self) -> &mut Self {
+            self.#field_name = false;
+            self
+          }
+  
+          #[doc = #update_fn_doc]
+          #[inline]
+          pub const fn #update_fn_name(&mut self, value: ::core::primitive::bool) -> &mut Self {
+            self.#field_name = value;
+            self
+          }
+  
+          #[doc = #toggle_fn_doc]
+          #[inline]
+          pub const fn #toggle_fn_name(&mut self) -> &mut Self {
+            self.#field_name = !self.#field_name;
+            self
+          }
+  
+          #[doc = #with_fn_doc]
+          #[inline]
+          pub const fn #with_fn_name(mut self) -> Self {
+            self.#field_name = true;
+            self
+          }
+  
+          #[doc = #without_fn_doc]
+          #[inline]
+          pub const fn #without_fn_name(mut self) -> Self {
+            self.#field_name = false;
+            self
+          }
+  
+          #[doc = #maybe_fn_doc]
+          #[inline]
+          pub const fn #maybe_fn_name(mut self, val: ::core::primitive::bool) -> Self {
+            self.#field_name = val;
+            self
+          }
+  
+          #[doc = #contains_fn_doc]
+          #[inline]
+          pub const fn #contains_fn_name(&self) -> ::core::primitive::bool {
+            self.#field_name
+          }
         }
       }
     });
@@ -142,8 +186,141 @@ impl Struct {
       .iter()
       .map(|(_, f)| self.generate_codec(path_to_grost, f));
 
+    let selection_fields = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          #field_name: ::core::primitive::bool
+        }
+      } else {
+        quote! {
+          #field_name: <#rust_ty as #path_to_grost::__private::Selectable>::Selector
+        }
+      }
+    });
+
+    let empty = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+
+      if ty.primitive_selection_type() {
+        quote! {
+          #field_name: false
+        }
+      } else {
+        quote! {
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE
+        }
+      } 
+    });
+
+    let all = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+
+      if ty.primitive_selection_type() {
+        quote! {
+          #field_name: true
+        }
+      } else {
+        quote! {
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::ALL
+        }
+      }
+    });
+
+    let is_empty = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          !self.#field_name
+        }
+      } else {
+        quote! {
+          (self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE)
+        }
+      }
+    });
+
+    let is_all = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          self.#field_name
+        }
+      } else {
+        quote! {
+          (self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::ALL)
+        }
+      }
+    });
+
+    let num_selected = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          if self.#field_name {
+            num += 1;
+          }
+        }
+      } else {
+        quote! {
+          if self.#field_name != <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE {
+            num += 1;
+          }
+        }
+      }
+    });
+
+    let num_unselected = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          if !self.#field_name {
+            num += 1;
+          }
+        }
+      } else {
+        quote! {
+          if self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE {
+            num += 1;
+          }
+        }
+      }
+    });
+
+    let merge = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          self.#field_name |= other.#field_name;
+        }
+      } else {
+        quote! {
+          <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::merge(&mut self.#field_name, other.#field_name);
+        }
+      }
+    });
+
+    let struct_name = &self.name;
+    let num_fields = self.fields.len();
+
     quote! {
-      #selection_flags
+      // #selection_flags
 
       #[doc = #doc]
       #[derive(
@@ -155,77 +332,70 @@ impl Struct {
         ::core::hash::Hash,
       )]
       #vis struct #name {
-        flags: #selection_flags_name,
+        #(#selection_fields),*
+      }
+
+      impl #path_to_grost::__private::Selectable for #struct_name {
+        type Selector = #name;
+      }
+
+      impl #path_to_grost::__private::Selector for #name {
+        const ALL: Self = Self::all();
+        const NONE: Self = Self::empty();
+
+        fn merge(&mut self, other: Self) -> &mut Self {
+          #(#merge)*
+
+          self
+        }
       }
 
       impl #name {
         /// The number of options in this selection type.
-        pub const OPTIONS: ::core::primitive::usize = #selection_flags_name::OPTIONS;
+        pub const OPTIONS: ::core::primitive::usize = #num_fields;
 
-        /// Get a flags value with all bits unset.
+        /// Returns a selector which selects nothing.
         #[inline]
         pub const fn empty() -> Self {
           Self {
-            flags: #selection_flags_name::empty(),
+            #(#empty),*
           }
         }
 
-        /// Get a flags value with all known bits set.
+        /// Returns a selector which selects all.
         #[inline]
         pub const fn all() -> Self {
           Self {
-            flags: #selection_flags_name::all(),
+            #(#all),*
           }
         }
 
-        /// Whether all bits in this flags value are unset.
+        /// Returns `true` if the selector selects nothing.
         #[inline]
         pub const fn is_empty(&self) -> ::core::primitive::bool {
-          self.flags.is_empty()
+          #(#is_empty) && *
         }
 
-        /// Whether all bits in this flags value are set.
+        /// Returns `true` if the selector selects all.
         #[inline]
         pub const fn is_all(&self) -> ::core::primitive::bool {
-          self.flags.is_all()
-        }
-
-        /// Returns an iterator over the selected fields, the iterator will yield the `FieldRelection` of the selected fields.
-        #[inline]
-        pub const fn iter_selected<F: ?::core::marker::Sized>(&self) -> #selection_flags_iter_name<F, true> {
-          self.flags.select_field_reflection_iter_selected()
-        }
-
-        /// Returns an iterator over the unselected fields, the iterator will yield the `FieldRelection` of the unselected fields.
-        #[inline]
-        pub const fn iter_unselected<F: ?::core::marker::Sized>(&self) -> #selection_flags_iter_name<F, false> {
-          self.flags.select_field_reflection_iter_unselected()
-        }
-
-        /// Merge another selection set into this one.
-        #[inline]
-        pub const fn merge(&mut self, other: Self) -> &mut Self {
-          self.flags = self.flags.merge(other.flags);
-          self
-        }
-
-        /// Merge another selection set into a new one.
-        #[inline]
-        pub const fn merge_into(mut self, other: Self) -> Self {
-          self.flags = self.flags.merge(other.flags);
-          self
+          #(#is_all) && *
         }
 
         /// Returns the number of selected fields.
         #[inline]
         pub const fn num_selected(&self) -> ::core::primitive::usize {
-          self.flags.num_selected()
+          let mut num = 0;
+          #(#num_selected)*
+          num
         }
 
         /// Returns the number of unselected fields.
         #[inline]
         pub const fn num_unselected(&self) -> ::core::primitive::usize {
-          self.flags.num_unselected()
+          let mut num = 0;
+          #(#num_unselected)*
+          num
         }
 
         #(#fns)*

@@ -16,7 +16,14 @@ mod wire_type;
 /// The unknown data types
 mod unknown;
 
-impl Selector for bool {}
+impl Selector for () {
+  const ALL: Self = ();
+  const NONE: Self = ();
+
+  fn merge(&mut self, _: Self) -> &mut Self {
+    self
+  }
+}
 
 /// The network flavor
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

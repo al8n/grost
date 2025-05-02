@@ -22,7 +22,7 @@ where
 }
 
 impl<K, V> Selectable for MapSelector<K, V> {
-  type Selector = bool;
+  type Selector = ();
 }
 
 impl<K, V> Encode<Network, LengthDelimited> for MapSelector<K, V>
@@ -91,46 +91,30 @@ where
     &self,
     context: &Context,
     buf: &mut [u8],
-    selector: &Self::Selector,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
-    if *selector {
-      <Self as Encode<Network, LengthDelimited>>::encode(self, context, buf)
-    } else {
-      Ok(0)
-    }
+    <Self as Encode<Network, LengthDelimited>>::encode(self, context, buf)
   }
 
-  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    if *selector {
-      <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context)
-    } else {
-      0
-    }
+  fn partial_encoded_len(&self, context: &Context, _: &Self::Selector) -> usize {
+    <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context)
   }
 
   fn partial_encoded_length_delimited_len(
     &self,
     context: &Context,
-    selector: &Self::Selector,
+    _: &Self::Selector,
   ) -> usize {
-    if *selector {
-      <Self as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(self, context)
-    } else {
-      0
-    }
+    <Self as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(self, context)
   }
 
   fn partial_encode_length_delimited(
     &self,
     context: &Context,
     buf: &mut [u8],
-    selector: &Self::Selector,
+    _: &Self::Selector,
   ) -> Result<usize, EncodeError> {
-    if *selector {
-      <Self as Encode<Network, LengthDelimited>>::encode_length_delimited(self, context, buf)
-    } else {
-      Ok(0)
-    }
+    <Self as Encode<Network, LengthDelimited>>::encode_length_delimited(self, context, buf)
   }
 }
 

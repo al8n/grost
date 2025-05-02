@@ -23,7 +23,21 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
 }
 
 /// The selector used to select fields for a type which implments [`Selectable`].
-pub trait Selector: Clone + core::fmt::Debug + Eq {}
+pub trait Selector: Clone + core::fmt::Debug + Eq {
+  /// Selects all.
+  const ALL: Self;
+  /// Selects nothing.
+  const NONE: Self;
+
+  /// Merge two selectors.
+  fn merge(&mut self, other: Self) -> &mut Self;
+
+  /// Merge two selectors into a new one.
+  fn merge_into(mut self, other: Self) -> Self {
+    self.merge(other);
+    self
+  }
+}
 
 /// A trait for types that can be selected.
 pub trait Selectable {

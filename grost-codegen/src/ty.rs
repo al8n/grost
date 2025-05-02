@@ -228,6 +228,15 @@ impl Ty {
     &self.repr
   }
 
+  pub(crate) fn primitive_selection_type(&self) -> bool {
+    match &self.repr {
+      TyRepr::Primitive(_) | TyRepr::Enum(_) => true,
+      TyRepr::List { item, .. } => item.primitive_selection_type(),
+      TyRepr::Optional(ty) => ty.primitive_selection_type(),
+      _ => false,
+    }
+  }
+
   pub(crate) fn selection_type<F>(
     &self,
     path_to_grost: &syn::Path,

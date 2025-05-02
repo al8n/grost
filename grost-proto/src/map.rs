@@ -66,6 +66,20 @@ where
   K: Selector,
   V: Selector,
 {
+  const ALL: Self = MapSelector::new(Some(K::ALL), Some(V::ALL));
+  const NONE: Self = MapSelector::new(None, None);
+
+  fn merge(&mut self, other: Self) -> &mut Self {
+    if let Some(key) = other.key {
+      self.set_key(Some(key));
+    }
+
+    if let Some(value) = other.value {
+      self.set_value(Some(value));
+    }
+
+    self
+  }
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
