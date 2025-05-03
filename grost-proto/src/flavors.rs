@@ -190,6 +190,7 @@ pub trait Selector: Clone + core::fmt::Debug + Eq {
 
 /// A trait for types that can be selected.
 pub trait Selectable<F: Flavor + ?Sized> {
+  /// The corresponding selector for this type.
   type Selector: Selector;
 }
 
