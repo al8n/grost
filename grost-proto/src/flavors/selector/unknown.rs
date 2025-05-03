@@ -1,4 +1,6 @@
-use super::{BytesBuffer, Tag, WireType};
+use crate::buffer::BytesBuffer;
+
+use super::{SelectorTag, SelectorWireType};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -10,8 +12,8 @@ use super::{BytesBuffer, Tag, WireType};
 /// as is.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Unknown<B: ?Sized> {
-  tag: Tag,
-  wire_type: WireType,
+  tag: SelectorTag,
+  wire_type: SelectorWireType,
   data_offset: usize,
   data: B,
 }
@@ -23,8 +25,8 @@ where
   /// Creates a new unknown by ref
   #[inline]
   pub const fn from_data_ref(
-    tag: Tag,
-    wire_type: WireType,
+    tag: SelectorTag,
+    wire_type: SelectorWireType,
     data_offset: usize,
     data: &'a B,
   ) -> Self {
@@ -49,7 +51,12 @@ where
   /// data is that when encoding the unknown data, there is no more need to encode the identifier
   /// again, and the data itself is the encoded format of the `Unknown` type.
   #[inline]
-  pub(super) const fn new(tag: Tag, wire_type: WireType, data_offset: usize, data: B) -> Self
+  pub(super) const fn new(
+    tag: SelectorTag,
+    wire_type: SelectorWireType,
+    data_offset: usize,
+    data: B,
+  ) -> Self
   where
     B: Sized,
   {
@@ -63,13 +70,13 @@ where
 
   /// Returns the tag of the unknown data type.
   #[inline]
-  pub const fn tag(&self) -> Tag {
+  pub const fn tag(&self) -> SelectorTag {
     self.tag
   }
 
   /// Returns the wire type of the unknown data type.
   #[inline]
-  pub const fn wire_type(&self) -> WireType {
+  pub const fn wire_type(&self) -> SelectorWireType {
     self.wire_type
   }
 
@@ -82,7 +89,7 @@ where
   where
     B: BytesBuffer,
   {
-    if self.wire_type == WireType::Zst {
+    if self.wire_type == SelectorWireType::Zst {
       return &[];
     }
 

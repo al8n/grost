@@ -109,12 +109,13 @@ where
 const _: () = {
   use std::collections::BTreeMap;
 
-  use crate::flavors::Selectable;
+  use crate::flavors::{Flavor, Selectable};
 
-  impl<K, V> Selectable for BTreeMap<K, V>
+  impl<K, V, F> Selectable<F> for BTreeMap<K, V>
   where
-    K: Selectable,
-    V: Selectable,
+    K: Selectable<F>,
+    V: Selectable<F>,
+    F: Flavor + ?Sized,
   {
     type Selector = MapSelector<K::Selector, V::Selector>;
   }

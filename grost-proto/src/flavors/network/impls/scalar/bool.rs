@@ -6,7 +6,7 @@ use crate::{
 
 default_wire_format!(Network: bool as Fixed8);
 
-selectable_bridge!(u8[bool]);
+selectable_bridge!(Network:u8[bool]);
 bridge!(
   Network: u8 {
     bool as Fixed8 {

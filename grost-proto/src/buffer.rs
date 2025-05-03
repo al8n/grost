@@ -108,6 +108,9 @@ const _: () = {
 };
 
 pub trait BytesBuffer {
+  /// Creates a new buffer.
+  fn new() -> Self;
+
   /// Returns the length of the buffer.
   fn len(&self) -> usize;
 
@@ -127,6 +130,10 @@ pub trait BytesBuffer {
 }
 
 impl BytesBuffer for &[u8] {
+  fn new() -> Self {
+    &[]
+  }
+
   fn is_empty(&self) -> bool {
     <[u8]>::is_empty(self)
   }
@@ -160,6 +167,10 @@ impl BytesBuffer for &[u8] {
 
 #[cfg(feature = "bytes_1")]
 impl BytesBuffer for bytes_1::Bytes {
+  fn new() -> Self {
+    bytes_1::Bytes::new()
+  }
+
   fn len(&self) -> usize {
     self.len()
   }
@@ -179,6 +190,10 @@ impl BytesBuffer for bytes_1::Bytes {
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl BytesBuffer for Vec<u8> {
+  fn new() -> Self {
+    Vec::new()
+  }
+
   fn len(&self) -> usize {
     self.len()
   }
@@ -212,6 +227,10 @@ impl BytesBuffer for Vec<u8> {
 
 #[cfg(feature = "heapless_0_9")]
 impl<const N: usize, L: heapless_0_9::LenType> BytesBuffer for heapless_0_9::Vec<u8, N, L> {
+  fn new() -> Self {
+    heapless_0_9::Vec::new()
+  }
+
   fn is_empty(&self) -> bool {
     self.is_empty()
   }

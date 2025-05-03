@@ -38,7 +38,7 @@ const _: () = {
           },
         );
 
-        $crate::selectable_bridge!(
+        $crate::selectable_bridge!(Network:
           str [$ty $([ $(const $g: usize),* ])?]
         );
 

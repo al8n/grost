@@ -12,7 +12,7 @@ const _: () = {
 
   default_wire_format!(Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited);
 
-  selectable_bridge!(
+  selectable_bridge!(Network:
     [u8] [TinyVec<[u8; N]> [const N: usize]]
   );
 

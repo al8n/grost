@@ -5,7 +5,7 @@ use crate::{
 };
 
 default_wire_format!(Network: f64 as Fixed64);
-selectable_bridge!(u64[f64]);
+selectable_bridge!(Network:u64[f64]);
 bridge!(
   Network: u64 {
     f64 as Fixed64 {

@@ -6,7 +6,7 @@ use crate::{
 use rust_decimal_1::Decimal as f128;
 
 default_wire_format!(Network: f128 as Fixed128);
-selectable_bridge!(u128[f128]);
+selectable_bridge!(Network:u128[f128]);
 bridge!(
   Network: u128 {
     f128 as Fixed128 {

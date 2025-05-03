@@ -1,9 +1,26 @@
-use super::{Identifier, Network, WireType};
-use crate::{decode::DecodeError as BaseDecodeError, flavors::Flavor};
+use crate::{
+  decode::DecodeError as BaseDecodeError,
+  flavors::{Flavor, selector::SelectorFlavor},
+};
 use core::num::NonZeroUsize;
 
-/// The encode error for [`Network`] flavor.
-pub type EncodeError = crate::encode::EncodeError<Network>;
+use super::{SelectorIdentifier, SelectorWireType};
+
+/// The encode error for [`SelectorFlavor`](super::SelectorFlavor)
+pub type EncodeError = crate::encode::EncodeError<super::SelectorFlavor>;
+
+/// The error when parsing a [`SelectorTag`](super::SelectorTag).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[error("invalid selector tag value: {0}")]
+pub struct ParseSelectorTagError(pub(super) u8);
+
+impl ParseSelectorTagError {
+  /// Returns the invalid selector tag value.
+  #[inline]
+  pub const fn value(&self) -> u8 {
+    self.0
+  }
+}
 
 /// A message decoding error.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -23,62 +40,63 @@ pub enum DecodeError {
     required: NonZeroUsize,
   },
 
-  /// Returned when the buffer does not contain the required field.
-  #[display("{field}{identifier} in {ty} is not found in buffer")]
-  FieldNotFound {
-    /// The type of the message.
-    ty: &'static str,
-    /// The name of the field.
-    field: &'static str,
-    /// The identifier of the field.
-    identifier: Identifier,
+  /// Unknown selector tag.
+  #[display("unknown selector tag value {value} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  UnknownTagValue {
+    /// The unknown selector tag value.
+    value: u8,
   },
 
-  /// Returned when the buffer contains duplicate fields for the same tag in a message.
-  #[display("duplicate field {field} with identifier{identifier} in {ty}")]
-  DuplicateField {
-    /// The type of the message.
-    ty: &'static str,
-    /// The name of the field.
-    field: &'static str,
-    /// The identifier of the field.
-    identifier: Identifier,
+  /// Unknown selector wire type.
+  #[display("unknown selector wire type value {value} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  UnknownWireTypeValue {
+    /// The unknown selector wire type value.
+    value: u8,
   },
 
-  /// Returned when there is a unknown identifier.
-  #[display("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = Network::NAME)]
+  /// Unknown selector identifier value.
+  #[display("unknown selector identifier type value (wire_type: {wire_type}, tag: {tag}) in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  UnknownIdentifierValue {
+    /// The unknown selector identifier tag value.
+    tag: u8,
+    /// The unknown selector identifier wire type value.
+    wire_type: u8,
+  },
+
+  /// Returned when there is a unknown wire type.
+  #[display("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
   UnknownIdentifier {
     /// The type of the message.
     ty: &'static str,
     /// The identifier of the field.
-    identifier: Identifier,
+    identifier: SelectorIdentifier,
   },
 
   /// Returned when the type cannot be decoded in the given wire type format
-  #[display("cannot decode {ty} in {wire_type} format in {flavor} flavor", flavor = Network::NAME)]
+  #[display("cannot decode {ty} in {wire_type} format in {flavor} flavor", flavor = SelectorFlavor::NAME)]
   UnsupportedWireType {
     /// The type of the value.
     ty: &'static str,
     /// The wire type of the value.
-    wire_type: WireType,
+    wire_type: SelectorWireType,
   },
 
   /// Returned when the type cannot be decoded with the given identifier
-  #[display("cannot decode {ty} with identifier({identifier}) format in {flavor} flavor", flavor = Network::NAME)]
+  #[display("cannot decode {ty} with identifier({identifier}) format in {flavor} flavor", flavor = SelectorFlavor::NAME)]
   UnsupportedIdentifier {
     /// The type of the value.
     ty: &'static str,
     /// The wire type of the value.
-    identifier: Identifier,
+    identifier: SelectorIdentifier,
   },
 
   /// Returned when there is a unknown wire type.
   #[display("identifier mismatch: expect {expect}, actual {actual}")]
   IdentifierMismatch {
     /// The type of the message.
-    expect: Identifier,
+    expect: SelectorIdentifier,
     /// The identifier
-    actual: Identifier,
+    actual: SelectorIdentifier,
   },
 
   /// Returned when fail to decode the length-delimited
@@ -98,9 +116,17 @@ pub enum DecodeError {
 
 impl core::error::Error for DecodeError {}
 
-impl From<BaseDecodeError<Network>> for DecodeError {
-  fn from(value: BaseDecodeError<Network>) -> Self {
-    match value {
+impl From<ParseSelectorTagError> for DecodeError {
+  #[inline]
+  fn from(e: ParseSelectorTagError) -> Self {
+    Self::UnknownTagValue { value: e.0 }
+  }
+}
+
+impl From<BaseDecodeError<super::SelectorFlavor>> for DecodeError {
+  #[inline]
+  fn from(e: BaseDecodeError<super::SelectorFlavor>) -> Self {
+    match e {
       BaseDecodeError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
       BaseDecodeError::BufferOverflow {
         available,
@@ -122,7 +148,7 @@ impl From<BaseDecodeError<Network>> for DecodeError {
         Self::unsupported_wire_type(ty, wire_type)
       }
       BaseDecodeError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
-      BaseDecodeError::Custom(e) => Self::Custom(e),
+      BaseDecodeError::Custom(e) => Self::custom(e),
     }
   }
 }
@@ -150,56 +176,46 @@ impl DecodeError {
     }
   }
 
-  /// Creates a new missing field decoding error.
+  /// Creates a new unknown selector tag decoding error.
   #[inline]
-  pub const fn field_not_found(
-    ty: &'static str,
-    field: &'static str,
-    identifier: Identifier,
-  ) -> Self {
-    Self::FieldNotFound {
-      ty,
-      field,
-      identifier,
-    }
+  pub const fn unknown_tag_value(value: u8) -> Self {
+    Self::UnknownTagValue { value }
   }
 
-  /// Creates a new duplicate field decoding error.
+  /// Creates a new unknown selector wire type decoding error.
   #[inline]
-  pub const fn duplicate_field(
-    ty: &'static str,
-    field: &'static str,
-    identifier: Identifier,
-  ) -> Self {
-    Self::DuplicateField {
-      ty,
-      field,
-      identifier,
-    }
+  pub const fn unknown_wire_type_value(value: u8) -> Self {
+    Self::UnknownWireTypeValue { value }
+  }
+
+  /// Creates a new unknown selector identifier decoding error.
+  #[inline]
+  pub const fn unknown_identifier_value(wire_type: u8, tag: u8) -> Self {
+    Self::UnknownIdentifierValue { tag, wire_type }
   }
 
   /// Creates a new unknown wire type decoding error.
   #[inline]
-  pub const fn unknown_identifier(ty: &'static str, identifier: Identifier) -> Self {
+  pub const fn unknown_identifier(ty: &'static str, identifier: SelectorIdentifier) -> Self {
     Self::UnknownIdentifier { ty, identifier }
   }
 
   /// Creates a wire type not supported error.
   #[inline]
-  pub const fn unsupported_wire_type(ty: &'static str, wire_type: WireType) -> Self {
+  pub const fn unsupported_wire_type(ty: &'static str, wire_type: SelectorWireType) -> Self {
     Self::UnsupportedWireType { ty, wire_type }
-  }
-
-  /// Creates a new identifier mismatch decoding error.
-  #[inline]
-  pub const fn identifier_mismatch(expect: Identifier, actual: Identifier) -> Self {
-    Self::IdentifierMismatch { expect, actual }
   }
 
   /// Creates an unsupported identifier error
   #[inline]
-  pub const fn unsupported_identifier(ty: &'static str, identifier: Identifier) -> Self {
+  pub const fn unsupported_identifier(ty: &'static str, identifier: SelectorIdentifier) -> Self {
     Self::UnsupportedIdentifier { ty, identifier }
+  }
+
+  /// Creates a new identifier mismatch decoding error.
+  #[inline]
+  pub const fn identifier_mismatch(expect: SelectorIdentifier, actual: SelectorIdentifier) -> Self {
+    Self::IdentifierMismatch { expect, actual }
   }
 
   /// Creates a new decoding error from [`varing::DecodeError`].

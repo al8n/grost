@@ -52,7 +52,7 @@ where
   }
 }
 
-impl<A> Selectable for ArrayVec<A>
+impl<A> Selectable<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {

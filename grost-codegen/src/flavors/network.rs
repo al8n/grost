@@ -372,7 +372,7 @@ impl FlavorGenerator for Network {
             if self.is_empty() {
               return NONE_IDENTIFIER_ENCODED_LEN;
             }
-            
+
             if self.is_all() {
               return ALL_IDENTIFIER_ENCODED_LEN;
             }
@@ -384,7 +384,7 @@ impl FlavorGenerator for Network {
               #(
                 #encode_unselected_len
               )*
-              
+
               UNSELECT_IDENTIFIER_ENCODED_LEN + #path_to_grost::__private::varing::encoded_u32_varint_len(len as ::core::primitive::u32) + len
             } else {
               let mut len = 0;
@@ -409,7 +409,7 @@ impl FlavorGenerator for Network {
               b.copy_from_slice(NONE_IDENTIFIER_ENCODED);
               return ::core::result::Result::Ok(NONE_IDENTIFIER_ENCODED_LEN);
             }
-            
+
             if self.is_all() {
               if buf_len < ALL_IDENTIFIER_ENCODED_LEN {
                 return ::core::result::Result::Err(#path_to_grost::__private::EncodeError::insufficient_buffer(ALL_IDENTIFIER_ENCODED_LEN, buf_len));
@@ -471,7 +471,7 @@ impl FlavorGenerator for Network {
               )*
 
               ::core::result::Result::Ok(offset)
-            }            
+            }
           }
         }
 

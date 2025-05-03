@@ -6,7 +6,7 @@ use crate::{
 use core::num::NonZeroI8;
 
 default_wire_format!(Network: i8 as Fixed8);
-selectable_bridge!(u8[i8]);
+selectable_bridge!(Network:u8[i8]);
 bridge!(
   Network: u8 {
     i8 as Fixed8 {
@@ -20,7 +20,7 @@ bridge!(
   },
 );
 
-selectable_bridge!(i8[NonZeroI8]);
+selectable_bridge!(Network:i8[NonZeroI8]);
 try_from_bridge!(
   Network: i8 {
     NonZeroI8 as Fixed8 {

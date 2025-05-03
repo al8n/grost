@@ -1,7 +1,11 @@
 use crate::{
-  decode::{Decode, DecodeOwned}, encode::{Encode, PartialEncode}, flavors::{
-    network::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Unknown}, DefaultWireFormat, Network, Selectable, Selector, WireFormat
-  }, map::MapSelector, Tag
+  decode::{Decode, DecodeOwned},
+  encode::{Encode, PartialEncode},
+  flavors::{
+    DefaultWireFormat, Network, Selectable, Selector, WireFormat,
+    network::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Tag, Unknown},
+  },
+  map::MapSelector,
 };
 
 const KEY_TAG: Tag = Tag::new(1);
@@ -21,7 +25,7 @@ where
   Identifier::new(V::WIRE_TYPE, VALUE_TAG)
 }
 
-impl<K, V> Selectable for MapSelector<K, V> {
+impl<K, V> Selectable<Network> for MapSelector<K, V> {
   type Selector = ();
 }
 
@@ -100,11 +104,7 @@ where
     <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context)
   }
 
-  fn partial_encoded_length_delimited_len(
-    &self,
-    context: &Context,
-    _: &Self::Selector,
-  ) -> usize {
+  fn partial_encoded_length_delimited_len(&self, context: &Context, _: &Self::Selector) -> usize {
     <Self as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(self, context)
   }
 
@@ -126,7 +126,7 @@ where
   fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de
+    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
     let mut offset = 0;
     let buf_len = src.len();
@@ -152,7 +152,7 @@ where
               kid,
             ));
           }
-         
+
           key = Some(decoded);
         }
         () if identifier == vid => {
@@ -170,13 +170,15 @@ where
           }
           value = Some(decoded);
         }
-        _ => return Err(DecodeError::unknown_identifier(
-          core::any::type_name::<Self>(),
-          identifier,
-        )),
+        _ => {
+          return Err(DecodeError::unknown_identifier(
+            core::any::type_name::<Self>(),
+            identifier,
+          ));
+        }
       }
     }
-    
+
     Ok((offset, Self::new(key, value)))
   }
 
@@ -186,7 +188,7 @@ where
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de
+    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
     let (mut offset, data_len) = varing::decode_u32_varint(src)?;
     let data_len = data_len as usize;
@@ -209,14 +211,11 @@ where
   K: Selector + DefaultWireFormat<Network> + DecodeOwned<Network, K::Format, K>,
   V: Selector + DefaultWireFormat<Network> + DecodeOwned<Network, V::Format, V>,
 {
-  fn decode_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized,
     B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static
+    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
     let mut offset = 0;
     let buf_len = src.len();
@@ -243,7 +242,7 @@ where
               kid,
             ));
           }
-         
+
           key = Some(decoded);
         }
         () if identifier == vid => {
@@ -261,13 +260,15 @@ where
           }
           value = Some(decoded);
         }
-        _ => return Err(DecodeError::unknown_identifier(
-          core::any::type_name::<Self>(),
-          identifier,
-        )),
+        _ => {
+          return Err(DecodeError::unknown_identifier(
+            core::any::type_name::<Self>(),
+            identifier,
+          ));
+        }
       }
     }
-    
+
     Ok((offset, Self::new(key, value)))
   }
 
@@ -278,7 +279,7 @@ where
   where
     Self: Sized,
     B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static
+    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
     let (mut offset, data_len) = varing::decode_u32_varint(src.as_bytes())?;
     let data_len = data_len as usize;

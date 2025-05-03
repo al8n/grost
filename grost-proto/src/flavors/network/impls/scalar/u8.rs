@@ -60,7 +60,7 @@ impl Encode<Network, Varint> for u8 {
   }
 }
 
-selectable_scalar!(u8);
+selectable_scalar!(Network: u8);
 partial_encode_scalar!(Network: u8 as Fixed8, u8 as Varint);
 
 impl<'de> Decode<'de, Network, Fixed8, Self> for u8 {
@@ -113,7 +113,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for u8 {
 decode_owned_scalar!(Network: u8 as Fixed8, u8 as Varint);
 message!(Network: u8 as Fixed8, u8 as Varint);
 
-selectable_bridge!(u8[NonZeroU8]);
+selectable_bridge!(Network:u8[NonZeroU8]);
 try_from_bridge!(
   Network: u8 {
     NonZeroU8 as Fixed8 {

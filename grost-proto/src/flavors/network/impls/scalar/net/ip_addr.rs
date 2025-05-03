@@ -150,7 +150,7 @@ macro_rules! ip_addr {
 
 ip_addr!(Ipv4Addr::Fixed32(u32));
 ip_addr!(Ipv6Addr::Fixed128(u128));
-selectable_scalar!(Ipv4Addr, Ipv6Addr, IpAddr);
+selectable_scalar!(Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 
 const IPV4_LEN: usize = 4;

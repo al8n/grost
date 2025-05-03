@@ -9,7 +9,7 @@ use smol_str_0_3::SmolStr;
 
 default_wire_format!(Network: SmolStr as LengthDelimited);
 
-selectable_bridge!(str[SmolStr]);
+selectable_bridge!(Network:str[SmolStr]);
 
 encode_bridge!(
   Network: str {

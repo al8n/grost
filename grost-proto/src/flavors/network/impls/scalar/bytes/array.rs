@@ -49,7 +49,7 @@ impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
   }
 }
 
-impl<const N: usize> Selectable for [u8; N] {
+impl<const N: usize> Selectable<Network> for [u8; N] {
   type Selector = ();
 }
 

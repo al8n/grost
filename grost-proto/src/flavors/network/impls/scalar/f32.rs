@@ -5,7 +5,7 @@ use crate::{
 };
 
 default_wire_format!(Network: f32 as Fixed32);
-selectable_bridge!(u32[f32]);
+selectable_bridge!(Network:u32[f32]);
 bridge!(
   Network: u32 {
     f32 as Fixed32 {

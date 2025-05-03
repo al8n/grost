@@ -330,7 +330,11 @@ impl Struct {
 
     let struct_name = &self.name;
     let num_fields = self.fields.len();
-    let constable = self.fields().iter().all(|f| f.ty().primitive_selection_type()).then(|| format_ident!("const"));
+    let constable = self
+      .fields()
+      .iter()
+      .all(|f| f.ty().primitive_selection_type())
+      .then(|| format_ident!("const"));
 
     quote! {
       #[doc = #doc]

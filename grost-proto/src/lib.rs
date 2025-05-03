@@ -17,7 +17,6 @@ pub use quickcheck;
 
 pub use convert::*;
 // pub use select_set::SelectionSet;
-pub use tag::Tag;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
@@ -38,7 +37,6 @@ mod convert;
 mod macros;
 mod map;
 mod select_set;
-mod tag;
 mod utils;
 
 #[doc(hidden)]
@@ -68,15 +66,14 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::{
-    Tag,
     buffer::*,
     convert::*,
     decode::*,
-    decode_owned_scalar, default_wire_format, selectable_scalar,
+    decode_owned_scalar, default_wire_format,
     encode::*,
     flavors::{self, *},
     map::MapSelector,
-    message, network_varint, partial_encode_scalar, reflection,
+    message, network_varint, partial_encode_scalar, reflection, selectable_scalar,
   };
   pub use varing;
 }

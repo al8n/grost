@@ -11,7 +11,7 @@ const _: () = {
   use crate::{into_target, type_owned, type_ref};
 
   default_wire_format!(Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited);
-  selectable_bridge!(
+  selectable_bridge!(Network:
     [u8] [SmallVec<[u8; N]> [const N: usize]]
   );
 

@@ -68,7 +68,6 @@ fn test_struct_generate() {
     .with_description("A user struct")
     .with_visibility(parse_quote!(pub));
 
-
   let fields = vec![
     Field::new(
       SafeIdent::new("user"),

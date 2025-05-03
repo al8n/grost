@@ -1,10 +1,10 @@
 use crate::flavors::{Flavor, Network, Selectable};
 
-struct UserSelection {
-  age: Option<<u8 as Selectable>::Selector>,
-  name: Option<<str as Selectable>::Selector>,
-  email: Option<<str as Selectable>::Selector>,
-}
+// struct UserSelection {
+//   age: Option<<u8 as Selectable>::Selector>,
+//   name: Option<<str as Selectable>::Selector>,
+//   email: Option<<str as Selectable>::Selector>,
+// }
 
 // #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 // pub struct SelectionSet<S, UT, UB> {

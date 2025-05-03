@@ -9,7 +9,7 @@ use bytes_1::Bytes;
 
 default_wire_format!(Network: Bytes as LengthDelimited);
 
-selectable_bridge!([u8][Bytes]);
+selectable_bridge!(Network:[u8][Bytes]);
 
 encode_bridge!(
   Network: [u8] {

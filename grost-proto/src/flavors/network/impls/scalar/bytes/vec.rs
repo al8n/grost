@@ -6,7 +6,7 @@ const _: () = {
 
   use crate::{into_target, type_owned, type_ref};
 
-  selectable_bridge!(
+  selectable_bridge!(Network:
     [u8] [Vec<u8>]
   );
 

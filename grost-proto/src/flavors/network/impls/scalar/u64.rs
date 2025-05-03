@@ -10,7 +10,7 @@ use crate::{
 };
 
 default_wire_format!(Network: u64 as Varint);
-selectable_scalar!(u64);
+selectable_scalar!(Network: u64);
 
 impl Encode<Network, Fixed64> for u64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
@@ -112,7 +112,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for u64 {
 decode_owned_scalar!(Network: u64 as Fixed64, u64 as Varint);
 message!(Network: u64 as Fixed64, u64 as Varint);
 
-selectable_bridge!(u64[NonZeroU64]);
+selectable_bridge!(Network:u64[NonZeroU64]);
 try_from_bridge!(
   Network: u64 {
     NonZeroU64 as Fixed64 {

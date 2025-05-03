@@ -1,12 +1,18 @@
+use crate::selectable_scalar;
+
+use super::Network;
+
 /// Invalid tag error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
-pub struct TagError(u32);
+pub struct ParseTagError(u32);
 
 /// Tag in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[display("{_0}")]
 pub struct Tag(pub(super) u32);
+
+selectable_scalar!(Network: Tag);
 
 impl Tag {
   /// The maximum Tag value is `2^29 - 1` (536870911).
@@ -17,11 +23,11 @@ impl Tag {
   /// Try to create a new tag with the given value,
   /// returning an error if the value is not in range `1..=536870911`.
   #[inline]
-  pub const fn try_new(tag: u32) -> Result<Self, TagError> {
+  pub const fn try_new(tag: u32) -> Result<Self, ParseTagError> {
     const MAX: u32 = (1u32 << 29) - 1;
 
     if tag > MAX || tag == 0 {
-      Err(TagError(tag))
+      Err(ParseTagError(tag))
     } else {
       Ok(Self(tag))
     }

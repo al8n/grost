@@ -6,7 +6,7 @@ use crate::{
   selectable_bridge,
 };
 
-selectable_bridge!(u128[Uuid]);
+selectable_bridge!(Network:u128[Uuid]);
 
 bridge!(
   Network: u128 {

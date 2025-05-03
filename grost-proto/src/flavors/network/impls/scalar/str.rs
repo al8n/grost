@@ -8,7 +8,7 @@ use crate::{
 default_wire_format!(
   Network: str as LengthDelimited
 );
-selectable_bridge!([u8][str]);
+selectable_bridge!(Network:[u8][str]);
 
 encode_bridge!(
   Network: [u8] {

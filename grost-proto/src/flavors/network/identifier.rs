@@ -1,7 +1,6 @@
 use varing::Varint;
 
-use super::WireType;
-use crate::Tag;
+use super::{Tag, WireType};
 
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
@@ -121,6 +120,14 @@ impl Varint for Identifier {
 }
 
 impl crate::flavors::Identifier<super::Network> for Identifier {
+  fn tag(&self) -> Tag {
+    self.tag
+  }
+
+  fn wire_type(&self) -> WireType {
+    self.wire_type
+  }
+
   fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
     self.encode_to(dst)
   }

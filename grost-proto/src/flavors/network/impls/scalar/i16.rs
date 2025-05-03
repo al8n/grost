@@ -9,7 +9,7 @@ use crate::{
 use core::num::NonZeroI16;
 
 default_wire_format!(Network: i16 as Varint);
-selectable_scalar!(i16);
+selectable_scalar!(Network: i16);
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.len() < 2 {
@@ -110,7 +110,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for i16 {
 decode_owned_scalar!(Network: i16 as Fixed16, i16 as Varint);
 message!(Network: i16 as Fixed16, i16 as Varint);
 
-selectable_bridge!(i16[NonZeroI16]);
+selectable_bridge!(Network:i16[NonZeroI16]);
 try_from_bridge!(
   Network: i16 {
     NonZeroI16 as Fixed16 {

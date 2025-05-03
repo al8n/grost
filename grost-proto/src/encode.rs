@@ -1,3 +1,5 @@
+use crate::flavors::Identifier;
+
 use super::flavors::{Flavor, Selectable, WireFormat};
 
 pub use error::EncodeError;
@@ -49,8 +51,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError>;
 
-  /// Returns the number of bytes needed to encode the message. If the message cannot be encoded as the given wire type,
-  /// then it will return `WireTypeNotSupported` err will be returned.
+  /// Returns the number of bytes needed to encode the message.
   ///
   /// This is used to determine the buffer size required for encoding.
   ///
@@ -64,8 +65,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encoded_length_delimited_len(&self, context: &F::Context) -> usize;
 
-  /// Encodes the message into the provided buffer with length-delimited. If the message cannot be encoded as the given wire type,
-  /// then it will return `WireTypeNotSupported` err will be returned.
+  /// Encodes the message into the provided buffer with length-delimited.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
@@ -75,6 +75,37 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
     context: &F::Context,
     buf: &mut [u8],
   ) -> Result<usize, F::EncodeError>;
+
+  /// Encodes the message into the provided buffer with identifier and length-delimited.
+  ///
+  /// Returns the number of bytes written to the buffer or an error if the operation fails.
+  ///
+  /// See also [ trait level documentation ](Encode) for more details about the arguments.
+  fn encode_identified(
+    &self,
+    context: &F::Context,
+    identifier: &F::Identifier,
+    buf: &mut [u8],
+  ) -> Result<usize, F::EncodeError> {
+    let wt = identifier.wire_type();
+    if W::WIRE_TYPE != wt {
+      return Err(
+        super::encode::EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wt)
+          .into(),
+      );
+    }
+
+    let mut offset = identifier.encode(buf)?;
+    offset += self.encode_length_delimited(context, &mut buf[offset..])?;
+    Ok(offset)
+  }
+
+  /// Returns the number of bytes needed to encode the message with identifier and length-delimited.
+  fn encoded_identified_len(&self, context: &F::Context, identifier: &F::Identifier) -> usize {
+    let identified_len = identifier.encoded_len();
+    let encoded_length_delimited_len = self.encoded_length_delimited_len(context);
+    identified_len + encoded_length_delimited_len
+  }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
   ///
@@ -151,7 +182,9 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: super::flavors::Selectable {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>:
+  super::flavors::Selectable<F>
+{
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -194,6 +227,43 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: super::flavors::S
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, F::EncodeError>;
+
+  /// Encodes the message into the provided buffer with identifier and length-delimited.
+  ///
+  /// Returns the number of bytes written to the buffer or an error if the operation fails.
+  ///
+  /// See also [ trait level documentation ](Encode) for more details about the arguments.
+  fn partial_encode_identified(
+    &self,
+    context: &F::Context,
+    identifier: &F::Identifier,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, F::EncodeError> {
+    let wt = identifier.wire_type();
+    if W::WIRE_TYPE != wt {
+      return Err(
+        super::encode::EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wt)
+          .into(),
+      );
+    }
+
+    let mut offset = identifier.encode(buf)?;
+    offset += self.partial_encode_length_delimited(context, &mut buf[offset..], selector)?;
+    Ok(offset)
+  }
+
+  /// Returns the number of bytes needed to encode the message with identifier and length-delimited.
+  fn partial_encoded_identified_len(
+    &self,
+    context: &F::Context,
+    identifier: &F::Identifier,
+    selector: &Self::Selector,
+  ) -> usize {
+    let identified_len = identifier.encoded_len();
+    let encoded_length_delimited_len = self.partial_encoded_length_delimited_len(context, selector);
+    identified_len + encoded_length_delimited_len
+  }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
   #[cfg(any(feature = "std", feature = "alloc"))]
@@ -316,7 +386,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for &T
 where
-  T: PartialEncode<F, W> + Selectable + ?Sized,
+  T: PartialEncode<F, W> + Selectable<F> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -353,7 +423,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for Option<T>
 where
-  T: PartialEncode<F, W> + Selectable,
+  T: PartialEncode<F, W> + Selectable<F>,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -442,16 +512,17 @@ macro_rules! deref_encode_impl {
 macro_rules! deref_partial_encode_impl {
   ($($ty:ty),+$(,)?) => {{
     $(
-      impl<T> Selectable for $ty
+      impl<T, F> Selectable<F> for $ty
       where
-        T: ?Sized + Selectable,
+        T: ?Sized + Selectable<F>,
+        F: Flavor + ?Sized,
       {
         type Selector = T::Selector;
       }
 
       impl<F, W, T> PartialEncode<F, W> for $ty
       where
-        T: PartialEncode<F, W> + Selectable + ?Sized,
+        T: PartialEncode<F, W> + Selectable<F> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {

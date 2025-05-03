@@ -85,14 +85,15 @@ uuid = ["uuid_1"]
 url_2 = ["dep:url_2"]
 url = ["url_2"]
 
-# arbitrary = [
-#   "dep:arbitrary",
-#   "chrono-tz_0_10?/arbitrary",
-#   "smol_str_0_3?/arbitrary",
-#   "ruint_1?/arbitrary",
-#   "rust_decimal_1?/rust-fuzz",
-#   "uuid_1?/arbitrary",
-# ]
+arbitrary = [
+  "dep:arbitrary",
+  "chrono-tz_0_10?/arbitrary",
+  "chrono-tz_0_10?/std",
+  "smol_str_0_3?/arbitrary",
+  "ruint_1?/arbitrary",
+  "rust_decimal_1?/rust-fuzz",
+  "uuid_1?/arbitrary",
+]
 quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck"]
 
 [dependencies]
@@ -106,6 +107,7 @@ bitflags = { version = "2", default-features = false }
 derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
 varing.workspace = true
 quickcheck = { version = "1", optional = true }
+arbitrary = { version = "1", optional = true, features = ["derive"] }
 thiserror.workspace = true
 
 arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
