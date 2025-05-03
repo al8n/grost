@@ -63,21 +63,39 @@ fn test_struct_generate() {
       )),
       Tag::new(3),
     ),
-    // .with_getter(
-    //   None,
-    //   Option::<&str>::None,
-    //   Some(getter::Converter::new(
-    //     parse_quote!(core::option::Option::as_deref),
-    //     parse_quote!(Option<&str>),
-    //   )),
-    //   false,
-    // ),
   ];
-  let struct_ = Struct::new(SafeIdent::new("User"), fields)
+  let user = Struct::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")
     .with_visibility(parse_quote!(pub));
 
-  let generated = generator.generate_struct(&struct_).unwrap();
+
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("user"),
+      Ty::struct_(parse_quote!(User), "User!"),
+      Tag::new(1),
+    ),
+    Field::new(
+      SafeIdent::new("title"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!").with_copy(),
+      Tag::new(2),
+    ),
+    Field::new(
+      SafeIdent::new("content"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      Tag::new(3),
+    ),
+  ];
+  let comment = Struct::new(SafeIdent::new("Comment"), fields)
+    .with_description("A comment struct")
+    .with_visibility(parse_quote!(pub));
+
+  let user_ts = generator.generate_struct(&user).unwrap();
+  let comment_ts = generator.generate_struct(&comment).unwrap();
+  let generated = quote::quote! {
+    #user_ts
+    #comment_ts
+  };
   let file: syn::File = syn::parse2(generated).unwrap();
   let output = prettyplease::unparse(&file);
   println!("{}", output);

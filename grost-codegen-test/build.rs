@@ -84,15 +84,6 @@ fn struct_codegen_test(name: &str) {
       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
       Tag::new(3),
     ),
-    // .with_getter(
-    //   None,
-    //   Option::<&str>::None,
-    //   Some(getter::Converter::new(
-    //     parse_quote!(::core::option::Option::as_deref),
-    //     parse_quote!(::core::option::Option<&str>),
-    //   )),
-    //   false,
-    // ),
   ];
   let struct_ = Struct::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")
@@ -114,5 +105,31 @@ fn struct_codegen_test(name: &str) {
     .unwrap();
 
   file.write_all(b"#![no_implicit_prelude]\n\n").unwrap();
+  file.write_all(output.as_bytes()).unwrap();
+
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("user"),
+      Ty::struct_(parse_quote!(User), "User!"),
+      Tag::new(1),
+    ),
+    Field::new(
+      SafeIdent::new("title"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!"),
+      Tag::new(2),
+    ),
+    Field::new(
+      SafeIdent::new("content"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      Tag::new(3),
+    ),
+  ];
+  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+    .with_description("A comment struct")
+    .with_visibility(parse_quote!(pub));
+
+  let generated = generator.generate_struct(&struct_).unwrap();
+  let ts: syn::File = syn::parse2(generated).unwrap();
+  let output = prettyplease::unparse(&ts);
   file.write_all(output.as_bytes()).unwrap();
 }

@@ -13,7 +13,7 @@ impl Struct {
     path_to_grost: &syn::Path,
     flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
   ) -> proc_macro2::TokenStream {
-    let name = self.selection_name();
+    let name = self.selector_name();
     let selection_flags_name = format_ident!("{}Flags", name.name_str());
     let selection_flags_iter_name = format_ident!("{}Iter", selection_flags_name);
     let fields = &self.fields;
@@ -233,14 +233,14 @@ impl Struct {
     let is_empty = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
-      let rust_ty = ty.ty();
+
       if ty.primitive_selection_type() {
         quote! {
           !self.#field_name
         }
       } else {
         quote! {
-          (self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE)
+          self.#field_name.is_empty()
         }
       }
     });
@@ -248,14 +248,14 @@ impl Struct {
     let is_all = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
-      let rust_ty = ty.ty();
+
       if ty.primitive_selection_type() {
         quote! {
           self.#field_name
         }
       } else {
         quote! {
-          (self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::ALL)
+          self.#field_name.is_all()
         }
       }
     });
@@ -263,7 +263,6 @@ impl Struct {
     let num_selected = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
-      let rust_ty = ty.ty();
       if ty.primitive_selection_type() {
         quote! {
           if self.#field_name {
@@ -272,7 +271,7 @@ impl Struct {
         }
       } else {
         quote! {
-          if self.#field_name != <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE {
+          if !self.#field_name.is_empty() {
             num += 1;
           }
         }
@@ -291,7 +290,7 @@ impl Struct {
         }
       } else {
         quote! {
-          if self.#field_name == <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE {
+          if self.#field_name.is_empty() {
             num += 1;
           }
         }
@@ -331,6 +330,7 @@ impl Struct {
 
     let struct_name = &self.name;
     let num_fields = self.fields.len();
+    let constable = self.fields().iter().all(|f| f.ty().primitive_selection_type()).then(|| format_ident!("const"));
 
     quote! {
       #[doc = #doc]
@@ -424,7 +424,7 @@ impl Struct {
   where
     F: FlavorGenerator + ?Sized,
   {
-    let name = self.selection_name();
+    let name = self.selector_name();
     let flavor_ty = flavors.ty();
 
     quote! {

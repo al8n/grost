@@ -15,7 +15,7 @@ mod selection;
 pub struct Struct {
   name: SafeIdent,
   schema_name: SmolStr,
-  selection_name: SafeIdent,
+  selector_name: SafeIdent,
   description: Option<SmolStr>,
   fields: Vec<Field>,
   attrs: Vec<Attribute>,
@@ -26,7 +26,7 @@ impl Struct {
   pub fn new(name: SafeIdent, mut fields: Vec<Field>) -> Self {
     fields.sort_by_key(|f| f.tag());
     Self {
-      selection_name: SafeIdent::new(format!("{}Selection", name.name_str()).as_str()),
+      selector_name: SafeIdent::new(format!("{}Selector", name.name_str()).as_str()),
       schema_name: name.original_str().into(),
       name,
       description: None,
@@ -42,8 +42,8 @@ impl Struct {
   }
 
   /// Change the default selection type name
-  pub fn with_selection_name(mut self, name: SafeIdent) -> Self {
-    self.selection_name = name;
+  pub fn with_selector_name(mut self, name: SafeIdent) -> Self {
+    self.selector_name = name;
     self
   }
 
@@ -72,8 +72,8 @@ impl Struct {
     self
   }
 
-  pub fn selection_name(&self) -> &SafeIdent {
-    &self.selection_name
+  pub fn selector_name(&self) -> &SafeIdent {
+    &self.selector_name
   }
 
   pub fn name(&self) -> &SafeIdent {
@@ -82,6 +82,10 @@ impl Struct {
 
   pub fn schema_name(&self) -> &str {
     &self.schema_name
+  }
+
+  pub fn fields(&self) -> &[Field] {
+    &self.fields
   }
 
   pub fn generate_reflection<F>(
@@ -194,7 +198,7 @@ impl Struct {
 
   pub(crate) fn struct_message(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = &self.name;
-    let selection_name = &self.selection_name;
+    let selector_name = &self.selector_name;
 
     quote! {
       impl #path_to_grost::__private::Wirable for #name {}
@@ -212,7 +216,7 @@ impl Struct {
       }
 
       impl #path_to_grost::__private::PartialEncode for #name {
-        type Selection = #selection_name;
+        type Selection = #selector_name;
 
         #[inline]
         fn partial_encode(&self, buf: &mut [::core::primitive::u8], selector: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {

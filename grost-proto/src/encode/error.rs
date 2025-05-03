@@ -86,11 +86,26 @@ impl EncodeError {
   }
 
   /// Update the error with the required and remaining buffer capacity.
-  pub fn update(mut self, required: usize, remaining: usize) -> Self {
+  pub const fn update(mut self, required: usize, remaining: usize) -> Self {
     match self {
       Self::InsufficientBytesBuffer {
         required: ref mut r,
         remaining: ref mut rem,
+      } => {
+        *r = required;
+        *rem = remaining;
+        self
+      }
+      _ => self,
+    }
+  }
+
+  /// Update the error with the required and remaining buffer capacity.
+  pub const fn update_mut(&mut self, required: usize, remaining: usize) -> &mut Self {
+    match self {
+      Self::InsufficientBytesBuffer {
+        required: r,
+        remaining: rem,
       } => {
         *r = required;
         *rem = remaining;
