@@ -22,6 +22,14 @@ impl Selector for () {
   const ALL: Self = ();
   const NONE: Self = ();
 
+  fn selected(&self) -> usize {
+    1
+  }
+
+  fn unselected(&self) -> usize {
+    0
+  }
+
   fn flip(&mut self) -> &mut Self {
     self
   }

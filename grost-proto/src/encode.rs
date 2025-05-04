@@ -182,9 +182,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>:
-  super::flavors::Selectable<F>
-{
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: super::flavors::Selectable<F> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.

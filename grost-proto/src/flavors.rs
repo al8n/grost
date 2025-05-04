@@ -3,6 +3,7 @@ use super::buffer::BytesBuffer;
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
 pub use network::Network;
+pub use selector::Select;
 
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {
@@ -160,6 +161,12 @@ pub trait Selector: Clone + core::fmt::Debug + Eq {
   /// a selector by gradually adding only the specific fields you need.
   const NONE: Self;
 
+  /// Returns the number of selected fields.
+  fn selected(&self) -> usize;
+
+  /// Returns the number of unselected fields.
+  fn unselected(&self) -> usize;
+
   /// Inverts the current selection.
   ///
   /// This method flips the selection state of all fields: previously selected fields
@@ -185,6 +192,16 @@ pub trait Selector: Clone + core::fmt::Debug + Eq {
   fn merge_into(mut self, other: Self) -> Self {
     self.merge(other);
     self
+  }
+
+  /// Returns `true` if this selector is empty.
+  fn is_empty(&self) -> bool {
+    self == &Self::NONE
+  }
+
+  /// Returns `true` if this selector is all.
+  fn is_all(&self) -> bool {
+    self == &Self::ALL
   }
 }
 

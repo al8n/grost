@@ -81,6 +81,30 @@ where
   const ALL: Self = MapSelector::new(Some(K::ALL), Some(V::ALL));
   const NONE: Self = MapSelector::new(None, None);
 
+  fn selected(&self) -> usize {
+    (if self.key.is_some() {
+      1
+    } else {
+      0
+    }) + (if self.value.is_some() {
+      1
+    } else {
+      0
+    })
+  }
+
+  fn unselected(&self) -> usize {
+    (if self.key.is_none() {
+      1
+    } else {
+      0
+    }) + (if self.value.is_none() {
+      1
+    } else {
+      0
+    })
+  }
+
   fn flip(&mut self) -> &mut Self {
     if let Some(key) = self.key_mut() {
       key.flip();

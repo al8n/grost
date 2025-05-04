@@ -17,6 +17,20 @@ mod unknown;
 #[display("Select")]
 pub struct Select;
 
+impl Select {
+  /// Returns the encoded format of select none.
+  pub const fn encoded_select_none() -> &'static [u8] {
+    const BYTES: &[u8] = &[SelectorIdentifier::none().as_u8()];
+    BYTES
+  }
+
+  /// Returns the encoded format of select all.
+  pub const fn encoded_select_all() -> &'static [u8] {
+    const BYTES: &[u8] = &[SelectorIdentifier::all().as_u8()];
+    BYTES
+  }
+}
+
 impl Flavor for Select {
   type Identifier = SelectorIdentifier;
   type WireType = SelectorWireType;
