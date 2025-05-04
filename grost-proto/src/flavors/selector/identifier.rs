@@ -1,6 +1,6 @@
-use super::{DecodeError, EncodeError, ParseSelectorTagError, SelectorFlavor};
+use super::{DecodeError, EncodeError, ParseSelectorTagError, Select};
 
-/// The tag for the [`SelectorFlavor`](super::SelectorFlavor).
+/// The tag for the [`Select`](super::Select).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[repr(u8)]
@@ -44,7 +44,7 @@ impl TryFrom<u8> for SelectorTag {
 }
 
 wire_type!(
-  enum SelectorWireType<SelectorFlavor> {
+  enum SelectorWireType<Select> {
     /// The zero-sized type wire format, this wire format is used for encoding [`SelectorTag::None`] and [`SelectorTag::All`].
     "zst" = 0,
     /// The varint wire format, this wire format is used for encoding [`SelectorTag::SelectOne`] and [`SelectorTag::UnselectOne`].
@@ -153,7 +153,7 @@ impl SelectorIdentifier {
   }
 }
 
-impl crate::flavors::Identifier<super::SelectorFlavor> for SelectorIdentifier {
+impl crate::flavors::Identifier<super::Select> for SelectorIdentifier {
   fn tag(&self) -> SelectorTag {
     self.tag
   }

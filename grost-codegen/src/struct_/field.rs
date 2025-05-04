@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use grost_proto::Tag;
 use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
 use smol_str::{SmolStr, format_smolstr};
@@ -32,12 +31,12 @@ pub struct Field {
   mutable_getter: Option<Getter>,
   setter: Option<Setter>,
   movable_setter: Option<Setter>,
-  tag: Tag,
+  tag: u32,
   wire_formats: HashMap<&'static str, syn::Type>,
 }
 
 impl Field {
-  pub fn new(name: SafeIdent, ty: Ty, tag: Tag) -> Self {
+  pub fn new(name: SafeIdent, ty: Ty, tag: u32) -> Self {
     Self {
       getter: None,
       mutable_getter: None,
@@ -266,7 +265,7 @@ impl Field {
     self
   }
 
-  pub fn with_tag(mut self, tag: Tag) -> Self {
+  pub fn with_tag(mut self, tag: u32) -> Self {
     self.tag = tag;
     self
   }
@@ -291,7 +290,7 @@ impl Field {
     &self.ty
   }
 
-  pub fn tag(&self) -> Tag {
+  pub fn tag(&self) -> u32 {
     self.tag
   }
 
@@ -360,12 +359,9 @@ impl Field {
       flavor.name().to_upper_camel_case(),
       flavor_ty.to_token_stream().to_string().replace(" ", "")
     );
-    let tag = self.tag.get();
     let field_ty = self.ty.ty();
     let schema_name = self.schema_name();
     let relection_ty = self.ty.to_type_reflection(path_to_grost, flavor);
-
-    let identifier_name = format_ident!("__{flavor_name_ssc}_FLAVOR_{name}_IDENTIFIER__");
     // let identifier_encoded_len_name = format_ident!("__{}_IDENTIFIER_ENCODED_LEN__", name);
     // let identifier_encode_name = format_ident!("__ENCODED_{}_IDENTIFIER__", name);
 
@@ -376,7 +372,7 @@ impl Field {
       // const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
 
       #[doc = #field_reflection_doc]
-      pub const #field_reflection_name: #path_to_grost::__private::reflection::FieldRelection<#flavor_ty> = #path_to_grost::__private::reflection::FieldRelectionBuilder::<#flavor_ty> {
+      pub const #field_reflection_name: #path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = #path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
         identifier: #identifier,
         // tag: #path_to_grost::__private::Tag::new(#tag),
         // wire_format: <#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE,

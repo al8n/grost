@@ -1,13 +1,13 @@
 use crate::{
   decode::DecodeError as BaseDecodeError,
-  flavors::{Flavor, selector::SelectorFlavor},
+  flavors::{Flavor, selector::Select},
 };
 use core::num::NonZeroUsize;
 
 use super::{SelectorIdentifier, SelectorWireType};
 
-/// The encode error for [`SelectorFlavor`](super::SelectorFlavor)
-pub type EncodeError = crate::encode::EncodeError<super::SelectorFlavor>;
+/// The encode error for [`Select`](super::Select)
+pub type EncodeError = crate::encode::EncodeError<super::Select>;
 
 /// The error when parsing a [`SelectorTag`](super::SelectorTag).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -41,21 +41,21 @@ pub enum DecodeError {
   },
 
   /// Unknown selector tag.
-  #[display("unknown selector tag value {value} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("unknown selector tag value {value} in {flavor} flavor", flavor = Select::NAME)]
   UnknownTagValue {
     /// The unknown selector tag value.
     value: u8,
   },
 
   /// Unknown selector wire type.
-  #[display("unknown selector wire type value {value} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("unknown selector wire type value {value} in {flavor} flavor", flavor = Select::NAME)]
   UnknownWireTypeValue {
     /// The unknown selector wire type value.
     value: u8,
   },
 
   /// Unknown selector identifier value.
-  #[display("unknown selector identifier type value (wire_type: {wire_type}, tag: {tag}) in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("unknown selector identifier type value (wire_type: {wire_type}, tag: {tag}) in {flavor} flavor", flavor = Select::NAME)]
   UnknownIdentifierValue {
     /// The unknown selector identifier tag value.
     tag: u8,
@@ -64,7 +64,7 @@ pub enum DecodeError {
   },
 
   /// Returned when there is a unknown wire type.
-  #[display("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = Select::NAME)]
   UnknownIdentifier {
     /// The type of the message.
     ty: &'static str,
@@ -73,7 +73,7 @@ pub enum DecodeError {
   },
 
   /// Returned when the type cannot be decoded in the given wire type format
-  #[display("cannot decode {ty} in {wire_type} format in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("cannot decode {ty} in {wire_type} format in {flavor} flavor", flavor = Select::NAME)]
   UnsupportedWireType {
     /// The type of the value.
     ty: &'static str,
@@ -82,7 +82,7 @@ pub enum DecodeError {
   },
 
   /// Returned when the type cannot be decoded with the given identifier
-  #[display("cannot decode {ty} with identifier({identifier}) format in {flavor} flavor", flavor = SelectorFlavor::NAME)]
+  #[display("cannot decode {ty} with identifier({identifier}) format in {flavor} flavor", flavor = Select::NAME)]
   UnsupportedIdentifier {
     /// The type of the value.
     ty: &'static str,
@@ -123,9 +123,9 @@ impl From<ParseSelectorTagError> for DecodeError {
   }
 }
 
-impl From<BaseDecodeError<super::SelectorFlavor>> for DecodeError {
+impl From<BaseDecodeError<super::Select>> for DecodeError {
   #[inline]
-  fn from(e: BaseDecodeError<super::SelectorFlavor>) -> Self {
+  fn from(e: BaseDecodeError<super::Select>) -> Self {
     match e {
       BaseDecodeError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
       BaseDecodeError::BufferOverflow {

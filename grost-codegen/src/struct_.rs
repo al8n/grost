@@ -1,7 +1,7 @@
 use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
-use syn::{Attribute, Visibility, parse_quote};
+use syn::{Attribute, Ident, Visibility, parse_quote};
 
 use crate::{SafeIdent, flavors::FlavorGeneratorExt};
 
@@ -10,6 +10,7 @@ pub use field::Field;
 /// The field of a struct
 pub mod field;
 
+mod index;
 mod selection;
 
 pub struct Struct {
@@ -74,6 +75,14 @@ impl Struct {
 
   pub fn selector_name(&self) -> &SafeIdent {
     &self.selector_name
+  }
+
+  pub fn selector_iter_name(&self) -> Ident {
+    format_ident!("{}Iter", self.selector_name.name_str())
+  }
+
+  pub fn indexer_name(&self) -> Ident {
+    format_ident!("{}FieldIndexer", self.name.name_str())
   }
 
   pub fn name(&self) -> &SafeIdent {
@@ -175,6 +184,8 @@ impl Struct {
 
     let name_str = self.name.name_str();
     let schema_name = self.schema_name.as_str();
+
+    let indexer = self.generate_indexer();
 
     quote! {
       impl ::core::default::Default for #name {

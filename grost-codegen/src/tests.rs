@@ -1,9 +1,6 @@
 use std::num::NonZeroU8;
 
-use grost_proto::{
-  Tag,
-  reflection::{EnumRepr, EnumVariantValue},
-};
+use grost_proto::reflection::{EnumRepr, EnumVariantValue};
 use syn::parse_quote;
 // use grost_proto::{Tag, WireType};
 
@@ -48,12 +45,12 @@ fn test_struct_generate() {
     Field::new(
       SafeIdent::new("name"),
       Ty::primitive(parse_quote!(String), "String!"),
-      Tag::new(1),
+      1,
     ),
     Field::new(
       SafeIdent::new("age"),
       Ty::primitive(parse_quote!(u32), "u32!").with_copy(),
-      Tag::new(2),
+      2,
     ),
     Field::new(
       SafeIdent::new("email"),
@@ -61,7 +58,7 @@ fn test_struct_generate() {
         parse_quote!(::core::option::Option<::std::string::String>),
         "String",
       )),
-      Tag::new(3),
+      3,
     ),
   ];
   let user = Struct::new(SafeIdent::new("User"), fields)
@@ -72,17 +69,17 @@ fn test_struct_generate() {
     Field::new(
       SafeIdent::new("user"),
       Ty::struct_(parse_quote!(User), "User!"),
-      Tag::new(1),
+      1,
     ),
     Field::new(
       SafeIdent::new("title"),
       Ty::primitive(parse_quote!(::std::string::String), "String!").with_copy(),
-      Tag::new(2),
+      2,
     ),
     Field::new(
       SafeIdent::new("content"),
       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-      Tag::new(3),
+      3,
     ),
   ];
   let comment = Struct::new(SafeIdent::new("Comment"), fields)

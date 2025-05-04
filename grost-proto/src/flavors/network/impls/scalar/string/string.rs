@@ -1,6 +1,10 @@
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
-  use crate::{flavors::network::Network, selectable_bridge};
+  use crate::{
+    default_wire_format,
+    flavors::network::{LengthDelimited, Network},
+    selectable_bridge,
+  };
   use smol_str_0_3::SmolStr;
   use std::string::String;
 

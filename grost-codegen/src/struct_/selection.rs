@@ -14,19 +14,8 @@ impl Struct {
     flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
   ) -> proc_macro2::TokenStream {
     let name = self.selector_name();
-    let selection_flags_name = format_ident!("{}Flags", name.name_str());
-    let selection_flags_iter_name = format_ident!("{}Iter", selection_flags_name);
     let fields = &self.fields;
 
-    let selection_flags = generate_selection_flags(
-      self.visibility.as_ref(),
-      self.name.name(),
-      &selection_flags_name,
-      &selection_flags_iter_name,
-      fields,
-      path_to_grost,
-      flavors,
-    );
     let fns = fields.iter().map(move |f| {
       let ty = f.ty();
       let field_name = f.name();
@@ -96,7 +85,7 @@ impl Struct {
         quote! {
           #[doc = #select_fn_doc]
           #[inline]
-          pub fn #select_fn_name(&mut self, val: <#rust_ty as #path_to_grost::__private::Selectable>::Selector) -> &mut Self {
+          pub fn #select_fn_name(&mut self, val: <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector) -> &mut Self {
             self.#field_name = val;
             self
           }
@@ -104,19 +93,19 @@ impl Struct {
           #[doc = #unselect_fn_doc]
           #[inline]
           pub fn #unselect_fn_name(&mut self) -> &mut Self {
-            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE;
+            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::NONE;
             self
           }
 
           #[doc = #ref_fn_doc]
           #[inline]
-          pub const fn #ref_fn_name(&self) -> &<#rust_ty as #path_to_grost::__private::Selectable>::Selector {
+          pub const fn #ref_fn_name(&self) -> &<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector {
             &self.#field_name
           }
 
           #[doc = #ref_mut_fn_doc]
           #[inline]
-          pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable>::Selector {
+          pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector {
             &mut self.#field_name
           }
         }
@@ -193,7 +182,7 @@ impl Struct {
         }
       } else {
         quote! {
-          #field_name: <#rust_ty as #path_to_grost::__private::Selectable>::Selector
+          #field_name: <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector
         }
       }
     });
@@ -209,7 +198,7 @@ impl Struct {
         }
       } else {
         quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::NONE
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::NONE
         }
       } 
     });
@@ -225,7 +214,7 @@ impl Struct {
         }
       } else {
         quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::ALL
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::ALL
         }
       }
     });
@@ -307,7 +296,7 @@ impl Struct {
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::merge(&mut self.#field_name, other.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::merge(&mut self.#field_name, other.#field_name);
         }
       }
     });
@@ -323,38 +312,174 @@ impl Struct {
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable>::Selector as #path_to_grost::__private::Selector>::flip(&mut self.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::flip(&mut self.#field_name);
         }
+      }
+    });
+
+    let debug = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let field_name_str = f.name().name_str();
+      let ty = f.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          if self.#field_name {
+            if idx != num_selected - 1 {
+              ::core::write!(f, ::core::concat!(#field_name_str, " & "))?;
+            } else {
+              ::core::write!(f, #field_name_str)?;
+            }
+            idx += 1;
+          }
+        }
+      } else {
+        quote! {
+          if !self.#field_name.is_empty() {
+            if idx != num_selected - 1 {
+              ::core::write!(f, #field_name_str)?;
+              self.#field_name.debug_helper(f)?;
+              ::core::write!(f, " & ")?;
+            } else {
+              ::core::write!(f, #field_name_str)?;
+              self.#field_name.debug_helper(f)?;
+            }
+            idx += 1;
+          }
+        }
+      }
+    });
+
+    let eq = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name == other.#field_name
+      }
+    });
+
+    let hash = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name.hash(state);
       }
     });
 
     let struct_name = &self.name;
     let num_fields = self.fields.len();
-    let constable = self
-      .fields()
-      .iter()
-      .all(|f| f.ty().primitive_selection_type())
-      .then(|| format_ident!("const"));
+    let name_str = name.name_str();
+    let iter_name = self.selector_iter_name();
+    let iter_doc = format!(
+      " An iterator over the selected fields of the [`{}`]",
+      name_str,
+    );
+    let indexer_name = self.indexer_name();
+
+    let index = self.fields().iter().map(|f| {
+      let field_name = f.name();
+      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
+      let ty = f.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          #indexer_name::#field_variant => self.#field_name
+        }
+      } else {
+        quote! {
+          #indexer_name::#field_variant => !self.#field_name.is_empty()
+        }
+      }
+    });
 
     quote! {
+      #[doc = #iter_doc]
+      #vis struct #iter_name<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool = true> {
+        selector: &'a #name<F>,
+        index: ::core::option::Option<#indexer_name>,
+        num: ::core::primitive::usize,
+        yielded: ::core::primitive::usize,
+      }
+
+      impl<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool> #iter_name<'a, F, N> {
+        #[inline]
+        const fn new(selector: &'a #name<F>, num: ::core::primitive::usize) -> Self {
+          Self {
+            selector,
+            index: ::core::option::Option::Some(#indexer_name::FIRST),
+            num,
+            yielded: 0,
+          }
+        }
+
+        /// Returns the exact remaining length of the iterator.
+        #[inline]
+        pub const fn remaining(&self) -> ::core::primitive::usize {
+          self.num - self.yielded
+        }
+
+        /// Returns `true` if the iterator is empty.
+        #[inline]
+        pub const fn is_empty(&self) -> ::core::primitive::bool {
+          self.remaining() == 0
+        }
+      }
+
       #[doc = #doc]
-      #[derive(
-        ::core::fmt::Debug,
-        ::core::clone::Clone,
-        ::core::marker::Copy,
-        ::core::cmp::PartialEq,
-        ::core::cmp::Eq,
-        ::core::hash::Hash,
-      )]
-      #vis struct #name {
+      #vis struct #name<F: ?::core::marker::Sized> {
+        _m: ::core::marker::PhantomData<F>,
         #(#selection_fields),*
       }
 
-      impl #path_to_grost::__private::Selectable for #struct_name {
-        type Selector = #name;
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> #name<F> {
+        fn debug_helper(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          let num_selected = self.num_selected();
+          let mut idx = 0;
+          ::core::write!(f, ::core::concat!("("))?;
+          #(#debug)*
+          ::core::write!(f, ")")
+        }
       }
 
-      impl #path_to_grost::__private::Selector for #name {
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::fmt::Debug for #name<F> {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::write!(f, #name_str)?;
+          self.debug_helper(f)
+        }
+      }
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::cmp::PartialEq for #name<F> {
+        fn eq(&self, other: &Self) -> ::core::primitive::bool {
+          #(#eq) && *
+        }
+      }
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::cmp::Eq for #name<F> {}
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::hash::Hash for #name<F> {
+        fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+          #(#hash)*
+        }
+      }
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::clone::Clone for #name<F> {
+        fn clone(&self) -> Self {
+          *self
+        }
+      }
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> ::core::marker::Copy for #name<F> {}
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> #path_to_grost::__private::Selectable<F> for #struct_name {
+        type Selector = #name<F>;
+      }
+
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> #path_to_grost::__private::Selector for #name<F> {
         const ALL: Self = Self::all();
         const NONE: Self = Self::empty();
 
@@ -371,7 +496,8 @@ impl Struct {
         }
       }
 
-      impl #name {
+      #[automatically_derived]
+      impl<F: ?::core::marker::Sized> #name<F> {
         /// The number of options in this selection type.
         pub const OPTIONS: ::core::primitive::usize = #num_fields;
 
@@ -379,6 +505,7 @@ impl Struct {
         #[inline]
         pub const fn empty() -> Self {
           Self {
+            _m: ::core::marker::PhantomData,
             #(#empty),*
           }
         }
@@ -387,6 +514,7 @@ impl Struct {
         #[inline]
         pub const fn all() -> Self {
           Self {
+            _m: ::core::marker::PhantomData,
             #(#all),*
           }
         }
@@ -417,6 +545,28 @@ impl Struct {
           let mut num = 0;
           #(#num_unselected)*
           num
+        }
+
+        /// Returns an iterator over the selected fields.
+        #[inline]
+        pub const fn iter_selected(&self) -> #iter_name<F, true>
+        {
+          #iter_name::new(self, self.num_selected())
+        }
+
+        /// Returns an iterator over the unselected fields.
+        #[inline]
+        pub const fn iter_unselected(&self) -> #iter_name<F, false>
+        {
+          #iter_name::new(self, self.num_unselected())
+        }
+
+        /// Returns `true` if such field is selected.
+        #[inline]
+        pub const fn contains(&self, idx: #indexer_name) -> ::core::primitive::bool {
+          match idx {
+            #(#index),*
+          }
         }
 
         #(#fns)*
@@ -722,7 +872,7 @@ fn generate_bitflags_iter(
     let reflection_name = f.struct_reflection_name();
     quote! {
       impl<const S: ::core::primitive::bool> ::core::iter::Iterator for #flags_iter_name<#flavor_ty, S> {
-        type Item = #path_to_grost::__private::reflection::FieldRelection<#flavor_ty>;
+        type Item = #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>;
 
         #[inline]
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
@@ -1086,7 +1236,7 @@ fn generate_selection_flags(
         let reflection_name = f.struct_reflection_name();
         quote! {
           impl<const S: ::core::primitive::bool> ::core::iter::Iterator for #selection_flags_iter_name<#flavor_ty, S> {
-            type Item = #path_to_grost::__private::reflection::FieldRelection<#flavor_ty>;
+            type Item = #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>;
 
             #[inline]
             fn next(&mut self) -> ::core::option::Option<Self::Item> {

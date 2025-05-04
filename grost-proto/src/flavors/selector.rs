@@ -14,10 +14,10 @@ mod unknown;
 #[derive(
   Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display,
 )]
-#[display("Selector")]
-pub struct SelectorFlavor;
+#[display("Select")]
+pub struct Select;
 
-impl Flavor for SelectorFlavor {
+impl Flavor for Select {
   type Identifier = SelectorIdentifier;
   type WireType = SelectorWireType;
   type Tag = SelectorTag;
@@ -30,7 +30,7 @@ impl Flavor for SelectorFlavor {
 
   type DecodeError = DecodeError;
 
-  const NAME: &'static str = "Selector";
+  const NAME: &'static str = "Select";
 
   fn encode_unknown<B>(
     ctx: &Self::Context,

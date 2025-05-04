@@ -189,7 +189,7 @@ pub trait Selector: Clone + core::fmt::Debug + Eq {
 }
 
 /// A trait for types that can be selected.
-pub trait Selectable<F: Flavor + ?Sized> {
+pub trait Selectable<F: ?Sized> {
   /// The corresponding selector for this type.
   type Selector: Selector;
 }
@@ -197,7 +197,7 @@ pub trait Selectable<F: Flavor + ?Sized> {
 impl<T, F> Selectable<F> for &T
 where
   T: Selectable<F> + ?Sized,
-  F: Flavor + ?Sized,
+  F: ?Sized,
 {
   type Selector = T::Selector;
 }
@@ -205,7 +205,7 @@ where
 impl<T, F> Selectable<F> for Option<T>
 where
   T: Selectable<F>,
-  F: Flavor + ?Sized,
+  F: ?Sized,
 {
   type Selector = T::Selector;
 }

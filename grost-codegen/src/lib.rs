@@ -190,8 +190,10 @@ impl Generator for DefaultGenerator {
       .flavors
       .iter()
       .map(|(_, f)| struct_.generate_reflection(&self.grost_path, &**f));
+    let indexer = struct_.generate_indexer();
 
     Ok(quote! {
+      #indexer
       #defination
       #(#reflections)*
       #basic

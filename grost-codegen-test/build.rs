@@ -1,7 +1,6 @@
 use std::{fs::OpenOptions, io::Write, num::NonZeroU32, path::PathBuf};
 
 use grost_codegen::{field::getter, ty::Ty, *};
-use grost_proto::Tag;
 use syn::parse_quote;
 
 const ENUM_FILE_NAME: &str = "color_enum";
@@ -72,17 +71,17 @@ fn struct_codegen_test(name: &str) {
     Field::new(
       SafeIdent::new("name"),
       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-      Tag::new(1),
+      1,
     ),
     Field::new(
       SafeIdent::new("age"),
       Ty::primitive(parse_quote!(u32), "u32").with_copy(),
-      Tag::new(2),
+      2,
     ),
     Field::new(
       SafeIdent::new("email"),
       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-      Tag::new(3),
+      3,
     ),
   ];
   let struct_ = Struct::new(SafeIdent::new("User"), fields)
@@ -111,17 +110,17 @@ fn struct_codegen_test(name: &str) {
     Field::new(
       SafeIdent::new("user"),
       Ty::struct_(parse_quote!(User), "User!"),
-      Tag::new(1),
+      1,
     ),
     Field::new(
       SafeIdent::new("title"),
       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-      Tag::new(2),
+      2,
     ),
     Field::new(
       SafeIdent::new("content"),
       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-      Tag::new(3),
+      3,
     ),
   ];
   let struct_ = Struct::new(SafeIdent::new("Comment"), fields)

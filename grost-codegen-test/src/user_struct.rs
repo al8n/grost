@@ -1,5 +1,87 @@
 #![no_implicit_prelude]
 
+/// Field indexer for the struct [`User`]
+#[derive(
+  ::core::clone::Clone,
+  ::core::marker::Copy,
+  ::core::cmp::PartialEq,
+  ::core::cmp::Eq,
+  ::core::cmp::PartialOrd,
+  ::core::cmp::Ord,
+  ::core::hash::Hash,
+  ::core::fmt::Debug,
+)]
+#[repr(u32)]
+pub enum UserFieldIndexer {
+  /// The field indexer for the field `name`
+  Name = 0u32,
+  /// The field indexer for the field `age`
+  Age = 1u32,
+  /// The field indexer for the field `email`
+  Email = 2u32,
+}
+impl UserFieldIndexer {
+  /// The number of variants of this field indexer.
+  pub const VARIANTS: ::core::primitive::usize = 3usize;
+  /// The first field indexer.
+  pub const FIRST: Self = Self::Name;
+  /// The last field indexer.
+  pub const LAST: Self = Self::Email;
+  /// Returns the next field indexer.
+  ///
+  /// Returns `None` if there are no more fields.
+  #[inline]
+  pub const fn next(&self) -> ::core::option::Option<Self> {
+    match self {
+      Self::Email => ::core::option::Option::None,
+      Self::Name => ::core::option::Option::Some(Self::Age),
+      Self::Age => ::core::option::Option::Some(Self::Email),
+    }
+  }
+  /// Returns the previous field indexer.
+  ///
+  /// Returns `None` if there are no previous fields.
+  #[inline]
+  pub const fn prev(&self) -> ::core::option::Option<Self> {
+    match self {
+      Self::Name => ::core::option::Option::None,
+      Self::Email => ::core::option::Option::Some(Self::Age),
+      Self::Age => ::core::option::Option::Some(Self::Name),
+    }
+  }
+  /// Returns the remaining number of fields.
+  #[inline]
+  pub const fn remaining(&self) -> ::core::primitive::usize {
+    Self::LAST as ::core::primitive::usize
+      - *self as ::core::primitive::u32 as ::core::primitive::usize
+  }
+}
+impl ::core::iter::Iterator for UserFieldIndexer {
+  type Item = Self;
+  fn next(&mut self) -> ::core::option::Option<Self> {
+    Self::next(self)
+  }
+  fn size_hint(
+    &self,
+  ) -> (
+    ::core::primitive::usize,
+    ::core::option::Option<::core::primitive::usize>,
+  ) {
+    let remaining = self.remaining();
+    (remaining, ::core::option::Option::Some(remaining))
+  }
+}
+impl ::core::iter::DoubleEndedIterator for UserFieldIndexer {
+  fn next_back(&mut self) -> ::core::option::Option<Self> {
+    Self::prev(self)
+  }
+}
+impl ::core::iter::FusedIterator for UserFieldIndexer {}
+impl ::core::iter::ExactSizeIterator for UserFieldIndexer {
+  fn len(&self) -> ::core::primitive::usize {
+    self.remaining()
+  }
+}
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 ///A user struct
 pub struct User {
@@ -9,55 +91,57 @@ pub struct User {
 }
 impl User {
   /// The reflection information of the `name` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_NAME_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  pub const NETWORK_FLAVOR_NAME_REFLECTION: ::grost::__private::reflection::FieldReflection<
     ::grost::__private::flavors::Network,
-  > =
-    ::grost::__private::reflection::FieldRelectionBuilder::<::grost::__private::flavors::Network> {
-      identifier: ::grost::__private::flavors::network::Identifier::new(
-        <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format as ::grost::__private::flavors::WireFormat<
-          ::grost::__private::flavors::Network,
-        >>::WIRE_TYPE,
-        ::grost::__private::Tag::new(1u32),
-      ),
-      name: "name",
-      ty: ::core::any::type_name::<::std::string::String>,
-      schema_name: "name",
-      schema_type:
-        ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
-          name: "String!",
-          description: "",
-        },
-    }
-    .build();
-  /// The reflection information of the `age` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_AGE_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  > = ::grost::__private::reflection::FieldReflectionBuilder::<
     ::grost::__private::flavors::Network,
-  > =
-    ::grost::__private::reflection::FieldRelectionBuilder::<::grost::__private::flavors::Network> {
-      identifier: ::grost::__private::flavors::network::Identifier::new(
-        <<u32 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format as ::grost::__private::flavors::WireFormat<
-          ::grost::__private::flavors::Network,
-        >>::WIRE_TYPE,
-        ::grost::__private::Tag::new(2u32),
-      ),
-      name: "age",
-      ty: ::core::any::type_name::<u32>,
-      schema_name: "age",
-      schema_type:
-        ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
-          name: "u32!",
-          description: "",
-        },
-    }
-    .build();
-  /// The reflection information of the `email` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_EMAIL_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  > {
+    identifier: ::grost::__private::flavors::network::Identifier::new(
+      <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
         ::grost::__private::flavors::Network,
-    > = ::grost::__private::reflection::FieldRelectionBuilder::<
+      >>::Format as ::grost::__private::flavors::WireFormat<
+        ::grost::__private::flavors::Network,
+      >>::WIRE_TYPE,
+      ::grost::__private::flavors::network::Tag::new(1u32),
+    ),
+    name: "name",
+    ty: ::core::any::type_name::<::std::string::String>,
+    schema_name: "name",
+    schema_type:
+      ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
+        name: "String!",
+        description: "",
+      },
+  }
+  .build();
+  /// The reflection information of the `age` field for [`Network`](::grost::__private::flavors::Network) flavor.
+  pub const NETWORK_FLAVOR_AGE_REFLECTION: ::grost::__private::reflection::FieldReflection<
+    ::grost::__private::flavors::Network,
+  > = ::grost::__private::reflection::FieldReflectionBuilder::<
+    ::grost::__private::flavors::Network,
+  > {
+    identifier: ::grost::__private::flavors::network::Identifier::new(
+      <<u32 as ::grost::__private::flavors::DefaultWireFormat<
+        ::grost::__private::flavors::Network,
+      >>::Format as ::grost::__private::flavors::WireFormat<
+        ::grost::__private::flavors::Network,
+      >>::WIRE_TYPE,
+      ::grost::__private::flavors::network::Tag::new(2u32),
+    ),
+    name: "age",
+    ty: ::core::any::type_name::<u32>,
+    schema_name: "age",
+    schema_type:
+      ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
+        name: "u32!",
+        description: "",
+      },
+  }
+  .build();
+  /// The reflection information of the `email` field for [`Network`](::grost::__private::flavors::Network) flavor.
+  pub const NETWORK_FLAVOR_EMAIL_REFLECTION: ::grost::__private::reflection::FieldReflection<
+        ::grost::__private::flavors::Network,
+    > = ::grost::__private::reflection::FieldReflectionBuilder::<
         ::grost::__private::flavors::Network,
     > {
         identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -68,7 +152,7 @@ impl User {
             >>::Format as ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::Network,
             >>::WIRE_TYPE,
-            ::grost::__private::Tag::new(3u32),
+            ::grost::__private::flavors::network::Tag::new(3u32),
         ),
         name: "email",
         ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
@@ -236,7 +320,9 @@ impl
         &self,
         ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
-        selector: &<User as ::grost::__private::Selectable>::Selector,
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
@@ -246,14 +332,18 @@ impl
   fn partial_encoded_len(
     &self,
     ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
-    selector: &<User as ::grost::__private::Selectable>::Selector,
+    selector: &<User as ::grost::__private::Selectable<
+      ::grost::__private::flavors::network::Network,
+    >>::Selector,
   ) -> ::core::primitive::usize {
     ::core::todo!()
   }
   fn partial_encoded_length_delimited_len(
     &self,
     ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
-    selector: &<User as ::grost::__private::Selectable>::Selector,
+    selector: &<User as ::grost::__private::Selectable<
+      ::grost::__private::flavors::network::Network,
+    >>::Selector,
   ) -> ::core::primitive::usize {
     ::core::todo!()
   }
@@ -261,7 +351,9 @@ impl
         &self,
         ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
-        selector: &<User as ::grost::__private::Selectable>::Selector,
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
@@ -269,24 +361,118 @@ impl
     ::core::todo!()
   }
 }
+/// An iterator over the selected fields of the [`UserSelector`]
+pub struct UserSelectorIter<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool = true>
+{
+  selector: &'a UserSelector<F>,
+  index: ::core::option::Option<UserFieldIndexer>,
+  num: ::core::primitive::usize,
+  yielded: ::core::primitive::usize,
+}
+impl<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool> UserSelectorIter<'a, F, N> {
+  #[inline]
+  const fn new(selector: &'a UserSelector<F>, num: ::core::primitive::usize) -> Self {
+    Self {
+      selector,
+      index: ::core::option::Option::Some(UserFieldIndexer::FIRST),
+      num,
+      yielded: 0,
+    }
+  }
+  /// Returns the exact remaining length of the iterator.
+  #[inline]
+  pub const fn remaining(&self) -> ::core::primitive::usize {
+    self.num - self.yielded
+  }
+  /// Returns `true` if the iterator is empty.
+  #[inline]
+  pub const fn is_empty(&self) -> ::core::primitive::bool {
+    self.remaining() == 0
+  }
+}
 /// The selection type for User
-#[derive(
-  ::core::fmt::Debug,
-  ::core::clone::Clone,
-  ::core::marker::Copy,
-  ::core::cmp::PartialEq,
-  ::core::cmp::Eq,
-  ::core::hash::Hash,
-)]
-pub struct UserSelector {
+pub struct UserSelector<F: ?::core::marker::Sized> {
+  _m: ::core::marker::PhantomData<F>,
   name: ::core::primitive::bool,
   age: ::core::primitive::bool,
   email: ::core::primitive::bool,
 }
-impl ::grost::__private::Selectable for User {
-  type Selector = UserSelector;
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> UserSelector<F> {
+  fn debug_helper(
+    &self,
+    f: &mut ::core::fmt::Formatter<'_>,
+  ) -> ::core::result::Result<(), ::core::fmt::Error> {
+    let num_selected = self.num_selected();
+    let mut idx = 0;
+    ::core::write!(f, ::core::concat!("("))?;
+    if self.name {
+      if idx != num_selected - 1 {
+        ::core::write!(f, ::core::concat!("name", " & "))?;
+      } else {
+        ::core::write!(f, "name")?;
+      }
+      idx += 1;
+    }
+    if self.age {
+      if idx != num_selected - 1 {
+        ::core::write!(f, ::core::concat!("age", " & "))?;
+      } else {
+        ::core::write!(f, "age")?;
+      }
+      idx += 1;
+    }
+    if self.email {
+      if idx != num_selected - 1 {
+        ::core::write!(f, ::core::concat!("email", " & "))?;
+      } else {
+        ::core::write!(f, "email")?;
+      }
+      idx += 1;
+    }
+    ::core::write!(f, ")")
+  }
 }
-impl ::grost::__private::Selector for UserSelector {
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::fmt::Debug for UserSelector<F> {
+  fn fmt(
+    &self,
+    f: &mut ::core::fmt::Formatter<'_>,
+  ) -> ::core::result::Result<(), ::core::fmt::Error> {
+    ::core::write!(f, "UserSelector")?;
+    self.debug_helper(f)
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::cmp::PartialEq for UserSelector<F> {
+  fn eq(&self, other: &Self) -> ::core::primitive::bool {
+    self.name == other.name && self.age == other.age && self.email == other.email
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::cmp::Eq for UserSelector<F> {}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::hash::Hash for UserSelector<F> {
+  fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+    self.name.hash(state);
+    self.age.hash(state);
+    self.email.hash(state);
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::clone::Clone for UserSelector<F> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::marker::Copy for UserSelector<F> {}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::grost::__private::Selectable<F> for User {
+  type Selector = UserSelector<F>;
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::grost::__private::Selector for UserSelector<F> {
   const ALL: Self = Self::all();
   const NONE: Self = Self::empty();
   fn flip(&mut self) -> &mut Self {
@@ -302,13 +488,15 @@ impl ::grost::__private::Selector for UserSelector {
     self
   }
 }
-impl UserSelector {
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> UserSelector<F> {
   /// The number of options in this selection type.
   pub const OPTIONS: ::core::primitive::usize = 3usize;
   /// Returns a selector which selects nothing.
   #[inline]
   pub const fn empty() -> Self {
     Self {
+      _m: ::core::marker::PhantomData,
       name: false,
       age: false,
       email: false,
@@ -318,6 +506,7 @@ impl UserSelector {
   #[inline]
   pub const fn all() -> Self {
     Self {
+      _m: ::core::marker::PhantomData,
       name: true,
       age: true,
       email: true,
@@ -362,6 +551,25 @@ impl UserSelector {
       num += 1;
     }
     num
+  }
+  /// Returns an iterator over the selected fields.
+  #[inline]
+  pub const fn iter_selected(&self) -> UserSelectorIter<F, true> {
+    UserSelectorIter::new(self, self.num_selected())
+  }
+  /// Returns an iterator over the unselected fields.
+  #[inline]
+  pub const fn iter_unselected(&self) -> UserSelectorIter<F, false> {
+    UserSelectorIter::new(self, self.num_unselected())
+  }
+  /// Returns `true` if such field is selected.
+  #[inline]
+  pub const fn contains(&self, idx: UserFieldIndexer) -> ::core::primitive::bool {
+    match idx {
+      UserFieldIndexer::Name => self.name,
+      UserFieldIndexer::Age => self.age,
+      UserFieldIndexer::Email => self.email,
+    }
   }
   /// Select the `User.name` field
   #[inline]
@@ -506,12 +714,107 @@ impl UserSelector {
   }
 }
 const _: () = {
-  const ALL_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(1);
-  const NONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(2);
-  const SELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(3);
-  const UNSELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(4);
-  const SELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(5);
-  const UNSELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(6);
+  #[automatically_derived]
+  impl UserSelector<::grost::__private::flavors::Network> {
+    fn __field_reflection_by_index_network_flavor(
+      &self,
+      idx: UserFieldIndexer,
+      select: ::core::primitive::bool,
+    ) -> ::core::option::Option<
+      &'static ::grost::__private::reflection::FieldReflection<
+        ::grost::__private::flavors::Network,
+      >,
+    > {
+      match idx {
+        UserFieldIndexer::Name => match (select, self.name) {
+          (true, true) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_NAME_REFLECTION),
+          (true, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::None,
+          (false, false) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_NAME_REFLECTION),
+        },
+        UserFieldIndexer::Age => match (select, self.age) {
+          (true, true) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_AGE_REFLECTION),
+          (true, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::None,
+          (false, false) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_AGE_REFLECTION),
+        },
+        UserFieldIndexer::Email => match (select, self.email) {
+          (true, true) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_EMAIL_REFLECTION),
+          (true, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::None,
+          (false, false) => ::core::option::Option::Some(&User::NETWORK_FLAVOR_EMAIL_REFLECTION),
+        },
+      }
+    }
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::Iterator
+    for UserSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+    type Item = &'static ::grost::__private::reflection::FieldReflection<
+      ::grost::__private::flavors::Network,
+    >;
+    fn next(&mut self) -> ::core::option::Option<Self::Item> {
+      loop {
+        if self.yielded >= self.num {
+          return ::core::option::Option::None;
+        }
+        match self.index {
+          ::core::option::Option::Some(index) => {
+            match self
+              .selector
+              .__field_reflection_by_index_network_flavor(index, N)
+            {
+              ::core::option::Option::Some(reflection) => {
+                self.index = index.next();
+                self.yielded += 1;
+                return ::core::option::Option::Some(reflection);
+              }
+              ::core::option::Option::None => {
+                self.index = index.next();
+              }
+            }
+          }
+          ::core::option::Option::None => return ::core::option::Option::None,
+        }
+      }
+    }
+    fn size_hint(
+      &self,
+    ) -> (
+      ::core::primitive::usize,
+      ::core::option::Option<::core::primitive::usize>,
+    ) {
+      let remaining = self.remaining();
+      (remaining, ::core::option::Option::Some(remaining))
+    }
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::FusedIterator
+    for UserSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::ExactSizeIterator
+    for UserSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+    #[inline]
+    fn len(&self) -> ::core::primitive::usize {
+      self.remaining()
+    }
+  }
+  const ALL_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(1);
+  const NONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(2);
+  const SELECT_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(3);
+  const UNSELECT_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(4);
+  const SELECT_ONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(5);
+  const UNSELECT_ONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(6);
   const ALL_IDENTIFIER: ::grost::__private::flavors::network::Identifier =
     ::grost::__private::flavors::network::Identifier::new(
       ::grost::__private::flavors::network::WireType::Zst,
@@ -560,19 +863,26 @@ const _: () = {
     SELECT_ONE_IDENTIFIER.encode().as_slice();
   const UNSELECT_ONE_IDENTIFIER_ENCODED: &[::core::primitive::u8] =
     UNSELECT_ONE_IDENTIFIER.encode().as_slice();
-  impl ::grost::__private::DefaultWireFormat<::grost::__private::flavors::Network> for UserSelector {
+  impl ::grost::__private::DefaultWireFormat<::grost::__private::flavors::Network>
+    for UserSelector<::grost::__private::flavors::Network>
+  {
     type Format = ::grost::__private::flavors::network::LengthDelimited;
   }
-  ::grost::__private::selectable_scalar!(UserSelector);
+  ::grost::__private::selectable_scalar!(
+      ::grost::__private::flavors::Network : UserSelector <
+      ::grost::__private::flavors::Network >
+  );
   ::grost::__private::partial_encode_scalar!(
-      ::grost::__private::flavors::Network : UserSelector as
+      ::grost::__private::flavors::Network : UserSelector <
+      ::grost::__private::flavors::Network > as
       ::grost::__private::flavors::network::LengthDelimited
   );
   ::grost::__private::decode_owned_scalar!(
-      ::grost::__private::flavors::Network : UserSelector as
+      ::grost::__private::flavors::Network : UserSelector <
+      ::grost::__private::flavors::Network > as
       ::grost::__private::flavors::network::LengthDelimited
   );
-  impl UserSelector {
+  impl UserSelector<::grost::__private::flavors::Network> {
     /// Returns the encoded length of the selector.
     #[inline]
     pub const fn encoded_len(&self) -> ::core::primitive::usize {
@@ -641,7 +951,10 @@ const _: () = {
     pub fn encode(
       &self,
       buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, ::grost::__private::EncodeError> {
+    ) -> ::core::result::Result<
+      ::core::primitive::usize,
+      ::grost::__private::flavors::network::EncodeError,
+    > {
       let buf_len = buf.len();
       if self.is_empty() {
         if buf_len < NONE_IDENTIFIER_ENCODED_LEN {
@@ -825,7 +1138,7 @@ const _: () = {
     ::grost::__private::Encode<
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-    > for UserSelector
+    > for UserSelector<::grost::__private::flavors::Network>
   {
     #[inline]
     fn encode(
@@ -899,7 +1212,7 @@ const _: () = {
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
       Self,
-    > for UserSelector
+    > for UserSelector<::grost::__private::flavors::Network>
   {
     #[inline]
     fn decode<UB>(
@@ -933,6 +1246,88 @@ const _: () = {
     }
   }
 };
+/// Field indexer for the struct [`Comment`]
+#[derive(
+  ::core::clone::Clone,
+  ::core::marker::Copy,
+  ::core::cmp::PartialEq,
+  ::core::cmp::Eq,
+  ::core::cmp::PartialOrd,
+  ::core::cmp::Ord,
+  ::core::hash::Hash,
+  ::core::fmt::Debug,
+)]
+#[repr(u32)]
+pub enum CommentFieldIndexer {
+  /// The field indexer for the field `user`
+  User = 0u32,
+  /// The field indexer for the field `title`
+  Title = 1u32,
+  /// The field indexer for the field `content`
+  Content = 2u32,
+}
+impl CommentFieldIndexer {
+  /// The number of variants of this field indexer.
+  pub const VARIANTS: ::core::primitive::usize = 3usize;
+  /// The first field indexer.
+  pub const FIRST: Self = Self::User;
+  /// The last field indexer.
+  pub const LAST: Self = Self::Content;
+  /// Returns the next field indexer.
+  ///
+  /// Returns `None` if there are no more fields.
+  #[inline]
+  pub const fn next(&self) -> ::core::option::Option<Self> {
+    match self {
+      Self::Content => ::core::option::Option::None,
+      Self::User => ::core::option::Option::Some(Self::Title),
+      Self::Title => ::core::option::Option::Some(Self::Content),
+    }
+  }
+  /// Returns the previous field indexer.
+  ///
+  /// Returns `None` if there are no previous fields.
+  #[inline]
+  pub const fn prev(&self) -> ::core::option::Option<Self> {
+    match self {
+      Self::User => ::core::option::Option::None,
+      Self::Content => ::core::option::Option::Some(Self::Title),
+      Self::Title => ::core::option::Option::Some(Self::User),
+    }
+  }
+  /// Returns the remaining number of fields.
+  #[inline]
+  pub const fn remaining(&self) -> ::core::primitive::usize {
+    Self::LAST as ::core::primitive::usize
+      - *self as ::core::primitive::u32 as ::core::primitive::usize
+  }
+}
+impl ::core::iter::Iterator for CommentFieldIndexer {
+  type Item = Self;
+  fn next(&mut self) -> ::core::option::Option<Self> {
+    Self::next(self)
+  }
+  fn size_hint(
+    &self,
+  ) -> (
+    ::core::primitive::usize,
+    ::core::option::Option<::core::primitive::usize>,
+  ) {
+    let remaining = self.remaining();
+    (remaining, ::core::option::Option::Some(remaining))
+  }
+}
+impl ::core::iter::DoubleEndedIterator for CommentFieldIndexer {
+  fn next_back(&mut self) -> ::core::option::Option<Self> {
+    Self::prev(self)
+  }
+}
+impl ::core::iter::FusedIterator for CommentFieldIndexer {}
+impl ::core::iter::ExactSizeIterator for CommentFieldIndexer {
+  fn len(&self) -> ::core::primitive::usize {
+    self.remaining()
+  }
+}
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 ///A comment struct
 pub struct Comment {
@@ -942,54 +1337,56 @@ pub struct Comment {
 }
 impl Comment {
   /// The reflection information of the `user` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_USER_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  pub const NETWORK_FLAVOR_USER_REFLECTION: ::grost::__private::reflection::FieldReflection<
     ::grost::__private::flavors::Network,
-  > =
-    ::grost::__private::reflection::FieldRelectionBuilder::<::grost::__private::flavors::Network> {
-      identifier: ::grost::__private::flavors::network::Identifier::new(
-        <<User as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format as ::grost::__private::flavors::WireFormat<
-          ::grost::__private::flavors::Network,
-        >>::WIRE_TYPE,
-        ::grost::__private::Tag::new(1u32),
-      ),
-      name: "user",
-      ty: ::core::any::type_name::<User>,
-      schema_name: "user",
-      schema_type:
-        ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Struct(
-          <User>::NETWORK_FLAVOR_REFLECTION,
-        ),
-    }
-    .build();
-  /// The reflection information of the `title` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_TITLE_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  > = ::grost::__private::reflection::FieldReflectionBuilder::<
     ::grost::__private::flavors::Network,
-  > =
-    ::grost::__private::reflection::FieldRelectionBuilder::<::grost::__private::flavors::Network> {
-      identifier: ::grost::__private::flavors::network::Identifier::new(
-        <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format as ::grost::__private::flavors::WireFormat<
-          ::grost::__private::flavors::Network,
-        >>::WIRE_TYPE,
-        ::grost::__private::Tag::new(2u32),
-      ),
-      name: "title",
-      ty: ::core::any::type_name::<::std::string::String>,
-      schema_name: "title",
-      schema_type:
-        ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
-          name: "String!",
-          description: "",
-        },
-    }
-    .build();
-  /// The reflection information of the `content` field for [`Network`](::grost::__private::flavors::Network) flavor.
-  pub const NETWORK_FLAVOR_CONTENT_REFLECTION: ::grost::__private::reflection::FieldRelection<
+  > {
+    identifier: ::grost::__private::flavors::network::Identifier::new(
+      <<User as ::grost::__private::flavors::DefaultWireFormat<
         ::grost::__private::flavors::Network,
-    > = ::grost::__private::reflection::FieldRelectionBuilder::<
+      >>::Format as ::grost::__private::flavors::WireFormat<
+        ::grost::__private::flavors::Network,
+      >>::WIRE_TYPE,
+      ::grost::__private::flavors::network::Tag::new(1u32),
+    ),
+    name: "user",
+    ty: ::core::any::type_name::<User>,
+    schema_name: "user",
+    schema_type:
+      ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Struct(
+        <User>::NETWORK_FLAVOR_REFLECTION,
+      ),
+  }
+  .build();
+  /// The reflection information of the `title` field for [`Network`](::grost::__private::flavors::Network) flavor.
+  pub const NETWORK_FLAVOR_TITLE_REFLECTION: ::grost::__private::reflection::FieldReflection<
+    ::grost::__private::flavors::Network,
+  > = ::grost::__private::reflection::FieldReflectionBuilder::<
+    ::grost::__private::flavors::Network,
+  > {
+    identifier: ::grost::__private::flavors::network::Identifier::new(
+      <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
+        ::grost::__private::flavors::Network,
+      >>::Format as ::grost::__private::flavors::WireFormat<
+        ::grost::__private::flavors::Network,
+      >>::WIRE_TYPE,
+      ::grost::__private::flavors::network::Tag::new(2u32),
+    ),
+    name: "title",
+    ty: ::core::any::type_name::<::std::string::String>,
+    schema_name: "title",
+    schema_type:
+      ::grost::__private::reflection::Type::<::grost::__private::flavors::Network>::Primitive {
+        name: "String!",
+        description: "",
+      },
+  }
+  .build();
+  /// The reflection information of the `content` field for [`Network`](::grost::__private::flavors::Network) flavor.
+  pub const NETWORK_FLAVOR_CONTENT_REFLECTION: ::grost::__private::reflection::FieldReflection<
+        ::grost::__private::flavors::Network,
+    > = ::grost::__private::reflection::FieldReflectionBuilder::<
         ::grost::__private::flavors::Network,
     > {
         identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -1000,7 +1397,7 @@ impl Comment {
             >>::Format as ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::Network,
             >>::WIRE_TYPE,
-            ::grost::__private::Tag::new(3u32),
+            ::grost::__private::flavors::network::Tag::new(3u32),
         ),
         name: "content",
         ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
@@ -1171,7 +1568,9 @@ impl
         &self,
         ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
-        selector: &<Comment as ::grost::__private::Selectable>::Selector,
+        selector: &<Comment as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
@@ -1181,14 +1580,18 @@ impl
   fn partial_encoded_len(
     &self,
     ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
-    selector: &<Comment as ::grost::__private::Selectable>::Selector,
+    selector: &<Comment as ::grost::__private::Selectable<
+      ::grost::__private::flavors::network::Network,
+    >>::Selector,
   ) -> ::core::primitive::usize {
     ::core::todo!()
   }
   fn partial_encoded_length_delimited_len(
     &self,
     ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
-    selector: &<Comment as ::grost::__private::Selectable>::Selector,
+    selector: &<Comment as ::grost::__private::Selectable<
+      ::grost::__private::flavors::network::Network,
+    >>::Selector,
   ) -> ::core::primitive::usize {
     ::core::todo!()
   }
@@ -1196,7 +1599,9 @@ impl
         &self,
         ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         buf: &mut [::core::primitive::u8],
-        selector: &<Comment as ::grost::__private::Selectable>::Selector,
+        selector: &<Comment as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
     ) -> ::core::result::Result<
         ::core::primitive::usize,
         <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
@@ -1204,28 +1609,130 @@ impl
     ::core::todo!()
   }
 }
+/// An iterator over the selected fields of the [`CommentSelector`]
+pub struct CommentSelectorIter<
+  'a,
+  F: ?::core::marker::Sized,
+  const N: ::core::primitive::bool = true,
+> {
+  selector: &'a CommentSelector<F>,
+  index: ::core::option::Option<CommentFieldIndexer>,
+  num: ::core::primitive::usize,
+  yielded: ::core::primitive::usize,
+}
+impl<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool>
+  CommentSelectorIter<'a, F, N>
+{
+  #[inline]
+  const fn new(selector: &'a CommentSelector<F>, num: ::core::primitive::usize) -> Self {
+    Self {
+      selector,
+      index: ::core::option::Option::Some(CommentFieldIndexer::FIRST),
+      num,
+      yielded: 0,
+    }
+  }
+  /// Returns the exact remaining length of the iterator.
+  #[inline]
+  pub const fn remaining(&self) -> ::core::primitive::usize {
+    self.num - self.yielded
+  }
+  /// Returns `true` if the iterator is empty.
+  #[inline]
+  pub const fn is_empty(&self) -> ::core::primitive::bool {
+    self.remaining() == 0
+  }
+}
 /// The selection type for Comment
-#[derive(
-  ::core::fmt::Debug,
-  ::core::clone::Clone,
-  ::core::marker::Copy,
-  ::core::cmp::PartialEq,
-  ::core::cmp::Eq,
-  ::core::hash::Hash,
-)]
-pub struct CommentSelector {
-  user: <User as ::grost::__private::Selectable>::Selector,
+pub struct CommentSelector<F: ?::core::marker::Sized> {
+  _m: ::core::marker::PhantomData<F>,
+  user: <User as ::grost::__private::Selectable<F>>::Selector,
   title: ::core::primitive::bool,
   content: ::core::primitive::bool,
 }
-impl ::grost::__private::Selectable for Comment {
-  type Selector = CommentSelector;
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> CommentSelector<F> {
+  fn debug_helper(
+    &self,
+    f: &mut ::core::fmt::Formatter<'_>,
+  ) -> ::core::result::Result<(), ::core::fmt::Error> {
+    let num_selected = self.num_selected();
+    let mut idx = 0;
+    ::core::write!(f, ::core::concat!("("))?;
+    if !self.user.is_empty() {
+      if idx != num_selected - 1 {
+        ::core::write!(f, "user")?;
+        self.user.debug_helper(f)?;
+        ::core::write!(f, " & ")?;
+      } else {
+        ::core::write!(f, "user")?;
+        self.user.debug_helper(f)?;
+      }
+      idx += 1;
+    }
+    if self.title {
+      if idx != num_selected - 1 {
+        ::core::write!(f, ::core::concat!("title", " & "))?;
+      } else {
+        ::core::write!(f, "title")?;
+      }
+      idx += 1;
+    }
+    if self.content {
+      if idx != num_selected - 1 {
+        ::core::write!(f, ::core::concat!("content", " & "))?;
+      } else {
+        ::core::write!(f, "content")?;
+      }
+      idx += 1;
+    }
+    ::core::write!(f, ")")
+  }
 }
-impl ::grost::__private::Selector for CommentSelector {
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::fmt::Debug for CommentSelector<F> {
+  fn fmt(
+    &self,
+    f: &mut ::core::fmt::Formatter<'_>,
+  ) -> ::core::result::Result<(), ::core::fmt::Error> {
+    ::core::write!(f, "CommentSelector")?;
+    self.debug_helper(f)
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::cmp::PartialEq for CommentSelector<F> {
+  fn eq(&self, other: &Self) -> ::core::primitive::bool {
+    self.user == other.user && self.title == other.title && self.content == other.content
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::cmp::Eq for CommentSelector<F> {}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::hash::Hash for CommentSelector<F> {
+  fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+    self.user.hash(state);
+    self.title.hash(state);
+    self.content.hash(state);
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::clone::Clone for CommentSelector<F> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::core::marker::Copy for CommentSelector<F> {}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::grost::__private::Selectable<F> for Comment {
+  type Selector = CommentSelector<F>;
+}
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> ::grost::__private::Selector for CommentSelector<F> {
   const ALL: Self = Self::all();
   const NONE: Self = Self::empty();
   fn flip(&mut self) -> &mut Self {
-    <<User as ::grost::__private::Selectable>::Selector as ::grost::__private::Selector>::flip(
+    <<User as ::grost::__private::Selectable<F>>::Selector as ::grost::__private::Selector>::flip(
       &mut self.user,
     );
     self.title = !self.title;
@@ -1233,7 +1740,7 @@ impl ::grost::__private::Selector for CommentSelector {
     self
   }
   fn merge(&mut self, other: Self) -> &mut Self {
-    <<User as ::grost::__private::Selectable>::Selector as ::grost::__private::Selector>::merge(
+    <<User as ::grost::__private::Selectable<F>>::Selector as ::grost::__private::Selector>::merge(
       &mut self.user,
       other.user,
     );
@@ -1242,25 +1749,29 @@ impl ::grost::__private::Selector for CommentSelector {
     self
   }
 }
-impl CommentSelector {
+#[automatically_derived]
+impl<F: ?::core::marker::Sized> CommentSelector<F> {
   /// The number of options in this selection type.
   pub const OPTIONS: ::core::primitive::usize = 3usize;
   /// Returns a selector which selects nothing.
   #[inline]
   pub const fn empty() -> Self {
     Self {
-      user:
-        <<User as ::grost::__private::Selectable>::Selector as ::grost::__private::Selector>::NONE,
-      title: false,
-      content: false,
-    }
+            _m: ::core::marker::PhantomData,
+            user: <<User as ::grost::__private::Selectable<
+                F,
+            >>::Selector as ::grost::__private::Selector>::NONE,
+            title: false,
+            content: false,
+        }
   }
   /// Returns a selector which selects all.
   #[inline]
   pub const fn all() -> Self {
     Self {
+      _m: ::core::marker::PhantomData,
       user:
-        <<User as ::grost::__private::Selectable>::Selector as ::grost::__private::Selector>::ALL,
+        <<User as ::grost::__private::Selectable<F>>::Selector as ::grost::__private::Selector>::ALL,
       title: true,
       content: true,
     }
@@ -1305,11 +1816,30 @@ impl CommentSelector {
     }
     num
   }
+  /// Returns an iterator over the selected fields.
+  #[inline]
+  pub const fn iter_selected(&self) -> CommentSelectorIter<F, true> {
+    CommentSelectorIter::new(self, self.num_selected())
+  }
+  /// Returns an iterator over the unselected fields.
+  #[inline]
+  pub const fn iter_unselected(&self) -> CommentSelectorIter<F, false> {
+    CommentSelectorIter::new(self, self.num_unselected())
+  }
+  /// Returns `true` if such field is selected.
+  #[inline]
+  pub const fn contains(&self, idx: CommentFieldIndexer) -> ::core::primitive::bool {
+    match idx {
+      CommentFieldIndexer::User => !self.user.is_empty(),
+      CommentFieldIndexer::Title => self.title,
+      CommentFieldIndexer::Content => self.content,
+    }
+  }
   /// Select the `Comment.user` field
   #[inline]
   pub fn select_user(
     &mut self,
-    val: <User as ::grost::__private::Selectable>::Selector,
+    val: <User as ::grost::__private::Selectable<F>>::Selector,
   ) -> &mut Self {
     self.user = val;
     self
@@ -1318,17 +1848,17 @@ impl CommentSelector {
   #[inline]
   pub fn unselect_user(&mut self) -> &mut Self {
     self.user =
-      <<User as ::grost::__private::Selectable>::Selector as ::grost::__private::Selector>::NONE;
+      <<User as ::grost::__private::Selectable<F>>::Selector as ::grost::__private::Selector>::NONE;
     self
   }
   /// Get a reference to the selector of `Comment.user` field
   #[inline]
-  pub const fn user_ref(&self) -> &<User as ::grost::__private::Selectable>::Selector {
+  pub const fn user_ref(&self) -> &<User as ::grost::__private::Selectable<F>>::Selector {
     &self.user
   }
   /// Get a mutable reference to the selector of `Comment.user` field
   #[inline]
-  pub const fn user_mut(&mut self) -> &mut <User as ::grost::__private::Selectable>::Selector {
+  pub const fn user_mut(&mut self) -> &mut <User as ::grost::__private::Selectable<F>>::Selector {
     &mut self.user
   }
   /// Select the `Comment.title` field
@@ -1427,12 +1957,109 @@ impl CommentSelector {
   }
 }
 const _: () = {
-  const ALL_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(1);
-  const NONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(2);
-  const SELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(3);
-  const UNSELECT_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(4);
-  const SELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(5);
-  const UNSELECT_ONE_TAG: ::grost::__private::Tag = ::grost::__private::Tag::new(6);
+  #[automatically_derived]
+  impl CommentSelector<::grost::__private::flavors::Network> {
+    fn __field_reflection_by_index_network_flavor(
+      &self,
+      idx: CommentFieldIndexer,
+      select: ::core::primitive::bool,
+    ) -> ::core::option::Option<
+      &'static ::grost::__private::reflection::FieldReflection<
+        ::grost::__private::flavors::Network,
+      >,
+    > {
+      match idx {
+        CommentFieldIndexer::User => match (select, self.user.is_empty()) {
+          (true, false) => ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_USER_REFLECTION),
+          (true, true) => ::core::option::Option::None,
+          (false, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_USER_REFLECTION),
+        },
+        CommentFieldIndexer::Title => match (select, self.title) {
+          (true, true) => ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_TITLE_REFLECTION),
+          (true, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::None,
+          (false, false) => ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_TITLE_REFLECTION),
+        },
+        CommentFieldIndexer::Content => match (select, self.content) {
+          (true, true) => ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_CONTENT_REFLECTION),
+          (true, false) => ::core::option::Option::None,
+          (false, true) => ::core::option::Option::None,
+          (false, false) => {
+            ::core::option::Option::Some(&Comment::NETWORK_FLAVOR_CONTENT_REFLECTION)
+          }
+        },
+      }
+    }
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::Iterator
+    for CommentSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+    type Item = &'static ::grost::__private::reflection::FieldReflection<
+      ::grost::__private::flavors::Network,
+    >;
+    fn next(&mut self) -> ::core::option::Option<Self::Item> {
+      loop {
+        if self.yielded >= self.num {
+          return ::core::option::Option::None;
+        }
+        match self.index {
+          ::core::option::Option::Some(index) => {
+            match self
+              .selector
+              .__field_reflection_by_index_network_flavor(index, N)
+            {
+              ::core::option::Option::Some(reflection) => {
+                self.index = index.next();
+                self.yielded += 1;
+                return ::core::option::Option::Some(reflection);
+              }
+              ::core::option::Option::None => {
+                self.index = index.next();
+              }
+            }
+          }
+          ::core::option::Option::None => return ::core::option::Option::None,
+        }
+      }
+    }
+    fn size_hint(
+      &self,
+    ) -> (
+      ::core::primitive::usize,
+      ::core::option::Option<::core::primitive::usize>,
+    ) {
+      let remaining = self.remaining();
+      (remaining, ::core::option::Option::Some(remaining))
+    }
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::FusedIterator
+    for CommentSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+  }
+  #[automatically_derived]
+  impl<'a, const N: ::core::primitive::bool> ::core::iter::ExactSizeIterator
+    for CommentSelectorIter<'a, ::grost::__private::flavors::Network, N>
+  {
+    #[inline]
+    fn len(&self) -> ::core::primitive::usize {
+      self.remaining()
+    }
+  }
+  const ALL_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(1);
+  const NONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(2);
+  const SELECT_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(3);
+  const UNSELECT_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(4);
+  const SELECT_ONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(5);
+  const UNSELECT_ONE_TAG: ::grost::__private::flavors::network::Tag =
+    ::grost::__private::flavors::network::Tag::new(6);
   const ALL_IDENTIFIER: ::grost::__private::flavors::network::Identifier =
     ::grost::__private::flavors::network::Identifier::new(
       ::grost::__private::flavors::network::WireType::Zst,
@@ -1482,20 +2109,25 @@ const _: () = {
   const UNSELECT_ONE_IDENTIFIER_ENCODED: &[::core::primitive::u8] =
     UNSELECT_ONE_IDENTIFIER.encode().as_slice();
   impl ::grost::__private::DefaultWireFormat<::grost::__private::flavors::Network>
-    for CommentSelector
+    for CommentSelector<::grost::__private::flavors::Network>
   {
     type Format = ::grost::__private::flavors::network::LengthDelimited;
   }
-  ::grost::__private::selectable_scalar!(CommentSelector);
+  ::grost::__private::selectable_scalar!(
+      ::grost::__private::flavors::Network : CommentSelector <
+      ::grost::__private::flavors::Network >
+  );
   ::grost::__private::partial_encode_scalar!(
-      ::grost::__private::flavors::Network : CommentSelector as
+      ::grost::__private::flavors::Network : CommentSelector <
+      ::grost::__private::flavors::Network > as
       ::grost::__private::flavors::network::LengthDelimited
   );
   ::grost::__private::decode_owned_scalar!(
-      ::grost::__private::flavors::Network : CommentSelector as
+      ::grost::__private::flavors::Network : CommentSelector <
+      ::grost::__private::flavors::Network > as
       ::grost::__private::flavors::network::LengthDelimited
   );
-  impl CommentSelector {
+  impl CommentSelector<::grost::__private::flavors::Network> {
     /// Returns the encoded length of the selector.
     #[inline]
     pub const fn encoded_len(&self) -> ::core::primitive::usize {
@@ -1580,7 +2212,10 @@ const _: () = {
     pub fn encode(
       &self,
       buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, ::grost::__private::EncodeError> {
+    ) -> ::core::result::Result<
+      ::core::primitive::usize,
+      ::grost::__private::flavors::network::EncodeError,
+    > {
       let buf_len = buf.len();
       if self.is_empty() {
         if buf_len < NONE_IDENTIFIER_ENCODED_LEN {
@@ -1816,7 +2451,7 @@ const _: () = {
     ::grost::__private::Encode<
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-    > for CommentSelector
+    > for CommentSelector<::grost::__private::flavors::Network>
   {
     #[inline]
     fn encode(
@@ -1890,7 +2525,7 @@ const _: () = {
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
       Self,
-    > for CommentSelector
+    > for CommentSelector<::grost::__private::flavors::Network>
   {
     #[inline]
     fn decode<UB>(

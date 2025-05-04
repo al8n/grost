@@ -8,7 +8,7 @@ publish = false
 quickcheck = ["grost/quickcheck"]
 
 [dependencies]
-grost = { path = "../grost", version = "0.1", default-features = false, features = ["quickcheck"] }
+grost = { path = "../grost", version = "0.1", default-features = false, features = ["quickcheck", "std"] }
 
 [build-dependencies]
 grost-codegen = { path = "../grost-codegen", workspace = true, features = ["quickcheck"] }

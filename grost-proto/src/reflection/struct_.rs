@@ -4,7 +4,7 @@ use super::{Flavor, Type};
 pub struct StructReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub fields: &'static [FieldRelection<F>],
+  pub fields: &'static [FieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
@@ -23,7 +23,7 @@ impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
 pub struct StructReflection<F: Flavor + ?Sized> {
   name: &'static str,
   schema_name: &'static str,
-  fields: &'static [FieldRelection<F>],
+  fields: &'static [FieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> Clone for StructReflection<F> {
@@ -51,13 +51,13 @@ impl<F: Flavor + ?Sized> StructReflection<F> {
 
   /// Get the fields of this struct
   #[inline]
-  pub const fn fields(&self) -> &'static [FieldRelection<F>] {
+  pub const fn fields(&self) -> &'static [FieldReflection<F>] {
     self.fields
   }
 }
 
 #[doc(hidden)]
-pub struct FieldRelectionBuilder<F: Flavor + ?Sized> {
+pub struct FieldReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
@@ -66,10 +66,10 @@ pub struct FieldRelectionBuilder<F: Flavor + ?Sized> {
   pub identifier: F::Identifier,
 }
 
-impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
+impl<F: Flavor + ?Sized> FieldReflectionBuilder<F> {
   #[inline]
-  pub const fn build(self) -> FieldRelection<F> {
-    FieldRelection {
+  pub const fn build(self) -> FieldReflection<F> {
+    FieldReflection {
       name: self.name,
       ty: self.ty,
       schema_name: self.schema_name,
@@ -81,7 +81,7 @@ impl<F: Flavor + ?Sized> FieldRelectionBuilder<F> {
 
 /// The information of a field in the Graph protocol buffer
 #[derive(Debug)]
-pub struct FieldRelection<F: Flavor + ?Sized> {
+pub struct FieldReflection<F: Flavor + ?Sized> {
   name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   ty: fn() -> &'static str,
@@ -90,15 +90,15 @@ pub struct FieldRelection<F: Flavor + ?Sized> {
   identifier: F::Identifier,
 }
 
-impl<F: Flavor> Clone for FieldRelection<F> {
+impl<F: Flavor> Clone for FieldReflection<F> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor> Copy for FieldRelection<F> {}
+impl<F: Flavor> Copy for FieldReflection<F> {}
 
-impl<F: Flavor> FieldRelection<F> {
+impl<F: Flavor> FieldReflection<F> {
   /// Get the name of the field
   #[inline]
   pub const fn name(&self) -> &'static str {

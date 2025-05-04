@@ -1,7 +1,7 @@
-use super::super::{SelectorFlavor, Varint};
+use super::super::{Select, Varint};
 use crate::varint;
 
-varint!(SelectorFlavor:Varint {
+varint!(Select:Varint {
   u8,
   u16,
   u32,

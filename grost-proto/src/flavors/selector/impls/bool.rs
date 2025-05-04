@@ -6,23 +6,23 @@ use crate::{
     DefaultWireFormat,
     network::Context,
     selector::{
-      DecodeError, EncodeError, SelectorFlavor, SelectorIdentifier, SelectorTag, SelectorWireType,
-      Unknown, Zst,
+      DecodeError, EncodeError, Select, SelectorIdentifier, SelectorTag, SelectorWireType, Unknown,
+      Zst,
     },
   },
   message, partial_encode_scalar, selectable_scalar,
 };
 
-selectable_scalar!(SelectorFlavor: bool);
-partial_encode_scalar!(SelectorFlavor: bool as Zst);
-decode_owned_scalar!(SelectorFlavor: bool as Zst);
-message!(SelectorFlavor: bool as Zst);
+selectable_scalar!(Select: bool);
+partial_encode_scalar!(Select: bool as Zst);
+decode_owned_scalar!(Select: bool as Zst);
+message!(Select: bool as Zst);
 
-impl DefaultWireFormat<SelectorFlavor> for bool {
+impl DefaultWireFormat<Select> for bool {
   type Format = Zst;
 }
 
-impl Encode<SelectorFlavor, Zst> for bool {
+impl Encode<Select, Zst> for bool {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.is_empty() {
       return Err(EncodeError::insufficient_buffer(1, 0));
@@ -41,7 +41,7 @@ impl Encode<SelectorFlavor, Zst> for bool {
   }
 
   fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<SelectorFlavor, Zst>>::encoded_len(self, context)
+    <Self as Encode<Select, Zst>>::encoded_len(self, context)
   }
 
   fn encode_length_delimited(
@@ -49,7 +49,7 @@ impl Encode<SelectorFlavor, Zst> for bool {
     context: &Context,
     buf: &mut [u8],
   ) -> Result<usize, EncodeError> {
-    <Self as Encode<SelectorFlavor, Zst>>::encode(self, context, buf)
+    <Self as Encode<Select, Zst>>::encode(self, context, buf)
   }
 
   fn encode_identified(
@@ -68,12 +68,8 @@ impl Encode<SelectorFlavor, Zst> for bool {
 
     let tag = identifier.tag();
     match tag {
-      SelectorTag::All if *self => {
-        <Self as Encode<SelectorFlavor, Zst>>::encode(self, context, buf)
-      }
-      SelectorTag::None if !*self => {
-        <Self as Encode<SelectorFlavor, Zst>>::encode(self, context, buf)
-      }
+      SelectorTag::All if *self => <Self as Encode<Select, Zst>>::encode(self, context, buf),
+      SelectorTag::None if !*self => <Self as Encode<Select, Zst>>::encode(self, context, buf),
       SelectorTag::All => Err(EncodeError::identifier_mismatch(
         SelectorIdentifier::all(),
         *identifier,
@@ -90,11 +86,11 @@ impl Encode<SelectorFlavor, Zst> for bool {
   }
 
   fn encoded_identified_len(&self, context: &Context, _: &SelectorIdentifier) -> usize {
-    <Self as Encode<SelectorFlavor, Zst>>::encoded_len(self, context)
+    <Self as Encode<Select, Zst>>::encoded_len(self, context)
   }
 }
 
-impl<'de> Decode<'de, SelectorFlavor, Zst, Self> for bool {
+impl<'de> Decode<'de, Select, Zst, Self> for bool {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
@@ -127,6 +123,6 @@ impl<'de> Decode<'de, SelectorFlavor, Zst, Self> for bool {
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
-    <Self as Decode<'de, SelectorFlavor, Zst, Self>>::decode::<UB>(context, src)
+    <Self as Decode<'de, Select, Zst, Self>>::decode::<UB>(context, src)
   }
 }
