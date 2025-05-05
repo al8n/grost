@@ -1,4 +1,3 @@
-
 use grost::{flavors::Network, reflection::FieldReflection};
 use grost_codegen_test::user_struct::*;
 

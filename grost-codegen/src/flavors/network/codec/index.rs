@@ -1,12 +1,12 @@
 use heck::ToUpperCamelCase;
-use quote::ToTokens;
+use quote::{format_ident, quote, ToTokens};
 
-use crate::Field;
+use crate::{network::Network, Field, FlavorGeneratorExt, Struct};
 
 use super::*;
 
 impl Network {
-  pub(super) fn generate_struct_index(
+  pub(crate) fn generate_struct_index(
     &self,
     path_to_grost: &syn::Path,
     struct_: &Struct,
@@ -193,7 +193,7 @@ impl Network {
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
       let name = self.field_identifier_const_name(f.name().name_str());
       quote! {
-        #indexer_name::#field_variant => &#struct_name::#name
+        #indexer_name::#field_variant => &#name
       }
     });
 
@@ -249,7 +249,7 @@ impl Network {
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
       let name = self.field_wire_type_const_name(f.name().name_str());
       quote! {
-        #indexer_name::#field_variant => &#struct_name::#name
+        #indexer_name::#field_variant => &#name
       }
     });
 
@@ -305,7 +305,7 @@ impl Network {
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
       let tag_name = self.field_tag_const_name(f.name().name_str());
       quote! {
-        #indexer_name::#field_variant => &#struct_name::#tag_name
+        #indexer_name::#field_variant => &#tag_name
       }
     });
     let output = quote! {#path_to_grost::__private::flavors::network::Tag};

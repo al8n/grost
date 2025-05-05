@@ -4,7 +4,7 @@ use crate::FlavorGeneratorExt;
 
 use super::{Enum, FlavorGenerator, Struct};
 
-mod struct_index;
+mod codec;
 
 #[derive(Clone)]
 pub struct Network {
@@ -75,96 +75,73 @@ impl FlavorGenerator for Network {
     let struct_name = struct_.name();
     let selector_name = struct_.selector_name();
     let consts = struct_.fields().iter().map(|f| {
-      let id_name = self.field_identifier_const_name(f.name().name_str());
-      let tag_name = self.field_tag_const_name(f.name().name_str());
-      let wire_type_name = self.field_wire_type_const_name(f.name().name_str());
-      let field_reflection_name = self.field_reflection_name(f.name().name_str());
+      let field_name_str = f.name().name_str();
+      let id_name = self.field_identifier_const_name(field_name_str);
+      let tag_name = self.field_tag_const_name(field_name_str);
+      let wire_type_name = self.field_wire_type_const_name(field_name_str);
+      let encoded_identifier_len_name = self.encoded_len_field_identifier_const_name(field_name_str);
+      let encoded_identifier_name = self.encoded_field_identifier_const_name(field_name_str);
+      let field_reflection_name = self.field_reflection_name(field_name_str);
       quote! {
-        /// The field identifier for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
-        pub const #id_name: #path_to_grost::__private::flavors::network::Identifier = Self::#field_reflection_name.identifier();
-        /// The field tag for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
-        pub const #tag_name: #path_to_grost::__private::flavors::network::Tag = Self::#id_name.tag();
-        /// The field wire type for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
-        pub const #wire_type_name: #path_to_grost::__private::flavors::network::WireType = Self::#id_name.wire_type();
+        const #id_name: #path_to_grost::__private::flavors::network::Identifier = #struct_name::#field_reflection_name.identifier();
+        const #tag_name: #path_to_grost::__private::flavors::network::Tag = #id_name.tag();
+        const #wire_type_name: #path_to_grost::__private::flavors::network::WireType = #id_name.wire_type();
+        const #encoded_identifier_len_name: ::core::primitive::usize = #id_name.encoded_len();
+        const #encoded_identifier_name: &[::core::primitive::u8] = #id_name.encode().as_slice();
       }
     });
+    let partial_encode = self.generate_partial_encode(path_to_grost, struct_);
+    let index = self.generate_struct_index(path_to_grost, struct_);
+    let fns = self.generate_field_encode_fns(path_to_grost, struct_);
 
     quote! {
-      impl #struct_name {
+      const _: () = {
         #(#consts)*
-      }
 
-      impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::network::Network> for #struct_name {
-        type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
-      }
+        #index
 
-      impl #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
-        fn encode(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          buf: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-          ::core::todo!()
+        #fns
+
+        #[automatically_derived]
+        impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::network::Network> for #struct_name {
+          type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
         }
 
-        fn encoded_len(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-        ) -> ::core::primitive::usize {
-          ::core::todo!()
+        #[automatically_derived]
+        impl #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
+          fn encode(
+            &self,
+            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+            buf: &mut [::core::primitive::u8],
+          ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+            ::core::todo!()
+          }
+  
+          fn encoded_len(
+            &self,
+            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ) -> ::core::primitive::usize {
+            ::core::todo!()
+          }
+  
+          fn encoded_length_delimited_len(
+            &self,
+            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ) -> ::core::primitive::usize {
+            ::core::todo!()
+          }
+  
+          fn encode_length_delimited(
+            &self,
+            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+            buf: &mut [::core::primitive::u8],
+          ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+            ::core::todo!()
+          }
         }
 
-        fn encoded_length_delimited_len(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-        ) -> ::core::primitive::usize {
-          ::core::todo!()
-        }
-
-        fn encode_length_delimited(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          buf: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-          ::core::todo!()
-        }
-      }
-
-      impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
-        fn partial_encode(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-          ::core::todo!()
-        }
-
-        fn partial_encoded_len(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::primitive::usize {
-          ::core::todo!()
-        }
-
-        fn partial_encoded_length_delimited_len(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::primitive::usize {
-          ::core::todo!()
-        }
-
-        fn partial_encode_length_delimited(
-          &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-          ::core::todo!()
-        }
-      }
+        #partial_encode
+      };
     }
   }
 
@@ -350,7 +327,6 @@ impl FlavorGenerator for Network {
 
     let struct_name = struct_.name();
     let iter_name = struct_.selector_iter_name();
-    let index = self.generate_struct_index(path_to_grost, struct_);
 
     let field_tag_consts = struct_.fields().iter().map(|f| {
       let tag = f.tag();
@@ -363,8 +339,6 @@ impl FlavorGenerator for Network {
     });
     quote! {
       const _: () = {
-        #index
-
         #[automatically_derived]
         impl<'a, const N: ::core::primitive::bool> ::core::iter::Iterator for #iter_name<'a, #path_to_grost::__private::flavors::Network, N> {
           type Item = &'static #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>;
@@ -596,6 +570,14 @@ impl FlavorGenerator for Network {
 
 
 impl Network {
+  fn encoded_len_field_identifier_const_name(&self, field_name: &str) -> syn::Ident {
+    format_ident!("NETWORK_FLAVOR_ENCODED_{}_IDENTIFIER_LEN", field_name.to_uppercase())
+  }
+
+  fn encoded_field_identifier_const_name(&self, field_name: &str) -> syn::Ident {
+    format_ident!("NETWORK_FLAVOR_ENCODED_{}_IDENTIFIER", field_name.to_uppercase())
+  }
+
   fn encoded_len_field_tag_const_name(&self, field_name: &str) -> syn::Ident {
     format_ident!("__NETWORK_FLAVOR_ENCODED_LEN_{}_TAG__", field_name.to_uppercase())
   }

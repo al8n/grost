@@ -82,6 +82,8 @@ pub mod __private {
     indexer,
     map::MapSelector,
     message, network_varint, partial_encode_scalar, reflection, selectable_scalar,
+    debug_assert_read_eq,
+    debug_assert_write_eq,
   };
   pub use varing;
 }
