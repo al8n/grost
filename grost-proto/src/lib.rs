@@ -32,6 +32,12 @@ pub mod decode;
 /// The encoding trait
 pub mod encode;
 
+/// The indexing related types and traits
+pub mod indexer;
+
+/// The selection related types and traits
+pub mod selector;
+
 mod convert;
 #[macro_use]
 mod macros;
@@ -72,6 +78,8 @@ pub mod __private {
     decode_owned_scalar, default_wire_format,
     encode::*,
     flavors::{self, *},
+    selector::{self, *},
+    indexer,
     map::MapSelector,
     message, network_varint, partial_encode_scalar, reflection, selectable_scalar,
   };

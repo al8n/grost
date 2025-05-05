@@ -1,4 +1,4 @@
-use crate::flavors::Selector;
+use crate::selector::Selector;
 
 /// A selector for maps.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -73,10 +73,11 @@ impl<K, V> MapSelector<K, V> {
   }
 }
 
-impl<K, V> Selector for MapSelector<K, V>
+impl<K, V, F> Selector<F> for MapSelector<K, V>
 where
-  K: Selector,
-  V: Selector,
+  K: Selector<F>,
+  V: Selector<F>,
+  F: ?Sized,
 {
   const ALL: Self = MapSelector::new(Some(K::ALL), Some(V::ALL));
   const NONE: Self = MapSelector::new(None, None);
@@ -133,7 +134,7 @@ where
 const _: () = {
   use std::collections::BTreeMap;
 
-  use crate::flavors::{Flavor, Selectable};
+  use crate::{flavors::Flavor, selector::Selectable};
 
   impl<K, V, F> Selectable<F> for BTreeMap<K, V>
   where

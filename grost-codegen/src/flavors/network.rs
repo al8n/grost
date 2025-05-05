@@ -74,7 +74,26 @@ impl FlavorGenerator for Network {
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
     let selector_name = struct_.selector_name();
+    let consts = struct_.fields().iter().map(|f| {
+      let id_name = self.field_identifier_const_name(f.name().name_str());
+      let tag_name = self.field_tag_const_name(f.name().name_str());
+      let wire_type_name = self.field_wire_type_const_name(f.name().name_str());
+      let field_reflection_name = self.field_reflection_name(f.name().name_str());
+      quote! {
+        /// The field identifier for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
+        pub const #id_name: #path_to_grost::__private::flavors::network::Identifier = Self::#field_reflection_name.identifier();
+        /// The field tag for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
+        pub const #tag_name: #path_to_grost::__private::flavors::network::Tag = Self::#id_name.tag();
+        /// The field wire type for [`Network`]( #path_to_grost::__private::flavors::Network) flavor.
+        pub const #wire_type_name: #path_to_grost::__private::flavors::network::WireType = Self::#id_name.wire_type();
+      }
+    });
+
     quote! {
+      impl #struct_name {
+        #(#consts)*
+      }
+
       impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::network::Network> for #struct_name {
         type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
       }
@@ -358,7 +377,7 @@ impl FlavorGenerator for Network {
 
               match self.index {
                 ::core::option::Option::Some(index) => {
-                  match self.selector.__field_reflection_by_index_network_flavor(index, N) {
+                  match self.selector[(index, N)] {
                     ::core::option::Option::Some(reflection) => {
                       self.index = index.next();
                       self.yielded += 1;
@@ -583,5 +602,17 @@ impl Network {
 
   fn encode_field_tag_const_name(&self, field_name: &str) -> syn::Ident {
     format_ident!("__NETWORK_FLAVOR_ENCODED_{}_TAG__", field_name.to_uppercase())
+  }
+
+  fn field_identifier_const_name(&self, field_name: &str) -> syn::Ident {
+    format_ident!("NETWORK_FLAVOR_{}_IDENTIFIER", field_name.to_uppercase())
+  }
+
+  fn field_tag_const_name(&self, field_name: &str) -> syn::Ident {
+    format_ident!("NETWORK_FLAVOR_{}_TAG", field_name.to_uppercase())
+  }
+
+  fn field_wire_type_const_name(&self, field_name: &str) -> syn::Ident {
+    format_ident!("NETWORK_FLAVOR_{}_WIRE_TYPE", field_name.to_uppercase())
   }
 }

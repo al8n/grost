@@ -50,7 +50,7 @@ impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
 }
 
 impl<const N: usize> Selectable<Network> for [u8; N] {
-  type Selector = ();
+  type Selector = bool;
 }
 
 partial_encode_scalar!(Network: [u8; N] [const N: usize] as LengthDelimited);

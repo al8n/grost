@@ -17,10 +17,10 @@ fn main() {
     .open("src/lib.rs")
     .unwrap();
   lib
-    .write_all(format!("mod {ENUM_FILE_NAME};").as_bytes())
+    .write_all(format!("pub mod {ENUM_FILE_NAME};").as_bytes())
     .unwrap();
   lib
-    .write_all(format!("mod {STRUCT_FILE_NAME};").as_bytes())
+    .write_all(format!("pub mod {STRUCT_FILE_NAME};").as_bytes())
     .unwrap();
 }
 

@@ -56,7 +56,7 @@ impl<A> Selectable<Network> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
-  type Selector = ();
+  type Selector = bool;
 }
 
 impl<A> PartialEncode<Network, LengthDelimited> for ArrayVec<A>

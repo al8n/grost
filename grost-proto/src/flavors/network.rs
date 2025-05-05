@@ -5,7 +5,7 @@ pub use tag::Tag;
 pub use unknown::Unknown;
 pub use wire_type::*;
 
-use super::{Flavor, Selector};
+use super::Flavor;
 use crate::buffer::BytesBuffer;
 
 mod context;
@@ -17,27 +17,6 @@ mod wire_type;
 
 /// The unknown data types
 mod unknown;
-
-impl Selector for () {
-  const ALL: Self = ();
-  const NONE: Self = ();
-
-  fn selected(&self) -> usize {
-    1
-  }
-
-  fn unselected(&self) -> usize {
-    0
-  }
-
-  fn flip(&mut self) -> &mut Self {
-    self
-  }
-
-  fn merge(&mut self, _: Self) -> &mut Self {
-    self
-  }
-}
 
 /// The network flavor
 #[derive(

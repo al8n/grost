@@ -108,6 +108,14 @@ pub trait FlavorGeneratorExt: FlavorGenerator {
     )
   }
 
+  fn optional_field_reflection_name(&self, field_name: &str) -> Ident {
+    let flavor_name_ssc = self.name().to_shouty_snake_case();
+    format_ident!(
+      "__{flavor_name_ssc}_FLAVOR_{}_REFLECTION_OPTIONAL__",
+      field_name.to_shouty_snake_case()
+    )
+  }
+
   fn struct_reflection_name(&self) -> Ident {
     let flavor_name_ssc = self.name().to_shouty_snake_case();
     format_ident!("{flavor_name_ssc}_FLAVOR_REFLECTION")

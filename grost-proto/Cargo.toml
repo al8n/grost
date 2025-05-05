@@ -104,7 +104,7 @@ simdutf8 = { version = "0.1", default-features = false, optional = true }
 
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bitflags = { version = "2", default-features = false }
-derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
+derive_more = { workspace = true, features = ["display", "debug", "is_variant", "try_unwrap", "unwrap"] }
 varing.workspace = true
 quickcheck = { version = "1", optional = true }
 arbitrary = { version = "1", optional = true, features = ["derive"] }

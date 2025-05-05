@@ -4,7 +4,7 @@ use super::{Flavor, Type};
 pub struct StructReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub fields: &'static [FieldReflection<F>],
+  pub fields: &'static [&'static FieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
@@ -23,7 +23,7 @@ impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
 pub struct StructReflection<F: Flavor + ?Sized> {
   name: &'static str,
   schema_name: &'static str,
-  fields: &'static [FieldReflection<F>],
+  fields: &'static [&'static FieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> Clone for StructReflection<F> {
@@ -51,7 +51,7 @@ impl<F: Flavor + ?Sized> StructReflection<F> {
 
   /// Get the fields of this struct
   #[inline]
-  pub const fn fields(&self) -> &'static [FieldReflection<F>] {
+  pub const fn fields(&self) -> &'static [&'static FieldReflection<F>] {
     self.fields
   }
 }
@@ -80,10 +80,11 @@ impl<F: Flavor + ?Sized> FieldReflectionBuilder<F> {
 }
 
 /// The information of a field in the Graph protocol buffer
-#[derive(Debug)]
+#[derive(derive_more::Debug)]
 pub struct FieldReflection<F: Flavor + ?Sized> {
   name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
+  #[debug("{}", (self.ty)())]
   ty: fn() -> &'static str,
   schema_name: &'static str,
   schema_type: Type<F>,

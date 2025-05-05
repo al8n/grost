@@ -85,6 +85,10 @@ impl Struct {
     format_ident!("{}FieldIndexer", self.name.name_str())
   }
 
+  pub fn index_name(&self) -> Ident {
+    format_ident!("{}FieldIndex", self.name.name_str())
+  }
+
   pub fn name(&self) -> &SafeIdent {
     &self.name
   }
@@ -184,8 +188,6 @@ impl Struct {
 
     let name_str = self.name.name_str();
     let schema_name = self.schema_name.as_str();
-
-    let indexer = self.generate_indexer();
 
     quote! {
       impl ::core::default::Default for #name {

@@ -354,6 +354,7 @@ impl Field {
     let flavor_ty = flavor.ty();
     let flavor_name_ssc = flavor.name().to_shouty_snake_case();
     let field_reflection_name = flavor.field_reflection_name(field_name);
+    let field_reflection_optional_name = flavor.optional_field_reflection_name(field_name);
     let field_reflection_doc = format!(
       " The reflection information of the `{field_name}` field for [`{}`]({}) flavor.",
       flavor.name().to_upper_camel_case(),
@@ -362,27 +363,19 @@ impl Field {
     let field_ty = self.ty.ty();
     let schema_name = self.schema_name();
     let relection_ty = self.ty.to_type_reflection(path_to_grost, flavor);
-    // let identifier_encoded_len_name = format_ident!("__{}_IDENTIFIER_ENCODED_LEN__", name);
-    // let identifier_encode_name = format_ident!("__ENCODED_{}_IDENTIFIER__", name);
 
     let identifier = flavor.generate_field_identifier(path_to_grost, self);
     quote! {
-      // const #identifier_name: #path_to_grost::__private::Identifier<#flavor_ty> = #path_to_grost::__private::Identifier::new(<#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE, #path_to_grost::__private::Tag::new(#tag));
-      // const #identifier_encoded_len_name: ::core::primitive::usize = Self::#identifier_name.encoded_len();
-      // const #identifier_encode_name: &[::core::primitive::u8] = Self::#identifier_name.encode().as_slice();
-
       #[doc = #field_reflection_doc]
-      pub const #field_reflection_name: #path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = #path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
+      pub const #field_reflection_name: &#path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = &#path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
         identifier: #identifier,
-        // tag: #path_to_grost::__private::Tag::new(#tag),
-        // wire_format: <#field_ty as #path_to_grost::__private::Wirable<#flavor_ty>>::WIRE_TYPE,
-        // encoded_identifier_len: Self::#identifier_encoded_len_name,
-        // encoded_identifier: Self::#identifier_encode_name,
         name: #field_name,
         ty: ::core::any::type_name::<#field_ty>,
         schema_name: #schema_name,
         schema_type: #relection_ty,
       }.build();
+
+      const #field_reflection_optional_name: ::core::option::Option<& #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>> = ::core::option::Option::Some(Self::#field_reflection_name);
     }
   }
 

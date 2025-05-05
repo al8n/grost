@@ -62,9 +62,15 @@ impl Struct {
         self.name.name_str(),
         field_name.name_str()
       );
-      let contains_fn_name = format_ident!("contains_{}", field_name.name_str());
-      let contains_fn_doc = format!(
-        " Check if the `{}.{}` field is set",
+      let is_field_selected_fn_name = format_ident!("is_{}_selected", field_name.name_str());
+      let is_field_selected_fn_doc = format!(
+        " Returns `true` if the `{}.{}` field is selected",
+        self.name.name_str(),
+        field_name.name_str()
+      );
+      let is_field_unselected_fn_name = format_ident!("is_{}_unselected", field_name.name_str());
+      let is_field_unselected_fn_doc = format!(
+        " Returns `true` if the `{}.{}` field is unselected",
         self.name.name_str(),
         field_name.name_str()
       );
@@ -93,7 +99,7 @@ impl Struct {
           #[doc = #unselect_fn_doc]
           #[inline]
           pub fn #unselect_fn_name(&mut self) -> &mut Self {
-            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::NONE;
+            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::NONE;
             self
           }
 
@@ -107,6 +113,18 @@ impl Struct {
           #[inline]
           pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector {
             &mut self.#field_name
+          }
+
+          #[doc = #is_field_selected_fn_doc]
+          #[inline]
+          pub const fn #is_field_selected_fn_name(&self) -> ::core::primitive::bool {
+            !self.#field_name.is_empty()
+          }
+
+          #[doc = #is_field_unselected_fn_doc]
+          #[inline]
+          pub const fn #is_field_unselected_fn_name(&self) -> ::core::primitive::bool {
+            self.#field_name.is_empty()
           }
         }
       } else {  
@@ -160,10 +178,16 @@ impl Struct {
             self
           }
   
-          #[doc = #contains_fn_doc]
+          #[doc = #is_field_selected_fn_doc]
           #[inline]
-          pub const fn #contains_fn_name(&self) -> ::core::primitive::bool {
+          pub const fn #is_field_selected_fn_name(&self) -> ::core::primitive::bool {
             self.#field_name
+          }
+
+          #[doc = #is_field_unselected_fn_doc]
+          #[inline]
+          pub const fn #is_field_unselected_fn_name(&self) -> ::core::primitive::bool {
+            !self.#field_name
           }
         }
       }
@@ -198,7 +222,7 @@ impl Struct {
         }
       } else {
         quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::NONE
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::NONE
         }
       } 
     });
@@ -214,7 +238,7 @@ impl Struct {
         }
       } else {
         quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::ALL
+          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::ALL
         }
       }
     });
@@ -250,38 +274,21 @@ impl Struct {
     });
 
     let num_selected = self.fields.iter().map(|f| {
-      let ty = f.ty();
       let field_name = f.name();
-      if ty.primitive_selection_type() {
-        quote! {
-          if self.#field_name {
-            num += 1;
-          }
-        }
-      } else {
-        quote! {
-          if !self.#field_name.is_empty() {
-            num += 1;
-          }
+      let fn_name = format_ident!("is_{}_selected", field_name.name_str());
+      quote! {
+        if self.#fn_name() {
+          num += 1;
         }
       }
     });
 
     let num_unselected = self.fields.iter().map(|f| {
-      let ty = f.ty();
       let field_name = f.name();
-      let rust_ty = ty.ty();
-      if ty.primitive_selection_type() {
-        quote! {
-          if !self.#field_name {
-            num += 1;
-          }
-        }
-      } else {
-        quote! {
-          if self.#field_name.is_empty() {
-            num += 1;
-          }
+      let fn_name = format_ident!("is_{}_unselected", field_name.name_str());
+      quote! {
+        if self.#fn_name() {
+          num += 1;
         }
       }
     });
@@ -296,7 +303,7 @@ impl Struct {
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::merge(&mut self.#field_name, other.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::merge(&mut self.#field_name, other.#field_name);
         }
       }
     });
@@ -312,14 +319,14 @@ impl Struct {
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector>::flip(&mut self.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::flip(&mut self.#field_name);
         }
       }
     });
 
     let debug = self.fields.iter().map(|f| {
       let field_name = f.name();
-      let field_name_str = f.name().name_str();
+      let field_name_str = f.schema_name();
       let ty = f.ty();
       if ty.primitive_selection_type() {
         quote! {
@@ -373,18 +380,21 @@ impl Struct {
     );
     let indexer_name = self.indexer_name();
 
-    let index = self.fields().iter().map(|f| {
+    let is_selected = self.fields().iter().map(|f| {
       let field_name = f.name();
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
-      let ty = f.ty();
-      if ty.primitive_selection_type() {
-        quote! {
-          #indexer_name::#field_variant => self.#field_name
-        }
-      } else {
-        quote! {
-          #indexer_name::#field_variant => !self.#field_name.is_empty()
-        }
+      let fn_name = format_ident!("is_{}_selected", field_name.name_str());
+      quote! {
+        #indexer_name::#field_variant => self.#fn_name()
+      }
+    });
+
+    let is_unselected = self.fields().iter().map(|f| {
+      let field_name = f.name();
+      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
+      let fn_name = format_ident!("is_{}_unselected", field_name.name_str());
+      quote! {
+        #indexer_name::#field_variant => self.#fn_name()
       }
     });
 
@@ -430,7 +440,7 @@ impl Struct {
       #[automatically_derived]
       impl<F: ?::core::marker::Sized> #name<F> {
         fn debug_helper(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-          let num_selected = self.num_selected();
+          let num_selected = self.selected();
           let mut idx = 0;
           ::core::write!(f, ::core::concat!("("))?;
           #(#debug)*
@@ -479,16 +489,16 @@ impl Struct {
       }
 
       #[automatically_derived]
-      impl<F: ?::core::marker::Sized> #path_to_grost::__private::Selector for #name<F> {
+      impl<F: ?::core::marker::Sized> #path_to_grost::__private::Selector<F> for #name<F> {
         const ALL: Self = Self::all();
         const NONE: Self = Self::empty();
 
         fn selected(&self) -> ::core::primitive::usize {
-          self.num_selected()
+          Self::selected(self)
         }
 
         fn unselected(&self) -> ::core::primitive::usize {
-          self.num_unselected()
+          Self::unselected(self)
         }
 
         fn flip(&mut self) -> &mut Self {
@@ -541,7 +551,7 @@ impl Struct {
 
         /// Returns the number of selected fields.
         #[inline]
-        pub const fn num_selected(&self) -> ::core::primitive::usize {
+        pub const fn selected(&self) -> ::core::primitive::usize {
           let mut num = 0;
           #(#num_selected)*
           num
@@ -549,7 +559,7 @@ impl Struct {
 
         /// Returns the number of unselected fields.
         #[inline]
-        pub const fn num_unselected(&self) -> ::core::primitive::usize {
+        pub const fn unselected(&self) -> ::core::primitive::usize {
           let mut num = 0;
           #(#num_unselected)*
           num
@@ -559,21 +569,29 @@ impl Struct {
         #[inline]
         pub const fn iter_selected(&self) -> #iter_name<F, true>
         {
-          #iter_name::new(self, self.num_selected())
+          #iter_name::new(self, self.selected())
         }
 
         /// Returns an iterator over the unselected fields.
         #[inline]
         pub const fn iter_unselected(&self) -> #iter_name<F, false>
         {
-          #iter_name::new(self, self.num_unselected())
+          #iter_name::new(self, self.unselected())
         }
 
         /// Returns `true` if such field is selected.
         #[inline]
-        pub const fn contains(&self, idx: #indexer_name) -> ::core::primitive::bool {
+        pub const fn is_selected(&self, idx: #indexer_name) -> ::core::primitive::bool {
           match idx {
-            #(#index),*
+            #(#is_selected),*
+          }
+        }
+
+        /// Returns `true` if such field is unselected.
+        #[inline]
+        pub const fn is_unselected(&self, idx: #indexer_name) -> ::core::primitive::bool {
+          match idx {
+            #(#is_unselected),*
           }
         }
 
@@ -849,643 +867,3 @@ impl Struct {
   }
 }
 
-fn flags_declare<'a, F, O>(
-  fields: &'a [Field],
-  convert: F,
-) -> impl Iterator<Item = proc_macro2::TokenStream> + 'a
-where
-  F: Fn(usize) -> O + 'a,
-  O: ToTokens + 'a,
-{
-  fields.iter().enumerate().map(move |(idx, f)| {
-    let field_name = f.name();
-    let field_flag_name = format_ident!("{}", field_name.name_str().to_shouty_snake_case());
-    let val = convert(idx);
-    quote! {
-      const #field_flag_name = #val;
-    }
-  })
-}
-
-fn flag_ops<'a>(fields: &'a [Field]) -> impl Iterator<Item = proc_macro2::TokenStream> + 'a {
-  fields.iter().map(move |f| {
-    let field_name = f.name();
-    let field_flag_name = format_ident!("{}", field_name.name_str().to_shouty_snake_case());
-    let select_fn_name = format_ident!("select_{}", field_name.name_str());
-    let unselect_fn_name = format_ident!("unselect_{}", field_name.name_str());
-    let update_fn_name = format_ident!("update_{}", field_name.name_str());
-    let toggle_fn_name = format_ident!("toggle_{}", field_name.name_str());
-    let with_fn_name = format_ident!("with_{}", field_name.name_str());
-    let without_fn_name = format_ident!("without_{}", field_name.name_str());
-    let maybe_fn_name = format_ident!("maybe_{}", field_name.name_str());
-    let contains_fn_name = format_ident!("contains_{}", field_name.name_str());
-
-    quote! {
-      #[inline]
-      const fn #select_fn_name(&mut self) -> &mut Self {
-        *self = self.union(Self::#field_flag_name);
-        self
-      }
-
-      #[inline]
-      const fn #unselect_fn_name(&mut self) -> &mut Self {
-        *self = self.difference(Self::#field_flag_name);
-        self
-      }
-
-      #[inline]
-      const fn #update_fn_name(&mut self, value: ::core::primitive::bool) -> &mut Self {
-        if value {
-          self.#select_fn_name()
-        } else {
-          self.#unselect_fn_name()
-        }
-      }
-
-      #[inline]
-      const fn #toggle_fn_name(&mut self) -> &mut Self {
-        *self = self.symmetric_difference(Self::#field_flag_name);
-        self
-      }
-
-      #[inline]
-      const fn #with_fn_name(self) -> Self {
-        self.union(Self::#field_flag_name)
-      }
-
-      #[inline]
-      const fn #without_fn_name(self) -> Self {
-        self.difference(Self::#field_flag_name)
-      }
-
-      #[inline]
-      const fn #maybe_fn_name(self, val: ::core::primitive::bool) -> Self {
-        if val {
-          self.#with_fn_name()
-        } else {
-          self.#without_fn_name()
-        }
-      }
-
-      #[inline]
-      const fn #contains_fn_name(&self) -> ::core::primitive::bool {
-        self.contains(Self::#field_flag_name)
-      }
-    }
-  })
-}
-
-fn generate_bitflags_iter(
-  path_to_grost: &syn::Path,
-  vis: Option<&Visibility>,
-  struct_name: &Ident,
-  flags_name: &Ident,
-  flags_iter_name: &Ident,
-  flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
-) -> proc_macro2::TokenStream {
-  let impl_iterators = flavors.iter().map(|(_, f)| {
-    let flavor_ty = f.ty();
-    let reflection_name = f.struct_reflection_name();
-    quote! {
-      impl<const S: ::core::primitive::bool> ::core::iter::Iterator for #flags_iter_name<#flavor_ty, S> {
-        type Item = #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>;
-
-        #[inline]
-        fn next(&mut self) -> ::core::option::Option<Self::Item> {
-          for f in ::core::iter::Iterator::by_ref(&mut self.iter) {
-            if let ::core::option::Option::Some(val) = #struct_name::#reflection_name.fields().get(f.bits().trailing_zeros() as ::core::primitive::usize) {
-              return ::core::option::Option::Some(*val);
-            }
-          }
-
-          ::core::option::Option::None
-        }
-      }
-
-      impl<const S: ::core::primitive::bool> ::core::iter::FusedIterator for #flags_iter_name<#flavor_ty, S> {}
-
-      impl<const S: ::core::primitive::bool> ::core::iter::ExactSizeIterator for #flags_iter_name<#flavor_ty, S> {
-        #[inline]
-        fn len(&self) -> ::core::primitive::usize {
-          self.remaining()
-        }
-      }
-    }
-  });
-
-  quote! {
-    /// Yield a set of selected fields.
-    #vis struct #flags_iter_name<F: ?::core::marker::Sized, const S: ::core::primitive::bool = true> {
-      iter: #path_to_grost::__private::bitflags::iter::Iter<#flags_name>,
-      yielded: ::core::primitive::usize,
-      len: ::core::primitive::usize,
-      _m: ::core::marker::PhantomData<F>,
-    }
-
-    impl<F, const S: ::core::primitive::bool> #flags_iter_name<F, S>
-    where
-      F: ?::core::marker::Sized,
-    {
-      #[inline]
-      const fn new(mut selector: #flags_name) -> Self {
-        if !S {
-          selection = selection.complement();
-        }
-
-        Self {
-          iter: selection.iter(),
-          yielded: 0,
-          len: selection.num_selected(),
-          _m: ::core::marker::PhantomData
-        }
-      }
-
-      /// Returns the exact remaining length of the iterator.
-      #[inline]
-      pub const fn remaining(&self) -> ::core::primitive::usize {
-        self.len - self.yielded
-      }
-
-      /// Returns `true` if the iterator is empty.
-      #[inline]
-      pub const fn is_empty(&self) -> ::core::primitive::bool {
-        self.remaining() == 0
-      }
-    }
-
-    #(#impl_iterators)*
-  }
-}
-
-fn generate_selection_flags(
-  vis: Option<&Visibility>,
-  struct_name: &Ident,
-  name: &Ident,
-  selection_flags_iter_name: &Ident,
-  fields: &[Field],
-  path_to_grost: &syn::Path,
-  flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
-) -> proc_macro2::TokenStream {
-  let num_fields = fields.len();
-
-  let derives = quote! {
-    #[derive(
-      ::core::fmt::Debug,
-      ::core::clone::Clone,
-      ::core::marker::Copy,
-      ::core::cmp::PartialEq,
-      ::core::cmp::Eq,
-      ::core::cmp::PartialOrd,
-      ::core::cmp::Ord,
-      ::core::hash::Hash,
-    )]
-  };
-  let merge = quote! {
-    #[inline]
-    const fn merge(&self, other: Self) -> Self {
-      Self(self.0.union(other.0))
-    }
-  };
-
-  let common_fns = quote! {
-    #[inline]
-    const fn select_field_reflection_iter_selected<F>(&self) -> #selection_flags_iter_name<F, true>
-    where
-      F: ?::core::marker::Sized,
-    {
-      #selection_flags_iter_name::new(*self)
-    }
-
-    #[inline]
-    const fn select_field_reflection_iter_unselected<F>(&self) -> #selection_flags_iter_name<F, false>
-    where
-      F: ?::core::marker::Sized,
-    {
-      #selection_flags_iter_name::new(*self)
-    }
-
-    #[inline]
-    const fn num_selected(&self) -> ::core::primitive::usize {
-      self.bits().count_ones() as ::core::primitive::usize
-    }
-
-    #[inline]
-    const fn num_unselected(&self) -> ::core::primitive::usize {
-      self.bits().count_zeros() as ::core::primitive::usize
-    }
-
-    const OPTIONS: ::core::primitive::usize = #num_fields;
-  };
-
-  match num_fields {
-    ..=8 => {
-      let flags = flags_declare(fields, |idx| 1u8 << idx);
-      let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(
-        path_to_grost,
-        vis,
-        struct_name,
-        name,
-        selection_flags_iter_name,
-        flavors,
-      );
-      quote! {
-        #path_to_grost::__private::bitflags::bitflags! {
-          #derives
-          struct #name: ::core::primitive::u8 {
-            #(#flags)*
-          }
-        }
-
-        impl #name {
-          #(#flag_ops)*
-
-          #merge
-
-          #common_fns
-        }
-
-        #iter
-      }
-    }
-    9..=16 => {
-      let flags = flags_declare(fields, |idx| 1u16 << idx);
-      let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(
-        path_to_grost,
-        vis,
-        struct_name,
-        name,
-        selection_flags_iter_name,
-        flavors,
-      );
-      quote! {
-        #path_to_grost::__private::bitflags::bitflags! {
-          #derives
-          struct #name: ::core::primitive::u16 {
-            #(#flags)*
-          }
-        }
-
-        impl #name {
-          #(#flag_ops)*
-
-          #merge
-
-          #common_fns
-        }
-
-        #iter
-      }
-    }
-    17..=32 => {
-      let flags = flags_declare(fields, |idx| 1u32 << idx);
-      let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(
-        path_to_grost,
-        vis,
-        struct_name,
-        name,
-        selection_flags_iter_name,
-        flavors,
-      );
-      quote! {
-        #path_to_grost::__private::bitflags::bitflags! {
-          #derives
-          struct #name: ::core::primitive::u32 {
-            #(#flags)*
-          }
-        }
-
-        impl #name {
-          #(#flag_ops)*
-
-          #merge
-
-          #common_fns
-        }
-
-        #iter
-      }
-    }
-    33..=64 => {
-      let flags = flags_declare(fields, |idx| 1u64 << idx);
-      let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(
-        path_to_grost,
-        vis,
-        struct_name,
-        name,
-        selection_flags_iter_name,
-        flavors,
-      );
-      quote! {
-        #path_to_grost::__private::bitflags::bitflags! {
-          #derives
-          struct #name: ::core::primitive::u64 {
-            #(#flags)*
-          }
-        }
-
-        impl #name {
-          #(#flag_ops)*
-
-          #merge
-
-          #common_fns
-        }
-
-        #iter
-      }
-    }
-    65..=128 => {
-      let flags = flags_declare(fields, |idx| 1u128 << idx);
-      let flag_ops = flag_ops(fields);
-      let iter = generate_bitflags_iter(
-        path_to_grost,
-        vis,
-        struct_name,
-        name,
-        selection_flags_iter_name,
-        flavors,
-      );
-      quote! {
-        #path_to_grost::__private::bitflags::bitflags! {
-          #derives
-          struct #name: ::core::primitive::u128 {
-            #(#flags)*
-          }
-        }
-
-        impl #name {
-          #(#flag_ops)*
-
-          #merge
-
-          #common_fns
-        }
-
-        #iter
-      }
-    }
-    val => {
-      let digits = val.div_ceil(64);
-      let bits = fields.len().min(val) as u32;
-
-      let flags = fields.iter().enumerate().map(move |(idx, f)| {
-        let field_name = f.name();
-        let field_flag_name = format_ident!("{}", field_name.name_str().to_shouty_snake_case());
-        let idx = idx as u32;
-        quote! {
-          const #field_flag_name: #path_to_grost::__private::bnum::BUint::<#digits> = #path_to_grost::__private::bnum::BUint::<#digits>::ONE.shl(#idx);
-        }
-      });
-
-      let all = (0..fields.len()).map(|idx| {
-        let idx = idx as u32;
-        quote! {
-          set_bit(#idx, true)
-        }
-      });
-
-      let flag_ops = fields.iter().enumerate().map(|(idx, field)| {
-        let field_name = field.name();
-        let select_fn_name = format_ident!("select_{}", field_name.name_str());
-        let unselect_fn_name = format_ident!("unselect_{}", field_name.name_str());
-        let update_fn_name = format_ident!("update_{}", field_name.name_str());
-        let toggle_fn_name = format_ident!("toggle_{}", field_name.name_str());
-        let with_fn_name = format_ident!("with_{}", field_name.name_str());
-        let without_fn_name = format_ident!("without_{}", field_name.name_str());
-        let maybe_fn_name = format_ident!("maybe_{}", field_name.name_str());
-        let contains_fn_name = format_ident!("contains_{}", field_name.name_str());
-        let idx = idx as u32;
-
-        quote! {
-          #[inline]
-          const fn #select_fn_name(&mut self) -> &mut Self {
-            *self = self.set_bit(#idx, true);
-            self
-          }
-
-          #[inline]
-          const fn #unselect_fn_name(&mut self) -> &mut Self {
-            *self = self.set_bit(#idx, false);
-            self
-          }
-
-          #[inline]
-          const fn #update_fn_name(&mut self, value: ::core::primitive::bool) -> &mut Self {
-            *self = self.set_bit(#idx, value);
-            self
-          }
-
-          #[inline]
-          const fn #toggle_fn_name(&mut self) -> &mut Self {
-            *self = self.set_bit(#idx, !self.0.bit(#idx));
-            self
-          }
-
-          #[inline]
-          const fn #with_fn_name(self) -> Self {
-            self.set_bit(#idx, true)
-          }
-
-          #[inline]
-          const fn #without_fn_name(self) -> Self {
-            self.set_bit(#idx, false)
-          }
-
-          #[inline]
-          const fn #maybe_fn_name(self, val: ::core::primitive::bool) -> Self {
-            self.set_bit(#idx, val)
-          }
-
-          #[inline]
-          const fn #contains_fn_name(&self) -> ::core::primitive::bool {
-            self.0.bit(#idx)
-          }
-        }
-      });
-
-      let impl_iterator = flavors.iter().map(|(_, f)| {
-        let flavor_ty = f.ty();
-        let reflection_name = f.struct_reflection_name();
-        quote! {
-          impl<const S: ::core::primitive::bool> ::core::iter::Iterator for #selection_flags_iter_name<#flavor_ty, S> {
-            type Item = #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>;
-
-            #[inline]
-            fn next(&mut self) -> ::core::option::Option<Self::Item> {
-              if S {
-                while self.idx < #name::MAX_BIT_POSITION && self.yielded < self.len {
-                  if self.selection.0.bit(self.idx) {
-                    if let ::core::option::Option::Some(val) = #struct_name::#reflection_name.fields().get(self.idx as ::core::primitive::usize) {
-                      self.yielded += 1;
-                      self.idx += 1;
-                      return ::core::option::Option::Some(*val);
-                    }
-                  }
-  
-                  self.idx += 1;
-                }
-              } else {
-                while self.idx < #name::MAX_BIT_POSITION && self.yielded < self.len {
-                  if !self.selection.0.bit(self.idx) {
-                    if let ::core::option::Option::Some(val) = #struct_name::#reflection_name.fields().get(self.idx as ::core::primitive::usize) {
-                      self.yielded += 1;
-                      self.idx += 1;
-                      return ::core::option::Option::Some(*val);
-                    }
-                  }
-  
-                  self.idx += 1;
-                }
-              }
-
-              ::core::option::Option::None
-            }
-
-            #[inline]
-            fn size_hint(&self) -> (::core::primitive::usize, ::core::option::Option<::core::primitive::usize>) {
-              let remaining = self.remaining();
-              (remaining, ::core::option::Option::Some(remaining))
-            }
-          }
-
-          impl<const S: ::core::primitive::bool> ::core::iter::FusedIterator for #selection_flags_iter_name<#flavor_ty, S> {}
-
-          impl<const S: ::core::primitive::bool> ::core::iter::ExactSizeIterator for #selection_flags_iter_name<#flavor_ty, S> {
-            #[inline]
-            fn len(&self) -> ::core::primitive::usize {
-              self.remaining()
-            }
-          }
-        }
-      });
-
-      quote! {
-        /// Yield a set of selected fields.
-        #vis struct #selection_flags_iter_name<F: ?::core::marker::Sized, const S: ::core::primitive::bool = true> {
-          idx: ::core::primitive::u32,
-          selector: #name,
-          yielded: ::core::primitive::usize,
-          len: ::core::primitive::usize,
-          _m: ::core::marker::PhantomData<F>,
-        }
-
-        impl<F, const S: ::core::primitive::bool> #selection_flags_iter_name<F, S>
-        where
-          F: ?::core::marker::Sized,
-        {
-          #[inline]
-          const fn new(idx: ::core::primitive::u32, selector: #name) -> Self {
-            let len = if S {
-              selection.num_selected()
-            } else {
-              selection.num_unselected()
-            };
-
-            Self {
-              idx,
-              selection,
-              yielded: 0,
-              len,
-              _m: ::core::marker::PhantomData
-            }
-          }
-
-          /// Returns the exact remaining length of the iterator.
-          #[inline]
-          pub const fn remaining(&self) -> ::core::primitive::usize {
-            self.len - self.yielded
-          }
-
-          /// Returns `true` if the iterator is empty.
-          #[inline]
-          pub const fn is_empty(&self) -> ::core::primitive::bool {
-            self.remaining() == 0
-          }
-        }
-
-        #(#impl_iterator)*
-
-        #derives
-        struct #name(#path_to_grost::__private::bnum::BUint<#digits>);
-
-        impl #name {
-          const ALL: Self = {
-            Self::empty()
-              #(.#all)*
-          };
-          const MAX_BIT_POSITION: ::core::primitive::u32 = #bits;
-          const OPTIONS: ::core::primitive::usize = #num_fields;
-
-          #(#flags)*
-
-          #(#flag_ops)*
-
-          #[inline]
-          const fn empty() -> Self {
-            Self(#path_to_grost::__private::bnum::BUint::<#digits>::ZERO)
-          }
-
-          #[inline]
-          const fn all() -> Self {
-            Self::ALL
-          }
-
-          #[inline]
-          const fn is_empty(&self) -> ::core::primitive::bool {
-            self.0.eq(&#path_to_grost::__private::bnum::BUint::<#digits>::ZERO)
-          }
-
-          #[inline]
-          const fn is_all(&self) -> ::core::primitive::bool {
-            self.0.eq(&Self::ALL.0)
-          }
-
-          #[inline]
-          const fn merge(&self, other: Self) -> Self {
-            Self(self.0.bitor(other.0))
-          }
-
-          #[inline]
-          const fn select_field_reflection_iter_selected<F>(&self) -> #selection_flags_iter_name<F, true>
-          where
-            F: ?::core::marker::Sized,
-          {
-            #selection_flags_iter_name::new(0, *self)
-          }
-
-          #[inline]
-          const fn select_field_reflection_iter_unselected<F>(&self) -> #selection_flags_iter_name<F, false>
-          where
-            F: ?::core::marker::Sized,
-          {
-            #selection_flags_iter_name::new(0, *self)
-          }
-
-          #[inline]
-          const fn num_selected(&self) -> ::core::primitive::usize {
-            self.0.count_ones() as ::core::primitive::usize
-          }
-
-          #[inline]
-          const fn num_unselected(&self) -> ::core::primitive::usize {
-            self.0.count_zeros() as ::core::primitive::usize
-          }
-
-          #[inline]
-          const fn set_bit(&self, idx: ::core::primitive::u32, val: ::core::primitive::bool) -> Self {
-            let mask = #path_to_grost::__private::bnum::BUint::<#digits>::ONE.shl(idx);
-            if val {
-              Self(self.0.bitor(mask))
-            } else {
-              Self(self.0.bitand(mask.not()))
-            }
-          }
-        }
-      }
-    }
-  }
-}
