@@ -1,7 +1,7 @@
 use heck::ToUpperCamelCase;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 
-use crate::{network::Network, Field, FlavorGeneratorExt, Struct};
+use crate::{Field, FlavorGeneratorExt, Struct, network::Network};
 
 use super::*;
 
@@ -15,53 +15,57 @@ impl Network {
     let index_name = struct_.index_name();
     let struct_name = struct_.name();
     let selector_name = struct_.selector_name();
-    let select_by_index = struct_.fields().iter().map(|f| {
-      let field_name = f.name();
-      let ty = f.ty();
-      let field_reflection_name = self.field_reflection_name(f.name().name_str());
-      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
-      if ty.primitive_selection_type() {
-        quote! {
-          #indexer_name::#field_variant => match (select, self.#field_name) {
-            (true, true) => ::core::option::Option::Some(&#struct_name::#field_reflection_name),
-            (true, false) => ::core::option::Option::None,
-            (false, true) => ::core::option::Option::None,
-            (false, false) => ::core::option::Option::Some(&#struct_name::#field_reflection_name),
-          }
-        }
-      } else {
-        quote! {
-          #indexer_name::#field_variant => match (select, self.#field_name.is_empty()) {
-            (true, false) => ::core::option::Option::Some(&#struct_name::#field_reflection_name),
-            (true, true) => ::core::option::Option::None,
-            (false, false) => ::core::option::Option::None,
-            (false, true) => ::core::option::Option::Some(&#struct_name::#field_reflection_name),
-          }
-        }
-      }
-    });
 
+    let reflection_mod_name = struct_.reflection_mod_name();
+    let reflection_name = struct_.reflection_name();
     let index_trait_select = struct_.fields().iter().map(|f| {
       let field_name = f.name();
       let ty = f.ty();
-      let field_reflection_name_optional = self.optional_field_reflection_name(f.name().name_str());
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
+      let field_reflection = struct_.field_reflection_name();
+      let tag = f.tag();
+      let reflection = quote! {
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+          <
+            #reflection_mod_name::#reflection_name<
+              #reflection_mod_name::#field_reflection<
+                #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+                #path_to_grost::__private::flavors::Network,
+                #tag,
+              >,
+              #path_to_grost::__private::flavors::Network,
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::flavors::Network,
+            >
+          >::REFLECTION
+        );
+      };
+
       if ty.primitive_selection_type() {
         quote! {
-          #indexer_name::#field_variant => match (select, self.#field_name) {
-            (true, true) => &#struct_name::#field_reflection_name_optional,
-            (true, false) => NONE,
-            (false, true) => NONE,
-            (false, false) => &#struct_name::#field_reflection_name_optional,
+          #indexer_name::#field_variant => {
+            #reflection
+
+            match (select, self.#field_name) {
+              (true, true) => &REFLECTION,
+              (true, false) => NONE,
+              (false, true) => NONE,
+              (false, false) => &REFLECTION,
+            }
           }
         }
       } else {
         quote! {
-          #indexer_name::#field_variant => match (select, self.#field_name.is_empty()) {
-            (true, false) => &#struct_name::#field_reflection_name_optional,
-            (true, true) => NONE,
-            (false, false) => NONE,
-            (false, true) => &#struct_name::#field_reflection_name_optional,
+          #indexer_name::#field_variant => {
+            #reflection
+
+            match (select, self.#field_name.is_empty()) {
+              (true, false) => &REFLECTION,
+              (true, true) => NONE,
+              (false, false) => NONE,
+              (false, true) => &REFLECTION,
+            }
           }
         }
       }
@@ -70,41 +74,50 @@ impl Network {
     let index_selector = struct_.fields().iter().map(|f| {
       let field_name = f.name();
       let ty = f.ty();
-      let field_reflection_name_optional = self.optional_field_reflection_name(f.name().name_str());
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
+      let field_reflection = struct_.field_reflection_name();
+      let tag = f.tag();
+      let reflection = quote! {
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+          <
+            #reflection_mod_name::#reflection_name<
+              #reflection_mod_name::#field_reflection<
+                #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+                #path_to_grost::__private::flavors::Network,
+                #tag,
+              >,
+              #path_to_grost::__private::flavors::Network,
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::flavors::Network,
+            >
+          >::REFLECTION
+        );
+      };
       if ty.primitive_selection_type() {
         quote! {
-          #indexer_name::#field_variant => if self.#field_name {
-            &#struct_name::#field_reflection_name_optional
-          } else {
-            NONE
+          #indexer_name::#field_variant => {
+            #reflection
+
+            if self.#field_name {
+              &REFLECTION
+            } else {
+              NONE
+            }
           }
         }
       } else {
         quote! {
-          #indexer_name::#field_variant => if self.#field_name.is_empty() {
-            NONE
-          } else {
-            &#struct_name::#field_reflection_name_optional
+          #indexer_name::#field_variant => {
+            #reflection
+
+            if self.#field_name.is_empty() {
+              NONE
+            } else {
+              &REFLECTION
+            }
           }
         }
-      }
-    });
-    let index = struct_.fields().iter().map(|f| {
-      let field_name = f.name();
-      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
-      let field_reflection_name = self.field_reflection_name(f.name().name_str());
-      quote! {
-        Self::#field_variant => &#struct_name::#field_reflection_name
-      }
-    });
-
-    let index_wire_type = struct_.fields().iter().map(|f| {
-      let field_name = f.name();
-      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
-      let name = self.field_wire_type_const_name(f.name().name_str());
-      quote! {
-        #indexer_name::#field_variant => &#struct_name::#name
       }
     });
 
@@ -173,10 +186,10 @@ impl Network {
         }
       }
 
-      #field_reflection_indexing
-      #field_tag_indexing
-      #field_wire_type_indexing
-      #field_identifier_indexing
+      // #field_reflection_indexing
+      // #field_tag_indexing
+      // #field_wire_type_indexing
+      // #field_identifier_indexing
     }
   }
 
@@ -198,22 +211,9 @@ impl Network {
     });
 
     let output = quote! {#path_to_grost::__private::flavors::network::Identifier};
-    let debug = self.generate_index_debug(
-      path_to_grost,
-      index_name,
-      &output,
-    );
-    let deref = self.generate_index_deref(
-      path_to_grost,
-      index_name,
-      &output,
-      true,
-    );
-    let display = self.generate_index_display(
-      path_to_grost,
-      index_name,
-      &output,
-    );
+    let debug = self.generate_index_debug(path_to_grost, index_name, &output);
+    let deref = self.generate_index_deref(path_to_grost, index_name, &output, true);
+    let display = self.generate_index_display(path_to_grost, index_name, &output);
 
     quote! {
       #[automatically_derived]
@@ -254,22 +254,9 @@ impl Network {
     });
 
     let output = quote! {#path_to_grost::__private::flavors::network::WireType};
-    let debug = self.generate_index_debug(
-      path_to_grost,
-      index_name,
-      &output,
-    );
-    let deref = self.generate_index_deref(
-      path_to_grost,
-      index_name,
-      &output,
-      true,
-    );
-    let display = self.generate_index_display(
-      path_to_grost,
-      index_name,
-      &output,
-    );
+    let debug = self.generate_index_debug(path_to_grost, index_name, &output);
+    let deref = self.generate_index_deref(path_to_grost, index_name, &output, true);
+    let display = self.generate_index_display(path_to_grost, index_name, &output);
 
     quote! {
       #[automatically_derived]
@@ -309,22 +296,9 @@ impl Network {
       }
     });
     let output = quote! {#path_to_grost::__private::flavors::network::Tag};
-    let debug = self.generate_index_debug(
-      path_to_grost,
-      index_name,
-      &output,
-    );
-    let deref = self.generate_index_deref(
-      path_to_grost,
-      index_name,
-      &output,
-      true,
-    );
-    let display = self.generate_index_display(
-      path_to_grost,
-      index_name,
-      &output,
-    );
+    let debug = self.generate_index_debug(path_to_grost, index_name, &output);
+    let deref = self.generate_index_deref(path_to_grost, index_name, &output, true);
+    let display = self.generate_index_display(path_to_grost, index_name, &output);
 
     quote! {
       #[automatically_derived]
@@ -364,17 +338,8 @@ impl Network {
       }
     });
     let output = quote! {#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>};
-    let debug = self.generate_index_debug(
-      path_to_grost,
-      index_name,
-      &output,
-    );
-    let deref = self.generate_index_deref(
-      path_to_grost,
-      index_name,
-      &output,
-      false,
-    );
+    let debug = self.generate_index_debug(path_to_grost, index_name, &output);
+    let deref = self.generate_index_deref(path_to_grost, index_name, &output, false);
 
     quote! {
       #[automatically_derived]
@@ -395,7 +360,7 @@ impl Network {
       #debug
     }
   }
-  
+
   fn generate_index_deref(
     &self,
     path_to_grost: &syn::Path,

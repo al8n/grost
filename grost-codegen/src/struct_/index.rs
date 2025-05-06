@@ -91,7 +91,7 @@ impl Struct {
       }
 
       impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #index_name<O, F> {}
-      
+
       impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> #index_name<O, F> {
         /// Create a new field index.
         #[inline]

@@ -614,7 +614,7 @@ impl Struct {
             }
 
             buf[0] = SELECT_NONE;
-            return ::core::result::Result::Ok(1);            
+            return ::core::result::Result::Ok(1);
           }
 
           if self.is_all() {
@@ -625,7 +625,7 @@ impl Struct {
             buf[0] = SELECT_ALL;
             return ::core::result::Result::Ok(1);
           }
-          
+
           ::core::result::Result::Err(#path_to_grost::__private::EncodeError::custom("only select all fields or no fields can be encoded as zst"))
         }
 
@@ -866,4 +866,3 @@ impl Struct {
     }
   }
 }
-

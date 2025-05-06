@@ -33,9 +33,7 @@ const _: () = {
   impl Arbitrary for Context {
     fn arbitrary(g: &mut Gen) -> Self {
       let flags = Flags::from_bits_truncate(*g.choose(&[1, 2, 4]).unwrap());
-      Self {
-        flags,
-      }
+      Self { flags }
     }
   }
 };

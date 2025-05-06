@@ -92,3 +92,13 @@ pub trait Reflectable<R: ?Sized + 'static, F: Flavor + ?Sized> {
   /// The reflection of this type
   const REFLECTION: &R;
 }
+
+pub struct CommentField<F: Flavor + ?Sized, const TAG: u32>(core::marker::PhantomData<F>);
+
+impl<F: Flavor + ?Sized> Reflectable<u128, F> for CommentField<F, 1> {
+  const REFLECTION: &u128 = &1;
+}
+
+impl<F: Flavor + ?Sized> Reflectable<u128, F> for CommentField<F, 2> {
+  const REFLECTION: &u128 = &2;
+}

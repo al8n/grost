@@ -1,8 +1,7 @@
-use quote::{quote, format_ident};
+use quote::{format_ident, quote};
 use syn::parse_quote;
 
-use crate::{network::Network, Struct};
-
+use crate::{Struct, network::Network};
 
 impl Network {
   pub(crate) fn generate_encode(
@@ -105,7 +104,7 @@ impl Network {
               #path_to_grost::__private::flavors::network::EncodeError::from_varint_error(e)
                 .update(#self_encoded_length_delimited_len, buf_len)
             })?;
-          
+
           if offset >= buf_len {
             return ::core::result::Result::Err(
               #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)

@@ -1,4 +1,7 @@
-use super::{flavors::{Flavor, WireFormat, Identifier}, selector::Selectable};
+use super::{
+  flavors::{Flavor, Identifier, WireFormat},
+  selector::Selectable,
+};
 
 pub use error::EncodeError;
 

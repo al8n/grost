@@ -3,49 +3,46 @@ use crate::FlavorGenerator;
 use super::*;
 
 impl Struct {
-  pub fn generate_reflection(
-    &self,
-    path_to_grost: &syn::Path,
-  ) -> proc_macro2::TokenStream
-  {
-    let mod_name = self.relfection_mod_name();
-    let reflection_name = self.relfection_name();
+  pub fn generate_reflection(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    let mod_name = self.reflection_mod_name();
+    let reflection_name = self.reflection_name();
     let name = self.name.name();
-    let name_str = self.name.name_str();
-    let schema_name = self.schema_name.as_str();
-    let fields = &self.fields;
-    // let fields_reflection_defination = fields
-    //   .iter()
-    //   .map(|f| f.field_reflections(path_to_grost, flavor));
-    // let field_reflections = fields.iter().map(|f| {
-    //   let ident = flavor.field_reflection_name(f.name().name_str());
-    //   quote! { Self::#ident }
-    // });
 
-    // let reflection_name = flavor.struct_reflection_name();
-    // let reflection_doc = format!(
-    //   " The reflection of the struct `{name_str}` for [`{}`]({}) flavor.",
-    //   flavor.name().to_upper_camel_case(),
-    //   flavor.ty().to_token_stream().to_string().replace(" ", "")
-    // );
-    // let flavor_ty = flavor.ty();
-
-    let field_reflections_defination = fields.iter().map(|f| {
-      let field_reflection_name = self.field_reflection_name(f.name().name_str());
+    let field_reflection_name = self.field_reflection_name();
+    let field_reflection_fns = self.fields.iter().map(|f| {
+      let name = f.name();
+      let tag = f.tag();
       let doc = format!(
-        " The reflection of the field `{}` in the struct `{}`",
-        f.name().name_str(),
-        name_str,
+        " Returns the field reflection of the field `{}.{}`.",
+        self.name.name_str(),
+        name.name_str()
       );
       quote! {
         #[doc = #doc]
-        #[derive(::core::fmt::Debug)]
-        pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        #[inline]
+        pub const fn #name(&self) ->
+          #field_reflection_name<
+            #path_to_grost::__private::reflection::FieldReflection<F>,
+            F,
+            #tag,
+          >
+        {
+          #field_reflection_name::new()
+        }
+      }
+    });
+
+    quote! {
+      mod #mod_name {
+        use super::#name;
+
+        /// The field reflection of the struct.
+        pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
           _reflect: ::core::marker::PhantomData<R>,
           _flavor: ::core::marker::PhantomData<F>,
         }
 
-        impl<R, F> #field_reflection_name<R, F>
+        impl<R, F, const TAG: ::core::primitive::u32> #field_reflection_name<R, F, TAG>
         where
           R: ?::core::marker::Sized,
           F: ?::core::marker::Sized,
@@ -58,14 +55,14 @@ impl Struct {
           }
         }
 
-        impl<F> #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F>
+        impl<F, const TAG: ::core::primitive::u32> #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F, TAG>
         where
           F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
         {
           /// Returns the reflection of the field.
           #[inline]
-          pub const fn new() -> Self {
-            #field_reflection_name::new_in()
+          const fn new() -> Self {
+            Self::new_in()
           }
 
           /// Returns the relection to a tag of the field.
@@ -75,6 +72,7 @@ impl Struct {
               F::Tag,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -86,6 +84,7 @@ impl Struct {
               F::Identifier,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -99,6 +98,7 @@ impl Struct {
               >,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -110,6 +110,7 @@ impl Struct {
               F::WireType,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -121,6 +122,7 @@ impl Struct {
               F::Identifier,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -132,6 +134,7 @@ impl Struct {
               F::Identifier,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -145,6 +148,7 @@ impl Struct {
               >,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -156,6 +160,7 @@ impl Struct {
               #path_to_grost::__private::reflection::encode::EncodeField,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -167,6 +172,7 @@ impl Struct {
               #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField,>,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -178,6 +184,7 @@ impl Struct {
               #path_to_grost::__private::reflection::encode::EncodeRefField<'a>,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -191,6 +198,7 @@ impl Struct {
               >,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -202,6 +210,7 @@ impl Struct {
               #path_to_grost::__private::reflection::encode::PartialEncodeField,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -215,6 +224,7 @@ impl Struct {
               >,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -226,6 +236,7 @@ impl Struct {
               #path_to_grost::__private::reflection::encode::PartialEncodeRefField<'a>,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
@@ -239,21 +250,13 @@ impl Struct {
               >,
             >,
             F,
+            TAG,
           > {
             #field_reflection_name::new_in()
           }
         }
 
-        impl<F> ::core::default::Default for #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F>
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
-        {
-          fn default() -> Self {
-            Self::new()
-          }
-        }
-
-        impl<R, F> ::core::clone::Clone for #field_reflection_name<R, F>
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::clone::Clone for #field_reflection_name<R, F, TAG>
         where
           R: ?::core::marker::Sized,
           F: ?::core::marker::Sized,
@@ -263,19 +266,11 @@ impl Struct {
           }
         }
 
-        impl<R, F> ::core::marker::Copy for #field_reflection_name<R, F>
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::marker::Copy for #field_reflection_name<R, F, TAG>
         where
           R: ?::core::marker::Sized,
           F: ?::core::marker::Sized,
         {}
-      }
-    });
-
-    quote! {
-      mod #mod_name {
-        use super::{#name,};
-
-        #(#field_reflections_defination)*
 
         /// The reflection bridge type.
         #[derive(::core::fmt::Debug)]
@@ -292,15 +287,6 @@ impl Struct {
 
         impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #reflection_name<R, F> {}
 
-        impl<F> ::core::default::Default for #reflection_name<#path_to_grost::__private::reflection::StructReflection<F>, F>
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
-        {
-          fn default() -> Self {
-            Self::new()
-          }
-        }
-
         impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> #reflection_name<R, F> {
           const fn new_in() -> Self {
             Self {
@@ -316,9 +302,11 @@ impl Struct {
         {
           /// Returns the reflection of the struct.
           #[inline]
-          pub const fn new() -> Self {
+          const fn new() -> Self {
             Self::new_in()
           }
+
+          #(#field_reflection_fns)*
         }
 
         impl #name {
@@ -335,7 +323,7 @@ impl Struct {
             #reflection_name::new()
           }
         }
-      } 
+      }
     }
   }
 }

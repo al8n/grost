@@ -3,15 +3,19 @@ use crate::Struct;
 use super::Network;
 
 use grost_proto::flavors::selector;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::parse_quote;
 
 mod encode;
-mod partial_encode;
 mod index;
+mod partial_encode;
 
 impl Network {
-  pub(super) fn generate_field_encode_fns(&self, path_to_grost: &syn::Path, struct_: &Struct) -> proc_macro2::TokenStream {
+  pub(super) fn generate_field_encode_fns(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
 
     // let self_encoded_len = quote! {
@@ -302,7 +306,7 @@ fn partial_encoded_length_delimited_len(
       ) -> ::core::primitive::usize {
         match f {
           ::core::option::Option::Some(f) => {
-            #impl_ 
+            #impl_
           },
           ::core::option::Option::None => 0,
         }
@@ -348,7 +352,7 @@ fn encoded_length_delimited_len(
       ) -> ::core::primitive::usize {
         match f {
           ::core::option::Option::Some(f) => {
-            #impl_ 
+            #impl_
           },
           ::core::option::Option::None => 0,
         }
@@ -377,9 +381,7 @@ fn encode_length_delimited(
 ) -> proc_macro2::TokenStream {
   let fn_name = encode_length_delimited_fn_name(field_name);
   let len_fn_name = encoded_length_delimited_len_fn_name(field_name);
-  let impl_ = quote! {
-    
-  };
+  let impl_ = quote! {};
 
   if optional {
     quote! {

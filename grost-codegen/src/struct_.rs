@@ -11,8 +11,8 @@ pub use field::Field;
 pub mod field;
 
 mod index;
-mod selection;
 mod reflection;
+mod selection;
 
 pub struct Struct {
   name: SafeIdent,
@@ -102,18 +102,23 @@ impl Struct {
     &self.fields
   }
 
-  pub fn relfection_mod_name(&self) -> Ident {
+  pub fn reflection_mod_name(&self) -> Ident {
     format_ident!("{}_reflection", self.name.name_str().to_snake_case())
   }
 
-  pub fn relfection_name(&self) -> Ident {
+  pub fn reflection_name(&self) -> Ident {
     format_ident!("{}Reflection", self.name.name_str())
   }
 
-  pub fn field_reflection_name(&self, field_name: &str) -> Ident {
+  pub fn field_reflection_name(&self) -> Ident {
     let struct_name = self.name.name_str();
-    format_ident!("{struct_name}{}FieldReflection", field_name.to_upper_camel_case())
+    format_ident!("{struct_name}FieldReflection")
   }
+
+  // pub fn field_reflection_name(&self, field_name: &str) -> Ident {
+  //   let struct_name = self.name.name_str();
+  //   format_ident!("{struct_name}{}FieldReflection", field_name.to_upper_camel_case())
+  // }
 
   pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
     let name = &self.name;

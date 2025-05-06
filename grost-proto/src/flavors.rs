@@ -7,7 +7,6 @@ pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintEr
 pub use network::Network;
 pub use selector::Select;
 
-
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {
     $(
@@ -145,8 +144,6 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
     B: BytesBuffer + Sized,
     Self: Sized;
 }
-
-
 
 /// The wire format used for encoding and decoding.
 pub trait WireFormat<F: Flavor + ?Sized>:

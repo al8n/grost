@@ -1,4 +1,3 @@
-
 /// A trait for type-based field selection within types implementing [`Selectable`].
 ///
 /// `Selector` provides mechanisms to include or exclude specific fields or components
@@ -88,20 +87,12 @@ impl<F: ?Sized> Selector<F> for bool {
 
   #[inline]
   fn selected(&self) -> usize {
-    if *self {
-      1
-    } else {
-      0
-    }
+    if *self { 1 } else { 0 }
   }
 
   #[inline]
   fn unselected(&self) -> usize {
-    if *self {
-      0
-    } else {
-      1
-    }
+    if *self { 0 } else { 1 }
   }
 
   #[inline]

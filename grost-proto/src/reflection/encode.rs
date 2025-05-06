@@ -1,7 +1,5 @@
 use core::marker::PhantomData;
 
-
-
 phantom!(
   /// Reflection to an encode fn.
   EncodeReflection

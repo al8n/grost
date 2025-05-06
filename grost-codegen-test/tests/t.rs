@@ -1,4 +1,14 @@
-use grost::{flavors::{network::{Context, LengthDelimited}, Network}, reflection::{encode::{EncodeField, EncodeRefField, EncodeReflection}, FieldReflection}, Encode, Flavor, Message};
+use grost::{
+  Encode, Flavor, Message,
+  flavors::{
+    Network,
+    network::{Context, LengthDelimited},
+  },
+  reflection::{
+    FieldReflection,
+    encode::{EncodeField, EncodeRefField, EncodeReflection},
+  },
+};
 use grost_codegen_test::user_struct::*;
 
 struct CommentReflection<Type, F> {
@@ -6,14 +16,9 @@ struct CommentReflection<Type, F> {
   _f: std::marker::PhantomData<F>,
 }
 
-struct CommentUserField<T>(
-  std::marker::PhantomData<T>,
-);
+struct CommentUserField<T>(std::marker::PhantomData<T>);
 
-struct CommentTitleField<T>(
-  std::marker::PhantomData<T>,
-);
-
+struct CommentTitleField<T>(std::marker::PhantomData<T>);
 
 fn encode_user(
   _: &User,
@@ -31,22 +36,38 @@ fn encode_title_ref(
   Ok(0)
 }
 
-
-impl core::ops::Deref for CommentReflection<CommentUserField<EncodeReflection<EncodeField>>, Network> {
-  type Target = fn(&User, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
+impl core::ops::Deref
+  for CommentReflection<CommentUserField<EncodeReflection<EncodeField>>, Network>
+{
+  type Target =
+    fn(&User, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
 
   fn deref(&self) -> &Self::Target {
-    const ENCODE_FN: fn(&User, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_user;
+    const ENCODE_FN: fn(
+      &User,
+      &Context,
+      &[u8],
+    ) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_user;
     &ENCODE_FN
   }
 }
 
-impl<'a> core::ops::Deref for CommentReflection<CommentTitleField<EncodeReflection<EncodeRefField<'a>>>, Network> {
-  type Target = fn(&<String as Message<Network, LengthDelimited>>::Encoded<'a>, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
+impl<'a> core::ops::Deref
+  for CommentReflection<CommentTitleField<EncodeReflection<EncodeRefField<'a>>>, Network>
+{
+  type Target = fn(
+    &<String as Message<Network, LengthDelimited>>::Encoded<'a>,
+    &Context,
+    &[u8],
+  ) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
 
   fn deref(&self) -> &Self::Target {
     #[allow(clippy::type_complexity)]
-    const ENCODE_FN: fn(&<String as Message<Network, LengthDelimited>>::Encoded<'_>, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_title_ref;
+    const ENCODE_FN: fn(
+      &<String as Message<Network, LengthDelimited>>::Encoded<'_>,
+      &Context,
+      &[u8],
+    ) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_title_ref;
     &ENCODE_FN
   }
 }
@@ -58,7 +79,6 @@ impl core::ops::Deref for CommentReflection<CommentUserField<FieldReflection<Net
     Comment::NETWORK_FLAVOR_USER_REFLECTION
   }
 }
-
 
 #[test]
 fn t() {

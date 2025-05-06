@@ -2,6 +2,8 @@ use super::{Identifier, Network, WireType};
 use crate::{decode::DecodeError as BaseDecodeError, flavors::Flavor};
 use core::num::NonZeroUsize;
 
+pub use super::tag::ParseTagError;
+
 /// The encode error for [`Network`] flavor.
 pub type EncodeError = crate::encode::EncodeError<Network>;
 
@@ -44,6 +46,10 @@ pub enum DecodeError {
     /// The identifier of the field.
     identifier: Identifier,
   },
+
+  /// Returned when parsing a tag fails.
+  #[display("failed to parse tag {_0}")]
+  ParseTagError(ParseTagError),
 
   /// Returned when there is a unknown identifier.
   #[display("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = Network::NAME)]
@@ -134,6 +140,13 @@ impl From<varing::DecodeError> for DecodeError {
   }
 }
 
+impl From<ParseTagError> for DecodeError {
+  #[inline]
+  fn from(e: ParseTagError) -> Self {
+    Self::ParseTagError(e)
+  }
+}
+
 impl DecodeError {
   /// Creates a new buffer underflow decoding error.
   #[inline]
@@ -217,6 +230,12 @@ impl DecodeError {
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       _ => Self::Custom("unknown error"),
     }
+  }
+
+  /// Creates a parse tag error.
+  #[inline]
+  pub const fn parse_tag_error(e: ParseTagError) -> Self {
+    Self::ParseTagError(e)
   }
 
   /// Creates a custom decoding error.

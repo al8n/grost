@@ -5,8 +5,8 @@ use crate::{
     DefaultWireFormat, Network, WireFormat,
     network::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Tag, Unknown},
   },
-  selector::{Selectable, Selector},
   map::MapSelector,
+  selector::{Selectable, Selector},
 };
 
 const KEY_TAG: Tag = Tag::new(1);
@@ -32,8 +32,8 @@ impl<K, V> Selectable<Network> for MapSelector<K, V> {
 
 impl<K, V> Encode<Network, LengthDelimited> for MapSelector<K, V>
 where
-  K: Selector<Network> +  DefaultWireFormat<Network> + Encode<Network, K::Format>,
-  V: Selector<Network> +  DefaultWireFormat<Network> + Encode<Network, V::Format>,
+  K: Selector<Network> + DefaultWireFormat<Network> + Encode<Network, K::Format>,
+  V: Selector<Network> + DefaultWireFormat<Network> + Encode<Network, V::Format>,
 {
   fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let kid = key_identifier::<K::Format>();
@@ -121,8 +121,8 @@ where
 
 impl<'de, K, V> Decode<'de, Network, LengthDelimited, Self> for MapSelector<K, V>
 where
-  K: Selector<Network> +  DefaultWireFormat<Network> + Decode<'de, Network, K::Format, K>,
-  V: Selector<Network> +  DefaultWireFormat<Network> + Decode<'de, Network, V::Format, V>,
+  K: Selector<Network> + DefaultWireFormat<Network> + Decode<'de, Network, K::Format, K>,
+  V: Selector<Network> + DefaultWireFormat<Network> + Decode<'de, Network, V::Format, V>,
 {
   fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
@@ -209,8 +209,8 @@ where
 
 impl<K, V> DecodeOwned<Network, LengthDelimited, Self> for MapSelector<K, V>
 where
-  K: Selector<Network> +  DefaultWireFormat<Network> + DecodeOwned<Network, K::Format, K>,
-  V: Selector<Network> +  DefaultWireFormat<Network> + DecodeOwned<Network, V::Format, V>,
+  K: Selector<Network> + DefaultWireFormat<Network> + DecodeOwned<Network, K::Format, K>,
+  V: Selector<Network> + DefaultWireFormat<Network> + DecodeOwned<Network, V::Format, V>,
 {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where

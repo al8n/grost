@@ -36,11 +36,7 @@ impl Encode<Network, LengthDelimited> for [u8] {
     this_len + encoded_len
   }
 
-  fn encode_length_delimited(
-    &self,
-    _: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let this_len = self.len();
 
     let buf_len = buf.len();

@@ -74,16 +74,15 @@ pub mod __private {
   pub use super::{
     buffer::*,
     convert::*,
+    debug_assert_read_eq, debug_assert_write_eq,
     decode::*,
     decode_owned_scalar, default_wire_format,
     encode::*,
     flavors::{self, *},
-    selector::{self, *},
     indexer,
     map::MapSelector,
     message, network_varint, partial_encode_scalar, reflection, selectable_scalar,
-    debug_assert_read_eq,
-    debug_assert_write_eq,
+    selector::{self, *},
   };
   pub use varing;
 }

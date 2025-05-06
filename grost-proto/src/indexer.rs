@@ -15,7 +15,7 @@ macro_rules! impl_indexable {
       impl<F: ?Sized, T: Indexable<F> + ?Sized> Indexable<F> for $ty {
         type Indexer = T::Indexer;
       }
-    )*   
+    )*
   };
 }
 

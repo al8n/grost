@@ -1,6 +1,6 @@
 use crate::selectable_scalar;
 
-use super::Network;
+use super::{DecodeError, Network};
 
 /// Invalid tag error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -53,6 +53,30 @@ impl Tag {
   #[inline]
   pub const fn get(&self) -> u32 {
     self.0
+  }
+
+  /// Encodes the tag to bytes slice.
+  #[inline]
+  pub const fn encode(&self) -> varing::utils::Buffer<6> {
+    varing::encode_u32_varint(self.0)
+  }
+
+  /// Returns the encoded length of the tag.
+  #[inline]
+  pub const fn encoded_len(&self) -> usize {
+    varing::encoded_u32_varint_len(self.0)
+  }
+
+  /// Decodes the tag from bytes slice.
+  #[inline]
+  pub const fn decode(bytes: &[u8]) -> Result<(usize, Self), DecodeError> {
+    match varing::decode_u32_varint(bytes) {
+      Ok((len, tag)) => match Self::try_new(tag) {
+        Ok(tag) => Ok((len, tag)),
+        Err(e) => Err(DecodeError::parse_tag_error(e)),
+      },
+      Err(e) => Err(DecodeError::from_varint_error(e)),
+    }
   }
 }
 
