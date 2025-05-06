@@ -189,6 +189,8 @@ mod user_reflection {
             }
         }
     }
+    #[automatically_derived]
+    #[allow(clippy::type_complexity)]
     impl<
         F,
         const TAG: ::core::primitive::u32,
@@ -205,12 +207,18 @@ mod user_reflection {
         #[inline]
         pub const fn tag(
             &self,
-        ) -> UserFieldReflection<
+        ) -> ::grost::__private::reflection::Reflection<
+            UserFieldReflection<
+                ::grost::__private::reflection::TagReflection<F::Tag>,
+                F,
+                TAG,
+            >,
             ::grost::__private::reflection::TagReflection<F::Tag>,
             F,
-            TAG,
         > {
-            UserFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                UserFieldReflection::new_in(),
+            )
         }
         /// Returns the relection to the encoded tag of the field.
         #[inline]
@@ -262,27 +270,41 @@ mod user_reflection {
         #[inline]
         pub const fn encoded_identifier(
             &self,
-        ) -> UserFieldReflection<
-            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+        ) -> ::grost::__private::reflection::Reflection<
+            UserFieldReflection<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+                F,
+                TAG,
+            >,
+            [::core::primitive::u8],
             F,
-            TAG,
         > {
-            UserFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                UserFieldReflection::new_in(),
+            )
         }
         /// Returns the relection to the encoded identifier of the field.
         #[inline]
         pub const fn encoded_identifier_len(
             &self,
-        ) -> UserFieldReflection<
-            ::grost::__private::reflection::Len<
-                ::grost::__private::reflection::EncodedIdentifierReflection<
-                    F::Identifier,
+        ) -> ::grost::__private::reflection::Reflection<
+            UserFieldReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::EncodedIdentifierReflection<
+                        F::Identifier,
+                    >,
                 >,
+                F,
+                TAG,
             >,
+            ::core::primitive::usize,
             F,
-            TAG,
         > {
-            UserFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                UserFieldReflection::new_in(),
+            )
         }
         /// Returns the reflection to the encode fn.
         #[inline]
@@ -2159,26 +2181,6 @@ const _: () = {
     }
 };
 const _: () = {
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
             ::grost::__private::flavors::Network,
@@ -2217,26 +2219,6 @@ const _: () = {
         }
             .build();
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
             ::grost::__private::flavors::Network,
@@ -2274,26 +2256,6 @@ const _: () = {
             },
         }
             .build();
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
@@ -2364,22 +2326,6 @@ const _: () = {
                 .wire_type()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::WireType,
         ::grost::__private::flavors::Network,
@@ -2404,22 +2350,6 @@ const _: () = {
             >>::REFLECTION
                 .wire_type()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::WireType,
@@ -2446,22 +2376,6 @@ const _: () = {
                 .wire_type()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
         ::grost::__private::flavors::Network,
@@ -2486,22 +2400,6 @@ const _: () = {
             >>::REFLECTION
                 .tag()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
@@ -2528,22 +2426,6 @@ const _: () = {
                 .tag()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
         ::grost::__private::flavors::Network,
@@ -2568,22 +2450,6 @@ const _: () = {
             >>::REFLECTION
                 .tag()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
@@ -2611,22 +2477,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -2653,22 +2503,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -2694,22 +2528,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -2738,24 +2556,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -2782,24 +2582,6 @@ const _: () = {
             >>::REFLECTION
                 .len()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -2828,24 +2610,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
         ::grost::__private::flavors::Network,
@@ -2872,22 +2636,6 @@ const _: () = {
             >>::REFLECTION
                 .identifier()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
@@ -2916,22 +2664,6 @@ const _: () = {
                 .identifier()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
         ::grost::__private::flavors::Network,
@@ -2959,22 +2691,6 @@ const _: () = {
                 .identifier()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -3000,22 +2716,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
@@ -3043,22 +2743,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -3084,22 +2768,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -3128,24 +2796,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -3173,24 +2823,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -3217,24 +2849,6 @@ const _: () = {
             >>::REFLECTION
                 .len()
         };
-    }
-    impl ::core::ops::Deref
-    for user_reflection::UserFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::StructReflection<
@@ -3504,6 +3118,8 @@ mod comment_reflection {
             }
         }
     }
+    #[automatically_derived]
+    #[allow(clippy::type_complexity)]
     impl<
         F,
         const TAG: ::core::primitive::u32,
@@ -3520,12 +3136,18 @@ mod comment_reflection {
         #[inline]
         pub const fn tag(
             &self,
-        ) -> CommentFieldReflection<
+        ) -> ::grost::__private::reflection::Reflection<
+            CommentFieldReflection<
+                ::grost::__private::reflection::TagReflection<F::Tag>,
+                F,
+                TAG,
+            >,
             ::grost::__private::reflection::TagReflection<F::Tag>,
             F,
-            TAG,
         > {
-            CommentFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                CommentFieldReflection::new_in(),
+            )
         }
         /// Returns the relection to the encoded tag of the field.
         #[inline]
@@ -3577,27 +3199,41 @@ mod comment_reflection {
         #[inline]
         pub const fn encoded_identifier(
             &self,
-        ) -> CommentFieldReflection<
-            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+        ) -> ::grost::__private::reflection::Reflection<
+            CommentFieldReflection<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+                F,
+                TAG,
+            >,
+            [::core::primitive::u8],
             F,
-            TAG,
         > {
-            CommentFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                CommentFieldReflection::new_in(),
+            )
         }
         /// Returns the relection to the encoded identifier of the field.
         #[inline]
         pub const fn encoded_identifier_len(
             &self,
-        ) -> CommentFieldReflection<
-            ::grost::__private::reflection::Len<
-                ::grost::__private::reflection::EncodedIdentifierReflection<
-                    F::Identifier,
+        ) -> ::grost::__private::reflection::Reflection<
+            CommentFieldReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::EncodedIdentifierReflection<
+                        F::Identifier,
+                    >,
                 >,
+                F,
+                TAG,
             >,
+            ::core::primitive::usize,
             F,
-            TAG,
         > {
-            CommentFieldReflection::new_in()
+            ::grost::__private::reflection::Reflection::new(
+                CommentFieldReflection::new_in(),
+            )
         }
         /// Returns the reflection to the encode fn.
         #[inline]
@@ -5869,26 +5505,6 @@ const _: () = {
     }
 };
 const _: () = {
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
             ::grost::__private::flavors::Network,
@@ -5930,26 +5546,6 @@ const _: () = {
             ),
         }
             .build();
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
@@ -5999,26 +5595,6 @@ const _: () = {
         }
             .build();
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
             ::grost::__private::flavors::Network,
@@ -6056,26 +5632,6 @@ const _: () = {
             },
         }
             .build();
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::network::Network,
-        >;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::reflection::FieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::FieldReflection<
@@ -6146,22 +5702,6 @@ const _: () = {
                 .wire_type()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::WireType,
         ::grost::__private::flavors::Network,
@@ -6186,22 +5726,6 @@ const _: () = {
             >>::REFLECTION
                 .wire_type()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::WireType,
@@ -6228,22 +5752,6 @@ const _: () = {
                 .wire_type()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::WireType,
         ::grost::__private::flavors::Network,
@@ -6269,22 +5777,6 @@ const _: () = {
                 .wire_type()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::WireTypeReflection<
-            ::grost::__private::flavors::network::WireType,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::grost::__private::flavors::network::WireType;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::WireType,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
         ::grost::__private::flavors::Network,
@@ -6309,22 +5801,6 @@ const _: () = {
             >>::REFLECTION
                 .tag()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
@@ -6351,22 +5827,6 @@ const _: () = {
                 .tag()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
         ::grost::__private::flavors::Network,
@@ -6392,22 +5852,6 @@ const _: () = {
                 .tag()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Tag,
         ::grost::__private::flavors::Network,
@@ -6432,22 +5876,6 @@ const _: () = {
             >>::REFLECTION
                 .tag()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::TagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Tag;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Tag,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
@@ -6475,22 +5903,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -6516,22 +5928,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
@@ -6559,22 +5955,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -6600,22 +5980,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedTagReflection<
-            ::grost::__private::flavors::network::Tag,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -6644,24 +6008,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -6688,24 +6034,6 @@ const _: () = {
             >>::REFLECTION
                 .len()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -6734,24 +6062,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -6779,24 +6089,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedTagReflection<
-                ::grost::__private::flavors::network::Tag,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
         ::grost::__private::flavors::Network,
@@ -6823,22 +6115,6 @@ const _: () = {
             >>::REFLECTION
                 .identifier()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
@@ -6867,22 +6143,6 @@ const _: () = {
                 .identifier()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
         ::grost::__private::flavors::Network,
@@ -6909,22 +6169,6 @@ const _: () = {
             >>::REFLECTION
                 .identifier()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::network::Identifier,
@@ -6953,22 +6197,6 @@ const _: () = {
                 .identifier()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::grost::__private::flavors::network::Identifier;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::network::Identifier,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -6994,22 +6222,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
@@ -7037,22 +6249,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -7079,22 +6275,6 @@ const _: () = {
                 .as_slice()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         [::core::primitive::u8],
         ::grost::__private::flavors::Network,
@@ -7120,22 +6300,6 @@ const _: () = {
                 .encode()
                 .as_slice()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::EncodedIdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = [::core::primitive::u8];
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                [::core::primitive::u8],
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -7164,24 +6328,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -7208,24 +6354,6 @@ const _: () = {
             >>::REFLECTION
                 .len()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        2u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
@@ -7254,24 +6382,6 @@ const _: () = {
                 .len()
         };
     }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        3u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
-    }
     impl ::grost::__private::reflection::Reflectable<
         ::core::primitive::usize,
         ::grost::__private::flavors::Network,
@@ -7298,24 +6408,6 @@ const _: () = {
             >>::REFLECTION
                 .len()
         };
-    }
-    impl ::core::ops::Deref
-    for comment_reflection::CommentFieldReflection<
-        ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::EncodedIdentifierReflection<
-                ::grost::__private::flavors::network::Identifier,
-            >,
-        >,
-        ::grost::__private::flavors::Network,
-        4u32,
-    > {
-        type Target = ::core::primitive::usize;
-        fn deref(&self) -> &Self::Target {
-            <Self as ::grost::__private::reflection::Reflectable<
-                ::core::primitive::usize,
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION
-        }
     }
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::reflection::StructReflection<

@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use super::flavors::Flavor;
 
 pub use enum_::*;
@@ -93,12 +95,62 @@ pub trait Reflectable<R: ?Sized + 'static, F: Flavor + ?Sized> {
   const REFLECTION: &R;
 }
 
-pub struct CommentField<F: Flavor + ?Sized, const TAG: u32>(core::marker::PhantomData<F>);
-
-impl<F: Flavor + ?Sized> Reflectable<u128, F> for CommentField<F, 1> {
-  const REFLECTION: &u128 = &1;
+/// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
+#[repr(transparent)]
+pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized> {
+  _r: PhantomData<R>,
+  _f: PhantomData<F>,
+  t: T,
 }
 
-impl<F: Flavor + ?Sized> Reflectable<u128, F> for CommentField<F, 2> {
-  const REFLECTION: &u128 = &2;
+impl<T, R, F> Reflection<T, R, F>
+where
+  R: ?Sized + 'static,
+  F: Flavor + ?Sized,
+{
+  /// Creates a new [`Reflection`].
+  #[inline]
+  pub const fn new(t: T) -> Self {
+    Self {
+      _r: PhantomData,
+      _f: PhantomData,
+      t,
+    }
+  }
+}
+
+impl<T, R, F> Clone for Reflection<T, R, F>
+where
+  T: Reflectable<R, F> + Clone,
+  R: ?Sized + 'static,
+  F: Flavor + ?Sized,
+{
+  fn clone(&self) -> Self {
+    Self {
+      _r: PhantomData,
+      _f: PhantomData,
+      t: self.t.clone(),
+    }
+  }
+}
+
+impl<T, R, F> Copy for Reflection<T, R, F>
+where
+  T: Reflectable<R, F> + Copy,
+  R: ?Sized + 'static,
+  F: Flavor + ?Sized,
+{
+}
+
+impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
+where
+  T: Reflectable<R, F>,
+  R: ?Sized + 'static,
+  F: Flavor + ?Sized, 
+{
+  type Target = R;
+
+  fn deref(&self) -> &Self::Target {
+    T::REFLECTION
+  }
 }
