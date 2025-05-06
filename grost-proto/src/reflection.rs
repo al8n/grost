@@ -90,9 +90,11 @@ phantom!(
 );
 
 /// Reflectable.
-pub trait Reflectable<R: ?Sized + 'static, F: Flavor + ?Sized> {
+pub trait Reflectable<F: Flavor + ?Sized> {
+  type Reflection: ?Sized + 'static;
+
   /// The reflection of this type
-  const REFLECTION: &R;
+  const REFLECTION: &Self::Reflection;
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
@@ -119,38 +121,38 @@ where
   }
 }
 
-impl<T, R, F> Clone for Reflection<T, R, F>
-where
-  T: Reflectable<R, F> + Clone,
-  R: ?Sized + 'static,
-  F: Flavor + ?Sized,
-{
-  fn clone(&self) -> Self {
-    Self {
-      _r: PhantomData,
-      _f: PhantomData,
-      t: self.t.clone(),
-    }
-  }
-}
+// impl<T, R, F> Clone for Reflection<T, R, F>
+// where
+//   T: Reflectable<R, F> + Clone,
+//   R: ?Sized + 'static,
+//   F: Flavor + ?Sized,
+// {
+//   fn clone(&self) -> Self {
+//     Self {
+//       _r: PhantomData,
+//       _f: PhantomData,
+//       t: self.t.clone(),
+//     }
+//   }
+// }
 
-impl<T, R, F> Copy for Reflection<T, R, F>
-where
-  T: Reflectable<R, F> + Copy,
-  R: ?Sized + 'static,
-  F: Flavor + ?Sized,
-{
-}
+// impl<T, R, F> Copy for Reflection<T, R, F>
+// where
+//   T: Reflectable<R, F> + Copy,
+//   R: ?Sized + 'static,
+//   F: Flavor + ?Sized,
+// {
+// }
 
-impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
-where
-  T: Reflectable<R, F>,
-  R: ?Sized + 'static,
-  F: Flavor + ?Sized, 
-{
-  type Target = R;
+// impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
+// where
+//   T: Reflectable<R, F>,
+//   R: ?Sized + 'static,
+//   F: Flavor + ?Sized,
+// {
+//   type Target = R;
 
-  fn deref(&self) -> &Self::Target {
-    T::REFLECTION
-  }
-}
+//   fn deref(&self) -> &Self::Target {
+//     T::REFLECTION
+//   }
+// }

@@ -32,7 +32,6 @@ impl Network {
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
             >
           >::REFLECTION
@@ -82,7 +81,6 @@ impl Network {
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
             >
           >::REFLECTION

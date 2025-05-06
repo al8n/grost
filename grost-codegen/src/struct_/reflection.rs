@@ -34,36 +34,6 @@ impl Struct {
       }
     });
 
-    let field_tag_reflection_type: Type = parse_quote! {
-      #field_reflection_name<
-        #path_to_grost::__private::reflection::TagReflection<
-          F::Tag,
-        >,
-        F,
-        TAG,
-      >
-    };
-    let field_encoded_identifier_len_type: Type = parse_quote! {
-      #field_reflection_name<
-        #path_to_grost::__private::reflection::Len<
-          #path_to_grost::__private::reflection::EncodedIdentifierReflection<
-            F::Identifier,
-          >,
-        >,
-        F,
-        TAG,
-      >
-    };
-    let field_encoded_identifier_type: Type = parse_quote! {
-      #field_reflection_name<
-        #path_to_grost::__private::reflection::EncodedIdentifierReflection<
-          F::Identifier,
-        >,
-        F,
-        TAG,
-      >
-    };
-
     quote! {
       mod #mod_name {
         use super::#name;
@@ -72,6 +42,19 @@ impl Struct {
         pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
           _reflect: ::core::marker::PhantomData<R>,
           _flavor: ::core::marker::PhantomData<F>,
+        }
+
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+          Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        {
+          type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
+
+          fn deref(&self) -> &Self::Target {
+            <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
+          }
         }
 
         impl<R, F, const TAG: ::core::primitive::u32> #field_reflection_name<R, F, TAG>
@@ -101,15 +84,15 @@ impl Struct {
 
           /// Returns the relection to a tag of the field.
           #[inline]
-          pub const fn tag(&self) -> #path_to_grost::__private::reflection::Reflection<
-            #field_tag_reflection_type,
+          pub const fn tag(&self) -> #field_reflection_name<
             #path_to_grost::__private::reflection::TagReflection<
               F::Tag,
             >,
             F,
+            TAG,
           >
           {
-            #path_to_grost::__private::reflection::Reflection::new(#field_reflection_name::new_in())
+            #field_reflection_name::new_in()
           }
 
           /// Returns the relection to the encoded tag of the field.
@@ -164,22 +147,28 @@ impl Struct {
 
           /// Returns the relection to the encoded identifier of the field.
           #[inline]
-          pub const fn encoded_identifier(&self) -> #path_to_grost::__private::reflection::Reflection<
-            #field_encoded_identifier_type,
-            [::core::primitive::u8],
+          pub const fn encoded_identifier(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+              F::Identifier,
+            >,
             F,
+            TAG,
           > {
-            #path_to_grost::__private::reflection::Reflection::new(#field_reflection_name::new_in())
+            #field_reflection_name::new_in()
           }
 
           /// Returns the relection to the encoded identifier of the field.
           #[inline]
-          pub const fn encoded_identifier_len(&self) -> #path_to_grost::__private::reflection::Reflection<
-            #field_encoded_identifier_len_type,
-            ::core::primitive::usize,
+          pub const fn encoded_identifier_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::Len<
+              #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+                F::Identifier,
+              >,
+            >,
             F,
+            TAG,
           > {
-            #path_to_grost::__private::reflection::Reflection::new(#field_reflection_name::new_in())
+            #field_reflection_name::new_in()
           }
 
           /// Returns the reflection to the encode fn.

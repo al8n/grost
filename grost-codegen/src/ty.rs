@@ -322,7 +322,6 @@ impl Ty {
         quote! {
           #path_to_grost::__private::reflection::Type::<#flavor_ty>::Struct(<
             #ty as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::reflection::StructReflection<#flavor_ty>,
               #flavor_ty,
             >
           >::REFLECTION)

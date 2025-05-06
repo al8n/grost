@@ -16,7 +16,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          #path_to_grost::__private::flavors::network::Identifier,
           #path_to_grost::__private::flavors::Network,
         > for #reflection_mod_name::#field_reflection<
           #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
@@ -24,13 +23,14 @@ impl Network {
           #tag,
         >
         {
-          const REFLECTION: &#path_to_grost::__private::flavors::network::Identifier = &{
+          type Reflection = #path_to_grost::__private::flavors::network::Identifier;
+  
+          const REFLECTION: &Self::Reflection = &{
             <#reflection_mod_name::#field_reflection<
                 #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
                 #path_to_grost::__private::flavors::Network,
                 #tag,
               > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .identifier()
@@ -52,7 +52,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          #path_to_grost::__private::flavors::network::WireType,
           #path_to_grost::__private::flavors::Network,
         > for #reflection_mod_name::#field_reflection<
           #path_to_grost::__private::reflection::WireTypeReflection<#path_to_grost::__private::flavors::network::WireType>,
@@ -60,13 +59,14 @@ impl Network {
           #tag,
         >
         {
+          type Reflection = #path_to_grost::__private::flavors::network::WireType;
+
           const REFLECTION: &#path_to_grost::__private::flavors::network::WireType = &{
             <#reflection_mod_name::#field_reflection<
                 #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
                 #path_to_grost::__private::flavors::Network,
                 #tag,
               > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::network::Identifier,
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .wire_type()
@@ -88,7 +88,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          #path_to_grost::__private::flavors::network::Tag,
           #path_to_grost::__private::flavors::Network,
         > for #reflection_mod_name::#field_reflection<
           #path_to_grost::__private::reflection::TagReflection<#path_to_grost::__private::flavors::network::Tag>,
@@ -96,13 +95,13 @@ impl Network {
           #tag,
         >
         {
-          const REFLECTION: &#path_to_grost::__private::flavors::network::Tag = &{
+          type Reflection = #path_to_grost::__private::flavors::network::Tag;
+          const REFLECTION: &Self::Reflection = &{
             <#reflection_mod_name::#field_reflection<
               #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::network::Identifier,
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .tag()
@@ -124,7 +123,7 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          [::core::primitive::u8],
+          // [::core::primitive::u8],
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -133,13 +132,14 @@ impl Network {
               #tag,
             >
         {
-          const REFLECTION: &[::core::primitive::u8] = {
+          type Reflection = [::core::primitive::u8];
+
+          const REFLECTION: &Self::Reflection = {
             <#reflection_mod_name::#field_reflection<
               #path_to_grost::__private::reflection::TagReflection<#path_to_grost::__private::flavors::network::Tag>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::network::Tag,
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .encode()
@@ -162,7 +162,7 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          ::core::primitive::usize,
+          // ::core::primitive::usize,
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -173,13 +173,15 @@ impl Network {
               #tag,
             >
         {
-          const REFLECTION: &::core::primitive::usize = &{
+          type Reflection = ::core::primitive::usize;
+
+          const REFLECTION: &Self::Reflection = &{
             <#reflection_mod_name::#field_reflection<
               #path_to_grost::__private::reflection::EncodedTagReflection<#path_to_grost::__private::flavors::network::Tag>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              [::core::primitive::u8],
+              // [::core::primitive::u8],
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .len()
@@ -201,7 +203,7 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          [::core::primitive::u8],
+          // [::core::primitive::u8],
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -210,13 +212,14 @@ impl Network {
               #tag,
             >
         {
-          const REFLECTION: &[::core::primitive::u8] = {
+          type Reflection = [::core::primitive::u8];
+
+          const REFLECTION: &Self::Reflection = {
             <#reflection_mod_name::#field_reflection<
               #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::network::Identifier,
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .encode()
@@ -239,7 +242,7 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          ::core::primitive::usize,
+          // ::core::primitive::usize,
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -250,13 +253,14 @@ impl Network {
               #tag,
             >
         {
-          const REFLECTION: &::core::primitive::usize = &{
+          type Reflection = ::core::primitive::usize;
+          const REFLECTION: &Self::Reflection = &{
             <#reflection_mod_name::#field_reflection<
               #path_to_grost::__private::reflection::EncodedIdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              [::core::primitive::u8],
+              // [::core::primitive::u8],
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .len()
@@ -277,25 +281,22 @@ impl Network {
       let tag = f.tag();
 
       quote! {
-        impl #path_to_grost::__private::reflection::Reflectable<
-          ::core::primitive::usize,
+        impl #path_to_grost::__private::reflection::Reflectable< 
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
-              #path_to_grost::__private::reflection::Len<
-                #path_to_grost::__private::reflection::EncodedIdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
-              >,
+              #path_to_grost::__private::reflection::EncodeReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             >
         {
-          const REFLECTION: &::core::primitive::usize = &{
+          type Reflection = ::core::primitive::usize;
+          const REFLECTION: &Self::Reflection = &{
             <#reflection_mod_name::#field_reflection<
-              #path_to_grost::__private::reflection::EncodedIdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
+              #path_to_grost::__private::reflection::EncodeReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              [::core::primitive::u8],
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .len()
@@ -318,7 +319,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
           #path_to_grost::__private::flavors::Network,
         > for #reflection_mod_name::#field_reflection<
           #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
@@ -326,7 +326,8 @@ impl Network {
           #tag,
         >
         {
-          const REFLECTION: &#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::network::Network> = &#impl_;
+          type Reflection = #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>;
+          const REFLECTION: &Self::Reflection = &#impl_;
         }
       }
     })

@@ -158,7 +158,6 @@ impl FlavorGenerator for Network {
             #path_to_grost::__private::flavors::Network,
             #tag,
           > as #path_to_grost::__private::reflection::Reflectable<
-            #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
             #path_to_grost::__private::flavors::Network,
           >
         >::REFLECTION
@@ -184,10 +183,10 @@ impl FlavorGenerator for Network {
         #(#field_encoded_identifier_len_reflections)*
 
         impl #path_to_grost::__private::reflection::Reflectable<
-          #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>,
           #path_to_grost::__private::flavors::network::Network,
         > for #struct_name {
-          const REFLECTION: &#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network> = &#path_to_grost::__private::reflection::StructReflectionBuilder::<#path_to_grost::__private::flavors::network::Network> {
+          type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
+          const REFLECTION: &Self::Reflection = &#path_to_grost::__private::reflection::StructReflectionBuilder::<#path_to_grost::__private::flavors::network::Network> {
             name: #name_str,
             schema_name: #schema_name,
             fields: &[
@@ -202,7 +201,6 @@ impl FlavorGenerator for Network {
           fn deref(&self) -> &Self::Target {
             <
               #struct_name as #path_to_grost::__private::reflection::Reflectable<
-                #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>,
                 #path_to_grost::__private::flavors::network::Network,
               >
             >::REFLECTION
