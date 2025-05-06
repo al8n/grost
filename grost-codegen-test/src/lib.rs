@@ -1,2 +1,1 @@
-pub mod color_enum;
-pub mod user_struct;
+pub mod color_enum;pub mod user_struct;
