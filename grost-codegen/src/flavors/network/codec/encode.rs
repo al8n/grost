@@ -46,7 +46,7 @@ impl Network {
             ),
           );
         }
-        offset += #fn_name(
+        offset += (#struct_name::reflection().#field_name().encode())(
           &self.#field_name,
           ctx,
           &mut buf[offset..],

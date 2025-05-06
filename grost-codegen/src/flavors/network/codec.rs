@@ -3,7 +3,7 @@ use crate::{SafeIdent, Struct};
 use super::Network;
 
 use quote::{ToTokens, format_ident, quote};
-use syn::parse_quote;
+use syn::{parse_quote, Ident};
 
 mod encode;
 mod index;
@@ -16,6 +16,7 @@ impl Network {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
+    let reflection_mod_name = struct_.reflection_mod_name();
 
     let fns = struct_.fields().iter().map(|f| {
       let ty = f.ty();
@@ -26,6 +27,11 @@ impl Network {
         parse_quote!(<#rust_ty as #path_to_grost::__private::DefaultWireFormat<#path_to_grost::__private::flavors::Network>>::Format)
       });
       let atomic_ty = ty.repr().encode_atomic_ty();
+      let field_reflection = struct_.field_reflection_name();
+      let tag = f.tag();
+      let reflection = quote! {
+        fn(&#ty, &#path_to_grost::__private::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      };
       let partial_encoded_len_fn = partial_encoded_length_delimited_len(
         path_to_grost,
         struct_name.name(),
@@ -66,7 +72,22 @@ impl Network {
 
         #partial_encode_fn
 
-        #encode_fn
+        impl #path_to_grost::__private::reflection::Reflectable< 
+          #path_to_grost::__private::flavors::Network,
+        > for 
+            #reflection_mod_name::#field_reflection<
+              #path_to_grost::__private::reflection::encode::EncodeReflection<#path_to_grost::__private::reflection::encode::EncodeField>,
+              #path_to_grost::__private::flavors::Network,
+              #tag,
+            >
+        {
+          type Reflection = #reflection;
+          const REFLECTION: &Self::Reflection = &{
+            #encode_fn
+
+            encode
+          };
+        }
       }
     });
 
@@ -116,6 +137,38 @@ impl Network {
 
       #(#fns)*
     }
+  }
+
+  fn generate_field_encode_reflections<'a>(
+    &'a self,
+    path_to_grost: &'a syn::Path,
+    struct_: &'a Struct,
+    reflection_mod_name: &'a Ident,
+  ) -> impl Iterator<Item = impl ToTokens + 'a> + 'a {
+    struct_.fields().iter().map(move |f| {
+      let field_reflection = struct_.field_reflection_name();
+      let field_ty = f.ty();
+      let tag = f.tag();
+      let reflection = quote! {
+        fn(&#field_ty, &#path_to_grost::__private::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      };
+      let encode_fn = format_ident!("encode_{}", f.name().name_str());
+
+      quote! {
+        impl #path_to_grost::__private::reflection::Reflectable< 
+          #path_to_grost::__private::flavors::Network,
+        > for 
+            #reflection_mod_name::#field_reflection<
+              #path_to_grost::__private::reflection::encode::EncodeReflection<#path_to_grost::__private::reflection::encode::EncodeField>,
+              #path_to_grost::__private::flavors::Network,
+              #tag,
+            >
+        {
+          type Reflection = #reflection;
+          const REFLECTION: &Self::Reflection = &{ #encode_fn };
+        }
+      }
+    })
   }
 }
 
@@ -232,7 +285,7 @@ fn encode_length_delimited(
 
   if optional {
     quote! {
-      fn #fn_name(
+      fn encode(
         f: &::core::option::Option<#ty>,
         ctx: &#path_to_grost::__private::flavors::network::Context,
         buf: &mut [::core::primitive::u8],
@@ -281,7 +334,7 @@ fn encode_length_delimited(
     }
   } else {
     quote! {
-      fn #fn_name(
+      fn encode(
         f: &#ty,
         ctx: &#path_to_grost::__private::flavors::network::Context,
         buf: &mut [::core::primitive::u8],

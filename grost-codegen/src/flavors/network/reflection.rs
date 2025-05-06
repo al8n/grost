@@ -123,7 +123,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          // [::core::primitive::u8],
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -162,7 +161,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          // ::core::primitive::usize,
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -181,7 +179,6 @@ impl Network {
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              // [::core::primitive::u8],
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .len()
@@ -203,7 +200,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          // [::core::primitive::u8],
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -242,7 +238,6 @@ impl Network {
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
-          // ::core::primitive::usize,
           #path_to_grost::__private::flavors::Network,
         > for 
             #reflection_mod_name::#field_reflection<
@@ -260,7 +255,6 @@ impl Network {
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              // [::core::primitive::u8],
               #path_to_grost::__private::flavors::Network,
             >>::REFLECTION
               .len()
@@ -270,41 +264,7 @@ impl Network {
     })
   }
 
-  pub(super) fn generate_field_encode_reflections<'a>(
-    &'a self,
-    path_to_grost: &'a syn::Path,
-    struct_: &'a Struct,
-    reflection_mod_name: &'a Ident,
-  ) -> impl Iterator<Item = impl ToTokens + 'a> + 'a {
-    struct_.fields().iter().map(move |f| {
-      let field_reflection = struct_.field_reflection_name();
-      let tag = f.tag();
-
-      quote! {
-        impl #path_to_grost::__private::reflection::Reflectable< 
-          #path_to_grost::__private::flavors::Network,
-        > for 
-            #reflection_mod_name::#field_reflection<
-              #path_to_grost::__private::reflection::EncodeReflection<#path_to_grost::__private::flavors::network::Identifier>,
-              #path_to_grost::__private::flavors::Network,
-              #tag,
-            >
-        {
-          type Reflection = ::core::primitive::usize;
-          const REFLECTION: &Self::Reflection = &{
-            <#reflection_mod_name::#field_reflection<
-              #path_to_grost::__private::reflection::EncodeReflection<#path_to_grost::__private::flavors::network::Identifier>,
-              #path_to_grost::__private::flavors::Network,
-              #tag,
-            > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::Network,
-            >>::REFLECTION
-              .len()
-          };
-        }
-      }
-    })
-  }
+  
 
   pub(super) fn generate_field_reflections<'a>(
     &'a self,
