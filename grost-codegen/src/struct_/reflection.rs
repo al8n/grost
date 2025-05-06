@@ -313,12 +313,12 @@ impl Struct {
           /// Returns the reflection of the struct.
           #[allow(non_camel_case_types)]
           #[inline]
-          pub const fn reflection<__GROST_FLAOVR__>() -> #reflection_name<
-            #path_to_grost::__private::reflection::StructReflection<__GROST_FLAOVR__>,
-            __GROST_FLAOVR__,
+          pub const fn reflection<__GROST_FLAVOR__>() -> #reflection_name<
+            #path_to_grost::__private::reflection::StructReflection<__GROST_FLAVOR__>,
+            __GROST_FLAVOR__,
           >
           where
-            __GROST_FLAOVR__: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+            __GROST_FLAVOR__: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
           {
             #reflection_name::new()
           }
