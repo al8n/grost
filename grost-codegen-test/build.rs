@@ -113,14 +113,19 @@ fn struct_codegen_test(name: &str) {
       1,
     ),
     Field::new(
+      SafeIdent::new("replyer"),
+      Ty::optional(Ty::struct_(parse_quote!(User), "User")),
+      2,
+    ),
+    Field::new(
       SafeIdent::new("title"),
       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-      2,
+      3,
     ),
     Field::new(
       SafeIdent::new("content"),
       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-      3,
+      4,
     ),
   ];
   let struct_ = Struct::new(SafeIdent::new("Comment"), fields)

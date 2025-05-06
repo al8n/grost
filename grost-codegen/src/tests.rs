@@ -66,21 +66,26 @@ fn test_struct_generate() {
     .with_visibility(parse_quote!(pub));
 
   let fields = vec![
-    Field::new(
-      SafeIdent::new("user"),
-      Ty::struct_(parse_quote!(User), "User!"),
-      1,
-    ),
-    Field::new(
-      SafeIdent::new("title"),
-      Ty::primitive(parse_quote!(::std::string::String), "String!").with_copy(),
-      2,
-    ),
-    Field::new(
-      SafeIdent::new("content"),
-      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-      3,
-    ),
+  Field::new(
+    SafeIdent::new("user"),
+    Ty::struct_(parse_quote!(User), "User!"),
+    1,
+  ),
+  Field::new(
+    SafeIdent::new("replyer"),
+    Ty::optional(Ty::struct_(parse_quote!(User), "User")),
+    2,
+  ),
+  Field::new(
+    SafeIdent::new("title"),
+    Ty::primitive(parse_quote!(::std::string::String), "String!"),
+    3,
+  ),
+  Field::new(
+    SafeIdent::new("content"),
+    Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+    4,
+  ),
   ];
   let comment = Struct::new(SafeIdent::new("Comment"), fields)
     .with_description("A comment struct")

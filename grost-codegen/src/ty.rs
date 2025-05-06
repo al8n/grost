@@ -90,6 +90,20 @@ impl TyRepr {
       }
     }
   }
+
+  pub fn encode_atomic_ty(&self) -> Type {
+    match self {
+      Self::Primitive(ty) => ty.clone(),
+      Self::List { item, .. } => item.repr().encode_atomic_ty(),
+      Self::Map { key, value, .. } => {
+        let key = key.repr().encode_atomic_ty();
+        let value = value.repr().encode_atomic_ty();
+        parse_quote!((&#key, &#value))
+      }
+      Self::Enum(ty) | Self::Struct(ty) | Self::Union(ty) | Self::Interface(ty) => ty.clone(),
+      Self::Optional(ty) => ty.repr().encode_atomic_ty(),
+    }
+  }
 }
 
 #[derive(Clone)]

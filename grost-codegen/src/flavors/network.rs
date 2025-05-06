@@ -91,6 +91,7 @@ impl FlavorGenerator for Network {
       }
     });
     let partial_encode = self.generate_partial_encode(path_to_grost, struct_);
+    let encode = self.generate_encode(path_to_grost, struct_);
     let index = self.generate_struct_index(path_to_grost, struct_);
     let fns = self.generate_field_encode_fns(path_to_grost, struct_);
 
@@ -107,38 +108,7 @@ impl FlavorGenerator for Network {
           type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
         }
 
-        #[automatically_derived]
-        impl #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
-          fn encode(
-            &self,
-            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-            buf: &mut [::core::primitive::u8],
-          ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-            ::core::todo!()
-          }
-  
-          fn encoded_len(
-            &self,
-            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          ) -> ::core::primitive::usize {
-            ::core::todo!()
-          }
-  
-          fn encoded_length_delimited_len(
-            &self,
-            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          ) -> ::core::primitive::usize {
-            ::core::todo!()
-          }
-  
-          fn encode_length_delimited(
-            &self,
-            ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-            buf: &mut [::core::primitive::u8],
-          ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
-            ::core::todo!()
-          }
-        }
+        #encode
 
         #partial_encode
       };

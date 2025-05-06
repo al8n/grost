@@ -744,6 +744,21 @@ const _: () = {
             }
         }
     }
+    fn partial_encoded_name_len(
+        f: &::std::string::String,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN
+            + <::std::string::String as ::grost::__private::PartialEncode<
+                ::grost::__private::flavors::network::Network,
+                <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
+    }
     fn encoded_name_len(
         f: &::std::string::String,
         ctx: &::grost::__private::flavors::network::Context,
@@ -755,6 +770,47 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::Format,
             >>::encoded_length_delimited_len(f, ctx)
+    }
+    fn partial_encode_name(
+        f: &::std::string::String,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        let buf_len = buf.len();
+        let mut offset = 0;
+        if offset > buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_name_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        buf[offset..offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN]
+            .copy_from_slice(NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER);
+        offset += NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN;
+        if offset >= buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_name_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        <::std::string::String as ::grost::__private::PartialEncode<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format,
+        >>::partial_encode_length_delimited(f, ctx, &mut buf[offset..], selector)
+            .map(|len| offset + len)
+            .map_err(|e| e.update(partial_encoded_name_len(f, ctx, selector), buf_len))
     }
     fn encode_name(
         f: &::std::string::String,
@@ -768,12 +824,10 @@ const _: () = {
         let mut offset = 0;
         if offset > buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_name_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         buf[offset..offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN]
@@ -781,12 +835,10 @@ const _: () = {
         offset += NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN;
         if offset >= buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_name_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         <::std::string::String as ::grost::__private::Encode<
@@ -796,6 +848,22 @@ const _: () = {
             >>::Format,
         >>::encode_length_delimited(f, ctx, &mut buf[offset..])
             .map(|len| offset + len)
+            .map_err(|e| e.update(encoded_name_len(f, ctx), buf_len))
+    }
+    fn partial_encoded_age_len(
+        f: &u32,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<u32 as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN
+            + <u32 as ::grost::__private::PartialEncode<
+                ::grost::__private::flavors::network::Network,
+                <u32 as ::grost::__private::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
     }
     fn encoded_age_len(
         f: &u32,
@@ -809,6 +877,47 @@ const _: () = {
                 >>::Format,
             >>::encoded_length_delimited_len(f, ctx)
     }
+    fn partial_encode_age(
+        f: &u32,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<u32 as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        let buf_len = buf.len();
+        let mut offset = 0;
+        if offset > buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_age_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        buf[offset..offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN]
+            .copy_from_slice(NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER);
+        offset += NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN;
+        if offset >= buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_age_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        <u32 as ::grost::__private::PartialEncode<
+            ::grost::__private::flavors::network::Network,
+            <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format,
+        >>::partial_encode_length_delimited(f, ctx, &mut buf[offset..], selector)
+            .map(|len| offset + len)
+            .map_err(|e| e.update(partial_encoded_age_len(f, ctx, selector), buf_len))
+    }
     fn encode_age(
         f: &u32,
         ctx: &::grost::__private::flavors::network::Context,
@@ -821,12 +930,10 @@ const _: () = {
         let mut offset = 0;
         if offset > buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <u32 as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_age_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         buf[offset..offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN]
@@ -834,12 +941,10 @@ const _: () = {
         offset += NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN;
         if offset >= buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <u32 as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_age_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         <u32 as ::grost::__private::Encode<
@@ -849,22 +954,103 @@ const _: () = {
             >>::Format,
         >>::encode_length_delimited(f, ctx, &mut buf[offset..])
             .map(|len| offset + len)
+            .map_err(|e| e.update(encoded_age_len(f, ctx), buf_len))
+    }
+    fn partial_encoded_email_len(
+        f: &::core::option::Option<::std::string::String>,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN
+                    + <::std::string::String as ::grost::__private::PartialEncode<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::partial_encoded_length_delimited_len(f, ctx, selector)
+            }
+            ::core::option::Option::None => 0,
+        }
     }
     fn encoded_email_len(
         f: &::core::option::Option<::std::string::String>,
         ctx: &::grost::__private::flavors::network::Context,
     ) -> ::core::primitive::usize {
-        NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN
-            + <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::Encode<
-                ::grost::__private::flavors::network::Network,
-                <::core::option::Option<
-                    ::std::string::String,
-                > as ::grost::__private::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::encoded_length_delimited_len(f, ctx)
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN
+                    + <::std::string::String as ::grost::__private::Encode<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::encoded_length_delimited_len(f, ctx)
+            }
+            ::core::option::Option::None => 0,
+        }
+    }
+    fn partial_encode_email(
+        f: &::core::option::Option<::std::string::String>,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_email_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_email_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                <::std::string::String as ::grost::__private::PartialEncode<
+                    ::grost::__private::flavors::network::Network,
+                    <::core::option::Option<
+                        ::std::string::String,
+                    > as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::partial_encode_length_delimited(
+                        field,
+                        ctx,
+                        &mut buf[offset..],
+                        selector,
+                    )
+                    .map(|len| offset + len)
+                    .map_err(|e| {
+                        e.update(partial_encoded_email_len(f, ctx, selector), buf_len)
+                    })
+            }
+        }
     }
     fn encode_email(
         f: &::core::option::Option<::std::string::String>,
@@ -874,46 +1060,42 @@ const _: () = {
         ::core::primitive::usize,
         ::grost::__private::flavors::network::EncodeError,
     > {
-        let buf_len = buf.len();
-        let mut offset = 0;
-        if offset > buf_len {
-            return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_email_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_email_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                <::std::string::String as ::grost::__private::Encode<
+                    ::grost::__private::flavors::network::Network,
                     <::core::option::Option<
                         ::std::string::String,
                     > as ::grost::__private::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
-            );
+                >>::encode_length_delimited(field, ctx, &mut buf[offset..])
+                    .map(|len| offset + len)
+                    .map_err(|e| e.update(encoded_email_len(f, ctx), buf_len))
+            }
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
-            .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
-        if offset >= buf_len {
-            return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::core::option::Option<
-                        ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
-            );
-        }
-        <::core::option::Option<
-            ::std::string::String,
-        > as ::grost::__private::Encode<
-            ::grost::__private::flavors::network::Network,
-            <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format,
-        >>::encode_length_delimited(f, ctx, &mut buf[offset..])
-            .map(|len| offset + len)
     }
     #[automatically_derived]
     impl ::grost::__private::flavors::DefaultWireFormat<
@@ -934,19 +1116,97 @@ const _: () = {
             ::core::primitive::usize,
             <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
         > {
-            ::core::todo!()
+            let mut offset = 0;
+            let buf_len = buf.len();
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_name(&self.name, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_age(&self.age, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_email(&self.email, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            ::core::result::Result::Ok(offset)
         }
         fn encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         ) -> ::core::primitive::usize {
-            ::core::todo!()
+            let mut len = 0;
+            len += encoded_name_len(&self.name, ctx);
+            len += encoded_age_len(&self.age, ctx);
+            len += encoded_email_len(&self.email, ctx);
+            len
         }
         fn encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         ) -> ::core::primitive::usize {
-            ::core::todo!()
+            let encoded_len = <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encoded_len(self, ctx);
+            ::grost::__private::varing::encoded_u32_varint_len(
+                encoded_len as ::core::primitive::u32,
+            ) + encoded_len
         }
         fn encode_length_delimited(
             &self,
@@ -956,7 +1216,61 @@ const _: () = {
             ::core::primitive::usize,
             <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
         > {
-            ::core::todo!()
+            let encoded_len = <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encoded_len(self, ctx);
+            let buf_len = buf.len();
+            let offset = ::grost::__private::varing::encode_u32_varint_to(
+                    encoded_len as ::core::primitive::u32,
+                    buf,
+                )
+                .map_err(|e| {
+                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                            e,
+                        )
+                        .update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_length_delimited_len(self, ctx),
+                            buf_len,
+                        )
+                })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_length_delimited_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encode(self, ctx, &mut buf[offset..])
+                .map(|write| {
+                    #[cfg(debug_assertions)]
+                    {
+                        ::grost::__private::debug_assert_write_eq::<
+                            Self,
+                        >(write, encoded_len);
+                    }
+                    write + offset
+                })
+                .map_err(|e| {
+                    e
+                        .update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_length_delimited_len(self, ctx),
+                            buf_len,
+                        )
+                })
         }
     }
     #[automatically_derived]
@@ -977,142 +1291,82 @@ const _: () = {
         > {
             let mut offset = 0;
             let buf_len = buf.len();
-            if selector.is_name_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <::std::string::String as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(&self.name, ctx, &mut buf[offset..])
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
-            if selector.is_age_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            offset
+                += partial_encode_name(
+                        &self.name,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.name,
+                    )
+                    .map_err(|e| {
+                        e.update(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::network::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
                             >>::partial_encoded_len(self, ctx, selector),
                             buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <u32 as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(&self.age, ctx, &mut buf[offset..])
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
-            if selector.is_email_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            offset
+                += partial_encode_age(&self.age, ctx, &mut buf[offset..], &selector.age)
+                    .map_err(|e| {
+                        e.update(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::network::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
                             >>::partial_encoded_len(self, ctx, selector),
                             buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <::core::option::Option<
-                        ::std::string::String,
-                    > as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <::core::option::Option<
-                            ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(&self.email, ctx, &mut buf[offset..])
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
+            offset
+                += partial_encode_email(
+                        &self.email,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.email,
+                    )
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::PartialEncode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::partial_encoded_len(self, ctx, selector),
+                            buf_len,
+                        )
+                    })?;
             ::core::result::Result::Ok(offset)
         }
         fn partial_encoded_len(
@@ -1123,15 +1377,9 @@ const _: () = {
             >>::Selector,
         ) -> ::core::primitive::usize {
             let mut len = 0;
-            if selector.is_name_selected() {
-                len += encoded_name_len(&self.name, ctx);
-            }
-            if selector.is_age_selected() {
-                len += encoded_age_len(&self.age, ctx);
-            }
-            if selector.is_email_selected() {
-                len += encoded_email_len(&self.email, ctx);
-            }
+            len += partial_encoded_name_len(&self.name, ctx, &selector.name);
+            len += partial_encoded_age_len(&self.age, ctx, &selector.age);
+            len += partial_encoded_email_len(&self.email, ctx, &selector.email);
             len
         }
         fn partial_encoded_length_delimited_len(
@@ -1894,15 +2142,17 @@ impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> CommentFieldIndex<O, 
 pub enum CommentFieldIndexer {
     /// The field indexer for the field `user`
     User = 0u32,
+    /// The field indexer for the field `replyer`
+    Replyer = 1u32,
     /// The field indexer for the field `title`
-    Title = 1u32,
+    Title = 2u32,
     /// The field indexer for the field `content`
-    Content = 2u32,
+    Content = 3u32,
 }
 #[automatically_derived]
 impl CommentFieldIndexer {
     /// The number of variants of this field indexer.
-    pub const VARIANTS: ::core::primitive::usize = 3usize;
+    pub const VARIANTS: ::core::primitive::usize = 4usize;
     /// The first field indexer.
     pub const FIRST: Self = Self::User;
     /// The last field indexer.
@@ -1948,7 +2198,8 @@ impl CommentFieldIndexer {
     pub const fn next(&self) -> ::core::option::Option<Self> {
         match self {
             Self::Content => ::core::option::Option::None,
-            Self::User => ::core::option::Option::Some(Self::Title),
+            Self::User => ::core::option::Option::Some(Self::Replyer),
+            Self::Replyer => ::core::option::Option::Some(Self::Title),
             Self::Title => ::core::option::Option::Some(Self::Content),
         }
     }
@@ -1960,7 +2211,8 @@ impl CommentFieldIndexer {
         match self {
             Self::User => ::core::option::Option::None,
             Self::Content => ::core::option::Option::Some(Self::Title),
-            Self::Title => ::core::option::Option::Some(Self::User),
+            Self::Title => ::core::option::Option::Some(Self::Replyer),
+            Self::Replyer => ::core::option::Option::Some(Self::User),
         }
     }
     /// Returns the remaining number of fields.
@@ -2001,6 +2253,7 @@ impl ::core::iter::ExactSizeIterator for CommentFieldIndexer {
 ///A comment struct
 pub struct Comment {
     user: User,
+    replyer: ::core::option::Option<User>,
     title: ::std::string::String,
     content: ::core::option::Option<::std::string::String>,
 }
@@ -2032,6 +2285,39 @@ impl Comment {
             ::grost::__private::flavors::Network,
         >,
     > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_USER_REFLECTION);
+    /// The reflection information of the `replyer` field for [`Network`](::grost::__private::flavors::Network) flavor.
+    pub const NETWORK_FLAVOR_REPLYER_REFLECTION: &::grost::__private::reflection::FieldReflection<
+        ::grost::__private::flavors::Network,
+    > = &::grost::__private::reflection::FieldReflectionBuilder::<
+        ::grost::__private::flavors::Network,
+    > {
+        identifier: ::grost::__private::flavors::network::Identifier::new(
+            <<::core::option::Option<
+                User,
+            > as ::grost::__private::flavors::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format as ::grost::__private::flavors::WireFormat<
+                ::grost::__private::flavors::Network,
+            >>::WIRE_TYPE,
+            ::grost::__private::flavors::network::Tag::new(2u32),
+        ),
+        name: "replyer",
+        ty: ::core::any::type_name::<::core::option::Option<User>>,
+        schema_name: "replyer",
+        schema_type: ::grost::__private::reflection::Type::<
+            ::grost::__private::flavors::Network,
+        >::Optional(
+            &::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Struct(<User>::NETWORK_FLAVOR_REFLECTION),
+        ),
+    }
+        .build();
+    const __NETWORK_FLAVOR_REPLYER_REFLECTION_OPTIONAL__: ::core::option::Option<
+        &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_REPLYER_REFLECTION);
     /// The reflection information of the `title` field for [`Network`](::grost::__private::flavors::Network) flavor.
     pub const NETWORK_FLAVOR_TITLE_REFLECTION: &::grost::__private::reflection::FieldReflection<
         ::grost::__private::flavors::Network,
@@ -2044,7 +2330,7 @@ impl Comment {
             >>::Format as ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::Network,
             >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(2u32),
+            ::grost::__private::flavors::network::Tag::new(3u32),
         ),
         name: "title",
         ty: ::core::any::type_name::<::std::string::String>,
@@ -2076,7 +2362,7 @@ impl Comment {
             >>::Format as ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::Network,
             >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(3u32),
+            ::grost::__private::flavors::network::Tag::new(4u32),
         ),
         name: "content",
         ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
@@ -2108,6 +2394,7 @@ impl Comment {
         schema_name: "Comment",
         fields: &[
             Self::NETWORK_FLAVOR_USER_REFLECTION,
+            Self::NETWORK_FLAVOR_REPLYER_REFLECTION,
             Self::NETWORK_FLAVOR_TITLE_REFLECTION,
             Self::NETWORK_FLAVOR_CONTENT_REFLECTION,
         ],
@@ -2124,6 +2411,7 @@ impl Comment {
     pub fn new() -> Self {
         Self {
             user: ::core::default::Default::default(),
+            replyer: ::core::default::Default::default(),
             title: ::core::default::Default::default(),
             content: ::core::default::Default::default(),
         }
@@ -2148,6 +2436,28 @@ impl Comment {
     #[inline]
     pub fn with_user(mut self, user: User) -> Self {
         self.user = user;
+        self
+    }
+    /// Gets the reference of the field `replyer`.
+    #[inline]
+    pub fn replyer(&self) -> ::core::option::Option<&User> {
+        ::core::option::Option::as_ref(&self.replyer)
+    }
+    /// Gets the mutable reference of the field `replyer`.
+    #[inline]
+    pub fn replyer_mut(&mut self) -> ::core::option::Option<&mut User> {
+        ::core::option::Option::as_mut(&mut self.replyer)
+    }
+    /// Sets the `replyer`.
+    #[inline]
+    pub fn set_replyer(&mut self, replyer: ::core::option::Option<User>) -> &mut Self {
+        self.replyer = replyer;
+        self
+    }
+    /// Sets the `replyer`.
+    #[inline]
+    pub fn with_replyer(mut self, replyer: ::core::option::Option<User>) -> Self {
+        self.replyer = replyer;
         self
     }
     /// Gets the reference of the field `title`.
@@ -2213,6 +2523,17 @@ const _: () = {
     const NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER: &[::core::primitive::u8] = NETWORK_FLAVOR_USER_IDENTIFIER
         .encode()
         .as_slice();
+    const NETWORK_FLAVOR_REPLYER_IDENTIFIER: ::grost::__private::flavors::network::Identifier = Comment::NETWORK_FLAVOR_REPLYER_REFLECTION
+        .identifier();
+    const NETWORK_FLAVOR_REPLYER_TAG: ::grost::__private::flavors::network::Tag = NETWORK_FLAVOR_REPLYER_IDENTIFIER
+        .tag();
+    const NETWORK_FLAVOR_REPLYER_WIRE_TYPE: ::grost::__private::flavors::network::WireType = NETWORK_FLAVOR_REPLYER_IDENTIFIER
+        .wire_type();
+    const NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN: ::core::primitive::usize = NETWORK_FLAVOR_REPLYER_IDENTIFIER
+        .encoded_len();
+    const NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER: &[::core::primitive::u8] = NETWORK_FLAVOR_REPLYER_IDENTIFIER
+        .encode()
+        .as_slice();
     const NETWORK_FLAVOR_TITLE_IDENTIFIER: ::grost::__private::flavors::network::Identifier = Comment::NETWORK_FLAVOR_TITLE_REFLECTION
         .identifier();
     const NETWORK_FLAVOR_TITLE_TAG: ::grost::__private::flavors::network::Tag = NETWORK_FLAVOR_TITLE_IDENTIFIER
@@ -2265,6 +2586,18 @@ const _: () = {
                         }
                     }
                 }
+                CommentFieldIndexer::Replyer => {
+                    match (select, self.replyer.is_empty()) {
+                        (true, false) => {
+                            &Comment::__NETWORK_FLAVOR_REPLYER_REFLECTION_OPTIONAL__
+                        }
+                        (true, true) => NONE,
+                        (false, false) => NONE,
+                        (false, true) => {
+                            &Comment::__NETWORK_FLAVOR_REPLYER_REFLECTION_OPTIONAL__
+                        }
+                    }
+                }
                 CommentFieldIndexer::Title => {
                     match (select, self.title) {
                         (true, true) => {
@@ -2314,6 +2647,13 @@ const _: () = {
                         &Comment::__NETWORK_FLAVOR_USER_REFLECTION_OPTIONAL__
                     }
                 }
+                CommentFieldIndexer::Replyer => {
+                    if self.replyer.is_empty() {
+                        NONE
+                    } else {
+                        &Comment::__NETWORK_FLAVOR_REPLYER_REFLECTION_OPTIONAL__
+                    }
+                }
                 CommentFieldIndexer::Title => {
                     if self.title {
                         &Comment::__NETWORK_FLAVOR_TITLE_REFLECTION_OPTIONAL__
@@ -2345,6 +2685,9 @@ const _: () = {
         fn index(&self, indexer: ()) -> &Self::Output {
             match ::core::convert::AsRef::<CommentFieldIndexer>::as_ref(self) {
                 CommentFieldIndexer::User => &Comment::NETWORK_FLAVOR_USER_REFLECTION,
+                CommentFieldIndexer::Replyer => {
+                    &Comment::NETWORK_FLAVOR_REPLYER_REFLECTION
+                }
                 CommentFieldIndexer::Title => &Comment::NETWORK_FLAVOR_TITLE_REFLECTION,
                 CommentFieldIndexer::Content => {
                     &Comment::NETWORK_FLAVOR_CONTENT_REFLECTION
@@ -2392,6 +2735,7 @@ const _: () = {
         fn index(&self, _: ()) -> &Self::Output {
             match ::core::convert::AsRef::<CommentFieldIndexer>::as_ref(self) {
                 CommentFieldIndexer::User => &NETWORK_FLAVOR_USER_TAG,
+                CommentFieldIndexer::Replyer => &NETWORK_FLAVOR_REPLYER_TAG,
                 CommentFieldIndexer::Title => &NETWORK_FLAVOR_TITLE_TAG,
                 CommentFieldIndexer::Content => &NETWORK_FLAVOR_CONTENT_TAG,
             }
@@ -2444,6 +2788,7 @@ const _: () = {
         fn index(&self, _: ()) -> &Self::Output {
             match ::core::convert::AsRef::<CommentFieldIndexer>::as_ref(self) {
                 CommentFieldIndexer::User => &NETWORK_FLAVOR_USER_WIRE_TYPE,
+                CommentFieldIndexer::Replyer => &NETWORK_FLAVOR_REPLYER_WIRE_TYPE,
                 CommentFieldIndexer::Title => &NETWORK_FLAVOR_TITLE_WIRE_TYPE,
                 CommentFieldIndexer::Content => &NETWORK_FLAVOR_CONTENT_WIRE_TYPE,
             }
@@ -2496,6 +2841,7 @@ const _: () = {
         fn index(&self, _: ()) -> &Self::Output {
             match ::core::convert::AsRef::<CommentFieldIndexer>::as_ref(self) {
                 CommentFieldIndexer::User => &NETWORK_FLAVOR_USER_IDENTIFIER,
+                CommentFieldIndexer::Replyer => &NETWORK_FLAVOR_REPLYER_IDENTIFIER,
                 CommentFieldIndexer::Title => &NETWORK_FLAVOR_TITLE_IDENTIFIER,
                 CommentFieldIndexer::Content => &NETWORK_FLAVOR_CONTENT_IDENTIFIER,
             }
@@ -2583,35 +2929,267 @@ const _: () = {
             }
         }
     }
+    fn partial_encoded_user_len(
+        f: &User,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+            + <User as ::grost::__private::PartialEncode<
+                ::grost::__private::flavors::network::Network,
+                <User as ::grost::__private::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
+    }
     fn encoded_user_len(
         f: &User,
         ctx: &::grost::__private::flavors::network::Context,
-        selector: ::core::option::Option<
-            &<User as ::grost::__private::Selectable<
-                ::grost::__private::flavors::network::Network,
-            >>::Selector,
-        >,
     ) -> ::core::primitive::usize {
-        match selector {
-            ::core::option::Option::Some(selector) => {
-                NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+        NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+            + <User as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                <User as ::grost::__private::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format,
+            >>::encoded_length_delimited_len(f, ctx)
+    }
+    fn partial_encode_user(
+        f: &User,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        let buf_len = buf.len();
+        let mut offset = 0;
+        if offset > buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_user_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        buf[offset..offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN]
+            .copy_from_slice(NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER);
+        offset += NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN;
+        if offset >= buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_user_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        <User as ::grost::__private::PartialEncode<
+            ::grost::__private::flavors::network::Network,
+            <User as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format,
+        >>::partial_encode_length_delimited(f, ctx, &mut buf[offset..], selector)
+            .map(|len| offset + len)
+            .map_err(|e| e.update(partial_encoded_user_len(f, ctx, selector), buf_len))
+    }
+    fn encode_user(
+        f: &User,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        let buf_len = buf.len();
+        let mut offset = 0;
+        if offset > buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_user_len(f, ctx),
+                    buf_len,
+                ),
+            );
+        }
+        buf[offset..offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN]
+            .copy_from_slice(NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER);
+        offset += NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN;
+        if offset >= buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_user_len(f, ctx),
+                    buf_len,
+                ),
+            );
+        }
+        <User as ::grost::__private::Encode<
+            ::grost::__private::flavors::network::Network,
+            <User as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format,
+        >>::encode_length_delimited(f, ctx, &mut buf[offset..])
+            .map(|len| offset + len)
+            .map_err(|e| e.update(encoded_user_len(f, ctx), buf_len))
+    }
+    fn partial_encoded_replyer_len(
+        f: &::core::option::Option<User>,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN
                     + <User as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <::core::option::Option<
+                            User,
+                        > as ::grost::__private::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encoded_length_delimited_len(f, ctx, selector)
             }
-            ::core::option::Option::None => {
-                NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+            ::core::option::Option::None => 0,
+        }
+    }
+    fn encoded_replyer_len(
+        f: &::core::option::Option<User>,
+        ctx: &::grost::__private::flavors::network::Context,
+    ) -> ::core::primitive::usize {
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN
                     + <User as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <::core::option::Option<
+                            User,
+                        > as ::grost::__private::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encoded_length_delimited_len(f, ctx)
             }
+            ::core::option::Option::None => 0,
         }
+    }
+    fn partial_encode_replyer(
+        f: &::core::option::Option<User>,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<User as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_replyer_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_replyer_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                <User as ::grost::__private::PartialEncode<
+                    ::grost::__private::flavors::network::Network,
+                    <::core::option::Option<
+                        User,
+                    > as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::partial_encode_length_delimited(
+                        field,
+                        ctx,
+                        &mut buf[offset..],
+                        selector,
+                    )
+                    .map(|len| offset + len)
+                    .map_err(|e| {
+                        e.update(partial_encoded_replyer_len(f, ctx, selector), buf_len)
+                    })
+            }
+        }
+    }
+    fn encode_replyer(
+        f: &::core::option::Option<User>,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_replyer_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_replyer_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                <User as ::grost::__private::Encode<
+                    ::grost::__private::flavors::network::Network,
+                    <::core::option::Option<
+                        User,
+                    > as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::encode_length_delimited(field, ctx, &mut buf[offset..])
+                    .map(|len| offset + len)
+                    .map_err(|e| e.update(encoded_replyer_len(f, ctx), buf_len))
+            }
+        }
+    }
+    fn partial_encoded_title_len(
+        f: &::std::string::String,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN
+            + <::std::string::String as ::grost::__private::PartialEncode<
+                ::grost::__private::flavors::network::Network,
+                <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
     }
     fn encoded_title_len(
         f: &::std::string::String,
@@ -2625,6 +3203,47 @@ const _: () = {
                 >>::Format,
             >>::encoded_length_delimited_len(f, ctx)
     }
+    fn partial_encode_title(
+        f: &::std::string::String,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        let buf_len = buf.len();
+        let mut offset = 0;
+        if offset > buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_title_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        buf[offset..offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN]
+            .copy_from_slice(NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER);
+        offset += NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN;
+        if offset >= buf_len {
+            return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    partial_encoded_title_len(f, ctx, selector),
+                    buf_len,
+                ),
+            );
+        }
+        <::std::string::String as ::grost::__private::PartialEncode<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+            >>::Format,
+        >>::partial_encode_length_delimited(f, ctx, &mut buf[offset..], selector)
+            .map(|len| offset + len)
+            .map_err(|e| e.update(partial_encoded_title_len(f, ctx, selector), buf_len))
+    }
     fn encode_title(
         f: &::std::string::String,
         ctx: &::grost::__private::flavors::network::Context,
@@ -2637,12 +3256,10 @@ const _: () = {
         let mut offset = 0;
         if offset > buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_title_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         buf[offset..offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN]
@@ -2650,12 +3267,10 @@ const _: () = {
         offset += NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN;
         if offset >= buf_len {
             return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    encoded_title_len(f, ctx),
+                    buf_len,
+                ),
             );
         }
         <::std::string::String as ::grost::__private::Encode<
@@ -2665,22 +3280,103 @@ const _: () = {
             >>::Format,
         >>::encode_length_delimited(f, ctx, &mut buf[offset..])
             .map(|len| offset + len)
+            .map_err(|e| e.update(encoded_title_len(f, ctx), buf_len))
+    }
+    fn partial_encoded_content_len(
+        f: &::core::option::Option<::std::string::String>,
+        ctx: &::grost::__private::flavors::network::Context,
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::primitive::usize {
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN
+                    + <::std::string::String as ::grost::__private::PartialEncode<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::partial_encoded_length_delimited_len(f, ctx, selector)
+            }
+            ::core::option::Option::None => 0,
+        }
     }
     fn encoded_content_len(
         f: &::core::option::Option<::std::string::String>,
         ctx: &::grost::__private::flavors::network::Context,
     ) -> ::core::primitive::usize {
-        NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN
-            + <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::Encode<
-                ::grost::__private::flavors::network::Network,
-                <::core::option::Option<
-                    ::std::string::String,
-                > as ::grost::__private::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::encoded_length_delimited_len(f, ctx)
+        match f {
+            ::core::option::Option::Some(f) => {
+                NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN
+                    + <::std::string::String as ::grost::__private::Encode<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::encoded_length_delimited_len(f, ctx)
+            }
+            ::core::option::Option::None => 0,
+        }
+    }
+    fn partial_encode_content(
+        f: &::core::option::Option<::std::string::String>,
+        ctx: &::grost::__private::flavors::network::Context,
+        buf: &mut [::core::primitive::u8],
+        selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+        >>::Selector,
+    ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+    > {
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_content_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            partial_encoded_content_len(f, ctx, selector),
+                            buf_len,
+                        ),
+                    );
+                }
+                <::std::string::String as ::grost::__private::PartialEncode<
+                    ::grost::__private::flavors::network::Network,
+                    <::core::option::Option<
+                        ::std::string::String,
+                    > as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::partial_encode_length_delimited(
+                        field,
+                        ctx,
+                        &mut buf[offset..],
+                        selector,
+                    )
+                    .map(|len| offset + len)
+                    .map_err(|e| {
+                        e.update(partial_encoded_content_len(f, ctx, selector), buf_len)
+                    })
+            }
+        }
     }
     fn encode_content(
         f: &::core::option::Option<::std::string::String>,
@@ -2690,46 +3386,42 @@ const _: () = {
         ::core::primitive::usize,
         ::grost::__private::flavors::network::EncodeError,
     > {
-        let buf_len = buf.len();
-        let mut offset = 0;
-        if offset > buf_len {
-            return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
+        match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+                let buf_len = buf.len();
+                let mut offset = 0;
+                if offset > buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_content_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
+                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
+                offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
+                if offset >= buf_len {
+                    return ::core::result::Result::Err(
+                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                            encoded_content_len(f, ctx),
+                            buf_len,
+                        ),
+                    );
+                }
+                <::std::string::String as ::grost::__private::Encode<
+                    ::grost::__private::flavors::network::Network,
                     <::core::option::Option<
                         ::std::string::String,
                     > as ::grost::__private::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
-            );
+                >>::encode_length_delimited(field, ctx, &mut buf[offset..])
+                    .map(|len| offset + len)
+                    .map_err(|e| e.update(encoded_content_len(f, ctx), buf_len))
+            }
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
-            .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
-        if offset >= buf_len {
-            return ::core::result::Result::Err(
-                insufficient_buffer_error::<
-                    _,
-                    <::core::option::Option<
-                        ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
-                        ::grost::__private::flavors::Network,
-                    >>::Format,
-                >(f, ctx, ::core::option::Option::None, buf_len),
-            );
-        }
-        <::core::option::Option<
-            ::std::string::String,
-        > as ::grost::__private::Encode<
-            ::grost::__private::flavors::network::Network,
-            <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format,
-        >>::encode_length_delimited(f, ctx, &mut buf[offset..])
-            .map(|len| offset + len)
     }
     #[automatically_derived]
     impl ::grost::__private::flavors::DefaultWireFormat<
@@ -2750,19 +3442,120 @@ const _: () = {
             ::core::primitive::usize,
             <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
         > {
-            ::core::todo!()
+            let mut offset = 0;
+            let buf_len = buf.len();
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_user(&self.user, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_replyer(&self.replyer, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_title(&self.title, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += encode_content(&self.content, ctx, &mut buf[offset..])
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_len(self, ctx),
+                            buf_len,
+                        )
+                    })?;
+            ::core::result::Result::Ok(offset)
         }
         fn encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         ) -> ::core::primitive::usize {
-            ::core::todo!()
+            let mut len = 0;
+            len += encoded_user_len(&self.user, ctx);
+            len += encoded_replyer_len(&self.replyer, ctx);
+            len += encoded_title_len(&self.title, ctx);
+            len += encoded_content_len(&self.content, ctx);
+            len
         }
         fn encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::Context,
         ) -> ::core::primitive::usize {
-            ::core::todo!()
+            let encoded_len = <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encoded_len(self, ctx);
+            ::grost::__private::varing::encoded_u32_varint_len(
+                encoded_len as ::core::primitive::u32,
+            ) + encoded_len
         }
         fn encode_length_delimited(
             &self,
@@ -2772,7 +3565,61 @@ const _: () = {
             ::core::primitive::usize,
             <::grost::__private::flavors::network::Network as ::grost::__private::flavors::Flavor>::EncodeError,
         > {
-            ::core::todo!()
+            let encoded_len = <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encoded_len(self, ctx);
+            let buf_len = buf.len();
+            let offset = ::grost::__private::varing::encode_u32_varint_to(
+                    encoded_len as ::core::primitive::u32,
+                    buf,
+                )
+                .map_err(|e| {
+                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                            e,
+                        )
+                        .update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_length_delimited_len(self, ctx),
+                            buf_len,
+                        )
+                })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::Encode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::encoded_length_delimited_len(self, ctx),
+                        buf_len,
+                    ),
+                );
+            }
+            <Self as ::grost::__private::Encode<
+                ::grost::__private::flavors::network::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+            >>::encode(self, ctx, &mut buf[offset..])
+                .map(|write| {
+                    #[cfg(debug_assertions)]
+                    {
+                        ::grost::__private::debug_assert_write_eq::<
+                            Self,
+                        >(write, encoded_len);
+                    }
+                    write + offset
+                })
+                .map_err(|e| {
+                    e
+                        .update(
+                            <Self as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::encoded_length_delimited_len(self, ctx),
+                            buf_len,
+                        )
+                })
         }
     }
     #[automatically_derived]
@@ -2793,147 +3640,114 @@ const _: () = {
         > {
             let mut offset = 0;
             let buf_len = buf.len();
-            if selector.is_user_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
+            }
+            offset
+                += partial_encode_user(
+                        &self.user,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.user,
+                    )
+                    .map_err(|e| {
+                        e.update(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::network::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
                             >>::partial_encoded_len(self, ctx, selector),
                             buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <User as ::grost::__private::PartialEncode<
-                        ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::partial_encode_length_delimited(
-                            &self.user,
-                            ctx,
-                            &mut buf[offset..],
-                            selector.user_ref(),
                         )
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
-            if selector.is_title_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            offset
+                += partial_encode_replyer(
+                        &self.replyer,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.replyer,
+                    )
+                    .map_err(|e| {
+                        e.update(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::network::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
                             >>::partial_encoded_len(self, ctx, selector),
                             buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <::std::string::String as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(&self.title, ctx, &mut buf[offset..])
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
-            if selector.is_content_selected() {
-                if offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN > buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            offset
+                += partial_encode_title(
+                        &self.title,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.title,
+                    )
+                    .map_err(|e| {
+                        e.update(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::network::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
                             >>::partial_encoded_len(self, ctx, selector),
                             buf_len,
-                        ),
-                    );
-                }
-                buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
-                    .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
-                offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
-                if offset >= buf_len {
-                    return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                            <Self as ::grost::__private::PartialEncode<
-                                ::grost::__private::flavors::network::Network,
-                                ::grost::__private::flavors::network::LengthDelimited,
-                            >>::partial_encoded_len(self, ctx, selector),
-                            buf_len,
-                        ),
-                    );
-                }
-                offset
-                    += <::core::option::Option<
-                        ::std::string::String,
-                    > as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <::core::option::Option<
-                            ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(&self.content, ctx, &mut buf[offset..])
-                        .map_err(|e| {
-                            e
-                                .update(
-                                    <Self as ::grost::__private::PartialEncode<
-                                        ::grost::__private::flavors::network::Network,
-                                        ::grost::__private::flavors::network::LengthDelimited,
-                                    >>::partial_encoded_len(self, ctx, selector),
-                                    buf_len,
-                                )
-                        })?;
+                        )
+                    })?;
+            if offset >= buf_len {
+                return ::core::result::Result::Err(
+                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        <Self as ::grost::__private::PartialEncode<
+                            ::grost::__private::flavors::network::Network,
+                            ::grost::__private::flavors::network::LengthDelimited,
+                        >>::partial_encoded_len(self, ctx, selector),
+                        buf_len,
+                    ),
+                );
             }
+            offset
+                += partial_encode_content(
+                        &self.content,
+                        ctx,
+                        &mut buf[offset..],
+                        &selector.content,
+                    )
+                    .map_err(|e| {
+                        e.update(
+                            <Self as ::grost::__private::PartialEncode<
+                                ::grost::__private::flavors::network::Network,
+                                ::grost::__private::flavors::network::LengthDelimited,
+                            >>::partial_encoded_len(self, ctx, selector),
+                            buf_len,
+                        )
+                    })?;
             ::core::result::Result::Ok(offset)
         }
         fn partial_encoded_len(
@@ -2944,20 +3758,10 @@ const _: () = {
             >>::Selector,
         ) -> ::core::primitive::usize {
             let mut len = 0;
-            if selector.is_user_selected() {
-                len
-                    += encoded_user_len(
-                        &self.user,
-                        ctx,
-                        ::core::option::Option::Some(selector.user_ref()),
-                    );
-            }
-            if selector.is_title_selected() {
-                len += encoded_title_len(&self.title, ctx);
-            }
-            if selector.is_content_selected() {
-                len += encoded_content_len(&self.content, ctx);
-            }
+            len += partial_encoded_user_len(&self.user, ctx, &selector.user);
+            len += partial_encoded_replyer_len(&self.replyer, ctx, &selector.replyer);
+            len += partial_encoded_title_len(&self.title, ctx, &selector.title);
+            len += partial_encoded_content_len(&self.content, ctx, &selector.content);
             len
         }
         fn partial_encoded_length_delimited_len(
@@ -3095,6 +3899,9 @@ impl<
 pub struct CommentSelector<F: ?::core::marker::Sized> {
     _m: ::core::marker::PhantomData<F>,
     user: <User as ::grost::__private::Selectable<F>>::Selector,
+    replyer: <::core::option::Option<
+        User,
+    > as ::grost::__private::Selectable<F>>::Selector,
     title: ::core::primitive::bool,
     content: ::core::primitive::bool,
 }
@@ -3115,6 +3922,17 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
             } else {
                 ::core::write!(f, "user")?;
                 self.user.debug_helper(f)?;
+            }
+            idx += 1;
+        }
+        if !self.replyer.is_empty() {
+            if idx != num_selected - 1 {
+                ::core::write!(f, "replyer")?;
+                self.replyer.debug_helper(f)?;
+                ::core::write!(f, " & ")?;
+            } else {
+                ::core::write!(f, "replyer")?;
+                self.replyer.debug_helper(f)?;
             }
             idx += 1;
         }
@@ -3150,8 +3968,8 @@ impl<F: ?::core::marker::Sized> ::core::fmt::Debug for CommentSelector<F> {
 #[automatically_derived]
 impl<F: ?::core::marker::Sized> ::core::cmp::PartialEq for CommentSelector<F> {
     fn eq(&self, other: &Self) -> ::core::primitive::bool {
-        self.user == other.user && self.title == other.title
-            && self.content == other.content
+        self.user == other.user && self.replyer == other.replyer
+            && self.title == other.title && self.content == other.content
     }
 }
 #[automatically_derived]
@@ -3160,6 +3978,7 @@ impl<F: ?::core::marker::Sized> ::core::cmp::Eq for CommentSelector<F> {}
 impl<F: ?::core::marker::Sized> ::core::hash::Hash for CommentSelector<F> {
     fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
         self.user.hash(state);
+        self.replyer.hash(state);
         self.title.hash(state);
         self.content.hash(state);
     }
@@ -3190,6 +4009,11 @@ impl<F: ?::core::marker::Sized> ::grost::__private::Selector<F> for CommentSelec
         <<User as ::grost::__private::Selectable<
             F,
         >>::Selector as ::grost::__private::Selector<F>>::flip(&mut self.user);
+        <<::core::option::Option<
+            User,
+        > as ::grost::__private::Selectable<
+            F,
+        >>::Selector as ::grost::__private::Selector<F>>::flip(&mut self.replyer);
         self.title = !self.title;
         self.content = !self.content;
         self
@@ -3200,6 +4024,13 @@ impl<F: ?::core::marker::Sized> ::grost::__private::Selector<F> for CommentSelec
         >>::Selector as ::grost::__private::Selector<
             F,
         >>::merge(&mut self.user, other.user);
+        <<::core::option::Option<
+            User,
+        > as ::grost::__private::Selectable<
+            F,
+        >>::Selector as ::grost::__private::Selector<
+            F,
+        >>::merge(&mut self.replyer, other.replyer);
         self.title |= other.title;
         self.content |= other.content;
         self
@@ -3208,13 +4039,18 @@ impl<F: ?::core::marker::Sized> ::grost::__private::Selector<F> for CommentSelec
 #[automatically_derived]
 impl<F: ?::core::marker::Sized> CommentSelector<F> {
     /// The number of options in this selection type.
-    pub const OPTIONS: ::core::primitive::usize = 3usize;
+    pub const OPTIONS: ::core::primitive::usize = 4usize;
     /// Returns a selector which selects nothing.
     #[inline]
     pub const fn empty() -> Self {
         Self {
             _m: ::core::marker::PhantomData,
             user: <<User as ::grost::__private::Selectable<
+                F,
+            >>::Selector as ::grost::__private::Selector<F>>::NONE,
+            replyer: <<::core::option::Option<
+                User,
+            > as ::grost::__private::Selectable<
                 F,
             >>::Selector as ::grost::__private::Selector<F>>::NONE,
             title: false,
@@ -3229,6 +4065,11 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
             user: <<User as ::grost::__private::Selectable<
                 F,
             >>::Selector as ::grost::__private::Selector<F>>::ALL,
+            replyer: <<::core::option::Option<
+                User,
+            > as ::grost::__private::Selectable<
+                F,
+            >>::Selector as ::grost::__private::Selector<F>>::ALL,
             title: true,
             content: true,
         }
@@ -3236,18 +4077,21 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
     /// Returns `true` if the selector selects nothing.
     #[inline]
     pub const fn is_empty(&self) -> ::core::primitive::bool {
-        self.user.is_empty() && !self.title && !self.content
+        self.user.is_empty() && self.replyer.is_empty() && !self.title && !self.content
     }
     /// Returns `true` if the selector selects all.
     #[inline]
     pub const fn is_all(&self) -> ::core::primitive::bool {
-        self.user.is_all() && self.title && self.content
+        self.user.is_all() && self.replyer.is_all() && self.title && self.content
     }
     /// Returns the number of selected fields.
     #[inline]
     pub const fn selected(&self) -> ::core::primitive::usize {
         let mut num = 0;
         if self.is_user_selected() {
+            num += 1;
+        }
+        if self.is_replyer_selected() {
             num += 1;
         }
         if self.is_title_selected() {
@@ -3263,6 +4107,9 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
     pub const fn unselected(&self) -> ::core::primitive::usize {
         let mut num = 0;
         if self.is_user_unselected() {
+            num += 1;
+        }
+        if self.is_replyer_unselected() {
             num += 1;
         }
         if self.is_title_unselected() {
@@ -3291,6 +4138,7 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
     ) -> ::core::primitive::bool {
         match idx {
             CommentFieldIndexer::User => self.is_user_selected(),
+            CommentFieldIndexer::Replyer => self.is_replyer_selected(),
             CommentFieldIndexer::Title => self.is_title_selected(),
             CommentFieldIndexer::Content => self.is_content_selected(),
         }
@@ -3303,6 +4151,7 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
     ) -> ::core::primitive::bool {
         match idx {
             CommentFieldIndexer::User => self.is_user_unselected(),
+            CommentFieldIndexer::Replyer => self.is_replyer_unselected(),
             CommentFieldIndexer::Title => self.is_title_unselected(),
             CommentFieldIndexer::Content => self.is_content_unselected(),
         }
@@ -3347,6 +4196,53 @@ impl<F: ?::core::marker::Sized> CommentSelector<F> {
     #[inline]
     pub const fn is_user_unselected(&self) -> ::core::primitive::bool {
         self.user.is_empty()
+    }
+    /// Select the `Comment.replyer` field
+    #[inline]
+    pub fn select_replyer(
+        &mut self,
+        val: <::core::option::Option<
+            User,
+        > as ::grost::__private::Selectable<F>>::Selector,
+    ) -> &mut Self {
+        self.replyer = val;
+        self
+    }
+    /// Unselect the `Comment.replyer` field
+    #[inline]
+    pub fn unselect_replyer(&mut self) -> &mut Self {
+        self.replyer = <<::core::option::Option<
+            User,
+        > as ::grost::__private::Selectable<
+            F,
+        >>::Selector as ::grost::__private::Selector<F>>::NONE;
+        self
+    }
+    /// Get a reference to the selector of `Comment.replyer` field
+    #[inline]
+    pub const fn replyer_ref(
+        &self,
+    ) -> &<::core::option::Option<User> as ::grost::__private::Selectable<F>>::Selector {
+        &self.replyer
+    }
+    /// Get a mutable reference to the selector of `Comment.replyer` field
+    #[inline]
+    pub const fn replyer_mut(
+        &mut self,
+    ) -> &mut <::core::option::Option<
+        User,
+    > as ::grost::__private::Selectable<F>>::Selector {
+        &mut self.replyer
+    }
+    /// Returns `true` if the `Comment.replyer` field is selected
+    #[inline]
+    pub const fn is_replyer_selected(&self) -> ::core::primitive::bool {
+        !self.replyer.is_empty()
+    }
+    /// Returns `true` if the `Comment.replyer` field is unselected
+    #[inline]
+    pub const fn is_replyer_unselected(&self) -> ::core::primitive::bool {
+        self.replyer.is_empty()
     }
     /// Select the `Comment.title` field
     #[inline]
@@ -3618,18 +4514,25 @@ const _: () = {
                 1u32,
             )
             .as_slice();
-        const __NETWORK_FLAVOR_ENCODED_LEN_TITLE_TAG__: ::core::primitive::usize = ::grost::__private::varing::encoded_u32_varint_len(
+        const __NETWORK_FLAVOR_ENCODED_LEN_REPLYER_TAG__: ::core::primitive::usize = ::grost::__private::varing::encoded_u32_varint_len(
             2u32,
         );
-        const __NETWORK_FLAVOR_ENCODED_TITLE_TAG__: &[::core::primitive::u8] = ::grost::__private::varing::encode_u32_varint(
+        const __NETWORK_FLAVOR_ENCODED_REPLYER_TAG__: &[::core::primitive::u8] = ::grost::__private::varing::encode_u32_varint(
                 2u32,
             )
             .as_slice();
-        const __NETWORK_FLAVOR_ENCODED_LEN_CONTENT_TAG__: ::core::primitive::usize = ::grost::__private::varing::encoded_u32_varint_len(
+        const __NETWORK_FLAVOR_ENCODED_LEN_TITLE_TAG__: ::core::primitive::usize = ::grost::__private::varing::encoded_u32_varint_len(
             3u32,
         );
-        const __NETWORK_FLAVOR_ENCODED_CONTENT_TAG__: &[::core::primitive::u8] = ::grost::__private::varing::encode_u32_varint(
+        const __NETWORK_FLAVOR_ENCODED_TITLE_TAG__: &[::core::primitive::u8] = ::grost::__private::varing::encode_u32_varint(
                 3u32,
+            )
+            .as_slice();
+        const __NETWORK_FLAVOR_ENCODED_LEN_CONTENT_TAG__: ::core::primitive::usize = ::grost::__private::varing::encoded_u32_varint_len(
+            4u32,
+        );
+        const __NETWORK_FLAVOR_ENCODED_CONTENT_TAG__: &[::core::primitive::u8] = ::grost::__private::varing::encode_u32_varint(
+                4u32,
             )
             .as_slice();
     }

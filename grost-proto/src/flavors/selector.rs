@@ -54,16 +54,8 @@ impl Flavor for Select {
   where
     B: crate::buffer::BytesBuffer,
   {
-    let maximum_encode_size = ctx.maximum_message_size();
-
     let value_bytes = value.raw();
     let value_len = value_bytes.len();
-    if value_len > maximum_encode_size {
-      return Err(EncodeError::insufficient_buffer(
-        value_len,
-        maximum_encode_size,
-      ));
-    }
 
     if value_len > buf.len() {
       return Err(EncodeError::insufficient_buffer(value_len, buf.len()));

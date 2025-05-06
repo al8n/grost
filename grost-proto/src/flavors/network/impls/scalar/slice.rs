@@ -14,13 +14,8 @@ default_wire_format!(
 selectable_scalar!(Network: [u8]);
 
 impl Encode<Network, LengthDelimited> for [u8] {
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     let this_len = self.len();
-    let maximum_msg_len = context.maximum_message_size();
-    if this_len > maximum_msg_len {
-      return Err(EncodeError::too_large(this_len, maximum_msg_len));
-    }
-
     let buf_len = buf.len();
 
     if this_len > buf_len {
@@ -43,14 +38,10 @@ impl Encode<Network, LengthDelimited> for [u8] {
 
   fn encode_length_delimited(
     &self,
-    context: &Context,
+    _: &Context,
     buf: &mut [u8],
   ) -> Result<usize, EncodeError> {
     let this_len = self.len();
-    let maximum_msg_len = context.maximum_message_size();
-    if this_len > maximum_msg_len {
-      return Err(EncodeError::too_large(this_len, maximum_msg_len));
-    }
 
     let buf_len = buf.len();
     if this_len > buf_len {
