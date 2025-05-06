@@ -341,7 +341,7 @@ impl Field {
     }
   }
 
-  pub(crate) fn field_reflections<F>(
+  pub(crate) fn field_reflection<F>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,
@@ -366,16 +366,24 @@ impl Field {
 
     let identifier = flavor.generate_field_identifier(path_to_grost, self);
     quote! {
-      #[doc = #field_reflection_doc]
-      pub const #field_reflection_name: &#path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = &#path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
+      // #[doc = #field_reflection_doc]
+      // pub const #field_reflection_name: &#path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = &#path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
+      //   identifier: #identifier,
+      //   name: #field_name,
+      //   ty: ::core::any::type_name::<#field_ty>,
+      //   schema_name: #schema_name,
+      //   schema_type: #relection_ty,
+      // }.build();
+
+      // const #field_reflection_optional_name: ::core::option::Option<& #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>> = ::core::option::Option::Some(Self::#field_reflection_name);
+
+      #path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
         identifier: #identifier,
         name: #field_name,
         ty: ::core::any::type_name::<#field_ty>,
         schema_name: #schema_name,
         schema_type: #relection_ty,
-      }.build();
-
-      const #field_reflection_optional_name: ::core::option::Option<& #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>> = ::core::option::Option::Some(Self::#field_reflection_name);
+      }.build()
     }
   }
 

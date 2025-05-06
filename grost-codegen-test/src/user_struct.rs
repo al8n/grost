@@ -166,118 +166,769 @@ pub struct User {
     age: u32,
     email: ::core::option::Option<::std::string::String>,
 }
-impl User {
-    /// The reflection information of the `name` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_NAME_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+mod user_reflection {
+    use super::User;
+    /// The reflection of the field `name` in the struct `User`
+    #[derive(::core::fmt::Debug)]
+    pub struct UserNameFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(1u32),
-        ),
-        name: "name",
-        ty: ::core::any::type_name::<::std::string::String>,
-        schema_name: "name",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Primitive {
-            name: "String!",
-            description: "",
-        },
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_NAME_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_NAME_REFLECTION);
-    /// The reflection information of the `age` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_AGE_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+    impl<R, F> UserNameFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<
+        F,
+    > UserNameFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> UserNameFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserNameFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for UserNameFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for UserNameFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for UserNameFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection of the field `age` in the struct `User`
+    #[derive(::core::fmt::Debug)]
+    pub struct UserAgeFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<u32 as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(2u32),
-        ),
-        name: "age",
-        ty: ::core::any::type_name::<u32>,
-        schema_name: "age",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Primitive {
-            name: "u32!",
-            description: "",
-        },
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_AGE_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_AGE_REFLECTION);
-    /// The reflection information of the `email` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_EMAIL_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+    impl<R, F> UserAgeFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<F> UserAgeFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> UserAgeFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserAgeFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for UserAgeFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for UserAgeFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for UserAgeFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection of the field `email` in the struct `User`
+    #[derive(::core::fmt::Debug)]
+    pub struct UserEmailFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(3u32),
-        ),
-        name: "email",
-        ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
-        schema_name: "email",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Optional(
-            &::grost::__private::reflection::Type::<
-                ::grost::__private::flavors::Network,
-            >::Primitive {
-                name: "String",
-                description: "",
-            },
-        ),
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_EMAIL_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_EMAIL_REFLECTION);
-    /// The reflection of the struct `User` for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_REFLECTION: ::grost::__private::reflection::StructReflection<
-        ::grost::__private::flavors::Network,
-    > = ::grost::__private::reflection::StructReflectionBuilder::<
-        ::grost::__private::flavors::Network,
-    > {
-        name: "User",
-        schema_name: "User",
-        fields: &[
-            Self::NETWORK_FLAVOR_NAME_REFLECTION,
-            Self::NETWORK_FLAVOR_AGE_REFLECTION,
-            Self::NETWORK_FLAVOR_EMAIL_REFLECTION,
-        ],
+    impl<R, F> UserEmailFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
     }
-        .build();
+    impl<
+        F,
+    > UserEmailFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> UserEmailFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            UserEmailFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for UserEmailFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for UserEmailFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for UserEmailFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection bridge type.
+    #[derive(::core::fmt::Debug)]
+    pub struct UserReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
+    for UserReflection<R, F> {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
+    for UserReflection<R, F> {}
+    impl<F> ::core::default::Default
+    for UserReflection<::grost::__private::reflection::StructReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> UserReflection<R, F> {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<F> UserReflection<::grost::__private::reflection::StructReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the struct.
+        #[inline]
+        pub const fn new() -> Self {
+            Self::new_in()
+        }
+    }
+    impl User {
+        /// Returns the reflection of the struct.
+        #[allow(non_camel_case_types)]
+        #[inline]
+        pub const fn reflection<__GROST_FLAOVR__>() -> UserReflection<
+            ::grost::__private::reflection::StructReflection<__GROST_FLAOVR__>,
+            __GROST_FLAOVR__,
+        >
+        where
+            __GROST_FLAOVR__: ?::core::marker::Sized + ::grost::__private::Flavor,
+        {
+            UserReflection::new()
+        }
+    }
 }
 impl ::core::default::Default for User {
     fn default() -> Self {
@@ -295,7 +946,7 @@ impl User {
     }
     /// Gets the reference of the field `name`.
     #[inline]
-    pub fn name(&self) -> &::std::string::String {
+    pub fn name_ref(&self) -> &::std::string::String {
         &self.name
     }
     /// Gets the mutable reference of the field `name`.
@@ -317,7 +968,7 @@ impl User {
     }
     /// Gets the reference of the field `age`.
     #[inline]
-    pub const fn age(&self) -> u32 {
+    pub const fn age_ref(&self) -> u32 {
         self.age
     }
     /// Gets the mutable reference of the field `age`.
@@ -339,7 +990,7 @@ impl User {
     }
     /// Gets the reference of the field `email`.
     #[inline]
-    pub fn email(&self) -> ::core::option::Option<&::std::string::String> {
+    pub fn email_ref(&self) -> ::core::option::Option<&::std::string::String> {
         ::core::option::Option::as_ref(&self.email)
     }
     /// Gets the mutable reference of the field `email`.
@@ -2086,6 +2737,279 @@ const _: () = {
         }
     }
 };
+const _: () = {
+    impl ::core::ops::Deref
+    for user_reflection::UserReflection<
+        user_reflection::UserNameFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for user_reflection::UserReflection<
+        user_reflection::UserNameFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(1u32),
+            ),
+            name: "name",
+            ty: ::core::any::type_name::<::std::string::String>,
+            schema_name: "name",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Primitive {
+                name: "String!",
+                description: "",
+            },
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for user_reflection::UserReflection<
+        user_reflection::UserAgeFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for user_reflection::UserReflection<
+        user_reflection::UserAgeFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<u32 as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(2u32),
+            ),
+            name: "age",
+            ty: ::core::any::type_name::<u32>,
+            schema_name: "age",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Primitive {
+                name: "u32!",
+                description: "",
+            },
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for user_reflection::UserReflection<
+        user_reflection::UserEmailFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for user_reflection::UserReflection<
+        user_reflection::UserEmailFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<::core::option::Option<
+                    ::std::string::String,
+                > as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(3u32),
+            ),
+            name: "email",
+            ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
+            schema_name: "email",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Optional(
+                &::grost::__private::reflection::Type::<
+                    ::grost::__private::flavors::Network,
+                >::Primitive {
+                    name: "String",
+                    description: "",
+                },
+            ),
+        }
+            .build();
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >,
+        ::grost::__private::flavors::network::Network,
+    > for User {
+        const REFLECTION: &::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::StructReflectionBuilder::<
+            ::grost::__private::flavors::network::Network,
+        > {
+            name: "User",
+            schema_name: "User",
+            fields: &[
+                <user_reflection::UserReflection<
+                    user_reflection::UserNameFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+                <user_reflection::UserReflection<
+                    user_reflection::UserAgeFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+                <user_reflection::UserReflection<
+                    user_reflection::UserEmailFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+            ],
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for user_reflection::UserReflection<
+        ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >,
+        ::grost::__private::flavors::network::Network,
+    > {
+        type Target = ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <User as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::StructReflection<
+                    ::grost::__private::flavors::network::Network,
+                >,
+                ::grost::__private::flavors::network::Network,
+            >>::REFLECTION
+        }
+    }
+};
 impl<F: ?::core::marker::Sized> ::grost::__private::indexer::Indexable<F> for Comment {
     type Indexer = CommentFieldIndexer;
 }
@@ -2257,149 +3181,1022 @@ pub struct Comment {
     title: ::std::string::String,
     content: ::core::option::Option<::std::string::String>,
 }
-impl Comment {
-    /// The reflection information of the `user` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_USER_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+mod comment_reflection {
+    use super::Comment;
+    /// The reflection of the field `user` in the struct `Comment`
+    #[derive(::core::fmt::Debug)]
+    pub struct CommentUserFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<User as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(1u32),
-        ),
-        name: "user",
-        ty: ::core::any::type_name::<User>,
-        schema_name: "user",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Struct(<User>::NETWORK_FLAVOR_REFLECTION),
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_USER_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_USER_REFLECTION);
-    /// The reflection information of the `replyer` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_REPLYER_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+    impl<R, F> CommentUserFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<
+        F,
+    > CommentUserFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> CommentUserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentUserFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for CommentUserFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for CommentUserFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for CommentUserFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection of the field `replyer` in the struct `Comment`
+    #[derive(::core::fmt::Debug)]
+    pub struct CommentReplyerFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<::core::option::Option<
-                User,
-            > as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(2u32),
-        ),
-        name: "replyer",
-        ty: ::core::any::type_name::<::core::option::Option<User>>,
-        schema_name: "replyer",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Optional(
-            &::grost::__private::reflection::Type::<
-                ::grost::__private::flavors::Network,
-            >::Struct(<User>::NETWORK_FLAVOR_REFLECTION),
-        ),
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_REPLYER_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_REPLYER_REFLECTION);
-    /// The reflection information of the `title` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_TITLE_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+    impl<R, F> CommentReplyerFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<
+        F,
+    > CommentReplyerFieldReflection<
+        ::grost::__private::reflection::FieldReflection<F>,
+        F,
+    >
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> CommentReplyerFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentReplyerFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for CommentReplyerFieldReflection<
+        ::grost::__private::reflection::FieldReflection<F>,
+        F,
+    >
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for CommentReplyerFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for CommentReplyerFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection of the field `title` in the struct `Comment`
+    #[derive(::core::fmt::Debug)]
+    pub struct CommentTitleFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(3u32),
-        ),
-        name: "title",
-        ty: ::core::any::type_name::<::std::string::String>,
-        schema_name: "title",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Primitive {
-            name: "String!",
-            description: "",
-        },
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_TITLE_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_TITLE_REFLECTION);
-    /// The reflection information of the `content` field for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_CONTENT_REFLECTION: &::grost::__private::reflection::FieldReflection<
-        ::grost::__private::flavors::Network,
-    > = &::grost::__private::reflection::FieldReflectionBuilder::<
-        ::grost::__private::flavors::Network,
+    impl<R, F> CommentTitleFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<
+        F,
+    > CommentTitleFieldReflection<::grost::__private::reflection::FieldReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> CommentTitleFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentTitleFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for CommentTitleFieldReflection<
+        ::grost::__private::reflection::FieldReflection<F>,
+        F,
+    >
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for CommentTitleFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for CommentTitleFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection of the field `content` in the struct `Comment`
+    #[derive(::core::fmt::Debug)]
+    pub struct CommentContentFieldReflection<
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
     > {
-        identifier: ::grost::__private::flavors::network::Identifier::new(
-            <<::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-            >>::Format as ::grost::__private::flavors::WireFormat<
-                ::grost::__private::flavors::Network,
-            >>::WIRE_TYPE,
-            ::grost::__private::flavors::network::Tag::new(4u32),
-        ),
-        name: "content",
-        ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
-        schema_name: "content",
-        schema_type: ::grost::__private::reflection::Type::<
-            ::grost::__private::flavors::Network,
-        >::Optional(
-            &::grost::__private::reflection::Type::<
-                ::grost::__private::flavors::Network,
-            >::Primitive {
-                name: "String",
-                description: "",
-            },
-        ),
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
     }
-        .build();
-    const __NETWORK_FLAVOR_CONTENT_REFLECTION_OPTIONAL__: ::core::option::Option<
-        &::grost::__private::reflection::FieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-    > = ::core::option::Option::Some(Self::NETWORK_FLAVOR_CONTENT_REFLECTION);
-    /// The reflection of the struct `Comment` for [`Network`](::grost::__private::flavors::Network) flavor.
-    pub const NETWORK_FLAVOR_REFLECTION: ::grost::__private::reflection::StructReflection<
-        ::grost::__private::flavors::Network,
-    > = ::grost::__private::reflection::StructReflectionBuilder::<
-        ::grost::__private::flavors::Network,
-    > {
-        name: "Comment",
-        schema_name: "Comment",
-        fields: &[
-            Self::NETWORK_FLAVOR_USER_REFLECTION,
-            Self::NETWORK_FLAVOR_REPLYER_REFLECTION,
-            Self::NETWORK_FLAVOR_TITLE_REFLECTION,
-            Self::NETWORK_FLAVOR_CONTENT_REFLECTION,
-        ],
+    impl<R, F> CommentContentFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
     }
-        .build();
+    impl<
+        F,
+    > CommentContentFieldReflection<
+        ::grost::__private::reflection::FieldReflection<F>,
+        F,
+    >
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the field.
+        #[inline]
+        pub const fn new() -> Self {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn tag(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::TagReflection<F::Tag>,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded tag of the field.
+        #[inline]
+        pub const fn encoded_tag_len(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedTagReflection<F::Identifier>,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to a tag of the field.
+        #[inline]
+        pub const fn wire_type(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::WireTypeReflection<F::WireType>,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to the identifier of the field.
+        #[inline]
+        pub const fn identifier(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::IdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::EncodedIdentifierReflection<F::Identifier>,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the relection to the encoded identifier of the field.
+        #[inline]
+        pub const fn encoded_identifier_len(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::EncodedIdentifierReflection<
+                    F::Identifier,
+                >,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the encode fn.
+        #[inline]
+        pub const fn encode(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_len(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn.
+        #[inline]
+        pub const fn encode_ref<'a>(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::EncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn encoded_ref_len<'a>(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn.
+        #[inline]
+        pub const fn partial_encode(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_len(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeField,
+                >,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn.
+        #[inline]
+        pub const fn partial_encode_ref<'a>(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+        /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        #[inline]
+        pub const fn partial_encoded_ref_len<'a>(
+            &self,
+        ) -> CommentContentFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+                >,
+            >,
+            F,
+        > {
+            CommentContentFieldReflection::new_in()
+        }
+    }
+    impl<F> ::core::default::Default
+    for CommentContentFieldReflection<
+        ::grost::__private::reflection::FieldReflection<F>,
+        F,
+    >
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R, F> ::core::clone::Clone for CommentContentFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R, F> ::core::marker::Copy for CommentContentFieldReflection<R, F>
+    where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized,
+    {}
+    /// The reflection bridge type.
+    #[derive(::core::fmt::Debug)]
+    pub struct CommentReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
+    for CommentReflection<R, F> {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
+    for CommentReflection<R, F> {}
+    impl<F> ::core::default::Default
+    for CommentReflection<::grost::__private::reflection::StructReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+    impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> CommentReflection<R, F> {
+        const fn new_in() -> Self {
+            Self {
+                _reflect: ::core::marker::PhantomData,
+                _flavor: ::core::marker::PhantomData,
+            }
+        }
+    }
+    impl<F> CommentReflection<::grost::__private::reflection::StructReflection<F>, F>
+    where
+        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    {
+        /// Returns the reflection of the struct.
+        #[inline]
+        pub const fn new() -> Self {
+            Self::new_in()
+        }
+    }
+    impl Comment {
+        /// Returns the reflection of the struct.
+        #[allow(non_camel_case_types)]
+        #[inline]
+        pub const fn reflection<__GROST_FLAOVR__>() -> CommentReflection<
+            ::grost::__private::reflection::StructReflection<__GROST_FLAOVR__>,
+            __GROST_FLAOVR__,
+        >
+        where
+            __GROST_FLAOVR__: ?::core::marker::Sized + ::grost::__private::Flavor,
+        {
+            CommentReflection::new()
+        }
+    }
 }
 impl ::core::default::Default for Comment {
     fn default() -> Self {
@@ -2418,7 +4215,7 @@ impl Comment {
     }
     /// Gets the reference of the field `user`.
     #[inline]
-    pub fn user(&self) -> &User {
+    pub fn user_ref(&self) -> &User {
         &self.user
     }
     /// Gets the mutable reference of the field `user`.
@@ -2440,7 +4237,7 @@ impl Comment {
     }
     /// Gets the reference of the field `replyer`.
     #[inline]
-    pub fn replyer(&self) -> ::core::option::Option<&User> {
+    pub fn replyer_ref(&self) -> ::core::option::Option<&User> {
         ::core::option::Option::as_ref(&self.replyer)
     }
     /// Gets the mutable reference of the field `replyer`.
@@ -2462,7 +4259,7 @@ impl Comment {
     }
     /// Gets the reference of the field `title`.
     #[inline]
-    pub fn title(&self) -> &::std::string::String {
+    pub fn title_ref(&self) -> &::std::string::String {
         &self.title
     }
     /// Gets the mutable reference of the field `title`.
@@ -2484,7 +4281,7 @@ impl Comment {
     }
     /// Gets the reference of the field `content`.
     #[inline]
-    pub fn content(&self) -> ::core::option::Option<&::std::string::String> {
+    pub fn content_ref(&self) -> ::core::option::Option<&::std::string::String> {
         ::core::option::Option::as_ref(&self.content)
     }
     /// Gets the mutable reference of the field `content`.
@@ -4576,6 +6373,369 @@ const _: () = {
             <::grost::__private::flavors::Select as ::grost::__private::Flavor>::EncodeError,
         > {
             ::core::todo!()
+        }
+    }
+};
+const _: () = {
+    impl ::core::ops::Deref
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentUserFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentUserFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<User as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(1u32),
+            ),
+            name: "user",
+            ty: ::core::any::type_name::<User>,
+            schema_name: "user",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Struct(
+                <User as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::StructReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+            ),
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentReplyerFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentReplyerFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<::core::option::Option<
+                    User,
+                > as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(2u32),
+            ),
+            name: "replyer",
+            ty: ::core::any::type_name::<::core::option::Option<User>>,
+            schema_name: "replyer",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Optional(
+                &::grost::__private::reflection::Type::<
+                    ::grost::__private::flavors::Network,
+                >::Struct(
+                    <User as ::grost::__private::reflection::Reflectable<
+                        ::grost::__private::reflection::StructReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >>::REFLECTION,
+                ),
+            ),
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentTitleFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentTitleFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(3u32),
+            ),
+            name: "title",
+            ty: ::core::any::type_name::<::std::string::String>,
+            schema_name: "title",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Primitive {
+                name: "String!",
+                description: "",
+            },
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentContentFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        type Target = ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Self as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::FieldReflection<
+                    ::grost::__private::flavors::Network,
+                >,
+                ::grost::__private::flavors::Network,
+            >>::REFLECTION
+        }
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    >
+    for comment_reflection::CommentReflection<
+        comment_reflection::CommentContentFieldReflection<
+            ::grost::__private::reflection::FieldReflection<
+                ::grost::__private::flavors::Network,
+            >,
+            ::grost::__private::flavors::Network,
+        >,
+        ::grost::__private::flavors::Network,
+    > {
+        const REFLECTION: &::grost::__private::reflection::FieldReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::FieldReflectionBuilder::<
+            ::grost::__private::flavors::Network,
+        > {
+            identifier: ::grost::__private::flavors::network::Identifier::new(
+                <<::core::option::Option<
+                    ::std::string::String,
+                > as ::grost::__private::flavors::DefaultWireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::Format as ::grost::__private::flavors::WireFormat<
+                    ::grost::__private::flavors::Network,
+                >>::WIRE_TYPE,
+                ::grost::__private::flavors::network::Tag::new(4u32),
+            ),
+            name: "content",
+            ty: ::core::any::type_name::<::core::option::Option<::std::string::String>>,
+            schema_name: "content",
+            schema_type: ::grost::__private::reflection::Type::<
+                ::grost::__private::flavors::Network,
+            >::Optional(
+                &::grost::__private::reflection::Type::<
+                    ::grost::__private::flavors::Network,
+                >::Primitive {
+                    name: "String",
+                    description: "",
+                },
+            ),
+        }
+            .build();
+    }
+    impl ::grost::__private::reflection::Reflectable<
+        ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >,
+        ::grost::__private::flavors::network::Network,
+    > for Comment {
+        const REFLECTION: &::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        > = &::grost::__private::reflection::StructReflectionBuilder::<
+            ::grost::__private::flavors::network::Network,
+        > {
+            name: "Comment",
+            schema_name: "Comment",
+            fields: &[
+                <comment_reflection::CommentReflection<
+                    comment_reflection::CommentUserFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+                <comment_reflection::CommentReflection<
+                    comment_reflection::CommentReplyerFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+                <comment_reflection::CommentReflection<
+                    comment_reflection::CommentTitleFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+                <comment_reflection::CommentReflection<
+                    comment_reflection::CommentContentFieldReflection<
+                        ::grost::__private::reflection::FieldReflection<
+                            ::grost::__private::flavors::Network,
+                        >,
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                > as ::grost::__private::reflection::Reflectable<
+                    ::grost::__private::reflection::FieldReflection<
+                        ::grost::__private::flavors::Network,
+                    >,
+                    ::grost::__private::flavors::Network,
+                >>::REFLECTION,
+            ],
+        }
+            .build();
+    }
+    impl ::core::ops::Deref
+    for comment_reflection::CommentReflection<
+        ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >,
+        ::grost::__private::flavors::network::Network,
+    > {
+        type Target = ::grost::__private::reflection::StructReflection<
+            ::grost::__private::flavors::network::Network,
+        >;
+        fn deref(&self) -> &Self::Target {
+            <Comment as ::grost::__private::reflection::Reflectable<
+                ::grost::__private::reflection::StructReflection<
+                    ::grost::__private::flavors::network::Network,
+                >,
+                ::grost::__private::flavors::network::Network,
+            >>::REFLECTION
         }
     }
 };

@@ -186,20 +186,23 @@ impl Generator for DefaultGenerator {
       .flavors
       .iter()
       .map(|(_, f)| f.generate_selection_codec(&self.grost_path, struct_));
-    let reflections = self
+    let reflection = struct_.generate_reflection(&self.grost_path);
+    let reflection_impls = self
       .flavors
       .iter()
-      .map(|(_, f)| struct_.generate_reflection(&self.grost_path, &**f));
+      .map(|(_, f)| f.generate_struct_reflection_impl(&self.grost_path, struct_));
     let indexer = struct_.generate_indexer(&self.grost_path);
 
     Ok(quote! {
       #indexer
       #defination
-      #(#reflections)*
+      #reflection
       #basic
       #(#codec)*
       #selection
       #(#selection_codecs)*
+
+      #(#reflection_impls)*
     })
   }
 

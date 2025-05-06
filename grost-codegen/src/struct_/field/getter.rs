@@ -201,8 +201,13 @@ impl ToTokens for Getter {
         }
       }
     } else {
-      let name = self.fn_name();
-      quote! { #name }
+      match &self.fn_name {
+        Some(name) => quote! { #name },
+        None => {
+          let name = format_ident!("{}_ref", self.field_name().name_str());
+          quote! { #name }
+        }
+      }
     };
 
     let output = self.output();

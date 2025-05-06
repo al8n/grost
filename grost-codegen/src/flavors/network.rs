@@ -115,6 +115,103 @@ impl FlavorGenerator for Network {
     }
   }
 
+  fn generate_struct_reflection_impl(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream {
+    let struct_name = struct_.name();
+    let reflection_mod_name = struct_.relfection_mod_name();
+    let reflection_name = struct_.relfection_name();
+    let name_str = struct_name.name_str();
+    let schema_name = struct_.schema_name();
+
+    let field_reflections = struct_.fields().iter().map(|f| {
+      let field_reflection = format_ident!("{}", struct_.field_reflection_name(f.name().name_str()));
+      let impl_ = f.field_reflection(path_to_grost, self);
+      quote! {
+        impl ::core::ops::Deref for #reflection_mod_name::#reflection_name<
+          #reflection_mod_name::#field_reflection<
+            #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+            #path_to_grost::__private::flavors::Network,
+          >,
+          #path_to_grost::__private::flavors::Network,
+        > {
+          type Target = #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::network::Network>;
+
+          fn deref(&self) -> &Self::Target {
+            <Self as #path_to_grost::__private::reflection::Reflectable<
+              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::flavors::Network,
+            >>::REFLECTION
+          }
+        }
+
+        impl #path_to_grost::__private::reflection::Reflectable<
+          #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+          #path_to_grost::__private::flavors::Network, 
+        > for #reflection_mod_name::#reflection_name<
+        #reflection_mod_name::#field_reflection<
+          #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+          #path_to_grost::__private::flavors::Network,
+          >,
+          #path_to_grost::__private::flavors::Network,
+        > {
+          const REFLECTION: &#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::network::Network> = &#impl_;
+        }
+      }
+    });
+    let field_reflections_names = struct_.fields().iter().map(|f| {
+      let field_reflection = format_ident!("{}", struct_.field_reflection_name(f.name().name_str()));
+      quote! {
+        <
+          #reflection_mod_name::#reflection_name<
+            #reflection_mod_name::#field_reflection<
+              #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::flavors::Network,
+            >,
+            #path_to_grost::__private::flavors::Network,
+          > as #path_to_grost::__private::reflection::Reflectable<
+            #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+            #path_to_grost::__private::flavors::Network,
+          >
+        >::REFLECTION
+      }
+    });
+
+    quote! {
+      const _: () = {
+        #(#field_reflections)*
+
+        impl #path_to_grost::__private::reflection::Reflectable<
+          #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>,
+          #path_to_grost::__private::flavors::network::Network,
+        > for #struct_name {
+          const REFLECTION: &#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network> = &#path_to_grost::__private::reflection::StructReflectionBuilder::<#path_to_grost::__private::flavors::network::Network> {
+            name: #name_str,
+            schema_name: #schema_name,
+            fields: &[
+              #(#field_reflections_names),*
+            ],
+          }.build();
+        }
+
+        impl ::core::ops::Deref for #reflection_mod_name::#reflection_name<#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>, #path_to_grost::__private::flavors::network::Network> {
+          type Target = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
+
+          fn deref(&self) -> &Self::Target {
+            <
+              #struct_name as #path_to_grost::__private::reflection::Reflectable<
+                #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>,
+                #path_to_grost::__private::flavors::network::Network,
+              >
+            >::REFLECTION
+          }
+        }
+      };
+    }
+  }
+
   fn generate_selection_codec(
     &self,
     path_to_grost: &syn::Path,
@@ -524,7 +621,7 @@ impl FlavorGenerator for Network {
       };
     }
   }
-
+  
   fn generate_enum_codec(
     &self,
     path_to_grost: &syn::Path,

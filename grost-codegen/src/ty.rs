@@ -319,9 +319,13 @@ impl Ty {
         }
       }
       TyRepr::Struct(ty) => {
-        let reflection_name = flavor.struct_reflection_name();
         quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Struct(<#ty>::#reflection_name)
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Struct(<
+            #ty as #path_to_grost::__private::reflection::Reflectable<
+              #path_to_grost::__private::reflection::StructReflection<#flavor_ty>,
+              #flavor_ty,
+            >
+          >::REFLECTION)
         }
       }
       TyRepr::Union(_) => todo!(),

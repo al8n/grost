@@ -1,4 +1,4 @@
-use heck::{ToShoutySnakeCase, ToUpperCamelCase};
+use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Ident, Visibility, parse_quote};
@@ -12,6 +12,7 @@ pub mod field;
 
 mod index;
 mod selection;
+mod reflection;
 
 pub struct Struct {
   name: SafeIdent,
@@ -101,48 +102,17 @@ impl Struct {
     &self.fields
   }
 
-  pub fn generate_reflection<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: super::FlavorGenerator + ?Sized,
-  {
-    let name = self.name.name();
-    let name_str = self.name.name_str();
-    let schema_name = self.schema_name.as_str();
-    let fields = &self.fields;
-    let fields_reflection_defination = fields
-      .iter()
-      .map(|f| f.field_reflections(path_to_grost, flavor));
-    let field_reflections = fields.iter().map(|f| {
-      let ident = flavor.field_reflection_name(f.name().name_str());
-      quote! { Self::#ident }
-    });
+  pub fn relfection_mod_name(&self) -> Ident {
+    format_ident!("{}_reflection", self.name.name_str().to_snake_case())
+  }
 
-    let reflection_name = flavor.struct_reflection_name();
-    let reflection_doc = format!(
-      " The reflection of the struct `{name_str}` for [`{}`]({}) flavor.",
-      flavor.name().to_upper_camel_case(),
-      flavor.ty().to_token_stream().to_string().replace(" ", "")
-    );
-    let flavor_ty = flavor.ty();
+  pub fn relfection_name(&self) -> Ident {
+    format_ident!("{}Reflection", self.name.name_str())
+  }
 
-    quote! {
-      impl #name {
-        #(#fields_reflection_defination)*
-
-        #[doc = #reflection_doc]
-        pub const #reflection_name: #path_to_grost::__private::reflection::StructReflection<#flavor_ty> = #path_to_grost::__private::reflection::StructReflectionBuilder::<#flavor_ty> {
-          name: #name_str,
-          schema_name: #schema_name,
-          fields: &[
-            #(#field_reflections),*
-          ],
-        }.build();
-      }
-    }
+  pub fn field_reflection_name(&self, field_name: &str) -> Ident {
+    let struct_name = self.name.name_str();
+    format_ident!("{struct_name}{}FieldReflection", field_name.to_upper_camel_case())
   }
 
   pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
@@ -186,9 +156,6 @@ impl Struct {
 
     let accessors = fields.iter().map(|f| f.field_accessors());
 
-    let name_str = self.name.name_str();
-    let schema_name = self.schema_name.as_str();
-
     quote! {
       impl ::core::default::Default for #name {
         fn default() -> Self {
@@ -205,51 +172,6 @@ impl Struct {
         }
 
         #(#accessors)*
-      }
-    }
-  }
-
-  pub(crate) fn struct_message(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-    let name = &self.name;
-    let selector_name = &self.selector_name;
-
-    quote! {
-      impl #path_to_grost::__private::Wirable for #name {}
-
-      impl #path_to_grost::__private::Encode for #name {
-        #[inline]
-        fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
-          ::core::todo!()
-        }
-
-        #[inline]
-        fn encoded_len(&self) -> ::core::primitive::usize {
-          ::core::todo!()
-        }
-      }
-
-      impl #path_to_grost::__private::PartialEncode for #name {
-        type Selection = #selector_name;
-
-        #[inline]
-        fn partial_encode(&self, buf: &mut [::core::primitive::u8], selector: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::EncodeError> {
-          ::core::todo!()
-        }
-
-        #[inline]
-        fn partial_encoded_len(&self, selector: &Self::Selector,) -> ::core::primitive::usize {
-          ::core::todo!()
-        }
-      }
-
-      impl<'de> #path_to_grost::__private::Decode<'de> for #name {
-        #[inline]
-        fn decode<B>(src: &'de [::core::primitive::u8], _: &mut B) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::DecodeError>
-        where
-          B: #path_to_grost::__private::UnknownRefBytesBuffer<'de>,
-        {
-          ::core::todo!()
-        }
       }
     }
   }

@@ -34,6 +34,13 @@ pub trait FlavorGenerator {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream;
 
+  /// Generates the reflection implementation for the struct type
+  fn generate_struct_reflection_impl(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream;
+
   /// Generates the codec for the selection type
   fn generate_selection_codec(
     &self,
@@ -78,6 +85,16 @@ impl<F: FlavorGenerator + ?Sized> FlavorGenerator for Box<F> {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
     self.as_ref().generate_struct_codec(path_to_grost, struct_)
+  }
+
+  fn generate_struct_reflection_impl(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+  ) -> proc_macro2::TokenStream {
+    self
+      .as_ref()
+      .generate_struct_reflection_impl(path_to_grost, struct_)
   }
 
   fn generate_enum_codec(
