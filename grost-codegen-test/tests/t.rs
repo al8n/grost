@@ -76,29 +76,26 @@ impl core::ops::Deref for CommentReflection<CommentUserField<FieldReflection<Net
   type Target = FieldReflection<Network>;
 
   fn deref(&self) -> &Self::Target {
-    Comment::NETWORK_FLAVOR_USER_REFLECTION
+    todo!()
   }
 }
 
 #[test]
 fn t() {
   let indexer = UserFieldIndexer::Age;
-  let reflection = indexer.field_reflection::<Network>();
-  println!("{:?} {}", reflection, size_of::<FieldReflection<Network>>());
-  let tag = indexer.tag::<Network>();
-  println!("{}", tag);
-  let wire_type = indexer.wire_type::<Network>();
-  println!("{}", wire_type);
-  let identifier = indexer.identifier::<Network>();
-  println!("{}", identifier);
+  let user_reflection = User::reflection::<Network>();
+  println!("{:#?}", &*user_reflection);
+  let comment_reflection = Comment::reflection::<Network>();
+  println!("{:#?}", &*comment_reflection);
+
+  // let tag = indexer.tag::<Network>();
+  // println!("{}", tag);
+  // let wire_type = indexer.wire_type::<Network>();
+  // println!("{}", wire_type);
+  // let identifier = indexer.identifier::<Network>();
+  // println!("{}", identifier);
 
   let s = CommentSelector::<Network>::all();
   let r = s[CommentFieldIndexer::User];
   println!("{:?}", s.without_title());
-
-  let a = CommentReflection::<CommentTitleField<EncodeReflection<EncodeRefField<'_>>>, Network> {
-    _m: std::marker::PhantomData,
-    _f: std::marker::PhantomData,
-  };
-  (a)(&"my title", &Context::default(), &[]).unwrap();
 }

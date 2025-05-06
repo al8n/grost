@@ -582,15 +582,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                1u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              1u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -607,15 +602,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                2u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              2u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -632,15 +622,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                3u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              3u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -672,15 +657,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                1u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              1u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -692,15 +672,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                2u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              2u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -712,15 +687,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <user_reflection::UserReflection<
-              user_reflection::UserFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                3u32,
-              >,
+            <user_reflection::UserFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              3u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -776,7 +746,7 @@ const _: () = {
       ::grost::__private::flavors::network::Network,
     >>::Selector,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN
+    (*<User>::reflection().name().encoded_identifier_len())
       + <::std::string::String as ::grost::__private::PartialEncode<
         ::grost::__private::flavors::network::Network,
         <::std::string::String as ::grost::__private::DefaultWireFormat<
@@ -788,7 +758,7 @@ const _: () = {
     f: &::std::string::String,
     ctx: &::grost::__private::flavors::network::Context,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN
+    (*<User>::reflection().name().encoded_identifier_len())
       + <::std::string::String as ::grost::__private::Encode<
         ::grost::__private::flavors::network::Network,
         <::std::string::String as ::grost::__private::DefaultWireFormat<
@@ -807,6 +777,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().name().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -817,9 +788,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<User>::reflection().name().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -845,6 +816,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().name().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -855,9 +827,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_NAME_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<User>::reflection().name().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -882,7 +854,7 @@ const _: () = {
       ::grost::__private::flavors::network::Network,
     >>::Selector,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN
+    (*<User>::reflection().age().encoded_identifier_len())
             + <u32 as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::network::Network,
                 <u32 as ::grost::__private::DefaultWireFormat<
@@ -894,7 +866,7 @@ const _: () = {
     f: &u32,
     ctx: &::grost::__private::flavors::network::Context,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN
+    (*<User>::reflection().age().encoded_identifier_len())
             + <u32 as ::grost::__private::Encode<
                 ::grost::__private::flavors::network::Network,
                 <u32 as ::grost::__private::DefaultWireFormat<
@@ -913,6 +885,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().age().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -923,9 +896,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<User>::reflection().age().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -949,6 +922,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().age().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -959,9 +933,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_AGE_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<User>::reflection().age().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -986,7 +960,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
             ::core::option::Option::Some(f) => {
-                NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN
+                (*<User>::reflection().email().encoded_identifier_len())
                     + <::std::string::String as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
@@ -1005,7 +979,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
             ::core::option::Option::Some(f) => {
-                NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN
+                (*<User>::reflection().email().encoded_identifier_len())
                     + <::std::string::String as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
@@ -1029,6 +1003,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().email().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -1042,9 +1017,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<User>::reflection().email().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -1081,6 +1056,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<User>::reflection().email().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -1094,9 +1070,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_EMAIL_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<User>::reflection().email().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -3835,15 +3811,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                1u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              1u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -3860,15 +3831,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                2u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              2u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -3885,15 +3851,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                3u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              3u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -3910,15 +3871,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                4u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              4u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -3952,15 +3908,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                1u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              1u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -3976,15 +3927,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                2u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              2u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -4000,15 +3946,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                3u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              3u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -4020,15 +3961,10 @@ const _: () = {
           const REFLECTION: ::core::option::Option<
             &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
           > = ::core::option::Option::Some(
-            <comment_reflection::CommentReflection<
-              comment_reflection::CommentFieldReflection<
-                ::grost::__private::reflection::FieldReflection<
-                  ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::flavors::Network,
-                4u32,
-              >,
+            <comment_reflection::CommentFieldReflection<
+              ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
+              4u32,
             > as ::grost::__private::reflection::Reflectable<
               ::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
               ::grost::__private::flavors::Network,
@@ -4084,7 +4020,7 @@ const _: () = {
       ::grost::__private::flavors::network::Network,
     >>::Selector,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+    (*<Comment>::reflection().user().encoded_identifier_len())
             + <User as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::network::Network,
                 <User as ::grost::__private::DefaultWireFormat<
@@ -4096,7 +4032,7 @@ const _: () = {
     f: &User,
     ctx: &::grost::__private::flavors::network::Context,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN
+    (*<Comment>::reflection().user().encoded_identifier_len())
             + <User as ::grost::__private::Encode<
                 ::grost::__private::flavors::network::Network,
                 <User as ::grost::__private::DefaultWireFormat<
@@ -4115,6 +4051,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().user().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -4125,9 +4062,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<Comment>::reflection().user().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4151,6 +4088,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().user().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -4161,9 +4099,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_USER_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<Comment>::reflection().user().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4188,7 +4126,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
       ::core::option::Option::Some(f) => {
-        NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN
+        (*<Comment>::reflection().replyer().encoded_identifier_len())
           + <User as ::grost::__private::PartialEncode<
             ::grost::__private::flavors::network::Network,
             <::core::option::Option<User> as ::grost::__private::DefaultWireFormat<
@@ -4205,7 +4143,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
       ::core::option::Option::Some(f) => {
-        NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN
+        (*<Comment>::reflection().replyer().encoded_identifier_len())
           + <User as ::grost::__private::Encode<
             ::grost::__private::flavors::network::Network,
             <::core::option::Option<User> as ::grost::__private::DefaultWireFormat<
@@ -4227,6 +4165,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().replyer().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -4240,9 +4179,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<Comment>::reflection().replyer().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4270,6 +4209,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().replyer().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -4283,9 +4223,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_REPLYER_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<Comment>::reflection().replyer().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4312,7 +4252,7 @@ const _: () = {
       ::grost::__private::flavors::network::Network,
     >>::Selector,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN
+    (*<Comment>::reflection().title().encoded_identifier_len())
       + <::std::string::String as ::grost::__private::PartialEncode<
         ::grost::__private::flavors::network::Network,
         <::std::string::String as ::grost::__private::DefaultWireFormat<
@@ -4324,7 +4264,7 @@ const _: () = {
     f: &::std::string::String,
     ctx: &::grost::__private::flavors::network::Context,
   ) -> ::core::primitive::usize {
-    NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN
+    (*<Comment>::reflection().title().encoded_identifier_len())
       + <::std::string::String as ::grost::__private::Encode<
         ::grost::__private::flavors::network::Network,
         <::std::string::String as ::grost::__private::DefaultWireFormat<
@@ -4343,6 +4283,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().title().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -4353,9 +4294,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<Comment>::reflection().title().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4381,6 +4322,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().title().encoded_identifier_len();
     let buf_len = buf.len();
     let mut offset = 0;
     if offset > buf_len {
@@ -4391,9 +4333,9 @@ const _: () = {
         ),
       );
     }
-    buf[offset..offset + NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN]
-      .copy_from_slice(NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER);
-    offset += NETWORK_FLAVOR_ENCODED_TITLE_IDENTIFIER_LEN;
+    buf[offset..offset + identifier_len]
+      .copy_from_slice(&*<Comment>::reflection().title().encoded_identifier());
+    offset += identifier_len;
     if offset >= buf_len {
       return ::core::result::Result::Err(
         ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4420,7 +4362,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
             ::core::option::Option::Some(f) => {
-                NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN
+                (*<Comment>::reflection().content().encoded_identifier_len())
                     + <::std::string::String as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
@@ -4439,7 +4381,7 @@ const _: () = {
   ) -> ::core::primitive::usize {
     match f {
             ::core::option::Option::Some(f) => {
-                NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN
+                (*<Comment>::reflection().content().encoded_identifier_len())
                     + <::std::string::String as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
@@ -4463,6 +4405,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().content().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -4476,9 +4419,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<Comment>::reflection().content().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
@@ -4515,6 +4458,7 @@ const _: () = {
     ::core::primitive::usize,
     ::grost::__private::flavors::network::EncodeError,
   > {
+    let identifier_len = *<Comment>::reflection().content().encoded_identifier_len();
     match f {
       ::core::option::Option::None => ::core::result::Result::Ok(0),
       ::core::option::Option::Some(field) => {
@@ -4528,9 +4472,9 @@ const _: () = {
             ),
           );
         }
-        buf[offset..offset + NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN]
-          .copy_from_slice(NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER);
-        offset += NETWORK_FLAVOR_ENCODED_CONTENT_IDENTIFIER_LEN;
+        buf[offset..offset + identifier_len]
+          .copy_from_slice(&*<Comment>::reflection().content().encoded_identifier());
+        offset += identifier_len;
         if offset >= buf_len {
           return ::core::result::Result::Err(
             ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
