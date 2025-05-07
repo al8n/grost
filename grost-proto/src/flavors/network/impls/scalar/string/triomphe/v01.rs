@@ -1,6 +1,6 @@
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
-  use crate::flavors::network::Network;
+  use crate::flavors::Network;
   use smol_str_0_3::SmolStr;
   use triomphe_0_1::Arc;
 

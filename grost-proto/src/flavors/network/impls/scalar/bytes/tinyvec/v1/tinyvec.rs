@@ -3,7 +3,7 @@ const _: () = {
   use crate::{
     default_wire_format,
     flavors::network::{LengthDelimited, Network},
-    selectable_bridge,
+    referenceable, selectable_bridge,
   };
   use ::tinyvec_1::TinyVec;
   use bytes_1::Bytes;
@@ -32,6 +32,9 @@ const _: () = {
   type_ref!( Network: &[u8] => TinyVec<[u8; N]> {
     |val: &[u8]| Ok(TinyVec::from(val))
   } [const N: usize]);
+  referenceable!(
+    Network: TinyVec<[u8; N]> [const N: usize]:LengthDelimited => &'a [u8]
+  );
   type_owned!( Network: Bytes => TinyVec<[u8; N]> {
     |val: &Bytes| Ok(TinyVec::from(val.as_ref()))
   } [const N: usize]);

@@ -29,6 +29,7 @@ macro_rules! varint {
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::decode_owned_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::referenceable!($flavor: $ty $([ $(const $g: usize),* ])? :$wf => $ty);)*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$flavor, $wf> for $ty {
@@ -144,6 +145,18 @@ macro_rules! selectable_scalar {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
         type Selector = ::core::primitive::bool;
+      }
+    )*
+  };
+}
+
+/// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`
+#[macro_export]
+macro_rules! referenceable {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? :$wf:ty => $target:ty ),+$(,)?) => {
+    $(
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$wf, $flavor> for $ty {
+        type Ref<'a> = $target where Self: 'a;
       }
     )*
   };

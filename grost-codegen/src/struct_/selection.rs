@@ -179,7 +179,7 @@ impl Struct {
             self.#field_name = val;
             self
           }
-  
+
           #[doc = #unselect_fn_doc]
           #[inline]
           pub fn #unselect_fn_name(&mut self) -> &mut Self {
@@ -211,7 +211,7 @@ impl Struct {
             self.#field_name.is_empty()
           }
         }
-      } else {  
+      } else {
         quote! {
           #[doc = #select_fn_doc]
           #[inline]
@@ -219,49 +219,49 @@ impl Struct {
             self.#field_name = true;
             self
           }
-  
+
           #[doc = #unselect_fn_doc]
           #[inline]
           pub const fn #unselect_fn_name(&mut self) -> &mut Self {
             self.#field_name = false;
             self
           }
-  
+
           #[doc = #update_fn_doc]
           #[inline]
           pub const fn #update_fn_name(&mut self, value: ::core::primitive::bool) -> &mut Self {
             self.#field_name = value;
             self
           }
-  
+
           #[doc = #toggle_fn_doc]
           #[inline]
           pub const fn #toggle_fn_name(&mut self) -> &mut Self {
             self.#field_name = !self.#field_name;
             self
           }
-  
+
           #[doc = #with_fn_doc]
           #[inline]
           pub const fn #with_fn_name(mut self) -> Self {
             self.#field_name = true;
             self
           }
-  
+
           #[doc = #without_fn_doc]
           #[inline]
           pub const fn #without_fn_name(mut self) -> Self {
             self.#field_name = false;
             self
           }
-  
+
           #[doc = #maybe_fn_doc]
           #[inline]
           pub const fn #maybe_fn_name(mut self, val: ::core::primitive::bool) -> Self {
             self.#field_name = val;
             self
           }
-  
+
           #[doc = #is_field_selected_fn_doc]
           #[inline]
           pub const fn #is_field_selected_fn_name(&self) -> ::core::primitive::bool {
@@ -290,7 +290,7 @@ impl Struct {
         quote! {
           #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector as #path_to_grost::__private::Selector<F>>::NONE
         }
-      } 
+      }
     });
 
     let all = self.fields.iter().map(|f| {

@@ -9,7 +9,7 @@ const _: () = {
       Network,
       network::{DecodeError, LengthDelimited},
     },
-    into_target, type_owned, type_ref,
+    into_target, referenceable, type_owned, type_ref,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -56,9 +56,12 @@ const _: () = {
         into_target!(Network: &str => $ty {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
-        type_ref!( Network: &str => $ty {
+        type_ref!(Network: &str => $ty {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
+        referenceable!(
+          Network: $ty:LengthDelimited => &'a str
+        );
         type_owned!( Network: SmolStr => $ty {
           |val: &SmolStr| <$ty>::new(val.as_str()).map_err(|_| DecodeError::custom(ERR_MSG))
         });

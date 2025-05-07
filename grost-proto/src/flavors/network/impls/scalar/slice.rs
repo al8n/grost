@@ -4,7 +4,7 @@ use crate::{
   default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
-  partial_encode_scalar, selectable_scalar,
+  partial_encode_scalar, referenceable, selectable_scalar,
 };
 
 default_wire_format!(
@@ -12,6 +12,7 @@ default_wire_format!(
 );
 
 selectable_scalar!(Network: [u8]);
+referenceable!(Network: [u8]:LengthDelimited => &'a [u8]);
 
 impl Encode<Network, LengthDelimited> for [u8] {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

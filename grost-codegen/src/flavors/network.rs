@@ -276,7 +276,7 @@ impl FlavorGenerator for Network {
                 #path_to_grost::__private::EncodeError::from_varint_error(e)
                   .update(self.encoded_len(), buf_len)
               })?;
-            
+
             if offset > buf_len {
               return ::core::result::Result::Err(#path_to_grost::__private::EncodeError::insufficient_buffer(self.encoded_len(), buf_len));
             }
@@ -335,7 +335,7 @@ impl FlavorGenerator for Network {
                 #path_to_grost::__private::EncodeError::from_varint_error(e)
                   .update(self.encoded_len(), buf_len)
               })?;
-            
+
             if offset > buf_len {
               return ::core::result::Result::Err(#path_to_grost::__private::EncodeError::insufficient_buffer(self.encoded_len(), buf_len));
             }

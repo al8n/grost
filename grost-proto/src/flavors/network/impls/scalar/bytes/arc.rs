@@ -18,6 +18,5 @@ const _: () = {
   type_owned!( Network: Bytes => Arc<[u8]> {
     |val: &Bytes| Ok(Arc::from(val.as_ref()))
   });
-
   bytes_message!(Arc<[u8]> => Bytes);
 };

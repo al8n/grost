@@ -1,9 +1,8 @@
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
   use crate::{
-    default_wire_format,
     flavors::network::{LengthDelimited, Network},
-    selectable_bridge,
+    referenceable, selectable_bridge,
   };
   use smol_str_0_3::SmolStr;
   use std::string::String;
@@ -28,6 +27,9 @@ const _: () = {
   type_ref!( Network: &str => String {
     |val: &str| Ok(String::from(val))
   });
+  referenceable!(
+    Network: String:LengthDelimited => &'a str
+  );
   type_owned!( Network: SmolStr => String {
     |val: &SmolStr| Ok(String::from(val.clone()))
   });

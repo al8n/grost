@@ -3,7 +3,7 @@ use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, selectable_bridge, type_ref,
+  into_target, referenceable, selectable_bridge, type_ref,
 };
 use bytes_1::Bytes;
 
@@ -33,6 +33,9 @@ into_target!(Network: &[u8] => Bytes {
 type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
+referenceable!(
+  Network: Bytes:LengthDelimited => &'a [u8]
+);
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>

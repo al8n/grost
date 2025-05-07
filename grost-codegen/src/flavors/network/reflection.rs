@@ -22,7 +22,7 @@ impl Network {
         >
         {
           type Reflection = #path_to_grost::__private::flavors::network::Identifier;
-  
+
           const REFLECTION: &Self::Reflection = &{
             <#field_reflection<
                 #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
@@ -119,7 +119,7 @@ impl Network {
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
-        > for 
+        > for
             #field_reflection<
               #path_to_grost::__private::reflection::EncodedTagReflection<#path_to_grost::__private::flavors::network::Tag>,
               #path_to_grost::__private::flavors::Network,
@@ -156,7 +156,7 @@ impl Network {
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
-        > for 
+        > for
             #field_reflection<
               #path_to_grost::__private::reflection::Len<
                 #path_to_grost::__private::reflection::EncodedTagReflection<#path_to_grost::__private::flavors::network::Tag>,
@@ -194,7 +194,7 @@ impl Network {
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
-        > for 
+        > for
             #field_reflection<
               #path_to_grost::__private::reflection::EncodedIdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
               #path_to_grost::__private::flavors::Network,
@@ -231,7 +231,7 @@ impl Network {
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
-        > for 
+        > for
             #field_reflection<
               #path_to_grost::__private::reflection::Len<
                 #path_to_grost::__private::reflection::EncodedIdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,

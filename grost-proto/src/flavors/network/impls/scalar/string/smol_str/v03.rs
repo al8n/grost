@@ -3,7 +3,7 @@ use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, selectable_bridge, type_ref,
+  into_target, referenceable, selectable_bridge, type_ref,
 };
 use smol_str_0_3::SmolStr;
 
@@ -30,9 +30,12 @@ decode_bridge!(
 into_target!(Network: &str => SmolStr {
   |val: &str| Ok(SmolStr::new(val))
 });
-type_ref!( Network: &str => SmolStr {
+type_ref!(Network: &str => SmolStr {
   |val: &str| Ok(SmolStr::new(val))
 });
+referenceable!(
+  Network: SmolStr:LengthDelimited => &'a str
+);
 
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>

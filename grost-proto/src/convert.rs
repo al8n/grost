@@ -90,6 +90,28 @@ where
   }
 }
 
+/// A trait that bridges the type to a reference type for the given wire format and flavor.
+///
+/// A type can reference to itself or to another type.
+pub trait Referenceable<W: ?Sized, F: ?Sized> {
+  /// The reference type for this type for the given wire format and flavor.
+  type Ref<'a>: Copy
+  where
+    Self: 'a;
+}
+
+impl<W, F, T> Referenceable<W, F> for &T
+where
+  T: ?Sized + Referenceable<W, F>,
+  F: ?Sized,
+  W: ?Sized,
+{
+  type Ref<'a>
+    = T::Ref<'a>
+  where
+    Self: 'a;
+}
+
 /// A trait for types that can be converted to another type.
 ///
 /// This trait enables bidirectional conversion between encoded
@@ -162,6 +184,18 @@ where
 }
 
 macro_rules! wrapper_impl {
+  (@referenceable $($ty:ty),+$(,)?) => {
+    $(
+      impl<W, F, T> Referenceable<W, F> for $ty
+      where
+        T: Referenceable<W, F> + ?Sized,
+        F: ?Sized,
+        W: ?Sized,
+      {
+        type Ref<'a> = T::Ref<'a> where Self: 'a;
+      }
+    )*
+  };
   (@into_target $($ty:ty:$constructor:ident),+$(,)?) => {
     $(
       impl<F, T> IntoTarget<F, $ty> for T
@@ -256,6 +290,18 @@ wrapper_impl!(@type_owned Option<T>:Some);
 wrapper_impl!(@partial_message Option<T>);
 wrapper_impl!(@message Option<T>);
 
+impl<W, F, T> Referenceable<W, F> for Option<T>
+where
+  T: Referenceable<W, F>,
+  F: ?Sized,
+  W: ?Sized,
+{
+  type Ref<'a>
+    = Option<T::Ref<'a>>
+  where
+    Self: 'a;
+}
+
 impl<'a, T, F> TypeBorrowed<'a, F, T> for Option<&'a T>
 where
   T: TypeBorrowed<'a, F, T>,
@@ -314,6 +360,42 @@ const _: () = {
     @message
     Box<T>,
     Rc<T>,
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @referenceable
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
+  );
+};
+
+#[cfg(feature = "triomphe_0_1")]
+const _: () = {
+  use triomphe_0_1::Arc;
+
+  wrapper_impl!(
+    @into_target
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_ref
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_owned
+    Arc<T>:new,
+  );
+  wrapper_impl!(
+    @type_borrowed
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @partial_message
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @message
     Arc<T>,
   );
 };
