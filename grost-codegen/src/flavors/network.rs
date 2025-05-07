@@ -166,16 +166,16 @@ impl FlavorGenerator for Network {
           }.build();
         }
 
-        impl ::core::ops::Deref for #reflection_name<#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>, #path_to_grost::__private::flavors::network::Network> {
-          type Target = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
-
-          fn deref(&self) -> &Self::Target {
-            <
-              #struct_name as #path_to_grost::__private::reflection::Reflectable<
+        impl #path_to_grost::__private::reflection::Reflectable<
+          #path_to_grost::__private::flavors::network::Network,
+        > for #reflection_name<#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>, #path_to_grost::__private::flavors::network::Network> {
+          type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
+          const REFLECTION: &Self::Reflection = <
+            #struct_name as
+              #path_to_grost::__private::reflection::Reflectable<
                 #path_to_grost::__private::flavors::network::Network,
               >
-            >::REFLECTION
-          }
+            >::REFLECTION;
         }
       };
     }

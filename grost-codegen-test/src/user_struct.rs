@@ -19,19 +19,13 @@ pub struct User {
   ::core::fmt::Debug,
 )]
 #[repr(u32)]
-pub enum UserFieldIndexer {
+pub enum UserFieldIndex {
   /// The field indexer for the field `name`
   Name = 0u32,
   /// The field indexer for the field `age`
   Age = 1u32,
   /// The field indexer for the field `email`
   Email = 2u32,
-}
-/// The concrete field index for the struct [`User`]
-pub struct UserFieldIndex<O: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-  variant: UserFieldIndexer,
-  _flavor: ::core::marker::PhantomData<F>,
-  _output: ::core::marker::PhantomData<O>,
 }
 /// The selection type for User
 pub struct UserSelector<F: ?::core::marker::Sized> {
@@ -44,7 +38,7 @@ pub struct UserSelector<F: ?::core::marker::Sized> {
 pub struct UserSelectorIter<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool = true>
 {
   selector: &'a UserSelector<F>,
-  index: ::core::option::Option<UserFieldIndexer>,
+  index: ::core::option::Option<UserFieldIndex>,
   num: ::core::primitive::usize,
   yielded: ::core::primitive::usize,
 }
@@ -135,7 +129,7 @@ const _: () = {
     const fn new(selector: &'a UserSelector<F>, num: ::core::primitive::usize) -> Self {
       Self {
         selector,
-        index: ::core::option::Option::Some(UserFieldIndexer::FIRST),
+        index: ::core::option::Option::Some(UserFieldIndex::FIRST),
         num,
         yielded: 0,
       }
@@ -324,20 +318,20 @@ const _: () = {
     }
     /// Returns `true` if such field is selected.
     #[inline]
-    pub const fn is_selected(&self, idx: UserFieldIndexer) -> ::core::primitive::bool {
+    pub const fn is_selected(&self, idx: UserFieldIndex) -> ::core::primitive::bool {
       match idx {
-        UserFieldIndexer::Name => self.is_name_selected(),
-        UserFieldIndexer::Age => self.is_age_selected(),
-        UserFieldIndexer::Email => self.is_email_selected(),
+        UserFieldIndex::Name => self.is_name_selected(),
+        UserFieldIndex::Age => self.is_age_selected(),
+        UserFieldIndex::Email => self.is_email_selected(),
       }
     }
     /// Returns `true` if such field is unselected.
     #[inline]
-    pub const fn is_unselected(&self, idx: UserFieldIndexer) -> ::core::primitive::bool {
+    pub const fn is_unselected(&self, idx: UserFieldIndex) -> ::core::primitive::bool {
       match idx {
-        UserFieldIndexer::Name => self.is_name_unselected(),
-        UserFieldIndexer::Age => self.is_age_unselected(),
-        UserFieldIndexer::Email => self.is_email_unselected(),
+        UserFieldIndex::Name => self.is_name_unselected(),
+        UserFieldIndex::Age => self.is_age_unselected(),
+        UserFieldIndex::Email => self.is_email_unselected(),
       }
     }
     /// Select the `User.name` field
@@ -599,85 +593,18 @@ const _: () = {
       >>::encoded_len(self, ctx)
     }
   }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized>
-    ::core::convert::AsRef<UserFieldIndexer> for UserFieldIndex<O, F>
-  {
-    fn as_ref(&self) -> &UserFieldIndexer {
-      &self.variant
-    }
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
-    for UserFieldIndex<O, F>
-  {
-    fn clone(&self) -> Self {
-      *self
-    }
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
-    for UserFieldIndex<O, F>
-  {
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> UserFieldIndex<O, F> {
-    /// Create a new field index.
-    #[inline]
-    pub const fn new(variant: UserFieldIndexer) -> Self {
-      Self {
-        variant,
-        _flavor: ::core::marker::PhantomData,
-        _output: ::core::marker::PhantomData,
-      }
-    }
-    /// Returns the indexer which creates this index.
-    #[inline]
-    pub const fn indexer(&self) -> UserFieldIndexer {
-      self.variant
-    }
-  }
+  #[automatically_derived]
   impl<F: ?::core::marker::Sized> ::grost::__private::indexer::Indexable<F> for User {
-    type Indexer = UserFieldIndexer;
+    type Indexer = UserFieldIndex;
   }
   #[automatically_derived]
-  impl UserFieldIndexer {
+  impl UserFieldIndex {
     /// The number of variants of this field indexer.
     pub const VARIANTS: ::core::primitive::usize = 3usize;
     /// The first field indexer.
     pub const FIRST: Self = Self::Name;
     /// The last field indexer.
     pub const LAST: Self = Self::Email;
-    /// Returns the field reflection index, which can be used to index the field reflection.
-    #[inline]
-    pub const fn field_reflection<F>(
-      &self,
-    ) -> UserFieldIndex<::grost::__private::reflection::FieldReflection<F>, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      UserFieldIndex::new(*self)
-    }
-    /// Returns the tag index, which can be used to index the tag of the field.
-    #[inline]
-    pub const fn tag<F>(&self) -> UserFieldIndex<F::Tag, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      UserFieldIndex::new(*self)
-    }
-    /// Returns the identifier index, which can be used to index the identifier of the field.
-    #[inline]
-    pub const fn identifier<F>(&self) -> UserFieldIndex<F::Identifier, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      UserFieldIndex::new(*self)
-    }
-    /// Returns the wire type index, which can be used to index the wire type of the field.
-    #[inline]
-    pub const fn wire_type<F>(&self) -> UserFieldIndex<F::WireType, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      UserFieldIndex::new(*self)
-    }
     /// Returns the next field indexer.
     ///
     /// Returns `None` if there are no more fields.
@@ -708,7 +635,7 @@ const _: () = {
     }
   }
   #[automatically_derived]
-  impl ::core::iter::Iterator for UserFieldIndexer {
+  impl ::core::iter::Iterator for UserFieldIndex {
     type Item = Self;
     fn next(&mut self) -> ::core::option::Option<Self> {
       Self::next(self)
@@ -724,15 +651,15 @@ const _: () = {
     }
   }
   #[automatically_derived]
-  impl ::core::iter::DoubleEndedIterator for UserFieldIndexer {
+  impl ::core::iter::DoubleEndedIterator for UserFieldIndex {
     fn next_back(&mut self) -> ::core::option::Option<Self> {
       Self::prev(self)
     }
   }
   #[automatically_derived]
-  impl ::core::iter::FusedIterator for UserFieldIndexer {}
+  impl ::core::iter::FusedIterator for UserFieldIndex {}
   #[automatically_derived]
-  impl ::core::iter::ExactSizeIterator for UserFieldIndexer {
+  impl ::core::iter::ExactSizeIterator for UserFieldIndex {
     fn len(&self) -> ::core::primitive::usize {
       self.remaining()
     }
@@ -746,6 +673,7 @@ const _: () = {
     _reflect: ::core::marker::PhantomData<R>,
     _flavor: ::core::marker::PhantomData<F>,
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for UserFieldReflection<R, F, TAG>
   where
     R: ?::core::marker::Sized,
@@ -757,6 +685,50 @@ const _: () = {
       <Self as ::grost::__private::reflection::Reflectable<F>>::REFLECTION
     }
   }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32>
+    ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for UserFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::core::ops::Deref,
+  {
+    fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+      self
+    }
+  }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug for UserFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display
+    for UserFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> UserFieldReflection<R, F, TAG>
   where
     R: ?::core::marker::Sized,
@@ -966,6 +938,7 @@ const _: () = {
       UserFieldReflection::new_in()
     }
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::clone::Clone
     for UserFieldReflection<R, F, TAG>
   where
@@ -976,6 +949,7 @@ const _: () = {
       *self
     }
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::marker::Copy
     for UserFieldReflection<R, F, TAG>
   where
@@ -984,11 +958,64 @@ const _: () = {
   {
   }
   /// The reflection bridge type.
-  #[derive(::core::fmt::Debug)]
   pub struct UserReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
     _reflect: ::core::marker::PhantomData<R>,
     _flavor: ::core::marker::PhantomData<F>,
   }
+  #[automatically_derived]
+  impl<R, F> ::core::ops::Deref for UserReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+  {
+    type Target = <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection;
+    fn deref(&self) -> &Self::Target {
+      <Self as ::grost::__private::reflection::Reflectable<F>>::REFLECTION
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for UserReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::core::ops::Deref,
+  {
+    fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+      self
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::fmt::Debug for UserReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::fmt::Display for UserReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
     for UserReflection<R, F>
   {
@@ -996,10 +1023,12 @@ const _: () = {
       *self
     }
   }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
     for UserReflection<R, F>
   {
   }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> UserReflection<R, F> {
     const fn new_in() -> Self {
       Self {
@@ -1008,6 +1037,7 @@ const _: () = {
       }
     }
   }
+  #[automatically_derived]
   impl<F> UserReflection<::grost::__private::reflection::StructReflection<F>, F>
   where
     F: ?::core::marker::Sized + ::grost::__private::Flavor,
@@ -1039,6 +1069,7 @@ const _: () = {
       UserFieldReflection::new()
     }
   }
+  #[automatically_derived]
   impl User {
     /// Returns the reflection of the struct.
     #[allow(non_camel_case_types)]
@@ -1698,7 +1729,8 @@ const _: () = {
           }
           .build();
       }
-      impl ::core::ops::Deref
+      impl
+        ::grost::__private::reflection::Reflectable<::grost::__private::flavors::network::Network>
         for UserReflection<
           ::grost::__private::reflection::StructReflection<
             ::grost::__private::flavors::network::Network,
@@ -1706,20 +1738,19 @@ const _: () = {
           ::grost::__private::flavors::network::Network,
         >
       {
-        type Target = ::grost::__private::reflection::StructReflection<
+        type Reflection = ::grost::__private::reflection::StructReflection<
           ::grost::__private::flavors::network::Network,
         >;
-        fn deref(&self) -> &Self::Target {
+        const REFLECTION: &Self::Reflection =
           <User as ::grost::__private::reflection::Reflectable<
             ::grost::__private::flavors::network::Network,
-          >>::REFLECTION
-        }
+          >>::REFLECTION;
       }
     };
   };
   const _: () = {
     #[automatically_derived]
-    impl ::core::ops::Index<(UserFieldIndexer, ::core::primitive::bool)>
+    impl ::core::ops::Index<(UserFieldIndex, ::core::primitive::bool)>
       for UserSelector<::grost::__private::flavors::Network>
     {
       type Output = ::core::option::Option<
@@ -1729,7 +1760,7 @@ const _: () = {
       >;
       fn index(
         &self,
-        (indexer, select): (UserFieldIndexer, ::core::primitive::bool),
+        (indexer, select): (UserFieldIndex, ::core::primitive::bool),
       ) -> &Self::Output {
         const NONE: &::core::option::Option<
           &'static ::grost::__private::reflection::FieldReflection<
@@ -1737,7 +1768,7 @@ const _: () = {
           >,
         > = &::core::option::Option::None;
         match indexer {
-          UserFieldIndexer::Name => {
+          UserFieldIndex::Name => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -1760,7 +1791,7 @@ const _: () = {
               (false, false) => &REFLECTION,
             }
           }
-          UserFieldIndexer::Age => {
+          UserFieldIndex::Age => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -1783,7 +1814,7 @@ const _: () = {
               (false, false) => &REFLECTION,
             }
           }
-          UserFieldIndexer::Email => {
+          UserFieldIndex::Email => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -1810,18 +1841,18 @@ const _: () = {
       }
     }
     #[automatically_derived]
-    impl ::core::ops::Index<UserFieldIndexer> for UserSelector<::grost::__private::flavors::Network> {
+    impl ::core::ops::Index<UserFieldIndex> for UserSelector<::grost::__private::flavors::Network> {
       type Output = ::core::option::Option<
         &'static ::grost::__private::reflection::FieldReflection<
           ::grost::__private::flavors::Network,
         >,
       >;
-      fn index(&self, indexer: UserFieldIndexer) -> &Self::Output {
+      fn index(&self, indexer: UserFieldIndex) -> &Self::Output {
         const NONE: &::core::option::Option<
           &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
         > = &::core::option::Option::None;
         match indexer {
-          UserFieldIndexer::Name => {
+          UserFieldIndex::Name => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -1839,7 +1870,7 @@ const _: () = {
             );
             if self.name { &REFLECTION } else { NONE }
           }
-          UserFieldIndexer::Age => {
+          UserFieldIndex::Age => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -1857,7 +1888,7 @@ const _: () = {
             );
             if self.age { &REFLECTION } else { NONE }
           }
-          UserFieldIndexer::Email => {
+          UserFieldIndex::Email => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -3142,7 +3173,7 @@ pub struct Comment {
   ::core::fmt::Debug,
 )]
 #[repr(u32)]
-pub enum CommentFieldIndexer {
+pub enum CommentFieldIndex {
   /// The field indexer for the field `user`
   User = 0u32,
   /// The field indexer for the field `replyer`
@@ -3151,12 +3182,6 @@ pub enum CommentFieldIndexer {
   Title = 2u32,
   /// The field indexer for the field `content`
   Content = 3u32,
-}
-/// The concrete field index for the struct [`Comment`]
-pub struct CommentFieldIndex<O: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-  variant: CommentFieldIndexer,
-  _flavor: ::core::marker::PhantomData<F>,
-  _output: ::core::marker::PhantomData<O>,
 }
 /// The selection type for Comment
 pub struct CommentSelector<F: ?::core::marker::Sized> {
@@ -3173,7 +3198,7 @@ pub struct CommentSelectorIter<
   const N: ::core::primitive::bool = true,
 > {
   selector: &'a CommentSelector<F>,
-  index: ::core::option::Option<CommentFieldIndexer>,
+  index: ::core::option::Option<CommentFieldIndex>,
   num: ::core::primitive::usize,
   yielded: ::core::primitive::usize,
 }
@@ -3292,7 +3317,7 @@ const _: () = {
     const fn new(selector: &'a CommentSelector<F>, num: ::core::primitive::usize) -> Self {
       Self {
         selector,
-        index: ::core::option::Option::Some(CommentFieldIndexer::FIRST),
+        index: ::core::option::Option::Some(CommentFieldIndex::FIRST),
         num,
         yielded: 0,
       }
@@ -3537,22 +3562,22 @@ const _: () = {
     }
     /// Returns `true` if such field is selected.
     #[inline]
-    pub const fn is_selected(&self, idx: CommentFieldIndexer) -> ::core::primitive::bool {
+    pub const fn is_selected(&self, idx: CommentFieldIndex) -> ::core::primitive::bool {
       match idx {
-        CommentFieldIndexer::User => self.is_user_selected(),
-        CommentFieldIndexer::Replyer => self.is_replyer_selected(),
-        CommentFieldIndexer::Title => self.is_title_selected(),
-        CommentFieldIndexer::Content => self.is_content_selected(),
+        CommentFieldIndex::User => self.is_user_selected(),
+        CommentFieldIndex::Replyer => self.is_replyer_selected(),
+        CommentFieldIndex::Title => self.is_title_selected(),
+        CommentFieldIndex::Content => self.is_content_selected(),
       }
     }
     /// Returns `true` if such field is unselected.
     #[inline]
-    pub const fn is_unselected(&self, idx: CommentFieldIndexer) -> ::core::primitive::bool {
+    pub const fn is_unselected(&self, idx: CommentFieldIndex) -> ::core::primitive::bool {
       match idx {
-        CommentFieldIndexer::User => self.is_user_unselected(),
-        CommentFieldIndexer::Replyer => self.is_replyer_unselected(),
-        CommentFieldIndexer::Title => self.is_title_unselected(),
-        CommentFieldIndexer::Content => self.is_content_unselected(),
+        CommentFieldIndex::User => self.is_user_unselected(),
+        CommentFieldIndex::Replyer => self.is_replyer_unselected(),
+        CommentFieldIndex::Title => self.is_title_unselected(),
+        CommentFieldIndex::Content => self.is_content_unselected(),
       }
     }
     /// Select the `Comment.user` field
@@ -3843,85 +3868,18 @@ const _: () = {
       >>::encoded_len(self, ctx)
     }
   }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized>
-    ::core::convert::AsRef<CommentFieldIndexer> for CommentFieldIndex<O, F>
-  {
-    fn as_ref(&self) -> &CommentFieldIndexer {
-      &self.variant
-    }
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
-    for CommentFieldIndex<O, F>
-  {
-    fn clone(&self) -> Self {
-      *self
-    }
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
-    for CommentFieldIndex<O, F>
-  {
-  }
-  impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> CommentFieldIndex<O, F> {
-    /// Create a new field index.
-    #[inline]
-    pub const fn new(variant: CommentFieldIndexer) -> Self {
-      Self {
-        variant,
-        _flavor: ::core::marker::PhantomData,
-        _output: ::core::marker::PhantomData,
-      }
-    }
-    /// Returns the indexer which creates this index.
-    #[inline]
-    pub const fn indexer(&self) -> CommentFieldIndexer {
-      self.variant
-    }
-  }
+  #[automatically_derived]
   impl<F: ?::core::marker::Sized> ::grost::__private::indexer::Indexable<F> for Comment {
-    type Indexer = CommentFieldIndexer;
+    type Indexer = CommentFieldIndex;
   }
   #[automatically_derived]
-  impl CommentFieldIndexer {
+  impl CommentFieldIndex {
     /// The number of variants of this field indexer.
     pub const VARIANTS: ::core::primitive::usize = 4usize;
     /// The first field indexer.
     pub const FIRST: Self = Self::User;
     /// The last field indexer.
     pub const LAST: Self = Self::Content;
-    /// Returns the field reflection index, which can be used to index the field reflection.
-    #[inline]
-    pub const fn field_reflection<F>(
-      &self,
-    ) -> CommentFieldIndex<::grost::__private::reflection::FieldReflection<F>, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      CommentFieldIndex::new(*self)
-    }
-    /// Returns the tag index, which can be used to index the tag of the field.
-    #[inline]
-    pub const fn tag<F>(&self) -> CommentFieldIndex<F::Tag, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      CommentFieldIndex::new(*self)
-    }
-    /// Returns the identifier index, which can be used to index the identifier of the field.
-    #[inline]
-    pub const fn identifier<F>(&self) -> CommentFieldIndex<F::Identifier, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      CommentFieldIndex::new(*self)
-    }
-    /// Returns the wire type index, which can be used to index the wire type of the field.
-    #[inline]
-    pub const fn wire_type<F>(&self) -> CommentFieldIndex<F::WireType, F>
-    where
-      F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-    {
-      CommentFieldIndex::new(*self)
-    }
     /// Returns the next field indexer.
     ///
     /// Returns `None` if there are no more fields.
@@ -3954,7 +3912,7 @@ const _: () = {
     }
   }
   #[automatically_derived]
-  impl ::core::iter::Iterator for CommentFieldIndexer {
+  impl ::core::iter::Iterator for CommentFieldIndex {
     type Item = Self;
     fn next(&mut self) -> ::core::option::Option<Self> {
       Self::next(self)
@@ -3970,15 +3928,15 @@ const _: () = {
     }
   }
   #[automatically_derived]
-  impl ::core::iter::DoubleEndedIterator for CommentFieldIndexer {
+  impl ::core::iter::DoubleEndedIterator for CommentFieldIndex {
     fn next_back(&mut self) -> ::core::option::Option<Self> {
       Self::prev(self)
     }
   }
   #[automatically_derived]
-  impl ::core::iter::FusedIterator for CommentFieldIndexer {}
+  impl ::core::iter::FusedIterator for CommentFieldIndex {}
   #[automatically_derived]
-  impl ::core::iter::ExactSizeIterator for CommentFieldIndexer {
+  impl ::core::iter::ExactSizeIterator for CommentFieldIndex {
     fn len(&self) -> ::core::primitive::usize {
       self.remaining()
     }
@@ -3992,6 +3950,7 @@ const _: () = {
     _reflect: ::core::marker::PhantomData<R>,
     _flavor: ::core::marker::PhantomData<F>,
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref
     for CommentFieldReflection<R, F, TAG>
   where
@@ -4004,6 +3963,52 @@ const _: () = {
       <Self as ::grost::__private::reflection::Reflectable<F>>::REFLECTION
     }
   }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32>
+    ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target>
+    for CommentFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::core::ops::Deref,
+  {
+    fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+      self
+    }
+  }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug
+    for CommentFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
+  impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display
+    for CommentFieldReflection<R, F, TAG>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> CommentFieldReflection<R, F, TAG>
   where
     R: ?::core::marker::Sized,
@@ -4216,6 +4221,7 @@ const _: () = {
       CommentFieldReflection::new_in()
     }
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::clone::Clone
     for CommentFieldReflection<R, F, TAG>
   where
@@ -4226,6 +4232,7 @@ const _: () = {
       *self
     }
   }
+  #[automatically_derived]
   impl<R, F, const TAG: ::core::primitive::u32> ::core::marker::Copy
     for CommentFieldReflection<R, F, TAG>
   where
@@ -4234,11 +4241,64 @@ const _: () = {
   {
   }
   /// The reflection bridge type.
-  #[derive(::core::fmt::Debug)]
   pub struct CommentReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
     _reflect: ::core::marker::PhantomData<R>,
     _flavor: ::core::marker::PhantomData<F>,
   }
+  #[automatically_derived]
+  impl<R, F> ::core::ops::Deref for CommentReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+  {
+    type Target = <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection;
+    fn deref(&self) -> &Self::Target {
+      <Self as ::grost::__private::reflection::Reflectable<F>>::REFLECTION
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for CommentReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::core::ops::Deref,
+  {
+    fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+      self
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::fmt::Debug for CommentReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
+  impl<R, F> ::core::fmt::Display for CommentReflection<R, F>
+  where
+    R: ?::core::marker::Sized,
+    F: ?::core::marker::Sized + ::grost::__private::Flavor,
+    Self: ::grost::__private::reflection::Reflectable<F>,
+    <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+  {
+    fn fmt(
+      &self,
+      f: &mut ::core::fmt::Formatter<'_>,
+    ) -> ::core::result::Result<(), ::core::fmt::Error> {
+      ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+    }
+  }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
     for CommentReflection<R, F>
   {
@@ -4246,10 +4306,12 @@ const _: () = {
       *self
     }
   }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
     for CommentReflection<R, F>
   {
   }
+  #[automatically_derived]
   impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> CommentReflection<R, F> {
     const fn new_in() -> Self {
       Self {
@@ -4258,6 +4320,7 @@ const _: () = {
       }
     }
   }
+  #[automatically_derived]
   impl<F> CommentReflection<::grost::__private::reflection::StructReflection<F>, F>
   where
     F: ?::core::marker::Sized + ::grost::__private::Flavor,
@@ -4296,6 +4359,7 @@ const _: () = {
       CommentFieldReflection::new()
     }
   }
+  #[automatically_derived]
   impl Comment {
     /// Returns the reflection of the struct.
     #[allow(non_camel_case_types)]
@@ -5167,7 +5231,8 @@ const _: () = {
           }
           .build();
       }
-      impl ::core::ops::Deref
+      impl
+        ::grost::__private::reflection::Reflectable<::grost::__private::flavors::network::Network>
         for CommentReflection<
           ::grost::__private::reflection::StructReflection<
             ::grost::__private::flavors::network::Network,
@@ -5175,20 +5240,19 @@ const _: () = {
           ::grost::__private::flavors::network::Network,
         >
       {
-        type Target = ::grost::__private::reflection::StructReflection<
+        type Reflection = ::grost::__private::reflection::StructReflection<
           ::grost::__private::flavors::network::Network,
         >;
-        fn deref(&self) -> &Self::Target {
+        const REFLECTION: &Self::Reflection =
           <Comment as ::grost::__private::reflection::Reflectable<
             ::grost::__private::flavors::network::Network,
-          >>::REFLECTION
-        }
+          >>::REFLECTION;
       }
     };
   };
   const _: () = {
     #[automatically_derived]
-    impl ::core::ops::Index<(CommentFieldIndexer, ::core::primitive::bool)>
+    impl ::core::ops::Index<(CommentFieldIndex, ::core::primitive::bool)>
       for CommentSelector<::grost::__private::flavors::Network>
     {
       type Output = ::core::option::Option<
@@ -5198,7 +5262,7 @@ const _: () = {
       >;
       fn index(
         &self,
-        (indexer, select): (CommentFieldIndexer, ::core::primitive::bool),
+        (indexer, select): (CommentFieldIndex, ::core::primitive::bool),
       ) -> &Self::Output {
         const NONE: &::core::option::Option<
           &'static ::grost::__private::reflection::FieldReflection<
@@ -5206,7 +5270,7 @@ const _: () = {
           >,
         > = &::core::option::Option::None;
         match indexer {
-          CommentFieldIndexer::User => {
+          CommentFieldIndex::User => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5229,7 +5293,7 @@ const _: () = {
               (false, true) => &REFLECTION,
             }
           }
-          CommentFieldIndexer::Replyer => {
+          CommentFieldIndex::Replyer => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5252,7 +5316,7 @@ const _: () = {
               (false, true) => &REFLECTION,
             }
           }
-          CommentFieldIndexer::Title => {
+          CommentFieldIndex::Title => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5275,7 +5339,7 @@ const _: () = {
               (false, false) => &REFLECTION,
             }
           }
-          CommentFieldIndexer::Content => {
+          CommentFieldIndex::Content => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5302,7 +5366,7 @@ const _: () = {
       }
     }
     #[automatically_derived]
-    impl ::core::ops::Index<CommentFieldIndexer>
+    impl ::core::ops::Index<CommentFieldIndex>
       for CommentSelector<::grost::__private::flavors::Network>
     {
       type Output = ::core::option::Option<
@@ -5310,12 +5374,12 @@ const _: () = {
           ::grost::__private::flavors::Network,
         >,
       >;
-      fn index(&self, indexer: CommentFieldIndexer) -> &Self::Output {
+      fn index(&self, indexer: CommentFieldIndex) -> &Self::Output {
         const NONE: &::core::option::Option<
           &::grost::__private::reflection::FieldReflection<::grost::__private::flavors::Network>,
         > = &::core::option::Option::None;
         match indexer {
-          CommentFieldIndexer::User => {
+          CommentFieldIndex::User => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5337,7 +5401,7 @@ const _: () = {
               &REFLECTION
             }
           }
-          CommentFieldIndexer::Replyer => {
+          CommentFieldIndex::Replyer => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5359,7 +5423,7 @@ const _: () = {
               &REFLECTION
             }
           }
-          CommentFieldIndexer::Title => {
+          CommentFieldIndex::Title => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,
@@ -5377,7 +5441,7 @@ const _: () = {
             );
             if self.title { &REFLECTION } else { NONE }
           }
-          CommentFieldIndexer::Content => {
+          CommentFieldIndex::Content => {
             const REFLECTION: ::core::option::Option<
               &::grost::__private::reflection::FieldReflection<
                 ::grost::__private::flavors::Network,

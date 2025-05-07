@@ -82,20 +82,13 @@ impl core::ops::Deref for CommentReflection<CommentUserField<FieldReflection<Net
 
 #[test]
 fn t() {
-  let indexer = UserFieldIndexer::Age;
+  let indexer = UserFieldIndex::Age;
   let user_reflection = User::reflection::<Network>();
-  println!("{:#?}", &*user_reflection);
+  println!("{:#?}", user_reflection);
   let comment_reflection = Comment::reflection::<Network>();
-  println!("{:#?}", &*comment_reflection);
-
-  // let tag = indexer.tag::<Network>();
-  // println!("{}", tag);
-  // let wire_type = indexer.wire_type::<Network>();
-  // println!("{}", wire_type);
-  // let identifier = indexer.identifier::<Network>();
-  // println!("{}", identifier);
+  println!("{:#?}", comment_reflection);
 
   let s = CommentSelector::<Network>::all();
-  let r = s[CommentFieldIndexer::User];
+  let r = s[CommentFieldIndex::User];
   println!("{:?}", s.without_title());
 }

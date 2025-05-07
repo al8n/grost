@@ -96,9 +96,7 @@ impl Generator for DefaultGenerator {
     let selector_impl = struct_.generate_selector_impl(&self.grost_path);
 
     let indexer_defination = struct_.generate_indexer_defination();
-    let index_defination = struct_.generate_index_defination();
     let indexer_impl = struct_.generate_indexer_impl(&self.grost_path);
-    let index_impl = struct_.generate_index_impl();
 
     let struct_impl = struct_.struct_impl();
     let codec = self
@@ -121,7 +119,6 @@ impl Generator for DefaultGenerator {
       #defination
 
       #indexer_defination
-      #index_defination
 
       #selector_defination
       #selector_iter_defination
@@ -132,7 +129,6 @@ impl Generator for DefaultGenerator {
         #selector_iter_impl
         #selector_impl
 
-        #index_impl
         #indexer_impl
 
         #reflection

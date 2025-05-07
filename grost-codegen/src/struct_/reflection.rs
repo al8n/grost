@@ -36,6 +36,7 @@ impl Struct {
         _flavor: ::core::marker::PhantomData<F>,
       }
 
+      #[automatically_derived]
       impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
@@ -49,6 +50,45 @@ impl Struct {
         }
       }
 
+      #[automatically_derived]
+      impl<R, F, const TAG: ::core::primitive::u32> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #field_reflection_name<R, F, TAG>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: ::core::ops::Deref,
+      {
+        fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+          self
+        }
+      }
+
+      #[automatically_derived]
+      impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug for #field_reflection_name<R, F, TAG>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+      {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+        }
+      }
+
+      #[automatically_derived]
+      impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display for #field_reflection_name<R, F, TAG>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+      {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+        }
+      }
+
+      #[automatically_derived]
       impl<R, F, const TAG: ::core::primitive::u32> #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
@@ -266,6 +306,7 @@ impl Struct {
         }
       }
 
+      #[automatically_derived]
       impl<R, F, const TAG: ::core::primitive::u32> ::core::clone::Clone for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
@@ -276,6 +317,7 @@ impl Struct {
         }
       }
 
+      #[automatically_derived]
       impl<R, F, const TAG: ::core::primitive::u32> ::core::marker::Copy for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
@@ -283,20 +325,74 @@ impl Struct {
       {}
 
       /// The reflection bridge type.
-      #[derive(::core::fmt::Debug)]
       pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
         _reflect: ::core::marker::PhantomData<R>,
         _flavor: ::core::marker::PhantomData<F>,
       }
 
+      #[automatically_derived]
+      impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: #path_to_grost::__private::reflection::Reflectable<F>,
+      {
+        type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
+
+        fn deref(&self) -> &Self::Target {
+          <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
+        }
+      }
+
+      #[automatically_derived]
+      impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: ::core::ops::Deref,
+      {
+        fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+          self
+        }
+      }
+
+      #[automatically_derived]
+      impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+      {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+        }
+      }
+
+      #[automatically_derived]
+      impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
+      where
+        R: ?::core::marker::Sized,
+        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+      {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+        }
+      }
+
+      #[automatically_derived]
       impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #reflection_name<R, F> {
         fn clone(&self) -> Self {
           *self
         }
       }
 
+      #[automatically_derived]
       impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #reflection_name<R, F> {}
 
+      #[automatically_derived]
       impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> #reflection_name<R, F> {
         const fn new_in() -> Self {
           Self {
@@ -306,6 +402,7 @@ impl Struct {
         }
       }
 
+      #[automatically_derived]
       impl<F> #reflection_name<#path_to_grost::__private::reflection::StructReflection<F>, F>
       where
         F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
@@ -319,6 +416,7 @@ impl Struct {
         #(#field_reflection_fns)*
       }
 
+      #[automatically_derived]
       impl #name {
         /// Returns the reflection of the struct.
         #[allow(non_camel_case_types)]

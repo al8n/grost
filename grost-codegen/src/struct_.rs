@@ -83,10 +83,6 @@ impl Struct {
   }
 
   pub fn indexer_name(&self) -> Ident {
-    format_ident!("{}FieldIndexer", self.name.name_str())
-  }
-
-  pub fn index_name(&self) -> Ident {
     format_ident!("{}FieldIndex", self.name.name_str())
   }
 
