@@ -8,10 +8,94 @@ use crate::FlavorGenerator;
 use super::*;
 
 impl Struct {
-  pub(crate) fn generate_selection(
+  pub(crate) fn generate_selector_defination(
     &self,
     path_to_grost: &syn::Path,
-    flavors: &IndexMap<SmolStr, Box<dyn FlavorGenerator>>,
+  ) -> proc_macro2::TokenStream {
+    let name = self.selector_name();
+    let vis = self.visibility.as_ref();
+    let doc = format!(" The selection type for {}", self.name.name_str());
+
+    let selection_fields = self.fields.iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let rust_ty = ty.ty();
+      if ty.primitive_selection_type() {
+        quote! {
+          #field_name: ::core::primitive::bool
+        }
+      } else {
+        quote! {
+          #field_name: <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector
+        }
+      }
+    });
+
+    quote! {
+      #[doc = #doc]
+      #vis struct #name<F: ?::core::marker::Sized> {
+        _m: ::core::marker::PhantomData<F>,
+        #(#selection_fields),*
+      }
+    }
+  }
+
+  pub(crate) fn generate_selector_iter_defination(&self) -> proc_macro2::TokenStream {
+    let name = self.selector_name();
+    let name_str = name.name_str();
+    let iter_name = self.selector_iter_name();
+    let vis = self.visibility.as_ref();
+    let iter_doc = format!(
+      " An iterator over the selected fields of the [`{}`]",
+      name_str,
+    );
+    let indexer_name = self.indexer_name();
+
+    quote! {
+      #[doc = #iter_doc]
+      #vis struct #iter_name<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool = true> {
+        selector: &'a #name<F>,
+        index: ::core::option::Option<#indexer_name>,
+        num: ::core::primitive::usize,
+        yielded: ::core::primitive::usize,
+      }
+    }
+  }
+
+  pub(crate) fn generate_selector_iter_impl(&self) -> proc_macro2::TokenStream {
+    let iter_name = self.selector_iter_name();
+    let name = self.selector_name();
+    let indexer_name = self.indexer_name();
+    quote! {
+      impl<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool> #iter_name<'a, F, N> {
+        #[inline]
+        const fn new(selector: &'a #name<F>, num: ::core::primitive::usize) -> Self {
+          Self {
+            selector,
+            index: ::core::option::Option::Some(#indexer_name::FIRST),
+            num,
+            yielded: 0,
+          }
+        }
+
+        /// Returns the exact remaining length of the iterator.
+        #[inline]
+        pub const fn remaining(&self) -> ::core::primitive::usize {
+          self.num - self.yielded
+        }
+
+        /// Returns `true` if the iterator is empty.
+        #[inline]
+        pub const fn is_empty(&self) -> ::core::primitive::bool {
+          self.remaining() == 0
+        }
+      }
+    }
+  }
+
+  pub(crate) fn generate_selector_impl(
+    &self,
+    path_to_grost: &syn::Path,
   ) -> proc_macro2::TokenStream {
     let name = self.selector_name();
     let fields = &self.fields;
@@ -193,24 +277,6 @@ impl Struct {
       }
     });
 
-    let vis = self.visibility.as_ref();
-    let doc = format!(" The selection type for {}", self.name.name_str());
-
-    let selection_fields = self.fields.iter().map(|f| {
-      let ty = f.ty();
-      let field_name = f.name();
-      let rust_ty = ty.ty();
-      if ty.primitive_selection_type() {
-        quote! {
-          #field_name: ::core::primitive::bool
-        }
-      } else {
-        quote! {
-          #field_name: <#rust_ty as #path_to_grost::__private::Selectable<F>>::Selector
-        }
-      }
-    });
-
     let empty = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
@@ -374,10 +440,6 @@ impl Struct {
     let num_fields = self.fields.len();
     let name_str = name.name_str();
     let iter_name = self.selector_iter_name();
-    let iter_doc = format!(
-      " An iterator over the selected fields of the [`{}`]",
-      name_str,
-    );
     let indexer_name = self.indexer_name();
 
     let is_selected = self.fields().iter().map(|f| {
@@ -399,44 +461,6 @@ impl Struct {
     });
 
     quote! {
-      #[doc = #iter_doc]
-      #vis struct #iter_name<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool = true> {
-        selector: &'a #name<F>,
-        index: ::core::option::Option<#indexer_name>,
-        num: ::core::primitive::usize,
-        yielded: ::core::primitive::usize,
-      }
-
-      impl<'a, F: ?::core::marker::Sized, const N: ::core::primitive::bool> #iter_name<'a, F, N> {
-        #[inline]
-        const fn new(selector: &'a #name<F>, num: ::core::primitive::usize) -> Self {
-          Self {
-            selector,
-            index: ::core::option::Option::Some(#indexer_name::FIRST),
-            num,
-            yielded: 0,
-          }
-        }
-
-        /// Returns the exact remaining length of the iterator.
-        #[inline]
-        pub const fn remaining(&self) -> ::core::primitive::usize {
-          self.num - self.yielded
-        }
-
-        /// Returns `true` if the iterator is empty.
-        #[inline]
-        pub const fn is_empty(&self) -> ::core::primitive::bool {
-          self.remaining() == 0
-        }
-      }
-
-      #[doc = #doc]
-      #vis struct #name<F: ?::core::marker::Sized> {
-        _m: ::core::marker::PhantomData<F>,
-        #(#selection_fields),*
-      }
-
       #[automatically_derived]
       impl<F: ?::core::marker::Sized> #name<F> {
         fn debug_helper(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {

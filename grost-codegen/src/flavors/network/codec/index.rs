@@ -16,7 +16,6 @@ impl Network {
     let struct_name = struct_.name();
     let selector_name = struct_.selector_name();
 
-    let reflection_mod_name = struct_.reflection_mod_name();
     let reflection_name = struct_.reflection_name();
     let index_trait_select = struct_.fields().iter().map(|f| {
       let field_name = f.name();
@@ -27,7 +26,7 @@ impl Network {
       let reflection = quote! {
         const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
           <
-            #reflection_mod_name::#field_reflection<
+            #field_reflection<
               #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
               #tag,
@@ -76,7 +75,7 @@ impl Network {
       let reflection = quote! {
         const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
           <
-            #reflection_mod_name::#field_reflection<
+            #field_reflection<
               #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
               #tag,

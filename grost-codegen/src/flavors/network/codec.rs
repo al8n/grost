@@ -114,7 +114,6 @@ impl Network {
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
     let field_name = f.name();
-    let reflection_mod_name = struct_.reflection_mod_name();
     let field_reflection = struct_.field_reflection_name();
     let encoded_identifier = quote! {
       <#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier()
@@ -125,7 +124,7 @@ impl Network {
     let ty = f.ty();
     let tag = f.tag();
     let encoded_len_fn = quote! {
-      const ENCODED_LEN_FN: #reflection_mod_name::#field_reflection<
+      const ENCODED_LEN_FN: #field_reflection<
         #path_to_grost::__private::reflection::encode::EncodeReflection<
           #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField>
         >,
@@ -241,7 +240,7 @@ impl Network {
       impl #path_to_grost::__private::reflection::Reflectable<
         #path_to_grost::__private::flavors::Network,
       > for
-        #reflection_mod_name::#field_reflection<
+        #field_reflection<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::encode::EncodeField
           >,
@@ -268,7 +267,6 @@ impl Network {
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
     let field_name = f.name();
-    let reflection_mod_name = struct_.reflection_mod_name();
     let field_reflection = struct_.field_reflection_name();
 
     let encoded_identifier = quote! {
@@ -290,7 +288,7 @@ impl Network {
       ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
     };
     let encoded_len_fn = quote! {
-      const ENCODED_LEN_FN: #reflection_mod_name::#field_reflection<
+      const ENCODED_LEN_FN: #field_reflection<
         #path_to_grost::__private::reflection::encode::EncodeReflection<
           #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::PartialEncodeField>
         >,
@@ -406,7 +404,7 @@ impl Network {
     quote! {
       impl #path_to_grost::__private::reflection::Reflectable<
         #path_to_grost::__private::flavors::Network,
-      > for #reflection_mod_name::#field_reflection<
+      > for #field_reflection<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::encode::PartialEncodeField
           >,
@@ -476,7 +474,6 @@ impl Network {
       }
     };
 
-    let reflection_mod_name = struct_.reflection_mod_name();
     let field_reflection = struct_.field_reflection_name();
     let tag = f.tag();
 
@@ -488,7 +485,7 @@ impl Network {
       impl #path_to_grost::__private::reflection::Reflectable<
         #path_to_grost::__private::flavors::Network,
       > for
-        #reflection_mod_name::#field_reflection<
+        #field_reflection<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField>,
           >,
@@ -560,7 +557,6 @@ impl Network {
       }
     };
 
-    let reflection_mod_name = struct_.reflection_mod_name();
     let field_reflection = struct_.field_reflection_name();
     let tag = f.tag();
 
@@ -576,7 +572,7 @@ impl Network {
       impl #path_to_grost::__private::reflection::Reflectable<
         #path_to_grost::__private::flavors::Network,
       > for
-        #reflection_mod_name::#field_reflection<
+        #field_reflection<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::PartialEncodeField>,
           >,

@@ -102,10 +102,6 @@ impl Struct {
     &self.fields
   }
 
-  pub fn reflection_mod_name(&self) -> Ident {
-    format_ident!("{}_reflection", self.name.name_str().to_snake_case())
-  }
-
   pub fn reflection_name(&self) -> Ident {
     format_ident!("{}Reflection", self.name.name_str())
   }
@@ -137,7 +133,7 @@ impl Struct {
     }
   }
 
-  pub(crate) fn struct_basic(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub(crate) fn struct_impl(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let fields = &self.fields;
     let default_fields = fields.iter().map(|f| {

@@ -1,20 +1,70 @@
-use crate::struct_;
-
 use super::*;
 
 impl Struct {
-  pub(crate) fn generate_indexer(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-    let name = self.indexer_name();
+  pub(crate) fn generate_index_defination(&self) -> proc_macro2::TokenStream {
     let index_name = self.index_name();
-    let vis = &self.visibility;
-    let indexer_doc = format!(
-      " Field indexer for the struct [`{}`]",
-      self.name().name_str()
-    );
+    let name = self.indexer_name();
     let index_doc = format!(
       " The concrete field index for the struct [`{}`]",
       self.name().name_str()
     );
+
+    quote! {
+      #[doc = #index_doc]
+      pub struct #index_name<O: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        variant: #name,
+        _flavor: ::core::marker::PhantomData<F>,
+        _output: ::core::marker::PhantomData<O>,
+      }
+    }
+  }
+
+  pub(crate) fn generate_index_impl(&self) -> proc_macro2::TokenStream {
+    let index_name = self.index_name();
+    let name = self.indexer_name();
+
+    quote! {
+      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::convert::AsRef<#name> for #index_name<O, F> {
+        fn as_ref(&self) -> &#name {
+          &self.variant
+        }
+      }
+
+      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #index_name<O, F> {
+        fn clone(&self) -> Self {
+          *self
+        }
+      }
+
+      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #index_name<O, F> {}
+
+      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> #index_name<O, F> {
+        /// Create a new field index.
+        #[inline]
+        pub const fn new(variant: #name) -> Self {
+          Self {
+            variant,
+            _flavor: ::core::marker::PhantomData,
+            _output: ::core::marker::PhantomData,
+          }
+        }
+
+        /// Returns the indexer which creates this index.
+        #[inline]
+        pub const fn indexer(&self) -> #name {
+          self.variant
+        }
+      }
+    }
+  }
+
+  pub(crate) fn generate_indexer_defination(&self) -> proc_macro2::TokenStream {
+    let name = self.indexer_name();
+    let indexer_doc = format!(
+      " Field indexer for the struct [`{}`]",
+      self.name().name_str()
+    );
+    let vis = &self.visibility;
     let field_varint = self.fields().iter().enumerate().map(|(idx, f)| {
       let variant = format_ident!("{}", f.name().name_str().to_upper_camel_case());
       let variant_doc = format!(" The field indexer for the field `{}`", f.name().name_str());
@@ -24,6 +74,24 @@ impl Struct {
         #variant = #idx
       }
     });
+
+    quote! {
+      #[doc = #indexer_doc]
+      #[derive(::core::clone::Clone, ::core::marker::Copy, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::cmp::PartialOrd, ::core::cmp::Ord, ::core::hash::Hash, ::core::fmt::Debug)]
+      #[repr(u32)]
+      #vis enum #name {
+        #(#field_varint),*
+      }
+    }
+  }
+
+  pub(crate) fn generate_indexer_impl(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> proc_macro2::TokenStream {
+    let name = self.indexer_name();
+    let index_name = self.index_name();
+
     let num_fields = self.fields().len();
 
     let first_variant_name = format_ident!(
@@ -64,57 +132,10 @@ impl Struct {
         .to_upper_camel_case()
     );
 
-    let selector_name = self.selector_name();
     let struct_name = self.name();
     quote! {
       impl<F: ?::core::marker::Sized> #path_to_grost::__private::indexer::Indexable<F> for #struct_name {
         type Indexer = #name;
-      }
-
-      #[doc = #index_doc]
-      pub struct #index_name<O: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-        variant: #name,
-        _flavor: ::core::marker::PhantomData<F>,
-        _output: ::core::marker::PhantomData<O>,
-      }
-
-      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::convert::AsRef<#name> for #index_name<O, F> {
-        fn as_ref(&self) -> &#name {
-          &self.variant
-        }
-      }
-
-      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #index_name<O, F> {
-        fn clone(&self) -> Self {
-          *self
-        }
-      }
-
-      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #index_name<O, F> {}
-
-      impl<O: ?::core::marker::Sized, F: ?::core::marker::Sized> #index_name<O, F> {
-        /// Create a new field index.
-        #[inline]
-        pub const fn new(variant: #name) -> Self {
-          Self {
-            variant,
-            _flavor: ::core::marker::PhantomData,
-            _output: ::core::marker::PhantomData,
-          }
-        }
-
-        /// Returns the indexer which creates this index.
-        #[inline]
-        pub const fn indexer(&self) -> #name {
-          self.variant
-        }
-      }
-
-      #[doc = #indexer_doc]
-      #[derive(::core::clone::Clone, ::core::marker::Copy, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::cmp::PartialOrd, ::core::cmp::Ord, ::core::hash::Hash, ::core::fmt::Debug)]
-      #[repr(u32)]
-      #vis enum #name {
-        #(#field_varint),*
       }
 
       #[automatically_derived]
