@@ -59,8 +59,7 @@ impl FlavorGenerator for Network {
               <#ty
                 as #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::Network>
               >::Format as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Network>
-              >::WIRE_TYPE,
-
+            >::WIRE_TYPE,
             #path_to_grost::__private::flavors::network::Tag::new(#tag),
           )
         }
@@ -74,22 +73,6 @@ impl FlavorGenerator for Network {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
-    // let consts = struct_.fields().iter().map(|f| {
-    //   let field_name_str = f.name().name_str();
-    //   let id_name = self.field_identifier_const_name(field_name_str);
-    //   let tag_name = self.field_tag_const_name(field_name_str);
-    //   let wire_type_name = self.field_wire_type_const_name(field_name_str);
-    //   let encoded_identifier_len_name = self.encoded_len_field_identifier_const_name(field_name_str);
-    //   let encoded_identifier_name = self.encoded_field_identifier_const_name(field_name_str);
-    //   let field_reflection_name = self.field_reflection_name(field_name_str);
-    //   quote! {
-    //     const #id_name: #path_to_grost::__private::flavors::network::Identifier = #struct_name::#field_reflection_name.identifier();
-    //     const #tag_name: #path_to_grost::__private::flavors::network::Tag = #id_name.tag();
-    //     const #wire_type_name: #path_to_grost::__private::flavors::network::WireType = #id_name.wire_type();
-    //     const #encoded_identifier_len_name: ::core::primitive::usize = #id_name.encoded_len();
-    //     const #encoded_identifier_name: &[::core::primitive::u8] = #id_name.encode().as_slice();
-    //   }
-    // });
     let partial_encode = self.generate_partial_encode(path_to_grost, struct_);
     let encode = self.generate_encode(path_to_grost, struct_);
     let index = self.generate_struct_index(path_to_grost, struct_);

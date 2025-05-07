@@ -1,5 +1,4 @@
-use quote::{format_ident, quote};
-use syn::parse_quote;
+use quote::quote;
 
 use crate::{Struct, network::Network};
 
@@ -12,9 +11,8 @@ impl Network {
     let struct_name = struct_.name();
     let encoded_len = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      let fn_name = super::partial_encoded_length_delimited_len_fn_name(field_name.name_str());
       quote! {
-        len += #fn_name(
+        len += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().partial_encoded_len())(
           &self.#field_name,
           ctx,
           &selector.#field_name,
@@ -39,7 +37,6 @@ impl Network {
 
     let encode = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      let fn_name = super::partial_encode_length_delimited_fn_name(field_name.name_str());
       quote! {
         if offset >= buf_len {
           return ::core::result::Result::Err(
@@ -49,7 +46,7 @@ impl Network {
             ),
           );
         }
-        offset += #fn_name(
+        offset += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().partial_encode())(
           &self.#field_name,
           ctx,
           &mut buf[offset..],

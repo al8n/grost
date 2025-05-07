@@ -1,9 +1,9 @@
-use heck::{ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
-use quote::{ToTokens, format_ident, quote};
+use heck::{ToSnakeCase, ToUpperCamelCase};
+use quote::{format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Ident, Visibility, parse_quote};
 
-use crate::{SafeIdent, flavors::FlavorGeneratorExt};
+use crate::SafeIdent;
 
 pub use field::Field;
 
@@ -114,11 +114,6 @@ impl Struct {
     let struct_name = self.name.name_str();
     format_ident!("{struct_name}FieldReflection")
   }
-
-  // pub fn field_reflection_name(&self, field_name: &str) -> Ident {
-  //   let struct_name = self.name.name_str();
-  //   format_ident!("{struct_name}{}FieldReflection", field_name.to_upper_camel_case())
-  // }
 
   pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
     let name = &self.name;

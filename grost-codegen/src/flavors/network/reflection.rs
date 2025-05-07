@@ -264,8 +264,6 @@ impl Network {
     })
   }
 
-  
-
   pub(super) fn generate_field_reflections<'a>(
     &'a self,
     path_to_grost: &'a syn::Path,

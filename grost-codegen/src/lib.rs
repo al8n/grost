@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 pub use case::*;
 pub use enum_::*;
 pub use flavors::*;
@@ -7,10 +5,8 @@ use indexmap::IndexMap;
 pub use safe_ident::*;
 pub use struct_::*;
 
-use heck::ToShoutySnakeCase;
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 use smol_str::SmolStr;
-use syn::Ident;
 
 mod case;
 /// Enum structs
