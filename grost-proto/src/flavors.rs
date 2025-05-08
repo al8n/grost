@@ -265,6 +265,11 @@ pub trait Flavor: core::fmt::Debug + 'static {
   where
     B: BytesBuffer;
 
+  /// Returns the length of the encoded unknown value.
+  fn encoded_unknown_len<B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  where
+    B: BytesBuffer;
+
   /// Decodes an unknown value from a buffer.
   ///
   /// This function is used as a handler for unknown identifiers when decoding

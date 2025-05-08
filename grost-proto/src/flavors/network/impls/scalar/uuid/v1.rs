@@ -3,10 +3,11 @@ use uuid_1::Uuid;
 use crate::{
   bridge, default_wire_format,
   flavors::network::{Fixed128, Network, Varint},
-  selectable_bridge,
+  referenceable_scalar, selectable_bridge,
 };
 
 selectable_bridge!(Network:u128[Uuid]);
+referenceable_scalar!(Network: Uuid);
 
 bridge!(
   Network: u128 {

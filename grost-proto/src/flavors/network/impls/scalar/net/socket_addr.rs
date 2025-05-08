@@ -8,7 +8,7 @@ use crate::{
     Network,
     network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
   },
-  partial_encode_scalar, selectable_scalar,
+  partial_encode_scalar, referenceable_scalar, selectable_scalar,
 };
 
 const PORT_SIZE: usize = 2;
@@ -146,6 +146,7 @@ default_wire_format!(
   SocketAddr as LengthDelimited;
 );
 selectable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
+referenceable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

@@ -29,7 +29,7 @@ macro_rules! varint {
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::decode_owned_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::referenceable!($flavor: $ty $([ $(const $g: usize),* ])? :$wf => $ty);)*
+    $($crate::referenceable_scalar!($flavor: $ty $([ $(const $g: usize),* ])?);)*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$flavor, $wf> for $ty {
@@ -150,13 +150,21 @@ macro_rules! selectable_scalar {
   };
 }
 
+/// A macro emits [`Referenceable`](super::Referenceable) implementations for primitive types.
+#[macro_export]
+macro_rules! referenceable_scalar {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $crate::referenceable!($flavor: $($ty $([ $(const $g: usize),* ])? => $ty),+);
+  };
+}
+
 /// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`
 #[macro_export]
 macro_rules! referenceable {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? :$wf:ty => $target:ty ),+$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $target:ty ),+$(,)?) => {
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$wf, $flavor> for $ty {
-        type Ref<'a> = $target where Self: 'a;
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$flavor> for $ty {
+        type Ref<'a, UB> = $target where Self: 'a;
       }
     )*
   };
@@ -451,7 +459,7 @@ macro_rules! try_from_bridge {
   };
 }
 
-/// A macro emits [`Selectable`](super::flavors::Selectable) implementations for `Self`.
+/// A macro emits [`Selectable`](super::selector::Selectable) implementations for `Self`.
 #[macro_export]
 macro_rules! selectable_bridge {
   ($flavor:ty: $(
@@ -463,6 +471,24 @@ macro_rules! selectable_bridge {
       $(
         impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
           type Selector = <$bridge as $crate::__private::Selectable<$flavor>>::Selector;
+        }
+      )*
+    )*
+  };
+}
+
+/// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`.
+#[macro_export]
+macro_rules! referenceable_bridge {
+  ($flavor:ty: $(
+    $bridge: ty [
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?), +$(,)?
+    ]
+  ),+$(,)?) => {
+    $(
+      $(
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$flavor> for $ty {
+          type Ref<'a> = <$bridge as $crate::__private::Referenceable<$flavor>>::Ref<'a> where Self: 'a;
         }
       )*
     )*

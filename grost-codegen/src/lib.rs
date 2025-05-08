@@ -89,6 +89,8 @@ impl Generator for DefaultGenerator {
 
   fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
     let defination = struct_.struct_defination();
+    let partial_defination = struct_.partial_struct_defination();
+    let partial_impl = struct_.partial_struct_impl(&self.grost_path);
 
     let selector_defination = struct_.generate_selector_defination(&self.grost_path);
     let selector_iter_defination = struct_.generate_selector_iter_defination();
@@ -99,10 +101,15 @@ impl Generator for DefaultGenerator {
     let indexer_impl = struct_.generate_indexer_impl(&self.grost_path);
 
     let struct_impl = struct_.struct_impl();
-    let codec = self
-      .flavors
-      .iter()
-      .map(|(_, f)| f.generate_struct_codec(&self.grost_path, struct_));
+    let codec = self.flavors.iter().map(|(_, f)| {
+      let codec = f.generate_struct_codec(&self.grost_path, struct_);
+      let partial_ref_defination = struct_.partial_encoded_struct_defination(&self.grost_path, f);
+      quote! {
+        #partial_ref_defination
+
+        #codec
+      }
+    });
 
     let selection_codecs = self
       .flavors
@@ -118,6 +125,8 @@ impl Generator for DefaultGenerator {
     Ok(quote! {
       #defination
 
+      #partial_defination
+
       #indexer_defination
 
       #selector_defination
@@ -125,6 +134,8 @@ impl Generator for DefaultGenerator {
 
       const _: () = {
         #struct_impl
+
+        #partial_impl
 
         #selector_iter_impl
         #selector_impl

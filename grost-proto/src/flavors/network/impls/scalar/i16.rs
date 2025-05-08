@@ -4,12 +4,14 @@ use crate::{
   decode_owned_scalar, default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
-  message, partial_encode_scalar, selectable_bridge, selectable_scalar, try_from_bridge,
+  message, partial_encode_scalar, referenceable_scalar, selectable_bridge, selectable_scalar,
+  try_from_bridge,
 };
 use core::num::NonZeroI16;
 
 default_wire_format!(Network: i16 as Varint);
 selectable_scalar!(Network: i16);
+referenceable_scalar!(Network: i16, NonZeroI16);
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.len() < 2 {

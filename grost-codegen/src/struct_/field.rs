@@ -100,6 +100,24 @@ impl Field {
     self.wire_formats.get(flavor.name())
   }
 
+  /// Inserts a wire type for a flavor
+  pub fn get_wire_format_or_default<F: FlavorGenerator + ?Sized>(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &F,
+  ) -> syn::Type {
+    match self.get_wire_format(flavor) {
+      Some(ty) => ty.clone(),
+      None => {
+        let ty = self.ty();
+        let flavor_ty = flavor.ty();
+        parse_quote!(
+          <#ty as #path_to_grost::__private::DefaultWireFormat<#flavor_ty>>::Format
+        )
+      }
+    }
+  }
+
   pub fn with_getter(
     mut self,
     fn_name: Option<SafeIdent>,

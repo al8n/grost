@@ -34,7 +34,7 @@ type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
 referenceable!(
-  Network: Bytes:LengthDelimited => &'a [u8]
+  Network: Bytes => &'a [u8]
 );
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {

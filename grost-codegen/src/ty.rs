@@ -91,6 +91,54 @@ impl TyRepr {
     }
   }
 
+  pub fn message_ref_ty<F>(&self, path_to_grost: &syn::Path, flavor: &F, wf: &syn::Type) -> Type
+  where
+    F: super::FlavorGenerator + ?Sized,
+  {
+    match self {
+      Self::Primitive(ty)
+      | Self::Enum(ty)
+      | Self::Struct(ty)
+      | Self::Union(ty)
+      | Self::Interface(ty) => {
+        let flavor_ty = flavor.ty();
+        parse_quote!(<#ty as #path_to_grost::__private::Message<#flavor_ty, #wf>>::Encoded<'a>)
+      }
+      Self::List { item, .. } => unimplemented!(),
+      Self::Map { key, value, .. } => {
+        unimplemented!()
+      }
+      Self::Optional(ty) => {
+        let ty = ty.repr().atomic_ty();
+        let flavor_ty = flavor.ty();
+        parse_quote!(<#ty as #path_to_grost::__private::Message<#flavor_ty, #wf>>::Encoded<'a>)
+      }
+    }
+  }
+
+  /// Returns the type will be used in the partial struct
+  pub fn partial_ty(&self) -> Type {
+    match self {
+      Self::Optional(ty) => ty.repr().partial_ty(),
+      _ => self.ty().clone(),
+    }
+  }
+
+  pub fn atomic_ty(&self) -> Type {
+    match self {
+      Self::List { item, .. } => unimplemented!(),
+      Self::Map { key, value, .. } => {
+        unimplemented!()
+      }
+      Self::Primitive(ty)
+      | Self::Enum(ty)
+      | Self::Struct(ty)
+      | Self::Union(ty)
+      | Self::Interface(ty) => ty.clone(),
+      Self::Optional(ty) => ty.repr().atomic_ty(),
+    }
+  }
+
   pub fn encode_atomic_ty(&self) -> Type {
     match self {
       Self::Primitive(ty) => ty.clone(),

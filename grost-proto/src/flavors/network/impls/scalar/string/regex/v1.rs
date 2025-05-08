@@ -60,7 +60,7 @@ const _: () = {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
         referenceable!(
-          Network: $ty:LengthDelimited => &'a str
+          Network: $ty => &'a str
         );
         type_owned!( Network: SmolStr => $ty {
           |val: &SmolStr| <$ty>::new(val.as_str()).map_err(|_| DecodeError::custom(ERR_MSG))

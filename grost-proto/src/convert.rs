@@ -93,21 +93,20 @@ where
 /// A trait that bridges the type to a reference type for the given wire format and flavor.
 ///
 /// A type can reference to itself or to another type.
-pub trait Referenceable<W: ?Sized, F: ?Sized> {
+pub trait Referenceable<F: ?Sized> {
   /// The reference type for this type for the given wire format and flavor.
-  type Ref<'a>: Copy
+  type Ref<'a, UB>
   where
     Self: 'a;
 }
 
-impl<W, F, T> Referenceable<W, F> for &T
+impl<F, T> Referenceable<F> for &T
 where
-  T: ?Sized + Referenceable<W, F>,
+  T: ?Sized + Referenceable<F>,
   F: ?Sized,
-  W: ?Sized,
 {
-  type Ref<'a>
-    = T::Ref<'a>
+  type Ref<'a, UB>
+    = T::Ref<'a, UB>
   where
     Self: 'a;
 }
@@ -186,13 +185,12 @@ where
 macro_rules! wrapper_impl {
   (@referenceable $($ty:ty),+$(,)?) => {
     $(
-      impl<W, F, T> Referenceable<W, F> for $ty
+      impl<F, T> Referenceable<F> for $ty
       where
-        T: Referenceable<W, F> + ?Sized,
+        T: Referenceable<F> + ?Sized,
         F: ?Sized,
-        W: ?Sized,
       {
-        type Ref<'a> = T::Ref<'a> where Self: 'a;
+        type Ref<'a, UB> = T::Ref<'a, UB> where Self: 'a;
       }
     )*
   };
@@ -284,20 +282,29 @@ macro_rules! wrapper_impl {
   }
 }
 
-wrapper_impl!(@into_target Option<T>:Some);
-wrapper_impl!(@type_ref Option<T>:Some);
-wrapper_impl!(@type_owned Option<T>:Some);
-wrapper_impl!(@partial_message Option<T>);
-wrapper_impl!(@message Option<T>);
+// wrapper_impl!(@into_target Option<T>:Some);
+// wrapper_impl!(@type_ref Option<T>:Some);
+// wrapper_impl!(@type_owned Option<T>:Some);
+// wrapper_impl!(@partial_message Option<T>);
+// wrapper_impl!(@message Option<T>);
 
-impl<W, F, T> Referenceable<W, F> for Option<T>
+// impl<F, T, I> IntoTarget<F, Option<T>> for I
+// where
+//   I: IntoTarget<F, T>,
+//   F: Flavor + ?Sized,
+// {
+//   fn into_target(self) -> Result<Option<T>, F::DecodeError> {
+//     Ok(Some(self.into_target()?))
+//   }
+// }
+
+impl<F, T> Referenceable<F> for Option<T>
 where
-  T: Referenceable<W, F>,
+  T: Referenceable<F>,
   F: ?Sized,
-  W: ?Sized,
 {
-  type Ref<'a>
-    = Option<T::Ref<'a>>
+  type Ref<'a, UB>
+    = T::Ref<'a, UB>
   where
     Self: 'a;
 }

@@ -43,27 +43,13 @@ impl FlavorGenerator for Network {
     field: &crate::Field,
   ) -> proc_macro2::TokenStream {
     let tag = field.tag();
+    let wf = field.get_wire_format_or_default(path_to_grost, self);
 
-    match field.get_wire_format(self) {
-      Some(wf) => quote! {
-        #path_to_grost::__private::flavors::network::Identifier::new(
-          <#wf as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Network>>::WIRE_TYPE,
-          #path_to_grost::__private::flavors::network::Tag::new(#tag),
-        )
-      },
-      None => {
-        let ty = field.ty().ty();
-        quote! {
-          #path_to_grost::__private::flavors::network::Identifier::new(
-            <
-              <#ty
-                as #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::Network>
-              >::Format as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Network>
-            >::WIRE_TYPE,
-            #path_to_grost::__private::flavors::network::Tag::new(#tag),
-          )
-        }
-      }
+    quote! {
+      #path_to_grost::__private::flavors::network::Identifier::new(
+        <#wf as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Network>>::WIRE_TYPE,
+        #path_to_grost::__private::flavors::network::Tag::new(#tag),
+      )
     }
   }
 

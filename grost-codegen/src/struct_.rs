@@ -3,7 +3,7 @@ use quote::{format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Ident, Visibility, parse_quote};
 
-use crate::SafeIdent;
+use crate::{FlavorGenerator, SafeIdent, struct_};
 
 pub use field::Field;
 
@@ -86,8 +86,16 @@ impl Struct {
     format_ident!("{}FieldIndex", self.name.name_str())
   }
 
+  pub fn partial_ref_name(&self) -> Ident {
+    format_ident!("Partial{}Ref", self.name.name_str())
+  }
+
   pub fn name(&self) -> &SafeIdent {
     &self.name
+  }
+
+  pub fn partial_struct_name(&self) -> syn::Ident {
+    format_ident!("Partial{}", self.name.name_str())
   }
 
   pub fn schema_name(&self) -> &str {
@@ -125,6 +133,305 @@ impl Struct {
       #(#attrs)*
       #visibility struct #name {
         #(#fields),*
+      }
+    }
+  }
+
+  pub(crate) fn partial_struct_defination(&self) -> proc_macro2::TokenStream {
+    let name = format_ident!("Partial{}", self.name.name_str());
+    let visibility = self.visibility.as_ref();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let ty = f.ty().repr().partial_ty();
+      quote! {
+        #field_name: ::core::option::Option<#ty>,
+      }
+    });
+    let doc = format!(" The partial struct of [`{}`]", self.name.name_str());
+
+    quote! {
+      #[doc = #doc]
+      #visibility struct #name<__GROST_BYTES_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+        #(#fields)*
+        __grost_unknown__: ::core::option::Option<__GROST_UNKNOWN_BUFFER__>,
+        _bytes_buffer: ::core::marker::PhantomData<__GROST_BYTES_BUFFER__>,
+      }
+    }
+  }
+
+  pub(crate) fn partial_struct_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+    let name = self.partial_struct_name();
+    let struct_name = self.name();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        #field_name: ::core::option::Option::None,
+      }
+    });
+
+    let fields_accessors = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let ref_fn = format_ident!("{}_ref", field_name.name_str());
+      let ref_mut_fn = format_ident!("{}_mut", field_name.name_str());
+      let set_fn = format_ident!("set_{}", field_name.name_str());
+      let take_fn = format_ident!("take_{}", field_name.name_str());
+      let without_fn = format_ident!("without_{}", field_name.name_str());
+      let with_fn = format_ident!("with_{}", field_name.name_str());
+      let clear_fn = format_ident!("clear_{}", field_name.name_str());
+      let ty = f.ty();
+      let constable = ty.copy().then(|| quote! { const });
+      let ty = ty.repr().partial_ty();
+
+      quote! {
+        #[inline]
+        pub const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
+          self.#field_name.as_ref()
+        }
+
+        #[inline]
+        pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
+          self.#field_name.as_mut()
+        }
+
+        #[inline]
+        pub const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
+          self.#field_name.take()
+        }
+
+        #[inline]
+        pub #constable fn #clear_fn(&mut self) -> &mut Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+
+        #[inline]
+        pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+          self.#field_name = ::core::option::Option::Some(value);
+          self
+        }
+
+        #[inline]
+        pub #constable fn #with_fn(mut self, value: #ty) -> Self {
+          self.#field_name = ::core::option::Option::Some(value);
+          self
+        }
+
+        #[inline]
+        pub #constable fn #without_fn(mut self) -> Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+      }
+    });
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__, __GROST_FLAVOR__> #path_to_grost::__private::Selectable<__GROST_FLAVOR__> for #name<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__>
+      where
+        __GROST_FLAVOR__: ?::core::marker::Sized,
+      {
+        type Selector = <#struct_name as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__> ::core::default::Default for #name<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__> {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__> #name<__GROST_BYTES_BUFFER__, __GROST_UNKNWON_BUFFER__> {
+        /// Creates an empty partial struct.
+        pub const fn new() -> Self {
+          Self {
+            #(#fields)*
+            __grost_unknown__: ::core::option::Option::None,
+            _bytes_buffer: ::core::marker::PhantomData,
+          }
+        }
+
+        pub const fn unknown(&self) -> ::core::option::Option<&__GROST_UNKNWON_BUFFER__> {
+          self.__grost_unknown__.as_ref()
+        }
+
+        pub const fn unknown_mut(&mut self) -> ::core::option::Option<&mut __GROST_UNKNWON_BUFFER__> {
+          self.__grost_unknown__.as_mut()
+        }
+
+        pub fn set_unknown(&mut self, value: __GROST_UNKNWON_BUFFER__) -> &mut Self {
+          self.__grost_unknown__ = ::core::option::Option::Some(value);
+          self
+        }
+
+        pub fn with_unknown(mut self, value: __GROST_UNKNWON_BUFFER__) -> Self {
+          self.__grost_unknown__ = ::core::option::Option::Some(value);
+          self
+        }
+
+        pub fn without_unknown(mut self) -> Self {
+          self.__grost_unknown__ = ::core::option::Option::None;
+          self
+        }
+
+        pub fn clear_unknown(&mut self) -> &mut Self {
+          self.__grost_unknown__ = ::core::option::Option::None;
+          self
+        }
+
+        pub fn take_unknown(&mut self) -> ::core::option::Option<__GROST_UNKNWON_BUFFER__> {
+          self.__grost_unknown__.take()
+        }
+
+        #(#fields_accessors)*
+      }
+    }
+  }
+
+  pub(crate) fn partial_encoded_struct_defination<F>(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: FlavorGenerator + ?Sized,
+  {
+    let struct_name = self.name();
+    let name = self.partial_ref_name();
+    let vis = self.visibility.as_ref();
+    let flavor_ty = flavor.ty();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let ty = f.ty();
+      let wf = f.get_wire_format_or_default(path_to_grost, flavor);
+      let encoded_ref_ty = ty.repr().message_ref_ty(path_to_grost, flavor, &wf);
+
+      quote! {
+        #field_name: ::core::option::Option<#encoded_ref_ty>,
+      }
+    });
+    let fields_init = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        #field_name: ::core::option::Option::None,
+      }
+    });
+    let fields_accessors = self.fields.iter()
+      .map(|f| {
+        let field_name = f.name();
+        let ref_fn = format_ident!("{}_ref", field_name.name_str());
+        let ref_mut_fn = format_ident!("{}_mut", field_name.name_str());
+        let set_fn = format_ident!("set_{}", field_name.name_str());
+        let take_fn = format_ident!("take_{}", field_name.name_str());
+        let without_fn = format_ident!("without_{}", field_name.name_str());
+        let with_fn = format_ident!("with_{}", field_name.name_str());
+        let clear_fn = format_ident!("clear_{}", field_name.name_str());
+        let ty = f.ty();
+
+        quote! {
+          #[inline]
+          pub const fn #ref_fn(&self) -> ::core::option::Option<&<#ty as #path_to_grost::__private::Referenceable<#flavor_ty>>::Ref<'a, UB>> {
+            self.#field_name.as_ref()
+          }
+
+          #[inline]
+          pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut <#ty as #path_to_grost::__private::Referenceable<#flavor_ty>>::Ref<'a, UB>> {
+            self.#field_name.as_mut()
+          }
+
+          #[inline]
+          pub const fn #take_fn(&mut self) -> ::core::option::Option<<#ty as #path_to_grost::__private::Referenceable<#flavor_ty>>::Ref<'a, UB>> {
+            self.#field_name.take()
+          }
+
+          #[inline]
+          pub fn #clear_fn(&mut self) -> &mut Self {
+            self.#field_name = ::core::option::Option::None;
+            self
+          }
+
+          #[inline]
+          pub fn #set_fn(&mut self, value: <#ty as #path_to_grost::__private::Referenceable<#flavor_ty>>::Ref<'a, UB>) -> &mut Self {
+            self.#field_name = ::core::option::Option::Some(value);
+            self
+          }
+
+          #[inline]
+          pub fn #with_fn(mut self, value: <#ty as #path_to_grost::__private::Referenceable<#flavor_ty>>::Ref<'a, UB>) -> Self {
+            self.#field_name = ::core::option::Option::Some(value);
+            self
+          }
+
+          #[inline]
+          pub fn #without_fn(mut self) -> Self {
+            self.#field_name = ::core::option::Option::None;
+            self
+          }
+        }
+      });
+
+    quote! {
+      #vis struct #name<'a, UB> {
+        #(#fields)*
+        unknown: ::core::option::Option<UB>,
+      }
+
+      impl #path_to_grost::__private::Referenceable<#flavor_ty> for #struct_name {
+        type Ref<'b, UB> = #name<'b, UB> where Self: 'b;
+      }
+
+      impl<'a, UB> ::core::default::Default for #name<'a, UB> {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      impl<'a, UB> #name<'a, UB> {
+        /// Creates an empty instance.
+        #[inline]
+        pub const fn new() -> Self {
+          Self {
+            #(#fields_init)*
+            unknown: ::core::option::Option::None,
+          }
+        }
+
+        pub const fn unknown(&self) -> ::core::option::Option<&UB> {
+          self.unknown.as_ref()
+        }
+
+        pub const fn unknown_mut(&mut self) -> ::core::option::Option<&mut UB> {
+          self.unknown.as_mut()
+        }
+
+        pub fn set_unknown(&mut self, value: UB) -> &mut Self {
+          self.unknown = ::core::option::Option::Some(value);
+          self
+        }
+
+        pub fn with_unknown(mut self, value: UB) -> Self {
+          self.unknown = ::core::option::Option::Some(value);
+          self
+        }
+
+        pub fn without_unknown(mut self) -> Self {
+          self.unknown = ::core::option::Option::None;
+          self
+        }
+
+        pub fn clear_unknown(&mut self) -> &mut Self {
+          self.unknown = ::core::option::Option::None;
+          self
+        }
+
+        pub fn take_unknown(&mut self) -> ::core::option::Option<UB> {
+          self.unknown.take()
+        }
+
+        // #(#fields_accessors)*
       }
     }
   }

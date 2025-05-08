@@ -54,6 +54,13 @@ impl Flavor for Network {
     Ok(value_len)
   }
 
+  fn encoded_unknown_len<B>(_: &Self::Context, value: &Self::Unknown<B>) -> usize
+  where
+    B: BytesBuffer,
+  {
+    value.raw().len()
+  }
+
   fn decode_unknown<B>(
     _: &Self::Context,
     buf: B,

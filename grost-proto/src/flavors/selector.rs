@@ -47,7 +47,7 @@ impl Flavor for Select {
   const NAME: &'static str = "Select";
 
   fn encode_unknown<B>(
-    ctx: &Self::Context,
+    _: &Self::Context,
     value: &Self::Unknown<B>,
     buf: &mut [u8],
   ) -> Result<usize, Self::EncodeError>
@@ -63,6 +63,13 @@ impl Flavor for Select {
 
     buf[..value_len].copy_from_slice(value_bytes);
     Ok(value_len)
+  }
+
+  fn encoded_unknown_len<B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  where
+    B: crate::buffer::BytesBuffer,
+  {
+    todo!()
   }
 
   fn decode_unknown<B>(

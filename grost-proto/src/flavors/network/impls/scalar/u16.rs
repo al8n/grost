@@ -6,11 +6,14 @@ use crate::{
   decode_owned_scalar, default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
-  message, partial_encode_scalar, selectable_bridge, selectable_scalar, try_from_bridge,
+  message, partial_encode_scalar, referenceable_scalar, selectable_bridge, selectable_scalar,
+  try_from_bridge,
 };
 
 default_wire_format!(Network: u16 as Varint);
 selectable_scalar!(Network: u16);
+referenceable_scalar!(Network: u16, NonZeroU16);
+
 impl Encode<Network, Fixed16> for u16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.len() < 2 {

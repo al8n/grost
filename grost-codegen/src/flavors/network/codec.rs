@@ -16,35 +16,14 @@ impl Network {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
     let fns = struct_.fields().iter().map(|f| {
-      let ty = f.ty();
-      let rust_ty = ty.ty();
-      let wf = f.get_wire_format(self).cloned().unwrap_or_else(|| {
-        parse_quote!(<#rust_ty as #path_to_grost::__private::DefaultWireFormat<#path_to_grost::__private::flavors::Network>>::Format)
-      });
-      let partial_encoded_len_fn = self.generate_partial_encoded_field_len_reflection(
-        path_to_grost,
-        struct_,
-        f,
-        &wf,
-      );
-      let partial_encode_fn = self.generate_partial_encode_field_reflection(
-        path_to_grost,
-        struct_,
-        f,
-        &wf,
-      );
-      let encoded_len_fn = self.generate_encoded_field_len_reflection(
-        path_to_grost,
-        struct_,
-        f,
-        &wf,
-      );
-      let encode_fn = self.generate_encode_field_reflection(
-        path_to_grost,
-        struct_,
-        f,
-        &wf,
-      );
+      let wf = f.get_wire_format_or_default(path_to_grost, self);
+      let partial_encoded_len_fn =
+        self.generate_partial_encoded_field_len_reflection(path_to_grost, struct_, f, &wf);
+      let partial_encode_fn =
+        self.generate_partial_encode_field_reflection(path_to_grost, struct_, f, &wf);
+      let encoded_len_fn =
+        self.generate_encoded_field_len_reflection(path_to_grost, struct_, f, &wf);
+      let encode_fn = self.generate_encode_field_reflection(path_to_grost, struct_, f, &wf);
 
       quote! {
         #partial_encoded_len_fn
@@ -575,6 +554,93 @@ impl Network {
         #field_reflection<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::PartialEncodeField>,
+          >,
+          #path_to_grost::__private::flavors::Network,
+          #tag,
+        >
+      {
+        type Reflection = #reflection;
+        const REFLECTION: &Self::Reflection = &{
+          #fn_impl
+
+          encoded_len
+        };
+      }
+    }
+  }
+
+  fn generate_partial_encoded_ref_field_len_reflection(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_: &Struct,
+    f: &Field,
+    wf: &syn::Type,
+  ) -> proc_macro2::TokenStream {
+    let struct_name = struct_.name();
+    let field_name = f.name();
+    let ty = f.ty();
+    let optional = ty.repr().is_optional();
+    let atomic_ty = if optional {
+      ty.repr().encode_atomic_ty()
+    } else {
+      ty.ty()
+    };
+    let impl_ = quote! {
+      (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
+        + <#atomic_ty as #path_to_grost::__private::PartialEncode<
+            #path_to_grost::__private::flavors::network::Network,
+            #wf,
+          >>::partial_encoded_length_delimited_len(
+            f,
+            ctx,
+            selector,
+          )
+    };
+    let fn_impl = if optional {
+      quote! {
+        fn encoded_len(
+          f: &#ty,
+          ctx: &#path_to_grost::__private::flavors::network::Context,
+          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+        ) -> ::core::primitive::usize {
+          match f {
+            ::core::option::Option::Some(f) => {
+              #impl_
+            },
+            ::core::option::Option::None => 0,
+          }
+        }
+      }
+    } else {
+      quote! {
+        fn encoded_len(
+          f: &#ty,
+          ctx: &#path_to_grost::__private::flavors::network::Context,
+          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+        ) -> ::core::primitive::usize {
+          #impl_
+        }
+      }
+    };
+
+    let field_reflection = struct_.field_reflection_name();
+    let tag = f.tag();
+
+    let reflection = quote! {
+      fn(
+        &<#ty as #path_to_grost::__private::Referenceable>,
+        &#path_to_grost::__private::network::Context,
+        &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+      ) -> ::core::primitive::usize
+    };
+
+    quote! {
+      impl #path_to_grost::__private::reflection::Reflectable<
+        #path_to_grost::__private::flavors::Network,
+      > for
+        #field_reflection<
+          #path_to_grost::__private::reflection::encode::EncodeReflection<
+            #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::PartialEncodeRefField>,
           >,
           #path_to_grost::__private::flavors::Network,
           #tag,
