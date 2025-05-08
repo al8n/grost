@@ -9,7 +9,7 @@ default_wire_format!(
   Network: str as LengthDelimited
 );
 selectable_bridge!(Network:[u8][str]);
-referenceable!(Network: str => &'a str);
+referenceable!(Network: str as LengthDelimited => &'a str);
 
 encode_bridge!(
   Network: [u8] {

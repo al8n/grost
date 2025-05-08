@@ -13,7 +13,7 @@ impl EncodeReflection<EncodeField> {
   }
 }
 
-impl<'a> EncodeReflection<EncodeRefField<'a>> {
+impl EncodeReflection<EncodeRefField> {
   /// Returns the encode function.
   #[inline]
   pub const fn encode_ref_field() -> Self {
@@ -27,7 +27,7 @@ pub struct EncodeField;
 
 /// Encodes the reference type of a field
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct EncodeRefField<'a>(PhantomData<&'a ()>);
+pub struct EncodeRefField;
 
 /// Encodes a field.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
@@ -35,4 +35,4 @@ pub struct PartialEncodeField;
 
 /// Encodes the reference type of a field
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct PartialEncodeRefField<'a>(PhantomData<&'a ()>);
+pub struct PartialEncodeRefField;

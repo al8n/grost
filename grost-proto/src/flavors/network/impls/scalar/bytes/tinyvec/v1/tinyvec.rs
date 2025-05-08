@@ -33,7 +33,7 @@ const _: () = {
     |val: &[u8]| Ok(TinyVec::from(val))
   } [const N: usize]);
   referenceable!(
-    Network: TinyVec<[u8; N]> [const N: usize] => &'a [u8]
+    Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited => &'a [u8]
   );
   type_owned!( Network: Bytes => TinyVec<[u8; N]> {
     |val: &Bytes| Ok(TinyVec::from(val.as_ref()))

@@ -7,7 +7,7 @@ use crate::{
 default_wire_format!(Network: bool as Fixed8);
 
 selectable_bridge!(Network:u8[bool]);
-referenceable_scalar!(Network: bool);
+referenceable_scalar!(Network: bool as Fixed8, bool as Varint);
 
 bridge!(
   Network: u8 {

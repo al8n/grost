@@ -146,7 +146,7 @@ default_wire_format!(
   SocketAddr as LengthDelimited;
 );
 selectable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
-referenceable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
+referenceable_scalar!(Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

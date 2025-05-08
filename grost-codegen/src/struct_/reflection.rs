@@ -229,9 +229,9 @@ impl Struct {
 
         /// Returns the reflection to the reference encode fn.
         #[inline]
-        pub const fn encode_ref<'a>(&self) -> #field_reflection_name<
+        pub const fn encode_ref(&self) -> #field_reflection_name<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
-            #path_to_grost::__private::reflection::encode::EncodeRefField<'a>,
+            #path_to_grost::__private::reflection::encode::EncodeRefField,
           >,
           F,
           TAG,
@@ -241,10 +241,10 @@ impl Struct {
 
         /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
         #[inline]
-        pub const fn encoded_ref_len<'a>(&self) -> #field_reflection_name<
+        pub const fn encoded_ref_len(&self) -> #field_reflection_name<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::encode::EncodeRefField<'a>,
+              #path_to_grost::__private::reflection::encode::EncodeRefField,
             >,
           >,
           F,
@@ -281,9 +281,9 @@ impl Struct {
 
         /// Returns the reflection to the partial reference encode fn.
         #[inline]
-        pub const fn partial_encode_ref<'a>(&self) -> #field_reflection_name<
+        pub const fn partial_encode_ref(&self) -> #field_reflection_name<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
-            #path_to_grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+            #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
           >,
           F,
           TAG,
@@ -293,10 +293,10 @@ impl Struct {
 
         /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
         #[inline]
-        pub const fn partial_encoded_ref_len<'a>(&self) -> #field_reflection_name<
+        pub const fn partial_encoded_ref_len(&self) -> #field_reflection_name<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
             #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+              #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
             >,
           >,
           F,

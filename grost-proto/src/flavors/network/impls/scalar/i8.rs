@@ -7,7 +7,7 @@ use core::num::NonZeroI8;
 
 default_wire_format!(Network: i8 as Fixed8);
 selectable_bridge!(Network:u8[i8]);
-referenceable_scalar!(Network: i8, NonZeroI8);
+referenceable_scalar!(Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
 bridge!(
   Network: u8 {
     i8 as Fixed8 {

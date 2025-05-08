@@ -12,7 +12,7 @@ use crate::{
 
 default_wire_format!(Network: i64 as Varint);
 selectable_scalar!(Network: i64);
-referenceable_scalar!(Network: i64, NonZeroI64);
+referenceable_scalar!(Network: i64 as Fixed64, NonZeroI64 as Fixed64, i64 as Varint, NonZeroI64 as Varint);
 
 impl Encode<Network, Fixed64> for i64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

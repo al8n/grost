@@ -11,7 +11,7 @@ use core::num::NonZeroI16;
 
 default_wire_format!(Network: i16 as Varint);
 selectable_scalar!(Network: i16);
-referenceable_scalar!(Network: i16, NonZeroI16);
+referenceable_scalar!(Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
     if buf.len() < 2 {

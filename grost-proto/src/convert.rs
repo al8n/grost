@@ -14,7 +14,7 @@ pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F,
   /// A encoded representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and decoded from raw bytes.
-  type Encoded<'a>: Copy + TypeRef<F, Self> + Encode<F, W> + Decode<'a, F, W, Self::Encoded<'a>>
+  type Encoded<'a>
   where
     Self: Sized + 'a;
 
@@ -22,15 +22,12 @@ pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F,
   ///
   /// This type provides a non-owned view that can be created from a reference
   /// and encoded when needed.
-  type Borrowed<'a>: Copy + TypeBorrowed<'a, F, Self> + Encode<F, W>
+  type Borrowed<'a>
   where
     Self: 'a;
 
   /// An owned encoded representation of this type.
-  type EncodedOwned: Clone
-    + TypeOwned<F, Self>
-    + Encode<F, W>
-    + DecodeOwned<F, W, Self::EncodedOwned>
+  type EncodedOwned
   where
     Self: Sized + 'static;
 }
@@ -93,20 +90,21 @@ where
 /// A trait that bridges the type to a reference type for the given wire format and flavor.
 ///
 /// A type can reference to itself or to another type.
-pub trait Referenceable<F: ?Sized> {
+pub trait Referenceable<F: ?Sized, W: ?Sized> {
   /// The reference type for this type for the given wire format and flavor.
-  type Ref<'a, UB>
+  type Ref<'a>
   where
     Self: 'a;
 }
 
-impl<F, T> Referenceable<F> for &T
+impl<F, W, T> Referenceable<F, W> for &T
 where
-  T: ?Sized + Referenceable<F>,
+  T: ?Sized + Referenceable<F, W>,
+  W: ?Sized,
   F: ?Sized,
 {
-  type Ref<'a, UB>
-    = T::Ref<'a, UB>
+  type Ref<'a>
+    = T::Ref<'a>
   where
     Self: 'a;
 }
@@ -185,12 +183,13 @@ where
 macro_rules! wrapper_impl {
   (@referenceable $($ty:ty),+$(,)?) => {
     $(
-      impl<F, T> Referenceable<F> for $ty
+      impl<F, W, T> Referenceable<F, W> for $ty
       where
-        T: Referenceable<F> + ?Sized,
+        T: Referenceable<F, W> + ?Sized,
         F: ?Sized,
+        W: ?Sized,
       {
-        type Ref<'a, UB> = T::Ref<'a, UB> where Self: 'a;
+        type Ref<'a> = T::Ref<'a> where Self: 'a;
       }
     )*
   };
@@ -282,11 +281,11 @@ macro_rules! wrapper_impl {
   }
 }
 
-// wrapper_impl!(@into_target Option<T>:Some);
-// wrapper_impl!(@type_ref Option<T>:Some);
-// wrapper_impl!(@type_owned Option<T>:Some);
-// wrapper_impl!(@partial_message Option<T>);
-// wrapper_impl!(@message Option<T>);
+wrapper_impl!(@into_target Option<T>:Some);
+wrapper_impl!(@type_ref Option<T>:Some);
+wrapper_impl!(@type_owned Option<T>:Some);
+wrapper_impl!(@partial_message Option<T>);
+wrapper_impl!(@message Option<T>);
 
 // impl<F, T, I> IntoTarget<F, Option<T>> for I
 // where
@@ -298,13 +297,14 @@ macro_rules! wrapper_impl {
 //   }
 // }
 
-impl<F, T> Referenceable<F> for Option<T>
+impl<F, W, T> Referenceable<F, W> for Option<T>
 where
-  T: Referenceable<F>,
+  T: Referenceable<F, W>,
   F: ?Sized,
+  W: ?Sized,
 {
-  type Ref<'a, UB>
-    = T::Ref<'a, UB>
+  type Ref<'a>
+    = T::Ref<'a>
   where
     Self: 'a;
 }

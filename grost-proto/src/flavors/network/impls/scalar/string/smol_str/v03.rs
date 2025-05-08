@@ -34,7 +34,7 @@ type_ref!(Network: &str => SmolStr {
   |val: &str| Ok(SmolStr::new(val))
 });
 referenceable!(
-  Network: SmolStr => &'a str
+  Network: SmolStr as LengthDelimited => &'a str
 );
 
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {

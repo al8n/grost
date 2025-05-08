@@ -81,22 +81,22 @@ impl core::ops::Deref for CommentReflection<CommentUserField<FieldReflection<Net
   }
 }
 
-pub struct PartialUserRef<'a, UB> {
-  name: ::core::option::Option<
-    <::std::string::String as ::grost::__private::Referenceable<
-      ::grost::__private::flavors::Network,
-    >>::Ref<'a, UB>,
-  >,
-  age: ::core::option::Option<
-    <u32 as ::grost::__private::Referenceable<::grost::__private::flavors::Network>>::Ref<'a, UB>,
-  >,
-  email: ::core::option::Option<
-    <::core::option::Option<::std::string::String> as ::grost::__private::Referenceable<
-      ::grost::__private::flavors::Network,
-    >>::Ref<'a, UB>,
-  >,
-  unknown: ::core::option::Option<UB>,
-}
+// pub struct PartialUserRef<'a, UB> {
+//   name: ::core::option::Option<
+//     <::std::string::String as ::grost::__private::Referenceable<
+//       ::grost::__private::flavors::Network,
+//     >>::Ref<'a, UB>,
+//   >,
+//   age: ::core::option::Option<
+//     <u32 as ::grost::__private::Referenceable<::grost::__private::flavors::Network>>::Ref<'a, UB>,
+//   >,
+//   email: ::core::option::Option<
+//     <::core::option::Option<::std::string::String> as ::grost::__private::Referenceable<
+//       ::grost::__private::flavors::Network,
+//     >>::Ref<'a, UB>,
+//   >,
+//   unknown: ::core::option::Option<UB>,
+// }
 
 pub trait Decode1<'de, F, W, O>
 where
@@ -115,20 +115,20 @@ where
     Self::Buffer: Buffer<F::Unknown<&'de [u8]>> + 'de;
 }
 
-impl<'de, B> Decode1<'de, Network, LengthDelimited, PartialUserRef<'de, B>> for User {
-  type Buffer = B;
+// impl<'de, B> Decode1<'de, Network, LengthDelimited, PartialUserRef<'de, B>> for User {
+//   type Buffer = B;
 
-  fn decode(
-    context: &<Network as Flavor>::Context,
-    src: &'de [u8],
-  ) -> Result<(usize, PartialUserRef<'de, B>), <Network as Flavor>::DecodeError>
-  where
-    PartialUserRef<'de, B>: Sized + 'de,
-    Self::Buffer: Buffer<<Network as Flavor>::Unknown<&'de [u8]>> + 'de,
-  {
-    todo!()
-  }
-}
+//   fn decode(
+//     context: &<Network as Flavor>::Context,
+//     src: &'de [u8],
+//   ) -> Result<(usize, PartialUserRef<'de, B>), <Network as Flavor>::DecodeError>
+//   where
+//     PartialUserRef<'de, B>: Sized + 'de,
+//     Self::Buffer: Buffer<<Network as Flavor>::Unknown<&'de [u8]>> + 'de,
+//   {
+//     todo!()
+//   }
+// }
 
 #[test]
 fn t() {

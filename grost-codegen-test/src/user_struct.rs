@@ -1019,11 +1019,11 @@ const _: () = {
     }
     /// Returns the reflection to the reference encode fn.
     #[inline]
-    pub const fn encode_ref<'a>(
+    pub const fn encode_ref(
       &self,
     ) -> UserFieldReflection<
       ::grost::__private::reflection::encode::EncodeReflection<
-        ::grost::__private::reflection::encode::EncodeRefField<'a>,
+        ::grost::__private::reflection::encode::EncodeRefField,
       >,
       F,
       TAG,
@@ -1032,13 +1032,11 @@ const _: () = {
     }
     /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
     #[inline]
-    pub const fn encoded_ref_len<'a>(
+    pub const fn encoded_ref_len(
       &self,
     ) -> UserFieldReflection<
       ::grost::__private::reflection::encode::EncodeReflection<
-        ::grost::__private::reflection::Len<
-          ::grost::__private::reflection::encode::EncodeRefField<'a>,
-        >,
+        ::grost::__private::reflection::Len<::grost::__private::reflection::encode::EncodeRefField>,
       >,
       F,
       TAG,
@@ -1075,11 +1073,11 @@ const _: () = {
     }
     /// Returns the reflection to the partial reference encode fn.
     #[inline]
-    pub const fn partial_encode_ref<'a>(
+    pub const fn partial_encode_ref(
       &self,
     ) -> UserFieldReflection<
       ::grost::__private::reflection::encode::EncodeReflection<
-        ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+        ::grost::__private::reflection::encode::PartialEncodeRefField,
       >,
       F,
       TAG,
@@ -1088,12 +1086,12 @@ const _: () = {
     }
     /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
     #[inline]
-    pub const fn partial_encoded_ref_len<'a>(
+    pub const fn partial_encoded_ref_len(
       &self,
     ) -> UserFieldReflection<
       ::grost::__private::reflection::encode::EncodeReflection<
         ::grost::__private::reflection::Len<
-          ::grost::__private::reflection::encode::PartialEncodeRefField<'a>,
+          ::grost::__private::reflection::encode::PartialEncodeRefField,
         >,
       >,
       F,
@@ -1942,12 +1940,6 @@ const _: () = {
             >,
             unknown: ::core::option::Option<UB>,
         }
-    impl ::grost::__private::Referenceable<::grost::__private::flavors::Network> for User {
-      type Ref<'b, UB>
-        = PartialUserRef<'b, UB>
-      where
-        Self: 'b;
-    }
     impl<'a, UB> ::core::default::Default for PartialUserRef<'a, UB> {
       fn default() -> Self {
         Self::new()
@@ -2188,152 +2180,8 @@ const _: () = {
                 }
             }
     }
-    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-      for UserFieldReflection<
-        ::grost::__private::reflection::encode::EncodeReflection<
-          ::grost::__private::reflection::Len<
-            ::grost::__private::reflection::encode::PartialEncodeField,
-          >,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-      >
-    {
-      type Reflection = fn(
-        &::std::string::String,
-        &::grost::__private::network::Context,
-        &<::std::string::String as ::grost::__private::Selectable<
-          ::grost::__private::flavors::network::Network,
-        >>::Selector,
-      ) -> ::core::primitive::usize;
-      const REFLECTION: &Self::Reflection = &{
-        fn encoded_len(
-          f: &::std::string::String,
-          ctx: &::grost::__private::flavors::network::Context,
-          selector: &<::std::string::String as ::grost::__private::Selectable<
-            ::grost::__private::flavors::network::Network,
-          >>::Selector,
-        ) -> ::core::primitive::usize {
-          (*<User>::reflection::<::grost::__private::flavors::Network>()
-            .name()
-            .encoded_identifier_len())
-            + <::std::string::String as ::grost::__private::PartialEncode<
-              ::grost::__private::flavors::network::Network,
-              <::std::string::String as ::grost::__private::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-              >>::Format,
-            >>::partial_encoded_length_delimited_len(f, ctx, selector)
-        }
-        encoded_len
-      };
-    }
-    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-      for UserFieldReflection<
-        ::grost::__private::reflection::encode::EncodeReflection<
-          ::grost::__private::reflection::Len<::grost::__private::reflection::encode::EncodeField>,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-      >
-    {
-      type Reflection = fn(
-        &::std::string::String,
-        &::grost::__private::network::Context,
-      ) -> ::core::primitive::usize;
-      const REFLECTION: &Self::Reflection = &{
-        fn encoded_len(
-          f: &::std::string::String,
-          ctx: &::grost::__private::flavors::network::Context,
-        ) -> ::core::primitive::usize {
-          (*<User>::reflection::<::grost::__private::flavors::Network>()
-            .name()
-            .encoded_identifier_len())
-            + <::std::string::String as ::grost::__private::Encode<
-              ::grost::__private::flavors::network::Network,
-              <::std::string::String as ::grost::__private::DefaultWireFormat<
-                ::grost::__private::flavors::Network,
-              >>::Format,
-            >>::encoded_length_delimited_len(f, ctx)
-        }
-        encoded_len
-      };
-    }
-    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-      for UserFieldReflection<
-        ::grost::__private::reflection::encode::EncodeReflection<
-          ::grost::__private::reflection::encode::EncodeField,
-        >,
-        ::grost::__private::flavors::Network,
-        1u32,
-      >
-    {
-      type Reflection = fn(
-        &::std::string::String,
-        &::grost::__private::network::Context,
-        &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<
-        ::core::primitive::usize,
-        ::grost::__private::flavors::network::EncodeError,
-      >;
-      const REFLECTION: &Self::Reflection = &{
-        fn encode(
-          f: &::std::string::String,
-          ctx: &::grost::__private::flavors::network::Context,
-          buf: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<
-          ::core::primitive::usize,
-          ::grost::__private::flavors::network::EncodeError,
-        > {
-          const ENCODED_LEN_FN: UserFieldReflection<
-            ::grost::__private::reflection::encode::EncodeReflection<
-              ::grost::__private::reflection::Len<
-                ::grost::__private::reflection::encode::EncodeField,
-              >,
-            >,
-            ::grost::__private::flavors::Network,
-            1u32,
-          > = <User>::reflection::<::grost::__private::flavors::Network>()
-            .name()
-            .encoded_len();
-          let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
-            .name()
-            .encoded_identifier_len();
-          let buf_len = buf.len();
-          let mut offset = 0;
-          if offset > buf_len {
-            return ::core::result::Result::Err(
-              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                (ENCODED_LEN_FN)(f, ctx),
-                buf_len,
-              ),
-            );
-          }
-          buf[offset..offset + identifier_len].copy_from_slice(
-            &<User>::reflection::<::grost::__private::flavors::Network>()
-              .name()
-              .encoded_identifier(),
-          );
-          offset += identifier_len;
-          if offset >= buf_len {
-            return ::core::result::Result::Err(
-              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                (ENCODED_LEN_FN)(f, ctx),
-                buf_len,
-              ),
-            );
-          }
-          <::std::string::String as ::grost::__private::Encode<
-            ::grost::__private::flavors::network::Network,
-            <::std::string::String as ::grost::__private::DefaultWireFormat<
-              ::grost::__private::flavors::Network,
-            >>::Format,
-          >>::encode_length_delimited(f, ctx, &mut buf[offset..])
-          .map(|len| offset + len)
-          .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
-        }
-        encode
-      };
-    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
@@ -2416,6 +2264,8 @@ const _: () = {
         encode
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
@@ -2424,30 +2274,30 @@ const _: () = {
           >,
         >,
         ::grost::__private::flavors::Network,
-        2u32,
+        1u32,
       >
     {
       type Reflection = fn(
-                &u32,
-                &::grost::__private::network::Context,
-                &<u32 as ::grost::__private::Selectable<
-                    ::grost::__private::flavors::network::Network,
-                >>::Selector,
-            ) -> ::core::primitive::usize;
+        &::std::string::String,
+        &::grost::__private::network::Context,
+        &<::std::string::String as ::grost::__private::Selectable<
+          ::grost::__private::flavors::network::Network,
+        >>::Selector,
+      ) -> ::core::primitive::usize;
       const REFLECTION: &Self::Reflection = &{
         fn encoded_len(
-          f: &u32,
+          f: &::std::string::String,
           ctx: &::grost::__private::flavors::network::Context,
-          selector: &<u32 as ::grost::__private::Selectable<
+          selector: &<::std::string::String as ::grost::__private::Selectable<
             ::grost::__private::flavors::network::Network,
           >>::Selector,
         ) -> ::core::primitive::usize {
           (*<User>::reflection::<::grost::__private::flavors::Network>()
-            .age()
+            .name()
             .encoded_identifier_len())
-            + <u32 as ::grost::__private::PartialEncode<
+            + <::std::string::String as ::grost::__private::PartialEncode<
               ::grost::__private::flavors::network::Network,
-              <u32 as ::grost::__private::DefaultWireFormat<
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
                 ::grost::__private::flavors::Network,
               >>::Format,
             >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -2455,27 +2305,32 @@ const _: () = {
         encoded_len
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
           ::grost::__private::reflection::Len<::grost::__private::reflection::encode::EncodeField>,
         >,
         ::grost::__private::flavors::Network,
-        2u32,
+        1u32,
       >
     {
-      type Reflection = fn(&u32, &::grost::__private::network::Context) -> ::core::primitive::usize;
+      type Reflection = fn(
+        &::std::string::String,
+        &::grost::__private::network::Context,
+      ) -> ::core::primitive::usize;
       const REFLECTION: &Self::Reflection = &{
         fn encoded_len(
-          f: &u32,
+          f: &::std::string::String,
           ctx: &::grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize {
           (*<User>::reflection::<::grost::__private::flavors::Network>()
-            .age()
+            .name()
             .encoded_identifier_len())
-            + <u32 as ::grost::__private::Encode<
+            + <::std::string::String as ::grost::__private::Encode<
               ::grost::__private::flavors::network::Network,
-              <u32 as ::grost::__private::DefaultWireFormat<
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
                 ::grost::__private::flavors::Network,
               >>::Format,
             >>::encoded_length_delimited_len(f, ctx)
@@ -2483,17 +2338,19 @@ const _: () = {
         encoded_len
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
           ::grost::__private::reflection::encode::EncodeField,
         >,
         ::grost::__private::flavors::Network,
-        2u32,
+        1u32,
       >
     {
       type Reflection = fn(
-        &u32,
+        &::std::string::String,
         &::grost::__private::network::Context,
         &mut [::core::primitive::u8],
       ) -> ::core::result::Result<
@@ -2502,7 +2359,7 @@ const _: () = {
       >;
       const REFLECTION: &Self::Reflection = &{
         fn encode(
-          f: &u32,
+          f: &::std::string::String,
           ctx: &::grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
@@ -2516,12 +2373,12 @@ const _: () = {
               >,
             >,
             ::grost::__private::flavors::Network,
-            2u32,
+            1u32,
           > = <User>::reflection::<::grost::__private::flavors::Network>()
-            .age()
+            .name()
             .encoded_len();
           let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
-            .age()
+            .name()
             .encoded_identifier_len();
           let buf_len = buf.len();
           let mut offset = 0;
@@ -2535,7 +2392,7 @@ const _: () = {
           }
           buf[offset..offset + identifier_len].copy_from_slice(
             &<User>::reflection::<::grost::__private::flavors::Network>()
-              .age()
+              .name()
               .encoded_identifier(),
           );
           offset += identifier_len;
@@ -2547,18 +2404,318 @@ const _: () = {
               ),
             );
           }
-          <u32 as ::grost::__private::Encode<
-                        ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
-                            ::grost::__private::flavors::Network,
-                        >>::Format,
-                    >>::encode_length_delimited(f, ctx, &mut buf[offset..])
-                        .map(|len| offset + len)
-                        .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
+          <::std::string::String as ::grost::__private::Encode<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::encode_length_delimited(f, ctx, &mut buf[offset..])
+          .map(|len| offset + len)
+          .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
         }
         encode
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::PartialEncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        1u32,
+      >
+    {
+      type Reflection = fn(
+        &<::std::string::String as ::grost::__private::Message<
+          ::grost::__private::flavors::network::Network,
+          <::std::string::String as ::grost::__private::DefaultWireFormat<
+            ::grost::__private::flavors::Network,
+          >>::Format,
+        >>::Encoded<'_>,
+        &::grost::__private::network::Context,
+        &<::std::string::String as ::grost::__private::Selectable<
+          ::grost::__private::flavors::network::Network,
+        >>::Selector,
+      ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+          selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+          >>::Selector,
+        ) -> ::core::primitive::usize {
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .encoded_identifier_len())
+            + <<::std::string::String as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::PartialEncode<
+              ::grost::__private::flavors::network::Network,
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::PartialEncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        1u32,
+      >
+    {
+      type Reflection = fn(
+        &<::std::string::String as ::grost::__private::Message<
+          ::grost::__private::flavors::network::Network,
+          <::std::string::String as ::grost::__private::DefaultWireFormat<
+            ::grost::__private::flavors::Network,
+          >>::Format,
+        >>::Encoded<'_>,
+        &::grost::__private::network::Context,
+        &mut [::core::primitive::u8],
+        &<::std::string::String as ::grost::__private::Selectable<
+          ::grost::__private::flavors::network::Network,
+        >>::Selector,
+      ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+      >;
+      const REFLECTION: &Self::Reflection = &{
+        fn encode(
+          f: &<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+          buf: &mut [::core::primitive::u8],
+          selector: &<::std::string::String as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+          >>::Selector,
+        ) -> ::core::result::Result<
+          ::core::primitive::usize,
+          ::grost::__private::flavors::network::EncodeError,
+        > {
+          let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .encoded_identifier_len();
+          const ENCODED_LEN_FN: UserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::encode::PartialEncodeRefField,
+              >,
+            >,
+            ::grost::__private::flavors::Network,
+            1u32,
+          > = <User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .partial_encoded_ref_len();
+          let buf_len = buf.len();
+          let mut offset = 0;
+          if offset > buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx, selector),
+                buf_len,
+              ),
+            );
+          }
+          buf[offset..offset + identifier_len].copy_from_slice(
+            &<User>::reflection::<::grost::__private::flavors::Network>()
+              .name()
+              .encoded_identifier(),
+          );
+          offset += identifier_len;
+          if offset >= buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx, selector),
+                buf_len,
+              ),
+            );
+          }
+          <<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_> as ::grost::__private::PartialEncode<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::partial_encode_length_delimited(f, ctx, buf, selector)
+          .map(|len| offset + len)
+          .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx, selector), buf_len))
+        }
+        encode
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::EncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        1u32,
+      >
+    {
+      type Reflection = fn(
+        &<::std::string::String as ::grost::__private::Message<
+          ::grost::__private::flavors::network::Network,
+          <::std::string::String as ::grost::__private::DefaultWireFormat<
+            ::grost::__private::flavors::Network,
+          >>::Format,
+        >>::Encoded<'_>,
+        &::grost::__private::network::Context,
+      ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+        ) -> ::core::primitive::usize {
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .encoded_identifier_len())
+            + <<::std::string::String as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::Encode<
+              ::grost::__private::flavors::network::Network,
+              <::std::string::String as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::encoded_length_delimited_len(f, ctx)
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::EncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        1u32,
+      >
+    {
+      type Reflection = fn(
+        &<::std::string::String as ::grost::__private::Message<
+          ::grost::__private::flavors::network::Network,
+          <::std::string::String as ::grost::__private::DefaultWireFormat<
+            ::grost::__private::flavors::Network,
+          >>::Format,
+        >>::Encoded<'_>,
+        &::grost::__private::network::Context,
+        &mut [::core::primitive::u8],
+      ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+      >;
+      const REFLECTION: &Self::Reflection = &{
+        fn encode(
+          f: &<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+          buf: &mut [::core::primitive::u8],
+        ) -> ::core::result::Result<
+          ::core::primitive::usize,
+          ::grost::__private::flavors::network::EncodeError,
+        > {
+          let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .encoded_identifier_len();
+          const ENCODED_LEN_FN: UserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::encode::EncodeRefField,
+              >,
+            >,
+            ::grost::__private::flavors::Network,
+            1u32,
+          > = <User>::reflection::<::grost::__private::flavors::Network>()
+            .name()
+            .encoded_ref_len();
+          let buf_len = buf.len();
+          let mut offset = 0;
+          if offset > buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx),
+                buf_len,
+              ),
+            );
+          }
+          buf[offset..offset + identifier_len].copy_from_slice(
+            &<User>::reflection::<::grost::__private::flavors::Network>()
+              .name()
+              .encoded_identifier(),
+          );
+          offset += identifier_len;
+          if offset >= buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx),
+                buf_len,
+              ),
+            );
+          }
+          <<::std::string::String as ::grost::__private::Message<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::Encoded<'_> as ::grost::__private::Encode<
+            ::grost::__private::flavors::network::Network,
+            <::std::string::String as ::grost::__private::DefaultWireFormat<
+              ::grost::__private::flavors::Network,
+            >>::Format,
+          >>::encode_length_delimited(f, ctx, buf)
+          .map(|len| offset + len)
+          .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
+        }
+        encode
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
@@ -2642,6 +2799,8 @@ const _: () = {
           encode
         };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
@@ -2650,99 +2809,80 @@ const _: () = {
           >,
         >,
         ::grost::__private::flavors::Network,
-        3u32,
+        2u32,
       >
     {
       type Reflection = fn(
-        &::core::option::Option<::std::string::String>,
-        &::grost::__private::network::Context,
-        &<::core::option::Option<::std::string::String> as ::grost::__private::Selectable<
-          ::grost::__private::flavors::network::Network,
-        >>::Selector,
-      ) -> ::core::primitive::usize;
+                &u32,
+                &::grost::__private::network::Context,
+                &<u32 as ::grost::__private::Selectable<
+                    ::grost::__private::flavors::network::Network,
+                >>::Selector,
+            ) -> ::core::primitive::usize;
       const REFLECTION: &Self::Reflection = &{
         fn encoded_len(
-          f: &::core::option::Option<::std::string::String>,
+          f: &u32,
           ctx: &::grost::__private::flavors::network::Context,
-          selector: &<::core::option::Option<
-                        ::std::string::String,
-                    > as ::grost::__private::Selectable<
-                        ::grost::__private::flavors::network::Network,
-                    >>::Selector,
+          selector: &<u32 as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+          >>::Selector,
         ) -> ::core::primitive::usize {
-          match f {
-                        ::core::option::Option::Some(f) => {
-                            (*<User>::reflection::<
-                                ::grost::__private::flavors::Network,
-                            >()
-                                .email()
-                                .encoded_identifier_len())
-                                + <::std::string::String as ::grost::__private::PartialEncode<
-                                    ::grost::__private::flavors::network::Network,
-                                    <::core::option::Option<
-                                        ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
-                                        ::grost::__private::flavors::Network,
-                                    >>::Format,
-                                >>::partial_encoded_length_delimited_len(f, ctx, selector)
-                        }
-                        ::core::option::Option::None => 0,
-                    }
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .age()
+            .encoded_identifier_len())
+            + <u32 as ::grost::__private::PartialEncode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
         }
         encoded_len
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
           ::grost::__private::reflection::Len<::grost::__private::reflection::encode::EncodeField>,
         >,
         ::grost::__private::flavors::Network,
-        3u32,
+        2u32,
       >
     {
-      type Reflection = fn(
-        &::core::option::Option<::std::string::String>,
-        &::grost::__private::network::Context,
-      ) -> ::core::primitive::usize;
+      type Reflection = fn(&u32, &::grost::__private::network::Context) -> ::core::primitive::usize;
       const REFLECTION: &Self::Reflection = &{
         fn encoded_len(
-          f: &::core::option::Option<::std::string::String>,
+          f: &u32,
           ctx: &::grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize {
-          match f {
-                        ::core::option::Option::Some(f) => {
-                            (*<User>::reflection::<
-                                ::grost::__private::flavors::Network,
-                            >()
-                                .email()
-                                .encoded_identifier_len())
-                                + <::std::string::String as ::grost::__private::Encode<
-                                    ::grost::__private::flavors::network::Network,
-                                    <::core::option::Option<
-                                        ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
-                                        ::grost::__private::flavors::Network,
-                                    >>::Format,
-                                >>::encoded_length_delimited_len(f, ctx)
-                        }
-                        ::core::option::Option::None => 0,
-                    }
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .age()
+            .encoded_identifier_len())
+            + <u32 as ::grost::__private::Encode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::encoded_length_delimited_len(f, ctx)
         }
         encoded_len
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
           ::grost::__private::reflection::encode::EncodeField,
         >,
         ::grost::__private::flavors::Network,
-        3u32,
+        2u32,
       >
     {
       type Reflection = fn(
-        &::core::option::Option<::std::string::String>,
+        &u32,
         &::grost::__private::network::Context,
         &mut [::core::primitive::u8],
       ) -> ::core::result::Result<
@@ -2751,7 +2891,7 @@ const _: () = {
       >;
       const REFLECTION: &Self::Reflection = &{
         fn encode(
-          f: &::core::option::Option<::std::string::String>,
+          f: &u32,
           ctx: &::grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
@@ -2765,56 +2905,351 @@ const _: () = {
               >,
             >,
             ::grost::__private::flavors::Network,
-            3u32,
+            2u32,
           > = <User>::reflection::<::grost::__private::flavors::Network>()
-            .email()
+            .age()
             .encoded_len();
           let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
-            .email()
+            .age()
             .encoded_identifier_len();
-          match f {
-            ::core::option::Option::None => ::core::result::Result::Ok(0),
-            ::core::option::Option::Some(field) => {
-              let buf_len = buf.len();
-              let mut offset = 0;
-              if offset > buf_len {
-                return ::core::result::Result::Err(
-                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                    (ENCODED_LEN_FN)(f, ctx),
-                    buf_len,
-                  ),
-                );
-              }
-              buf[offset..offset + identifier_len].copy_from_slice(
-                &<User>::reflection::<::grost::__private::flavors::Network>()
-                  .email()
-                  .encoded_identifier(),
-              );
-              offset += identifier_len;
-              if offset >= buf_len {
-                return ::core::result::Result::Err(
-                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
-                    (ENCODED_LEN_FN)(f, ctx),
-                    buf_len,
-                  ),
-                );
-              }
-              <::std::string::String as ::grost::__private::Encode<
-                                ::grost::__private::flavors::network::Network,
-                                <::core::option::Option<
-                                    ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
-                                    ::grost::__private::flavors::Network,
-                                >>::Format,
-                            >>::encode_length_delimited(field, ctx, &mut buf[offset..])
-                                .map(|len| offset + len)
-                                .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
-            }
+          let buf_len = buf.len();
+          let mut offset = 0;
+          if offset > buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx),
+                buf_len,
+              ),
+            );
           }
+          buf[offset..offset + identifier_len].copy_from_slice(
+            &<User>::reflection::<::grost::__private::flavors::Network>()
+              .age()
+              .encoded_identifier(),
+          );
+          offset += identifier_len;
+          if offset >= buf_len {
+            return ::core::result::Result::Err(
+              ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                (ENCODED_LEN_FN)(f, ctx),
+                buf_len,
+              ),
+            );
+          }
+          <u32 as ::grost::__private::Encode<
+                        ::grost::__private::flavors::network::Network,
+                        <u32 as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::encode_length_delimited(f, ctx, &mut buf[offset..])
+                        .map(|len| offset + len)
+                        .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
         }
         encode
       };
     }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::PartialEncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        2u32,
+      >
+    {
+      type Reflection = fn(
+                &<u32 as ::grost::__private::Message<
+                    ::grost::__private::flavors::network::Network,
+                    <u32 as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::Encoded<'_>,
+                &::grost::__private::network::Context,
+                &<u32 as ::grost::__private::Selectable<
+                    ::grost::__private::flavors::network::Network,
+                >>::Selector,
+            ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &<u32 as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <u32 as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+          selector: &<u32 as ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+          >>::Selector,
+        ) -> ::core::primitive::usize {
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .age()
+            .encoded_identifier_len())
+            + <<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::PartialEncode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::partial_encoded_length_delimited_len(f, ctx, selector)
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::PartialEncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        2u32,
+      >
+    {
+      type Reflection = fn(
+                &<u32 as ::grost::__private::Message<
+                    ::grost::__private::flavors::network::Network,
+                    <u32 as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::Encoded<'_>,
+                &::grost::__private::network::Context,
+                &mut [::core::primitive::u8],
+                &<u32 as ::grost::__private::Selectable<
+                    ::grost::__private::flavors::network::Network,
+                >>::Selector,
+            ) -> ::core::result::Result<
+                ::core::primitive::usize,
+                ::grost::__private::flavors::network::EncodeError,
+            >;
+      const REFLECTION: &Self::Reflection =
+        &{
+          fn encode(
+            f: &<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_>,
+            ctx: &::grost::__private::flavors::network::Context,
+            buf: &mut [::core::primitive::u8],
+            selector: &<u32 as ::grost::__private::Selectable<
+              ::grost::__private::flavors::network::Network,
+            >>::Selector,
+          ) -> ::core::result::Result<
+            ::core::primitive::usize,
+            ::grost::__private::flavors::network::EncodeError,
+          > {
+            let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+              .age()
+              .encoded_identifier_len();
+            const ENCODED_LEN_FN: UserFieldReflection<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                  ::grost::__private::reflection::encode::PartialEncodeRefField,
+                >,
+              >,
+              ::grost::__private::flavors::Network,
+              2u32,
+            > = <User>::reflection::<::grost::__private::flavors::Network>()
+              .age()
+              .partial_encoded_ref_len();
+            let buf_len = buf.len();
+            let mut offset = 0;
+            if offset > buf_len {
+              return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  (ENCODED_LEN_FN)(f, ctx, selector),
+                  buf_len,
+                ),
+              );
+            }
+            buf[offset..offset + identifier_len].copy_from_slice(
+              &<User>::reflection::<::grost::__private::flavors::Network>()
+                .age()
+                .encoded_identifier(),
+            );
+            offset += identifier_len;
+            if offset >= buf_len {
+              return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  (ENCODED_LEN_FN)(f, ctx, selector),
+                  buf_len,
+                ),
+              );
+            }
+            <<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::PartialEncode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::partial_encode_length_delimited(f, ctx, buf, selector)
+            .map(|len| offset + len)
+            .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx, selector), buf_len))
+          }
+          encode
+        };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::EncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        2u32,
+      >
+    {
+      type Reflection = fn(
+                &<u32 as ::grost::__private::Message<
+                    ::grost::__private::flavors::network::Network,
+                    <u32 as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::Encoded<'_>,
+                &::grost::__private::network::Context,
+            ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &<u32 as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <u32 as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+          ctx: &::grost::__private::flavors::network::Context,
+        ) -> ::core::primitive::usize {
+          (*<User>::reflection::<::grost::__private::flavors::Network>()
+            .age()
+            .encoded_identifier_len())
+            + <<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::Encode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::encoded_length_delimited_len(f, ctx)
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::EncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        2u32,
+      >
+    {
+      type Reflection = fn(
+                &<u32 as ::grost::__private::Message<
+                    ::grost::__private::flavors::network::Network,
+                    <u32 as ::grost::__private::DefaultWireFormat<
+                        ::grost::__private::flavors::Network,
+                    >>::Format,
+                >>::Encoded<'_>,
+                &::grost::__private::network::Context,
+                &mut [::core::primitive::u8],
+            ) -> ::core::result::Result<
+                ::core::primitive::usize,
+                ::grost::__private::flavors::network::EncodeError,
+            >;
+      const REFLECTION: &Self::Reflection =
+        &{
+          fn encode(
+            f: &<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_>,
+            ctx: &::grost::__private::flavors::network::Context,
+            buf: &mut [::core::primitive::u8],
+          ) -> ::core::result::Result<
+            ::core::primitive::usize,
+            ::grost::__private::flavors::network::EncodeError,
+          > {
+            let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+              .age()
+              .encoded_identifier_len();
+            const ENCODED_LEN_FN: UserFieldReflection<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::Len<
+                  ::grost::__private::reflection::encode::EncodeRefField,
+                >,
+              >,
+              ::grost::__private::flavors::Network,
+              2u32,
+            > = <User>::reflection::<::grost::__private::flavors::Network>()
+              .age()
+              .encoded_ref_len();
+            let buf_len = buf.len();
+            let mut offset = 0;
+            if offset > buf_len {
+              return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  (ENCODED_LEN_FN)(f, ctx),
+                  buf_len,
+                ),
+              );
+            }
+            buf[offset..offset + identifier_len].copy_from_slice(
+              &<User>::reflection::<::grost::__private::flavors::Network>()
+                .age()
+                .encoded_identifier(),
+            );
+            offset += identifier_len;
+            if offset >= buf_len {
+              return ::core::result::Result::Err(
+                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  (ENCODED_LEN_FN)(f, ctx),
+                  buf_len,
+                ),
+              );
+            }
+            <<u32 as ::grost::__private::Message<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::Encoded<'_> as ::grost::__private::Encode<
+              ::grost::__private::flavors::network::Network,
+              <u32 as ::grost::__private::DefaultWireFormat<
+                ::grost::__private::flavors::Network,
+              >>::Format,
+            >>::encode_length_delimited(f, ctx, buf)
+            .map(|len| offset + len)
+            .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
+          }
+          encode
+        };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
     impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
       for UserFieldReflection<
         ::grost::__private::reflection::encode::EncodeReflection<
@@ -2906,6 +3341,575 @@ const _: () = {
                                     e.update((ENCODED_LEN_FN)(f, ctx, selector), buf_len)
                                 })
             }
+          }
+        }
+        encode
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::PartialEncodeField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+        &::core::option::Option<::std::string::String>,
+        &::grost::__private::network::Context,
+        &<::core::option::Option<::std::string::String> as ::grost::__private::Selectable<
+          ::grost::__private::flavors::network::Network,
+        >>::Selector,
+      ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &::core::option::Option<::std::string::String>,
+          ctx: &::grost::__private::flavors::network::Context,
+          selector: &<::core::option::Option<
+                        ::std::string::String,
+                    > as ::grost::__private::Selectable<
+                        ::grost::__private::flavors::network::Network,
+                    >>::Selector,
+        ) -> ::core::primitive::usize {
+          match f {
+                        ::core::option::Option::Some(f) => {
+                            (*<User>::reflection::<
+                                ::grost::__private::flavors::Network,
+                            >()
+                                .email()
+                                .encoded_identifier_len())
+                                + <::std::string::String as ::grost::__private::PartialEncode<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::partial_encoded_length_delimited_len(f, ctx, selector)
+                        }
+                        ::core::option::Option::None => 0,
+                    }
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<::grost::__private::reflection::encode::EncodeField>,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+        &::core::option::Option<::std::string::String>,
+        &::grost::__private::network::Context,
+      ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &::core::option::Option<::std::string::String>,
+          ctx: &::grost::__private::flavors::network::Context,
+        ) -> ::core::primitive::usize {
+          match f {
+                        ::core::option::Option::Some(f) => {
+                            (*<User>::reflection::<
+                                ::grost::__private::flavors::Network,
+                            >()
+                                .email()
+                                .encoded_identifier_len())
+                                + <::std::string::String as ::grost::__private::Encode<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::encoded_length_delimited_len(f, ctx)
+                        }
+                        ::core::option::Option::None => 0,
+                    }
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::EncodeField,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+        &::core::option::Option<::std::string::String>,
+        &::grost::__private::network::Context,
+        &mut [::core::primitive::u8],
+      ) -> ::core::result::Result<
+        ::core::primitive::usize,
+        ::grost::__private::flavors::network::EncodeError,
+      >;
+      const REFLECTION: &Self::Reflection = &{
+        fn encode(
+          f: &::core::option::Option<::std::string::String>,
+          ctx: &::grost::__private::flavors::network::Context,
+          buf: &mut [::core::primitive::u8],
+        ) -> ::core::result::Result<
+          ::core::primitive::usize,
+          ::grost::__private::flavors::network::EncodeError,
+        > {
+          const ENCODED_LEN_FN: UserFieldReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::Len<
+                ::grost::__private::reflection::encode::EncodeField,
+              >,
+            >,
+            ::grost::__private::flavors::Network,
+            3u32,
+          > = <User>::reflection::<::grost::__private::flavors::Network>()
+            .email()
+            .encoded_len();
+          let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+            .email()
+            .encoded_identifier_len();
+          match f {
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+            ::core::option::Option::Some(field) => {
+              let buf_len = buf.len();
+              let mut offset = 0;
+              if offset > buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(f, ctx),
+                    buf_len,
+                  ),
+                );
+              }
+              buf[offset..offset + identifier_len].copy_from_slice(
+                &<User>::reflection::<::grost::__private::flavors::Network>()
+                  .email()
+                  .encoded_identifier(),
+              );
+              offset += identifier_len;
+              if offset >= buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(f, ctx),
+                    buf_len,
+                  ),
+                );
+              }
+              <::std::string::String as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                <::core::option::Option<
+                                    ::std::string::String,
+                                > as ::grost::__private::DefaultWireFormat<
+                                    ::grost::__private::flavors::Network,
+                                >>::Format,
+                            >>::encode_length_delimited(field, ctx, &mut buf[offset..])
+                                .map(|len| offset + len)
+                                .map_err(|e| e.update((ENCODED_LEN_FN)(f, ctx), buf_len))
+            }
+          }
+        }
+        encode
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::PartialEncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+                &::core::option::Option<
+                    <::std::string::String as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+                >,
+                &::grost::__private::network::Context,
+                &<::core::option::Option<
+                    ::std::string::String,
+                > as ::grost::__private::Selectable<
+                    ::grost::__private::flavors::network::Network,
+                >>::Selector,
+            ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &::core::option::Option<
+                        <::std::string::String as ::grost::__private::Message<
+                            ::grost::__private::flavors::network::Network,
+                            <::core::option::Option<
+                                ::std::string::String,
+                            > as ::grost::__private::DefaultWireFormat<
+                                ::grost::__private::flavors::Network,
+                            >>::Format,
+                        >>::Encoded<'_>,
+                    >,
+          ctx: &::grost::__private::flavors::network::Context,
+          selector: &<::core::option::Option<
+                        ::std::string::String,
+                    > as ::grost::__private::Selectable<
+                        ::grost::__private::flavors::network::Network,
+                    >>::Selector,
+        ) -> ::core::primitive::usize {
+          match f {
+                        ::core::option::Option::Some(f) => {
+                            (*<User>::reflection::<
+                                ::grost::__private::flavors::Network,
+                            >()
+                                .email()
+                                .encoded_identifier_len())
+                                + <<::std::string::String as ::grost::__private::Message<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::Encoded<
+                                    '_,
+                                > as ::grost::__private::PartialEncode<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::partial_encoded_length_delimited_len(f, ctx, selector)
+                        }
+                        ::core::option::Option::None => 0,
+                    }
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::PartialEncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+                &::core::option::Option<
+                    <::std::string::String as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+                >,
+                &::grost::__private::network::Context,
+                &mut [::core::primitive::u8],
+                &<::core::option::Option<
+                    ::std::string::String,
+                > as ::grost::__private::Selectable<
+                    ::grost::__private::flavors::network::Network,
+                >>::Selector,
+            ) -> ::core::result::Result<
+                ::core::primitive::usize,
+                ::grost::__private::flavors::network::EncodeError,
+            >;
+      const REFLECTION: &Self::Reflection = &{
+        fn encode(
+          field: &::core::option::Option<
+                        <::std::string::String as ::grost::__private::Message<
+                            ::grost::__private::flavors::network::Network,
+                            <::core::option::Option<
+                                ::std::string::String,
+                            > as ::grost::__private::DefaultWireFormat<
+                                ::grost::__private::flavors::Network,
+                            >>::Format,
+                        >>::Encoded<'_>,
+                    >,
+          ctx: &::grost::__private::flavors::network::Context,
+          buf: &mut [::core::primitive::u8],
+          selector: &<::core::option::Option<
+                        ::std::string::String,
+                    > as ::grost::__private::Selectable<
+                        ::grost::__private::flavors::network::Network,
+                    >>::Selector,
+        ) -> ::core::result::Result<
+          ::core::primitive::usize,
+          ::grost::__private::flavors::network::EncodeError,
+        > {
+          match field {
+            ::core::option::Option::Some(f) => {
+              let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+                .email()
+                .encoded_identifier_len();
+              const ENCODED_LEN_FN: UserFieldReflection<
+                ::grost::__private::reflection::encode::EncodeReflection<
+                  ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::PartialEncodeRefField,
+                  >,
+                >,
+                ::grost::__private::flavors::Network,
+                3u32,
+              > = <User>::reflection::<::grost::__private::flavors::Network>()
+                .email()
+                .partial_encoded_ref_len();
+              let buf_len = buf.len();
+              let mut offset = 0;
+              if offset > buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(field, ctx, selector),
+                    buf_len,
+                  ),
+                );
+              }
+              buf[offset..offset + identifier_len].copy_from_slice(
+                &<User>::reflection::<::grost::__private::flavors::Network>()
+                  .email()
+                  .encoded_identifier(),
+              );
+              offset += identifier_len;
+              if offset >= buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(field, ctx, selector),
+                    buf_len,
+                  ),
+                );
+              }
+              <<::std::string::String as ::grost::__private::Message<
+                                ::grost::__private::flavors::network::Network,
+                                <::core::option::Option<
+                                    ::std::string::String,
+                                > as ::grost::__private::DefaultWireFormat<
+                                    ::grost::__private::flavors::Network,
+                                >>::Format,
+                            >>::Encoded<
+                                '_,
+                            > as ::grost::__private::PartialEncode<
+                                ::grost::__private::flavors::network::Network,
+                                <::core::option::Option<
+                                    ::std::string::String,
+                                > as ::grost::__private::DefaultWireFormat<
+                                    ::grost::__private::flavors::Network,
+                                >>::Format,
+                            >>::partial_encode_length_delimited(f, ctx, buf, selector)
+                                .map(|len| offset + len)
+                                .map_err(|e| {
+                                    e.update((ENCODED_LEN_FN)(field, ctx, selector), buf_len)
+                                })
+            }
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
+          }
+        }
+        encode
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::Len<
+            ::grost::__private::reflection::encode::EncodeRefField,
+          >,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+                &::core::option::Option<
+                    <::std::string::String as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+                >,
+                &::grost::__private::network::Context,
+            ) -> ::core::primitive::usize;
+      const REFLECTION: &Self::Reflection = &{
+        fn encoded_len(
+          f: &::core::option::Option<
+                        <::std::string::String as ::grost::__private::Message<
+                            ::grost::__private::flavors::network::Network,
+                            <::core::option::Option<
+                                ::std::string::String,
+                            > as ::grost::__private::DefaultWireFormat<
+                                ::grost::__private::flavors::Network,
+                            >>::Format,
+                        >>::Encoded<'_>,
+                    >,
+          ctx: &::grost::__private::flavors::network::Context,
+        ) -> ::core::primitive::usize {
+          match f {
+                        ::core::option::Option::Some(f) => {
+                            (*<User>::reflection::<
+                                ::grost::__private::flavors::Network,
+                            >()
+                                .email()
+                                .encoded_identifier_len())
+                                + <<::std::string::String as ::grost::__private::Message<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::Encoded<
+                                    '_,
+                                > as ::grost::__private::Encode<
+                                    ::grost::__private::flavors::network::Network,
+                                    <::core::option::Option<
+                                        ::std::string::String,
+                                    > as ::grost::__private::DefaultWireFormat<
+                                        ::grost::__private::flavors::Network,
+                                    >>::Format,
+                                >>::encoded_length_delimited_len(f, ctx)
+                        }
+                        ::core::option::Option::None => 0,
+                    }
+        }
+        encoded_len
+      };
+    }
+    #[allow(clippy::type_complexity)]
+    #[automatically_derived]
+    impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
+      for UserFieldReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::encode::EncodeRefField,
+        >,
+        ::grost::__private::flavors::Network,
+        3u32,
+      >
+    {
+      type Reflection = fn(
+                &::core::option::Option<
+                    <::std::string::String as ::grost::__private::Message<
+                        ::grost::__private::flavors::network::Network,
+                        <::core::option::Option<
+                            ::std::string::String,
+                        > as ::grost::__private::DefaultWireFormat<
+                            ::grost::__private::flavors::Network,
+                        >>::Format,
+                    >>::Encoded<'_>,
+                >,
+                &::grost::__private::network::Context,
+                &mut [::core::primitive::u8],
+            ) -> ::core::result::Result<
+                ::core::primitive::usize,
+                ::grost::__private::flavors::network::EncodeError,
+            >;
+      const REFLECTION: &Self::Reflection = &{
+        fn encode(
+          field: &::core::option::Option<
+                        <::std::string::String as ::grost::__private::Message<
+                            ::grost::__private::flavors::network::Network,
+                            <::core::option::Option<
+                                ::std::string::String,
+                            > as ::grost::__private::DefaultWireFormat<
+                                ::grost::__private::flavors::Network,
+                            >>::Format,
+                        >>::Encoded<'_>,
+                    >,
+          ctx: &::grost::__private::flavors::network::Context,
+          buf: &mut [::core::primitive::u8],
+        ) -> ::core::result::Result<
+          ::core::primitive::usize,
+          ::grost::__private::flavors::network::EncodeError,
+        > {
+          match field {
+            ::core::option::Option::Some(f) => {
+              let identifier_len = *<User>::reflection::<::grost::__private::flavors::Network>()
+                .email()
+                .encoded_identifier_len();
+              const ENCODED_LEN_FN: UserFieldReflection<
+                ::grost::__private::reflection::encode::EncodeReflection<
+                  ::grost::__private::reflection::Len<
+                    ::grost::__private::reflection::encode::EncodeRefField,
+                  >,
+                >,
+                ::grost::__private::flavors::Network,
+                3u32,
+              > = <User>::reflection::<::grost::__private::flavors::Network>()
+                .email()
+                .encoded_ref_len();
+              let buf_len = buf.len();
+              let mut offset = 0;
+              if offset > buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(field, ctx),
+                    buf_len,
+                  ),
+                );
+              }
+              buf[offset..offset + identifier_len].copy_from_slice(
+                &<User>::reflection::<::grost::__private::flavors::Network>()
+                  .email()
+                  .encoded_identifier(),
+              );
+              offset += identifier_len;
+              if offset >= buf_len {
+                return ::core::result::Result::Err(
+                  ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    (ENCODED_LEN_FN)(field, ctx),
+                    buf_len,
+                  ),
+                );
+              }
+              <<::std::string::String as ::grost::__private::Message<
+                                ::grost::__private::flavors::network::Network,
+                                <::core::option::Option<
+                                    ::std::string::String,
+                                > as ::grost::__private::DefaultWireFormat<
+                                    ::grost::__private::flavors::Network,
+                                >>::Format,
+                            >>::Encoded<
+                                '_,
+                            > as ::grost::__private::Encode<
+                                ::grost::__private::flavors::network::Network,
+                                <::core::option::Option<
+                                    ::std::string::String,
+                                > as ::grost::__private::DefaultWireFormat<
+                                    ::grost::__private::flavors::Network,
+                                >>::Format,
+                            >>::encode_length_delimited(f, ctx, buf)
+                                .map(|len| offset + len)
+                                .map_err(|e| {
+                                    e.update((ENCODED_LEN_FN)(field, ctx), buf_len)
+                                })
+            }
+            ::core::option::Option::None => ::core::result::Result::Ok(0),
           }
         }
         encode

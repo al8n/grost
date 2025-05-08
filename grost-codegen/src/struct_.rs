@@ -379,9 +379,9 @@ impl Struct {
         unknown: ::core::option::Option<UB>,
       }
 
-      impl #path_to_grost::__private::Referenceable<#flavor_ty> for #struct_name {
-        type Ref<'b, UB> = #name<'b, UB> where Self: 'b;
-      }
+      // impl #path_to_grost::__private::Referenceable<#flavor_ty, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
+      //   type Ref<'b> = #name<'b> where Self: 'b;
+      // }
 
       impl<'a, UB> ::core::default::Default for #name<'a, UB> {
         fn default() -> Self {

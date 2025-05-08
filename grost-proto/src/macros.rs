@@ -29,7 +29,7 @@ macro_rules! varint {
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::decode_owned_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::referenceable_scalar!($flavor: $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::referenceable_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$flavor, $wf> for $ty {
@@ -153,18 +153,18 @@ macro_rules! selectable_scalar {
 /// A macro emits [`Referenceable`](super::Referenceable) implementations for primitive types.
 #[macro_export]
 macro_rules! referenceable_scalar {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
-    $crate::referenceable!($flavor: $($ty $([ $(const $g: usize),* ])? => $ty),+);
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
+    $crate::referenceable!($flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
   };
 }
 
 /// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`
 #[macro_export]
 macro_rules! referenceable {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $target:ty ),+$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$flavor> for $ty {
-        type Ref<'a, UB> = $target where Self: 'a;
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$flavor, $wf> for $ty {
+        type Ref<'a> = $target where Self: 'a;
       }
     )*
   };
@@ -173,16 +173,25 @@ macro_rules! referenceable {
 /// A macro emits [`TypeRef`](super::TypeRef) implementations for `Self`
 #[macro_export]
 macro_rules! type_ref {
-  ( $flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+  ($flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<$flavor, $target> for $ty {
-        $crate::type_ref!(_impl $flavor: $target { $expr });
+        $crate::type_ref!(@impl $flavor: $target { $expr });
+      }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<$flavor, ::core::option::Option<$target>> for $ty {
+        $crate::type_ref!(@optional_impl $flavor: $target);
       }
     )*
   };
-  (_impl $flavor:ty: $target:ty { $expr: expr }) => {
+  (@impl $flavor:ty: $target:ty { $expr: expr }) => {
     fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $expr(self)
+    }
+  };
+  (@optional_impl $flavor:ty: $target:ty) => {
+    fn to(&self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      <Self as $crate::__private::TypeRef<$flavor, $target>>::to(self).map(::core::option::Option::Some)
     }
   };
 }
@@ -193,13 +202,22 @@ macro_rules! type_owned {
   ( $flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, $target> for $ty {
-        $crate::type_owned!(_impl $flavor: $target { $expr });
+        $crate::type_owned!(@impl $flavor: $target { $expr });
+      }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, ::core::option::Option<$target>> for $ty {
+        $crate::type_owned!(@optional_impl $flavor: $target);
       }
     )*
   };
-  (_impl $flavor:ty: $target:ty { $expr: expr }) => {
+  (@impl $flavor:ty: $target:ty { $expr: expr }) => {
     fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $expr(self)
+    }
+  };
+  (@optional_impl $flavor:ty: $target:ty) => {
+    fn to(&self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      <Self as $crate::__private::TypeOwned<$flavor, $target>>::to(self).map(::core::option::Option::Some)
     }
   };
 }
@@ -212,13 +230,22 @@ macro_rules! into_target {
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, $target> for $ty {
         $crate::into_target!(@impl $flavor: $target { $expr });
       }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, ::core::option::Option<$target>> for $ty {
+        $crate::into_target!(@optional_impl $flavor: $target);
+      }
     )*
   };
   (@impl $flavor:ty: $target:ty { $expr:expr }) => {
     fn into_target(self) -> ::core::result::Result<$target, <$flavor as $crate::__private::Flavor>::DecodeError> {
       $expr(self)
     }
-  }
+  };
+  (@optional_impl $flavor:ty: $target:ty) => {
+    fn into_target(self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::Flavor>::DecodeError> {
+      <Self as $crate::__private::IntoTarget<$flavor, $target>>::into_target(self).map(::core::option::Option::Some)
+    }
+  };
 }
 
 /// A macro emits [`DefaultWireFormat`](crate::flavors::DefaultWireFormat) implementations.

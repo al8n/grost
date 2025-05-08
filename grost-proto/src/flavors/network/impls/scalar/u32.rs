@@ -12,7 +12,7 @@ use crate::{
 
 default_wire_format!(Network: u32 as Varint);
 selectable_scalar!(Network: u32);
-referenceable_scalar!(Network: u32, NonZeroU32);
+referenceable_scalar!(Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
 
 impl Encode<Network, Fixed32> for u32 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

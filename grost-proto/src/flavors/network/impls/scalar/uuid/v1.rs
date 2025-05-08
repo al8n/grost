@@ -7,7 +7,7 @@ use crate::{
 };
 
 selectable_bridge!(Network:u128[Uuid]);
-referenceable_scalar!(Network: Uuid);
+referenceable_scalar!(Network: Uuid as Fixed128, Uuid as Varint);
 
 bridge!(
   Network: u128 {
