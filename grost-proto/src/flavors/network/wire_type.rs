@@ -24,8 +24,48 @@ wire_type!(
     "fixed128" = 7,
   }
 );
+/// The stream wire format for element encoding within repeated fields.
+///
+/// When used as `Repeated<Stream>`, this changes the encoding strategy
+/// to a more stream-friendly format where each element is individually tagged.
+/// This is similar to how Protocol Buffers encodes repeated fields when the `packed=false`
+/// option is used.
+///
+/// Instead of the default length-prefixed encoding:
+///
+/// ```text
+/// | identifier | total_length | elem1 | elem2 | elem3 | ... |
+/// ```
+///
+/// `Repeated<Stream>` encoding repeats the field identifier for each element:
+///
+/// ```text
+/// | identifier | elem1 | identifier | elem2 | field_id | elem3 | ... |
+/// ```
+///
+/// This format is useful for:
+/// - Streaming scenarios where you need to process elements before receiving the entire collection
+/// - Compatibility with Protocol Buffer's default repeated field encoding
+/// - Cases where elements may be added incrementally
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("stream")]
+// TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
+pub struct Stream<W: ?Sized, const I: u32>(PhantomData<W>);
 
-/// The wire format for repeated.
+/// Represents the wire format for repeated fields.
+///
+/// `Repeated<W>` is a marker type that indicates a field should be encoded as a repeated
+/// field, where `W` is the wire format of the contained elements.
+///
+/// By default, repeated fields are encoded using length-prefixed encoding:
+///
+/// ```text
+/// | field_id | total_length | elem1 | elem2 | elem3 | ... |
+/// ```
+///
+/// However, for a streaming encoding format where each element is individually tagged with
+/// the field identifier, use `Repeated<Stream>` instead. See the [`Stream`] type
+/// documentation for more details.
 #[derive(PartialEq, Eq, Hash)]
 pub struct Repeated<W: ?Sized>(PhantomData<W>);
 
@@ -33,14 +73,6 @@ impl<W: ?Sized> From<Repeated<W>> for WireType {
   fn from(_: Repeated<W>) -> Self {
     WireType::LengthDelimited
   }
-}
-
-impl<W> WireFormat<Network> for Repeated<W>
-where
-  W: WireFormat<Network>,
-{
-  const NAME: &'static str = "repeated";
-  const WIRE_TYPE: WireType = WireType::LengthDelimited;
 }
 
 impl<W> core::fmt::Debug for Repeated<W>
@@ -84,3 +116,29 @@ impl<W: ?Sized> Clone for Repeated<W> {
 }
 
 impl<W: ?Sized> Copy for Repeated<W> {}
+
+macro_rules! impl_wire_format_for_repeated {
+  ($($wf:ty),+$(,)?) => {
+    $(
+      impl WireFormat<Network> for Repeated<$wf> {
+        const NAME: &'static str = "repeated";
+        const WIRE_TYPE: WireType = WireType::LengthDelimited;
+      }
+
+      impl<const I: u32> WireFormat<Network> for Repeated<Stream<$wf, I>> {
+        const NAME: &'static str = "repeated";
+        const WIRE_TYPE: WireType = <$wf>::WIRE_TYPE;
+      }
+    )*
+  };
+}
+
+impl_wire_format_for_repeated!(
+  Fixed8,
+  Fixed16,
+  Fixed32,
+  Fixed64,
+  Fixed128,
+  Varint,
+  LengthDelimited,
+);

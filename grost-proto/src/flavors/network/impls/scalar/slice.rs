@@ -3,10 +3,9 @@ use crate::{
   decode::Decode,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
-  partial_encode_scalar, referenceable, selectable_scalar,
+  partial_encode_scalar, referenceable,
 };
 
-selectable_scalar!(Network: [u8]);
 referenceable!(Network: [u8] as LengthDelimited => &'a [u8]);
 
 impl Encode<Network, LengthDelimited> for [u8] {

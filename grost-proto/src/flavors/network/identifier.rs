@@ -46,6 +46,9 @@ impl Identifier {
   }
 
   /// Creates an identifier from a `u32` value.
+  ///
+  /// # Panics
+  /// This function will panic if the tag is not in range `1..=536870911`
   #[inline]
   pub const fn from_u32(val: u32) -> Self {
     let wire_type = val & 0b111; // Get last 3 bits for wire type
