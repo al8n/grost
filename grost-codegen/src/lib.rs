@@ -103,7 +103,7 @@ impl Generator for DefaultGenerator {
     let struct_impl = struct_.struct_impl();
     let codec = self.flavors.iter().map(|(_, f)| {
       let codec = f.generate_struct_codec(&self.grost_path, struct_);
-      let partial_ref_defination = struct_.partial_encoded_struct_defination(&self.grost_path, f);
+      let partial_ref_defination = struct_.partial_ref_struct_defination(&self.grost_path, f);
       quote! {
         #partial_ref_defination
 

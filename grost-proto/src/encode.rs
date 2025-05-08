@@ -1,3 +1,5 @@
+use crate::decode::Decoded;
+
 use super::{
   flavors::{Flavor, Identifier, WireFormat},
   selector::Selectable,
@@ -471,6 +473,14 @@ where
       0
     }
   }
+}
+
+impl<T, F, B, UB> Selectable<F> for Decoded<T, B, UB>
+where
+  F: Flavor + ?Sized,
+  T: Selectable<F>,
+{
+  type Selector = T::Selector;
 }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]

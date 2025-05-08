@@ -91,7 +91,13 @@ impl TyRepr {
     }
   }
 
-  pub fn message_ref_ty<F>(&self, path_to_grost: &syn::Path, flavor: &F, wf: &syn::Type) -> Type
+  pub fn message_ref_ty<F>(
+    &self,
+    path_to_grost: &syn::Path,
+    flavor: &F,
+    wf: &syn::Type,
+    lifetime: &Lifetime,
+  ) -> Type
   where
     F: super::FlavorGenerator + ?Sized,
   {
@@ -102,7 +108,7 @@ impl TyRepr {
       | Self::Union(ty)
       | Self::Interface(ty) => {
         let flavor_ty = flavor.ty();
-        parse_quote!(<#ty as #path_to_grost::__private::Message<#flavor_ty, #wf>>::Encoded<'a>)
+        parse_quote!(<#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<#lifetime>)
       }
       Self::List { item, .. } => unimplemented!(),
       Self::Map { key, value, .. } => {
@@ -111,7 +117,7 @@ impl TyRepr {
       Self::Optional(ty) => {
         let ty = ty.repr().atomic_ty();
         let flavor_ty = flavor.ty();
-        parse_quote!(<#ty as #path_to_grost::__private::Message<#flavor_ty, #wf>>::Encoded<'a>)
+        parse_quote!(<#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<#lifetime>)
       }
     }
   }

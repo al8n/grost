@@ -1,5 +1,5 @@
 use heck::ToShoutySnakeCase;
-use quote::{format_ident, quote};
+use quote::format_ident;
 use syn::Ident;
 
 use crate::Field;

@@ -1,15 +1,10 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use heck::{ToShoutySnakeCase, ToUpperCamelCase};
-use quote::{ToTokens, format_ident, quote};
+use quote::quote;
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility, parse_quote};
 
-use crate::{
-  FlavorGenerator, SafeIdent,
-  flavors::FlavorGeneratorExt,
-  ty::{Ty, TyRepr},
-};
+use crate::{FlavorGenerator, SafeIdent, ty::Ty};
 use getter::Getter;
 use setter::Setter;
 
@@ -367,34 +362,14 @@ impl Field {
   where
     F: FlavorGenerator + ?Sized,
   {
-    let name = self.name.name_str().to_shouty_snake_case();
     let field_name = self.name.name_str();
     let flavor_ty = flavor.ty();
-    let flavor_name_ssc = flavor.name().to_shouty_snake_case();
-    let field_reflection_name = flavor.field_reflection_name(field_name);
-    let field_reflection_optional_name = flavor.optional_field_reflection_name(field_name);
-    let field_reflection_doc = format!(
-      " The reflection information of the `{field_name}` field for [`{}`]({}) flavor.",
-      flavor.name().to_upper_camel_case(),
-      flavor_ty.to_token_stream().to_string().replace(" ", "")
-    );
     let field_ty = self.ty.ty();
     let schema_name = self.schema_name();
     let relection_ty = self.ty.to_type_reflection(path_to_grost, flavor);
 
     let identifier = flavor.generate_field_identifier(path_to_grost, self);
     quote! {
-      // #[doc = #field_reflection_doc]
-      // pub const #field_reflection_name: &#path_to_grost::__private::reflection::FieldReflection<#flavor_ty> = &#path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
-      //   identifier: #identifier,
-      //   name: #field_name,
-      //   ty: ::core::any::type_name::<#field_ty>,
-      //   schema_name: #schema_name,
-      //   schema_type: #relection_ty,
-      // }.build();
-
-      // const #field_reflection_optional_name: ::core::option::Option<& #path_to_grost::__private::reflection::FieldReflection<#flavor_ty>> = ::core::option::Option::Some(Self::#field_reflection_name);
-
       #path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
         identifier: #identifier,
         name: #field_name,

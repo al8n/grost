@@ -76,7 +76,8 @@ impl Struct {
     let struct_name = self.name();
     quote! {
       #[automatically_derived]
-      impl<F: ?::core::marker::Sized> #path_to_grost::__private::indexer::Indexable<F> for #struct_name {
+      #[allow(non_camel_case_types)]
+      impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::indexer::Indexable<__GROST_FLAVOR__> for #struct_name {
         type Indexer = #name;
       }
 

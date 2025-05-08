@@ -632,7 +632,7 @@ impl Network {
     let fn_impl = if optional {
       quote! {
         fn encode(
-          field: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          field: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
           selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
@@ -666,7 +666,7 @@ impl Network {
                 );
               }
 
-              <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::PartialEncode<
+              <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::PartialEncode<
                 #path_to_grost::__private::flavors::network::Network,
                 #wf,
               >>::partial_encode_length_delimited(
@@ -685,7 +685,7 @@ impl Network {
     } else {
       quote! {
         fn encode(
-          f: &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          f: &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
           selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
@@ -717,7 +717,7 @@ impl Network {
             );
           }
 
-          <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::PartialEncode<
+          <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::PartialEncode<
             #path_to_grost::__private::flavors::network::Network,
             #wf,
           >>::partial_encode_length_delimited(
@@ -739,7 +739,7 @@ impl Network {
     let reflection = if optional {
       quote! {
         fn(
-          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           &#path_to_grost::__private::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
@@ -748,7 +748,7 @@ impl Network {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           &#path_to_grost::__private::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
@@ -800,14 +800,14 @@ impl Network {
     let fn_impl = if optional {
       quote! {
         fn encoded_len(
-          f: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          f: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize {
           match f {
             ::core::option::Option::Some(f) => {
               (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
-                + <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::PartialEncode<
+                + <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::PartialEncode<
                     #path_to_grost::__private::flavors::network::Network,
                     #wf,
                   >>::partial_encoded_length_delimited_len(
@@ -823,12 +823,12 @@ impl Network {
     } else {
       quote! {
         fn encoded_len(
-          f: &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          f: &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize {
           (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
-            + <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::PartialEncode<
+            + <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::PartialEncode<
                 #path_to_grost::__private::flavors::network::Network,
                 #wf,
               >>::partial_encoded_length_delimited_len(
@@ -847,7 +847,7 @@ impl Network {
     let reflection = if optional {
       quote! {
         fn(
-          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           &#path_to_grost::__private::network::Context,
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize
@@ -855,7 +855,7 @@ impl Network {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           &#path_to_grost::__private::network::Context,
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize
@@ -927,7 +927,7 @@ impl Network {
     let fn_impl = if optional {
       quote! {
         fn encode(
-          field: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          field: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
         ) -> #ret {
@@ -960,7 +960,7 @@ impl Network {
                 );
               }
 
-              <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::Encode<
+              <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::Encode<
                 #path_to_grost::__private::flavors::network::Network,
                 #wf,
               >>::encode_length_delimited(
@@ -978,7 +978,7 @@ impl Network {
     } else {
       quote! {
         fn encode(
-          f: &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          f: &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
         ) -> #ret {
@@ -1009,7 +1009,7 @@ impl Network {
             );
           }
 
-          <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::Encode<
+          <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::Encode<
             #path_to_grost::__private::flavors::network::Network,
             #wf,
           >>::encode_length_delimited(
@@ -1030,7 +1030,7 @@ impl Network {
     let reflection = if optional {
       quote! {
         fn(
-          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           &#path_to_grost::__private::network::Context,
           &mut [::core::primitive::u8],
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
@@ -1038,7 +1038,7 @@ impl Network {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           &#path_to_grost::__private::network::Context,
           &mut [::core::primitive::u8],
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
@@ -1089,13 +1089,13 @@ impl Network {
     let fn_impl = if optional {
       quote! {
         fn encoded_len(
-          f: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          f: &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize {
           match f {
             ::core::option::Option::Some(f) => {
               (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
-                + <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::Encode<
+                + <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::Encode<
                     #path_to_grost::__private::flavors::network::Network,
                     #wf,
                   >>::encoded_length_delimited_len(
@@ -1110,11 +1110,11 @@ impl Network {
     } else {
       quote! {
         fn encoded_len(
-          f: &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          f: &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize {
           (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
-            + <<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_> as #path_to_grost::__private::Encode<
+            + <<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_> as #path_to_grost::__private::Encode<
                 #path_to_grost::__private::flavors::network::Network,
                 #wf,
               >>::encoded_length_delimited_len(
@@ -1132,14 +1132,14 @@ impl Network {
     let reflection = if optional {
       quote! {
         fn(
-          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>>,
+          &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
           &#path_to_grost::__private::network::Context,
         ) -> ::core::primitive::usize
       }
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::Message<#path_to_grost::__private::flavors::network::Network, #wf>>::Encoded<'_>,
+          &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
           &#path_to_grost::__private::network::Context,
         ) -> ::core::primitive::usize
       }

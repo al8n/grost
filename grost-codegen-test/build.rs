@@ -128,12 +128,12 @@ fn struct_codegen_test(name: &str) {
       4,
     ),
   ];
-  // let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
-  //   .with_description("A comment struct")
-  //   .with_visibility(parse_quote!(pub));
+  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+    .with_description("A comment struct")
+    .with_visibility(parse_quote!(pub));
 
-  // let generated = generator.generate_struct(&struct_).unwrap();
-  // let ts: syn::File = syn::parse2(generated).unwrap();
-  // let output = prettyplease::unparse(&ts);
-  // file.write_all(output.as_bytes()).unwrap();
+  let generated = generator.generate_struct(&struct_).unwrap();
+  let ts: syn::File = syn::parse2(generated).unwrap();
+  let output = prettyplease::unparse(&ts);
+  file.write_all(output.as_bytes()).unwrap();
 }
