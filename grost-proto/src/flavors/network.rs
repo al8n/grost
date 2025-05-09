@@ -6,7 +6,7 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::buffer::BytesBuffer;
+use crate::{buffer::BytesBuffer, selector::Selectable};
 mod context;
 mod error;
 mod identifier;
@@ -16,7 +16,6 @@ mod wire_type;
 
 /// The unknown data types
 mod unknown;
-
 /// The network flavor
 #[derive(
   Debug, Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display,

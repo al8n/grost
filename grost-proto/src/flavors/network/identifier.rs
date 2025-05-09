@@ -1,6 +1,6 @@
 use varing::Varint;
 
-use super::{Tag, WireType};
+use super::{Tag, WireType, tag::ParseTagError};
 
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
@@ -55,6 +55,22 @@ impl Identifier {
     let tag = val >> 3; // Shift right to get the tag
     // Using from_u8_unchecked since we know wire_type is within 0-7
     Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag::new(tag))
+  }
+
+  /// Creates an identifier from a `u32` value.
+  ///
+  /// # Panics
+  /// This function will panic if the tag is not in range `1..=536870911`
+  #[inline]
+  pub const fn try_from_u32(val: u32) -> Result<Self, ParseTagError> {
+    let wire_type = val & 0b111; // Get last 3 bits for wire type
+    let tag = val >> 3; // Shift right to get the tag
+    // Using from_u8_unchecked since we know wire_type is within 0-7
+    // Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag::new(tag))
+    match Tag::try_new(tag) {
+      Ok(tag) => Ok(Self::new(WireType::from_u8_unchecked(wire_type as u8), tag)),
+      Err(e) => Err(e),
+    }
   }
 
   /// Encodes the identifier.

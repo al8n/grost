@@ -5,7 +5,7 @@ use super::buffer::BytesBuffer;
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
 pub use network::Network;
-pub use selector::Select;
+// pub use selector::Select;
 
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {

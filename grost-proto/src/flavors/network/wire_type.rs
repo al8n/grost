@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::flavors::WireFormat;
 
-use super::Network;
+use super::{Identifier, Network};
 
 wire_type!(
   enum WireType<Network> {
@@ -24,6 +24,26 @@ wire_type!(
     "fixed128" = 7,
   }
 );
+
+macro_rules! fixed_size {
+  ($($ty:ty:$size:literal),+$(,)?) => {
+    $(
+      impl $ty {
+        /// The size of the corresponding fixed-size type.
+        pub const SIZE: usize = $size;
+      }
+    )*
+  };
+}
+
+fixed_size!(
+  Fixed8: 1,
+  Fixed16: 2,
+  Fixed32: 4,
+  Fixed64: 8,
+  Fixed128: 16,
+);
+
 /// The stream wire format for element encoding within repeated fields.
 ///
 /// When used as `Repeated<Stream>`, this changes the encoding strategy
@@ -40,7 +60,7 @@ wire_type!(
 /// `Repeated<Stream>` encoding repeats the field identifier for each element:
 ///
 /// ```text
-/// | identifier | elem1 | identifier | elem2 | field_id | elem3 | ... |
+/// | identifier | elem1 | identifier | elem2 | identifier | elem3 | ... |
 /// ```
 ///
 /// This format is useful for:
@@ -60,7 +80,7 @@ pub struct Stream<W: ?Sized, const I: u32>(PhantomData<W>);
 /// By default, repeated fields are encoded using length-prefixed encoding:
 ///
 /// ```text
-/// | field_id | total_length | elem1 | elem2 | elem3 | ... |
+/// | identifier | total_length | elem1 | elem2 | elem3 | ... |
 /// ```
 ///
 /// However, for a streaming encoding format where each element is individually tagged with

@@ -12,7 +12,7 @@ pub struct ParseTagError(u32);
 #[display("{_0}")]
 pub struct Tag(pub(super) u32);
 
-selectable_scalar!(Network: Tag);
+// selectable_scalar!(Network: Tag);
 
 impl Tag {
   /// The maximum Tag value is `2^29 - 1` (536870911).

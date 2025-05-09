@@ -141,7 +141,7 @@ macro_rules! partial_encode_scalar {
 /// A macro emits [`Selectable`](super::flavors::Selectable) implementations for primitive types.
 #[macro_export]
 macro_rules! selectable_scalar {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)?])?),+$(,)?) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
         type Selector = ::core::primitive::bool;
