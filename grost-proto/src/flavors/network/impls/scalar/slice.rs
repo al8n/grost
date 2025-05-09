@@ -4,7 +4,6 @@ use crate::{
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
   partial_encode_scalar, referenceable,
-  selector::Selectable,
 };
 
 referenceable!(Network: [u8] as LengthDelimited => &'a [u8]);
