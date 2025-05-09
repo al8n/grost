@@ -6,8 +6,7 @@ use crate::{
   decode_owned_scalar, default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
-  message, partial_encode_scalar, referenceable_scalar, selectable_bridge, selectable_scalar,
-  try_from_bridge,
+  message, partial_encode_scalar, referenceable_scalar, selectable_scalar, try_from_bridge,
 };
 
 default_wire_format!(Network: i128 as Varint);
@@ -114,7 +113,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for i128 {
 decode_owned_scalar!(Network: i128 as Fixed128, i128 as Varint);
 message!(Network: i128 as Fixed128, i128 as Varint);
 
-selectable_bridge!(Network:i128[NonZeroI128]);
+selectable_scalar!(Network: NonZeroI128);
 try_from_bridge!(
   Network: i128 {
     NonZeroI128 as Fixed128 {

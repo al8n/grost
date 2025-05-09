@@ -185,7 +185,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 ///       type Foo {
 ///         bar: u16 @fixed
 ///       }
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F> {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -387,7 +387,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for &T
 where
-  T: PartialEncode<F, W> + Selectable<F> + ?Sized,
+  T: PartialEncode<F, W> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -424,7 +424,7 @@ where
 
 impl<F, W, T> PartialEncode<F, W> for Option<T>
 where
-  T: PartialEncode<F, W> + Selectable<F>,
+  T: PartialEncode<F, W>,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -475,10 +475,11 @@ where
   }
 }
 
-impl<T, F, B, UB> Selectable<F> for Decoded<T, B, UB>
+impl<T, F, W, B, UB> Selectable<F, W> for Decoded<T, B, UB>
 where
   F: Flavor + ?Sized,
-  T: Selectable<F>,
+  T: Selectable<F, W>,
+  W: ?Sized,
 {
   type Selector = T::Selector;
 }
@@ -521,17 +522,18 @@ macro_rules! deref_encode_impl {
 macro_rules! deref_partial_encode_impl {
   ($($ty:ty),+$(,)?) => {{
     $(
-      impl<T, F> Selectable<F> for $ty
+      impl<T, F, W> Selectable<F, W> for $ty
       where
-        T: ?Sized + Selectable<F>,
+        T: ?Sized + Selectable<F, W>,
         F: Flavor + ?Sized,
+        W: ?Sized,
       {
         type Selector = T::Selector;
       }
 
       impl<F, W, T> PartialEncode<F, W> for $ty
       where
-        T: PartialEncode<F, W> + Selectable<F> + ?Sized,
+        T: PartialEncode<F, W> + Selectable<F, W> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {

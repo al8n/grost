@@ -2,13 +2,13 @@ use crate::{
   decode::Decode,
   default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  referenceable, selectable_bridge, try_decode_bridge,
+  referenceable, selectable_scalar, try_decode_bridge,
 };
 
 default_wire_format!(
   Network: str as LengthDelimited
 );
-selectable_bridge!(Network:[u8][str]);
+selectable_scalar!(Network:str);
 referenceable!(Network: str as LengthDelimited => &'a str);
 
 encode_bridge!(

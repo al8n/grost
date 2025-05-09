@@ -2,14 +2,14 @@
 const _: () = {
   use crate::{
     flavors::network::{LengthDelimited, Network},
-    referenceable, selectable_bridge,
+    referenceable, selectable_scalar,
   };
   use smol_str_0_3::SmolStr;
   use std::string::String;
 
   use crate::{into_target, type_owned, type_ref};
 
-  selectable_bridge!(Network:str[String]);
+  selectable_scalar!(Network:String);
 
   str_bridge!(Network: String {
     from_str: |val: &str| String::from(val);

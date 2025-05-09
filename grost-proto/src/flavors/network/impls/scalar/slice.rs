@@ -1,10 +1,18 @@
 use crate::{
   buffer::Buffer,
   decode::Decode,
+  default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
   partial_encode_scalar, referenceable,
+  selector::Selectable,
 };
+
+default_wire_format!(Network: [u8] as LengthDelimited);
+
+impl Selectable<Network, LengthDelimited> for [u8] {
+  type Selector = bool;
+}
 
 referenceable!(Network: [u8] as LengthDelimited => &'a [u8]);
 

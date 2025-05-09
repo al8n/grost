@@ -143,7 +143,8 @@ macro_rules! partial_encode_scalar {
 macro_rules! selectable_scalar {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)?])?),+$(,)?) => {
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
+      #[allow(non_camel_case_types)]
+      impl<__GROST_WIRE_FORMAT__: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Selectable<$flavor, __GROST_WIRE_FORMAT__> for $ty {
         type Selector = ::core::primitive::bool;
       }
     )*
@@ -491,13 +492,13 @@ macro_rules! try_from_bridge {
 macro_rules! selectable_bridge {
   ($flavor:ty: $(
     $bridge: ty [
-      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?), +$(,)?
+      $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?
     ]
   ),+$(,)?) => {
     $(
       $(
-        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor> for $ty {
-          type Selector = <$bridge as $crate::__private::Selectable<$flavor>>::Selector;
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Selectable<$flavor, $wf> for $ty {
+          type Selector = <$bridge as $crate::__private::Selectable<$flavor, $wf>>::Selector;
         }
       )*
     )*
@@ -1185,7 +1186,7 @@ macro_rules! network_phantom {
         }
       }
 
-      impl<T: ?::core::marker::Sized> $crate::__private::Selectable<$crate::__private::flavors::Network> for $ty {
+      impl<T: ?::core::marker::Sized, W: ?::core::marker::Sized> $crate::__private::Selectable<$crate::__private::flavors::Network, W> for $ty {
         type Selector = ::core::primitive::bool;
       }
 

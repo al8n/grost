@@ -1,13 +1,13 @@
 use crate::{
   bridge, default_wire_format,
   flavors::network::{Fixed16, Network, Varint},
-  referenceable_scalar, selectable_bridge,
+  referenceable_scalar, selectable_scalar,
 };
 use half_2::f16;
 
 default_wire_format!(Network: f16 as Fixed16);
 
-selectable_bridge!(Network:u16[f16]);
+selectable_scalar!(Network:f16);
 referenceable_scalar!(Network: f16 as Fixed16, f16 as Varint);
 bridge!(
   Network: u16 {

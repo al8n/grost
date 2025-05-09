@@ -3,13 +3,13 @@ use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, referenceable, selectable_bridge, type_ref,
+  into_target, referenceable, selectable_scalar, type_ref,
 };
 use bytes_1::Bytes;
 
 default_wire_format!(Network: Bytes as LengthDelimited);
 
-selectable_bridge!(Network:[u8][Bytes]);
+selectable_scalar!(Network:Bytes);
 
 encode_bridge!(
   Network: [u8] {

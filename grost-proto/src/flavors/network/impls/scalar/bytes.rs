@@ -36,6 +36,15 @@ macro_rules! bytes_message {
 }
 
 #[allow(unused_macros)]
+macro_rules! impl_selectable_for_bytes {
+  ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
+    impl $(<$(const $g: usize),* >)? $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
+      type Selector = bool;
+    }
+  };
+}
+
+#[allow(unused_macros)]
 macro_rules! bytes_bridge {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
     from_slice: $from_bytes: expr;
@@ -59,6 +68,8 @@ macro_rules! bytes_bridge {
           },
         },
       );
+
+      impl_selectable_for_bytes!($ty $([ $(const $g: usize),* ])?);
 
       bytes_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);
     )*
@@ -124,7 +135,7 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable<$crate::__private::flavors::Network> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Selector = ::core::primitive::bool;
     }
 

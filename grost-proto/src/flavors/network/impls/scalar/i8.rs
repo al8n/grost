@@ -1,12 +1,12 @@
 use crate::{
   bridge, default_wire_format,
   flavors::network::{DecodeError, Fixed8, Network, Varint},
-  referenceable_scalar, selectable_bridge, try_from_bridge,
+  referenceable_scalar, selectable_scalar, try_from_bridge,
 };
 use core::num::NonZeroI8;
 
 default_wire_format!(Network: i8 as Fixed8);
-selectable_bridge!(Network:u8[i8]);
+selectable_scalar!(Network:i8);
 referenceable_scalar!(Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
 bridge!(
   Network: u8 {
@@ -21,7 +21,7 @@ bridge!(
   },
 );
 
-selectable_bridge!(Network:i8[NonZeroI8]);
+selectable_scalar!(Network:NonZeroI8);
 try_from_bridge!(
   Network: i8 {
     NonZeroI8 as Fixed8 {

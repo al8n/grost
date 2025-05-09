@@ -1,11 +1,11 @@
 use crate::{
   default_wire_format,
   flavors::network::{DecodeError, Fixed32, Network, Varint},
-  referenceable_scalar, selectable_bridge, try_from_bridge,
+  referenceable_scalar, selectable_scalar, try_from_bridge,
 };
 
 default_wire_format!(Network: char as Fixed32);
-selectable_bridge!(Network:u32[char]);
+selectable_scalar!(Network:char);
 referenceable_scalar!(Network: char as Fixed32, char as Varint);
 try_from_bridge!(
   Network: u32 {

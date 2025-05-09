@@ -7,6 +7,14 @@ use super::{DecodeError, Network};
 #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
 pub struct ParseTagError(u32);
 
+impl ParseTagError {
+  /// Returns the invalid tag value.
+  #[inline]
+  pub const fn value(&self) -> u32 {
+    self.0
+  }
+}
+
 /// Tag in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[display("{_0}")]

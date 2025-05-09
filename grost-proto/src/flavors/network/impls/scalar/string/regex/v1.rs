@@ -38,8 +38,8 @@ const _: () = {
           },
         );
 
-        $crate::selectable_bridge!(Network:
-          str [$ty $([ $(const $g: usize),* ])?]
+        $crate::selectable_scalar!(Network:
+          $ty $([ $(const $g: usize),* ])?
         );
 
         str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);

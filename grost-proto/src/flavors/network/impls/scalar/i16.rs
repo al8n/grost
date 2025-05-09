@@ -4,8 +4,7 @@ use crate::{
   decode_owned_scalar, default_wire_format,
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
-  message, partial_encode_scalar, referenceable_scalar, selectable_bridge, selectable_scalar,
-  try_from_bridge,
+  message, partial_encode_scalar, referenceable_scalar, selectable_scalar, try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -112,7 +111,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for i16 {
 decode_owned_scalar!(Network: i16 as Fixed16, i16 as Varint);
 message!(Network: i16 as Fixed16, i16 as Varint);
 
-selectable_bridge!(Network:i16[NonZeroI16]);
+selectable_scalar!(Network:NonZeroI16);
 try_from_bridge!(
   Network: i16 {
     NonZeroI16 as Fixed16 {
