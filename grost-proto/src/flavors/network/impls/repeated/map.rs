@@ -229,7 +229,24 @@ map_impl!(
 const _: () = {
   use std::collections::HashMap;
 
-  use crate::flavors::network::Varint;
+  map_impl!(
+    @fixed_kvh HashMap<K, V, S>:
+      Fixed8:Fixed16,
+      Fixed16:Fixed32,
+      Fixed32:Fixed64,
+      Fixed64:Fixed128,
+  );
+
+  map_impl!(@kvh
+    HashMap<K, V, S>:
+      Varint,
+      LengthDelimited,
+  );
+};
+
+#[cfg(feature = "hashbrown_0_15")]
+const _: () = {
+  use hashbrown_0_15::HashMap;
 
   map_impl!(
     @fixed_kvh HashMap<K, V, S>:
@@ -241,6 +258,25 @@ const _: () = {
 
   map_impl!(@kvh
     HashMap<K, V, S>:
+      Varint,
+      LengthDelimited,
+  );
+};
+
+#[cfg(feature = "indexmap_2")]
+const _: () = {
+  use indexmap_2::IndexMap;
+
+  map_impl!(
+    @fixed_kvh IndexMap<K, V, S>:
+      Fixed8:Fixed16,
+      Fixed16:Fixed32,
+      Fixed32:Fixed64,
+      Fixed64:Fixed128,
+  );
+
+  map_impl!(
+    @kvh IndexMap<K, V, S>:
       Varint,
       LengthDelimited,
   );
@@ -323,4 +359,73 @@ const _: () = {
       Varint,
       LengthDelimited,
   );
+};
+
+#[cfg(feature = "tinyvec_1")]
+const _: () = {
+  use tinyvec_1::{Array, ArrayVec};
+
+  use crate::{
+    encode::Encode,
+    flavors::{Network, network::Repeated},
+  };
+
+  macro_rules! tinyvec_impl {
+    (@fixed $ty:ty:$($wf:ty:$merged_wf:ty),+$(,)?) => {
+      $(
+        impl<A, K, V> Encode<Network, Repeated<$merged_wf>> for $ty
+        where
+          K: Encode<Network, $wf>,
+          V: Encode<Network, $wf>,
+          A: Array<Item = (K, V)>,
+        {
+          map_impl!(@fixed_impl $wf:$merged_wf);
+        }
+      )*
+    };
+    ($ty:ty: $($wf:ty),+$(,)?) => {
+      $(
+        impl<A, K, V> Encode<Network, Repeated<$wf>> for $ty
+        where
+          K: Encode<Network, $wf>,
+          V: Encode<Network, $wf>,
+          A: Array<Item = (K, V)>,
+        {
+          map_impl!(@impl $wf);
+        }
+      )*
+    };
+  }
+
+  tinyvec_impl!(
+    @fixed ArrayVec<A>:
+    Fixed8:Fixed16,
+    Fixed16:Fixed32,
+    Fixed32:Fixed64,
+    Fixed64:Fixed128,
+  );
+
+  tinyvec_impl!(
+    ArrayVec<A>:
+      Varint,
+      LengthDelimited,
+  );
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  const _: () = {
+    use tinyvec_1::TinyVec;
+
+    tinyvec_impl!(
+      @fixed TinyVec<A>:
+      Fixed8:Fixed16,
+      Fixed16:Fixed32,
+      Fixed32:Fixed64,
+      Fixed64:Fixed128,
+    );
+    tinyvec_impl!(
+      TinyVec<A>:
+      Varint,
+      LengthDelimited,
+    );
+  };
 };

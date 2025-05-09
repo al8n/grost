@@ -46,6 +46,12 @@ decimal = ["decimal_1"]
 half_2 = ["dep:half_2", "varing/half_2"]
 half = ["half_2"]
 
+hashbrown_0_15 = ["dep:hashbrown_0_15"]
+hashbrown = ["hashbrown_0_15"]
+
+indexmap_2 = ["dep:indexmap_2"]
+indexmap = ["indexmap_2"]
+
 hostaddr_0_1 = ["dep:hostaddr_0_1"]
 hostaddr = ["hostaddr_0_1"]
 
@@ -118,7 +124,9 @@ chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, op
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
 # heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
+hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
 hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
+indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
 num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
 regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
