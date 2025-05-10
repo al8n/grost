@@ -8,7 +8,7 @@ const STRUCT_FILE_NAME: &str = "user_struct";
 
 fn main() {
   enum_codegen_test(ENUM_FILE_NAME);
-  // struct_codegen_test(STRUCT_FILE_NAME);
+  struct_codegen_test(STRUCT_FILE_NAME);
 
   let mut lib = OpenOptions::new()
     .write(true)
@@ -19,9 +19,9 @@ fn main() {
   lib
     .write_all(format!("pub mod {ENUM_FILE_NAME};").as_bytes())
     .unwrap();
-  // lib
-  //   .write_all(format!("pub mod {STRUCT_FILE_NAME};").as_bytes())
-  //   .unwrap();
+  lib
+    .write_all(format!("pub mod {STRUCT_FILE_NAME};").as_bytes())
+    .unwrap();
 }
 
 fn enum_codegen_test(name: &str) {
@@ -75,75 +75,82 @@ fn enum_codegen_test(name: &str) {
   file.write_all(impls.as_bytes()).unwrap();
 }
 
-// fn struct_codegen_test(name: &str) {
-//   let generator = SchemaGenerator::new();
-//   let fields = vec![
-//     Field::new(
-//       SafeIdent::new("name"),
-//       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-//       1,
-//     ),
-//     Field::new(
-//       SafeIdent::new("age"),
-//       Ty::primitive(parse_quote!(u32), "u32").with_copy(),
-//       2,
-//     ),
-//     Field::new(
-//       SafeIdent::new("email"),
-//       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-//       3,
-//     ),
-//   ];
-//   let struct_ = Struct::new(SafeIdent::new("User"), fields)
-//     .with_description("A user struct")
-//     .with_visibility(parse_quote!(pub));
+fn struct_codegen_test(name: &str) {
+  let mut generator = SchemaGeneratorBuilder::new();
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("name"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!"),
+      1,
+    ),
+    Field::new(
+      SafeIdent::new("age"),
+      Ty::primitive(parse_quote!(u32), "u32").with_copy(),
+      2,
+    ),
+    Field::new(
+      SafeIdent::new("email"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      3,
+    ),
+  ];
+  let struct_ = Struct::new(SafeIdent::new("User"), fields)
+    .with_description("A user struct")
+    .with_visibility(parse_quote!(pub));
 
-//   let generated = generator.generate_struct(&struct_).unwrap();
-//   let file: syn::File = syn::parse2(generated).unwrap();
-//   let output = prettyplease::unparse(&file);
+  generator.objects_mut().insert(struct_);
 
-//   let mut path = PathBuf::from("src");
-//   path.push(name);
-//   path.set_extension("rs");
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("user"),
+      Ty::struct_(parse_quote!(User), "User!"),
+      1,
+    ),
+    Field::new(
+      SafeIdent::new("replyer"),
+      Ty::optional(Ty::struct_(parse_quote!(User), "User")),
+      2,
+    ),
+    Field::new(
+      SafeIdent::new("title"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!"),
+      3,
+    ),
+    Field::new(
+      SafeIdent::new("content"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      4,
+    ),
+  ];
+  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+    .with_description("A comment struct")
+    .with_visibility(parse_quote!(pub));
 
-//   let mut file = OpenOptions::new()
-//     .write(true)
-//     .create(true)
-//     .truncate(true)
-//     .open(&path)
-//     .unwrap();
+  generator.objects_mut().insert(struct_);
 
-//   file.write_all(b"#![no_implicit_prelude]\n\n").unwrap();
-//   file.write_all(output.as_bytes()).unwrap();
+  let generator = generator.build();
 
-//   let fields = vec![
-//     Field::new(
-//       SafeIdent::new("user"),
-//       Ty::struct_(parse_quote!(User), "User!"),
-//       1,
-//     ),
-//     Field::new(
-//       SafeIdent::new("replyer"),
-//       Ty::optional(Ty::struct_(parse_quote!(User), "User")),
-//       2,
-//     ),
-//     Field::new(
-//       SafeIdent::new("title"),
-//       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-//       3,
-//     ),
-//     Field::new(
-//       SafeIdent::new("content"),
-//       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-//       4,
-//     ),
-//   ];
-//   let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
-//     .with_description("A comment struct")
-//     .with_visibility(parse_quote!(pub));
+  let mut path = PathBuf::from("src");
+  path.push(name);
+  path.set_extension("rs");
 
-//   let generated = generator.generate_struct(&struct_).unwrap();
-//   let ts: syn::File = syn::parse2(generated).unwrap();
-//   let output = prettyplease::unparse(&ts);
-//   file.write_all(output.as_bytes()).unwrap();
-// }
+  let mut file = OpenOptions::new()
+    .write(true)
+    .create(true)
+    .truncate(true)
+    .open(&path)
+    .unwrap();
+
+  let generated = generator.generate();
+  let code: syn::File = syn::parse2(generated).unwrap();
+  let definations = prettyplease::unparse(&code);
+
+  let network = Network::new(&parse_quote!(::grost));
+  let generated = generator.derive(&network).unwrap();
+  let code: syn::File = syn::parse2(generated).unwrap();
+  let impls = prettyplease::unparse(&code);
+
+  file.write_all(b"#![no_implicit_prelude]\n\n").unwrap();
+  file.write_all(definations.as_bytes()).unwrap();
+  file.write_all(impls.as_bytes()).unwrap();
+}

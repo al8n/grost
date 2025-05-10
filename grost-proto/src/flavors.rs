@@ -156,10 +156,7 @@ pub trait WireFormat<F: Flavor + ?Sized>:
 }
 
 /// The default wire format for a type on flavor `F`.
-pub trait DefaultWireFormat<F: Flavor + ?Sized>
-where
-  Self: super::encode::Encode<F, Self::Format>,
-{
+pub trait DefaultWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
   type Format: WireFormat<F>;
 }

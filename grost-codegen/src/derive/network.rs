@@ -53,6 +53,20 @@ impl Network {
       }.build()
     }
   }
+
+  fn derive_default_format(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_name: &syn::Ident,
+  ) -> proc_macro2::TokenStream {
+    let ty = self.ty();
+    quote! {
+      #[automatically_derived]
+      impl #path_to_grost::__private::flavors::DefaultWireFormat<#ty> for #struct_name {
+        type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
+      }
+    }
+  }
 }
 
 impl DeriveGenerator for Network {
@@ -87,7 +101,11 @@ impl DeriveGenerator for Network {
     path_to_grost: &syn::Path,
     struct_: &Struct,
   ) -> Result<proc_macro2::TokenStream, Self::Error> {
-    Ok(quote! {})
+    let default_format = self.derive_default_format(path_to_grost, struct_.name().name());
+
+    Ok(quote! {
+      #default_format
+    })
   }
 
   // fn generate_struct_codec(

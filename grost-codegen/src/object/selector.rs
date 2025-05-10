@@ -8,7 +8,7 @@ use crate::DeriveGenerator;
 use super::*;
 
 impl Struct {
-  pub fn generate_selector_defination<F>(
+  pub(crate) fn selector_defination<F>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,
@@ -20,27 +20,27 @@ impl Struct {
     let vis = self.visibility.as_ref();
     let doc = format!(" The selection type for {}", self.name.name_str());
 
+    let flavor_ty = flavor.ty();
     let selection_fields = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
       let wf = f.get_wire_format_or_default(path_to_grost, flavor);
       quote! {
-        #field_name: <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__, #wf>>::Selector
+        #field_name: <#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector
       }
     });
 
     quote! {
       #[doc = #doc]
       #[allow(non_camel_case_types)]
-      #vis struct #name<__GROST_FLAVOR__: ?::core::marker::Sized> {
-        _m: ::core::marker::PhantomData<__GROST_FLAVOR__>,
+      #vis struct #name {
         #(#selection_fields),*
       }
     }
   }
 
-  pub(crate) fn generate_selector_iter_defination(&self) -> proc_macro2::TokenStream {
+  pub(crate) fn selector_iter_defination(&self) -> proc_macro2::TokenStream {
     let name = self.selector_name();
     let name_str = name.name_str();
     let iter_name = self.selector_iter_name();
@@ -54,8 +54,8 @@ impl Struct {
     quote! {
       #[doc = #iter_doc]
       #[allow(non_camel_case_types)]
-      #vis struct #iter_name<'a, __GROST_FLAVOR__: ?::core::marker::Sized, const N: ::core::primitive::bool = true> {
-        selector: &'a #name<__GROST_FLAVOR__>,
+      #vis struct #iter_name<'a, const N: ::core::primitive::bool = true> {
+        selector: &'a #name,
         index: ::core::option::Option<#indexer_name>,
         num: ::core::primitive::usize,
         yielded: ::core::primitive::usize,
@@ -63,16 +63,19 @@ impl Struct {
     }
   }
 
-  pub(crate) fn generate_selector_iter_impl(&self) -> proc_macro2::TokenStream {
+  pub(crate) fn selector_iter_impl<F>(&self, flavor: &F) -> proc_macro2::TokenStream
+  where
+    F: DeriveGenerator + ?Sized,
+  {
     let iter_name = self.selector_iter_name();
     let name = self.selector_name();
     let indexer_name = self.indexer_name();
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'a, __GROST_FLAVOR__: ?::core::marker::Sized, const N: ::core::primitive::bool> #iter_name<'a, __GROST_FLAVOR__, N> {
+      impl<'a, const N: ::core::primitive::bool> #iter_name<'a, N> {
         #[inline]
-        const fn new(selector: &'a #name<__GROST_FLAVOR__>, num: ::core::primitive::usize) -> Self {
+        const fn new(selector: &'a #name, num: ::core::primitive::usize) -> Self {
           Self {
             selector,
             index: ::core::option::Option::Some(#indexer_name::FIRST),
@@ -96,12 +99,17 @@ impl Struct {
     }
   }
 
-  pub(crate) fn generate_selector_impl(
+  pub(crate) fn selector_impl<F>(
     &self,
     path_to_grost: &syn::Path,
-  ) -> proc_macro2::TokenStream {
+    generator: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: DeriveGenerator + ?Sized,
+  {
     let name = self.selector_name();
     let fields = &self.fields;
+    let flavor_ty = generator.ty();
 
     let fns = fields.iter().map(move |f| {
       let ty = f.ty();
@@ -175,10 +183,11 @@ impl Struct {
           self.name.name_str(),
           field_name.name_str()
         );
+        let wf = f.get_wire_format_or_default(path_to_grost, generator);
         quote! {
           #[doc = #select_fn_doc]
           #[inline]
-          pub fn #select_fn_name(&mut self, val: <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector) -> &mut Self {
+          pub fn #select_fn_name(&mut self, val: <#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector) -> &mut Self {
             self.#field_name = val;
             self
           }
@@ -186,19 +195,19 @@ impl Struct {
           #[doc = #unselect_fn_doc]
           #[inline]
           pub fn #unselect_fn_name(&mut self) -> &mut Self {
-            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector as #path_to_grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            self.#field_name = <<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector as #path_to_grost::__private::Selector<#flavor_ty>>::NONE;
             self
           }
 
           #[doc = #ref_fn_doc]
           #[inline]
-          pub const fn #ref_fn_name(&self) -> &<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector {
+          pub const fn #ref_fn_name(&self) -> &<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector {
             &self.#field_name
           }
 
           #[doc = #ref_mut_fn_doc]
           #[inline]
-          pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector {
+          pub const fn #ref_mut_fn_name(&mut self) -> &mut <#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector {
             &mut self.#field_name
           }
 
@@ -284,15 +293,10 @@ impl Struct {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
+      let wf = f.get_wire_format_or_default(path_to_grost, generator);
 
-      if ty.primitive_selection_type() {
-        quote! {
-          #field_name: false
-        }
-      } else {
-        quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector as #path_to_grost::__private::Selector<__GROST_FLAVOR__>>::NONE
-        }
+      quote! {
+        #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector as #path_to_grost::__private::Selector<#flavor_ty>>::NONE
       }
     });
 
@@ -300,15 +304,10 @@ impl Struct {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
+      let wf = f.get_wire_format_or_default(path_to_grost, generator);
 
-      if ty.primitive_selection_type() {
-        quote! {
-          #field_name: true
-        }
-      } else {
-        quote! {
-          #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector as #path_to_grost::__private::Selector<__GROST_FLAVOR__>>::ALL
-        }
+      quote! {
+        #field_name: <<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector as #path_to_grost::__private::Selector<#flavor_ty>>::ALL
       }
     });
 
@@ -366,13 +365,14 @@ impl Struct {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
+      let wf = f.get_wire_format_or_default(path_to_grost, generator);
       if ty.primitive_selection_type() {
         quote! {
           self.#field_name |= other.#field_name;
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector as #path_to_grost::__private::Selector<__GROST_FLAVOR__>>::merge(&mut self.#field_name, other.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector as #path_to_grost::__private::Selector<#flavor_ty>>::merge(&mut self.#field_name, other.#field_name);
         }
       }
     });
@@ -381,6 +381,7 @@ impl Struct {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
+      let wf = f.get_wire_format_or_default(path_to_grost, generator);
 
       if ty.primitive_selection_type() {
         quote! {
@@ -388,7 +389,7 @@ impl Struct {
         }
       } else {
         quote! {
-          <<#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector as #path_to_grost::__private::Selector<__GROST_FLAVOR__>>::flip(&mut self.#field_name);
+          <<#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector as #path_to_grost::__private::Selector<#flavor_ty>>::flip(&mut self.#field_name);
         }
       }
     });
@@ -463,10 +464,12 @@ impl Struct {
       }
     });
 
+    let flavor_ty = generator.ty();
+
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> #name<__GROST_FLAVOR__> {
+      impl #name {
         fn debug_helper(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
           let num_selected = self.selected();
           let mut idx = 0;
@@ -478,7 +481,7 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::fmt::Debug for #name<__GROST_FLAVOR__> {
+      impl ::core::fmt::Debug for #name {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
           ::core::write!(f, #name_str)?;
           self.debug_helper(f)
@@ -487,7 +490,7 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::cmp::PartialEq for #name<__GROST_FLAVOR__> {
+      impl ::core::cmp::PartialEq for #name {
         fn eq(&self, other: &Self) -> ::core::primitive::bool {
           #(#eq) && *
         }
@@ -495,11 +498,11 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::cmp::Eq for #name<__GROST_FLAVOR__> {}
+      impl ::core::cmp::Eq for #name {}
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::hash::Hash for #name<__GROST_FLAVOR__> {
+      impl ::core::hash::Hash for #name {
         fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
           #(#hash)*
         }
@@ -507,7 +510,7 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::clone::Clone for #name<__GROST_FLAVOR__> {
+      impl ::core::clone::Clone for #name {
         fn clone(&self) -> Self {
           *self
         }
@@ -515,17 +518,17 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> ::core::marker::Copy for #name<__GROST_FLAVOR__> {}
+      impl ::core::marker::Copy for #name {}
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::Selectable<__GROST_FLAVOR__> for #struct_name {
-        type Selector = #name<__GROST_FLAVOR__>;
+      impl #path_to_grost::__private::Selectable<#flavor_ty, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
+        type Selector = #name;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::Selector<__GROST_FLAVOR__> for #name<__GROST_FLAVOR__> {
+      impl #path_to_grost::__private::Selector<#flavor_ty> for #name {
         const ALL: Self = Self::all();
         const NONE: Self = Self::empty();
 
@@ -552,7 +555,7 @@ impl Struct {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__: ?::core::marker::Sized> #name<__GROST_FLAVOR__> {
+      impl #name {
         /// The number of options in this selection type.
         pub const OPTIONS: ::core::primitive::usize = #num_fields;
 
@@ -560,7 +563,6 @@ impl Struct {
         #[inline]
         pub const fn empty() -> Self {
           Self {
-            _m: ::core::marker::PhantomData,
             #(#empty),*
           }
         }
@@ -569,7 +571,6 @@ impl Struct {
         #[inline]
         pub const fn all() -> Self {
           Self {
-            _m: ::core::marker::PhantomData,
             #(#all),*
           }
         }
@@ -604,14 +605,14 @@ impl Struct {
 
         /// Returns an iterator over the selected fields.
         #[inline]
-        pub const fn iter_selected(&self) -> #iter_name<__GROST_FLAVOR__, true>
+        pub const fn iter_selected(&self) -> #iter_name<true>
         {
           #iter_name::new(self, self.selected())
         }
 
         /// Returns an iterator over the unselected fields.
         #[inline]
-        pub const fn iter_unselected(&self) -> #iter_name<__GROST_FLAVOR__, false>
+        pub const fn iter_unselected(&self) -> #iter_name<false>
         {
           #iter_name::new(self, self.unselected())
         }
@@ -641,7 +642,7 @@ impl Struct {
 
       // #[automatically_derived]
       // #[allow(non_camel_case_types)]
-      // impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst> for #name<__GROST_FLAVOR__> {
+      // impl #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst> for #name {
       //   fn encode(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
       //     const SELECT_NONE: ::core::primitive::u8 = #path_to_grost::__private::flavors::selector::SelectorIdentifier::none().as_u8();
       //     const SELECT_ALL: ::core::primitive::u8 = #path_to_grost::__private::flavors::selector::SelectorIdentifier::all().as_u8();
@@ -840,7 +841,7 @@ impl Struct {
           }
 
           /// Decodes the selection from a buffer.
-          pub fn decode<'a, F, UB>(src: &'a [u8]) -> ::core::result::Result<(::core::primitive::usize, #path_to_grost::__private::SelectionSet<Self, UB>), #path_to_grost::__private::DecodeError<__GROST_FLAVOR__>>
+          pub fn decode<'a, F, UB>(src: &'a [u8]) -> ::core::result::Result<(::core::primitive::usize, #path_to_grost::__private::SelectionSet<Self, UB>), #path_to_grost::__private::DecodeError>
           where
             F: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
             UB: #path_to_grost::__private::Buffer<#path_to_grost::__private::Unknown<F, &'a [::core::primitive::u8]>> + 'a,

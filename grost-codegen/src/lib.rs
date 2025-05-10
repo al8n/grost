@@ -1,20 +1,19 @@
 pub use case::*;
 pub use derive::*;
 pub use enum_::*;
-use indexmap::{IndexMap, IndexSet};
+pub use object::*;
 pub use safe_ident::*;
-pub use struct_::*;
 
+use indexmap::IndexSet;
 use quote::{ToTokens, quote};
-use smol_str::SmolStr;
 
 mod case;
 mod derive;
 /// Enum structs
 mod enum_;
-mod safe_ident;
 /// structs
-mod struct_;
+mod object;
+mod safe_ident;
 
 /// Types for the generator
 pub mod ty;
@@ -133,7 +132,37 @@ impl SchemaGenerator {
     let structs = self
       .structs
       .iter()
-      .map(|s| derive.derive_object(&self.grost_path, s))
+      .map(|s| {
+        let code = derive.derive_object(&self.grost_path, s)?;
+        let struct_impl = s.struct_impl();
+        let partial_impl = s.partial_struct_impl(&self.grost_path);
+        let indexer_impl = s.indexer_impl(&self.grost_path);
+
+        let selector = s.selector_defination(&self.grost_path, derive);
+        let selector_iter = s.selector_iter_defination();
+        let selector_impl = s.selector_impl(&self.grost_path, derive);
+        let selector_iter_impl = s.selector_iter_impl(derive);
+
+        Ok(quote! {
+          const _: () = {
+            #struct_impl
+            #partial_impl
+            #indexer_impl
+
+            const _: () = {
+              #selector
+
+              #selector_impl
+
+              #selector_iter
+
+              #selector_iter_impl
+
+              #code
+            };
+          };
+        })
+      })
       .collect::<Result<Vec<_>, G::Error>>()?;
 
     let enums = self
@@ -171,88 +200,75 @@ impl SchemaGenerator {
 
   /// Generates the definations for the schema types
   pub fn generate(&self) -> proc_macro2::TokenStream {
-    let enums = self.enums.iter().map(|e| e.enum_defination());
+    let enums = self.enums.iter().map(|e| e.enum_definations());
+    let objects = self.structs.iter().map(|s| {
+      let defination = s.struct_defination();
+      let partial_defination = s.partial_struct_defination();
+      let indexer_defination = s.indexer_defination();
+
+      quote! {
+        #defination
+
+        #partial_defination
+
+        #indexer_defination
+      }
+    });
 
     quote! {
       #(#enums)*
+
+      #(#objects)*
     }
   }
 
   // pub fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Box<dyn core::error::Error + Send + Sync + 'static>> {
-  //   let defination = struct_.struct_defination();
-  //   let partial_defination = struct_.partial_struct_defination();
-  //   let partial_impl = struct_.partial_struct_impl(&self.grost_path);
-
-  //   let indexer_defination = struct_.generate_indexer_defination();
-  //   let indexer_impl = struct_.generate_indexer_impl(&self.grost_path);
-
-  //   let struct_impl = struct_.struct_impl();
   //   let codec = self.flavors.iter().map(|(_, f)| {
   //     let codec = f.generate_struct_codec(&self.grost_path, struct_);
   //     let partial_ref_defination = struct_.partial_ref_struct_defination(&self.grost_path, f);
   //     quote! {
   //       #partial_ref_defination
-
   //       #codec
   //     }
   //   });
-
   //   let selector_definations = self.flavors.iter().map(|(_, f)| {
   //     struct_.generate_selector_defination(&self.grost_path, f)
   //   });
   //   let selector_iter_defination = struct_.generate_selector_iter_defination();
   //   let selector_iter_impl = struct_.generate_selector_iter_impl();
   //   let selector_impl = struct_.generate_selector_impl(&self.grost_path);
-
   //   let selector_codecs = self
   //     .flavors
   //     .iter()
   //     .map(|(_, f)| f.generate_selection_codec(&self.grost_path, struct_));
-
   //   let reflection = struct_.generate_reflection(&self.grost_path);
   //   let reflection_impls = self
   //     .flavors
   //     .iter()
   //     .map(|(_, f)| f.generate_struct_reflection_impl(&self.grost_path, struct_));
-
   //   Ok(quote! {
-  //     #defination
-
-  //     #partial_defination
-
-  //     #indexer_defination
-
   //     // #selector_iter_defination
-
   //     const _: () = {
   //       #struct_impl
-
   //       #partial_impl
-
   //       #selector_iter_impl
   //       #selector_impl
-
   //       #indexer_impl
-
   //       #reflection
-
   //       #(const _: () = {
   //         #reflection_impls
   //       };)*
-
   //       #(
   //         const _: () = {
   //           #codec
   //         };
   //       )*
   //     };
-
   //     #(#selector_codecs)*
   //   })
   // }
 
   fn generate_enum_impl(&self, enum_: &Enum) -> proc_macro2::TokenStream {
-    let name = enum_.name();
     let as_str = enum_.enum_as_str();
     let from_str = enum_.enum_from_str();
     let is_variant = enum_.enum_is_variant();
@@ -264,10 +280,6 @@ impl SchemaGenerator {
     let arbitrary = quote! {};
 
     quote! {
-      // impl #name {
-      //   #reflection
-      // }
-
       #reflection
 
       #as_str

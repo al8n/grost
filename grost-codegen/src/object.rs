@@ -12,7 +12,7 @@ pub mod field;
 
 mod index;
 mod reflection;
-mod selection;
+mod selector;
 
 pub struct Struct {
   name: SafeIdent,

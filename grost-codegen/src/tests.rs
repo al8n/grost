@@ -1,14 +1,14 @@
-// use std::num::NonZeroU8;
+use std::num::NonZeroU8;
 
-// use grost_proto::reflection::{EnumRepr, EnumVariantValue};
-// use syn::parse_quote;
-// // use grost_proto::{Tag, WireType};
-
-// // use crate::{Field, Struct, field::getter, ty::Ty};
+use grost_proto::reflection::{EnumRepr, EnumVariantValue};
+use syn::parse_quote;
+// use grost_proto::{Tag, WireType};
 
 // use crate::{Field, Struct, field::getter, ty::Ty};
 
-// use super::{SchemaGenerator, Enum, EnumVariant, Generator, SafeIdent};
+use crate::{Field, SchemaGeneratorBuilder, Struct, field::getter, network::Network, ty::Ty};
+
+use super::{Enum, EnumVariant, SafeIdent, SchemaGenerator};
 
 // #[test]
 // fn test_enum_generate() {
@@ -38,66 +38,71 @@
 //   println!("{}", output);
 // }
 
-// #[test]
-// fn test_struct_generate() {
-//   let generator = SchemaGenerator::new();
-//   let fields = vec![
-//     Field::new(
-//       SafeIdent::new("name"),
-//       Ty::primitive(parse_quote!(String), "String!"),
-//       1,
-//     ),
-//     Field::new(
-//       SafeIdent::new("age"),
-//       Ty::primitive(parse_quote!(u32), "u32!").with_copy(),
-//       2,
-//     ),
-//     Field::new(
-//       SafeIdent::new("email"),
-//       Ty::optional(Ty::primitive(
-//         parse_quote!(::core::option::Option<::std::string::String>),
-//         "String",
-//       )),
-//       3,
-//     ),
-//   ];
-//   let user = Struct::new(SafeIdent::new("User"), fields)
-//     .with_description("A user struct")
-//     .with_visibility(parse_quote!(pub));
+#[test]
+fn test_struct_generate() {
+  let mut generator = SchemaGeneratorBuilder::new();
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("name"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!"),
+      1,
+    ),
+    Field::new(
+      SafeIdent::new("age"),
+      Ty::primitive(parse_quote!(u32), "u32").with_copy(),
+      2,
+    ),
+    Field::new(
+      SafeIdent::new("email"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      3,
+    ),
+  ];
+  let struct_ = Struct::new(SafeIdent::new("User"), fields)
+    .with_description("A user struct")
+    .with_visibility(parse_quote!(pub));
 
-//   let fields = vec![
-//     Field::new(
-//       SafeIdent::new("user"),
-//       Ty::struct_(parse_quote!(User), "User!"),
-//       1,
-//     ),
-//     Field::new(
-//       SafeIdent::new("replyer"),
-//       Ty::optional(Ty::struct_(parse_quote!(User), "User")),
-//       2,
-//     ),
-//     Field::new(
-//       SafeIdent::new("title"),
-//       Ty::primitive(parse_quote!(::std::string::String), "String!"),
-//       3,
-//     ),
-//     Field::new(
-//       SafeIdent::new("content"),
-//       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
-//       4,
-//     ),
-//   ];
-//   let comment = Struct::new(SafeIdent::new("Comment"), fields)
-//     .with_description("A comment struct")
-//     .with_visibility(parse_quote!(pub));
+  generator.objects_mut().insert(struct_);
 
-//   let user_ts = generator.generate_struct(&user).unwrap();
-//   let comment_ts = generator.generate_struct(&comment).unwrap();
-//   let generated = quote::quote! {
-//     #user_ts
-//     #comment_ts
-//   };
-//   let file: syn::File = syn::parse2(generated).unwrap();
-//   let output = prettyplease::unparse(&file);
-//   println!("{}", output);
-// }
+  let fields = vec![
+    Field::new(
+      SafeIdent::new("user"),
+      Ty::struct_(parse_quote!(User), "User!"),
+      1,
+    ),
+    Field::new(
+      SafeIdent::new("replyer"),
+      Ty::optional(Ty::struct_(parse_quote!(User), "User")),
+      2,
+    ),
+    Field::new(
+      SafeIdent::new("title"),
+      Ty::primitive(parse_quote!(::std::string::String), "String!"),
+      3,
+    ),
+    Field::new(
+      SafeIdent::new("content"),
+      Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+      4,
+    ),
+  ];
+  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+    .with_description("A comment struct")
+    .with_visibility(parse_quote!(pub));
+
+  generator.objects_mut().insert(struct_);
+
+  let generator = generator.build();
+
+  let generated = generator.generate();
+  let code: syn::File = syn::parse2(generated).unwrap();
+  let definations = prettyplease::unparse(&code);
+
+  let network = Network::new(&parse_quote!(::grost));
+  let generated = generator.derive(&network).unwrap();
+  let code: syn::File = syn::parse2(generated).unwrap();
+  let impls = prettyplease::unparse(&code);
+
+  println!("{definations}");
+  println!("{impls}");
+}

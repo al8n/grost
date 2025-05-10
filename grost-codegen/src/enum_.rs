@@ -339,7 +339,7 @@ impl Enum {
     )
   }
 
-  pub(super) fn enum_defination(&self) -> proc_macro2::TokenStream {
+  pub(super) fn enum_definations(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let repr = &self.repr;
     let meta_repr = repr.to_attribute();

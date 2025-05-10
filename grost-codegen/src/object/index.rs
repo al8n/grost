@@ -1,7 +1,7 @@
 use super::*;
 
 impl Struct {
-  pub(crate) fn generate_indexer_defination(&self) -> proc_macro2::TokenStream {
+  pub(crate) fn indexer_defination(&self) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let indexer_doc = format!(
       " Field indexer for the struct [`{}`]",
@@ -28,10 +28,7 @@ impl Struct {
     }
   }
 
-  pub(crate) fn generate_indexer_impl(
-    &self,
-    path_to_grost: &syn::Path,
-  ) -> proc_macro2::TokenStream {
+  pub(crate) fn indexer_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let num_fields = self.fields().len();
 
