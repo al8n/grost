@@ -185,7 +185,7 @@ macro_rules! referenceable {
   };
 }
 
-/// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`
+/// A macro emits [`State<Encoded<'a, Flavor, WireFormat>>`](super::State) implementations for `Self`
 #[macro_export]
 macro_rules! encoded_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {

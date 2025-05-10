@@ -7,6 +7,8 @@ use super::{DeriveGenerator, Enum, Struct};
 mod codec;
 mod reflection;
 
+mod object;
+
 #[derive(Clone)]
 pub struct Network {
   ty: syn::Type,
@@ -67,6 +69,21 @@ impl Network {
       }
     }
   }
+
+  fn derive_encoded_state(
+    &self,
+    path_to_grost: &syn::Path,
+    struct_name: &syn::Ident,
+    partial_ref_struct_name: &syn::Ident,
+  ) -> proc_macro2::TokenStream {
+    quote! {
+      #path_to_grost::__private::encoded_state!(
+        &'__grost_encoded_state__ #path_to_grost::__private::flavors::Network: #struct_name
+          as #path_to_grost::__private::flavors::network::LengthDelimited
+          => #partial_ref_struct_name<'__grost_encoded_state__>
+      );
+    }
+  }
 }
 
 impl DeriveGenerator for Network {
@@ -102,9 +119,33 @@ impl DeriveGenerator for Network {
     struct_: &Struct,
   ) -> Result<proc_macro2::TokenStream, Self::Error> {
     let default_format = self.derive_default_format(path_to_grost, struct_.name().name());
+    let partial_ref_struct_name = struct_.partial_ref_name();
+    let struct_encoded_state = self.derive_encoded_state(
+      path_to_grost,
+      struct_.name().name(),
+      &partial_ref_struct_name,
+    );
+    let partial_struct_encoded_state = self.derive_encoded_state(
+      path_to_grost,
+      &struct_.partial_struct_name(),
+      &partial_ref_struct_name,
+    );
+    let selectable = self.derive_selectable_for_object(path_to_grost, struct_);
 
     Ok(quote! {
+      #struct_encoded_state
+
+      #partial_struct_encoded_state
+
+      #path_to_grost::__private::encoded_state!(
+        &'__grost_encoded_state__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_encoded_state__>
+          as #path_to_grost::__private::flavors::network::LengthDelimited
+          => #partial_ref_struct_name<'__grost_encoded_state__>
+      );
+
       #default_format
+
+      #selectable
     })
   }
 
@@ -122,69 +163,10 @@ impl DeriveGenerator for Network {
   //   let fns = self.generate_field_encode_fns(path_to_grost, struct_);
   //   let selector = struct_.selector_name();
 
-  //   let selectable_impl = |name: &syn::Ident, lifetime: bool| -> proc_macro2::TokenStream {
-  //     let lifetime_with_angle = if lifetime {
-  //       Some(quote! {<'__grost_lifetime__>})
-  //     } else {
-  //       None
-  //     };
-  //     let lifetime = if lifetime {
-  //       Some(quote! {'__grost_lifetime__})
-  //     } else {
-  //       None
-  //     };
-  //     quote! {
-  //       #[automatically_derived]
-  //       #[allow(non_camel_case_types)]
-  //       impl #lifetime_with_angle #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::Network,
-  //         #path_to_grost::__private::flavors::network::LengthDelimited,
-  //       > for #name #lifetime_with_angle
-  //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
-  //       }
-
-  //       #[automatically_derived]
-  //       #[allow(non_camel_case_types)]
-  //       impl #lifetime_with_angle #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::Network,
-  //         #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
-  //       > for #name #lifetime_with_angle
-  //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
-  //       }
-
-  //       #[automatically_derived]
-  //       #[allow(non_camel_case_types)]
-  //       impl<const I: ::core::primitive::u32, #lifetime> #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::Network,
-  //         #path_to_grost::__private::flavors::network::Repeated<
-  //           #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
-  //         >,
-  //       > for #name #lifetime_with_angle
-  //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
-  //       }
-  //     }
-  //   };
-
-  //   let selectable_impls = [
-  //     selectable_impl(struct_name.name(), false),
-  //     selectable_impl(&partial_struct_name, false),
-  //     selectable_impl(&partial_ref_name, true),
-  //   ];
-
   //   quote! {
   //     #index
 
   //     #fns
-
-  //     #(#selectable_impls)*
-
-  //     #[automatically_derived]
-  //     impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::Network> for #struct_name {
-  //       type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
-  //     }
 
   //     #encode
 

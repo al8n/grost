@@ -261,7 +261,7 @@ impl Struct {
     }
   }
 
-  pub(crate) fn partial_ref_struct_defination<F>(
+  pub(crate) fn partial_ref_struct<F>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,

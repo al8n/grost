@@ -143,11 +143,15 @@ impl SchemaGenerator {
         let selector_impl = s.selector_impl(&self.grost_path, derive);
         let selector_iter_impl = s.selector_iter_impl(derive);
 
+        let partial_ref_struct = s.partial_ref_struct(&self.grost_path, derive);
+
         Ok(quote! {
           const _: () = {
             #struct_impl
             #partial_impl
             #indexer_impl
+
+            #partial_ref_struct
 
             const _: () = {
               #selector

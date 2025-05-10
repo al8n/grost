@@ -82,6 +82,7 @@ pub mod __private {
     decode_owned_scalar,
     default_wire_format,
     encode::*,
+    encoded_state,
     flavors,
     indexer,
     // map::MapSelector,
