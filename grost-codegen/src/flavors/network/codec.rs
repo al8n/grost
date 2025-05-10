@@ -68,7 +68,7 @@ impl Network {
           >
           + #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>
           + ?::core::marker::Sized,
-        W: #path_to_grost::__private::WireFormat<
+        W: #path_to_grost::__private::flavors::WireFormat<
             #path_to_grost::__private::flavors::network::Network,
           >,
       {
@@ -127,7 +127,7 @@ impl Network {
     };
 
     let reflection = quote! {
-      fn(&#ty, &#path_to_grost::__private::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      fn(&#ty, &#path_to_grost::__private::flavors::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
     };
     let fn_impl = if ty.repr().is_optional() {
       let atomic_ty = ty.repr().encode_atomic_ty();
@@ -286,7 +286,7 @@ impl Network {
     let reflection = quote! {
       fn(
         &#rust_ty,
-        &#path_to_grost::__private::network::Context,
+        &#path_to_grost::__private::flavors::network::Context,
         &mut [::core::primitive::u8],
         &<#rust_ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
       ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
@@ -475,7 +475,7 @@ impl Network {
     let tag = f.tag();
 
     let reflection = quote! {
-      fn(&#ty, &#path_to_grost::__private::network::Context) -> ::core::primitive::usize
+      fn(&#ty, &#path_to_grost::__private::flavors::network::Context) -> ::core::primitive::usize
     };
 
     quote! {
@@ -562,7 +562,7 @@ impl Network {
     let reflection = quote! {
       fn(
         &#ty,
-        &#path_to_grost::__private::network::Context,
+        &#path_to_grost::__private::flavors::network::Context,
         &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
       ) -> ::core::primitive::usize
     };
@@ -740,7 +740,7 @@ impl Network {
       quote! {
         fn(
           &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
@@ -749,7 +749,7 @@ impl Network {
       quote! {
         fn(
           &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
@@ -848,7 +848,7 @@ impl Network {
       quote! {
         fn(
           &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize
       }
@@ -856,7 +856,7 @@ impl Network {
       quote! {
         fn(
           &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
         ) -> ::core::primitive::usize
       }
@@ -1031,7 +1031,7 @@ impl Network {
       quote! {
         fn(
           &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
       }
@@ -1039,7 +1039,7 @@ impl Network {
       quote! {
         fn(
           &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
       }
@@ -1133,14 +1133,14 @@ impl Network {
       quote! {
         fn(
           &::core::option::Option<<#atomic_ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize
       }
     } else {
       quote! {
         fn(
           &<#ty as #path_to_grost::__private::Referenceable<#path_to_grost::__private::flavors::network::Network, #wf>>::Ref<'_>,
-          &#path_to_grost::__private::network::Context,
+          &#path_to_grost::__private::flavors::network::Context,
         ) -> ::core::primitive::usize
       }
     };

@@ -40,7 +40,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
       {
         type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -54,7 +54,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
       {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -66,7 +66,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
       {
@@ -79,7 +79,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
       {
@@ -106,7 +106,7 @@ impl Struct {
       #[allow(clippy::type_complexity)]
       impl<F, const TAG: ::core::primitive::u32> #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F, TAG>
       where
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
       {
         /// Returns the reflection of the field.
         #[inline]
@@ -334,7 +334,7 @@ impl Struct {
       impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
       {
         type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -348,7 +348,7 @@ impl Struct {
       impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
       {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -360,7 +360,7 @@ impl Struct {
       impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
       {
@@ -373,7 +373,7 @@ impl Struct {
       impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
       {
@@ -405,7 +405,7 @@ impl Struct {
       #[automatically_derived]
       impl<F> #reflection_name<#path_to_grost::__private::reflection::StructReflection<F>, F>
       where
-        F: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
       {
         /// Returns the reflection of the struct.
         #[inline]
@@ -426,7 +426,7 @@ impl Struct {
           __GROST_FLAVOR__,
         >
         where
-          __GROST_FLAVOR__: ?::core::marker::Sized + #path_to_grost::__private::Flavor,
+          __GROST_FLAVOR__: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
         {
           #reflection_name::new()
         }

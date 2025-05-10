@@ -368,7 +368,7 @@ impl Color {
         }
     }
 }
-::grost::__private::network_varint!(Color);
+::grost::__private::flavors::network_varint!(Color);
 #[cfg(feature = "quickcheck")]
 const _: () = {
     use ::grost::__private::quickcheck::{Arbitrary, Gen};
@@ -388,12 +388,12 @@ mod __quickcheck_fuzzy_network_flavor_color__ {
     use ::grost::__private::{Encode, Decode};
     ::grost::__private::quickcheck::quickcheck! {
         fn fuzzy_color(ctx : < ::grost::__private::flavors::Network as
-        ::grost::__private::Flavor > ::Context, value : Color) -> bool { extern crate
-        std; let encoded_len = value.encoded_len(& ctx); let mut buf = ::std::vec![0u8;
-        encoded_len]; let ::core::result::Result::Ok(written) = value.encode(& ctx, & mut
-        buf) else { return false; }; if written != encoded_len { return false; } let
-        ::core::result::Result::Ok((read, decoded)) = Color::decode:: < () > (& ctx, &
-        buf[..encoded_len]) else { return false; }; if decoded != value || read !=
-        written { return false; } true }
+        ::grost::__private::flavors::Flavor > ::Context, value : Color) -> bool { extern
+        crate std; let encoded_len = value.encoded_len(& ctx); let mut buf =
+        ::std::vec![0u8; encoded_len]; let ::core::result::Result::Ok(written) = value
+        .encode(& ctx, & mut buf) else { return false; }; if written != encoded_len {
+        return false; } let ::core::result::Result::Ok((read, decoded)) = Color::decode::
+        < () > (& ctx, & buf[..encoded_len]) else { return false; }; if decoded != value
+        || read != written { return false; } true }
     }
 }

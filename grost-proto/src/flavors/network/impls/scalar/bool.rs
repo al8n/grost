@@ -1,13 +1,14 @@
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state,
   flavors::network::{Fixed8, Network, Varint},
-  referenceable_scalar, selectable_scalar,
+  referenceable_scalar, selectable,
 };
 
 default_wire_format!(Network: bool as Fixed8);
 
-selectable_scalar!(Network:bool);
+selectable!(@scalar Network:bool);
 referenceable_scalar!(Network: bool as Fixed8, bool as Varint);
+encoded_state!(@scalar &'a Network: bool as Fixed8, bool as Varint);
 
 bridge!(
   Network: u8 {

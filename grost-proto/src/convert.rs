@@ -7,6 +7,39 @@ use super::{
   flavors::Flavor,
 };
 
+// pub trait Transform<S: ?Sized> {
+//   type Input: ?Sized;
+//   type Output;
+
+//   fn transform_ref(input: &Self::Input) -> Result<Self::Output, F::DecodeError>
+//   where
+//     F: Flavor;
+
+//   fn transform(input: Self::Input) -> Result<Self::Output, F::DecodeError>
+//   where
+//     F: Flavor,
+//     Self::Input: Sized,
+//   {
+//     Self::transform_ref(&input)
+//   }
+// }
+
+/// A trait for types that can be transformed from the input type to the output type.
+///
+/// The generic `S` can be any type representing a state.
+pub trait State<S: ?Sized> {
+  /// The input state type.
+  type Input: ?Sized;
+  /// The output state type.
+  type Output: ?Sized;
+}
+
+/// A state which shows the type in encoded state.
+pub struct Encoded<'a, F: ?Sized, W: ?Sized> {
+  _wf: core::marker::PhantomData<&'a W>,
+  _flavor: core::marker::PhantomData<&'a F>,
+}
+
 /// A partial message which may or may not contain all of fields of a [`Message`].
 pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F, W> {
   type UnknownBuffer<B>: Buffer<F::Unknown<B>>;
@@ -193,6 +226,19 @@ macro_rules! wrapper_impl {
       }
     )*
   };
+  (@transform_encoded $($ty:ty),+$(,)?) => {
+    $(
+      impl<'a, F, W, T> State<Encoded<'a, F, W>> for $ty
+      where
+        T: State<Encoded<'a, F, W>> + ?Sized,
+        F: ?Sized,
+        W: ?Sized,
+      {
+        type Input = T::Input;
+        type Output = T::Output;
+      }
+    )*
+  };
   (@into_target $($ty:ty:$constructor:ident),+$(,)?) => {
     $(
       impl<F, T> IntoTarget<F, $ty> for T
@@ -287,16 +333,6 @@ wrapper_impl!(@type_owned Option<T>:Some);
 wrapper_impl!(@partial_message Option<T>);
 wrapper_impl!(@message Option<T>);
 
-// impl<F, T, I> IntoTarget<F, Option<T>> for I
-// where
-//   I: IntoTarget<F, T>,
-//   F: Flavor + ?Sized,
-// {
-//   fn into_target(self) -> Result<Option<T>, F::DecodeError> {
-//     Ok(Some(self.into_target()?))
-//   }
-// }
-
 impl<F, W, T> Referenceable<F, W> for Option<T>
 where
   T: Referenceable<F, W>,
@@ -307,6 +343,16 @@ where
     = T::Ref<'a>
   where
     Self: 'a;
+}
+
+impl<'a, F, W, T> State<Encoded<'a, F, W>> for Option<T>
+where
+  T: State<Encoded<'a, F, W>>,
+  F: ?Sized,
+  W: ?Sized,
+{
+  type Input = T::Input;
+  type Output = T::Output;
 }
 
 impl<'a, T, F> TypeBorrowed<'a, F, T> for Option<&'a T>
@@ -375,6 +421,12 @@ const _: () = {
     Rc<T>,
     Arc<T>,
   );
+  wrapper_impl!(
+    @transform_encoded
+    Box<T>,
+    Rc<T>,
+    Arc<T>,
+  );
 };
 
 #[cfg(feature = "triomphe_0_1")]
@@ -403,6 +455,14 @@ const _: () = {
   );
   wrapper_impl!(
     @message
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @referenceable
+    Arc<T>,
+  );
+  wrapper_impl!(
+    @transform_encoded
     Arc<T>,
   );
 };

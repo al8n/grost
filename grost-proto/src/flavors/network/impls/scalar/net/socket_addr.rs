@@ -4,11 +4,12 @@ use crate::{
   decode::Decode,
   decode_owned_scalar, default_wire_format,
   encode::Encode,
+  encoded_state,
   flavors::{
     Network,
     network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
   },
-  partial_encode_scalar, referenceable_scalar, selectable_scalar,
+  partial_encode_scalar, referenceable_scalar, selectable,
 };
 
 const PORT_SIZE: usize = 2;
@@ -145,8 +146,9 @@ default_wire_format!(
   SocketAddrV6 as LengthDelimited;
   SocketAddr as LengthDelimited;
 );
-selectable_scalar!(Network: SocketAddrV4, SocketAddrV6, SocketAddr);
+selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
 referenceable_scalar!(Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
+encoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

@@ -38,7 +38,9 @@ pub mod indexer;
 /// The selection related types and traits
 pub mod selector;
 
-mod convert;
+/// Traits for conversions between types.
+pub mod convert;
+
 #[macro_use]
 mod macros;
 mod map;
@@ -73,21 +75,21 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 pub mod __private {
   pub use super::{
     buffer::*,
-    convert::*,
+    convert::{self, *},
     debug_assert_read_eq,
     debug_assert_write_eq,
     decode::*,
     decode_owned_scalar,
     default_wire_format,
     encode::*,
-    flavors::{self, *},
+    flavors,
     indexer,
     // map::MapSelector,
     message,
     network_varint,
     partial_encode_scalar,
     reflection,
-    selectable_scalar,
+    selectable,
     selector::{self, *},
   };
   pub use varing;

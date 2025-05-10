@@ -3,13 +3,13 @@ use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, referenceable, selectable_scalar, type_ref,
+  into_target, referenceable, selectable, type_ref,
 };
 use smol_str_0_3::SmolStr;
 
 default_wire_format!(Network: SmolStr as LengthDelimited);
 
-selectable_scalar!(Network:SmolStr);
+selectable!(@scalar Network:SmolStr);
 
 encode_bridge!(
   Network: str {

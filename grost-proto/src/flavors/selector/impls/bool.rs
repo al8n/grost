@@ -10,10 +10,10 @@ use crate::{
       Zst,
     },
   },
-  message, partial_encode_scalar, selectable_scalar,
+  message, partial_encode_scalar, selectable,
 };
 
-selectable_scalar!(Select: bool);
+selectable!(@scalar Select: bool);
 partial_encode_scalar!(Select: bool as Zst);
 decode_owned_scalar!(Select: bool as Zst);
 message!(Select: bool as Zst);

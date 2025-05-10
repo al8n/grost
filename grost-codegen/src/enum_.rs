@@ -665,7 +665,7 @@ impl Enum {
         use #path_to_grost::__private::{Encode, Decode};
 
         #path_to_grost::__private::quickcheck::quickcheck! {
-          fn #quickcheck_fn(ctx: <#flavor_ty as #path_to_grost::__private::Flavor>::Context, value: #name_ident) -> bool {
+          fn #quickcheck_fn(ctx: <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context, value: #name_ident) -> bool {
             extern crate std;
 
             let encoded_len = value.encoded_len(&ctx);

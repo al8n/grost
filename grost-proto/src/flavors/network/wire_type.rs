@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::flavors::WireFormat;
 
-use super::{Identifier, Network};
+use super::Network;
 
 wire_type!(
   enum WireType<Network> {

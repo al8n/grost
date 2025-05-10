@@ -1,15 +1,15 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge,
+  decode_bridge, default_wire_format, encode_bridge, encoded_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, referenceable, selectable_scalar, type_ref,
+  into_target, referenceable, selectable, type_ref,
 };
 use bytes_1::Bytes;
 
 default_wire_format!(Network: Bytes as LengthDelimited);
 
-selectable_scalar!(Network:Bytes);
+selectable!(@scalar Network:Bytes);
 
 encode_bridge!(
   Network: [u8] {
@@ -35,6 +35,9 @@ type_ref!( Network: &[u8] => Bytes {
 });
 referenceable!(
   Network: Bytes as LengthDelimited => &'a [u8]
+);
+encoded_state!(
+  &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {

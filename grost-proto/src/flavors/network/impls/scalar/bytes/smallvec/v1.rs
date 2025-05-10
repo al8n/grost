@@ -1,7 +1,18 @@
+use smallvec_1::SmallVec;
+
+use crate::{
+  default_wire_format, encoded_state,
+  flavors::{Network, network::LengthDelimited},
+};
+
+default_wire_format!(Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited);
+encoded_state!(
+  &'a Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited => &'a [u8]
+);
+
 #[cfg(feature = "bytes_1")]
 const _: () = {
   use crate::{
-    default_wire_format,
     flavors::network::{LengthDelimited, Network},
     referenceable,
   };
@@ -9,8 +20,6 @@ const _: () = {
   use smallvec_1::SmallVec;
 
   use crate::{into_target, type_owned, type_ref};
-
-  default_wire_format!(Network: SmallVec<[u8; N]> [const N: usize] as LengthDelimited);
 
   bytes_bridge!(Network: SmallVec<[u8; N]> [const N: usize] {
     from_slice: |val: &[u8]| SmallVec::<[u8; N]>::from(val);

@@ -1,12 +1,13 @@
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state,
   flavors::network::{Fixed64, Network, Varint},
-  referenceable_scalar, selectable_scalar,
+  referenceable_scalar, selectable,
 };
 
 default_wire_format!(Network: f64 as Fixed64);
-selectable_scalar!(Network:f64);
+selectable!(@scalar Network:f64);
 referenceable_scalar!(Network: f64 as Fixed64, f64 as Varint);
+encoded_state!(@scalar &'a Network: f64 as Fixed64, f64 as Varint);
 bridge!(
   Network: u64 {
     f64 as Fixed64 {

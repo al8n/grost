@@ -636,14 +636,14 @@ impl Struct {
         #(#fns)*
       }
 
-      // #path_to_grost::__private::selectable_scalar!(#path_to_grost::__private::flavors::Select: #name<#path_to_grost::__private::flavors::Network>);
+      // #path_to_grost::__private::selectable!(@scalar #path_to_grost::__private::flavors::Select: #name<#path_to_grost::__private::flavors::Network>);
       // #path_to_grost::__private::partial_encode_scalar!(#path_to_grost::__private::flavors::Select: #name<#path_to_grost::__private::flavors::Network> as #path_to_grost::__private::flavors::network::LengthDelimited);
       // #path_to_grost::__private::decode_owned_scalar!(#path_to_grost::__private::flavors::Select: #name<#path_to_grost::__private::flavors::Network> as #path_to_grost::__private::flavors::network::LengthDelimited);
 
       // #[automatically_derived]
       // #[allow(non_camel_case_types)]
       // impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst> for #name<__GROST_FLAVOR__> {
-      //   fn encode(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::EncodeError> {
+      //   fn encode(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
       //     const SELECT_NONE: ::core::primitive::u8 = #path_to_grost::__private::flavors::selector::SelectorIdentifier::none().as_u8();
       //     const SELECT_ALL: ::core::primitive::u8 = #path_to_grost::__private::flavors::selector::SelectorIdentifier::all().as_u8();
 
@@ -668,24 +668,24 @@ impl Struct {
       //     ::core::result::Result::Err(#path_to_grost::__private::EncodeError::custom("only select all fields or no fields can be encoded as zst"))
       //   }
 
-      //   fn encoded_len(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context) -> ::core::primitive::usize {
+      //   fn encoded_len(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context) -> ::core::primitive::usize {
       //     1
       //   }
 
-      //   fn encoded_length_delimited_len(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context) -> ::core::primitive::usize {
+      //   fn encoded_length_delimited_len(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context) -> ::core::primitive::usize {
       //     <Self as #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst>>::encoded_len(self, ctx)
       //   }
 
-      //   fn encode_length_delimited(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::EncodeError> {
+      //   fn encode_length_delimited(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
       //     <Self as #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst>>::encode(self, ctx, buf)
       //   }
 
       //   fn encode_identified(
       //     &self,
-      //     ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context,
-      //     identifier: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Identifier,
+      //     ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context,
+      //     identifier: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Identifier,
       //     buf: &mut [::core::primitive::u8],
-      //   ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::EncodeError> {
+      //   ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
       //     if identifier.wire_type() != #path_to_grost::__private::flavors::selector::SelectorWireType::Zst {
       //       return ::core::result::Result::Err(#path_to_grost::__private::EncodeError::unsupported_wire_type(
       //         ::core::any::type_name::<Self>(),
@@ -698,8 +698,8 @@ impl Struct {
 
       //   fn encoded_identified_len(
       //     &self,
-      //     ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context,
-      //     identifier: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Identifier,
+      //     ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context,
+      //     identifier: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Identifier,
       //   ) -> ::core::primitive::usize {
       //     <Self as #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::Zst>>::encoded_len(self, ctx)
       //   }
@@ -843,7 +843,7 @@ impl Struct {
           /// Decodes the selection from a buffer.
           pub fn decode<'a, F, UB>(src: &'a [u8]) -> ::core::result::Result<(::core::primitive::usize, #path_to_grost::__private::SelectionSet<Self, UB>), #path_to_grost::__private::DecodeError<__GROST_FLAVOR__>>
           where
-            F: #path_to_grost::__private::Flavor + ?::core::marker::Sized,
+            F: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
             UB: #path_to_grost::__private::Buffer<#path_to_grost::__private::Unknown<F, &'a [::core::primitive::u8]>> + 'a,
           {
             if src.is_empty() {

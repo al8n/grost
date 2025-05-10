@@ -417,24 +417,24 @@ impl FlavorGenerator for Network {
         // }
 
         // impl #path_to_grost::__private::Encode<#path_to_grost::__private::flavors::Select, #path_to_grost::__private::flavors::selector::LengthDelimited> for #name<#path_to_grost::__private::flavors::Network> {
-        //   fn encode(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::EncodeError> {
+        //   fn encode(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
         //     ::core::todo!()
         //   }
 
-        //   fn encoded_len(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context) -> ::core::primitive::usize {
+        //   fn encoded_len(&self, _: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context) -> ::core::primitive::usize {
         //     ::core::todo!()
         //   }
 
-        //   fn encoded_length_delimited_len(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context) -> ::core::primitive::usize {
+        //   fn encoded_length_delimited_len(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context) -> ::core::primitive::usize {
         //     ::core::todo!()
         //   }
 
-        //   fn encode_length_delimited(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::Flavor>::EncodeError> {
+        //   fn encode_length_delimited(&self, ctx: &<#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Select as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
         //     ::core::todo!()
         //   }
         // }
 
-        // #path_to_grost::__private::selectable_scalar!(#flavor_ty: #name<#path_to_grost::__private::flavors::Network>);
+        // #path_to_grost::__private::selectable!(@scalar #flavor_ty: #name<#path_to_grost::__private::flavors::Network>);
         // #path_to_grost::__private::partial_encode_scalar!(#flavor_ty: #name<#path_to_grost::__private::flavors::Network> as #path_to_grost::__private::flavors::network::LengthDelimited);
         // #path_to_grost::__private::decode_owned_scalar!(#flavor_ty: #name<#path_to_grost::__private::flavors::Network> as #path_to_grost::__private::flavors::network::LengthDelimited);
 
@@ -553,9 +553,9 @@ impl FlavorGenerator for Network {
         // impl<'de> #path_to_grost::__private::Decode<'de, #flavor_ty, #path_to_grost::__private::flavors::network::LengthDelimited, Self> for #name<#path_to_grost::__private::flavors::Network> {
         //   #[inline]
         //   fn decode<UB>(
-        //     ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context,
+        //     ctx: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         //     src: &'de [::core::primitive::u8],
-        //   ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError>
+        //   ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::DecodeError>
         //   where
         //     UB: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
         //   {
@@ -564,9 +564,9 @@ impl FlavorGenerator for Network {
 
         //   #[inline]
         //   fn decode_length_delimited<UB>(
-        //     ctx: &<#flavor_ty as #path_to_grost::__private::Flavor>::Context,
+        //     ctx: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         //     src: &'de [::core::primitive::u8],
-        //   ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::Flavor>::DecodeError>
+        //   ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::DecodeError>
         //   where
         //     UB: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
         //   {
@@ -585,7 +585,7 @@ impl FlavorGenerator for Network {
     let name_ident = enum_.name();
 
     quote! {
-      #path_to_grost::__private::network_varint!(#name_ident);
+      #path_to_grost::__private::flavors::network_varint!(#name_ident);
     }
   }
 }

@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  IntoTarget, Message, PartialMessage, TypeRef,
+  Encoded, IntoTarget, Message, PartialMessage, State, TypeRef,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   flavors::{
@@ -134,6 +134,14 @@ where
     = Self
   where
     Self: Sized + 'static;
+}
+
+impl<'a, A> State<Encoded<'a, Network, LengthDelimited>> for ArrayVec<A>
+where
+  A: Array<Item = u8>,
+{
+  type Input = &'a [u8];
+  type Output = &'a [u8];
 }
 
 impl<A> Message<Network, LengthDelimited> for ArrayVec<A>

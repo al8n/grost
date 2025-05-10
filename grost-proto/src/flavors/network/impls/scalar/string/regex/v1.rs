@@ -38,8 +38,12 @@ const _: () = {
           },
         );
 
-        $crate::selectable_scalar!(Network:
+        $crate::selectable!(@scalar Network:
           $ty $([ $(const $g: usize),* ])?
+        );
+
+        $crate::encoded_state!(&'a Network:
+          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => &'a str
         );
 
         str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);

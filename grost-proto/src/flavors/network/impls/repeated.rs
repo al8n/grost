@@ -483,18 +483,18 @@ macro_rules! repeated {
 
     impl<V, W, const I: u32> $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::Encode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
     {
       repeated!(@encode_impl);
     }
 
     impl<V, W, const I: u32> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::PartialEncode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
     {
       repeated!(@partial_encode_impl);
     }
@@ -534,9 +534,9 @@ macro_rules! repeated {
 
     impl<V, A, W, const I: u32> $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::Encode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       A: $trait<Item = V>,
     {
       repeated!(@encode_impl);
@@ -544,9 +544,9 @@ macro_rules! repeated {
 
     impl<V, A, W, const I: u32,> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::PartialEncode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       A: $trait<Item = V>,
     {
       repeated!(@partial_encode_impl);
@@ -586,18 +586,18 @@ macro_rules! repeated {
 
     impl<V, W, const I: u32, const N: usize> $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::Encode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
     {
       repeated!(@encode_impl);
     }
 
     impl<V, W, const I: u32, const N: usize> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       V: $crate::__private::PartialEncode<$crate::__private::flavors::Network, W>,
-      W: $crate::__private::WireFormat<$crate::__private::flavors::Network>,
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
     {
       repeated!(@partial_encode_impl);
     }
@@ -739,6 +739,7 @@ macro_rules! repeated {
 mod map;
 
 mod arrayvec;
+mod repeated_decoder;
 mod slice;
 mod smallvec;
 mod tinyvec;

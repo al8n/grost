@@ -1,16 +1,24 @@
+use crate::{
+  default_wire_format, encoded_state,
+  flavors::{Network, network::LengthDelimited},
+};
+
+use std::vec::Vec;
+
+encoded_state!(
+  &'a Network: Vec<u8> as LengthDelimited => &'a [u8]
+);
+default_wire_format!(Network: Vec<u8> as LengthDelimited);
+
 #[cfg(feature = "bytes_1")]
 const _: () = {
   use crate::{
-    default_wire_format,
     flavors::network::{LengthDelimited, Network},
     referenceable,
   };
   use bytes_1::Bytes;
-  use std::vec::Vec;
 
   use crate::{into_target, type_owned, type_ref};
-
-  default_wire_format!(Network: Vec<u8> as LengthDelimited);
 
   bytes_bridge!(Network: Vec<u8> {
     from_slice: |val: &[u8]| val.to_vec();
@@ -28,6 +36,7 @@ const _: () = {
   referenceable!(
     Network: Vec<u8> as LengthDelimited => &'a [u8]
   );
+
   type_ref!(Network: &[u8] => Vec<u8> {
     |val: &[u8]| Ok(val.to_vec())
   });

@@ -776,7 +776,7 @@ const _: () = {
     for UserFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
     {
         type Target = <Self as ::grost::__private::reflection::Reflectable<
@@ -795,7 +795,7 @@ const _: () = {
     for UserFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
     {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -807,7 +807,7 @@ const _: () = {
     for UserFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -825,7 +825,7 @@ const _: () = {
     for UserFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -858,7 +858,7 @@ const _: () = {
         const TAG: ::core::primitive::u32,
     > UserFieldReflection<::grost::__private::reflection::FieldReflection<F>, F, TAG>
     where
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
         /// Returns the reflection of the field.
         #[inline]
@@ -1088,7 +1088,7 @@ const _: () = {
     impl<R, F> ::core::ops::Deref for UserReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
     {
         type Target = <Self as ::grost::__private::reflection::Reflectable<
@@ -1103,7 +1103,7 @@ const _: () = {
     for UserReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
     {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -1114,7 +1114,7 @@ const _: () = {
     impl<R, F> ::core::fmt::Debug for UserReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -1131,7 +1131,7 @@ const _: () = {
     impl<R, F> ::core::fmt::Display for UserReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -1166,7 +1166,7 @@ const _: () = {
     #[automatically_derived]
     impl<F> UserReflection<::grost::__private::reflection::StructReflection<F>, F>
     where
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
         /// Returns the reflection of the struct.
         #[inline]
@@ -1217,7 +1217,8 @@ const _: () = {
             __GROST_FLAVOR__,
         >
         where
-            __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::Flavor,
+            __GROST_FLAVOR__: ?::core::marker::Sized
+                + ::grost::__private::flavors::Flavor,
         {
             UserReflection::new()
         }
@@ -2413,7 +2414,7 @@ const _: () = {
                 + ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 > + ?::core::marker::Sized,
-            W: ::grost::__private::WireFormat<
+            W: ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::network::Network,
             >,
         {
@@ -2452,7 +2453,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -2549,7 +2550,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -2591,7 +2592,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -2625,7 +2626,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -2714,7 +2715,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -2771,7 +2772,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -2880,7 +2881,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -2931,7 +2932,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -3025,7 +3026,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &u32,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<u32 as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -3122,7 +3123,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &u32,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<u32 as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -3164,7 +3165,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &u32,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -3198,7 +3199,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &u32,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -3287,7 +3288,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<u32 as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -3344,7 +3345,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<u32 as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -3453,7 +3454,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -3504,7 +3505,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -3598,7 +3599,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     ::std::string::String,
@@ -3706,7 +3707,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     ::std::string::String,
                 > as ::grost::__private::Selectable<
@@ -3761,7 +3762,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -3804,7 +3805,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -3906,7 +3907,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     ::std::string::String,
                 > as ::grost::__private::Selectable<
@@ -3986,7 +3987,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     ::std::string::String,
@@ -4120,7 +4121,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -4190,7 +4191,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -6594,7 +6595,7 @@ const _: () = {
     for CommentFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
     {
         type Target = <Self as ::grost::__private::reflection::Reflectable<
@@ -6613,7 +6614,7 @@ const _: () = {
     for CommentFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
     {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -6625,7 +6626,7 @@ const _: () = {
     for CommentFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -6643,7 +6644,7 @@ const _: () = {
     for CommentFieldReflection<R, F, TAG>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -6676,7 +6677,7 @@ const _: () = {
         const TAG: ::core::primitive::u32,
     > CommentFieldReflection<::grost::__private::reflection::FieldReflection<F>, F, TAG>
     where
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
         /// Returns the reflection of the field.
         #[inline]
@@ -6906,7 +6907,7 @@ const _: () = {
     impl<R, F> ::core::ops::Deref for CommentReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
     {
         type Target = <Self as ::grost::__private::reflection::Reflectable<
@@ -6921,7 +6922,7 @@ const _: () = {
     for CommentReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::core::ops::Deref,
     {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -6932,7 +6933,7 @@ const _: () = {
     impl<R, F> ::core::fmt::Debug for CommentReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -6949,7 +6950,7 @@ const _: () = {
     impl<R, F> ::core::fmt::Display for CommentReflection<R, F>
     where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         Self: ::grost::__private::reflection::Reflectable<F>,
         <Self as ::grost::__private::reflection::Reflectable<
             F,
@@ -6984,7 +6985,7 @@ const _: () = {
     #[automatically_derived]
     impl<F> CommentReflection<::grost::__private::reflection::StructReflection<F>, F>
     where
-        F: ?::core::marker::Sized + ::grost::__private::Flavor,
+        F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
         /// Returns the reflection of the struct.
         #[inline]
@@ -7046,7 +7047,8 @@ const _: () = {
             __GROST_FLAVOR__,
         >
         where
-            __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::Flavor,
+            __GROST_FLAVOR__: ?::core::marker::Sized
+                + ::grost::__private::flavors::Flavor,
         {
             CommentReflection::new()
         }
@@ -8616,7 +8618,7 @@ const _: () = {
                 + ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 > + ?::core::marker::Sized,
-            W: ::grost::__private::WireFormat<
+            W: ::grost::__private::flavors::WireFormat<
                 ::grost::__private::flavors::network::Network,
             >,
         {
@@ -8655,7 +8657,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &User,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<User as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -8754,7 +8756,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &User,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<User as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -8796,7 +8798,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &User,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -8830,7 +8832,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &User,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -8921,7 +8923,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<User as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -8978,7 +8980,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<User as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -9089,7 +9091,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -9140,7 +9142,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -9236,7 +9238,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<User>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     User,
@@ -9344,7 +9346,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<User>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     User,
                 > as ::grost::__private::Selectable<
@@ -9399,7 +9401,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<User>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -9442,7 +9444,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<User>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -9544,7 +9546,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     User,
                 > as ::grost::__private::Selectable<
@@ -9624,7 +9626,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     User,
@@ -9758,7 +9760,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -9828,7 +9830,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -9941,7 +9943,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -10040,7 +10042,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -10082,7 +10084,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -10116,7 +10118,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::std::string::String,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -10207,7 +10209,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
                 >>::Selector,
@@ -10264,7 +10266,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::std::string::String as ::grost::__private::Selectable<
                     ::grost::__private::flavors::network::Network,
@@ -10375,7 +10377,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -10426,7 +10428,7 @@ const _: () = {
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -10522,7 +10524,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     ::std::string::String,
@@ -10630,7 +10632,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     ::std::string::String,
                 > as ::grost::__private::Selectable<
@@ -10685,7 +10687,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -10728,7 +10730,7 @@ const _: () = {
         > {
             type Reflection = fn(
                 &::core::option::Option<::std::string::String>,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
@@ -10830,7 +10832,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &<::core::option::Option<
                     ::std::string::String,
                 > as ::grost::__private::Selectable<
@@ -10910,7 +10912,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
                 &<::core::option::Option<
                     ::std::string::String,
@@ -11044,7 +11046,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
             ) -> ::core::primitive::usize;
             const REFLECTION: &Self::Reflection = &{
                 fn encoded_len(
@@ -11114,7 +11116,7 @@ const _: () = {
                         >>::Format,
                     >>::Ref<'_>,
                 >,
-                &::grost::__private::network::Context,
+                &::grost::__private::flavors::network::Context,
                 &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,

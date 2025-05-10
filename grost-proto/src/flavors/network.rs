@@ -6,7 +6,8 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::{buffer::BytesBuffer, selector::Selectable};
+use crate::buffer::BytesBuffer;
+
 mod context;
 mod error;
 mod identifier;

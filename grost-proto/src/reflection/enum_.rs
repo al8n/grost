@@ -72,7 +72,7 @@ impl EnumRepr {
 
 #[cfg(feature = "codegen")]
 const _: () = {
-  use quote::{ToTokens, format_ident, quote};
+  use quote::format_ident;
 
   impl EnumRepr {
     /// Returns the attribute of the corresponding repr
