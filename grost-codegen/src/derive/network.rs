@@ -1,8 +1,8 @@
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 
 use crate::Field;
 
-use super::{Enum, DeriveGenerator, Struct};
+use super::{DeriveGenerator, Enum, Struct};
 
 mod codec;
 mod reflection;
@@ -35,11 +35,7 @@ impl Network {
     }
   }
 
-  fn field_reflection(
-    &self,
-    path_to_grost: &syn::Path,
-    field: &Field,
-  ) -> proc_macro2::TokenStream {
+  fn field_reflection(&self, path_to_grost: &syn::Path, field: &Field) -> proc_macro2::TokenStream {
     let field_name: &str = field.name().name_str();
     let flavor_ty = self.ty();
     let field_ty = field.ty().ty();
@@ -73,7 +69,7 @@ impl DeriveGenerator for Network {
   fn name(&self) -> &'static str {
     self.name
   }
-  
+
   fn derive_enum(
     &self,
     path_to_grost: &syn::Path,
@@ -91,9 +87,7 @@ impl DeriveGenerator for Network {
     path_to_grost: &syn::Path,
     struct_: &Struct,
   ) -> Result<proc_macro2::TokenStream, Self::Error> {
-    Ok(quote! {
-    
-    })
+    Ok(quote! {})
   }
 
   // fn generate_struct_codec(
@@ -125,33 +119,33 @@ impl DeriveGenerator for Network {
   //       #[automatically_derived]
   //       #[allow(non_camel_case_types)]
   //       impl #lifetime_with_angle #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::network::Network,
+  //         #path_to_grost::__private::flavors::Network,
   //         #path_to_grost::__private::flavors::network::LengthDelimited,
   //       > for #name #lifetime_with_angle
   //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::network::Network>;
+  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
   //       }
 
   //       #[automatically_derived]
   //       #[allow(non_camel_case_types)]
   //       impl #lifetime_with_angle #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::network::Network,
+  //         #path_to_grost::__private::flavors::Network,
   //         #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
   //       > for #name #lifetime_with_angle
   //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::network::Network>;
+  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
   //       }
 
   //       #[automatically_derived]
   //       #[allow(non_camel_case_types)]
   //       impl<const I: ::core::primitive::u32, #lifetime> #path_to_grost::__private::Selectable<
-  //         #path_to_grost::__private::flavors::network::Network,
+  //         #path_to_grost::__private::flavors::Network,
   //         #path_to_grost::__private::flavors::network::Repeated<
   //           #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
   //         >,
   //       > for #name #lifetime_with_angle
   //       {
-  //         type Selector = #selector<#path_to_grost::__private::flavors::network::Network>;
+  //         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
   //       }
   //     }
   //   };
@@ -170,7 +164,7 @@ impl DeriveGenerator for Network {
   //     #(#selectable_impls)*
 
   //     #[automatically_derived]
-  //     impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::network::Network> for #struct_name {
+  //     impl #path_to_grost::__private::flavors::DefaultWireFormat<#path_to_grost::__private::flavors::Network> for #struct_name {
   //       type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
   //     }
 
@@ -240,10 +234,10 @@ impl DeriveGenerator for Network {
   //       #(#field_encoded_identifier_len_reflections)*
 
   //       impl #path_to_grost::__private::reflection::Reflectable<
-  //         #path_to_grost::__private::flavors::network::Network,
+  //         #path_to_grost::__private::flavors::Network,
   //       > for #struct_name {
-  //         type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
-  //         const REFLECTION: &Self::Reflection = &#path_to_grost::__private::reflection::StructReflectionBuilder::<#path_to_grost::__private::flavors::network::Network> {
+  //         type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::Network>;
+  //         const REFLECTION: &Self::Reflection = &#path_to_grost::__private::reflection::StructReflectionBuilder::<#path_to_grost::__private::flavors::Network> {
   //           name: #name_str,
   //           schema_name: #schema_name,
   //           fields: &[
@@ -253,13 +247,13 @@ impl DeriveGenerator for Network {
   //       }
 
   //       impl #path_to_grost::__private::reflection::Reflectable<
-  //         #path_to_grost::__private::flavors::network::Network,
-  //       > for #reflection_name<#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>, #path_to_grost::__private::flavors::network::Network> {
-  //         type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::network::Network>;
+  //         #path_to_grost::__private::flavors::Network,
+  //       > for #reflection_name<#path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::Network>, #path_to_grost::__private::flavors::Network> {
+  //         type Reflection = #path_to_grost::__private::reflection::StructReflection<#path_to_grost::__private::flavors::Network>;
   //         const REFLECTION: &Self::Reflection = <
   //           #struct_name as
   //             #path_to_grost::__private::reflection::Reflectable<
-  //               #path_to_grost::__private::flavors::network::Network,
+  //               #path_to_grost::__private::flavors::Network,
   //             >
   //           >::REFLECTION;
   //       }
@@ -647,8 +641,6 @@ impl DeriveGenerator for Network {
   //       //     }
   //       //   }
   //       // }
-
-
 
   //       // impl<'de> #path_to_grost::__private::Decode<'de, #flavor_ty, #path_to_grost::__private::flavors::network::LengthDelimited, Self> for #name<#path_to_grost::__private::flavors::Network> {
   //       //   #[inline]

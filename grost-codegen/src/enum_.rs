@@ -317,11 +317,26 @@ impl Enum {
 
   /// Returns the parse enum error name.
   pub fn parse_error_name(&self) -> Ident {
-    format_ident!("Parse{}Error", self.name.original_str().to_upper_camel_case())
+    format_ident!(
+      "Parse{}Error",
+      self.name.original_str().to_upper_camel_case()
+    )
   }
 
-  fn reflection_name(&self) -> Ident {
-    format_ident!("{}Reflection", self.name.original_str().to_upper_camel_case())
+  /// Returns the name of the reflection struct of this enum.
+  pub fn reflection_name(&self) -> Ident {
+    format_ident!(
+      "{}Reflection",
+      self.name.original_str().to_upper_camel_case()
+    )
+  }
+
+  /// Returns the variant name of the reflection struct of this enum variants.
+  pub fn variant_reflection_name(&self) -> Ident {
+    format_ident!(
+      "{}VariantReflection",
+      self.name.original_str().to_upper_camel_case()
+    )
   }
 
   pub(super) fn enum_defination(&self) -> proc_macro2::TokenStream {
@@ -565,8 +580,6 @@ impl Enum {
         })
       },
     };
-
-    
 
     quote! {
       #[automatically_derived]

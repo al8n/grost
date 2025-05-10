@@ -90,7 +90,7 @@ phantom!(
 );
 
 /// Reflectable.
-pub trait Reflectable<F: Flavor + ?Sized> {
+pub trait Reflectable<F: ?Sized> {
   type Reflection: ?Sized + 'static;
 
   /// The reflection of this type

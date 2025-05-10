@@ -354,8 +354,6 @@ impl Field {
     }
   }
 
-
-
   fn accessor_description_field_description(&self) -> Option<SmolStr> {
     self.description.as_ref().map(|d| {
       let s = d.as_str();

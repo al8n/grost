@@ -315,7 +315,7 @@ impl EnumVariantReflection {
 pub struct EnumReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub variants: &'static [EnumVariantReflection],
+  pub variants: &'static [&'static EnumVariantReflection],
   pub description: &'static str,
   pub repr: EnumRepr,
 }
@@ -339,7 +339,7 @@ pub struct EnumReflection {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
-  variants: &'static [EnumVariantReflection],
+  variants: &'static [&'static EnumVariantReflection],
   repr: EnumRepr,
 }
 
@@ -358,7 +358,7 @@ impl EnumReflection {
 
   /// Get the variants of the enum
   #[inline]
-  pub const fn variants(&self) -> &'static [EnumVariantReflection] {
+  pub const fn variants(&self) -> &'static [&'static EnumVariantReflection] {
     self.variants
   }
 

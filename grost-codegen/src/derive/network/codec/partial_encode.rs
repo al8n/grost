@@ -9,14 +9,14 @@ impl Network {
     struct_: &Struct,
   ) -> proc_macro2::TokenStream {
     let self_encoded_len = quote! {
-      <Self as #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited>>::partial_encoded_len(
+      <Self as #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited>>::partial_encoded_len(
         self,
         ctx,
         selector,
       )
     };
     let self_encoded_length_delimited_len = quote! {
-      <Self as #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited>>::partial_encoded_length_delimited_len(
+      <Self as #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited>>::partial_encoded_length_delimited_len(
         self,
         ctx,
         selector,
@@ -98,13 +98,13 @@ impl Network {
 
     quote! {
       #[automatically_derived]
-      impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
+      impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
         fn partial_encode(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -115,8 +115,8 @@ impl Network {
 
         fn partial_encoded_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let mut len = 0;
 
@@ -127,8 +127,8 @@ impl Network {
 
         fn partial_encoded_length_delimited_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let encoded_len = #self_encoded_len;
 
@@ -137,10 +137,10 @@ impl Network {
 
         fn partial_encode_length_delimited(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
@@ -156,7 +156,7 @@ impl Network {
           }
 
           <Self as #path_to_grost::__private::PartialEncode<
-            #path_to_grost::__private::flavors::network::Network,
+            #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::partial_encode(self, ctx, &mut buf[offset..], selector)
             .map(|write| {
@@ -256,14 +256,14 @@ impl Network {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_struct_name
+      impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_struct_name
       {
         fn partial_encode(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -293,8 +293,8 @@ impl Network {
 
         fn partial_encoded_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let mut len = 0;
 
@@ -317,8 +317,8 @@ impl Network {
 
         fn partial_encoded_length_delimited_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let encoded_len = #self_encoded_len;
 
@@ -327,10 +327,10 @@ impl Network {
 
         fn partial_encode_length_delimited(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
@@ -346,7 +346,7 @@ impl Network {
           }
 
           <Self as #path_to_grost::__private::PartialEncode<
-            #path_to_grost::__private::flavors::network::Network,
+            #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::partial_encode(self, ctx, &mut buf[offset..], selector)
             .map(|write| {
@@ -453,14 +453,14 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'__grost_flavor__> #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::network::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_ref_name<'__grost_flavor__>
+      impl<'__grost_flavor__> #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_ref_name<'__grost_flavor__>
       {
         fn partial_encode(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -490,8 +490,8 @@ impl Network {
 
         fn partial_encoded_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let mut len = 0;
 
@@ -514,8 +514,8 @@ impl Network {
 
         fn partial_encoded_length_delimited_len(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
         ) -> ::core::primitive::usize {
           let encoded_len = #self_encoded_len;
 
@@ -524,10 +524,10 @@ impl Network {
 
         fn partial_encode_length_delimited(
           &self,
-          ctx: &<#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::Context,
+          ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::network::Network>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::network::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+          selector: &<#struct_name as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network>>::Selector,
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
@@ -543,7 +543,7 @@ impl Network {
           }
 
           <Self as #path_to_grost::__private::PartialEncode<
-            #path_to_grost::__private::flavors::network::Network,
+            #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::partial_encode(self, ctx, &mut buf[offset..], selector)
             .map(|write| {

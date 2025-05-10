@@ -52,7 +52,12 @@ fn enum_codegen_test(name: &str) {
   let file: syn::File = syn::parse2(generated).unwrap();
   let defination = prettyplease::unparse(&file);
 
-  let file: syn::File = syn::parse2(generator.derive(&Network::new(&parse_quote!(::grost))).unwrap()).unwrap();
+  let file: syn::File = syn::parse2(
+    generator
+      .derive(&Network::new(&parse_quote!(::grost)))
+      .unwrap(),
+  )
+  .unwrap();
   let impls = prettyplease::unparse(&file);
   let mut path = PathBuf::from("src");
   path.push(name);

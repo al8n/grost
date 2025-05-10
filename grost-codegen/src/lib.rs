@@ -1,6 +1,6 @@
 pub use case::*;
-pub use enum_::*;
 pub use derive::*;
+pub use enum_::*;
 use indexmap::{IndexMap, IndexSet};
 pub use safe_ident::*;
 pub use struct_::*;
@@ -9,9 +9,9 @@ use quote::{ToTokens, quote};
 use smol_str::SmolStr;
 
 mod case;
+mod derive;
 /// Enum structs
 mod enum_;
-mod derive;
 mod safe_ident;
 /// structs
 mod struct_;
@@ -130,31 +130,38 @@ impl SchemaGenerator {
   where
     G: DeriveGenerator,
   {
-    let structs = self.structs.iter().map(|s| {
-      derive.derive_object(&self.grost_path, s)
-    }).collect::<Result<Vec<_>, G::Error>>()?;
+    let structs = self
+      .structs
+      .iter()
+      .map(|s| derive.derive_object(&self.grost_path, s))
+      .collect::<Result<Vec<_>, G::Error>>()?;
 
-    let enums = self.enums.iter().map(|e| {
-      #[cfg(feature = "quickcheck")]
-      let quickcheck = e.enum_quickcheck(&self.grost_path, derive);
-      #[cfg(not(feature = "quickcheck"))]
-      let quickcheck = core::iter::once(quote! {}).into_iter();
+    let enums = self
+      .enums
+      .iter()
+      .map(|e| {
+        #[cfg(feature = "quickcheck")]
+        let quickcheck = e.enum_quickcheck(&self.grost_path, derive);
+        #[cfg(not(feature = "quickcheck"))]
+        let quickcheck = core::iter::once(quote! {}).into_iter();
 
-      let impls = self.generate_enum_impl(e);
+        let impls = self.generate_enum_impl(e);
 
-      derive.derive_enum(&self.grost_path, e)
-        .map(|code| quote! {
-          const _: () = {
-            #impls
-
+        derive.derive_enum(&self.grost_path, e).map(|code| {
+          quote! {
             const _: () = {
-              #code
-            };
-          };
+              #impls
 
-          #quickcheck
+              const _: () = {
+                #code
+              };
+            };
+
+            #quickcheck
+          }
         })
-    }).collect::<Result<Vec<_>, G::Error>>()?;
+      })
+      .collect::<Result<Vec<_>, G::Error>>()?;
 
     Ok(quote! {
       #(#structs)*
@@ -164,9 +171,7 @@ impl SchemaGenerator {
 
   /// Generates the definations for the schema types
   pub fn generate(&self) -> proc_macro2::TokenStream {
-    let enums = self.enums.iter().map(|e| {
-      e.enum_defination()
-    });
+    let enums = self.enums.iter().map(|e| e.enum_defination());
 
     quote! {
       #(#enums)*
