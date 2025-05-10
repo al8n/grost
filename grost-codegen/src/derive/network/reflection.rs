@@ -264,7 +264,7 @@ impl Network {
     struct_.fields().iter().map(move |f| {
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
-      let impl_ = f.field_reflection(path_to_grost, self);
+      let impl_ = self.field_reflection(path_to_grost, f);
 
       quote! {
         impl #path_to_grost::__private::reflection::Reflectable<

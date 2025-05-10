@@ -34,26 +34,6 @@ pub enum UserFieldIndex {
     /// The field indexer for the field `email`
     Email = 2u32,
 }
-/// The selection type for User
-#[allow(non_camel_case_types)]
-pub struct UserSelector<__GROST_FLAVOR__: ?::core::marker::Sized> {
-    _m: ::core::marker::PhantomData<__GROST_FLAVOR__>,
-    name: ::core::primitive::bool,
-    age: ::core::primitive::bool,
-    email: ::core::primitive::bool,
-}
-/// An iterator over the selected fields of the [`UserSelector`]
-#[allow(non_camel_case_types)]
-pub struct UserSelectorIter<
-    'a,
-    __GROST_FLAVOR__: ?::core::marker::Sized,
-    const N: ::core::primitive::bool = true,
-> {
-    selector: &'a UserSelector<__GROST_FLAVOR__>,
-    index: ::core::option::Option<UserFieldIndex>,
-    num: ::core::primitive::usize,
-    yielded: ::core::primitive::usize,
-}
 const _: () = {
     #[automatically_derived]
     impl ::core::default::Default for User {
@@ -146,17 +126,6 @@ const _: () = {
             self.email = email;
             self
         }
-    }
-    #[automatically_derived]
-    #[allow(non_camel_case_types)]
-    impl<__GROST_FLAVOR__> ::grost::__private::Selectable<__GROST_FLAVOR__>
-    for PartialUser
-    where
-        __GROST_FLAVOR__: ?::core::marker::Sized,
-    {
-        type Selector = <User as ::grost::__private::Selectable<
-            __GROST_FLAVOR__,
-        >>::Selector;
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
@@ -1242,7 +1211,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 > {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
-                        <<::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -1278,7 +1247,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 > {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
-                        <<u32 as ::grost::__private::DefaultWireFormat<
+                        <<u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -1316,7 +1285,7 @@ const _: () = {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
                         <<::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -1930,7 +1899,7 @@ const _: () = {
             name: ::core::option::Option<
                 <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -1938,7 +1907,7 @@ const _: () = {
             age: ::core::option::Option<
                 <u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -1948,7 +1917,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -1990,7 +1959,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2003,7 +1972,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &mut <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2016,7 +1985,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2033,7 +2002,7 @@ const _: () = {
                 &mut self,
                 value: <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2046,7 +2015,7 @@ const _: () = {
                 mut self,
                 value: <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2065,7 +2034,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &<u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2078,7 +2047,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &mut <u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2091,7 +2060,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 <u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2108,7 +2077,7 @@ const _: () = {
                 &mut self,
                 value: <u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2121,7 +2090,7 @@ const _: () = {
                 mut self,
                 value: <u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2144,7 +2113,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2161,7 +2130,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2178,7 +2147,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2199,7 +2168,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2216,7 +2185,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -2517,7 +2486,7 @@ const _: () = {
                     }
                     <::std::string::String as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(
@@ -2568,7 +2537,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <::std::string::String as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -2604,7 +2573,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <::std::string::String as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -2684,7 +2653,7 @@ const _: () = {
                     }
                     <::std::string::String as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, &mut buf[offset..])
@@ -2711,7 +2680,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -2724,7 +2693,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -2738,14 +2707,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<::std::string::String as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -2768,7 +2737,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -2785,7 +2754,7 @@ const _: () = {
                 fn encode(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -2841,14 +2810,14 @@ const _: () = {
                     }
                     <<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -2877,7 +2846,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -2887,7 +2856,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -2898,14 +2867,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<::std::string::String as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -2928,7 +2897,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -2942,7 +2911,7 @@ const _: () = {
                 fn encode(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -2995,14 +2964,14 @@ const _: () = {
                     }
                     <<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, buf)
@@ -3090,7 +3059,7 @@ const _: () = {
                     }
                     <u32 as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(
@@ -3141,7 +3110,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <u32 as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -3177,7 +3146,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <u32 as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -3257,7 +3226,7 @@ const _: () = {
                     }
                     <u32 as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, &mut buf[offset..])
@@ -3284,7 +3253,7 @@ const _: () = {
             type Reflection = fn(
                 &<u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -3297,7 +3266,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -3311,14 +3280,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<u32 as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -3341,7 +3310,7 @@ const _: () = {
             type Reflection = fn(
                 &<u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -3358,7 +3327,7 @@ const _: () = {
                 fn encode(
                     f: &<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -3414,14 +3383,14 @@ const _: () = {
                     }
                     <<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -3450,7 +3419,7 @@ const _: () = {
             type Reflection = fn(
                 &<u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -3460,7 +3429,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -3471,14 +3440,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<u32 as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <u32 as ::grost::__private::DefaultWireFormat<
+                            <u32 as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -3501,7 +3470,7 @@ const _: () = {
             type Reflection = fn(
                 &<u32 as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <u32 as ::grost::__private::DefaultWireFormat<
+                    <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -3515,7 +3484,7 @@ const _: () = {
                 fn encode(
                     f: &<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -3568,14 +3537,14 @@ const _: () = {
                     }
                     <<u32 as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <u32 as ::grost::__private::DefaultWireFormat<
+                        <u32 as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, buf)
@@ -3672,7 +3641,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(
@@ -3735,7 +3704,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -3780,7 +3749,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -3870,7 +3839,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(field, ctx, &mut buf[offset..])
@@ -3902,7 +3871,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -3921,7 +3890,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -3944,7 +3913,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -3953,7 +3922,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -3982,7 +3951,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -4005,7 +3974,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -4072,7 +4041,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -4081,7 +4050,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -4116,7 +4085,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -4130,7 +4099,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -4148,7 +4117,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -4157,7 +4126,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -4186,7 +4155,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -4204,7 +4173,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -4266,7 +4235,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -4275,7 +4244,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(f, ctx, buf)
@@ -4289,6 +4258,110 @@ const _: () = {
                 }
                 encode
             };
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for User {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for User {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for User {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for PartialUser {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for PartialUser {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for PartialUser {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for PartialUserRef<'__grost_lifetime__> {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for PartialUserRef<'__grost_lifetime__> {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for PartialUserRef<'__grost_lifetime__> {
+            type Selector = UserSelector<::grost::__private::flavors::network::Network>;
         }
         #[automatically_derived]
         impl ::grost::__private::flavors::DefaultWireFormat<
@@ -5682,29 +5755,6 @@ pub enum CommentFieldIndex {
     /// The field indexer for the field `content`
     Content = 3u32,
 }
-/// The selection type for Comment
-#[allow(non_camel_case_types)]
-pub struct CommentSelector<__GROST_FLAVOR__: ?::core::marker::Sized> {
-    _m: ::core::marker::PhantomData<__GROST_FLAVOR__>,
-    user: <User as ::grost::__private::Selectable<__GROST_FLAVOR__>>::Selector,
-    replyer: <::core::option::Option<
-        User,
-    > as ::grost::__private::Selectable<__GROST_FLAVOR__>>::Selector,
-    title: ::core::primitive::bool,
-    content: ::core::primitive::bool,
-}
-/// An iterator over the selected fields of the [`CommentSelector`]
-#[allow(non_camel_case_types)]
-pub struct CommentSelectorIter<
-    'a,
-    __GROST_FLAVOR__: ?::core::marker::Sized,
-    const N: ::core::primitive::bool = true,
-> {
-    selector: &'a CommentSelector<__GROST_FLAVOR__>,
-    index: ::core::option::Option<CommentFieldIndex>,
-    num: ::core::primitive::usize,
-    yielded: ::core::primitive::usize,
-}
 const _: () = {
     #[automatically_derived]
     impl ::core::default::Default for Comment {
@@ -5823,17 +5873,6 @@ const _: () = {
             self.content = content;
             self
         }
-    }
-    #[automatically_derived]
-    #[allow(non_camel_case_types)]
-    impl<__GROST_FLAVOR__> ::grost::__private::Selectable<__GROST_FLAVOR__>
-    for PartialComment
-    where
-        __GROST_FLAVOR__: ?::core::marker::Sized,
-    {
-        type Selector = <Comment as ::grost::__private::Selectable<
-            __GROST_FLAVOR__,
-        >>::Selector;
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
@@ -7072,7 +7111,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 > {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
-                        <<User as ::grost::__private::DefaultWireFormat<
+                        <<User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -7111,7 +7150,7 @@ const _: () = {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
                         <<::core::option::Option<
                             User,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -7152,7 +7191,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 > {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
-                        <<::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <<::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -7190,7 +7229,7 @@ const _: () = {
                     identifier: ::grost::__private::flavors::network::Identifier::new(
                         <<::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format as ::grost::__private::flavors::WireFormat<
                             ::grost::__private::flavors::Network,
@@ -7987,7 +8026,7 @@ const _: () = {
             user: ::core::option::Option<
                 <User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -7997,7 +8036,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8005,7 +8044,7 @@ const _: () = {
             title: ::core::option::Option<
                 <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8015,7 +8054,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8058,7 +8097,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &<User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8071,7 +8110,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &mut <User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8084,7 +8123,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 <User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8101,7 +8140,7 @@ const _: () = {
                 &mut self,
                 value: <User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8114,7 +8153,7 @@ const _: () = {
                 mut self,
                 value: <User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8137,7 +8176,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8154,7 +8193,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8171,7 +8210,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8192,7 +8231,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8209,7 +8248,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8228,7 +8267,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8241,7 +8280,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 &mut <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8254,7 +8293,7 @@ const _: () = {
             ) -> ::core::option::Option<
                 <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8271,7 +8310,7 @@ const _: () = {
                 &mut self,
                 value: <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8284,7 +8323,7 @@ const _: () = {
                 mut self,
                 value: <::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8307,7 +8346,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8324,7 +8363,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8341,7 +8380,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8362,7 +8401,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8379,7 +8418,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
-                    > as ::grost::__private::DefaultWireFormat<
+                    > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'__grost_flavor__>,
@@ -8723,7 +8762,7 @@ const _: () = {
                     }
                     <User as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(
@@ -8774,7 +8813,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <User as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -8810,7 +8849,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <User as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -8892,7 +8931,7 @@ const _: () = {
                     }
                     <User as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, &mut buf[offset..])
@@ -8919,7 +8958,7 @@ const _: () = {
             type Reflection = fn(
                 &<User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -8932,7 +8971,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -8946,14 +8985,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<User as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -8976,7 +9015,7 @@ const _: () = {
             type Reflection = fn(
                 &<User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -8993,7 +9032,7 @@ const _: () = {
                 fn encode(
                     f: &<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9051,14 +9090,14 @@ const _: () = {
                     }
                     <<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -9087,7 +9126,7 @@ const _: () = {
             type Reflection = fn(
                 &<User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -9097,7 +9136,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9108,14 +9147,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<User as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <User as ::grost::__private::DefaultWireFormat<
+                            <User as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -9138,7 +9177,7 @@ const _: () = {
             type Reflection = fn(
                 &<User as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <User as ::grost::__private::DefaultWireFormat<
+                    <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -9152,7 +9191,7 @@ const _: () = {
                 fn encode(
                     f: &<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9207,14 +9246,14 @@ const _: () = {
                     }
                     <<User as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <User as ::grost::__private::DefaultWireFormat<
+                        <User as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, buf)
@@ -9311,7 +9350,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(
@@ -9374,7 +9413,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -9419,7 +9458,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -9509,7 +9548,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(field, ctx, &mut buf[offset..])
@@ -9541,7 +9580,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             User,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9560,7 +9599,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 User,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -9583,7 +9622,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -9592,7 +9631,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -9621,7 +9660,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             User,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9644,7 +9683,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 User,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -9711,7 +9750,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -9720,7 +9759,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -9755,7 +9794,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             User,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9769,7 +9808,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 User,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -9787,7 +9826,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -9796,7 +9835,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         User,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -9825,7 +9864,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             User,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -9843,7 +9882,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 User,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -9905,7 +9944,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -9914,7 +9953,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     User,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(f, ctx, buf)
@@ -10009,7 +10048,7 @@ const _: () = {
                     }
                     <::std::string::String as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(
@@ -10060,7 +10099,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <::std::string::String as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -10096,7 +10135,7 @@ const _: () = {
                         .encoded_identifier_len())
                         + <::std::string::String as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -10178,7 +10217,7 @@ const _: () = {
                     }
                     <::std::string::String as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, &mut buf[offset..])
@@ -10205,7 +10244,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -10218,7 +10257,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10232,14 +10271,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<::std::string::String as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -10262,7 +10301,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -10279,7 +10318,7 @@ const _: () = {
                 fn encode(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10337,14 +10376,14 @@ const _: () = {
                     }
                     <<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -10373,7 +10412,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -10383,7 +10422,7 @@ const _: () = {
                 fn encoded_len(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10394,14 +10433,14 @@ const _: () = {
                         .encoded_identifier_len())
                         + <<::std::string::String as ::grost::__private::Referenceable<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<
                             '_,
                         > as ::grost::__private::Encode<
                             ::grost::__private::flavors::network::Network,
-                            <::std::string::String as ::grost::__private::DefaultWireFormat<
+                            <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::encoded_length_delimited_len(f, ctx)
@@ -10424,7 +10463,7 @@ const _: () = {
             type Reflection = fn(
                 &<::std::string::String as ::grost::__private::Referenceable<
                     ::grost::__private::flavors::network::Network,
-                    <::std::string::String as ::grost::__private::DefaultWireFormat<
+                    <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
                     >>::Format,
                 >>::Ref<'_>,
@@ -10438,7 +10477,7 @@ const _: () = {
                 fn encode(
                     f: &<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10493,14 +10532,14 @@ const _: () = {
                     }
                     <<::std::string::String as ::grost::__private::Referenceable<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<
                         '_,
                     > as ::grost::__private::Encode<
                         ::grost::__private::flavors::network::Network,
-                        <::std::string::String as ::grost::__private::DefaultWireFormat<
+                        <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::encode_length_delimited(f, ctx, buf)
@@ -10597,7 +10636,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(
@@ -10660,7 +10699,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -10705,7 +10744,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -10795,7 +10834,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(field, ctx, &mut buf[offset..])
@@ -10827,7 +10866,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10846,7 +10885,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -10869,7 +10908,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -10878,7 +10917,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::partial_encoded_length_delimited_len(f, ctx, selector)
@@ -10907,7 +10946,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -10930,7 +10969,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -10997,7 +11036,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -11006,7 +11045,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::partial_encode_length_delimited(f, ctx, buf, selector)
@@ -11041,7 +11080,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -11055,7 +11094,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -11073,7 +11112,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::Ref<
@@ -11082,7 +11121,7 @@ const _: () = {
                                     ::grost::__private::flavors::network::Network,
                                     <::core::option::Option<
                                         ::std::string::String,
-                                    > as ::grost::__private::DefaultWireFormat<
+                                    > as ::grost::__private::flavors::DefaultWireFormat<
                                         ::grost::__private::flavors::Network,
                                     >>::Format,
                                 >>::encoded_length_delimited_len(f, ctx)
@@ -11111,7 +11150,7 @@ const _: () = {
                         ::grost::__private::flavors::network::Network,
                         <::core::option::Option<
                             ::std::string::String,
-                        > as ::grost::__private::DefaultWireFormat<
+                        > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Network,
                         >>::Format,
                     >>::Ref<'_>,
@@ -11129,7 +11168,7 @@ const _: () = {
                             ::grost::__private::flavors::network::Network,
                             <::core::option::Option<
                                 ::std::string::String,
-                            > as ::grost::__private::DefaultWireFormat<
+                            > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Network,
                             >>::Format,
                         >>::Ref<'_>,
@@ -11191,7 +11230,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::Ref<
@@ -11200,7 +11239,7 @@ const _: () = {
                                 ::grost::__private::flavors::network::Network,
                                 <::core::option::Option<
                                     ::std::string::String,
-                                > as ::grost::__private::DefaultWireFormat<
+                                > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Network,
                                 >>::Format,
                             >>::encode_length_delimited(f, ctx, buf)
@@ -11214,6 +11253,128 @@ const _: () = {
                 }
                 encode
             };
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for Comment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for Comment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for Comment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for PartialComment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for PartialComment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for PartialComment {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::LengthDelimited,
+        > for PartialCommentRef<'__grost_lifetime__> {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::LengthDelimited,
+            >,
+        > for PartialCommentRef<'__grost_lifetime__> {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
+        }
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<
+            '__grost_lifetime__,
+            const I: ::core::primitive::u32,
+        > ::grost::__private::Selectable<
+            ::grost::__private::flavors::network::Network,
+            ::grost::__private::flavors::network::Repeated<
+                ::grost::__private::flavors::network::Stream<
+                    ::grost::__private::flavors::network::LengthDelimited,
+                    I,
+                >,
+            >,
+        > for PartialCommentRef<'__grost_lifetime__> {
+            type Selector = CommentSelector<
+                ::grost::__private::flavors::network::Network,
+            >;
         }
         #[automatically_derived]
         impl ::grost::__private::flavors::DefaultWireFormat<

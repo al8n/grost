@@ -3,15 +3,19 @@ use indexmap::IndexMap;
 use quote::{ToTokens, format_ident};
 use syn::Ident;
 
-use crate::FlavorGenerator;
+use crate::DeriveGenerator;
 
 use super::*;
 
 impl Struct {
-  pub(crate) fn generate_selector_defination(
+  pub fn generate_selector_defination<F>(
     &self,
     path_to_grost: &syn::Path,
-  ) -> proc_macro2::TokenStream {
+    flavor: &F,
+  ) -> proc_macro2::TokenStream
+  where
+    F: DeriveGenerator + ?Sized,
+  {
     let name = self.selector_name();
     let vis = self.visibility.as_ref();
     let doc = format!(" The selection type for {}", self.name.name_str());
@@ -20,14 +24,9 @@ impl Struct {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
-      if ty.primitive_selection_type() {
-        quote! {
-          #field_name: ::core::primitive::bool
-        }
-      } else {
-        quote! {
-          #field_name: <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector
-        }
+      let wf = f.get_wire_format_or_default(path_to_grost, flavor);
+      quote! {
+        #field_name: <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__, #wf>>::Selector
       }
     });
 
@@ -709,7 +708,7 @@ impl Struct {
 
   fn generate_codec<F>(&self, path_to_grost: &syn::Path, flavors: &F) -> proc_macro2::TokenStream
   where
-    F: FlavorGenerator + ?Sized,
+    F: DeriveGenerator + ?Sized,
   {
     let name = self.selector_name();
     let flavor_ty = flavors.ty();

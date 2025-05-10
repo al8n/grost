@@ -3,7 +3,7 @@ use quote::{format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Ident, Visibility, parse_quote};
 
-use crate::{FlavorGenerator, SafeIdent};
+use crate::{DeriveGenerator, SafeIdent};
 
 pub use field::Field;
 
@@ -22,6 +22,20 @@ pub struct Struct {
   fields: Vec<Field>,
   attrs: Vec<Attribute>,
   visibility: Option<Visibility>,
+}
+
+impl PartialEq for Struct {
+  fn eq(&self, other: &Self) -> bool {
+    self.name.name().eq(other.name.name())
+  }
+}
+
+impl Eq for Struct {}
+
+impl core::hash::Hash for Struct {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    self.name.name().hash(state);
+  }
 }
 
 impl Struct {
@@ -226,15 +240,6 @@ impl Struct {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<__GROST_FLAVOR__> #path_to_grost::__private::Selectable<__GROST_FLAVOR__> for #name
-      where
-        __GROST_FLAVOR__: ?::core::marker::Sized,
-      {
-        type Selector = <#struct_name as #path_to_grost::__private::Selectable<__GROST_FLAVOR__>>::Selector;
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types)]
       impl ::core::default::Default for #name {
         fn default() -> Self {
           Self::new()
@@ -262,7 +267,7 @@ impl Struct {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: FlavorGenerator + ?Sized,
+    F: DeriveGenerator + ?Sized,
   {
     let struct_name = self.name();
     let name = self.partial_ref_name();

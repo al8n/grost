@@ -5,7 +5,7 @@ use syn::{Lifetime, Type, parse_quote};
 pub use int::Int;
 pub use uint::Uint;
 
-use crate::{SafeIdent, flavors::FlavorGeneratorExt};
+use crate::SafeIdent;
 
 mod int;
 mod uint;
@@ -99,7 +99,7 @@ impl TyRepr {
     lifetime: &Lifetime,
   ) -> Type
   where
-    F: super::FlavorGenerator + ?Sized,
+    F: super::DeriveGenerator + ?Sized,
   {
     match self {
       Self::Primitive(ty)
@@ -312,7 +312,7 @@ impl Ty {
     wire_format: &syn::Type,
   ) -> Type
   where
-    F: super::FlavorGenerator + ?Sized,
+    F: super::DeriveGenerator + ?Sized,
   {
     match &self.repr {
       TyRepr::Primitive(_) | TyRepr::Enum(_) => parse_quote!(::core::primitive::bool),
@@ -336,7 +336,7 @@ impl Ty {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: super::FlavorGenerator + ?Sized,
+    F: super::DeriveGenerator + ?Sized,
   {
     let flavor_ty = flavor.ty();
     match &self.repr {

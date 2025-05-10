@@ -4,7 +4,7 @@ use quote::quote;
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility, parse_quote};
 
-use crate::{FlavorGenerator, SafeIdent, ty::Ty};
+use crate::{DeriveGenerator, SafeIdent, ty::Ty};
 use getter::Getter;
 use setter::Setter;
 
@@ -91,12 +91,12 @@ impl Field {
   }
 
   /// Inserts a wire type for a flavor
-  pub fn get_wire_format<F: FlavorGenerator + ?Sized>(&self, flavor: &F) -> Option<&syn::Type> {
+  pub fn get_wire_format<F: DeriveGenerator + ?Sized>(&self, flavor: &F) -> Option<&syn::Type> {
     self.wire_formats.get(flavor.name())
   }
 
   /// Inserts a wire type for a flavor
-  pub fn get_wire_format_or_default<F: FlavorGenerator + ?Sized>(
+  pub fn get_wire_format_or_default<F: DeriveGenerator + ?Sized>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,
@@ -107,7 +107,7 @@ impl Field {
         let ty = self.ty();
         let flavor_ty = flavor.ty();
         parse_quote!(
-          <#ty as #path_to_grost::__private::DefaultWireFormat<#flavor_ty>>::Format
+          <#ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_ty>>::Format
         )
       }
     }
@@ -354,31 +354,7 @@ impl Field {
     }
   }
 
-  pub(crate) fn field_reflection<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: FlavorGenerator + ?Sized,
-  {
-    let field_name = self.name.name_str();
-    let flavor_ty = flavor.ty();
-    let field_ty = self.ty.ty();
-    let schema_name = self.schema_name();
-    let relection_ty = self.ty.to_type_reflection(path_to_grost, flavor);
 
-    let identifier = flavor.generate_field_identifier(path_to_grost, self);
-    quote! {
-      #path_to_grost::__private::reflection::FieldReflectionBuilder::<#flavor_ty> {
-        identifier: #identifier,
-        name: #field_name,
-        ty: ::core::any::type_name::<#field_ty>,
-        schema_name: #schema_name,
-        schema_type: #relection_ty,
-      }.build()
-    }
-  }
 
   fn accessor_description_field_description(&self) -> Option<SmolStr> {
     self.description.as_ref().map(|d| {
