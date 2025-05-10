@@ -117,7 +117,7 @@ const _: () = {
   impl<F, const VALUE: ::core::primitive::u32>
     ColorVariantReflection<::grost::__private::reflection::EnumVariantReflection, F, VALUE>
   where
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
   {
     /// Returns the reflection of the field.
     #[inline]
@@ -129,7 +129,9 @@ const _: () = {
     pub const fn encoded_varint(
       &self,
     ) -> ColorVariantReflection<
-      ::grost::__private::reflection::encode::EncodeReflection<F::Identifier>,
+      ::grost::__private::reflection::encode::EncodeReflection<
+        ::grost::__private::reflection::EnumVariantReflection,
+      >,
       F,
       VALUE,
     > {
@@ -141,7 +143,9 @@ const _: () = {
       &self,
     ) -> ColorVariantReflection<
       ::grost::__private::reflection::Len<
-        ::grost::__private::reflection::encode::EncodeReflection<F::Identifier>,
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
       >,
       F,
       VALUE,
@@ -177,7 +181,7 @@ const _: () = {
   impl<R, F> ::core::ops::Deref for ColorReflection<R, F>
   where
     R: ?::core::marker::Sized,
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
     Self: ::grost::__private::reflection::Reflectable<F>,
   {
     type Target = <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -189,7 +193,7 @@ const _: () = {
   impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for ColorReflection<R, F>
   where
     R: ?::core::marker::Sized,
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
     Self: ::core::ops::Deref,
   {
     fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -200,7 +204,7 @@ const _: () = {
   impl<R, F> ::core::fmt::Debug for ColorReflection<R, F>
   where
     R: ?::core::marker::Sized,
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
     Self: ::grost::__private::reflection::Reflectable<F>,
     <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
   {
@@ -215,7 +219,7 @@ const _: () = {
   impl<R, F> ::core::fmt::Display for ColorReflection<R, F>
   where
     R: ?::core::marker::Sized,
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
     Self: ::grost::__private::reflection::Reflectable<F>,
     <Self as ::grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
   {
@@ -251,7 +255,7 @@ const _: () = {
   #[automatically_derived]
   impl<F> ColorReflection<::grost::__private::reflection::EnumReflection, F>
   where
-    F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+    F: ?::core::marker::Sized,
   {
     /// Returns the reflection of the enum.
     #[inline]
@@ -291,7 +295,7 @@ const _: () = {
     pub const fn reflection<__GROST_FLAVOR__>()
     -> ColorReflection<::grost::__private::reflection::EnumReflection, __GROST_FLAVOR__>
     where
-      __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
+      __GROST_FLAVOR__: ?::core::marker::Sized,
     {
       ColorReflection::new()
     }
@@ -367,6 +371,47 @@ const _: () = {
   impl<__GROST_FLAVOR__: ?::core::marker::Sized>
     ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
     for ColorVariantReflection<
+      ::grost::__private::reflection::encode::EncodeReflection<
+        ::grost::__private::reflection::EnumVariantReflection,
+      >,
+      __GROST_FLAVOR__,
+      1u32,
+    >
+  {
+    type Reflection = ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }>;
+    const REFLECTION: &Self::Reflection = &::grost::__private::varing::encode_u32_varint(1u32);
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
+      ::grost::__private::reflection::Len<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+      >,
+      __GROST_FLAVOR__,
+      1u32,
+    >
+  {
+    type Reflection = ::core::primitive::usize;
+    const REFLECTION: &Self::Reflection = &{
+      <ColorVariantReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+        __GROST_FLAVOR__,
+        1u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::REFLECTION
+        .len()
+    };
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
       ::grost::__private::reflection::EnumVariantReflection,
       __GROST_FLAVOR__,
       2u32,
@@ -390,6 +435,47 @@ const _: () = {
   impl<__GROST_FLAVOR__: ?::core::marker::Sized>
     ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
     for ColorVariantReflection<
+      ::grost::__private::reflection::encode::EncodeReflection<
+        ::grost::__private::reflection::EnumVariantReflection,
+      >,
+      __GROST_FLAVOR__,
+      2u32,
+    >
+  {
+    type Reflection = ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }>;
+    const REFLECTION: &Self::Reflection = &::grost::__private::varing::encode_u32_varint(2u32);
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
+      ::grost::__private::reflection::Len<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+      >,
+      __GROST_FLAVOR__,
+      2u32,
+    >
+  {
+    type Reflection = ::core::primitive::usize;
+    const REFLECTION: &Self::Reflection = &{
+      <ColorVariantReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+        __GROST_FLAVOR__,
+        2u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::REFLECTION
+        .len()
+    };
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
       ::grost::__private::reflection::EnumVariantReflection,
       __GROST_FLAVOR__,
       3u32,
@@ -406,6 +492,47 @@ const _: () = {
         ),
       }
       .build()
+    };
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
+      ::grost::__private::reflection::encode::EncodeReflection<
+        ::grost::__private::reflection::EnumVariantReflection,
+      >,
+      __GROST_FLAVOR__,
+      3u32,
+    >
+  {
+    type Reflection = ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }>;
+    const REFLECTION: &Self::Reflection = &::grost::__private::varing::encode_u32_varint(3u32);
+  }
+  #[automatically_derived]
+  #[allow(non_camel_case_types)]
+  impl<__GROST_FLAVOR__: ?::core::marker::Sized>
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
+    for ColorVariantReflection<
+      ::grost::__private::reflection::Len<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+      >,
+      __GROST_FLAVOR__,
+      3u32,
+    >
+  {
+    type Reflection = ::core::primitive::usize;
+    const REFLECTION: &Self::Reflection = &{
+      <ColorVariantReflection<
+        ::grost::__private::reflection::encode::EncodeReflection<
+          ::grost::__private::reflection::EnumVariantReflection,
+        >,
+        __GROST_FLAVOR__,
+        3u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::REFLECTION
+        .len()
     };
   }
   #[automatically_derived]
@@ -517,7 +644,7 @@ const _: () = {
     type Error = ::grost::__private::varing::DecodeError;
     #[inline]
     fn try_from(src: &'a [::core::primitive::u8]) -> ::core::result::Result<Self, Self::Error> {
-      Self::const_decode(src).map(|(_, this)| this)
+      Self::decode(src).map(|(_, this)| this)
     }
   }
   #[automatically_derived]
@@ -530,11 +657,11 @@ const _: () = {
       buf: &mut [::core::primitive::u8],
     ) -> ::core::result::Result<::core::primitive::usize, ::grost::__private::varing::EncodeError>
     {
-      self.const_encode_to(buf)
+      Self::encode_to(self, buf)
     }
     #[inline]
     fn encoded_len(&self) -> ::core::primitive::usize {
-      self.const_encoded_len()
+      Self::encoded_len(self)
     }
     #[inline]
     fn decode(
@@ -543,30 +670,11 @@ const _: () = {
       (::core::primitive::usize, Self),
       ::grost::__private::varing::DecodeError,
     > {
-      Self::const_decode(src)
+      Self::decode(src)
     }
   }
   #[automatically_derived]
   impl Color {
-    /// The maximum encoded length in bytes.
-    pub const MAX_VARINT_ENCODED_LEN: ::core::primitive::usize = 5usize;
-    /// The minimum encoded length in bytes.
-    pub const MIN_VARINT_ENCODED_LEN: ::core::primitive::usize = 1usize;
-    /// The encoded length of the enum variant [`Color::Red`]
-    pub const RED_VARINT_ENCODED_LEN: ::core::primitive::usize = Self::RED_VARINT_ENCODED.len();
-    /// The encoded bytes of the enum variant [`Color::Red`]
-    pub const RED_VARINT_ENCODED: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> =
-      ::grost::__private::varing::encode_u32_varint(1u32);
-    /// The encoded length of the enum variant [`Color::Green`]
-    pub const GREEN_VARINT_ENCODED_LEN: ::core::primitive::usize = Self::GREEN_VARINT_ENCODED.len();
-    /// The encoded bytes of the enum variant [`Color::Green`]
-    pub const GREEN_VARINT_ENCODED: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> =
-      ::grost::__private::varing::encode_u32_varint(2u32);
-    /// The encoded length of the enum variant [`Color::Blue`]
-    pub const BLUE_VARINT_ENCODED_LEN: ::core::primitive::usize = Self::BLUE_VARINT_ENCODED.len();
-    /// The encoded bytes of the enum variant [`Color::Blue`]
-    pub const BLUE_VARINT_ENCODED: ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> =
-      ::grost::__private::varing::encode_u32_varint(3u32);
     /// Returns the enum variant from the raw representation.
     #[inline]
     pub const fn from_u32(repr: ::core::primitive::u32) -> Self {
@@ -589,63 +697,132 @@ const _: () = {
     }
     /// Returns the encoded bytes of the enum variant.
     #[inline]
-    pub const fn const_encode(&self) -> ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> {
+    pub const fn encode(&self) -> ::grost::__private::varing::utils::Buffer<{ 5usize + 1 }> {
       match self {
-        Self::Red => Self::RED_VARINT_ENCODED,
-        Self::Green => Self::GREEN_VARINT_ENCODED,
-        Self::Blue => Self::BLUE_VARINT_ENCODED,
+        Self::Red => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::EnumVariantReflection,
+            >,
+            (),
+            1u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
+        Self::Green => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::EnumVariantReflection,
+            >,
+            (),
+            2u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
+        Self::Blue => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::encode::EncodeReflection<
+              ::grost::__private::reflection::EnumVariantReflection,
+            >,
+            (),
+            3u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
         Self::Unknown(val) => ::grost::__private::varing::encode_u32_varint(*val),
       }
     }
     /// Returns the encoded bytes of the enum variant.
     #[inline]
-    pub const fn const_encode_to(
+    pub const fn encode_to(
       &self,
       buf: &mut [::core::primitive::u8],
     ) -> ::core::result::Result<::core::primitive::usize, ::grost::__private::varing::EncodeError>
     {
       match self {
         Self::Red => {
+          const ENCODED_LEN: ::core::primitive::usize = *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            1u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION;
           let buf_len = buf.len();
-          if buf_len < Self::RED_VARINT_ENCODED_LEN {
+          if buf_len < ENCODED_LEN {
             return ::core::result::Result::Err(
-              ::grost::__private::varing::EncodeError::underflow(
-                Self::RED_VARINT_ENCODED_LEN,
-                buf_len,
-              ),
+              ::grost::__private::varing::EncodeError::underflow(ENCODED_LEN, buf_len),
             );
           }
-          let (b, _) = buf.split_at_mut(Self::RED_VARINT_ENCODED_LEN);
-          b.copy_from_slice(Self::RED_VARINT_ENCODED.as_slice());
-          ::core::result::Result::Ok(Self::RED_VARINT_ENCODED_LEN)
+          let (b, _) = buf.split_at_mut(ENCODED_LEN);
+          b.copy_from_slice(
+            <ColorVariantReflection<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+              (),
+              1u32,
+            > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+              .as_slice(),
+          );
+          ::core::result::Result::Ok(ENCODED_LEN)
         }
         Self::Green => {
+          const ENCODED_LEN: ::core::primitive::usize = *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            2u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION;
           let buf_len = buf.len();
-          if buf_len < Self::GREEN_VARINT_ENCODED_LEN {
+          if buf_len < ENCODED_LEN {
             return ::core::result::Result::Err(
-              ::grost::__private::varing::EncodeError::underflow(
-                Self::GREEN_VARINT_ENCODED_LEN,
-                buf_len,
-              ),
+              ::grost::__private::varing::EncodeError::underflow(ENCODED_LEN, buf_len),
             );
           }
-          let (b, _) = buf.split_at_mut(Self::GREEN_VARINT_ENCODED_LEN);
-          b.copy_from_slice(Self::GREEN_VARINT_ENCODED.as_slice());
-          ::core::result::Result::Ok(Self::GREEN_VARINT_ENCODED_LEN)
+          let (b, _) = buf.split_at_mut(ENCODED_LEN);
+          b.copy_from_slice(
+            <ColorVariantReflection<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+              (),
+              2u32,
+            > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+              .as_slice(),
+          );
+          ::core::result::Result::Ok(ENCODED_LEN)
         }
         Self::Blue => {
+          const ENCODED_LEN: ::core::primitive::usize = *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            3u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION;
           let buf_len = buf.len();
-          if buf_len < Self::BLUE_VARINT_ENCODED_LEN {
+          if buf_len < ENCODED_LEN {
             return ::core::result::Result::Err(
-              ::grost::__private::varing::EncodeError::underflow(
-                Self::BLUE_VARINT_ENCODED_LEN,
-                buf_len,
-              ),
+              ::grost::__private::varing::EncodeError::underflow(ENCODED_LEN, buf_len),
             );
           }
-          let (b, _) = buf.split_at_mut(Self::BLUE_VARINT_ENCODED_LEN);
-          b.copy_from_slice(Self::BLUE_VARINT_ENCODED.as_slice());
-          ::core::result::Result::Ok(Self::BLUE_VARINT_ENCODED_LEN)
+          let (b, _) = buf.split_at_mut(ENCODED_LEN);
+          b.copy_from_slice(
+            <ColorVariantReflection<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+              (),
+              3u32,
+            > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+              .as_slice(),
+          );
+          ::core::result::Result::Ok(ENCODED_LEN)
         }
         Self::Unknown(val) => ::grost::__private::varing::encode_u32_varint_to(*val, buf),
       }
@@ -654,7 +831,7 @@ const _: () = {
     ///
     /// Returns the number of bytes readed and `Self`.
     #[inline]
-    pub const fn const_decode(
+    pub const fn decode(
       src: &[::core::primitive::u8],
     ) -> ::core::result::Result<
       (::core::primitive::usize, Self),
@@ -676,11 +853,41 @@ const _: () = {
     }
     /// Returns the encoded length of the enum variant.
     #[inline]
-    pub const fn const_encoded_len(&self) -> ::core::primitive::usize {
+    pub const fn encoded_len(&self) -> ::core::primitive::usize {
       match self {
-        Self::Red => Self::RED_VARINT_ENCODED_LEN,
-        Self::Green => Self::GREEN_VARINT_ENCODED_LEN,
-        Self::Blue => Self::BLUE_VARINT_ENCODED_LEN,
+        Self::Red => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            1u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
+        Self::Green => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            2u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
+        Self::Blue => {
+          *<ColorVariantReflection<
+            ::grost::__private::reflection::Len<
+              ::grost::__private::reflection::encode::EncodeReflection<
+                ::grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            3u32,
+          > as ::grost::__private::reflection::Reflectable<()>>::REFLECTION
+        }
         Self::Unknown(val) => ::grost::__private::varing::encoded_u32_varint_len(*val),
       }
     }
@@ -710,12 +917,12 @@ mod __quickcheck_fuzzy_network_flavor_color__ {
   use ::grost::__private::{Decode, Encode};
   ::grost::__private::quickcheck::quickcheck! {
       fn fuzzy_color(ctx : < ::grost::__private::flavors::Network as
-      ::grost::__private::flavors::Flavor > ::Context, value : Color) -> bool { extern
-      crate std; let encoded_len = value.encoded_len(& ctx); let mut buf =
-      ::std::vec![0u8; encoded_len]; let ::core::result::Result::Ok(written) = value
-      .encode(& ctx, & mut buf) else { return false; }; if written != encoded_len {
-      return false; } let ::core::result::Result::Ok((read, decoded)) = Color::decode::
-      < () > (& ctx, & buf[..encoded_len]) else { return false; }; if decoded != value
-      || read != written { return false; } true }
+      ::grost::__private::flavors::Flavor > ::Context, value : Color) -> bool { let
+      encoded_len = Encode::encoded_len(& value, & ctx); let mut buf = ::std::vec![0u8;
+      encoded_len]; let ::core::result::Result::Ok(written) = Encode::encode(& value, &
+      ctx, & mut buf) else { return false; }; if written != encoded_len { return false;
+      } let ::core::result::Result::Ok((read, decoded)) = < Color as Decode < '_, _, _,
+      Color >> ::decode:: < () > (& ctx, & buf[..encoded_len]) else { return false; };
+      if decoded != value || read != written { return false; } true }
   }
 }

@@ -6,16 +6,18 @@ impl Enum {
     let reflection_name = self.reflection_name();
     let variant_reflection_name = self.variant_reflection_name();
     let variant_reflections = self.variants.iter().map(|v| {
-    let name = v.name.name_str();
-    let schema_name = v.schema_name.as_str();
-    let uevv = v.value();
-    let value = uevv.to_non_zero_value();
-    let raw_value = uevv.to_value();
-    let variant_ident = uevv.to_variant_ident();
-    let val = quote! {
-      #path_to_grost::__private::reflection::EnumVariantValue::#variant_ident(#value)
-    };
-    let description = v.description.as_deref().unwrap_or_default();
+      let name = v.name.name_str();
+      let schema_name = v.schema_name.as_str();
+      let uevv = v.value();
+      let value = uevv.to_non_zero_value();
+      let raw_value = uevv.to_value();
+      let variant_ident = uevv.to_variant_ident();
+      let repr_encode_fn = self.repr.to_encode_fn(path_to_grost);
+      let repr_max_encoded_len = self.repr.to_max_encoded_len();
+      let val = quote! {
+        #path_to_grost::__private::reflection::EnumVariantValue::#variant_ident(#value)
+      };
+      let description = v.description.as_deref().unwrap_or_default();
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
@@ -35,6 +37,50 @@ impl Enum {
               description: #description,
               value: #val,
             }.build()
+          };
+        }
+
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::reflection::Reflectable<
+          __GROST_FLAVOR__,
+        > for #variant_reflection_name<
+          #path_to_grost::__private::reflection::encode::EncodeReflection<
+            #path_to_grost::__private::reflection::EnumVariantReflection,
+          >,
+          __GROST_FLAVOR__,
+          #raw_value,
+        >
+        {
+          type Reflection = #path_to_grost::__private::varing::utils::Buffer<{ #repr_max_encoded_len + 1 }>;
+          const REFLECTION: &Self::Reflection = &#repr_encode_fn(#raw_value);
+        }
+
+        #[automatically_derived]
+        #[allow(non_camel_case_types)]
+        impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::reflection::Reflectable<
+          __GROST_FLAVOR__,
+        > for #variant_reflection_name<
+          #path_to_grost::__private::reflection::Len<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::EnumVariantReflection,
+            >,
+          >,
+          __GROST_FLAVOR__,
+          #raw_value,
+        >
+        {
+          type Reflection = ::core::primitive::usize;
+          const REFLECTION: &Self::Reflection = &{
+            <#variant_reflection_name<
+              #path_to_grost::__private::reflection::encode::EncodeReflection<
+                #path_to_grost::__private::reflection::EnumVariantReflection,
+              >,
+              __GROST_FLAVOR__,
+              #raw_value,
+            > as #path_to_grost::__private::reflection::Reflectable<
+              __GROST_FLAVOR__,
+            >>::REFLECTION.len()
           };
         }
       }
@@ -166,7 +212,7 @@ impl Enum {
       #[allow(clippy::type_complexity)]
       impl<F, const VALUE: #fqty> #variant_reflection_name<#path_to_grost::__private::reflection::EnumVariantReflection, F, VALUE>
       where
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
       {
         /// Returns the reflection of the field.
         #[inline]
@@ -178,7 +224,7 @@ impl Enum {
         #[inline]
         pub const fn encoded_varint(&self) -> #variant_reflection_name<
           #path_to_grost::__private::reflection::encode::EncodeReflection<
-            F::Identifier,
+            #path_to_grost::__private::reflection::EnumVariantReflection,
           >,
           F,
           VALUE,
@@ -191,7 +237,7 @@ impl Enum {
         pub const fn encoded_varint_len(&self) -> #variant_reflection_name<
           #path_to_grost::__private::reflection::Len<
             #path_to_grost::__private::reflection::encode::EncodeReflection<
-              F::Identifier,
+              #path_to_grost::__private::reflection::EnumVariantReflection,
             >,
           >,
           F,
@@ -229,7 +275,7 @@ impl Enum {
       impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
       {
         type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -243,7 +289,7 @@ impl Enum {
       impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: ::core::ops::Deref,
       {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -255,7 +301,7 @@ impl Enum {
       impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
       {
@@ -268,7 +314,7 @@ impl Enum {
       impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
       {
@@ -300,7 +346,7 @@ impl Enum {
       #[automatically_derived]
       impl<F> #reflection_name<#path_to_grost::__private::reflection::EnumReflection, F>
       where
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
       {
         /// Returns the reflection of the enum.
         #[inline]
@@ -321,7 +367,7 @@ impl Enum {
           __GROST_FLAVOR__,
         >
         where
-          __GROST_FLAVOR__: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+          __GROST_FLAVOR__: ?::core::marker::Sized,
         {
           #reflection_name::new()
         }

@@ -664,11 +664,9 @@ impl Enum {
 
         #path_to_grost::__private::quickcheck::quickcheck! {
           fn #quickcheck_fn(ctx: <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context, value: #name_ident) -> bool {
-            extern crate std;
-
-            let encoded_len = value.encoded_len(&ctx);
+            let encoded_len = Encode::encoded_len(&value, &ctx);
             let mut buf = ::std::vec![0u8; encoded_len];
-            let ::core::result::Result::Ok(written) = value.encode(&ctx, &mut buf) else {
+            let ::core::result::Result::Ok(written) = Encode::encode(&value, &ctx, &mut buf) else {
               return false;
             };
 
@@ -676,7 +674,7 @@ impl Enum {
               return false;
             }
 
-            let ::core::result::Result::Ok((read, decoded)) = #name_ident::decode::<()>(&ctx, &buf[..encoded_len]) else {
+            let ::core::result::Result::Ok((read, decoded)) = <#name_ident as Decode<'_, _, _, #name_ident>>::decode::<()>(&ctx, &buf[..encoded_len]) else {
               return false;
             };
 
@@ -732,52 +730,60 @@ impl Enum {
     let from_fn_name = format_ident!("from_{}", repr_ty);
     let to_fn_name = format_ident!("as_{}", repr_ty);
 
-    let varint_encoded_len_name = |name: &Ident| format_ident!("{}_VARINT_ENCODED_LEN", name);
-    let varint_encoded_name = |name: &Ident| format_ident!("{}_VARINT_ENCODED", name);
-
-    let consts = self.variants.iter().map(|v| {
-      let name = v.const_variant_name();
-      let variant_encoded_len_name = varint_encoded_len_name(&name);
-      let variant_encoded_len_doc = format!(" The encoded length of the enum variant [`{}::{}`]", self.name.name_str(), v.name.name_str());
-      let encoded_variant_name = varint_encoded_name(&name);
-      let encoded_variant_len_doc = format!(" The encoded bytes of the enum variant [`{}::{}`]", self.name.name_str(), v.name.name_str());
-      let value = v.value().to_value();
-
-      quote! {
-        #[doc = #variant_encoded_len_doc]
-        pub const #variant_encoded_len_name: ::core::primitive::usize = Self::#encoded_variant_name.len();
-        #[doc = #encoded_variant_len_doc]
-        pub const #encoded_variant_name: #path_to_grost::__private::varing::utils::Buffer<{ #repr_max_encoded_len + 1 }> = #repr_encode_fn(#value);
-      }
-    });
+    let variant_reflection_name = self.variant_reflection_name();
 
     let const_encode_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let name = v.const_variant_name();
-      let encoded_variant_name = varint_encoded_name(&name);
+      let raw_value = v.value().to_value();
 
       quote! {
-        Self::#variant_name_ident => Self::#encoded_variant_name,
+        Self::#variant_name_ident => *<#variant_reflection_name<
+          #path_to_grost::__private::reflection::encode::EncodeReflection<
+            #path_to_grost::__private::reflection::EnumVariantReflection,
+          >,
+          (),
+          #raw_value,
+        > as #path_to_grost::__private::reflection::Reflectable<
+          (),
+        >>::REFLECTION,
       }
     });
 
     let const_encode_to_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-      let name = v.const_variant_name();
-      let encoded_variant_name = varint_encoded_name(&name);
-      let variant_encoded_len_name = varint_encoded_len_name(&name);
+      let raw_value = v.value().to_value();
 
       quote! {
         Self::#variant_name_ident => {
+          const ENCODED_LEN: ::core::primitive::usize = *<#variant_reflection_name<
+            #path_to_grost::__private::reflection::Len<
+              #path_to_grost::__private::reflection::encode::EncodeReflection<
+                #path_to_grost::__private::reflection::EnumVariantReflection,
+              >,
+            >,
+            (),
+            #raw_value,
+          > as #path_to_grost::__private::reflection::Reflectable<
+            (),
+          >>::REFLECTION;
+
           let buf_len = buf.len();
-          if buf_len < Self::#variant_encoded_len_name {
-            return ::core::result::Result::Err(::grost::__private::varing::EncodeError::underflow(Self::#variant_encoded_len_name, buf_len));
+          if buf_len < ENCODED_LEN {
+            return ::core::result::Result::Err(::grost::__private::varing::EncodeError::underflow(ENCODED_LEN, buf_len));
           }
 
-          let (b, _) = buf.split_at_mut(Self::#variant_encoded_len_name);
-          b.copy_from_slice(Self::#encoded_variant_name.as_slice());
+          let (b, _) = buf.split_at_mut(ENCODED_LEN);
+          b.copy_from_slice(<#variant_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::EnumVariantReflection,
+            >,
+            (),
+            #raw_value,
+          > as #path_to_grost::__private::reflection::Reflectable<
+            (),
+          >>::REFLECTION.as_slice());
 
-          ::core::result::Result::Ok(Self::#variant_encoded_len_name)
+          ::core::result::Result::Ok(ENCODED_LEN)
         },
       }
     });
@@ -793,17 +799,22 @@ impl Enum {
 
     let const_encoded_len_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
-
-      let name = v.const_variant_name();
-      let variant_encoded_len_name = varint_encoded_len_name(&name);
+      let raw_value = v.value().to_value();
 
       quote! {
-        Self::#variant_name_ident => Self::#variant_encoded_len_name,
+        Self::#variant_name_ident => *<#variant_reflection_name<
+          #path_to_grost::__private::reflection::Len<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::EnumVariantReflection,
+            >,
+          >,
+          (),
+          #raw_value,
+        > as #path_to_grost::__private::reflection::Reflectable<
+          (),
+        >>::REFLECTION,
       }
     });
-
-    let max_encoded_len_name = format_ident!("MAX_VARINT_ENCODED_LEN");
-    let min_encoded_len_name = format_ident!("MIN_VARINT_ENCODED_LEN");
 
     let from_branches = self.variants.iter().map(|v| {
       let variant_name_ident = &v.name;
@@ -846,7 +857,7 @@ impl Enum {
 
         #[inline]
         fn try_from(src: &'a [::core::primitive::u8]) -> ::core::result::Result<Self, Self::Error> {
-          Self::const_decode(src).map(|(_, this)| this)
+          Self::decode(src).map(|(_, this)| this)
         }
       }
 
@@ -857,29 +868,22 @@ impl Enum {
 
         #[inline]
         fn encode(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::varing::EncodeError> {
-          self.const_encode_to(buf)
+          Self::encode_to(self, buf)
         }
 
         #[inline]
         fn encoded_len(&self) -> ::core::primitive::usize {
-          self.const_encoded_len()
+          Self::encoded_len(self)
         }
 
         #[inline]
         fn decode(src: &[::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::varing::DecodeError> {
-          Self::const_decode(src)
+          Self::decode(src)
         }
       }
 
       #[automatically_derived]
       impl #name_ident {
-        /// The maximum encoded length in bytes.
-        pub const #max_encoded_len_name: ::core::primitive::usize = #repr_max_encoded_len;
-        /// The minimum encoded length in bytes.
-        pub const #min_encoded_len_name: ::core::primitive::usize = #repr_min_encoded_len;
-
-        #(#consts)*
-
         /// Returns the enum variant from the raw representation.
         #[inline]
         pub const fn #from_fn_name(repr: #repr_fq_ty) -> Self {
@@ -900,7 +904,7 @@ impl Enum {
 
         /// Returns the encoded bytes of the enum variant.
         #[inline]
-        pub const fn const_encode(&self) -> #path_to_grost::__private::varing::utils::Buffer<{ #repr_max_encoded_len + 1 }> {
+        pub const fn encode(&self) -> #path_to_grost::__private::varing::utils::Buffer<{ #repr_max_encoded_len + 1 }> {
           match self {
             #(#const_encode_branches)*
             Self::Unknown(val) => #repr_encode_fn(*val),
@@ -909,7 +913,7 @@ impl Enum {
 
         /// Returns the encoded bytes of the enum variant.
         #[inline]
-        pub const fn const_encode_to(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::varing::EncodeError> {
+        pub const fn encode_to(&self, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::varing::EncodeError> {
           match self {
             #(#const_encode_to_branches)*
             Self::Unknown(val) => #repr_encode_to_fn(*val, buf),
@@ -920,7 +924,7 @@ impl Enum {
         ///
         /// Returns the number of bytes readed and `Self`.
         #[inline]
-        pub const fn const_decode(src: &[::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::varing::DecodeError> {
+        pub const fn decode(src: &[::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::varing::DecodeError> {
           ::core::result::Result::Ok(match src {
             #(#const_decode_branches)*
             src => {
@@ -934,7 +938,7 @@ impl Enum {
 
         /// Returns the encoded length of the enum variant.
         #[inline]
-        pub const fn const_encoded_len(&self) -> ::core::primitive::usize {
+        pub const fn encoded_len(&self) -> ::core::primitive::usize {
           match self {
             #(#const_encoded_len_branches)*
             Self::Unknown(val) => #repr_encoded_len_fn(*val),
