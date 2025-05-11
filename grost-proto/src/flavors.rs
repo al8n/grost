@@ -26,6 +26,7 @@ macro_rules! wire_type {
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
           const NAME: &'static str = $ty;
+          const SELF: Self = [< $ty: camel >];
         }
 
         impl From<[< $ty: camel >]> for $name {
@@ -153,6 +154,8 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const WIRE_TYPE: F::WireType;
   /// The name of the wire format.
   const NAME: &'static str;
+  /// The self.
+  const SELF: Self;
 }
 
 /// The default wire format for a type on flavor `F`.

@@ -4,9 +4,9 @@ use grost_proto::reflection::{EnumRepr, EnumVariantValue};
 use syn::parse_quote;
 // use grost_proto::{Tag, WireType};
 
-// use crate::{Field, Struct, field::getter, ty::Ty};
+// use crate::{Field, Object, field::getter, ty::Ty};
 
-use crate::{Field, SchemaGeneratorBuilder, Struct, field::getter, network::Network, ty::Ty};
+use crate::{Field, SchemaGeneratorBuilder, Object, field::getter, network::Network, ty::Ty};
 
 use super::{Enum, EnumVariant, SafeIdent, SchemaGenerator};
 
@@ -58,7 +58,7 @@ fn test_struct_generate() {
       3,
     ),
   ];
-  let struct_ = Struct::new(SafeIdent::new("User"), fields)
+  let struct_ = Object::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")
     .with_visibility(parse_quote!(pub));
 
@@ -86,7 +86,7 @@ fn test_struct_generate() {
       4,
     ),
   ];
-  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+  let struct_ = Object::new(SafeIdent::new("Comment"), fields)
     .with_description("A comment struct")
     .with_visibility(parse_quote!(pub));
 

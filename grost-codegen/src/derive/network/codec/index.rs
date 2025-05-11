@@ -1,13 +1,13 @@
 use heck::ToUpperCamelCase;
 use quote::{format_ident, quote};
 
-use crate::{Struct, network::Network};
+use crate::{Object, network::Network};
 
 impl Network {
   pub(crate) fn generate_struct_index(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
   ) -> proc_macro2::TokenStream {
     let indexer_name = struct_.indexer_name();
     let selector_name = struct_.selector_name();

@@ -7,7 +7,7 @@ use crate::DeriveGenerator;
 
 use super::*;
 
-impl Struct {
+impl Object {
   pub(crate) fn selector_defination<F>(
     &self,
     path_to_grost: &syn::Path,

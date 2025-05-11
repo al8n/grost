@@ -1,7 +1,33 @@
 use super::*;
 
-impl Struct {
-  pub fn generate_reflection(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+impl Object {
+  pub(crate) fn reflection(&self) -> proc_macro2::TokenStream {
+    let reflection_name = self.reflection_name();
+    let doc = format!(
+      " The reflection of the [`{}`].",
+      self.name.name_str()
+    );
+    let field_reflection_name = self.field_reflection_name();
+    let field_reflection_doc = format!(
+      " The field reflection of the [`{}`]'s fields.",
+      self.name.name_str()
+    );
+    quote! {
+      #[doc = #field_reflection_doc]
+      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+
+      #[doc = #doc]
+      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+    }
+  }
+
+  pub(crate) fn reflection_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let reflection_name = self.reflection_name();
     let name = self.name.name();
 
@@ -30,17 +56,11 @@ impl Struct {
     });
 
     quote! {
-      /// The field reflection of the struct.
-      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-
       #[automatically_derived]
       impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
       {
         type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -54,7 +74,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: ::core::ops::Deref,
       {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -66,7 +86,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
       {
@@ -79,7 +99,7 @@ impl Struct {
       impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display for #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
       {
@@ -89,16 +109,37 @@ impl Struct {
       }
 
       #[automatically_derived]
+      #[allow(clippy::type_complexity, non_camel_case_types)]
       impl<R, F, const TAG: ::core::primitive::u32> #field_reflection_name<R, F, TAG>
       where
         R: ?::core::marker::Sized,
         F: ?::core::marker::Sized,
       {
+        #[inline]
         const fn new_in() -> Self {
           Self {
             _reflect: ::core::marker::PhantomData,
             _flavor: ::core::marker::PhantomData,
           }
+        }
+
+        /// Returns the reflection of the field.
+        #[inline]
+        const fn new() -> Self {
+          Self::new_in()
+        }
+
+        /// Returns the relection to the wire format of the field.
+        #[inline]
+        pub const fn wire_format<W>(&self) -> #field_reflection_name<
+          #path_to_grost::__private::reflection::WireFormatReflection<
+            W,
+          >,
+          F,
+          TAG,
+        >
+        {
+          #field_reflection_name::new_in()
         }
       }
 
@@ -108,12 +149,6 @@ impl Struct {
       where
         F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
       {
-        /// Returns the reflection of the field.
-        #[inline]
-        const fn new() -> Self {
-          Self::new_in()
-        }
-
         /// Returns the relection to a tag of the field.
         #[inline]
         pub const fn tag(&self) -> #field_reflection_name<
@@ -153,7 +188,7 @@ impl Struct {
           #field_reflection_name::new_in()
         }
 
-        /// Returns the relection to a tag of the field.
+        /// Returns the relection to the wire type of the field.
         #[inline]
         pub const fn wire_type(&self) -> #field_reflection_name<
           #path_to_grost::__private::reflection::WireTypeReflection<
@@ -324,17 +359,11 @@ impl Struct {
         F: ?::core::marker::Sized,
       {}
 
-      /// The reflection bridge type.
-      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-
       #[automatically_derived]
       impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
       {
         type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
@@ -348,7 +377,7 @@ impl Struct {
       impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: ::core::ops::Deref,
       {
         fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
@@ -360,7 +389,7 @@ impl Struct {
       impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
       {
@@ -373,7 +402,7 @@ impl Struct {
       impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
       where
         R: ?::core::marker::Sized,
-        F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        F: ?::core::marker::Sized,
         Self: #path_to_grost::__private::reflection::Reflectable<F>,
         <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
       {
@@ -403,7 +432,7 @@ impl Struct {
       }
 
       #[automatically_derived]
-      impl<F> #reflection_name<#path_to_grost::__private::reflection::StructReflection<F>, F>
+      impl<F> #reflection_name<#path_to_grost::__private::reflection::ObjectReflection<F>, F>
       where
         F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
       {
@@ -422,7 +451,7 @@ impl Struct {
         #[allow(non_camel_case_types)]
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>() -> #reflection_name<
-          #path_to_grost::__private::reflection::StructReflection<__GROST_FLAVOR__>,
+          #path_to_grost::__private::reflection::ObjectReflection<__GROST_FLAVOR__>,
           __GROST_FLAVOR__,
         >
         where

@@ -20,7 +20,7 @@ pub mod ty;
 
 pub struct SchemaGeneratorBuilder {
   grost_path: syn::Path,
-  structs: IndexSet<Struct>,
+  structs: IndexSet<Object>,
   enums: IndexSet<Enum>,
 }
 
@@ -67,7 +67,7 @@ impl SchemaGeneratorBuilder {
   }
 
   /// Returns the objects in the schema builder
-  pub fn objects_mut(&mut self) -> &mut IndexSet<Struct> {
+  pub fn objects_mut(&mut self) -> &mut IndexSet<Object> {
     &mut self.structs
   }
 
@@ -77,7 +77,7 @@ impl SchemaGeneratorBuilder {
   }
 
   /// Returns the objects in the schema builder
-  pub fn objects(&mut self) -> &IndexSet<Struct> {
+  pub fn objects(&mut self) -> &IndexSet<Object> {
     &mut self.structs
   }
 
@@ -91,7 +91,7 @@ impl SchemaGeneratorBuilder {
 /// interfaces in a grost schema to the corresponding Rust definitions.
 pub struct SchemaGenerator {
   grost_path: syn::Path,
-  structs: IndexSet<Struct>,
+  structs: IndexSet<Object>,
   enums: IndexSet<Enum>,
 }
 
@@ -104,7 +104,7 @@ impl SchemaGenerator {
 
   /// Returns a new `SchemaGenerator` with the given `grost_path`
   #[inline]
-  pub const fn structs(&self) -> &IndexSet<Struct> {
+  pub const fn structs(&self) -> &IndexSet<Object> {
     &self.structs
   }
 
@@ -145,6 +145,8 @@ impl SchemaGenerator {
 
         let partial_ref_struct = s.partial_ref_struct(&self.grost_path, derive);
 
+        let reflection_impl = s.reflection_impl(&self.grost_path);
+
         Ok(quote! {
           const _: () = {
             #struct_impl
@@ -152,6 +154,8 @@ impl SchemaGenerator {
             #indexer_impl
 
             #partial_ref_struct
+
+            #reflection_impl
 
             const _: () = {
               #selector
@@ -209,6 +213,7 @@ impl SchemaGenerator {
       let defination = s.struct_defination();
       let partial_defination = s.partial_struct_defination();
       let indexer_defination = s.indexer_defination();
+      let reflection_defination = s.reflection();
 
       quote! {
         #defination
@@ -216,6 +221,8 @@ impl SchemaGenerator {
         #partial_defination
 
         #indexer_defination
+
+        #reflection_defination
       }
     });
 
@@ -226,7 +233,7 @@ impl SchemaGenerator {
     }
   }
 
-  // pub fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Box<dyn core::error::Error + Send + Sync + 'static>> {
+  // pub fn generate_struct(&self, struct_: &Object) -> Result<proc_macro2::TokenStream, Box<dyn core::error::Error + Send + Sync + 'static>> {
   //   let codec = self.flavors.iter().map(|(_, f)| {
   //     let codec = f.generate_struct_codec(&self.grost_path, struct_);
   //     let partial_ref_defination = struct_.partial_ref_struct_defination(&self.grost_path, f);

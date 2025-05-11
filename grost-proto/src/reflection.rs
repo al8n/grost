@@ -60,7 +60,7 @@ pub enum Type<F: Flavor + ?Sized> {
     value: &'static Type<F>,
   },
   Optional(&'static Type<F>),
-  Struct(&'static StructReflection<F>),
+  Object(&'static ObjectReflection<F>),
   UintEnum(EnumReflection),
   Union(),
   Interface(),
@@ -85,6 +85,8 @@ phantom!(
   EncodedTagReflection,
   /// Reflection to the wire type of a field
   WireTypeReflection,
+  /// Reflection to the wire format of a field
+  WireFormatReflection,
   /// Reflection to length related
   Len
 );

@@ -1,4 +1,4 @@
-use crate::{Field, Struct};
+use crate::{Field, Object};
 
 use super::Network;
 
@@ -12,7 +12,7 @@ impl Network {
   pub(super) fn generate_field_encode_fns(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
   ) -> proc_macro2::TokenStream {
     let fns = struct_.fields().iter().map(|f| {
       let wf = f.get_wire_format_or_default(path_to_grost, self);
@@ -101,7 +101,7 @@ impl Network {
   fn generate_encode_field_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -256,7 +256,7 @@ impl Network {
   fn generate_partial_encode_field_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -422,7 +422,7 @@ impl Network {
   fn generate_encoded_field_len_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -505,7 +505,7 @@ impl Network {
   fn generate_partial_encoded_field_len_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -594,7 +594,7 @@ impl Network {
   fn generate_partial_encode_ref_field_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -783,7 +783,7 @@ impl Network {
   fn generate_partial_encoded_ref_field_len_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -889,7 +889,7 @@ impl Network {
   fn generate_encode_ref_field_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {
@@ -1072,7 +1072,7 @@ impl Network {
   fn generate_encoded_ref_field_len_reflection(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
     f: &Field,
     wf: &syn::Type,
   ) -> proc_macro2::TokenStream {

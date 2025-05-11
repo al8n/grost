@@ -1,6 +1,6 @@
 use crate::Field;
 
-use super::{Enum, Struct};
+use super::{Enum, Object};
 
 /// The network flavor code generator
 pub mod network;
@@ -30,7 +30,7 @@ pub trait DeriveGenerator {
   fn derive_object(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
   ) -> Result<proc_macro2::TokenStream, Self::Error>;
 
   /// Derives the implementations for the enum schema type
@@ -67,7 +67,7 @@ impl<F: DeriveGenerator + ?Sized> DeriveGenerator for Box<F> {
   fn derive_object(
     &self,
     path_to_grost: &syn::Path,
-    struct_: &Struct,
+    struct_: &Object,
   ) -> Result<proc_macro2::TokenStream, Self::Error> {
     self.as_ref().derive_object(path_to_grost, struct_)
   }

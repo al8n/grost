@@ -1,16 +1,16 @@
 use super::{Flavor, Type};
 
 #[doc(hidden)]
-pub struct StructReflectionBuilder<F: Flavor + ?Sized> {
+pub struct ObjectReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub fields: &'static [&'static FieldReflection<F>],
 }
 
-impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
+impl<F: Flavor + ?Sized> ObjectReflectionBuilder<F> {
   #[inline]
-  pub const fn build(self) -> StructReflection<F> {
-    StructReflection {
+  pub const fn build(self) -> ObjectReflection<F> {
+    ObjectReflection {
       name: self.name,
       schema_name: self.schema_name,
       fields: self.fields,
@@ -20,21 +20,21 @@ impl<F: Flavor + ?Sized> StructReflectionBuilder<F> {
 
 /// The struct information of an object in the Graph protocol buffer
 #[derive(Debug)]
-pub struct StructReflection<F: Flavor + ?Sized> {
+pub struct ObjectReflection<F: Flavor + ?Sized> {
   name: &'static str,
   schema_name: &'static str,
   fields: &'static [&'static FieldReflection<F>],
 }
 
-impl<F: Flavor + ?Sized> Clone for StructReflection<F> {
+impl<F: Flavor + ?Sized> Clone for ObjectReflection<F> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor + ?Sized> Copy for StructReflection<F> {}
+impl<F: Flavor + ?Sized> Copy for ObjectReflection<F> {}
 
-impl<F: Flavor + ?Sized> StructReflection<F> {
+impl<F: Flavor + ?Sized> ObjectReflection<F> {
   /// Get the name of the struct
   #[inline]
   pub const fn name(&self) -> &'static str {

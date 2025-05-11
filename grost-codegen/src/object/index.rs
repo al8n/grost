@@ -1,6 +1,6 @@
 use super::*;
 
-impl Struct {
+impl Object {
   pub(crate) fn indexer_defination(&self) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let indexer_doc = format!(

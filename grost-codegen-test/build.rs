@@ -94,7 +94,7 @@ fn struct_codegen_test(name: &str) {
       3,
     ),
   ];
-  let struct_ = Struct::new(SafeIdent::new("User"), fields)
+  let struct_ = Object::new(SafeIdent::new("User"), fields)
     .with_description("A user struct")
     .with_visibility(parse_quote!(pub));
 
@@ -122,7 +122,7 @@ fn struct_codegen_test(name: &str) {
       4,
     ),
   ];
-  let struct_ = Struct::new(SafeIdent::new("Comment"), fields)
+  let struct_ = Object::new(SafeIdent::new("Comment"), fields)
     .with_description("A comment struct")
     .with_visibility(parse_quote!(pub));
 

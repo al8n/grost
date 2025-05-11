@@ -52,7 +52,7 @@ pub(crate) enum TyRepr {
   },
   Optional(Box<Ty>),
   Enum(Type),
-  Struct(Type),
+  Object(Type),
   Union(Type),
   Interface(Type),
 }
@@ -64,7 +64,7 @@ impl TyRepr {
       Self::List { ty, .. } => ty.clone(),
       Self::Map { ty, .. } => ty.clone(),
       Self::Enum(ty) => ty.clone(),
-      Self::Struct(ty) => ty.clone(),
+      Self::Object(ty) => ty.clone(),
       Self::Union(ty) => ty.clone(),
       Self::Interface(ty) => ty.clone(),
       Self::Optional(ty) => {
@@ -81,7 +81,7 @@ impl TyRepr {
       Self::List { ty, .. } => parse_quote!(& #lifetime #mutability #ty),
       Self::Map { ty, .. } => parse_quote!(& #lifetime #mutability #ty),
       Self::Enum(ty) => parse_quote!(& #lifetime #mutability #ty),
-      Self::Struct(ty) => parse_quote!(& #lifetime #mutability #ty),
+      Self::Object(ty) => parse_quote!(& #lifetime #mutability #ty),
       Self::Union(ty) => parse_quote!(& #lifetime #mutability #ty),
       Self::Interface(ty) => parse_quote!(& #lifetime #mutability #ty),
       Self::Optional(ty) => {
@@ -104,7 +104,7 @@ impl TyRepr {
     match self {
       Self::Primitive(ty)
       | Self::Enum(ty)
-      | Self::Struct(ty)
+      | Self::Object(ty)
       | Self::Union(ty)
       | Self::Interface(ty) => {
         let flavor_ty = flavor.ty();
@@ -138,7 +138,7 @@ impl TyRepr {
       }
       Self::Primitive(ty)
       | Self::Enum(ty)
-      | Self::Struct(ty)
+      | Self::Object(ty)
       | Self::Union(ty)
       | Self::Interface(ty) => ty.clone(),
       Self::Optional(ty) => ty.repr().atomic_ty(),
@@ -154,7 +154,7 @@ impl TyRepr {
         let value = value.repr().encode_atomic_ty();
         parse_quote!((&#key, &#value))
       }
-      Self::Enum(ty) | Self::Struct(ty) | Self::Union(ty) | Self::Interface(ty) => ty.clone(),
+      Self::Enum(ty) | Self::Object(ty) | Self::Union(ty) | Self::Interface(ty) => ty.clone(),
       Self::Optional(ty) => ty.repr().encode_atomic_ty(),
     }
   }
@@ -222,7 +222,7 @@ impl Ty {
   /// Creates a new struct [`Ty`].
   pub fn struct_(ty: Type, schema_type: &str) -> Self {
     Self {
-      repr: TyRepr::Struct(ty),
+      repr: TyRepr::Object(ty),
       schema_type: required_schema_type(schema_type),
       copy: false,
       description: None,
@@ -316,7 +316,7 @@ impl Ty {
   {
     match &self.repr {
       TyRepr::Primitive(_) | TyRepr::Enum(_) => parse_quote!(::core::primitive::bool),
-      TyRepr::Struct(ty) | TyRepr::Union(ty) | TyRepr::Interface(ty) => {
+      TyRepr::Object(ty) | TyRepr::Union(ty) | TyRepr::Interface(ty) => {
         let flavor_ty = flavor.ty();
         parse_quote!(<#ty as #path_to_grost::__private::PartialEncode<#flavor_ty, #wire_format>>::Selection)
       }
@@ -372,9 +372,9 @@ impl Ty {
           #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
         }
       }
-      TyRepr::Struct(ty) => {
+      TyRepr::Object(ty) => {
         quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Struct(<
+          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Object(<
             #ty as #path_to_grost::__private::reflection::Reflectable<
               #flavor_ty,
             >

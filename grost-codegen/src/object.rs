@@ -14,7 +14,7 @@ mod index;
 mod reflection;
 mod selector;
 
-pub struct Struct {
+pub struct Object {
   name: SafeIdent,
   schema_name: SmolStr,
   selector_name: SafeIdent,
@@ -24,21 +24,21 @@ pub struct Struct {
   visibility: Option<Visibility>,
 }
 
-impl PartialEq for Struct {
+impl PartialEq for Object {
   fn eq(&self, other: &Self) -> bool {
     self.name.name().eq(other.name.name())
   }
 }
 
-impl Eq for Struct {}
+impl Eq for Object {}
 
-impl core::hash::Hash for Struct {
+impl core::hash::Hash for Object {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
     self.name.name().hash(state);
   }
 }
 
-impl Struct {
+impl Object {
   pub fn new(name: SafeIdent, mut fields: Vec<Field>) -> Self {
     fields.sort_by_key(|f| f.tag());
     Self {

@@ -143,11 +143,13 @@ macro_rules! impl_wire_format_for_repeated {
       impl WireFormat<Network> for Repeated<$wf> {
         const NAME: &'static str = "repeated";
         const WIRE_TYPE: WireType = WireType::LengthDelimited;
+        const SELF: Self = Self(PhantomData);
       }
 
       impl<const I: u32> WireFormat<Network> for Repeated<Stream<$wf, I>> {
         const NAME: &'static str = "repeated";
         const WIRE_TYPE: WireType = <$wf>::WIRE_TYPE;
+        const SELF: Self = Self(PhantomData);
       }
     )*
   };

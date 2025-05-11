@@ -144,3 +144,8 @@
 //   // let a = <<User as Referenceable<Network>>::Ref<'_, ()>>::new();
 //   // println!("{:?}", s.without_title());
 // }
+
+#[test]
+fn t() {
+
+}
