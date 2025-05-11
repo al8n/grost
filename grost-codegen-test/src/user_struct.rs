@@ -164,6 +164,109 @@ pub struct UserReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> 
   _reflect: ::core::marker::PhantomData<R>,
   _flavor: ::core::marker::PhantomData<F>,
 }
+/// The selection type for User
+#[allow(non_camel_case_types)]
+pub struct UserSelector<__GROST_FLAVOR__>
+where
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 1u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::std::string::String: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        1u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 2u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  u32: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        2u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 3u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<::std::string::String>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        3u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+{
+  name: <::std::string::String as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <UserFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      1u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+  age: <u32 as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <UserFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      2u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+  email: <::core::option::Option<::std::string::String> as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <UserFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      3u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+}
+/// An iterator over the selected fields of the [`UserSelector`]
+#[allow(non_camel_case_types, clippy::type_complexity)]
+pub struct UserSelectorIter<
+  '__grost_lifetime__,
+  __GROST_FLAVOR__,
+  const N: ::core::primitive::bool = true,
+> where
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 1u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::std::string::String: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        1u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 2u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  u32: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        2u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  UserFieldReflection<::grost::__private::reflection::WireFormatReflection, __GROST_FLAVOR__, 3u32>:
+    ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<::std::string::String>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <UserFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        3u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+{
+  selector: &'__grost_lifetime__ UserSelector<__GROST_FLAVOR__>,
+  index: ::core::option::Option<UserFieldIndex>,
+  num: ::core::primitive::usize,
+  yielded: ::core::primitive::usize,
+}
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 ///A comment struct
 pub struct Comment {
@@ -380,6 +483,161 @@ pub struct CommentFieldReflection<
 pub struct CommentReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
   _reflect: ::core::marker::PhantomData<R>,
   _flavor: ::core::marker::PhantomData<F>,
+}
+/// The selection type for Comment
+#[allow(non_camel_case_types)]
+pub struct CommentSelector<__GROST_FLAVOR__>
+where
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    1u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  User: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        1u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    2u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<User>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        2u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    3u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::std::string::String: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        3u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    4u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<::std::string::String>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        4u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+{
+  user: <User as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <CommentFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      1u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+  replyer: <::core::option::Option<User> as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <CommentFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      2u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+  title: <::std::string::String as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <CommentFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      3u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+  content: <::core::option::Option<::std::string::String> as ::grost::__private::Selectable<
+    __GROST_FLAVOR__,
+    <CommentFieldReflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      4u32,
+    > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+  >>::Selector,
+}
+/// An iterator over the selected fields of the [`CommentSelector`]
+#[allow(non_camel_case_types, clippy::type_complexity)]
+pub struct CommentSelectorIter<
+  '__grost_lifetime__,
+  __GROST_FLAVOR__,
+  const N: ::core::primitive::bool = true,
+> where
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    1u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  User: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        1u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    2u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<User>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        2u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    3u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::std::string::String: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        3u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+  CommentFieldReflection<
+    ::grost::__private::reflection::WireFormatReflection,
+    __GROST_FLAVOR__,
+    4u32,
+  >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+  ::core::option::Option<::std::string::String>: ::grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      <CommentFieldReflection<
+        ::grost::__private::reflection::WireFormatReflection,
+        __GROST_FLAVOR__,
+        4u32,
+      > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+    >,
+{
+  selector: &'__grost_lifetime__ CommentSelector<__GROST_FLAVOR__>,
+  index: ::core::option::Option<CommentFieldIndex>,
+  num: ::core::primitive::usize,
+  yielded: ::core::primitive::usize,
 }
 const _: () = {
   #[automatically_derived]
@@ -1564,32 +1822,6 @@ const _: () = {
     }
   }
   const _: () = {
-    /// The selection type for User
-    #[allow(non_camel_case_types)]
-    pub struct UserSelector {
-            name: <::std::string::String as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-            age: <u32 as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <u32 as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-            email: <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <::core::option::Option<
-                    ::std::string::String,
-                > as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-        }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
     impl UserSelector {
@@ -2040,14 +2272,6 @@ const _: () = {
       pub const fn is_email_unselected(&self) -> ::core::primitive::bool {
         !self.email
       }
-    }
-    /// An iterator over the selected fields of the [`UserSelector`]
-    #[allow(non_camel_case_types)]
-    pub struct UserSelectorIter<'__grost_selector_iter__, const N: ::core::primitive::bool = true> {
-      selector: &'__grost_selector_iter__ UserSelector,
-      index: ::core::option::Option<UserFieldIndex>,
-      num: ::core::primitive::usize,
-      yielded: ::core::primitive::usize,
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
@@ -4394,42 +4618,6 @@ const _: () = {
     }
   }
   const _: () = {
-    /// The selection type for Comment
-    #[allow(non_camel_case_types)]
-    pub struct CommentSelector {
-            user: <User as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <User as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-            replyer: <::core::option::Option<
-                User,
-            > as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <::core::option::Option<
-                    User,
-                > as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-            title: <::std::string::String as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-            content: <::core::option::Option<
-                ::std::string::String,
-            > as ::grost::__private::Selectable<
-                ::grost::__private::flavors::Network,
-                <::core::option::Option<
-                    ::std::string::String,
-                > as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::Format,
-            >>::Selector,
-        }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
     impl CommentSelector {
@@ -5013,17 +5201,6 @@ const _: () = {
       pub const fn is_content_unselected(&self) -> ::core::primitive::bool {
         !self.content
       }
-    }
-    /// An iterator over the selected fields of the [`CommentSelector`]
-    #[allow(non_camel_case_types)]
-    pub struct CommentSelectorIter<
-      '__grost_selector_iter__,
-      const N: ::core::primitive::bool = true,
-    > {
-      selector: &'__grost_selector_iter__ CommentSelector,
-      index: ::core::option::Option<CommentFieldIndex>,
-      num: ::core::primitive::usize,
-      yielded: ::core::primitive::usize,
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]

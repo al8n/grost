@@ -99,7 +99,7 @@ impl TyRepr {
     lifetime: &Lifetime,
   ) -> Type
   where
-    F: super::DeriveGenerator + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     match self {
       Self::Primitive(ty)
@@ -312,7 +312,7 @@ impl Ty {
     wire_format: &syn::Type,
   ) -> Type
   where
-    F: super::DeriveGenerator + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     match &self.repr {
       TyRepr::Primitive(_) | TyRepr::Enum(_) => parse_quote!(::core::primitive::bool),
@@ -336,7 +336,7 @@ impl Ty {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: super::DeriveGenerator + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     let flavor_ty = flavor.ty();
     match &self.repr {

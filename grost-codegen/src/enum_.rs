@@ -622,7 +622,7 @@ impl Enum {
     flavor: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: super::DeriveGenerator + ?Sized,
+    F: super::FlavorGenerator + ?Sized,
   {
     let name_ident = &self.name;
     let variants = self.variants.iter().map(|v| &v.name);

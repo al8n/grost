@@ -127,7 +127,7 @@ impl SchemaGenerator {
   /// Derives the implementations for the schema types
   pub fn derive<G>(&self, derive: &G) -> Result<proc_macro2::TokenStream, G::Error>
   where
-    G: DeriveGenerator,
+    G: FlavorGenerator,
   {
     let structs = self
       .structs
@@ -142,9 +142,6 @@ impl SchemaGenerator {
         let partial_ref_struct = s.derive_partial_ref_object(&self.grost_path);
         let reflection_impl = s.derive_reflection(&self.grost_path);
 
-        let selector = s.generate_selector(&self.grost_path, derive);
-        let selector_iter = s.generate_selector_iter();
-
         Ok(quote! {
           const _: () = {
             #struct_impl
@@ -156,12 +153,7 @@ impl SchemaGenerator {
             #reflection_impl
 
             const _: () = {
-              #selector
-
               #selector_impl
-
-              #selector_iter
-
               #selector_iter_impl
 
               #code
@@ -213,6 +205,8 @@ impl SchemaGenerator {
       let partial_ref_generate_object = s.generate_partial_ref_object(&self.grost_path);
       let indexer = s.generate_indexer();
       let reflection_defination = s.generate_reflection();
+      let selector = s.generate_selector(&self.grost_path);
+      let selector_iter = s.generate_selector_iter(&self.grost_path);
 
       quote! {
         #defination
@@ -224,6 +218,10 @@ impl SchemaGenerator {
         #indexer
 
         #reflection_defination
+
+        #selector
+
+        #selector_iter
       }
     });
 

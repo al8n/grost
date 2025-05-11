@@ -145,5 +145,11 @@
 //   // println!("{:?}", s.without_title());
 // }
 
+use grost::flavors::Network;
+use grost_codegen_test::user_struct::PartialUserRef;
+
 #[test]
-fn t() {}
+fn t() {
+  let user = PartialUserRef::<Network>::new().with_age(18);
+  println!("{:?}", user.age_ref());
+}

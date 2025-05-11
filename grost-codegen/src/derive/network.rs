@@ -2,7 +2,7 @@ use quote::{ToTokens, format_ident, quote};
 
 use crate::Field;
 
-use super::{DeriveGenerator, Enum, Object};
+use super::{Enum, FlavorGenerator, Object};
 
 mod codec;
 mod reflection;
@@ -86,7 +86,7 @@ impl Network {
   }
 }
 
-impl DeriveGenerator for Network {
+impl FlavorGenerator for Network {
   type Error = ();
 
   fn ty(&self) -> &syn::Type {

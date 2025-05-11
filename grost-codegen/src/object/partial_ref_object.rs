@@ -139,16 +139,6 @@ impl Object {
   }
 }
 
-fn wire_format_reflection_ty(field_reflection: impl ToTokens, tag: u32) -> syn::Type {
-  parse_quote! {
-    #field_reflection<
-      ::grost::__private::reflection::WireFormatReflection,
-      __GROST_FLAVOR__,
-      #tag,
-    >
-  }
-}
-
 fn encode_state_ty(path_to_grost: &syn::Path, wf: &syn::Type) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::convert::State<

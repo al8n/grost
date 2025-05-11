@@ -3,46 +3,43 @@ use indexmap::IndexMap;
 use quote::{ToTokens, format_ident};
 use syn::Ident;
 
-use crate::DeriveGenerator;
+use crate::FlavorGenerator;
 
 use super::*;
 
 impl Object {
   /// Generates the selector for the object
-  pub fn generate_selector<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: DeriveGenerator + ?Sized,
-  {
+  pub fn generate_selector(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.selector_name();
     let vis = self.visibility.as_ref();
     let doc = format!(" The selection type for {}", self.name.name_str());
-
-    let flavor_ty = flavor.ty();
+    let field_reflection_ident = self.field_reflection_name();
+    let where_clauses = constraints(path_to_grost, &field_reflection_ident, self.fields());
     let selection_fields = self.fields.iter().map(|f| {
       let ty = f.ty();
       let field_name = f.name();
       let rust_ty = ty.ty();
-      let wf = f.get_wire_format_or_default(path_to_grost, flavor);
+      let wf = wire_format_reflection_ty(&field_reflection_ident, f.tag());
+      let wf = wire_format_ty(path_to_grost, &wf);
       quote! {
-        #field_name: <#rust_ty as #path_to_grost::__private::Selectable<#flavor_ty, #wf>>::Selector
+        #field_name: <#rust_ty as #path_to_grost::__private::Selectable<__GROST_FLAVOR__, #wf>>::Selector
       }
     });
 
     quote! {
       #[doc = #doc]
       #[allow(non_camel_case_types)]
-      #vis struct #name {
+      #vis struct #name<__GROST_FLAVOR__>
+      where
+        #(#where_clauses)*
+      {
         #(#selection_fields),*
       }
     }
   }
 
   /// Generates the iterator type of the selector for the object
-  pub fn generate_selector_iter(&self) -> proc_macro2::TokenStream {
+  pub fn generate_selector_iter(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.selector_name();
     let name_str = name.name_str();
     let iter_name = self.selector_iter_name();
@@ -52,12 +49,17 @@ impl Object {
       name_str,
     );
     let indexer_name = self.indexer_name();
+    let field_reflection_ident = self.field_reflection_name();
+    let where_clauses = constraints(path_to_grost, &field_reflection_ident, self.fields());
 
     quote! {
       #[doc = #iter_doc]
-      #[allow(non_camel_case_types)]
-      #vis struct #iter_name<'__grost_selector_iter__, const N: ::core::primitive::bool = true> {
-        selector: &'__grost_selector_iter__ #name,
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      #vis struct #iter_name<'__grost_lifetime__, __GROST_FLAVOR__, const N: ::core::primitive::bool = true>
+      where
+        #(#where_clauses)*
+      {
+        selector: &'__grost_lifetime__ #name<__GROST_FLAVOR__>,
         index: ::core::option::Option<#indexer_name>,
         num: ::core::primitive::usize,
         yielded: ::core::primitive::usize,
@@ -69,7 +71,7 @@ impl Object {
   /// of the object
   pub fn derive_selector_iter<F>(&self, flavor: &F) -> proc_macro2::TokenStream
   where
-    F: DeriveGenerator + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let iter_name = self.selector_iter_name();
     let name = self.selector_name();
@@ -110,7 +112,7 @@ impl Object {
     generator: &F,
   ) -> proc_macro2::TokenStream
   where
-    F: DeriveGenerator + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let name = self.selector_name();
     let flavor_ty = generator.ty();
@@ -437,7 +439,7 @@ impl Object {
     generator: &F,
   ) -> impl Iterator<Item = proc_macro2::TokenStream>
   where
-    F: DeriveGenerator + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let flavor_ty = generator.ty();
     self.fields.iter().map(move |f| {
@@ -457,7 +459,7 @@ impl Object {
     generator: &F,
   ) -> impl Iterator<Item = proc_macro2::TokenStream>
   where
-    F: DeriveGenerator + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let flavor_ty = generator.ty();
     self.fields.iter().map(move |f| {
@@ -478,7 +480,7 @@ impl Object {
     generator: &F,
   ) -> impl Iterator<Item = proc_macro2::TokenStream>
   where
-    F: DeriveGenerator + ?Sized,
+    F: FlavorGenerator + ?Sized,
   {
     let flavor_ty = generator.ty();
     self.fields.iter().map(move |f| {
@@ -659,4 +661,36 @@ impl Object {
       }
     })
   }
+}
+
+fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type) -> syn::Type {
+  parse_quote! {
+    <#wf as #path_to_grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection
+  }
+}
+
+fn selector_ty(path_to_grost: &syn::Path, wf: &syn::Type) -> syn::Type {
+  parse_quote! {
+    #path_to_grost::__private::Selectable<
+      __GROST_FLAVOR__,
+      #wf,
+    >
+  }
+}
+
+fn constraints(
+  path_to_grost: &syn::Path,
+  field_reflection: impl ToTokens,
+  fields: &[Field],
+) -> impl Iterator<Item = proc_macro2::TokenStream> {
+  fields.iter().map(move |f| {
+    let ty = f.ty();
+    let wfr = wire_format_reflection_ty(&field_reflection, f.tag());
+    let wf = wire_format_ty(path_to_grost, &wfr);
+    let selector_ty = selector_ty(path_to_grost, &wf);
+    quote! {
+      #wfr: #path_to_grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+      #ty: #selector_ty,
+    }
+  })
 }

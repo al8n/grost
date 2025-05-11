@@ -4,7 +4,7 @@ use quote::quote;
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Attribute, Expr, Visibility, parse_quote};
 
-use crate::{DeriveGenerator, SafeIdent, ty::Ty};
+use crate::{FlavorGenerator, SafeIdent, ty::Ty};
 use getter::Getter;
 use setter::Setter;
 
@@ -91,12 +91,12 @@ impl Field {
   }
 
   /// Inserts a wire type for a flavor
-  pub fn get_wire_format<F: DeriveGenerator + ?Sized>(&self, flavor: &F) -> Option<&syn::Type> {
+  pub fn get_wire_format<F: FlavorGenerator + ?Sized>(&self, flavor: &F) -> Option<&syn::Type> {
     self.wire_formats.get(flavor.name())
   }
 
   /// Inserts a wire type for a flavor
-  pub fn get_wire_format_or_default<F: DeriveGenerator + ?Sized>(
+  pub fn get_wire_format_or_default<F: FlavorGenerator + ?Sized>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,

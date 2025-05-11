@@ -1,9 +1,9 @@
 use heck::ToUpperCamelCase;
-use quote::{format_ident, quote};
+use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
 use syn::{Attribute, Ident, Visibility, parse_quote};
 
-use crate::{DeriveGenerator, SafeIdent};
+use crate::{FlavorGenerator, SafeIdent};
 
 pub use field::Field;
 
@@ -195,5 +195,15 @@ impl Object {
         #(#accessors)*
       }
     }
+  }
+}
+
+fn wire_format_reflection_ty(field_reflection: impl ToTokens, tag: u32) -> syn::Type {
+  parse_quote! {
+    #field_reflection<
+      ::grost::__private::reflection::WireFormatReflection,
+      __GROST_FLAVOR__,
+      #tag,
+    >
   }
 }
