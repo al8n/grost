@@ -3,7 +3,7 @@
 /// `Selector` provides mechanisms to include or exclude specific fields or components
 /// within a composite type. This is useful for operations like serialization, validation,
 /// or any process where you need to specify which parts of a data structure to process.
-pub trait Selector<F: ?Sized>: Clone + core::fmt::Debug + Eq {
+pub trait Selector<F: ?Sized>: Clone + core::fmt::Debug + Eq + core::hash::Hash {
   /// Creates a selector that includes all possible fields.
   ///
   /// This constant provides a convenient starting point when you want to select
@@ -15,6 +15,13 @@ pub trait Selector<F: ?Sized>: Clone + core::fmt::Debug + Eq {
   /// This constant provides a convenient starting point when you want to build
   /// a selector by gradually adding only the specific fields you need.
   const NONE: Self;
+
+  /// Creates a selector that includes the default selected fields.
+  ///
+  /// This constant provides a convenient starting point when you want to select
+  /// the default fields of a type. The exact fields selected depend on the
+  /// implementation of the `Selector` trait for the specific type.
+  const DEFAULT: Self;
 
   /// Returns the number of selected fields.
   fn selected(&self) -> usize;
@@ -63,6 +70,7 @@ pub trait Selector<F: ?Sized>: Clone + core::fmt::Debug + Eq {
 impl<F: ?Sized> Selector<F> for () {
   const ALL: Self = ();
   const NONE: Self = ();
+  const DEFAULT: Self = ();
 
   fn selected(&self) -> usize {
     1
@@ -84,6 +92,7 @@ impl<F: ?Sized> Selector<F> for () {
 impl<F: ?Sized> Selector<F> for bool {
   const ALL: Self = true;
   const NONE: Self = false;
+  const DEFAULT: Self = true;
 
   #[inline]
   fn selected(&self) -> usize {

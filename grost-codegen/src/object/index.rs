@@ -33,6 +33,8 @@ impl Object {
   pub fn derive_indexer(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let num_fields = self.fields().len();
+    let struct_name = self.name();
+    let field_reflection_ident = self.field_reflection_name();
 
     let first_variant_name = format_ident!(
       "{}",
@@ -61,6 +63,34 @@ impl Object {
         Self::#curr_variant_name => ::core::option::Option::Some(Self::#next_variant_name)
       }
     });
+    let mut reflections_constraints = vec![];
+    let reflections = self.fields().iter().map(|f| {
+      let field_name = f.name();
+      let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
+      let tag = f.tag();
+
+      reflections_constraints.push(quote! {
+        #field_reflection_ident<
+          #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>,
+          __GROST_FLAVOR__,
+          #tag,
+        >: #path_to_grost::__private::reflection::Reflectable<__GROST_FLAVOR__, Reflection = #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>>
+      });
+      quote! {
+        Self::#field_variant => {
+          <
+            #field_reflection_ident<
+              #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>,
+              __GROST_FLAVOR__,
+              #tag,
+            > as #path_to_grost::__private::reflection::Reflectable<
+              __GROST_FLAVOR__,
+            >
+          >::REFLECTION
+        }
+      }
+    }).collect::<Vec<_>>();
+
     let last_variant_name = format_ident!(
       "{}",
       self
@@ -88,6 +118,21 @@ impl Object {
         pub const FIRST: Self = Self::#first_variant_name;
         /// The last field indexer.
         pub const LAST: Self = Self::#last_variant_name;
+
+        /// Returns the field reflection of the corresponding field.
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        #[inline]
+        pub const fn reflection<__GROST_FLAVOR__>(
+          &self,
+        ) -> &'static #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>
+        where
+          __GROST_FLAVOR__: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
+          #(#reflections_constraints),*
+        {
+          match self {
+            #(#reflections),*
+          }
+        }
 
         /// Returns the next field indexer.
         ///

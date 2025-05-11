@@ -131,7 +131,9 @@ impl FlavorGenerator for Network {
       &partial_ref_struct_name,
     );
     let selectable = self.derive_selectable_for_object(path_to_grost, struct_);
+    let selector = self.derive_selector_for_object(path_to_grost, struct_);
     let reflectable = self.derive_reflectable_for_object(path_to_grost, struct_);
+    let indexing = self.derive_index_for_object(path_to_grost, struct_);
 
     Ok(quote! {
       #struct_encoded_state
@@ -148,7 +150,11 @@ impl FlavorGenerator for Network {
 
       #selectable
 
+      #selector
+
       #reflectable
+
+      #indexing
     })
   }
 

@@ -137,8 +137,8 @@ impl SchemaGenerator {
         let struct_impl = s.derive_object();
         let partial_impl = s.derive_partial_object(&self.grost_path);
         let indexer_impl = s.derive_indexer(&self.grost_path);
-        let selector_impl = s.derive_selector(&self.grost_path, derive);
-        let selector_iter_impl = s.derive_selector_iter(derive);
+        let selector_impl = s.derive_selector(&self.grost_path);
+        let selector_iter_impl = s.derive_selector_iter(&self.grost_path);
         let partial_ref_struct = s.derive_partial_ref_object(&self.grost_path);
         let reflection_impl = s.derive_reflection(&self.grost_path);
 
