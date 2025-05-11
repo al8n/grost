@@ -5,8 +5,6 @@ use crate::Field;
 use super::{Enum, FlavorGenerator, Object};
 
 mod codec;
-mod reflection;
-
 mod object;
 
 #[derive(Clone)]
@@ -134,6 +132,9 @@ impl FlavorGenerator for Network {
     let selector = self.derive_selector_for_object(path_to_grost, struct_);
     let reflectable = self.derive_reflectable_for_object(path_to_grost, struct_);
     let indexing = self.derive_index_for_object(path_to_grost, struct_);
+    let encode = self.derive_encode(path_to_grost, struct_);
+    let encode_reflection = self.derive_encode_reflection(path_to_grost, struct_);
+    let partial_encode = self.derive_partial_encode(path_to_grost, struct_);
 
     Ok(quote! {
       #struct_encoded_state
@@ -155,6 +156,12 @@ impl FlavorGenerator for Network {
       #reflectable
 
       #indexing
+
+      #partial_encode
+
+      #encode
+
+      #encode_reflection
     })
   }
 

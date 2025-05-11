@@ -33,7 +33,6 @@ impl Object {
   pub fn derive_indexer(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let num_fields = self.fields().len();
-    let struct_name = self.name();
     let field_reflection_ident = self.field_reflection_name();
 
     let first_variant_name = format_ident!(

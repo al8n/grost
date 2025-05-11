@@ -1,5 +1,3 @@
-use crate::Field;
-
 use super::{Enum, Object};
 
 /// The network flavor code generator
