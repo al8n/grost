@@ -133,31 +133,48 @@ impl SchemaGenerator {
       .structs
       .iter()
       .map(|s| {
-        let code = derive.derive_object(&self.grost_path, s)?;
-        let struct_impl = s.derive_object();
-        let partial_impl = s.derive_partial_object(&self.grost_path);
+        let flavor_impl = derive.derive_object(&self.grost_path, s)?;
+
+        let object_impl = s.derive_object();
+        let partial_object_impl = s.derive_partial_object(&self.grost_path);
+        let partial_ref_object_impl = s.derive_partial_ref_object(&self.grost_path);
+
         let indexer_impl = s.derive_indexer(&self.grost_path);
         let selector_impl = s.derive_selector(&self.grost_path);
         let selector_iter_impl = s.derive_selector_iter(&self.grost_path);
-        let partial_ref_struct = s.derive_partial_ref_object(&self.grost_path);
         let reflection_impl = s.derive_reflection(&self.grost_path);
 
         Ok(quote! {
           const _: () = {
-            #struct_impl
-            #partial_impl
-            #indexer_impl
+            #object_impl
+          };
 
-            #partial_ref_struct
+          const _: () = {
+            #partial_object_impl
+          };
 
+          const _: () = {
+            #partial_ref_object_impl
+          };
+
+          const _: () = {
             #reflection_impl
+          };
 
-            const _: () = {
-              #selector_impl
-              #selector_iter_impl
+          const _: () = {
+            #indexer_impl
+          };
 
-              #code
-            };
+          const _: () = {
+            #selector_impl
+          };
+          
+          const _: () = {
+            #selector_iter_impl            
+          };
+
+          const _: () = {
+            #flavor_impl
           };
         })
       })
@@ -178,10 +195,10 @@ impl SchemaGenerator {
           quote! {
             const _: () = {
               #impls
+            };
 
-              const _: () = {
-                #code
-              };
+            const _: () = {
+              #code
             };
 
             #quickcheck
