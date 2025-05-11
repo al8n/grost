@@ -11,46 +11,36 @@ impl Network {
     let partial_ref_name = struct_.partial_ref_name();
     let selector = struct_.selector_name();
 
-    let selectable_impl = |name: &syn::Ident, lifetime: bool| -> proc_macro2::TokenStream {
-      let lifetime_with_angle = if lifetime {
-        Some(quote! {<'__grost_lifetime__>})
-      } else {
-        None
-      };
-      let lifetime = if lifetime {
-        Some(quote! {'__grost_lifetime__})
-      } else {
-        None
-      };
+    let selectable_impl = |name: &syn::Ident| -> proc_macro2::TokenStream {
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl #lifetime_with_angle #path_to_grost::__private::Selectable<
+        impl #path_to_grost::__private::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::LengthDelimited,
-        > for #name #lifetime_with_angle
+        > for #name
         {
           type Selector = #selector;
         }
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl #lifetime_with_angle #path_to_grost::__private::Selectable<
+        impl #path_to_grost::__private::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
-        > for #name #lifetime_with_angle
+        > for #name
         {
           type Selector = #selector;
         }
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl<const I: ::core::primitive::u32, #lifetime> #path_to_grost::__private::Selectable<
+        impl<const I: ::core::primitive::u32> #path_to_grost::__private::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::Repeated<
             #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
           >,
-        > for #name #lifetime_with_angle
+        > for #name
         {
           type Selector = #selector;
         }
@@ -58,12 +48,44 @@ impl Network {
     };
 
     let selectable_impls = [
-      selectable_impl(struct_name.name(), false),
-      selectable_impl(&partial_struct_name, false),
-      selectable_impl(&partial_ref_name, true),
+      selectable_impl(struct_name.name()),
+      selectable_impl(&partial_struct_name),
     ];
+
     quote! {
       #(#selectable_impls)*
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
+        #path_to_grost::__private::flavors::Network,
+        #path_to_grost::__private::flavors::network::LengthDelimited,
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      {
+        type Selector = #selector;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
+        #path_to_grost::__private::flavors::Network,
+        #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      {
+        type Selector = #selector;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl<'__grost_lifetime__, const I: ::core::primitive::u32> #path_to_grost::__private::Selectable<
+        #path_to_grost::__private::flavors::Network,
+        #path_to_grost::__private::flavors::network::Repeated<
+          #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
+        >,
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      {
+        type Selector = #selector;
+      }
     }
   }
 }

@@ -8,7 +8,8 @@ use crate::DeriveGenerator;
 use super::*;
 
 impl Object {
-  pub(crate) fn selector_defination<F>(
+  /// Generates the selector for the object
+  pub fn generate_selector<F>(
     &self,
     path_to_grost: &syn::Path,
     flavor: &F,
@@ -40,7 +41,8 @@ impl Object {
     }
   }
 
-  pub(crate) fn selector_iter_defination(&self) -> proc_macro2::TokenStream {
+  /// Generates the iterator type of the selector for the object
+  pub fn generate_selector_iter(&self) -> proc_macro2::TokenStream {
     let name = self.selector_name();
     let name_str = name.name_str();
     let iter_name = self.selector_iter_name();
@@ -63,7 +65,9 @@ impl Object {
     }
   }
 
-  pub(crate) fn selector_iter_impl<F>(&self, flavor: &F) -> proc_macro2::TokenStream
+  /// Derives implementations for the iterator of the selector
+  /// of the object
+  pub fn derive_selector_iter<F>(&self, flavor: &F) -> proc_macro2::TokenStream
   where
     F: DeriveGenerator + ?Sized,
   {
@@ -99,7 +103,8 @@ impl Object {
     }
   }
 
-  pub(crate) fn selector_impl<F>(
+  /// Derives implementations for the selector of the object
+  pub fn derive_selector<F>(
     &self,
     path_to_grost: &syn::Path,
     generator: &F,

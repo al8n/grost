@@ -1,12 +1,10 @@
 use super::*;
 
 impl Object {
-  pub(crate) fn reflection(&self) -> proc_macro2::TokenStream {
+  /// Generates the reflection types for the object.
+  pub fn generate_reflection(&self) -> proc_macro2::TokenStream {
     let reflection_name = self.reflection_name();
-    let doc = format!(
-      " The reflection of the [`{}`].",
-      self.name.name_str()
-    );
+    let doc = format!(" The reflection of the [`{}`].", self.name.name_str());
     let field_reflection_name = self.field_reflection_name();
     let field_reflection_doc = format!(
       " The field reflection of the [`{}`]'s fields.",
@@ -27,7 +25,8 @@ impl Object {
     }
   }
 
-  pub(crate) fn reflection_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  /// Derives implementations for the reflection types.
+  pub fn derive_reflection(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let reflection_name = self.reflection_name();
     let name = self.name.name();
 
@@ -131,10 +130,8 @@ impl Object {
 
         /// Returns the relection to the wire format of the field.
         #[inline]
-        pub const fn wire_format<W>(&self) -> #field_reflection_name<
-          #path_to_grost::__private::reflection::WireFormatReflection<
-            W,
-          >,
+        pub const fn wire_format(&self) -> #field_reflection_name<
+          #path_to_grost::__private::reflection::WireFormatReflection,
           F,
           TAG,
         >

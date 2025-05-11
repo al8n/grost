@@ -11,6 +11,8 @@ pub use field::Field;
 pub mod field;
 
 mod index;
+mod partial_object;
+mod partial_ref_object;
 mod reflection;
 mod selector;
 
@@ -129,7 +131,8 @@ impl Object {
     format_ident!("{struct_name}FieldReflection")
   }
 
-  pub(crate) fn struct_defination(&self) -> proc_macro2::TokenStream {
+  /// Generate the object struct
+  pub fn generate_object(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let description = self.description.as_ref().map(|d| {
       let s = d.as_str();
@@ -151,239 +154,8 @@ impl Object {
     }
   }
 
-  pub(crate) fn partial_struct_defination(&self) -> proc_macro2::TokenStream {
-    let name = format_ident!("Partial{}", self.name.name_str());
-    let visibility = self.visibility.as_ref();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let ty = f.ty().repr().partial_ty();
-      quote! {
-        #field_name: ::core::option::Option<#ty>,
-      }
-    });
-    let doc = format!(" The partial struct of [`{}`]", self.name.name_str());
-
-    quote! {
-      #[doc = #doc]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      #visibility struct #name {
-        #(#fields)*
-      }
-    }
-  }
-
-  pub(crate) fn partial_struct_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-    let name = self.partial_struct_name();
-    let struct_name = self.name();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        #field_name: ::core::option::Option::None,
-      }
-    });
-
-    let fields_accessors = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let ref_fn = format_ident!("{}_ref", field_name.name_str());
-      let ref_mut_fn = format_ident!("{}_mut", field_name.name_str());
-      let set_fn = format_ident!("set_{}", field_name.name_str());
-      let take_fn = format_ident!("take_{}", field_name.name_str());
-      let without_fn = format_ident!("without_{}", field_name.name_str());
-      let with_fn = format_ident!("with_{}", field_name.name_str());
-      let clear_fn = format_ident!("clear_{}", field_name.name_str());
-      let ty = f.ty();
-      let constable = ty.copy().then(|| quote! { const });
-      let ty = ty.repr().partial_ty();
-
-      quote! {
-        #[inline]
-        pub const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
-          self.#field_name.as_ref()
-        }
-
-        #[inline]
-        pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
-          self.#field_name.as_mut()
-        }
-
-        #[inline]
-        pub const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
-          self.#field_name.take()
-        }
-
-        #[inline]
-        pub #constable fn #clear_fn(&mut self) -> &mut Self {
-          self.#field_name = ::core::option::Option::None;
-          self
-        }
-
-        #[inline]
-        pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
-          self.#field_name = ::core::option::Option::Some(value);
-          self
-        }
-
-        #[inline]
-        pub #constable fn #with_fn(mut self, value: #ty) -> Self {
-          self.#field_name = ::core::option::Option::Some(value);
-          self
-        }
-
-        #[inline]
-        pub #constable fn #without_fn(mut self) -> Self {
-          self.#field_name = ::core::option::Option::None;
-          self
-        }
-      }
-    });
-
-    quote! {
-      #[automatically_derived]
-      #[allow(non_camel_case_types)]
-      impl ::core::default::Default for #name {
-        fn default() -> Self {
-          Self::new()
-        }
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #name {
-        /// Creates an empty partial struct.
-        pub const fn new() -> Self {
-          Self {
-            #(#fields)*
-          }
-        }
-
-        #(#fields_accessors)*
-      }
-    }
-  }
-
-  pub(crate) fn partial_ref_struct<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: DeriveGenerator + ?Sized,
-  {
-    let struct_name = self.name();
-    let name = self.partial_ref_name();
-    let vis = self.visibility.as_ref();
-    let flavor_ty = flavor.ty();
-    let lifetime = parse_quote!('__grost_flavor__);
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let ty = f.ty();
-      let wf = f.get_wire_format_or_default(path_to_grost, flavor);
-      let encoded_ref_ty = ty
-        .repr()
-        .message_ref_ty(path_to_grost, flavor, &wf, &lifetime);
-
-      quote! {
-        #field_name: ::core::option::Option<#encoded_ref_ty>,
-      }
-    });
-    let fields_init = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        #field_name: ::core::option::Option::None,
-      }
-    });
-    let fields_accessors = self.fields.iter()
-      .map(|f| {
-        let field_name = f.name();
-        let ref_fn = format_ident!("{}_ref", field_name.name_str());
-        let ref_mut_fn = format_ident!("{}_mut", field_name.name_str());
-        let set_fn = format_ident!("set_{}", field_name.name_str());
-        let take_fn = format_ident!("take_{}", field_name.name_str());
-        let without_fn = format_ident!("without_{}", field_name.name_str());
-        let with_fn = format_ident!("with_{}", field_name.name_str());
-        let clear_fn = format_ident!("clear_{}", field_name.name_str());
-        let ty = f.ty();
-        let wf = f.get_wire_format_or_default(path_to_grost, flavor);
-
-        quote! {
-          #[inline]
-          pub const fn #ref_fn(&self) -> ::core::option::Option<&<#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<'__grost_flavor__>> {
-            self.#field_name.as_ref()
-          }
-
-          #[inline]
-          pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut <#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<'__grost_flavor__>> {
-            self.#field_name.as_mut()
-          }
-
-          #[inline]
-          pub const fn #take_fn(&mut self) -> ::core::option::Option<<#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<'__grost_flavor__>> {
-            self.#field_name.take()
-          }
-
-          #[inline]
-          pub fn #clear_fn(&mut self) -> &mut Self {
-            self.#field_name = ::core::option::Option::None;
-            self
-          }
-
-          #[inline]
-          pub fn #set_fn(&mut self, value: <#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<'__grost_flavor__>) -> &mut Self {
-            self.#field_name = ::core::option::Option::Some(value);
-            self
-          }
-
-          #[inline]
-          pub fn #with_fn(mut self, value: <#ty as #path_to_grost::__private::Referenceable<#flavor_ty, #wf>>::Ref<'__grost_flavor__>) -> Self {
-            self.#field_name = ::core::option::Option::Some(value);
-            self
-          }
-
-          #[inline]
-          pub fn #without_fn(mut self) -> Self {
-            self.#field_name = ::core::option::Option::None;
-            self
-          }
-        }
-      });
-
-    quote! {
-      #[allow(clippy::type_complexity)]
-      #vis struct #name<'__grost_flavor__> {
-        #(#fields)*
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types)]
-      impl #path_to_grost::__private::Referenceable<#flavor_ty, #path_to_grost::__private::flavors::network::LengthDelimited> for #struct_name {
-        type Ref<'__grost_flavor__> = #name<'__grost_flavor__> where Self: '__grost_flavor__;
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types)]
-      impl<'__grost_flavor__> ::core::default::Default for #name<'__grost_flavor__> {
-        fn default() -> Self {
-          Self::new()
-        }
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl<'__grost_flavor__> #name<'__grost_flavor__> {
-        /// Creates an empty instance.
-        #[inline]
-        pub const fn new() -> Self {
-          Self {
-            #(#fields_init)*
-          }
-        }
-
-        #(#fields_accessors)*
-      }
-    }
-  }
-
-  pub(crate) fn struct_impl(&self) -> proc_macro2::TokenStream {
+  /// Derives implementations for the object
+  pub fn derive_object(&self) -> proc_macro2::TokenStream {
     let name = &self.name;
     let fields = &self.fields;
     let default_fields = fields.iter().map(|f| {

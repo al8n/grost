@@ -176,7 +176,7 @@ impl Network {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
         > for #field_reflection<
-          #path_to_grost::__private::reflection::WireFormatReflection<#wf>,
+          #path_to_grost::__private::reflection::WireFormatReflection,
           #path_to_grost::__private::flavors::Network,
           #tag,
         >

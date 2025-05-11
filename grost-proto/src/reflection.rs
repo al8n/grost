@@ -41,6 +41,21 @@ macro_rules! phantom {
   };
 }
 
+macro_rules! zst {
+  ($(
+    $(#[$meta:meta])*
+    $name:ident
+  ),+$(,)?) => {
+    paste::paste! {
+      $(
+        $(#[$meta])*
+        #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+        pub struct $name;
+      )*
+    }
+  };
+}
+
 /// Reflection for encoding.
 pub mod encode;
 
@@ -85,10 +100,13 @@ phantom!(
   EncodedTagReflection,
   /// Reflection to the wire type of a field
   WireTypeReflection,
-  /// Reflection to the wire format of a field
-  WireFormatReflection,
   /// Reflection to length related
   Len
+);
+
+zst!(
+  /// Reflection to the wire format of a field
+  WireFormatReflection
 );
 
 /// Reflectable.

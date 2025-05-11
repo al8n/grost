@@ -6,7 +6,7 @@ use syn::parse_quote;
 
 // use crate::{Field, Object, field::getter, ty::Ty};
 
-use crate::{Field, SchemaGeneratorBuilder, Object, field::getter, network::Network, ty::Ty};
+use crate::{Field, Object, SchemaGeneratorBuilder, field::getter, network::Network, ty::Ty};
 
 use super::{Enum, EnumVariant, SafeIdent, SchemaGenerator};
 

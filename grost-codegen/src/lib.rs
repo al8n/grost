@@ -134,18 +134,16 @@ impl SchemaGenerator {
       .iter()
       .map(|s| {
         let code = derive.derive_object(&self.grost_path, s)?;
-        let struct_impl = s.struct_impl();
-        let partial_impl = s.partial_struct_impl(&self.grost_path);
-        let indexer_impl = s.indexer_impl(&self.grost_path);
+        let struct_impl = s.derive_object();
+        let partial_impl = s.derive_partial_object(&self.grost_path);
+        let indexer_impl = s.derive_indexer(&self.grost_path);
+        let selector_impl = s.derive_selector(&self.grost_path, derive);
+        let selector_iter_impl = s.derive_selector_iter(derive);
+        let partial_ref_struct = s.derive_partial_ref_object(&self.grost_path);
+        let reflection_impl = s.derive_reflection(&self.grost_path);
 
-        let selector = s.selector_defination(&self.grost_path, derive);
-        let selector_iter = s.selector_iter_defination();
-        let selector_impl = s.selector_impl(&self.grost_path, derive);
-        let selector_iter_impl = s.selector_iter_impl(derive);
-
-        let partial_ref_struct = s.partial_ref_struct(&self.grost_path, derive);
-
-        let reflection_impl = s.reflection_impl(&self.grost_path);
+        let selector = s.generate_selector(&self.grost_path, derive);
+        let selector_iter = s.generate_selector_iter();
 
         Ok(quote! {
           const _: () = {
@@ -210,17 +208,20 @@ impl SchemaGenerator {
   pub fn generate(&self) -> proc_macro2::TokenStream {
     let enums = self.enums.iter().map(|e| e.enum_definations());
     let objects = self.structs.iter().map(|s| {
-      let defination = s.struct_defination();
-      let partial_defination = s.partial_struct_defination();
-      let indexer_defination = s.indexer_defination();
-      let reflection_defination = s.reflection();
+      let defination = s.generate_object();
+      let partial_defination = s.generate_partial_object();
+      let partial_ref_generate_object = s.generate_partial_ref_object(&self.grost_path);
+      let indexer = s.generate_indexer();
+      let reflection_defination = s.generate_reflection();
 
       quote! {
         #defination
 
         #partial_defination
 
-        #indexer_defination
+        #partial_ref_generate_object
+
+        #indexer
 
         #reflection_defination
       }
@@ -236,14 +237,14 @@ impl SchemaGenerator {
   // pub fn generate_struct(&self, struct_: &Object) -> Result<proc_macro2::TokenStream, Box<dyn core::error::Error + Send + Sync + 'static>> {
   //   let codec = self.flavors.iter().map(|(_, f)| {
   //     let codec = f.generate_struct_codec(&self.grost_path, struct_);
-  //     let partial_ref_defination = struct_.partial_ref_struct_defination(&self.grost_path, f);
+  //     let partial_ref_defination = struct_.partial_ref_generate_object(&self.grost_path, f);
   //     quote! {
   //       #partial_ref_defination
   //       #codec
   //     }
   //   });
-  //   let selector_definations = self.flavors.iter().map(|(_, f)| {
-  //     struct_.generate_selector_defination(&self.grost_path, f)
+  //   let generate_selectors = self.flavors.iter().map(|(_, f)| {
+  //     struct_.generate_generate_selector(&self.grost_path, f)
   //   });
   //   let selector_iter_defination = struct_.generate_selector_iter_defination();
   //   let selector_iter_impl = struct_.generate_selector_iter_impl();
@@ -301,6 +302,20 @@ impl SchemaGenerator {
       #arbitrary
     }
   }
+}
+
+/// Returns a `'__grost_lifetime__` lifetime, which is the lifetime name used
+/// in the generated code. This is used to avoid conflicts with other
+/// lifetimes in the code.
+pub fn grost_lifetime() -> syn::Lifetime {
+  syn::parse_quote!('__grost_lifetime__)
+}
+
+/// Returns a generic parameter `__GROST_FLAVOR__`, which is used to represent
+/// the a flavor generic parameter in the generated code. This is used to avoid
+/// conflicts with other generic parameters in the code.
+pub fn grost_flavor_generic() -> syn::Ident {
+  quote::format_ident!("__GROST_FLAVOR__")
 }
 
 #[cfg(test)]

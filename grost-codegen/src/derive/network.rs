@@ -80,7 +80,7 @@ impl Network {
       #path_to_grost::__private::encoded_state!(
         &'__grost_encoded_state__ #path_to_grost::__private::flavors::Network: #struct_name
           as #path_to_grost::__private::flavors::network::LengthDelimited
-          => #partial_ref_struct_name<'__grost_encoded_state__>
+          => #partial_ref_struct_name<'__grost_encoded_state__, #path_to_grost::__private::flavors::Network>
       );
     }
   }
@@ -139,9 +139,9 @@ impl DeriveGenerator for Network {
       #partial_struct_encoded_state
 
       #path_to_grost::__private::encoded_state!(
-        &'__grost_encoded_state__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_encoded_state__>
+        &'__grost_encoded_state__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_encoded_state__, #path_to_grost::__private::flavors::Network>
           as #path_to_grost::__private::flavors::network::LengthDelimited
-          => #partial_ref_struct_name<'__grost_encoded_state__>
+          => #partial_ref_struct_name<'__grost_encoded_state__, #path_to_grost::__private::flavors::Network>
       );
 
       #default_format

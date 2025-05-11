@@ -1,7 +1,8 @@
 use super::*;
 
 impl Object {
-  pub(crate) fn indexer_defination(&self) -> proc_macro2::TokenStream {
+  /// Generates the field indexer for the object
+  pub fn generate_indexer(&self) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let indexer_doc = format!(
       " Field indexer for the struct [`{}`]",
@@ -28,7 +29,8 @@ impl Object {
     }
   }
 
-  pub(crate) fn indexer_impl(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  /// Derives implementations for the indexer of the object
+  pub fn derive_indexer(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
     let name = self.indexer_name();
     let num_fields = self.fields().len();
 
