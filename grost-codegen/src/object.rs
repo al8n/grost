@@ -1,7 +1,12 @@
+use darling::FromDeriveInput;
 use heck::ToUpperCamelCase;
+use indexmap::IndexMap;
 use quote::{ToTokens, format_ident, quote};
 use smol_str::SmolStr;
-use syn::{Attribute, Ident, Visibility, parse_quote};
+use syn::{
+  Attribute, DeriveInput, Ident, LitInt, LitStr, Type, Visibility, meta::ParseNestedMeta,
+  parse_quote,
+};
 
 use crate::{FlavorGenerator, SafeIdent};
 
@@ -11,10 +16,36 @@ pub use field::Field;
 pub mod field;
 
 mod index;
+/// The parser for parsing from token stream to object
+mod parser;
 mod partial_object;
 mod partial_ref_object;
 mod reflection;
 mod selector;
+
+#[derive(Default)]
+pub struct ObjectAttributeArgs {
+  schema_name: Option<LitStr>,
+  path_to_grost: Option<syn::Path>,
+  // parse_flavor_generator: Box<dyn Fn() -> Result<Box<dyn FlavorGenerator>, syn::Error>>,
+}
+
+impl ObjectAttributeArgs {
+  pub fn parse(&mut self, meta: ParseNestedMeta) -> syn::Result<()> {
+    match () {
+      () if meta.path.is_ident("schema_name") => {
+        self.schema_name = Some(meta.value()?.parse()?);
+        Ok(())
+      }
+      () if meta.path.is_ident("crate") => {
+        let val: LitStr = meta.value()?.parse()?;
+        self.path_to_grost = Some(syn::parse_str(&val.value()).map_err(|e| meta.error(e))?);
+        Ok(())
+      }
+      _ => Err(meta.error("Unsupported grost attribute")),
+    }
+  }
+}
 
 pub struct Object {
   name: SafeIdent,
@@ -41,6 +72,69 @@ impl core::hash::Hash for Object {
 }
 
 impl Object {
+  pub fn from_attribute_macro_input(
+    args: ObjectAttributeArgs,
+    input: DeriveInput,
+  ) -> Result<(), syn::Error> {
+    // let mut obj = Self::new(SafeIdent::new(input.ident.to_string().as_str()), vec![]);
+    // if let Some(s) = &args.schema_name {
+    //   obj = obj.with_schema_name(s.value());
+    // }
+    // let data_struct = match &input.data {
+    //   syn::Data::Struct(data_struct) => data_struct,
+    //   syn::Data::Enum(_) => {
+    //     return Err(syn::Error::new_spanned(
+    //       input,
+    //       "enum is not supported by object attribute macro",
+    //     ));
+    //   }
+    //   syn::Data::Union(_) => {
+    //     return Err(syn::Error::new_spanned(
+    //       input,
+    //       "union is not supported by object attribute macro",
+    //     ));
+    //   }
+    // };
+    // let fields = match &data_struct.fields {
+    //   syn::Fields::Named(fields) => &fields.named,
+    //   syn::Fields::Unnamed(_) => {
+    //     return Err(syn::Error::new_spanned(
+    //       input,
+    //       "tuple structs are not supported by object attribute macro",
+    //     ));
+    //   }
+    //   syn::Fields::Unit => {
+    //     return Err(syn::Error::new_spanned(
+    //       input,
+    //       "unit structs are not supported by object attribute macro",
+    //     ));
+    //   }
+    // };
+
+    // for f in fields {
+    //   let mut has_grost = false;
+    //   for attr in f.attrs.iter() {
+    //     if attr.path().is_ident("grost") {
+    //       has_grost = true;
+    //       // parse_field_attributes(f.ident.as_ref().unwrap(), attr)?;
+    //     }
+    //   }
+
+    //   if !has_grost {
+    //     return Err(syn::Error::new_spanned(
+    //       f,
+    //       format!("missing tag for field `{}`", f.ident.as_ref().unwrap()),
+    //     ));
+    //   }
+    // }
+
+    // input.generics.type_params()
+
+    let input = parser::ObjectDeriveInput::from_derive_input(&input)?;
+
+    Ok(())
+  }
+
   pub fn new(name: SafeIdent, mut fields: Vec<Field>) -> Self {
     fields.sort_by_key(|f| f.tag());
     Self {

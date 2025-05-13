@@ -1,6 +1,20 @@
 use core::ops::{Bound, RangeBounds};
 
-/// A buffer that stores the `T`.
+/// A trait for implementing custom buffers that can store values of type `T`.
+///
+/// This trait is designed for scenarios where you need flexible storage behavior,
+/// particularly useful in decoding operations where you may encounter unknown or
+/// unexpected data that needs to be handled differently based on your requirements.
+///
+/// ## Built-in Implementations
+///
+/// There are two built-in buffer implementations:
+///
+/// - `()` (unit type): A "black hole" buffer that silently discards all values.
+///   Use this when you want to ignore unknown data during decoding operations.
+/// - [`Vec<T>`]: A growable buffer that stores all values and automatically expands
+///   its capacity as needed. Use this when you want to collect and preserve
+///   unknown data for later inspection or processing.
 pub trait Buffer<T> {
   /// Creates a new buffer.
   fn new() -> Self;
@@ -27,8 +41,8 @@ pub trait Buffer<T> {
 impl<T> Buffer<T> for () {
   fn new() -> Self {}
 
-  fn push(&mut self, value: T) -> Option<T> {
-    Some(value)
+  fn push(&mut self, _: T) -> Option<T> {
+    None
   }
 
   fn capacity(&self) -> usize {
@@ -108,8 +122,8 @@ const _: () = {
 };
 
 pub trait BytesBuffer {
-  /// Creates a new buffer.
-  fn new() -> Self;
+  // /// Creates a new buffer.
+  // fn new() -> Self;
 
   /// Returns the length of the buffer.
   fn len(&self) -> usize;
@@ -130,9 +144,9 @@ pub trait BytesBuffer {
 }
 
 impl BytesBuffer for &[u8] {
-  fn new() -> Self {
-    &[]
-  }
+  // fn new() -> Self {
+  //   &[]
+  // }
 
   fn is_empty(&self) -> bool {
     <[u8]>::is_empty(self)
@@ -167,9 +181,9 @@ impl BytesBuffer for &[u8] {
 
 #[cfg(feature = "bytes_1")]
 impl BytesBuffer for bytes_1::Bytes {
-  fn new() -> Self {
-    bytes_1::Bytes::new()
-  }
+  // fn new() -> Self {
+  //   bytes_1::Bytes::new()
+  // }
 
   fn len(&self) -> usize {
     self.len()
@@ -190,9 +204,9 @@ impl BytesBuffer for bytes_1::Bytes {
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl BytesBuffer for Vec<u8> {
-  fn new() -> Self {
-    Vec::new()
-  }
+  // fn new() -> Self {
+  //   Vec::new()
+  // }
 
   fn len(&self) -> usize {
     self.len()
@@ -227,9 +241,9 @@ impl BytesBuffer for Vec<u8> {
 
 #[cfg(feature = "heapless_0_9")]
 impl<const N: usize, L: heapless_0_9::LenType> BytesBuffer for heapless_0_9::Vec<u8, N, L> {
-  fn new() -> Self {
-    heapless_0_9::Vec::new()
-  }
+  // fn new() -> Self {
+  //   heapless_0_9::Vec::new()
+  // }
 
   fn is_empty(&self) -> bool {
     self.is_empty()

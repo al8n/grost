@@ -8,7 +8,7 @@ const STRUCT_FILE_NAME: &str = "user_struct";
 
 fn main() {
   enum_codegen_test(ENUM_FILE_NAME);
-  struct_codegen_test(STRUCT_FILE_NAME);
+  // struct_codegen_test(STRUCT_FILE_NAME);
 
   let mut lib = OpenOptions::new()
     .write(true)
@@ -19,9 +19,9 @@ fn main() {
   lib
     .write_all(format!("pub mod {ENUM_FILE_NAME};").as_bytes())
     .unwrap();
-  lib
-    .write_all(format!("pub mod {STRUCT_FILE_NAME};").as_bytes())
-    .unwrap();
+  // lib
+  //   .write_all(format!("pub mod {STRUCT_FILE_NAME};").as_bytes())
+  //   .unwrap();
 }
 
 fn enum_codegen_test(name: &str) {

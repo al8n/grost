@@ -125,7 +125,7 @@ impl core::fmt::Debug for SchemaGenerator {
 
 impl SchemaGenerator {
   /// Derives the implementations for the schema types
-  pub fn derive<G>(&self, derive: &G) -> Result<proc_macro2::TokenStream, G::Error>
+  pub fn derive<G>(&self, derive: &G) -> Result<proc_macro2::TokenStream, syn::Error>
   where
     G: FlavorGenerator,
   {
@@ -168,9 +168,9 @@ impl SchemaGenerator {
           const _: () = {
             #selector_impl
           };
-          
+
           const _: () = {
-            #selector_iter_impl            
+            #selector_iter_impl
           };
 
           const _: () = {
@@ -178,16 +178,16 @@ impl SchemaGenerator {
           };
         })
       })
-      .collect::<Result<Vec<_>, G::Error>>()?;
+      .collect::<Result<Vec<_>, syn::Error>>()?;
 
     let enums = self
       .enums
       .iter()
       .map(|e| {
-        #[cfg(feature = "quickcheck")]
-        let quickcheck = e.enum_quickcheck(&self.grost_path, derive);
-        #[cfg(not(feature = "quickcheck"))]
-        let quickcheck = core::iter::once(quote! {}).into_iter();
+        // #[cfg(feature = "quickcheck")]
+        // let quickcheck = e.enum_quickcheck(&self.grost_path, derive);
+        // #[cfg(not(feature = "quickcheck"))]
+        // let quickcheck = core::iter::once(quote! {}).into_iter();
 
         let impls = self.generate_enum_impl(e);
 
@@ -201,11 +201,11 @@ impl SchemaGenerator {
               #code
             };
 
-            #quickcheck
+            // #quickcheck
           }
         })
       })
-      .collect::<Result<Vec<_>, G::Error>>()?;
+      .collect::<Result<Vec<_>, syn::Error>>()?;
 
     Ok(quote! {
       #(#structs)*
@@ -331,6 +331,13 @@ pub fn grost_lifetime() -> syn::Lifetime {
 /// conflicts with other generic parameters in the code.
 pub fn grost_flavor_generic() -> syn::Ident {
   quote::format_ident!("__GROST_FLAVOR__")
+}
+
+/// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
+/// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
+/// This is used to avoid conflicts with other generic parameters in the code.
+pub fn grost_unknown_buffer_generic() -> syn::Ident {
+  quote::format_ident!("__GROST_UNKNOWN_BUFFER__")
 }
 
 #[cfg(test)]

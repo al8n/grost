@@ -15,7 +15,11 @@ pub struct PartialUser {
     email: ::core::option::Option<::std::string::String>,
 }
 #[allow(clippy::type_complexity, non_camel_case_types)]
-pub struct PartialUserRef<'__grost_lifetime__, __GROST_FLAVOR__>
+pub struct PartialUserRef<
+    '__grost_lifetime__,
+    __GROST_FLAVOR__,
+    __GROST_UNKNOWN_BUFFER__ = (),
+>
 where
     UserFieldReflection<
         ::grost::__private::reflection::WireFormatReflection,
@@ -162,6 +166,7 @@ where
             >,
         >>::Output,
     >,
+    __grost_unknown_buffer__: ::core::option::Option<__GROST_UNKNOWN_BUFFER__>,
 }
 /// Field indexer for the struct [`User`]
 #[derive(
@@ -342,7 +347,11 @@ pub struct PartialComment {
     content: ::core::option::Option<::std::string::String>,
 }
 #[allow(clippy::type_complexity, non_camel_case_types)]
-pub struct PartialCommentRef<'__grost_lifetime__, __GROST_FLAVOR__>
+pub struct PartialCommentRef<
+    '__grost_lifetime__,
+    __GROST_FLAVOR__,
+    __GROST_UNKNOWN_BUFFER__ = (),
+>
 where
     CommentFieldReflection<
         ::grost::__private::reflection::WireFormatReflection,
@@ -541,6 +550,7 @@ where
             >,
         >>::Output,
     >,
+    __grost_unknown_buffer__: ::core::option::Option<__GROST_UNKNOWN_BUFFER__>,
 }
 /// Field indexer for the struct [`Comment`]
 #[derive(
@@ -968,8 +978,12 @@ const _: () = {
 const _: () = {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl<'__grost_lifetime__, __GROST_FLAVOR__> ::core::default::Default
-    for PartialUserRef<'__grost_lifetime__, __GROST_FLAVOR__>
+    impl<
+        '__grost_lifetime__,
+        __GROST_FLAVOR__,
+        __GROST_UNKNOWN_BUFFER__,
+    > ::core::default::Default
+    for PartialUserRef<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>
     where
         UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -1078,7 +1092,8 @@ const _: () = {
     impl<
         '__grost_lifetime__,
         __GROST_FLAVOR__,
-    > PartialUserRef<'__grost_lifetime__, __GROST_FLAVOR__>
+        __GROST_UNKNOWN_BUFFER__,
+    > PartialUserRef<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>
     where
         UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -1185,6 +1200,7 @@ const _: () = {
                 name: ::core::option::Option::None,
                 age: ::core::option::Option::None,
                 email: ::core::option::Option::None,
+                __grost_unknown_buffer__: ::core::option::Option::None,
             }
         }
         #[inline]
@@ -8294,8 +8310,16 @@ const _: () = {
 const _: () = {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl<'__grost_lifetime__, __GROST_FLAVOR__> ::core::default::Default
-    for PartialCommentRef<'__grost_lifetime__, __GROST_FLAVOR__>
+    impl<
+        '__grost_lifetime__,
+        __GROST_FLAVOR__,
+        __GROST_UNKNOWN_BUFFER__,
+    > ::core::default::Default
+    for PartialCommentRef<
+        '__grost_lifetime__,
+        __GROST_FLAVOR__,
+        __GROST_UNKNOWN_BUFFER__,
+    >
     where
         CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -8439,7 +8463,8 @@ const _: () = {
     impl<
         '__grost_lifetime__,
         __GROST_FLAVOR__,
-    > PartialCommentRef<'__grost_lifetime__, __GROST_FLAVOR__>
+        __GROST_UNKNOWN_BUFFER__,
+    > PartialCommentRef<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>
     where
         CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -8582,6 +8607,7 @@ const _: () = {
                 replyer: ::core::option::Option::None,
                 title: ::core::option::Option::None,
                 content: ::core::option::Option::None,
+                __grost_unknown_buffer__: ::core::option::Option::None,
             }
         }
         #[inline]

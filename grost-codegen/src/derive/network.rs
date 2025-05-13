@@ -84,8 +84,6 @@ impl Network {
 }
 
 impl FlavorGenerator for Network {
-  type Error = ();
-
   fn ty(&self) -> &syn::Type {
     &self.ty
   }
@@ -102,7 +100,7 @@ impl FlavorGenerator for Network {
     &self,
     path_to_grost: &syn::Path,
     enum_: &Enum,
-  ) -> Result<proc_macro2::TokenStream, Self::Error> {
+  ) -> Result<proc_macro2::TokenStream, syn::Error> {
     let name_ident = enum_.name();
 
     Ok(quote! {
@@ -114,7 +112,7 @@ impl FlavorGenerator for Network {
     &self,
     path_to_grost: &syn::Path,
     struct_: &Object,
-  ) -> Result<proc_macro2::TokenStream, Self::Error> {
+  ) -> Result<proc_macro2::TokenStream, syn::Error> {
     let default_format = self.derive_default_format(path_to_grost, struct_.name().name());
     let partial_ref_struct_name = struct_.partial_ref_name();
     let struct_encoded_state = self.derive_encoded_state(

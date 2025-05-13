@@ -10,4 +10,14 @@ rust-version.workspace = true
 categories.workspace = true
 metadata.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
+grost-codegen = { path = "../grost-codegen" }
+proc-macro2 = { workspace = true, features = ["default"] }
+quote = { workspace = true, features = ["default"] }
+syn = { workspace = true, features = ["full"] }
+
+[dev-dependencies]
+grost = { path = "../grost" }

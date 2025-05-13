@@ -145,8 +145,50 @@
 //   // println!("{:?}", s.without_title());
 // }
 
-use grost::flavors::Network;
+use grost::{
+  Decode, Decoded, Flavor,
+  buffer::Buffer,
+  flavors::{Network, WireFormat, network::LengthDelimited},
+};
 use grost_codegen_test::user_struct::PartialUserRef;
+
+pub trait Decode1<'de, F, W, O>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  type UnknownBuffer;
+
+  /// Decodes an instance of this type from a byte buffer.
+  ///
+  /// The function consumes the entire buffer and returns both the
+  /// number of bytes consumed and the decoded instance.
+  fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
+  where
+    O: Sized + 'de,
+    Self::UnknownBuffer: Buffer<F::Unknown<&'de [u8]>> + 'de;
+}
+
+impl<'de, UB>
+  Decode1<'de, Network, LengthDelimited, Decoded<PartialUserRef<'de, Network>, &'de [u8], UB>>
+  for PartialUserRef<'de, Network>
+{
+  type UnknownBuffer = UB;
+
+  fn decode(
+    context: &<Network as Flavor>::Context,
+    src: &'de [u8],
+  ) -> Result<
+    (usize, Decoded<PartialUserRef<'de, Network>, &'de [u8], UB>),
+    <Network as Flavor>::DecodeError,
+  >
+  where
+    Decoded<PartialUserRef<'de, Network>, &'de [u8], UB>: Sized + 'de,
+    Self::UnknownBuffer: Buffer<<Network as Flavor>::Unknown<&'de [u8]>> + 'de,
+  {
+    todo!()
+  }
+}
 
 #[test]
 fn t() {

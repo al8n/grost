@@ -155,7 +155,6 @@ impl Network {
 
     let index_trait_select = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      let ty = f.ty();
       let field_variant = format_ident!("{}", field_name.name_str().to_upper_camel_case());
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
@@ -173,30 +172,15 @@ impl Network {
         );
       };
 
-      if ty.primitive_selection_type() {
-        quote! {
-          #indexer_name::#field_variant => {
-            #reflection
+      quote! {
+        #indexer_name::#field_variant => {
+          #reflection
 
-            match (select, self.#field_name) {
-              (true, true) => &REFLECTION,
-              (true, false) => NONE,
-              (false, true) => NONE,
-              (false, false) => &REFLECTION,
-            }
-          }
-        }
-      } else {
-        quote! {
-          #indexer_name::#field_variant => {
-            #reflection
-
-            match (select, self.#field_name.is_empty()) {
-              (true, false) => &REFLECTION,
-              (true, true) => NONE,
-              (false, false) => NONE,
-              (false, true) => &REFLECTION,
-            }
+          match (select, self.#field_name.is_empty()) {
+            (true, false) => &REFLECTION,
+            (true, true) => NONE,
+            (false, false) => NONE,
+            (false, true) => &REFLECTION,
           }
         }
       }

@@ -29,6 +29,7 @@ impl Object {
     quote! {
       #[doc = #doc]
       #[allow(non_camel_case_types)]
+      #[derive(::core::fmt::Debug)]
       #vis struct #name<__GROST_FLAVOR__>
       where
         #(#where_clauses)*
@@ -200,38 +201,6 @@ impl Object {
     let merge = self.selector_merge_impl(path_to_grost, &field_reflection_ident);
     let flip = self.selector_flip_impl(path_to_grost, &field_reflection_ident);
 
-    let debug = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let field_name_str = f.schema_name();
-      let ty = f.ty();
-      if ty.primitive_selection_type() {
-        quote! {
-          if !self.#field_name.is_empty() {
-            if idx != num_selected - 1 {
-              ::core::write!(f, ::core::concat!(#field_name_str, " & "))?;
-            } else {
-              ::core::write!(f, #field_name_str)?;
-            }
-            idx += 1;
-          }
-        }
-      } else {
-        quote! {
-          if !self.#field_name.is_empty() {
-            if idx != num_selected - 1 {
-              ::core::write!(f, #field_name_str)?;
-              self.#field_name.debug_helper(f)?;
-              ::core::write!(f, " & ")?;
-            } else {
-              ::core::write!(f, #field_name_str)?;
-              self.#field_name.debug_helper(f)?;
-            }
-            idx += 1;
-          }
-        }
-      }
-    });
-
     let eq = self.fields.iter().map(|f| {
       let field_name = f.name();
       quote! {
@@ -253,7 +222,6 @@ impl Object {
       }
     });
 
-    let struct_name = &self.name;
     let num_fields = self.fields.len();
     let name_str = name.name_str();
     let iter_name = self.selector_iter_name();
