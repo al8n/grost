@@ -1,5 +1,13 @@
 use grost_derive::Object;
 
+
+mod sealed {
+  pub fn default_user() -> String {
+    String::from("user")
+  }
+}
+
+
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 pub struct User {
   #[grost(
@@ -7,7 +15,8 @@ pub struct User {
     schema(description = "The nick name of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     select = "all",
-    partial_ref(copy,)
+    partial_ref(copy,),
+    default = sealed::default_user,
   )]
   name: String,
   #[grost(

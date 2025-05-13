@@ -1,4 +1,4 @@
-use darling::FromMeta;
+use darling::{util::SpannedValue, FromMeta};
 use quote::quote;
 use syn::{Attribute, parse::Parser};
 

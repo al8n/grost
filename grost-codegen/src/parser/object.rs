@@ -1,4 +1,4 @@
-use darling::{FromDeriveInput, FromMeta, ast::Data, util::Ignored};
+use darling::{ast::Data, util::{Ignored, SpannedValue}, FromDeriveInput, FromMeta};
 use syn::{Attribute, Generics, Ident, Visibility};
 
 use super::*;
@@ -9,14 +9,16 @@ mod field;
 
 #[derive(Default, Debug, FromMeta)]
 pub struct SchemaMeta {
-  name: Option<String>,
+  #[darling(default)]
+  name: Option<Ident>,
+  #[darling(default)]
   description: Option<String>,
 }
 
 #[derive(Debug, Default, FromMeta)]
 pub struct PartialObjectMeta {
   #[darling(default, rename = "rename")]
-  name: Option<String>,
+  name: Option<Ident>,
   #[darling(default, map = "Attributes::into")]
   attrs: Attributes,
 }
@@ -24,7 +26,7 @@ pub struct PartialObjectMeta {
 #[derive(Debug, Default, FromMeta)]
 pub struct PartialRefObjectMeta {
   #[darling(default, rename = "rename")]
-  name: Option<String>,
+  name: Option<Ident>,
   #[darling(default, map = "Attributes::into")]
   attrs: Attributes,
   #[darling(default)]

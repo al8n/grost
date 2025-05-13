@@ -4,7 +4,7 @@ use darling::{FromField, FromMeta};
 use hint::TypeHintMeta;
 use syn::{Attribute, Ident, Type, Visibility};
 
-use super::{Attributes, SchemaMeta, from_optional_string};
+use super::{Attributes, SchemaMeta};
 
 pub use hint::TypeHint;
 pub use select::Selection;
@@ -35,7 +35,7 @@ pub struct ObjectFieldDeriveInput {
   attrs: Vec<Attribute>,
   #[darling(default)]
   schema: SchemaMeta,
-  #[darling(default, and_then = "from_optional_string")]
+  #[darling(default)]
   default: Option<syn::Path>,
   tag: NonZeroU32,
   #[darling(default)]
