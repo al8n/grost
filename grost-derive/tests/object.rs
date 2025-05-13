@@ -1,9 +1,7 @@
-use grost_derive::object;
+use grost_derive::Object;
 
-#[object]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Object)]
 pub struct User {
-  #[doc = concat!("asd", b, "a")]
   #[grost(
     tag = 1,
     schema(description = "The nick name of the user"),
@@ -17,8 +15,7 @@ pub struct User {
     schema(description = "The age of the user"),
     wire = "grost::flavors::network::Varint",
     copy,
-    partial_ref(copy),
-    optional(repeated)
+    partial_ref(copy)
   )]
   age: u8,
   #[grost(
@@ -26,9 +23,8 @@ pub struct User {
     schema(description = "The email of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     copy,
-    partial_ref(copy),
-    optional(repeated(map(value(optional)))),
-    repeated(map(value(optional)))
+    partial_ref(copy, attrs(derive(Copy, Clone))),
+    optional(repeated)
   )]
   emails: Option<Vec<String>>,
 }

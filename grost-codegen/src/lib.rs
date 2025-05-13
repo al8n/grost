@@ -15,6 +15,9 @@ mod enum_;
 mod object;
 mod safe_ident;
 
+/// The parser for parsing proc-macro inputs
+pub mod parser;
+
 /// Types for the generator
 pub mod ty;
 

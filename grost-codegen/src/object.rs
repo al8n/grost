@@ -16,8 +16,7 @@ pub use field::Field;
 pub mod field;
 
 mod index;
-/// The parser for parsing from token stream to object
-mod parser;
+
 mod partial_object;
 mod partial_ref_object;
 mod reflection;
@@ -130,7 +129,7 @@ impl Object {
 
     // input.generics.type_params()
 
-    let input = parser::ObjectDeriveInput::from_derive_input(&input)?;
+    let input = crate::parser::ObjectDeriveInput::from_derive_input(&input)?;
 
     Ok(())
   }
