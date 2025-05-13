@@ -1,12 +1,10 @@
 use grost_derive::Object;
 
-
 mod sealed {
   pub fn default_user() -> String {
     String::from("user")
   }
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 pub struct User {

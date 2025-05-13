@@ -1,20 +1,10 @@
-use darling::{util::SpannedValue, FromMeta};
+use darling::FromMeta;
 use quote::quote;
 use syn::{Attribute, parse::Parser};
 
 pub use object::*;
 
 mod object;
-
-fn from_optional_string<T>(s: Option<String>) -> darling::Result<Option<T>>
-where
-  T: syn::parse::Parse,
-{
-  match s {
-    Some(s) => syn::parse_str(&s).map(Some).map_err(Into::into),
-    None => Ok(None),
-  }
-}
 
 #[derive(Debug, Default)]
 struct Attributes(Vec<Attribute>);
