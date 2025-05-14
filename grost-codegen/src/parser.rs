@@ -1,12 +1,12 @@
 use darling::FromMeta;
-use quote::quote;
-use syn::{Attribute, parse::Parser};
+use quote::{ToTokens, quote};
+use syn::{Attribute, parse::Parser, parse_quote};
 
 pub use object::*;
 
 mod object;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Attributes(Vec<Attribute>);
 
 impl From<Attributes> for Vec<Attribute> {
@@ -33,5 +33,20 @@ impl FromMeta for Attributes {
     }
 
     Ok(Self(attributes))
+  }
+}
+
+fn wire_format_reflection_ty(
+  path_to_grost: &syn::Path,
+  field_reflection: impl ToTokens,
+  tag: u32,
+  flavor_generic: impl ToTokens,
+) -> syn::Type {
+  parse_quote! {
+    #field_reflection<
+      #path_to_grost::__private::reflection::WireFormatReflection,
+      #flavor_generic,
+      #tag,
+    >
   }
 }

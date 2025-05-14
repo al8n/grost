@@ -1,7 +1,7 @@
 use darling::{FromMeta, ast::NestedMeta, util::SpannedValue};
 use syn::Meta;
 
-#[derive(Debug, derive_more::Display)]
+#[derive(Debug, Clone, derive_more::Display)]
 pub enum TypeHint {
   #[display("required")]
   Required,
@@ -145,7 +145,7 @@ impl TypeHint {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct OptionalTypeHint(TypeHint);
 
 impl core::ops::Deref for OptionalTypeHint {
@@ -178,7 +178,7 @@ impl FromMeta for OptionalTypeHint {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct RepeatedTypeHint(TypeHint);
 
 impl core::ops::Deref for RepeatedTypeHint {
@@ -211,7 +211,7 @@ impl FromMeta for RepeatedTypeHint {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct MapTypeHint(TypeHint);
 
 impl core::ops::Deref for MapTypeHint {
@@ -224,7 +224,10 @@ impl core::ops::Deref for MapTypeHint {
 
 impl FromMeta for MapTypeHint {
   fn from_word() -> darling::Result<Self> {
-    Ok(Self(TypeHint::Repeated(Box::new(TypeHint::Required))))
+    Ok(Self(TypeHint::Map {
+      key: None,
+      value: None,
+    }))
   }
 
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
@@ -239,7 +242,7 @@ impl FromMeta for MapTypeHint {
   }
 }
 
-#[derive(Debug, FromMeta)]
+#[derive(Debug, Clone, FromMeta)]
 #[darling(and_then = "Self::validate")]
 pub(super) struct TypeHintMeta {
   #[darling(default)]
@@ -248,6 +251,21 @@ pub(super) struct TypeHintMeta {
   pub(super) repeated: Option<SpannedValue<RepeatedTypeHint>>,
   #[darling(default)]
   pub(super) map: Option<SpannedValue<MapTypeHint>>,
+}
+
+impl From<TypeHintMeta> for TypeHint {
+  fn from(meta: TypeHintMeta) -> Self {
+    if let Some(optional) = meta.optional {
+      return Self::Optional(Box::new(optional.0.clone()));
+    }
+    if let Some(repeated) = meta.repeated {
+      return Self::Repeated(Box::new(repeated.0.clone()));
+    }
+    if let Some(map) = meta.map {
+      return map.0.clone();
+    }
+    TypeHint::Required
+  }
 }
 
 impl TypeHintMeta {

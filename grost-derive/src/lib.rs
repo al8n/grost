@@ -1,5 +1,8 @@
 use darling::FromDeriveInput;
-use grost_codegen::{ObjectAttributeArgs, parser::ObjectDeriveInput};
+use grost_codegen::{
+  ObjectAttributeArgs,
+  parser::{Object, ObjectDeriveInput},
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
@@ -14,8 +17,16 @@ pub fn object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
   };
+  let object = match Object::from_input(input) {
+    Ok(object) => object,
+    Err(e) => return e.write_errors().into(),
+  };
 
-  quote!().into()
+  let definations = object.derive_defination();
+  quote!(
+    #definations
+  )
+  .into()
 }
 
 fn to_compile_error(res: Result) -> TokenStream {
