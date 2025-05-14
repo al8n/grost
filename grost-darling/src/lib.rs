@@ -1,35 +1,34 @@
 use darling::FromMeta;
-use syn::{Attribute, Ident, parse::Parser};
 use quote::quote;
+use syn::{Attribute, parse::Parser};
 
-/// The meta for the object
-pub mod object;
+pub use grost_darling_derive::*;
 
-/// The meta for the schema
-#[derive(Default, Debug, Clone, FromMeta)]
-pub struct SchemaMeta {
-  #[darling(default)]
-  name: Option<String>,
-  #[darling(default)]
-  description: Option<String>,
+/// The meta for Grost schema types
+pub mod meta;
+
+/// The Mid-level Intermediate Representation (MIR) for Grost schema types.
+pub mod mir;
+
+/// Returns a `'__grost_lifetime__` lifetime, which is the lifetime name used
+/// in the generated code. This is used to avoid conflicts with other
+/// lifetimes in the code.
+pub fn grost_lifetime() -> syn::Lifetime {
+  syn::parse_quote!('__grost_lifetime__)
 }
 
-impl SchemaMeta {
-  /// Returns the name of the schema
-  pub const fn name(&self) -> Option<&str> {
-    match self.name.as_ref() {
-      Some(name) => Some(name.as_str()),
-      None => None,
-    }
-  }
+/// Returns a generic parameter `__GROST_FLAVOR__`, which is used to represent
+/// the a flavor generic parameter in the generated code. This is used to avoid
+/// conflicts with other generic parameters in the code.
+pub fn grost_flavor_generic() -> syn::Ident {
+  quote::format_ident!("__GROST_FLAVOR__")
+}
 
-  /// Returns the description of the schema
-  pub const fn description(&self) -> Option<&str> {
-    match self.description.as_ref() {
-      Some(description) => Some(description.as_str()),
-      None => None,
-    }
-  }
+/// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
+/// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
+/// This is used to avoid conflicts with other generic parameters in the code.
+pub fn grost_unknown_buffer_generic() -> syn::Ident {
+  quote::format_ident!("__GROST_UNKNOWN_BUFFER__")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,16 +68,12 @@ impl FromMeta for Attributes {
   }
 }
 
-fn default_grost_path() -> syn::Path {
-  syn::parse_quote!(::grost)
-}
-
 #[doc(hidden)]
 pub mod __private {
   pub use darling;
-  pub use syn;
-  pub use quote;
   pub use proc_macro2;
+  pub use quote;
+  pub use syn;
 
   pub use super::*;
 }

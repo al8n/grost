@@ -1,0 +1,252 @@
+use std::num::NonZeroU32;
+
+use quote::quote;
+use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
+
+pub use partial::{PartialField, PartialObject};
+pub use partial_ref::{PartialRefField, PartialRefObject};
+pub use selector::{Selector, SelectorIter};
+
+use crate::meta::{
+  SchemaMeta,
+  object::{ObjectExt as _, TypeSpecification},
+};
+
+mod partial;
+mod partial_ref;
+mod selector;
+
+pub struct Field {
+  name: Ident,
+  ty: Type,
+  vis: Visibility,
+  schema: SchemaMeta,
+  default: Option<Path>,
+  tag: NonZeroU32,
+  wire: Option<Type>,
+  specification: Option<TypeSpecification>,
+  attrs: Vec<Attribute>,
+  copy: bool,
+}
+
+impl Field {
+  /// Returns the field name.
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the field type.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the field visibility.
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the field tag.
+  #[inline]
+  pub const fn tag(&self) -> NonZeroU32 {
+    self.tag
+  }
+
+  /// Returns the field wire format type.
+  #[inline]
+  pub const fn wire(&self) -> Option<&Type> {
+    self.wire.as_ref()
+  }
+
+  /// Returns the field type specification.
+  #[inline]
+  pub const fn type_specification(&self) -> Option<&TypeSpecification> {
+    self.specification.as_ref()
+  }
+
+  /// Returns the fn that returns the default value of the field.
+  #[inline]
+  pub const fn default(&self) -> Option<&Path> {
+    self.default.as_ref()
+  }
+
+  /// Returns whether the field is copyable.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the field attributes.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the schema information of the field.
+  #[inline]
+  pub const fn schema(&self) -> &SchemaMeta {
+    &self.schema
+  }
+
+  fn from_input<I>(input: &I) -> darling::Result<Self>
+  where
+    I: crate::meta::object::Field,
+  {
+    let meta = input.meta();
+    Ok(Self {
+      name: input.name().clone(),
+      ty: input.ty().clone(),
+      vis: input.vis().clone(),
+      tag: meta.tag(),
+      specification: meta.type_specification().cloned(),
+      attrs: meta.partial().attrs().to_vec(),
+      copy: meta.copy(),
+      schema: meta.schema().clone(),
+      default: meta.default().cloned(),
+      wire: meta.wire().cloned(),
+    })
+  }
+}
+
+pub struct Object {
+  name: Ident,
+  path_to_grost: Path,
+  schema: SchemaMeta,
+  vis: Visibility,
+  generics: Generics,
+  field_reflection: Ident,
+  fields: Vec<Field>,
+  partial: PartialObject,
+  partial_ref: PartialRefObject,
+  reflection: Ident,
+  selector: Selector,
+  selector_iter: SelectorIter,
+}
+
+impl Object {
+  #[inline]
+  pub const fn path_to_grost(&self) -> &Path {
+    &self.path_to_grost
+  }
+
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+
+  #[inline]
+  pub const fn fields(&self) -> &[Field] {
+    self.fields.as_slice()
+  }
+
+  #[inline]
+  pub const fn shema(&self) -> &SchemaMeta {
+    &self.schema
+  }
+
+  #[inline]
+  pub const fn partial(&self) -> &PartialObject {
+    &self.partial
+  }
+
+  #[inline]
+  pub const fn partial_ref(&self) -> &PartialRefObject {
+    &self.partial_ref
+  }
+
+  #[inline]
+  pub const fn field_reflection_name(&self) -> &Ident {
+    &self.field_reflection
+  }
+
+  #[inline]
+  pub const fn reflection_name(&self) -> &Ident {
+    &self.reflection
+  }
+
+  #[inline]
+  pub const fn selector(&self) -> &Selector {
+    &self.selector
+  }
+
+  #[inline]
+  pub const fn selector_iter(&self) -> &SelectorIter {
+    &self.selector_iter
+  }
+
+  pub fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
+  where
+    O: crate::meta::object::Object,
+  {
+    let partial_object = PartialObject::from_input(path_to_grost, input)?;
+    let partial_ref_object = PartialRefObject::from_input(path_to_grost, input)?;
+    let selector = Selector::from_input(path_to_grost, input)?;
+    let selector_iter = selector.selector_iter(input.selector_iter_name())?;
+
+    Ok(Self {
+      name: input.name().clone(),
+      path_to_grost: path_to_grost.clone(),
+      schema: input.meta().schema().clone(),
+      vis: input.vis().clone(),
+      generics: input.generics().clone(),
+      fields: input
+        .fields()
+        .into_iter()
+        .map(Field::from_input)
+        .collect::<Result<Vec<_>, darling::Error>>()?,
+      partial: partial_object,
+      partial_ref: partial_ref_object,
+      field_reflection: input.field_reflection_name(),
+      reflection: input.reflection_name(),
+      selector_iter,
+      selector,
+    })
+  }
+
+  pub fn derive_defination(&self) -> proc_macro2::TokenStream {
+    let partial_object = self.partial.derive_defination();
+    let partial_ref_object = self.partial_ref.derive_defination();
+    let reflection_definition = self.derive_reflection_definations();
+
+    quote! {
+      #reflection_definition
+
+      #partial_object
+
+      #partial_ref_object
+    }
+  }
+
+  /// Generates the reflection types for the object.
+  fn derive_reflection_definations(&self) -> proc_macro2::TokenStream {
+    let reflection_name = &self.reflection;
+    let doc = format!(" The reflection of the [`{}`].", self.name);
+    let field_reflection_name = &self.field_reflection;
+    let field_reflection_doc = format!(" The field reflection of the [`{}`]'s fields.", self.name);
+    quote! {
+      #[doc = #field_reflection_doc]
+      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+
+      #[doc = #doc]
+      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+    }
+  }
+}

@@ -1,7 +1,10 @@
 use darling::FromMeta;
-use syn::Attribute;
+use quote::format_ident;
+use syn::{Attribute, Ident};
 
-use super::{SchemaMeta, Attributes, Ident};
+use super::SchemaMeta;
+
+use crate::Attributes;
 
 pub use field::*;
 
@@ -51,6 +54,19 @@ impl PartialRefObjectMeta {
   /// Returns whether the partial reference object is copyable
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+}
+
+#[derive(Debug, Default, Clone, FromMeta)]
+pub struct SelectorIterMeta {
+  #[darling(default, rename = "rename")]
+  name: Option<Ident>,
+}
+
+impl SelectorIterMeta {
+  /// Returns the name of the selector iterator
+  pub const fn name(&self) -> Option<&Ident> {
+    self.name.as_ref()
   }
 }
 
@@ -120,11 +136,8 @@ impl IndexerMeta {
   }
 }
 
-
-#[derive(Debug, Clone, FromMeta)]
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct ObjectMeta {
-  #[darling(rename = "crate", default = "super::default_grost_path")]
-  path_to_crate: syn::Path,
   #[darling(default)]
   default: Option<syn::Path>,
   #[darling(default)]
@@ -138,33 +151,16 @@ pub struct ObjectMeta {
   #[darling(default)]
   reflection: ReflectionMeta,
   #[darling(default)]
+  selector_iter: SelectorIterMeta,
+  #[darling(default)]
   field_reflection: FieldReflectionMeta,
   #[darling(default)]
   indexer: IndexerMeta,
-}
-
-impl Default for ObjectMeta {
-  fn default() -> Self {
-    Self {
-      path_to_crate: super::default_grost_path(),
-      default: None,
-      schema: SchemaMeta::default(),
-      partial: PartialObjectMeta::default(),
-      partial_ref: PartialRefObjectMeta::default(),
-      selector: SelectorMeta::default(),
-      reflection: ReflectionMeta::default(),
-      field_reflection: FieldReflectionMeta::default(),
-      indexer: IndexerMeta::default(),
-    }
-  }
+  #[darling(default)]
+  copy: bool,
 }
 
 impl ObjectMeta {
-  /// Returns the path to the crate
-  pub const fn path_to_crate(&self) -> &syn::Path {
-    &self.path_to_crate
-  }
-
   /// Returns the path to the fn that returns the default value of the object
   pub const fn default(&self) -> Option<&syn::Path> {
     self.default.as_ref()
@@ -190,6 +186,11 @@ impl ObjectMeta {
     &self.selector
   }
 
+  /// Returns the selector iterator information
+  pub const fn selector_iter(&self) -> &SelectorIterMeta {
+    &self.selector_iter
+  }
+
   /// Returns the reflection information
   pub const fn reflection(&self) -> &ReflectionMeta {
     &self.reflection
@@ -203,6 +204,11 @@ impl ObjectMeta {
   /// Returns the indexer information
   pub const fn indexer(&self) -> &IndexerMeta {
     &self.indexer
+  }
+
+  /// Returns whether the object is copyable
+  pub const fn copy(&self) -> bool {
+    self.copy
   }
 }
 
@@ -229,3 +235,78 @@ pub trait Object {
   /// Returns the meta of the object
   fn meta(&self) -> &ObjectMeta;
 }
+
+/// The extension trait for the object
+pub(crate) trait ObjectExt: Object {
+  #[inline]
+  fn field_reflection_name(&self) -> Ident {
+    self
+      .meta()
+      .field_reflection()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("{}FieldReflection", self.name()))
+  }
+
+  #[inline]
+  fn reflection_name(&self) -> Ident {
+    self
+      .meta()
+      .reflection()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("{}Reflection", self.name()))
+  }
+
+  #[inline]
+  fn partial_ref_name(&self) -> Ident {
+    self
+      .meta()
+      .partial_ref()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("PartialRef{}", self.name()))
+  }
+
+  #[inline]
+  fn partial_name(&self) -> Ident {
+    self
+      .meta()
+      .partial()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("Partial{}", self.name()))
+  }
+
+  #[inline]
+  fn selector_name(&self) -> Ident {
+    self
+      .meta()
+      .selector()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("{}Selector", self.name()))
+  }
+
+  #[inline]
+  fn selector_iter_name(&self) -> Ident {
+    self
+      .meta()
+      .selector_iter()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("{}Iter", self.selector_name()))
+  }
+
+  #[inline]
+  fn indexer_name(&self) -> Ident {
+    self
+      .meta()
+      .indexer()
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("{}Index", self.name()))
+  }
+}
+
+impl<T: Object> ObjectExt for T {}

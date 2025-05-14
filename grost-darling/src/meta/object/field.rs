@@ -2,16 +2,16 @@ use core::num::NonZeroU32;
 use std::sync::{Arc, OnceLock};
 
 use darling::FromMeta;
-use type_spec::TypeHintMeta;
 use syn::{Attribute, Ident, Type};
+use type_spec::TypeHintMeta;
 
 use super::{Attributes, SchemaMeta};
 
-pub use type_spec::TypeSpecification;
 pub use select::Selection;
+pub use type_spec::TypeSpecification;
 
-mod type_spec;
 mod select;
+mod type_spec;
 
 /// The meta of the partial reference object field
 #[derive(Debug, Default, Clone, FromMeta)]
@@ -105,12 +105,10 @@ impl FieldMeta {
 
   /// Returns the type specification of the field
   pub fn type_specification(&self) -> Option<&TypeSpecification> {
-    self.specification.get_or_init(|| {
-      self
-        .meta
-        .clone()
-        .into_specification()
-    }).as_ref()
+    self
+      .specification
+      .get_or_init(|| self.meta.clone().into_specification())
+      .as_ref()
   }
 
   /// Returns the schema information of the field

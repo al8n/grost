@@ -6,6 +6,10 @@ pub use object::*;
 
 mod object;
 
+fn default_path() -> syn::Path {
+  syn::parse_quote!(::grost)
+}
+
 #[derive(Debug, Default, Clone)]
 struct Attributes(Vec<Attribute>);
 

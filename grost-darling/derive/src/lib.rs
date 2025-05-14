@@ -1,6 +1,6 @@
 use darling::FromDeriveInput;
-use syn::{parse_macro_input, DeriveInput};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
+use syn::{DeriveInput, parse_macro_input};
 
 mod object;
 
@@ -20,7 +20,7 @@ pub fn object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   input.to_token_stream().into()
 }
 
-#[proc_macro_derive(Field, attributes(grost))]
+#[proc_macro_derive(ObjectField, attributes(grost))]
 pub fn field(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input_struct = parse_macro_input!(input as DeriveInput);
 
@@ -63,6 +63,46 @@ impl darling::FromMeta for Attributes {
             .parse2(quote! { #[#meta] })
             .map_err(|e| darling::Error::from(e).with_span(meta))?;
           attributes.extend(attr);
+        }
+      }
+    }
+
+    Ok(Self(attributes))
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+struct DarlingAttributes(Vec<syn::Ident>);
+
+impl From<DarlingAttributes> for Vec<syn::Ident> {
+  fn from(attrs: DarlingAttributes) -> Self {
+    attrs.0
+  }
+}
+
+impl DarlingAttributes {
+  /// Consumes the `DarlingAttributes` and returns the inner vector of attributes
+  pub fn into_inner(self) -> Vec<syn::Ident> {
+    self.0
+  }
+}
+
+impl darling::FromMeta for DarlingAttributes {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let mut attributes = Vec::new();
+    for item in items {
+      match item {
+        darling::ast::NestedMeta::Lit(lit) => {
+          return Err(darling::Error::unexpected_lit_type(lit));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
+          if let syn::Meta::Path(path) = meta {
+            if let Some(ident) = path.get_ident() {
+              attributes.push(ident.clone());
+            } else {
+              return Err(darling::Error::custom("missing an ident"));
+            }
+          }
         }
       }
     }

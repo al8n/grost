@@ -12,6 +12,8 @@ metadata.workspace = true
 description = "A crate for who want to developing proc-macro based on Grost"
 
 [dependencies]
+grost-darling-derive.workspace = true
+
 syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true
 quote.workspace = true

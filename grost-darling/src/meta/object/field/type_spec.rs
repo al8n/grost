@@ -25,7 +25,9 @@ impl TypeSpecification {
       TypeHint::Repeated(inner) => Some(Self::Repeated(Self::from_hint(inner).map(Arc::new))),
       TypeHint::Map { key, value } => Some(Self::Map {
         key: key.as_ref().and_then(|k| Self::from_hint(k).map(Arc::new)),
-        value: value.as_ref().and_then(|v| Self::from_hint(v).map(Arc::new)),
+        value: value
+          .as_ref()
+          .and_then(|v| Self::from_hint(v).map(Arc::new)),
       }),
     }
   }
