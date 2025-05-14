@@ -38,9 +38,13 @@ pub struct User {
 
 #[test]
 fn t() {
-  // let user = PartialUser {
-  //   age: Some(1),
-  //   name: Some("user".to_string()),
-  //   emails: None,
-  // };
+  let user = PartialUser {
+    age: Some(1),
+    name: Some("user".to_string()),
+    emails: None,
+  };
+
+  let partial_user_ref = PartialUserRef {
+  
+  };
 }

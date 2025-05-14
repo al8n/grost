@@ -70,7 +70,7 @@ pub struct ObjectFieldDeriveInput {
 
 impl ObjectFieldDeriveInput {
   pub fn name(&self) -> &Ident {
-    &self.ident.as_ref().expect("Field name is required")
+    self.ident.as_ref().expect("Field name is required")
   }
 
   pub fn ty(&self) -> &Type {

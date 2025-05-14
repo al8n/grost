@@ -1,0 +1,21 @@
+[package]
+name = "grost-darling-derive"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+description = "The derive macros for grost-darling."
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true, features = ["full"] }
+proc-macro2.workspace = true
+quote.workspace = true
+darling.workspace = true
