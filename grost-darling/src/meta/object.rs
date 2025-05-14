@@ -20,7 +20,7 @@ pub struct PartialObjectMeta {
 
 impl PartialObjectMeta {
   /// Returns the name of the partial object
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 
@@ -42,7 +42,7 @@ pub struct PartialRefObjectMeta {
 
 impl PartialRefObjectMeta {
   /// Returns the name of the partial reference object
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 
@@ -65,7 +65,7 @@ pub struct SelectorIterMeta {
 
 impl SelectorIterMeta {
   /// Returns the name of the selector iterator
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 }
@@ -80,7 +80,7 @@ pub struct SelectorMeta {
 
 impl SelectorMeta {
   /// Returns the name of the selector
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 
@@ -98,7 +98,7 @@ pub struct ReflectionMeta {
 
 impl ReflectionMeta {
   /// Returns the name of the reflection
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 }
@@ -111,7 +111,7 @@ pub struct FieldReflectionMeta {
 
 impl FieldReflectionMeta {
   /// Returns the name of the field reflection
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 }
@@ -126,7 +126,7 @@ pub struct IndexerMeta {
 
 impl IndexerMeta {
   /// Returns the name of the indexer
-  pub const fn name(&self) -> Option<&Ident> {
+  pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
 
@@ -213,9 +213,12 @@ impl ObjectMeta {
 }
 
 /// The trait for the object derive input
-pub trait Object {
+pub trait Object: Clone {
   /// The type of the field
   type Field: Field;
+
+  /// Returns the path to the `grost` crate
+  fn path(&self) -> &syn::Path;
 
   /// Returns the name of the object
   fn name(&self) -> &Ident;
@@ -237,7 +240,7 @@ pub trait Object {
 }
 
 /// The extension trait for the object
-pub(crate) trait ObjectExt: Object {
+pub trait ObjectExt: Object {
   #[inline]
   fn field_reflection_name(&self) -> Ident {
     self

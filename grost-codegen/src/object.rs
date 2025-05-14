@@ -71,68 +71,68 @@ impl core::hash::Hash for Object {
 }
 
 impl Object {
-  pub fn from_attribute_macro_input(
-    args: ObjectAttributeArgs,
-    input: DeriveInput,
-  ) -> Result<(), syn::Error> {
-    // let mut obj = Self::new(SafeIdent::new(input.ident.to_string().as_str()), vec![]);
-    // if let Some(s) = &args.schema_name {
-    //   obj = obj.with_schema_name(s.value());
-    // }
-    // let data_struct = match &input.data {
-    //   syn::Data::Struct(data_struct) => data_struct,
-    //   syn::Data::Enum(_) => {
-    //     return Err(syn::Error::new_spanned(
-    //       input,
-    //       "enum is not supported by object attribute macro",
-    //     ));
-    //   }
-    //   syn::Data::Union(_) => {
-    //     return Err(syn::Error::new_spanned(
-    //       input,
-    //       "union is not supported by object attribute macro",
-    //     ));
-    //   }
-    // };
-    // let fields = match &data_struct.fields {
-    //   syn::Fields::Named(fields) => &fields.named,
-    //   syn::Fields::Unnamed(_) => {
-    //     return Err(syn::Error::new_spanned(
-    //       input,
-    //       "tuple structs are not supported by object attribute macro",
-    //     ));
-    //   }
-    //   syn::Fields::Unit => {
-    //     return Err(syn::Error::new_spanned(
-    //       input,
-    //       "unit structs are not supported by object attribute macro",
-    //     ));
-    //   }
-    // };
+  // pub fn from_attribute_macro_input(
+  //   args: ObjectAttributeArgs,
+  //   input: DeriveInput,
+  // ) -> Result<(), syn::Error> {
+  //   // let mut obj = Self::new(SafeIdent::new(input.ident.to_string().as_str()), vec![]);
+  //   // if let Some(s) = &args.schema_name {
+  //   //   obj = obj.with_schema_name(s.value());
+  //   // }
+  //   // let data_struct = match &input.data {
+  //   //   syn::Data::Struct(data_struct) => data_struct,
+  //   //   syn::Data::Enum(_) => {
+  //   //     return Err(syn::Error::new_spanned(
+  //   //       input,
+  //   //       "enum is not supported by object attribute macro",
+  //   //     ));
+  //   //   }
+  //   //   syn::Data::Union(_) => {
+  //   //     return Err(syn::Error::new_spanned(
+  //   //       input,
+  //   //       "union is not supported by object attribute macro",
+  //   //     ));
+  //   //   }
+  //   // };
+  //   // let fields = match &data_struct.fields {
+  //   //   syn::Fields::Named(fields) => &fields.named,
+  //   //   syn::Fields::Unnamed(_) => {
+  //   //     return Err(syn::Error::new_spanned(
+  //   //       input,
+  //   //       "tuple structs are not supported by object attribute macro",
+  //   //     ));
+  //   //   }
+  //   //   syn::Fields::Unit => {
+  //   //     return Err(syn::Error::new_spanned(
+  //   //       input,
+  //   //       "unit structs are not supported by object attribute macro",
+  //   //     ));
+  //   //   }
+  //   // };
 
-    // for f in fields {
-    //   let mut has_grost = false;
-    //   for attr in f.attrs.iter() {
-    //     if attr.path().is_ident("grost") {
-    //       has_grost = true;
-    //       // parse_field_attributes(f.ident.as_ref().unwrap(), attr)?;
-    //     }
-    //   }
+  //   // for f in fields {
+  //   //   let mut has_grost = false;
+  //   //   for attr in f.attrs.iter() {
+  //   //     if attr.path().is_ident("grost") {
+  //   //       has_grost = true;
+  //   //       // parse_field_attributes(f.ident.as_ref().unwrap(), attr)?;
+  //   //     }
+  //   //   }
 
-    //   if !has_grost {
-    //     return Err(syn::Error::new_spanned(
-    //       f,
-    //       format!("missing tag for field `{}`", f.ident.as_ref().unwrap()),
-    //     ));
-    //   }
-    // }
+  //   //   if !has_grost {
+  //   //     return Err(syn::Error::new_spanned(
+  //   //       f,
+  //   //       format!("missing tag for field `{}`", f.ident.as_ref().unwrap()),
+  //   //     ));
+  //   //   }
+  //   // }
 
-    // input.generics.type_params()
+  //   // input.generics.type_params()
 
-    let input = crate::parser::ObjectDeriveInput::from_derive_input(&input)?;
+  //   let input = crate::parser::ObjectDeriveInput::from_derive_input(&input)?;
 
-    Ok(())
-  }
+  //   Ok(())
+  // }
 
   pub fn new(name: SafeIdent, mut fields: Vec<Field>) -> Self {
     fields.sort_by_key(|f| f.tag());

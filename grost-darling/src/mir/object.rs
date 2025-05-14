@@ -16,7 +16,7 @@ mod partial;
 mod partial_ref;
 mod selector;
 
-pub struct Field {
+pub struct Field<M> {
   name: Ident,
   ty: Type,
   vis: Visibility,
@@ -27,9 +27,10 @@ pub struct Field {
   specification: Option<TypeSpecification>,
   attrs: Vec<Attribute>,
   copy: bool,
+  meta: M,
 }
 
-impl Field {
+impl<M> Field<M> {
   /// Returns the field name.
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -90,9 +91,15 @@ impl Field {
     &self.schema
   }
 
-  fn from_input<I>(input: &I) -> darling::Result<Self>
+  /// Returns the meta information of the field.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  fn from_input(input: M) -> darling::Result<Self>
   where
-    I: crate::meta::object::Field,
+    M: crate::meta::object::Field,
   {
     let meta = input.meta();
     Ok(Self {
@@ -106,28 +113,41 @@ impl Field {
       schema: meta.schema().clone(),
       default: meta.default().cloned(),
       wire: meta.wire().cloned(),
+      meta: input,
     })
   }
 }
 
-pub struct Object {
+pub struct Object<M>
+where
+  M: crate::meta::object::Object,
+{
   name: Ident,
   path_to_grost: Path,
   schema: SchemaMeta,
   vis: Visibility,
   generics: Generics,
   field_reflection: Ident,
-  fields: Vec<Field>,
+  fields: Vec<Field<M::Field>>,
   partial: PartialObject,
   partial_ref: PartialRefObject,
   reflection: Ident,
   selector: Selector,
   selector_iter: SelectorIter,
+  meta: M,
 }
 
-impl Object {
+impl<M> Object<M>
+where
+  M: crate::meta::object::Object,
+{
   #[inline]
-  pub const fn path_to_grost(&self) -> &Path {
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  #[inline]
+  pub const fn path(&self) -> &Path {
     &self.path_to_grost
   }
 
@@ -147,7 +167,10 @@ impl Object {
   }
 
   #[inline]
-  pub const fn fields(&self) -> &[Field] {
+  pub const fn fields(&self) -> &[Field<M::Field>]
+  where
+    M: crate::meta::object::Object,
+  {
     self.fields.as_slice()
   }
 
@@ -186,13 +209,14 @@ impl Object {
     &self.selector_iter
   }
 
-  pub fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
+  pub fn from_meta(input: M) -> darling::Result<Self>
   where
-    O: crate::meta::object::Object,
+    M: crate::meta::object::Object,
   {
-    let partial_object = PartialObject::from_input(path_to_grost, input)?;
-    let partial_ref_object = PartialRefObject::from_input(path_to_grost, input)?;
-    let selector = Selector::from_input(path_to_grost, input)?;
+    let path_to_grost = input.path();
+    let partial_object = PartialObject::from_input(path_to_grost, &input)?;
+    let partial_ref_object = PartialRefObject::from_input(path_to_grost, &input)?;
+    let selector = Selector::from_input(path_to_grost, &input)?;
     let selector_iter = selector.selector_iter(input.selector_iter_name())?;
 
     Ok(Self {
@@ -204,6 +228,7 @@ impl Object {
       fields: input
         .fields()
         .into_iter()
+        .cloned()
         .map(Field::from_input)
         .collect::<Result<Vec<_>, darling::Error>>()?,
       partial: partial_object,
@@ -212,6 +237,7 @@ impl Object {
       reflection: input.reflection_name(),
       selector_iter,
       selector,
+      meta: input,
     })
   }
 

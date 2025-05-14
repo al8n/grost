@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use darling::{FromDeriveInput, FromField, ast::Data, util::Ignored};
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, Type, Visibility};
@@ -25,7 +27,7 @@ pub struct ObjectFieldDeriveInput {
   #[darling(rename = "crate", default = "super::default_path")]
   path_to_crate: syn::Path,
   #[darling(default, map = "DarlingAttributes::into_inner")]
-  attributes: Vec<Ident>,
+  attributes: HashSet<Ident>,
   #[darling(default)]
   rename: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
@@ -42,7 +44,7 @@ impl ToTokens for ObjectFieldDeriveInput {
     let path_to_crate = &self.path_to_crate;
     let (ig, tg, w) = self.generics.split_for_impl();
 
-    let attributes = &self.attributes;
+    let attributes = self.attributes.iter();
     let meta = &self.meta;
 
     let fields = match self.data.as_ref() {
@@ -69,7 +71,7 @@ impl ToTokens for ObjectFieldDeriveInput {
 
     tokens.extend(quote! {
       #(#meta)*
-      #[derive(::core::fmt::Debug, #path_to_crate::__private::darling::FromField)]
+      #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromField)]
       #[darling(attributes(#(#attributes),*), forward_attrs)]
       #vis struct #name #tg #w {
         ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
@@ -117,12 +119,14 @@ pub struct ObjectDeriveInput {
   #[darling(rename = "crate", default = "super::default_path")]
   path_to_crate: syn::Path,
   #[darling(default, map = "DarlingAttributes::into_inner")]
-  attributes: Vec<Ident>,
+  attributes: HashSet<Ident>,
   #[darling(default)]
   rename: Option<Ident>,
   field: Type,
   #[darling(default, map = "Attributes::into_inner")]
   meta: Vec<syn::Attribute>,
+  #[darling(default = "super::default_grost_path")]
+  path: syn::Path,
 }
 
 impl ToTokens for ObjectDeriveInput {
@@ -136,9 +140,10 @@ impl ToTokens for ObjectDeriveInput {
     let (ig, tg, w) = self.generics.split_for_impl();
 
     let field = &self.field;
-    let attributes = &self.attributes;
+    let attributes = self.attributes.iter();
     let meta = &self.meta;
     let expect_msg = format!("{} only supports named structs", name);
+    let path = &self.path.to_token_stream().to_string();
 
     let fields = match self.data.as_ref() {
       Data::Enum(_) => unreachable!("ObjectDeriveInput should not be used for enums"),
@@ -164,7 +169,7 @@ impl ToTokens for ObjectDeriveInput {
 
     tokens.extend(quote! {
       #(#meta)*
-      #[derive(::core::fmt::Debug, #path_to_crate::__private::darling::FromDeriveInput)]
+      #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromDeriveInput)]
       #[darling(attributes(#(#attributes),*), forward_attrs)]
       #vis struct #name #tg #w {
         ident: #path_to_crate::__private::syn::Ident,
@@ -173,14 +178,20 @@ impl ToTokens for ObjectDeriveInput {
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
         data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
 
-        #[darling(flatten)]
-        meta: #path_to_crate::__private::meta::object::ObjectMeta,
-
         #(#fields)*
+
+        #[darling(rename = "crate", default = #path)]
+        __path_to_crate__: #path_to_crate::__private::syn::Path,
+        #[darling(flatten)]
+        __meta__: #path_to_crate::__private::meta::object::ObjectMeta,
       }
 
       impl #ig #path_to_crate::__private::meta::object::Object for #name #tg #w {
         type Field = #field;
+
+        fn path(&self) -> &#path_to_crate::__private::syn::Path {
+          &self.__path_to_crate__
+        }
 
         fn name(&self) -> &#path_to_crate::__private::syn::Ident {
           &self.ident
@@ -203,7 +214,7 @@ impl ToTokens for ObjectDeriveInput {
         }
 
         fn meta(&self) -> &#path_to_crate::__private::meta::object::ObjectMeta {
-          &self.meta
+          &self.__meta__
         }
       }
     });

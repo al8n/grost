@@ -123,7 +123,7 @@ impl FieldMeta {
 }
 
 /// The trait for the field derive input
-pub trait Field {
+pub trait Field: Clone {
   /// Returns the name of the field
   fn name(&self) -> &Ident;
 

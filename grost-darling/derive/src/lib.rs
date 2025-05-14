@@ -1,11 +1,17 @@
+use std::collections::HashSet;
+
 use darling::FromDeriveInput;
 use quote::{ToTokens, quote};
-use syn::{DeriveInput, parse_macro_input};
+use syn::{parse_macro_input, parse_quote, DeriveInput};
 
 mod object;
 
 fn default_path() -> syn::Path {
   syn::parse_str("::grost_darling").unwrap()
+}
+
+fn default_grost_path() -> syn::Path {
+  parse_quote! { ::grost_darling::__private::default_grost_path }
 }
 
 #[proc_macro_derive(Object, attributes(grost))]
@@ -72,9 +78,9 @@ impl darling::FromMeta for Attributes {
 }
 
 #[derive(Debug, Default, Clone)]
-struct DarlingAttributes(Vec<syn::Ident>);
+struct DarlingAttributes(HashSet<syn::Ident>);
 
-impl From<DarlingAttributes> for Vec<syn::Ident> {
+impl From<DarlingAttributes> for HashSet<syn::Ident> {
   fn from(attrs: DarlingAttributes) -> Self {
     attrs.0
   }
@@ -82,14 +88,14 @@ impl From<DarlingAttributes> for Vec<syn::Ident> {
 
 impl DarlingAttributes {
   /// Consumes the `DarlingAttributes` and returns the inner vector of attributes
-  pub fn into_inner(self) -> Vec<syn::Ident> {
+  pub fn into_inner(self) -> HashSet<syn::Ident> {
     self.0
   }
 }
 
 impl darling::FromMeta for DarlingAttributes {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    let mut attributes = Vec::new();
+    let mut attributes = HashSet::new();
     for item in items {
       match item {
         darling::ast::NestedMeta::Lit(lit) => {
@@ -98,7 +104,7 @@ impl darling::FromMeta for DarlingAttributes {
         darling::ast::NestedMeta::Meta(meta) => {
           if let syn::Meta::Path(path) = meta {
             if let Some(ident) = path.get_ident() {
-              attributes.push(ident.clone());
+              attributes.insert(ident.clone());
             } else {
               return Err(darling::Error::custom("missing an ident"));
             }
