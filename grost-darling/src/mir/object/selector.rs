@@ -158,7 +158,7 @@ impl Selector {
     let name = input.selector_name();
 
     let vis = input.vis().clone();
-    let field_reflection_ident = input.field_reflection_name();
+    let reflection_name = input.reflection_name();
     let fg = grost_flavor_generic();
 
     let mut generics = Generics::default();
@@ -205,7 +205,7 @@ impl Selector {
     add_selector_constraints(
       &mut generics,
       path_to_grost,
-      &field_reflection_ident,
+      &reflection_name,
       input.fields().iter().copied(),
       &fg,
     )?;
@@ -216,7 +216,7 @@ impl Selector {
       .map(|f| {
         let ty = f.ty();
         let tag = f.meta().tag();
-        let wfr = wire_format_reflection_ty(path_to_grost, &field_reflection_ident, tag.get(), &fg);
+        let wfr = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fg);
         let wf = wire_format_ty(path_to_grost, &wfr, &fg);
 
         let attrs = f.meta().selector().attrs();

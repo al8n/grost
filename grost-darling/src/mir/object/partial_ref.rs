@@ -98,7 +98,7 @@ impl PartialRefObject {
   {
     let fields = input.fields();
     let meta = input.meta();
-    let field_reflection_name = input.field_reflection_name();
+    let reflection_name = input.reflection_name();
     let fg = grost_flavor_generic();
     let lt = grost_lifetime();
     let ubg = grost_unknown_buffer_generic();
@@ -157,7 +157,7 @@ impl PartialRefObject {
     add_partial_ref_constraints(
       &mut generics,
       path_to_grost,
-      &field_reflection_name,
+      &reflection_name,
       fields.iter().copied(),
       &fg,
       &lt,
@@ -169,7 +169,7 @@ impl PartialRefObject {
         let ty = f.ty();
         let meta = f.meta();
         let tag = meta.tag();
-        let wf = wire_format_reflection_ty(path_to_grost, &field_reflection_name, tag.get(), &fg);
+        let wf = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fg);
         let encoded_state = encode_state_ty(path_to_grost, &wf, &fg, &lt);
         let vis = f.vis();
         let name = f.name();

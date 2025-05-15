@@ -6,8 +6,8 @@ use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
 pub use partial_ref::{PartialRefField, PartialRefObject};
-pub use selector::{Selector, SelectorField, SelectorIter};
 pub use reflection::Reflection;
+pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::meta::{
   SchemaMeta,
@@ -17,8 +17,8 @@ use crate::meta::{
 mod indexer;
 mod partial;
 mod partial_ref;
-mod selector;
 mod reflection;
+mod selector;
 
 pub struct Field<M> {
   name: Ident,
@@ -262,9 +262,12 @@ where
 
   fn derive(&self) -> proc_macro2::TokenStream {
     let reflection_impl = self.derive_reflection();
+    let indexer_impl = self.derive_indexer();
 
     quote! {
       #reflection_impl
+
+      #indexer_impl
     }
   }
 }
@@ -278,7 +281,7 @@ where
     let partial_ref_object = self.partial_ref();
     let selector = self.selector();
     let selector_iter = self.selector_iter();
-    let indexer = self.indexer();
+    let indexer = self.indexer().to_token_stream();
     let reflection = self.reflection().to_token_stream();
 
     let impls = self.derive();

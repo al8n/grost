@@ -5,15 +5,17 @@ pub mod object;
 
 fn wire_format_reflection_ty(
   path_to_grost: &syn::Path,
-  field_reflection_name: &syn::Ident,
+  reflection_name: &syn::Ident,
   tag: u32,
   flavor_generic: &syn::Ident,
 ) -> syn::Type {
   parse_quote! {
-    #field_reflection_name<
-      #path_to_grost::__private::reflection::WireFormatReflection,
+    #reflection_name<
+      (
+        #path_to_grost::__private::reflection::WireFormatReflection,
+        #path_to_grost::__private::RawTag<#tag>,
+      ),
       #flavor_generic,
-      #tag,
     >
   }
 }

@@ -1,7 +1,13 @@
 use quote::quote;
-use syn::{parse::{Parse, Parser}, Fields, FieldsNamed, Ident};
+use syn::{
+  Fields, FieldsNamed, Ident,
+  parse::{Parse, Parser},
+};
 
-use crate::{grost_flavor_generic, meta::object::{Field, ObjectExt}};
+use crate::{
+  grost_flavor_generic,
+  meta::object::{Field, ObjectExt},
+};
 
 use super::Object;
 
@@ -40,7 +46,11 @@ impl Reflection {
       .iter()
       .map(|f| {
         let field_name = f.name();
-        let field_doc = format!(" The reflection to the `{}.{}` field.", input.name(), field_name);
+        let field_doc = format!(
+          " The reflection to the `{}.{}` field.",
+          input.name(),
+          field_name
+        );
         let tag = f.meta().tag().get();
         let vis = f.vis();
         syn::Field::parse_named.parse2(quote! {
@@ -98,9 +108,7 @@ where
     let field_reflection_fns = reflection.fields.iter().map(|f| {
       let field_name = f.ident.as_ref().unwrap();
       let ty = &f.ty;
-      let doc = format!(
-        " Returns the field reflection of the field `{name}.{field_name}`.",
-      );
+      let doc = format!(" Returns the field reflection of the field `{name}.{field_name}`.",);
       quote! {
         #[doc = #doc]
         #[inline]
