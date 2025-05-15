@@ -34,7 +34,7 @@ impl Network {
       quote! {
         <
           #field_reflection<
-            #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+            #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>,
             #path_to_grost::__private::flavors::Network,
             #tag,
           > as #path_to_grost::__private::reflection::Reflectable<
@@ -110,7 +110,7 @@ impl Network {
 
           const REFLECTION: &Self::Reflection = &{
             <#field_reflection<
-                #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+                #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>,
                 #path_to_grost::__private::flavors::Network,
                 #tag,
               > as #path_to_grost::__private::reflection::Reflectable<
@@ -400,12 +400,12 @@ impl Network {
         impl #path_to_grost::__private::reflection::Reflectable<
           #path_to_grost::__private::flavors::Network,
         > for #field_reflection<
-          #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>,
+          #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>,
           #path_to_grost::__private::flavors::Network,
           #tag,
         >
         {
-          type Reflection = #path_to_grost::__private::reflection::FieldReflection<#path_to_grost::__private::flavors::Network>;
+          type Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>;
           const REFLECTION: &Self::Reflection = &#impl_;
         }
       }

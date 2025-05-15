@@ -70,16 +70,16 @@ impl Object {
 
       reflections_constraints.push(quote! {
         #field_reflection_ident<
-          #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>,
+          #path_to_grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
           __GROST_FLAVOR__,
           #tag,
-        >: #path_to_grost::__private::reflection::Reflectable<__GROST_FLAVOR__, Reflection = #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>>
+        >: #path_to_grost::__private::reflection::Reflectable<__GROST_FLAVOR__, Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>>
       });
       quote! {
         Self::#field_variant => {
           <
             #field_reflection_ident<
-              #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>,
+              #path_to_grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
               __GROST_FLAVOR__,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
@@ -123,7 +123,7 @@ impl Object {
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>(
           &self,
-        ) -> &'static #path_to_grost::__private::reflection::FieldReflection<__GROST_FLAVOR__>
+        ) -> &'static #path_to_grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>
         where
           __GROST_FLAVOR__: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
           #(#reflections_constraints),*

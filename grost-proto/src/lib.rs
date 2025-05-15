@@ -83,7 +83,7 @@ pub mod __private {
     default_wire_format,
     encode::*,
     encoded_state,
-    flavors,
+    flavors::{self, RawTag},
     indexer,
     // map::MapSelector,
     message,

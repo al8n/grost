@@ -4,7 +4,7 @@ use super::{Flavor, Type};
 pub struct ObjectReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub fields: &'static [&'static FieldReflection<F>],
+  pub fields: &'static [&'static ObjectFieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> ObjectReflectionBuilder<F> {
@@ -23,7 +23,7 @@ impl<F: Flavor + ?Sized> ObjectReflectionBuilder<F> {
 pub struct ObjectReflection<F: Flavor + ?Sized> {
   name: &'static str,
   schema_name: &'static str,
-  fields: &'static [&'static FieldReflection<F>],
+  fields: &'static [&'static ObjectFieldReflection<F>],
 }
 
 impl<F: Flavor + ?Sized> Clone for ObjectReflection<F> {
@@ -51,13 +51,13 @@ impl<F: Flavor + ?Sized> ObjectReflection<F> {
 
   /// Get the fields of this struct
   #[inline]
-  pub const fn fields(&self) -> &'static [&'static FieldReflection<F>] {
+  pub const fn fields(&self) -> &'static [&'static ObjectFieldReflection<F>] {
     self.fields
   }
 }
 
 #[doc(hidden)]
-pub struct FieldReflectionBuilder<F: Flavor + ?Sized> {
+pub struct ObjectFieldReflectionBuilder<F: Flavor + ?Sized> {
   pub name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
@@ -66,10 +66,10 @@ pub struct FieldReflectionBuilder<F: Flavor + ?Sized> {
   pub identifier: F::Identifier,
 }
 
-impl<F: Flavor + ?Sized> FieldReflectionBuilder<F> {
+impl<F: Flavor + ?Sized> ObjectFieldReflectionBuilder<F> {
   #[inline]
-  pub const fn build(self) -> FieldReflection<F> {
-    FieldReflection {
+  pub const fn build(self) -> ObjectFieldReflection<F> {
+    ObjectFieldReflection {
       name: self.name,
       ty: self.ty,
       schema_name: self.schema_name,
@@ -81,7 +81,7 @@ impl<F: Flavor + ?Sized> FieldReflectionBuilder<F> {
 
 /// The information of a field in the Graph protocol buffer
 #[derive(derive_more::Debug)]
-pub struct FieldReflection<F: Flavor + ?Sized> {
+pub struct ObjectFieldReflection<F: Flavor + ?Sized> {
   name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   #[debug("{}", (self.ty)())]
@@ -91,15 +91,15 @@ pub struct FieldReflection<F: Flavor + ?Sized> {
   identifier: F::Identifier,
 }
 
-impl<F: Flavor> Clone for FieldReflection<F> {
+impl<F: Flavor> Clone for ObjectFieldReflection<F> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor> Copy for FieldReflection<F> {}
+impl<F: Flavor> Copy for ObjectFieldReflection<F> {}
 
-impl<F: Flavor> FieldReflection<F> {
+impl<F: Flavor> ObjectFieldReflection<F> {
   /// Get the name of the field
   #[inline]
   pub const fn name(&self) -> &'static str {

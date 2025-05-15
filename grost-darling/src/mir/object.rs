@@ -7,7 +7,6 @@ pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
 pub use partial_ref::{PartialRefField, PartialRefObject};
 pub use selector::{Selector, SelectorField, SelectorIter};
-pub use field_reflection::FieldReflection;
 pub use reflection::Reflection;
 
 use crate::meta::{
@@ -20,7 +19,6 @@ mod partial;
 mod partial_ref;
 mod selector;
 mod reflection;
-mod field_reflection;
 
 pub struct Field<M> {
   name: Ident,
@@ -133,7 +131,6 @@ where
   schema: SchemaMeta,
   vis: Visibility,
   generics: Generics,
-  field_reflection: FieldReflection,
   fields: Vec<Field<M::Field>>,
   partial: PartialObject,
   partial_ref: PartialRefObject,
@@ -197,11 +194,6 @@ where
   }
 
   #[inline]
-  pub const fn field_reflection(&self) -> &FieldReflection {
-    &self.field_reflection
-  }
-
-  #[inline]
   pub const fn reflection(&self) -> &Reflection {
     &self.reflection
   }
@@ -245,7 +237,6 @@ where
     )?;
     let indexer = Indexer::from_input(&input)?;
     let reflection = Reflection::from_input(&input)?;
-    let field_reflection = FieldReflection::from_input(&input)?;
 
     Ok(Self {
       name: input.name().clone(),
@@ -261,13 +252,20 @@ where
         .collect::<Result<Vec<_>, darling::Error>>()?,
       partial: partial_object,
       partial_ref: partial_ref_object,
-      field_reflection,
       reflection,
       selector_iter,
       selector,
       meta: input,
       indexer,
     })
+  }
+
+  fn derive(&self) -> proc_macro2::TokenStream {
+    let reflection_impl = self.derive_reflection();
+
+    quote! {
+      #reflection_impl
+    }
   }
 }
 
@@ -281,12 +279,11 @@ where
     let selector = self.selector();
     let selector_iter = self.selector_iter();
     let indexer = self.indexer();
-    let reflection = self.reflection();
-    let field_reflection = self.field_reflection();
+    let reflection = self.reflection().to_token_stream();
+
+    let impls = self.derive();
 
     tokens.extend(quote! {
-      #field_reflection
-
       #reflection
 
       #partial_object
@@ -298,6 +295,8 @@ where
       #selector
 
       #selector_iter
+
+      #impls
     });
   }
 }

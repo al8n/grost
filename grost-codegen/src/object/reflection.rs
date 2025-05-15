@@ -44,7 +44,7 @@ impl Object {
         #[inline]
         pub const fn #name(&self) ->
           #field_reflection_name<
-            #path_to_grost::__private::reflection::FieldReflection<F>,
+            #path_to_grost::__private::reflection::ObjectFieldReflection<F>,
             F,
             #tag,
           >
@@ -142,7 +142,7 @@ impl Object {
 
       #[automatically_derived]
       #[allow(clippy::type_complexity)]
-      impl<F, const TAG: ::core::primitive::u32> #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F, TAG>
+      impl<F, const TAG: ::core::primitive::u32> #field_reflection_name<#path_to_grost::__private::reflection::ObjectFieldReflection<F>, F, TAG>
       where
         F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
       {

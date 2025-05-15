@@ -282,3 +282,8 @@ pub trait Flavor: core::fmt::Debug + 'static {
   where
     B: BytesBuffer;
 }
+
+/// A raw tag for a field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
+#[display("{}", T)]
+pub struct RawTag<const T: u32>;
