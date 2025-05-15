@@ -1,5 +1,5 @@
 use heck::ToUpperCamelCase as _;
-use quote::{format_ident, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{
   Ident,
   parse::{Parse, Parser},
@@ -8,6 +8,7 @@ use syn::{
 use crate::meta::object::{Field, ObjectExt};
 
 pub struct Indexer {
+  parent_name: Ident,
   name: Ident,
   vis: syn::Visibility,
   attrs: Vec<syn::Attribute>,
@@ -54,10 +55,40 @@ impl Indexer {
       .collect::<Result<Vec<_>, _>>()?;
 
     Ok(Self {
+      parent_name: input.name().clone(),
       name,
       vis: input.vis().clone(),
       attrs,
       variants,
     })
+  }
+}
+
+impl ToTokens for Indexer {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let vis = self.vis();
+
+    let variants = self.variants();
+    let attrs = self.attrs();
+
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(" Field indexer for the struct [`{}`]", self.parent_name);
+      Some(quote! {
+        #[doc = #doc]
+      })
+    } else {
+      None
+    };
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #doc
+      #[derive(::core::clone::Clone, ::core::marker::Copy, ::core::cmp::PartialEq, ::core::cmp::Eq, ::core::cmp::PartialOrd, ::core::cmp::Ord, ::core::hash::Hash, ::core::fmt::Debug)]
+      #[repr(u32)]
+      #vis enum #name {
+        #(#variants),*
+      }
+    });
   }
 }

@@ -1,11 +1,12 @@
 use std::num::NonZeroU32;
 
+use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
 pub use partial_ref::{PartialRefField, PartialRefObject};
-pub use selector::{Selector, SelectorIter};
+pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::meta::{
   SchemaMeta,
@@ -215,24 +216,29 @@ where
   pub const fn indexer(&self) -> &Indexer {
     &self.indexer
   }
+}
 
+impl<M> Object<M>
+where
+  M: crate::meta::object::Object,
+{
   pub fn from_derive_input(input: &syn::DeriveInput) -> darling::Result<Self>
   where
-    M: darling::FromDeriveInput + crate::meta::object::Object,
+    M: darling::FromDeriveInput,
   {
     <M as darling::FromDeriveInput>::from_derive_input(input).and_then(Self::from_object)
   }
 
-  pub fn from_object(input: M) -> darling::Result<Self>
-  where
-    M: crate::meta::object::Object,
-  {
+  pub fn from_object(input: M) -> darling::Result<Self> {
     let path_to_grost = input.path();
     let partial_object = PartialObject::from_input(path_to_grost, &input)?;
     let partial_ref_object = PartialRefObject::from_input(path_to_grost, &input)?;
     let selector = Selector::from_input(path_to_grost, &input)?;
-    let selector_iter =
-      selector.selector_iter(input.selector_iter_name(), input.meta().selector_iter())?;
+    let selector_iter = selector.selector_iter(
+      input.selector_iter_name(),
+      input.indexer_name(),
+      input.meta().selector_iter(),
+    )?;
     let indexer = Indexer::from_input(&input)?;
 
     Ok(Self {
@@ -256,5 +262,55 @@ where
       meta: input,
       indexer,
     })
+  }
+
+  /// Generates the reflection types for the object.
+  fn derive_reflection_definations(&self) -> proc_macro2::TokenStream {
+    let reflection_name = &self.reflection_name();
+    let doc = format!(" The reflection of the [`{}`].", self.name());
+    let field_reflection_name = &self.field_reflection_name();
+    let field_reflection_doc =
+      format!(" The field reflection of the [`{}`]'s fields.", self.name());
+    quote! {
+      #[doc = #field_reflection_doc]
+      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+
+      #[doc = #doc]
+      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+    }
+  }
+}
+
+impl<M> ToTokens for Object<M>
+where
+  M: crate::meta::object::Object,
+{
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let partial_object = self.partial();
+    let partial_ref_object = self.partial_ref();
+    let reflection_definition = self.derive_reflection_definations();
+    let selector = self.selector();
+    let selector_iter = self.selector_iter();
+    let indexer = self.indexer();
+
+    tokens.extend(quote! {
+      #reflection_definition
+
+      #partial_object
+
+      #partial_ref_object
+
+      #indexer
+
+      #selector
+
+      #selector_iter
+    });
   }
 }

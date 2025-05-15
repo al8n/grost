@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 
-use quote::quote;
-use syn::{Attribute, GenericParam, Generics, Ident, Type, Visibility, parse_quote};
+use quote::{ToTokens, quote};
+use syn::{Attribute, GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_quote};
 
 use crate::{
   grost_flavor_generic, grost_lifetime, grost_unknown_buffer_generic,
@@ -12,34 +12,13 @@ use super::super::wire_format_reflection_ty;
 
 #[derive(Debug, Clone)]
 pub struct PartialRefField {
-  name: Ident,
-  ty: Type,
-  vis: Visibility,
+  field: syn::Field,
   tag: NonZeroU32,
   wire: Type,
-  attrs: Vec<Attribute>,
   copy: bool,
 }
 
 impl PartialRefField {
-  /// Returns the field name.
-  #[inline]
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the field type.
-  #[inline]
-  pub const fn ty(&self) -> &Type {
-    &self.ty
-  }
-
-  /// Returns the field visibility.
-  #[inline]
-  pub const fn vis(&self) -> &Visibility {
-    &self.vis
-  }
-
   /// Returns the field tag.
   #[inline]
   pub const fn tag(&self) -> NonZeroU32 {
@@ -52,10 +31,10 @@ impl PartialRefField {
     &self.wire
   }
 
-  /// Returns the field attributes.
+  /// Returns the field
   #[inline]
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
+  pub const fn field(&self) -> &syn::Field {
+    &self.field
   }
 
   /// Returns whether the field is copyable.
@@ -67,6 +46,7 @@ impl PartialRefField {
 
 #[derive(Debug, Clone)]
 pub struct PartialRefObject {
+  parent_name: Ident,
   path_to_grost: syn::Path,
   name: Ident,
   vis: Visibility,
@@ -191,20 +171,25 @@ impl PartialRefObject {
         let tag = meta.tag();
         let wf = wire_format_reflection_ty(path_to_grost, &field_reflection_name, tag.get(), &fg);
         let encoded_state = encode_state_ty(path_to_grost, &wf, &fg, &lt);
+        let vis = f.vis();
+        let name = f.name();
+        let attrs = f.meta().partial_ref().attrs();
+        let field = syn::Field::parse_named.parse2(quote! {
+          #(#attrs)*
+          #vis #name: ::core::option::Option<<#ty as #encoded_state>::Output>
+        })?;
 
         Ok(PartialRefField {
-          name: f.name().clone(),
-          ty: syn::parse2(quote! { ::core::option::Option<<#ty as #encoded_state>::Output> })?,
-          vis: f.vis().clone(),
+          field,
           tag,
           wire: wf,
-          attrs: meta.partial_ref().attrs().to_vec(),
           copy: meta.partial_ref().copy(),
         })
       })
       .collect::<Result<Vec<_>, darling::Error>>()?;
 
     Ok(Self {
+      parent_name: input.name().clone(),
       path_to_grost: path_to_grost.clone(),
       name: input.partial_ref_name(),
       vis: input.vis().clone(),
@@ -213,6 +198,41 @@ impl PartialRefObject {
       attrs: meta.partial_ref().attrs().to_vec(),
       copy: meta.partial_ref().copy(),
     })
+  }
+}
+
+impl ToTokens for PartialRefObject {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let vis = self.vis();
+    let ubg = grost_unknown_buffer_generic();
+    let fields = self.fields().iter().map(PartialRefField::field);
+    let generics = self.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(
+        " Partial reference struct for the struct [`{}`]",
+        self.parent_name
+      );
+      quote! {
+        #[doc = #doc]
+      }
+    } else {
+      quote! {}
+    };
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #doc
+      #[allow(clippy::type_complexity, non_camel_case_types)]
+      #vis struct #name #generics #where_clause
+      {
+        __grost_unknown_buffer__: ::core::option::Option<#ubg>,
+        #(#fields),*
+      }
+    });
   }
 }
 

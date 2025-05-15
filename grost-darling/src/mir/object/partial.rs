@@ -1,18 +1,15 @@
 use std::num::NonZeroU32;
 
-use quote::quote;
-use syn::{Attribute, Generics, Ident, Type, Visibility};
+use quote::{ToTokens, quote};
+use syn::{Attribute, Generics, Ident, Type, Visibility, parse::Parser};
 
 use crate::meta::object::{ObjectExt as _, TypeSpecification};
 
 #[derive(Debug, Clone)]
 pub struct PartialField {
-  name: Ident,
-  ty: Type,
-  vis: Visibility,
+  field: syn::Field,
   tag: NonZeroU32,
   specification: Option<TypeSpecification>,
-  attrs: Vec<Attribute>,
   copy: bool,
 }
 
@@ -20,19 +17,25 @@ impl PartialField {
   /// Returns the field name.
   #[inline]
   pub const fn name(&self) -> &Ident {
-    &self.name
+    self.field.ident.as_ref().unwrap()
   }
 
   /// Returns the field type.
   #[inline]
   pub const fn ty(&self) -> &Type {
-    &self.ty
+    &self.field.ty
   }
 
   /// Returns the field visibility.
   #[inline]
   pub const fn vis(&self) -> &Visibility {
-    &self.vis
+    &self.field.vis
+  }
+
+  /// Returns the field
+  #[inline]
+  pub const fn field(&self) -> &syn::Field {
+    &self.field
   }
 
   /// Returns the field tag.
@@ -56,7 +59,7 @@ impl PartialField {
   /// Returns the field attributes.
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
+    self.field.attrs.as_slice()
   }
 
   pub(super) fn from_input<I>(input: &I) -> darling::Result<Self>
@@ -65,14 +68,18 @@ impl PartialField {
   {
     let meta = input.meta();
     let ty = input.ty();
+    let name = input.name();
+    let vis = input.vis();
+    let attrs = input.attrs();
+    let field = syn::Field::parse_named.parse2(quote! {
+      #(#attrs)*
+      #vis #name: ::core::option::Option<#ty>
+    })?;
 
     Ok(Self {
-      name: input.name().clone(),
-      ty: syn::parse2(quote! { ::core::option::Option<#ty> })?,
-      vis: input.vis().clone(),
+      field,
       tag: meta.tag(),
       specification: meta.type_specification().cloned(),
-      attrs: meta.partial().attrs().to_vec(),
       copy: meta.copy(),
     })
   }
@@ -151,5 +158,24 @@ impl PartialObject {
       attrs: meta.partial().attrs().to_vec(),
       copy: meta.copy(),
     })
+  }
+}
+
+impl ToTokens for PartialObject {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let visibility = &self.vis();
+    let fields = self.fields().iter().map(PartialField::field);
+    let attrs = self.attrs();
+    let generics = self.generics();
+    let where_clause = generics.where_clause.as_ref();
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      #visibility struct #name #generics #where_clause {
+        #(#fields),*
+      }
+    });
   }
 }
