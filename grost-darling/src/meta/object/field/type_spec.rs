@@ -4,7 +4,7 @@ use darling::{FromMeta, ast::NestedMeta, util::SpannedValue};
 use syn::Meta;
 
 /// The specification of the type of a field.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, derive_more::IsVariant)]
 pub enum TypeSpecification {
   /// Specifies the field is optional
   Optional(Option<Arc<TypeSpecification>>),
@@ -284,10 +284,10 @@ pub(super) struct TypeHintMeta {
 impl TypeHintMeta {
   pub(super) fn into_specification(self) -> Option<TypeSpecification> {
     if let Some(optional) = self.optional {
-      return TypeSpecification::from_hint(&optional.0);
+      return Some(TypeSpecification::Optional(TypeSpecification::from_hint(&optional.0).map(Arc::new)));
     }
     if let Some(repeated) = self.repeated {
-      return TypeSpecification::from_hint(&repeated.0);
+      return Some(TypeSpecification::Repeated(TypeSpecification::from_hint(&repeated.0).map(Arc::new)));
     }
     if let Some(map) = self.map {
       return TypeSpecification::from_hint(&map.0);

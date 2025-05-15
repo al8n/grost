@@ -12,7 +12,6 @@ use crate::{
 use super::Object;
 
 pub struct Reflection {
-  path_to_grost: syn::Path,
   parent_name: Ident,
   name: Ident,
   vis: syn::Visibility,
@@ -72,7 +71,6 @@ impl Reflection {
 
     Ok(Self {
       parent_name,
-      path_to_grost: path_to_grost.clone(),
       name,
       fields,
       vis,

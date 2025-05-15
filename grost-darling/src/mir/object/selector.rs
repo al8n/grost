@@ -469,6 +469,14 @@ where
       }
     });
 
+    let debug = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      let field_name_str = field_name.to_string();
+      quote! {
+        field(#field_name_str, &self.#field_name)
+      }
+    });
+
     let hash = self.selector.fields().iter().map(|f| {
       let field_name = f.name();
       quote! {
@@ -510,8 +518,9 @@ where
       impl #ig ::core::fmt::Debug for #name #tg #selector_where_clauses
       {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-          ::core::write!(f, #name_str)
-          // self.debug_helper(f)
+          f.debug_struct(#name_str)
+            #(.#debug)*
+            .finish()
         }
       }
 

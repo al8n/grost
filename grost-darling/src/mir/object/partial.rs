@@ -71,10 +71,18 @@ impl PartialField {
     let name = input.name();
     let vis = input.vis();
     let attrs = input.attrs();
-    let field = syn::Field::parse_named.parse2(quote! {
-      #(#attrs)*
-      #vis #name: ::core::option::Option<#ty>
-    })?;
+    let optional = input.meta().type_specification().is_some_and(|f| f.is_optional());
+    let field = if optional {
+      syn::Field::parse_named.parse2(quote! {
+        #(#attrs)*
+        #vis #name: #ty
+      })?
+    } else {
+      syn::Field::parse_named.parse2(quote! {
+        #(#attrs)*
+        #vis #name: ::core::option::Option<#ty>
+      })?
+    };
 
     Ok(Self {
       field,

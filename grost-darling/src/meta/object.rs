@@ -111,19 +111,6 @@ impl ReflectionMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct FieldReflectionMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-}
-
-impl FieldReflectionMeta {
-  /// Returns the name of the field reflection
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
 pub struct IndexerMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
@@ -159,8 +146,6 @@ pub struct ObjectMeta {
   reflection: ReflectionMeta,
   #[darling(default)]
   selector_iter: SelectorIterMeta,
-  #[darling(default)]
-  field_reflection: FieldReflectionMeta,
   #[darling(default)]
   indexer: IndexerMeta,
   #[darling(default)]
@@ -203,11 +188,6 @@ impl ObjectMeta {
     &self.reflection
   }
 
-  /// Returns the field reflection information
-  pub const fn field_reflection(&self) -> &FieldReflectionMeta {
-    &self.field_reflection
-  }
-
   /// Returns the indexer information
   pub const fn indexer(&self) -> &IndexerMeta {
     &self.indexer
@@ -248,16 +228,6 @@ pub trait Object: Clone {
 
 /// The extension trait for the object
 pub trait ObjectExt: Object {
-  #[inline]
-  fn field_reflection_name(&self) -> Ident {
-    self
-      .meta()
-      .field_reflection()
-      .name()
-      .cloned()
-      .unwrap_or_else(|| format_ident!("{}FieldReflection", self.name()))
-  }
-
   #[inline]
   fn reflection_name(&self) -> Ident {
     self
