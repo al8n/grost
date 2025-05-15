@@ -1,6 +1,28 @@
 use darling::FromMeta;
 use quote::quote;
 
+use super::Attributes;
+
+#[derive(Debug, Default, Clone, FromMeta)]
+pub struct SelectorFieldMeta {
+  #[darling(default, map = "Attributes::into_inner")]
+  attrs: Vec<syn::Attribute>,
+  #[darling(default)]
+  select: Selection,
+}
+
+impl SelectorFieldMeta {
+  /// Returns the attributes of the selector field
+  pub const fn attrs(&self) -> &[syn::Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the selection of the selector field
+  pub const fn select(&self) -> &Selection {
+    &self.select
+  }
+}
+
 #[derive(Default, Debug, Clone)]
 pub enum Selection {
   #[default]

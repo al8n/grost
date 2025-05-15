@@ -1,8 +1,8 @@
 use std::num::NonZeroU32;
 
-use quote::quote;
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
+pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
 pub use partial_ref::{PartialRefField, PartialRefObject};
 pub use selector::{Selector, SelectorIter};
@@ -12,6 +12,7 @@ use crate::meta::{
   object::{ObjectExt as _, TypeSpecification},
 };
 
+mod indexer;
 mod partial;
 mod partial_ref;
 mod selector;
@@ -134,6 +135,7 @@ where
   reflection: Ident,
   selector: Selector,
   selector_iter: SelectorIter,
+  indexer: Indexer,
   meta: M,
 }
 
@@ -209,6 +211,11 @@ where
     &self.selector_iter
   }
 
+  #[inline]
+  pub const fn indexer(&self) -> &Indexer {
+    &self.indexer
+  }
+
   pub fn from_derive_input(input: &syn::DeriveInput) -> darling::Result<Self>
   where
     M: darling::FromDeriveInput + crate::meta::object::Object,
@@ -224,7 +231,9 @@ where
     let partial_object = PartialObject::from_input(path_to_grost, &input)?;
     let partial_ref_object = PartialRefObject::from_input(path_to_grost, &input)?;
     let selector = Selector::from_input(path_to_grost, &input)?;
-    let selector_iter = selector.selector_iter(input.selector_iter_name())?;
+    let selector_iter =
+      selector.selector_iter(input.selector_iter_name(), input.meta().selector_iter())?;
+    let indexer = Indexer::from_input(&input)?;
 
     Ok(Self {
       name: input.name().clone(),
@@ -245,41 +254,7 @@ where
       selector_iter,
       selector,
       meta: input,
+      indexer,
     })
-  }
-
-  pub fn derive_defination(&self) -> proc_macro2::TokenStream {
-    let partial_object = self.partial.derive_defination();
-    let partial_ref_object = self.partial_ref.derive_defination();
-    let reflection_definition = self.derive_reflection_definations();
-
-    quote! {
-      #reflection_definition
-
-      #partial_object
-
-      #partial_ref_object
-    }
-  }
-
-  /// Generates the reflection types for the object.
-  fn derive_reflection_definations(&self) -> proc_macro2::TokenStream {
-    let reflection_name = &self.reflection;
-    let doc = format!(" The reflection of the [`{}`].", self.name);
-    let field_reflection_name = &self.field_reflection;
-    let field_reflection_doc = format!(" The field reflection of the [`{}`]'s fields.", self.name);
-    quote! {
-      #[doc = #field_reflection_doc]
-      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-
-      #[doc = #doc]
-      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-    }
   }
 }

@@ -5,13 +5,15 @@ use super::super::wire_format_reflection_ty;
 
 use crate::{
   grost_flavor_generic, grost_lifetime,
-  meta::object::{Field, ObjectExt as _, Selection},
+  meta::object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
 };
 
 #[derive(Debug, Clone)]
 pub struct SelectorField {
   name: Ident,
+  vis: Visibility,
   ty: Type,
+  attrs: Vec<syn::Attribute>,
   default: Selection,
 }
 
@@ -28,6 +30,18 @@ impl SelectorField {
     &self.ty
   }
 
+  /// Returns the visibility of the field.
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the attributes of the field.
+  #[inline]
+  pub const fn attrs(&self) -> &[syn::Attribute] {
+    self.attrs.as_slice()
+  }
+
   /// Returns the default selection of the field.
   #[inline]
   pub const fn default_selection(&self) -> &Selection {
@@ -39,6 +53,7 @@ impl SelectorField {
 pub struct SelectorIter {
   name: Ident,
   vis: Visibility,
+  attrs: Vec<syn::Attribute>,
   generics: Generics,
 }
 
@@ -54,6 +69,10 @@ impl SelectorIter {
   pub const fn generics(&self) -> &Generics {
     &self.generics
   }
+
+  pub const fn attrs(&self) -> &[syn::Attribute] {
+    self.attrs.as_slice()
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +80,7 @@ pub struct Selector {
   name: Ident,
   vis: Visibility,
   generics: Generics,
+  attrs: Vec<syn::Attribute>,
   fields: Vec<SelectorField>,
 }
 
@@ -78,6 +98,11 @@ impl Selector {
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
+  }
+
+  #[inline]
+  pub const fn attrs(&self) -> &[syn::Attribute] {
+    self.attrs.as_slice()
   }
 
   #[inline]
@@ -158,20 +183,28 @@ impl Selector {
           ty: syn::parse2(
             quote!(<#ty as #path_to_grost::__private::Selectable<#fg, #wf>>::Selector),
           )?,
-          default: f.meta().selection().clone(),
+          default: f.meta().selector().select().clone(),
+          attrs: f.meta().selector().attrs().to_vec(),
+          vis: f.vis().clone(),
         })
       })
       .collect::<Result<Vec<_>, darling::Error>>()?;
 
+    let attrs = input.meta().selector().attrs().to_vec();
     Ok(Self {
       name,
       vis,
+      attrs,
       generics,
       fields,
     })
   }
 
-  pub(super) fn selector_iter(&self, name: Ident) -> darling::Result<SelectorIter> {
+  pub(super) fn selector_iter(
+    &self,
+    name: Ident,
+    iter_meta: &SelectorIterMeta,
+  ) -> darling::Result<SelectorIter> {
     let mut generics = Generics::default();
     let original_generics = self.generics.clone();
 
@@ -222,6 +255,7 @@ impl Selector {
 
     Ok(SelectorIter {
       name,
+      attrs: iter_meta.attrs().to_vec(),
       vis: self.vis.clone(),
       generics,
     })

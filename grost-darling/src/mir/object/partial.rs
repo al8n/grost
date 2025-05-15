@@ -132,28 +132,6 @@ impl PartialObject {
     self.copy
   }
 
-  pub(super) fn derive_defination(&self) -> proc_macro2::TokenStream {
-    let name = &self.name;
-    let visibility = &self.vis;
-    let fields = self.fields.iter().map(|f| {
-      let field_name = &f.name;
-      let ty = &f.ty;
-      quote! {
-        #field_name: #ty,
-      }
-    });
-    let attrs = &self.attrs;
-    let (_, ty_generics, where_clause) = self.generics.split_for_impl();
-
-    quote! {
-      #(#attrs)*
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      #visibility struct #name #ty_generics #where_clause {
-        #(#fields)*
-      }
-    }
-  }
-
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
     O: crate::meta::object::Object,

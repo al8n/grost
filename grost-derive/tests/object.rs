@@ -12,7 +12,7 @@ pub struct User {
     tag = 1,
     schema(description = "The nick name of the user"),
     wire = "grost::flavors::network::LengthDelimited",
-    select = "all",
+    selector(select = "all"),
     partial_ref(copy,),
     default = sealed::default_user,
   )]
@@ -30,7 +30,7 @@ pub struct User {
     schema(description = "The email of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     copy,
-    partial_ref(copy, attrs(derive(Copy, Clone))),
+    partial_ref(copy),
     optional(repeated)
   )]
   emails: Option<Vec<String>>,

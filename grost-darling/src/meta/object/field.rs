@@ -7,7 +7,7 @@ use type_spec::TypeHintMeta;
 
 use super::{Attributes, SchemaMeta};
 
-pub use select::Selection;
+pub use select::{Selection, SelectorFieldMeta};
 pub use type_spec::TypeSpecification;
 
 mod select;
@@ -63,7 +63,7 @@ pub struct FieldMeta {
   #[darling(default)]
   partial_ref: PartialRefFieldMeta,
   #[darling(default)]
-  select: Selection,
+  selector: SelectorFieldMeta,
   #[darling(default)]
   copy: bool,
   #[darling(flatten)]
@@ -99,8 +99,8 @@ impl FieldMeta {
   }
 
   /// Returns the default selection for the field
-  pub const fn selection(&self) -> &Selection {
-    &self.select
+  pub const fn selector(&self) -> &SelectorFieldMeta {
+    &self.selector
   }
 
   /// Returns the type specification of the field

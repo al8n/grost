@@ -112,30 +112,6 @@ impl PartialRefObject {
     self.copy
   }
 
-  pub(super) fn derive_defination(&self) -> proc_macro2::TokenStream {
-    let name = &self.name;
-    let vis = &self.vis;
-    let ubg = grost_unknown_buffer_generic();
-
-    let fields = self.fields.iter().map(|f| {
-      let ty = &f.ty;
-      let name = &f.name;
-      quote! {
-        #name: #ty,
-      }
-    });
-
-    let (_, ty_generics, where_clauses) = self.generics.split_for_impl();
-    quote! {
-      #[allow(clippy::type_complexity, non_camel_case_types)]
-      #vis struct #name #ty_generics #where_clauses
-      {
-        #(#fields)*
-        __grost_unknown_buffer__: ::core::option::Option<#ubg>,
-      }
-    }
-  }
-
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
     O: crate::meta::object::Object,

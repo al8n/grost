@@ -2,9 +2,12 @@ use std::collections::HashSet;
 
 use darling::FromDeriveInput;
 use quote::{ToTokens, quote};
-use syn::{DeriveInput, parse_macro_input, parse_quote};
+use syn::{DeriveInput, ItemTrait, parse_macro_input, parse_quote};
 
+mod enum_;
+mod interface;
 mod object;
+mod union;
 
 fn default_path() -> syn::Path {
   syn::parse_str("::grost_darling").unwrap()
@@ -36,6 +39,23 @@ pub fn field(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   };
 
   input.to_token_stream().into()
+}
+
+#[proc_macro_attribute]
+pub fn interface(
+  args: proc_macro::TokenStream,
+  input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+  // let args = parse_macro_input!(args as syn::AttributeArgs);
+  let input_struct = parse_macro_input!(input as ItemTrait);
+
+  // let input = match interface::InterfaceDeriveInput::from_derive_input(&input_struct) {
+  //   Ok(input) => input,
+  //   Err(e) => return e.write_errors().into(),
+  // };
+
+  // input.to_token_stream().into()
+  quote! {}.into()
 }
 
 #[derive(Debug, Default, Clone)]

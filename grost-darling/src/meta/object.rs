@@ -61,12 +61,19 @@ impl PartialRefObjectMeta {
 pub struct SelectorIterMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
+  #[darling(default, map = "Attributes::into_inner")]
+  attrs: Vec<Attribute>,
 }
 
 impl SelectorIterMeta {
   /// Returns the name of the selector iterator
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
+  }
+
+  /// Returns the attributes of the selector iterator
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
   }
 }
 
