@@ -17,6 +17,7 @@ use super::Object;
 pub struct IndexerVariant {
   tag: NonZeroU32,
   variant: syn::Variant,
+  field_name: Ident,
 }
 
 impl IndexerVariant {
@@ -30,6 +31,11 @@ impl IndexerVariant {
 
   pub const fn name(&self) -> &Ident {
     &self.variant.ident
+  }
+
+  /// Returns the corresponding field name to the variant.
+  pub const fn field_name(&self) -> &Ident {
+    &self.field_name
   }
 }
 
@@ -82,6 +88,7 @@ impl Indexer {
           .map(|variant| IndexerVariant {
             tag: f.meta().tag(),
             variant,
+            field_name: f.name().clone(),
           })
       })
       .collect::<Result<Vec<_>, _>>()?;

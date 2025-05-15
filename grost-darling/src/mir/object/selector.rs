@@ -1,7 +1,7 @@
-use quote::{ToTokens, quote};
+use quote::{format_ident, quote};
 use syn::{GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_quote};
 
-use super::super::wire_format_reflection_ty;
+use super::{super::wire_format_reflection_ty, Object};
 
 use crate::{
   grost_flavor_generic, grost_lifetime,
@@ -78,10 +78,8 @@ impl SelectorIter {
   pub const fn attrs(&self) -> &[syn::Attribute] {
     self.attrs.as_slice()
   }
-}
 
-impl ToTokens for SelectorIter {
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+  pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let selector_name = &self.selector;
     let iter_name = self.name();
     let vis = self.vis();
@@ -100,7 +98,7 @@ impl ToTokens for SelectorIter {
       None
     };
 
-    tokens.extend(quote! {
+    quote! {
       #(#attrs)*
       #doc
       #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -111,7 +109,7 @@ impl ToTokens for SelectorIter {
         num: ::core::primitive::usize,
         yielded: ::core::primitive::usize,
       }
-    });
+    }
   }
 }
 
@@ -308,10 +306,8 @@ impl Selector {
       generics,
     })
   }
-}
 
-impl ToTokens for Selector {
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+  pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let name = self.name();
     let vis = self.vis();
 
@@ -329,16 +325,508 @@ impl ToTokens for Selector {
 
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
-    tokens.extend(quote! {
+    quote! {
       #(#attrs)*
       #doc
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      #[derive(::core::fmt::Debug)]
       #vis struct #name #generics #where_clause
       {
         #(#fields),*
       }
+    }
+  }
+}
+
+impl<M> Object<M>
+where
+  M: crate::meta::object::Object,
+{
+  pub(super) fn derive_selector_iter(&self) -> proc_macro2::TokenStream {
+    let selector_iter = self.selector_iter();
+    let iter_name = selector_iter.name();
+    let selector = self.selector();
+    let name = selector.name();
+    let indexer_name = self.indexer().name();
+    let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #iter_name #tg #where_clauses
+      {
+        #[inline]
+        const fn new(selector: &'__grost_lifetime__ #name<__GROST_FLAVOR__>, num: ::core::primitive::usize) -> Self {
+          Self {
+            selector,
+            index: ::core::option::Option::Some(#indexer_name::FIRST),
+            num,
+            yielded: 0,
+          }
+        }
+
+        /// Returns the exact remaining length of the iterator.
+        #[inline]
+        pub const fn remaining(&self) -> ::core::primitive::usize {
+          self.num - self.yielded
+        }
+
+        /// Returns `true` if the iterator is empty.
+        #[inline]
+        pub const fn is_empty(&self) -> ::core::primitive::bool {
+          self.remaining() == 0
+        }
+      }
+    }
+  }
+
+  pub(super) fn derive_selector(&self) -> proc_macro2::TokenStream {
+    let selector = self.selector();
+    let name = selector.name();
+    let path_to_grost = &self.path_to_grost;
+    let fns = self.selector_field_fns(&self.path_to_grost);
+    let fg = grost_flavor_generic();
+    let (ig, tg, selector_where_clauses) = selector.generics().split_for_impl();
+
+    let empty = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::NONE
+      }
     });
+
+    let all = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::ALL
+      }
+    });
+
+    let default = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT
+      }
+    });
+
+    let is_empty = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        <#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+      }
+    });
+
+    let is_all = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        <#ty as #path_to_grost::__private::Selector<#fg>>::is_all(&self.#field_name)
+      }
+    });
+
+    let num_selected = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      let fn_name = format_ident!("is_{}_selected", field_name);
+      quote! {
+        if self.#fn_name() {
+          num += 1;
+        }
+      }
+    });
+
+    let num_unselected = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      let fn_name = format_ident!("is_{}_unselected", field_name);
+      quote! {
+        if self.#fn_name() {
+          num += 1;
+        }
+      }
+    });
+
+    let merge = self.selector_merge_impl(&self.path_to_grost);
+    let flip = self.selector_flip_impl(&self.path_to_grost);
+
+    let eq = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name == other.#field_name
+      }
+    });
+
+    let clone = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        #field_name: ::core::clone::Clone::clone(&self.#field_name)
+      }
+    });
+
+    let hash = self.selector.fields().iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name.hash(state);
+      }
+    });
+
+    let copy_constraints = self.selector.fields().iter().map(|f| {
+      let ty = f.ty();
+      quote! { #ty: ::core::marker::Copy }
+    });
+
+    let num_fields = self.fields.len();
+    let name_str = name.to_string();
+    let iter_name = self.selector_iter().name();
+    let indexer_name = self.indexer.name();
+
+    let is_selected = self.indexer.variants().iter().map(|f| {
+      let field_name = f.field_name();
+      let field_variant = f.name();
+      let fn_name = format_ident!("is_{}_selected", field_name);
+      quote! {
+        #indexer_name::#field_variant => self.#fn_name()
+      }
+    });
+
+    let is_unselected = self.indexer.variants().iter().map(|f| {
+      let field_name = f.field_name();
+      let field_variant = f.name();
+      let fn_name = format_ident!("is_{}_unselected", field_name);
+      quote! {
+        #indexer_name::#field_variant => self.#fn_name()
+      }
+    });
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::fmt::Debug for #name #tg #selector_where_clauses
+      {
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+          ::core::write!(f, #name_str)
+          // self.debug_helper(f)
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::cmp::PartialEq for #name #tg #selector_where_clauses
+      {
+        fn eq(&self, other: &Self) -> ::core::primitive::bool {
+          #(#eq) && *
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::cmp::Eq for #name #tg #selector_where_clauses
+      {}
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::hash::Hash for #name #tg #selector_where_clauses
+      {
+        fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+          #(#hash)*
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::clone::Clone for #name #tg #selector_where_clauses
+      {
+        fn clone(&self) -> Self {
+          Self {
+            #(#clone),*
+          }
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig ::core::marker::Copy for #name
+        #tg
+        #selector_where_clauses,
+        #(#copy_constraints),*
+      {}
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #ig #path_to_grost::__private::Selector<#fg> for #name #tg #selector_where_clauses
+      {
+        const ALL: Self = Self::all();
+        const DEFAULT: Self = Self::new();
+        const NONE: Self = Self::empty();
+
+        fn selected(&self) -> ::core::primitive::usize {
+          Self::selected(self)
+        }
+
+        fn unselected(&self) -> ::core::primitive::usize {
+          Self::unselected(self)
+        }
+
+        fn flip(&mut self) -> &mut Self {
+          #(#flip)*
+
+          self
+        }
+
+        fn merge(&mut self, other: Self) -> &mut Self {
+          #(#merge)*
+
+          self
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::default::Default for #name #tg #selector_where_clauses
+      {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #selector_where_clauses
+      {
+        /// The number of options in this selection type.
+        pub const OPTIONS: ::core::primitive::usize = #num_fields;
+
+        /// Returns a selector with the default values.
+        #[inline]
+        pub const fn new() -> Self {
+          Self {
+            #(#default),*
+          }
+        }
+
+        /// Returns a selector which selects nothing.
+        #[inline]
+        pub const fn empty() -> Self {
+          Self {
+            #(#empty),*
+          }
+        }
+
+        /// Returns a selector which selects all.
+        #[inline]
+        pub const fn all() -> Self {
+          Self {
+            #(#all),*
+          }
+        }
+
+        /// Returns `true` if the selector selects nothing.
+        #[inline]
+        pub fn is_empty(&self) -> ::core::primitive::bool {
+          #(#is_empty) && *
+        }
+
+        /// Returns `true` if the selector selects all.
+        #[inline]
+        pub fn is_all(&self) -> ::core::primitive::bool {
+          #(#is_all) && *
+        }
+
+        /// Returns the number of selected fields.
+        #[inline]
+        pub fn selected(&self) -> ::core::primitive::usize {
+          let mut num = 0;
+          #(#num_selected)*
+          num
+        }
+
+        /// Returns the number of unselected fields.
+        #[inline]
+        pub fn unselected(&self) -> ::core::primitive::usize {
+          let mut num = 0;
+          #(#num_unselected)*
+          num
+        }
+
+        /// Returns an iterator over the selected fields.
+        #[inline]
+        pub fn iter_selected(&self) -> #iter_name<__GROST_FLAVOR__, true>
+        {
+          #iter_name::new(self, self.selected())
+        }
+
+        /// Returns an iterator over the unselected fields.
+        #[inline]
+        pub fn iter_unselected(&self) -> #iter_name<__GROST_FLAVOR__, false>
+        {
+          #iter_name::new(self, self.unselected())
+        }
+
+        /// Returns `true` if such field is selected.
+        #[inline]
+        pub fn is_selected(&self, idx: #indexer_name) -> ::core::primitive::bool {
+          match idx {
+            #(#is_selected),*
+          }
+        }
+
+        /// Returns `true` if such field is unselected.
+        #[inline]
+        pub fn is_unselected(&self, idx: #indexer_name) -> ::core::primitive::bool {
+          match idx {
+            #(#is_unselected),*
+          }
+        }
+
+        #(#fns)*
+      }
+    }
+  }
+
+  fn selector_merge_impl(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> impl Iterator<Item = proc_macro2::TokenStream> {
+    let fg = grost_flavor_generic();
+    self.selector.fields().iter().map(move |f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      quote! {
+        <#ty as #path_to_grost::__private::Selector<#fg>>::merge(&mut self.#field_name, other.#field_name);
+      }
+    })
+  }
+
+  fn selector_flip_impl(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> impl Iterator<Item = proc_macro2::TokenStream> {
+    let fg = grost_flavor_generic();
+    self.selector.fields().iter().map(move |f| {
+      let ty = f.ty();
+      let field_name = f.name();
+
+      quote! {
+        <#ty as #path_to_grost::__private::Selector<#fg>>::flip(&mut self.#field_name);
+      }
+    })
+  }
+
+  fn selector_field_fns(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> impl Iterator<Item = proc_macro2::TokenStream> {
+    self.selector.fields().iter().map(move |f| {
+      let ty = f.ty();
+      let field_name = f.name();
+      let fg = grost_flavor_generic();
+      let select_fn_name = format_ident!("select_{}", field_name);
+      let select_fn_doc = format!(" Select the `{}.{}` field", self.name, field_name);
+      let unselect_fn_name = format_ident!("unselect_{}", field_name);
+      let unselect_fn_doc = format!(" Unselect the `{}.{}` field", self.name, field_name);
+      let update_fn_name = format_ident!("update_{}", field_name);
+      let update_fn_doc = format!(" Update the `{}.{}` field", self.name, field_name);
+      let with_fn_name = format_ident!("with_{}", field_name);
+      let with_fn_doc = format!(" Set the `{}.{}` field", self.name, field_name);
+      let without_fn_name = format_ident!("without_{}", field_name);
+      let without_fn_doc = format!(" Unset the `{}.{}` field", self.name, field_name);
+      let maybe_fn_name = format_ident!("maybe_{}", field_name);
+      let maybe_fn_doc = format!(" Set or unset the `{}.{}` field", self.name, field_name);
+      let is_field_selected_fn_name = format_ident!("is_{}_selected", field_name);
+      let is_field_selected_fn_doc = format!(
+        " Returns `true` if the `{}.{}` field is selected",
+        self.name, field_name
+      );
+      let is_field_unselected_fn_name = format_ident!("is_{}_unselected", field_name);
+      let is_field_unselected_fn_doc = format!(
+        " Returns `true` if the `{}.{}` field is unselected",
+        self.name, field_name
+      );
+
+      let ref_fn_name = format_ident!("{}_ref", field_name);
+      let ref_fn_doc = format!(
+        " Get a reference to the selector of `{}.{}` field",
+        self.name, field_name
+      );
+      let ref_mut_fn_name = format_ident!("{}_mut", field_name);
+      let ref_mut_fn_doc = format!(
+        " Get a mutable reference to the selector of `{}.{}` field",
+        self.name, field_name
+      );
+      quote! {
+        #[doc = #select_fn_doc]
+        #[inline]
+        pub fn #select_fn_name(&mut self) -> &mut Self {
+          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT;
+          self
+        }
+
+        #[doc = #unselect_fn_doc]
+        #[inline]
+        pub fn #unselect_fn_name(&mut self) -> &mut Self {
+          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::NONE;
+          self
+        }
+
+        #[doc = #update_fn_doc]
+        #[inline]
+        pub fn #update_fn_name(&mut self, value: #ty) -> &mut Self {
+          self.#field_name = value;
+          self
+        }
+
+        #[doc = #maybe_fn_doc]
+        #[inline]
+        pub fn #maybe_fn_name(mut self, val: #ty) -> Self {
+          self.#field_name = val;
+          self
+        }
+
+        #[doc = #ref_fn_doc]
+        #[inline]
+        pub const fn #ref_fn_name(&self) -> &#ty {
+          &self.#field_name
+        }
+
+        #[doc = #ref_mut_fn_doc]
+        #[inline]
+        pub const fn #ref_mut_fn_name(&mut self) -> &mut #ty {
+          &mut self.#field_name
+        }
+
+        #[doc = #with_fn_doc]
+        #[inline]
+        pub fn #with_fn_name(mut self) -> Self {
+          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT;
+          self
+        }
+
+        #[doc = #without_fn_doc]
+        #[inline]
+        pub fn #without_fn_name(mut self) -> Self {
+          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::NONE;
+          self
+        }
+
+        #[doc = #is_field_selected_fn_doc]
+        #[inline]
+        pub fn #is_field_selected_fn_name(&self) -> ::core::primitive::bool {
+          !<#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+        }
+
+        #[doc = #is_field_unselected_fn_doc]
+        #[inline]
+        pub fn #is_field_unselected_fn_name(&self) -> ::core::primitive::bool {
+          <#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+        }
+      }
+    })
   }
 }
 

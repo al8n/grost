@@ -263,11 +263,17 @@ where
   fn derive(&self) -> proc_macro2::TokenStream {
     let reflection_impl = self.derive_reflection();
     let indexer_impl = self.derive_indexer();
+    let selector_iter_impl = self.derive_selector_iter();
+    let selector_impl = self.derive_selector();
 
     quote! {
       #reflection_impl
 
       #indexer_impl
+
+      #selector_impl
+
+      #selector_iter_impl
     }
   }
 }
@@ -279,8 +285,8 @@ where
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let partial_object = self.partial();
     let partial_ref_object = self.partial_ref();
-    let selector = self.selector();
-    let selector_iter = self.selector_iter();
+    let selector = self.selector().to_token_stream();
+    let selector_iter = self.selector_iter().to_token_stream();
     let indexer = self.indexer().to_token_stream();
     let reflection = self.reflection().to_token_stream();
 
