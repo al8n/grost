@@ -1,0 +1,357 @@
+use quote::{quote, ToTokens};
+use syn::Ident;
+
+use crate::meta::object::ObjectExt;
+
+pub struct FieldReflection {
+  path_to_grost: syn::Path,
+  parent_name: Ident,
+  name: Ident,
+  vis: syn::Visibility,
+}
+
+impl FieldReflection {
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  pub const fn vis(&self) -> &syn::Visibility {
+    &self.vis
+  }
+
+  pub(super) fn from_input<O>(input: &O) -> darling::Result<Self>
+  where
+    O: crate::meta::object::Object,
+  {
+    let name = input.field_reflection_name();
+    let parent_name = input.name().clone();
+    let vis = input.vis().clone();
+
+    Ok(Self {
+      path_to_grost: input.path().clone(),
+      parent_name,
+      name,
+      vis,
+    })
+  }
+}
+
+impl ToTokens for FieldReflection {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let field_reflection_name = &self.name;
+    let doc = format!(" The reflection of the [`{}`].", self.parent_name);
+    let vis = &self.vis;
+    let path_to_grost = &self.path_to_grost;
+
+    tokens.extend(quote! {
+      #[doc = #doc]
+      #vis struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
+        _reflect: ::core::marker::PhantomData<R>,
+        _flavor: ::core::marker::PhantomData<F>,
+      }
+
+      const _: () = {
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::ops::Deref for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+          Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        {
+          type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
+
+          fn deref(&self) -> &Self::Target {
+            <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
+          }
+        }
+
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+          Self: ::core::ops::Deref,
+        {
+          fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+            self
+          }
+        }
+
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Debug for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+          Self: #path_to_grost::__private::reflection::Reflectable<F>,
+          <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+        {
+          fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+            ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+          }
+        }
+
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::fmt::Display for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+          Self: #path_to_grost::__private::reflection::Reflectable<F>,
+          <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+        {
+          fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+            ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+          }
+        }
+
+        #[automatically_derived]
+        #[allow(clippy::type_complexity, non_camel_case_types)]
+        impl<R, F, const TAG: ::core::primitive::u32> #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+        {
+          #[inline]
+          const fn new_in() -> Self {
+            Self {
+              _reflect: ::core::marker::PhantomData,
+              _flavor: ::core::marker::PhantomData,
+            }
+          }
+
+          /// Returns the reflection of the field.
+          #[inline]
+          const fn new() -> Self {
+            Self::new_in()
+          }
+
+          /// Returns the relection to the wire format of the field.
+          #[inline]
+          pub const fn wire_format(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::WireFormatReflection,
+            F,
+            TAG,
+          >
+          {
+            #field_reflection_name::new_in()
+          }
+        }
+
+        #[automatically_derived]
+        #[allow(clippy::type_complexity)]
+        impl<F, const TAG: ::core::primitive::u32> #field_reflection_name<#path_to_grost::__private::reflection::FieldReflection<F>, F, TAG>
+        where
+          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        {
+          /// Returns the relection to a tag of the field.
+          #[inline]
+          pub const fn tag(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::TagReflection<
+              F::Tag,
+            >,
+            F,
+            TAG,
+          >
+          {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the encoded tag of the field.
+          #[inline]
+          pub const fn encoded_tag(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::EncodedTagReflection<
+              F::Identifier,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the encoded tag of the field.
+          #[inline]
+          pub const fn encoded_tag_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::Len<
+              #path_to_grost::__private::reflection::EncodedTagReflection<
+                F::Identifier,
+              >,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the wire type of the field.
+          #[inline]
+          pub const fn wire_type(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::WireTypeReflection<
+              F::WireType,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the identifier of the field.
+          #[inline]
+          pub const fn identifier(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::IdentifierReflection<
+              F::Identifier,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the encoded identifier of the field.
+          #[inline]
+          pub const fn encoded_identifier(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+              F::Identifier,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the relection to the encoded identifier of the field.
+          #[inline]
+          pub const fn encoded_identifier_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::Len<
+              #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+                F::Identifier,
+              >,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the encode fn.
+          #[inline]
+          pub const fn encode(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::encode::EncodeField,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to fn which will give the length of the encoded data.
+          #[inline]
+          pub const fn encoded_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField,>,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the reference encode fn.
+          #[inline]
+          pub const fn encode_ref(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::encode::EncodeRefField,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+          #[inline]
+          pub const fn encoded_ref_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::Len<
+                #path_to_grost::__private::reflection::encode::EncodeRefField,
+              >,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the partial encode fn.
+          #[inline]
+          pub const fn partial_encode(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::encode::PartialEncodeField,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+          #[inline]
+          pub const fn partial_encoded_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::Len<
+                #path_to_grost::__private::reflection::encode::PartialEncodeField,
+              >,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the partial reference encode fn.
+          #[inline]
+          pub const fn partial_encode_ref(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+
+          /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+          #[inline]
+          pub const fn partial_encoded_ref_len(&self) -> #field_reflection_name<
+            #path_to_grost::__private::reflection::encode::EncodeReflection<
+              #path_to_grost::__private::reflection::Len<
+                #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
+              >,
+            >,
+            F,
+            TAG,
+          > {
+            #field_reflection_name::new_in()
+          }
+        }
+
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::clone::Clone for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+        {
+          fn clone(&self) -> Self {
+            *self
+          }
+        }
+
+        #[automatically_derived]
+        impl<R, F, const TAG: ::core::primitive::u32> ::core::marker::Copy for #field_reflection_name<R, F, TAG>
+        where
+          R: ?::core::marker::Sized,
+          F: ?::core::marker::Sized,
+        {}
+      };
+    });
+  }
+}

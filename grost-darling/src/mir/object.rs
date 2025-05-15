@@ -7,6 +7,8 @@ pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
 pub use partial_ref::{PartialRefField, PartialRefObject};
 pub use selector::{Selector, SelectorField, SelectorIter};
+pub use field_reflection::FieldReflection;
+pub use reflection::Reflection;
 
 use crate::meta::{
   SchemaMeta,
@@ -17,6 +19,8 @@ mod indexer;
 mod partial;
 mod partial_ref;
 mod selector;
+mod reflection;
+mod field_reflection;
 
 pub struct Field<M> {
   name: Ident,
@@ -129,11 +133,11 @@ where
   schema: SchemaMeta,
   vis: Visibility,
   generics: Generics,
-  field_reflection: Ident,
+  field_reflection: FieldReflection,
   fields: Vec<Field<M::Field>>,
   partial: PartialObject,
   partial_ref: PartialRefObject,
-  reflection: Ident,
+  reflection: Reflection,
   selector: Selector,
   selector_iter: SelectorIter,
   indexer: Indexer,
@@ -193,12 +197,12 @@ where
   }
 
   #[inline]
-  pub const fn field_reflection_name(&self) -> &Ident {
+  pub const fn field_reflection(&self) -> &FieldReflection {
     &self.field_reflection
   }
 
   #[inline]
-  pub const fn reflection_name(&self) -> &Ident {
+  pub const fn reflection(&self) -> &Reflection {
     &self.reflection
   }
 
@@ -240,6 +244,8 @@ where
       input.meta().selector_iter(),
     )?;
     let indexer = Indexer::from_input(&input)?;
+    let reflection = Reflection::from_input(&input)?;
+    let field_reflection = FieldReflection::from_input(&input)?;
 
     Ok(Self {
       name: input.name().clone(),
@@ -255,35 +261,13 @@ where
         .collect::<Result<Vec<_>, darling::Error>>()?,
       partial: partial_object,
       partial_ref: partial_ref_object,
-      field_reflection: input.field_reflection_name(),
-      reflection: input.reflection_name(),
+      field_reflection,
+      reflection,
       selector_iter,
       selector,
       meta: input,
       indexer,
     })
-  }
-
-  /// Generates the reflection types for the object.
-  fn derive_reflection_definations(&self) -> proc_macro2::TokenStream {
-    let reflection_name = &self.reflection_name();
-    let doc = format!(" The reflection of the [`{}`].", self.name());
-    let field_reflection_name = &self.field_reflection_name();
-    let field_reflection_doc =
-      format!(" The field reflection of the [`{}`]'s fields.", self.name());
-    quote! {
-      #[doc = #field_reflection_doc]
-      pub struct #field_reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized, const TAG: ::core::primitive::u32> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-
-      #[doc = #doc]
-      pub struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
-    }
   }
 }
 
@@ -294,13 +278,16 @@ where
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let partial_object = self.partial();
     let partial_ref_object = self.partial_ref();
-    let reflection_definition = self.derive_reflection_definations();
     let selector = self.selector();
     let selector_iter = self.selector_iter();
     let indexer = self.indexer();
+    let reflection = self.reflection();
+    let field_reflection = self.field_reflection();
 
     tokens.extend(quote! {
-      #reflection_definition
+      #field_reflection
+
+      #reflection
 
       #partial_object
 
