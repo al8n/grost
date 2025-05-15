@@ -1,5 +1,3 @@
-// pub use sealed::ObjectDeriveInput;
-use darling::FromDeriveInput;
 use syn::DeriveInput;
 
 #[allow(unused)]
@@ -20,16 +18,11 @@ pub struct Object {
 }
 
 impl Object {
-  pub fn from_derive_input(input: DeriveInput) -> darling::Result<Self> {
-    let input = sealed::ObjectDeriveInput::from_derive_input(&input)?;
+  pub fn from_derive_input(input: &DeriveInput) -> darling::Result<Self> {
+    let object =
+      grost_darling::mir::object::Object::<sealed::ObjectDeriveInput>::from_derive_input(input)?;
 
-    let object = grost_darling::mir::object::Object::from_meta(
-      input,
-    )?;
-
-    Ok(Self {
-      object,
-    })
+    Ok(Self { object })
   }
 
   pub fn derive_defination(&self) -> proc_macro2::TokenStream {

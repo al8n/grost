@@ -12,9 +12,6 @@ struct Field {
   ident: Option<Ident>,
   vis: Visibility,
   ty: syn::Type,
-
-  #[darling(default, flatten)]
-  attributes: Attributes,
 }
 
 #[derive(Debug, FromDeriveInput)]
@@ -36,7 +33,8 @@ pub struct ObjectFieldDeriveInput {
 
 impl ToTokens for ObjectFieldDeriveInput {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let name = self
+    let name = &self.ident;
+    let derive_input_name = self
       .rename
       .clone()
       .unwrap_or_else(|| format_ident!("{}DeriveInput", self.ident));
@@ -47,44 +45,74 @@ impl ToTokens for ObjectFieldDeriveInput {
     let attributes = self.attributes.iter();
     let meta = &self.meta;
 
-    let fields = match self.data.as_ref() {
+    let custom_meta_field = match self.data.as_ref() {
       Data::Enum(_) => unreachable!("ObjectFieldDeriveInput should not be used for enums"),
-      Data::Struct(fields) => fields
-        .fields
-        .as_slice()
-        .iter()
-        .map(|f| {
-          let name = f
-            .ident
-            .as_ref()
-            .expect("the field of the named struct must have a name");
-          let ty = &f.ty;
-          let vis = &f.vis;
-          let attrs = &f.attributes.0;
-          quote! {
-            #(#attrs)*
-            #vis #name: #ty,
+      Data::Struct(fields) => {
+        if fields.is_unit() || fields.is_empty() {
+          None
+        } else {
+          Some(quote! {
+            #[darling(flatten)]
+            #[doc(hidden)]
+            __custom_meta__: #name,
+          })
+        }
+      }
+    };
+
+    let fields = self.data.as_ref().take_struct().unwrap();
+    let accessors = if fields.is_unit() || fields.is_empty() {
+      quote! {}
+    } else {
+      let iter = fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        let field_ty = &f.ty;
+        let field_vis = &f.vis;
+        let fn_name = format_ident!("{}_ref", field_name);
+        let fn_mut_name = format_ident!("{}_mut", field_name);
+        let doc = format!(" Returns a reference to the field `{}`.", field_name);
+        let doc_mut = format!(
+          " Returns a mutable reference to the field `{}`.",
+          field_name
+        );
+        quote! {
+          #[doc = #doc]
+          #field_vis fn #fn_name(&self) -> &#field_ty {
+            &self.__custom_meta__.#field_name
           }
-        })
-        .collect::<Vec<_>>(),
+
+          #[doc = #doc_mut]
+          #field_vis fn #fn_mut_name(&mut self) -> &mut #field_ty {
+            &mut self.__custom_meta__.#field_name
+          }
+        }
+      });
+      quote! {
+        #(#iter)*
+      }
     };
 
     tokens.extend(quote! {
       #(#meta)*
       #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromField)]
       #[darling(attributes(#(#attributes),*), forward_attrs)]
-      #vis struct #name #tg #w {
+      #vis struct #derive_input_name #tg #w {
         ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
         vis: #path_to_crate::__private::syn::Visibility,
         ty: #path_to_crate::__private::syn::Type,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
-        #[darling(flatten)]
-        meta: #path_to_crate::__private::meta::object::FieldMeta,
 
-        #(#fields)*
+        #custom_meta_field
+
+        #[darling(flatten)]
+        __meta__: #path_to_crate::__private::meta::object::FieldMeta,
       }
 
-      impl #ig #path_to_crate::__private::meta::object::Field for #name #tg #w {
+      impl #ig #derive_input_name #tg #w {
+        #accessors
+      }
+
+      impl #ig #path_to_crate::__private::meta::object::Field for #derive_input_name #tg #w {
         fn name(&self) -> &#path_to_crate::__private::syn::Ident {
           self.ident.as_ref().expect("the field of the named struct must have a name")
         }
@@ -102,7 +130,7 @@ impl ToTokens for ObjectFieldDeriveInput {
         }
 
         fn meta(&self) -> &#path_to_crate::__private::meta::object::FieldMeta {
-          &self.meta
+          &self.__meta__
         }
       }
     });
@@ -131,7 +159,7 @@ pub struct ObjectDeriveInput {
 
 impl ToTokens for ObjectDeriveInput {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let name = self
+    let derive_input_name = self
       .rename
       .clone()
       .unwrap_or_else(|| format_ident!("{}DeriveInput", self.ident));
@@ -142,51 +170,83 @@ impl ToTokens for ObjectDeriveInput {
     let field = &self.field;
     let attributes = self.attributes.iter();
     let meta = &self.meta;
-    let expect_msg = format!("{} only supports named structs", name);
+    let expect_msg = format!("{} only supports named structs", derive_input_name);
     let path = &self.path.to_token_stream().to_string();
+    let name = &self.ident;
 
-    let fields = match self.data.as_ref() {
+    let meta_field = match self.data.as_ref() {
       Data::Enum(_) => unreachable!("ObjectDeriveInput should not be used for enums"),
-      Data::Struct(fields) => fields
-        .fields
-        .as_slice()
-        .iter()
-        .map(|f| {
-          let name = f
-            .ident
-            .as_ref()
-            .expect("the field of the named struct must have a name");
-          let ty = &f.ty;
-          let vis = &f.vis;
-          let attrs = &f.attributes.0;
-          quote! {
-            #(#attrs)*
-            #vis #name: #ty,
+      Data::Struct(fields) => {
+        if fields.is_unit() || fields.is_empty() {
+          None
+        } else {
+          Some(quote! {
+            #[darling(flatten)]
+            #[doc(hidden)]
+            __custom_meta__: #name,
+          })
+        }
+      }
+    };
+
+    let fields = self.data.as_ref().take_struct().unwrap();
+    let accessors = if fields.is_unit() || fields.is_empty() {
+      quote! {}
+    } else {
+      let iter = fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        let field_ty = &f.ty;
+        let field_vis = &f.vis;
+        let fn_name = format_ident!("{}_ref", field_name);
+        let fn_mut_name = format_ident!("{}_mut", field_name);
+        let doc = format!(" Returns a reference to the field `{}`.", field_name);
+        let doc_mut = format!(
+          " Returns a mutable reference to the field `{}`.",
+          field_name
+        );
+        quote! {
+          #[doc = #doc]
+          #field_vis fn #fn_name(&self) -> &#field_ty {
+            &self.__custom_meta__.#field_name
           }
-        })
-        .collect::<Vec<_>>(),
+
+          #[doc = #doc_mut]
+          #field_vis fn #fn_mut_name(&mut self) -> &mut #field_ty {
+            &mut self.__custom_meta__.#field_name
+          }
+        }
+      });
+      quote! {
+        #(#iter)*
+      }
     };
 
     tokens.extend(quote! {
       #(#meta)*
       #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromDeriveInput)]
-      #[darling(attributes(#(#attributes),*), forward_attrs)]
-      #vis struct #name #tg #w {
+      #[darling(attributes(#(#attributes),*), forward_attrs, supports(struct_named))]
+      #vis struct #derive_input_name #tg #w {
         ident: #path_to_crate::__private::syn::Ident,
         vis: #path_to_crate::__private::syn::Visibility,
         generics: #path_to_crate::__private::syn::Generics,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
         data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
 
-        #(#fields)*
+        #meta_field
 
         #[darling(rename = "crate", default = #path)]
+        #[doc(hidden)]
         __path_to_crate__: #path_to_crate::__private::syn::Path,
         #[darling(flatten)]
+        #[doc(hidden)]
         __meta__: #path_to_crate::__private::meta::object::ObjectMeta,
       }
 
-      impl #ig #path_to_crate::__private::meta::object::Object for #name #tg #w {
+      impl #ig #derive_input_name #tg #w {
+        #accessors
+      }
+
+      impl #ig #path_to_crate::__private::meta::object::Object for #derive_input_name #tg #w {
         type Field = #field;
 
         fn path(&self) -> &#path_to_crate::__private::syn::Path {

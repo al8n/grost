@@ -209,7 +209,14 @@ where
     &self.selector_iter
   }
 
-  pub fn from_meta(input: M) -> darling::Result<Self>
+  pub fn from_derive_input(input: &syn::DeriveInput) -> darling::Result<Self>
+  where
+    M: darling::FromDeriveInput + crate::meta::object::Object,
+  {
+    <M as darling::FromDeriveInput>::from_derive_input(input).and_then(Self::from_object)
+  }
+
+  pub fn from_object(input: M) -> darling::Result<Self>
   where
     M: crate::meta::object::Object,
   {

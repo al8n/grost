@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use darling::FromDeriveInput;
 use quote::{ToTokens, quote};
-use syn::{parse_macro_input, parse_quote, DeriveInput};
+use syn::{DeriveInput, parse_macro_input, parse_quote};
 
 mod object;
 
