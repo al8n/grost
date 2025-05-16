@@ -1,14 +1,15 @@
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state, flatten_state,
   flavors::network::{Fixed16, Network, Varint},
-  selectable, state,
+  selectable,
 };
 use half_2::f16;
 
 default_wire_format!(Network: f16 as Fixed16);
 
 selectable!(@scalar Network:f16);
-state!(@scalar &'a Network: f16 as Fixed16, f16 as Varint);
+encoded_state!(@scalar &'a Network: f16 as Fixed16, f16 as Varint);
+flatten_state!(f16);
 bridge!(
   Network: u16 {
     f16 as Fixed16 {

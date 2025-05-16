@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{Attribute, Generics, Ident, Type, Visibility, parse::Parser};
 
 use crate::meta::object::{ObjectExt as _, TypeSpecification};
@@ -14,6 +14,7 @@ pub struct PartialField {
   specification: Option<TypeSpecification>,
   copy: bool,
   object_type: Type,
+  output_type: Type,
 }
 
 impl PartialField {
@@ -71,7 +72,11 @@ impl PartialField {
     self.field.attrs.as_slice()
   }
 
-  pub(super) fn from_input<I>(input: &I, copy: bool) -> darling::Result<Self>
+  pub(super) fn from_input<I>(
+    input: &I,
+    path_to_grost: &syn::Path,
+    copy: bool,
+  ) -> darling::Result<Self>
   where
     I: crate::meta::object::Field,
   {
@@ -80,21 +85,19 @@ impl PartialField {
     let name = input.name();
     let vis = input.vis();
     let attrs = input.attrs();
-    let optional = input
-      .meta()
-      .type_specification()
-      .is_some_and(|f| f.is_optional());
-    let field = if optional {
-      syn::Field::parse_named.parse2(quote! {
-        #(#attrs)*
-        #vis #name: #ty
-      })?
-    } else {
-      syn::Field::parse_named.parse2(quote! {
-        #(#attrs)*
-        #vis #name: ::core::option::Option<#ty>
-      })?
-    };
+    // let optional = input
+    //   .meta()
+    //   .type_specification()
+    //   .is_some_and(|f| f.is_optional());
+    let output_type = syn::parse2(quote! {
+      <#ty as #path_to_grost::__private::convert::State<
+        #path_to_grost::__private::convert::Flatten
+      >>::Output
+    })?;
+    let field = syn::Field::parse_named.parse2(quote! {
+      #(#attrs)*
+      #vis #name: ::core::option::Option<#output_type>
+    })?;
 
     Ok(Self {
       field,
@@ -102,6 +105,7 @@ impl PartialField {
       specification: meta.type_specification().cloned(),
       copy: meta.copy() | copy,
       object_type: ty.clone(),
+      output_type,
     })
   }
 }
@@ -168,7 +172,7 @@ impl PartialObject {
     let fields = input
       .fields()
       .into_iter()
-      .map(|f| PartialField::from_input(f, meta.copy()))
+      .map(|f| PartialField::from_input(f, path_to_grost, meta.copy()))
       .collect::<Result<Vec<_>, darling::Error>>()?;
 
     Ok(Self {
@@ -217,85 +221,8 @@ where
 
     let fields_accessors = self.partial().fields().iter().map(|f| {
       let field_name = f.name();
-      let ref_fn = format_ident!("{}_ref", field_name);
-      let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
-      let ref_mut_fn = format_ident!("{}_mut", field_name);
-      let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
-      let set_fn = format_ident!("set_{}", field_name);
-      let set_fn_doc = format!(" Set the `{field_name}` to the given value");
-      let update_fn = format_ident!("update_{}", field_name);
-      let update_fn_doc =
-        format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
-      let clear_fn = format_ident!("clear_{}", field_name);
-      let clear_fn_doc = format!(" Clear the value of `{field_name}`");
-      let take_fn = format_ident!("take_{}", field_name);
-      let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
-      let with_fn = format_ident!("with_{}", field_name);
-      let without_fn = format_ident!("without_{}", field_name);
-      let maybe_fn = format_ident!("maybe_{}", field_name);
-      let constable = f.copy.then(|| quote! { const });
-
-      quote! {
-        // #[doc = #ref_fn_doc]
-        // #[inline]
-        // pub const fn #ref_fn(&self) -> #ref_ty {
-        //   self.#field_name.as_ref()
-        // }
-
-        // #[doc = #ref_mut_fn_doc]
-        // #[inline]
-        // pub const fn #ref_mut_fn(&mut self) -> #ref_mut_ty {
-        //   self.#field_name.as_mut()
-        // }
-
-        // #[doc = #take_fn_doc]
-        // #[inline]
-        // pub const fn #take_fn(&mut self) -> #owned_ty {
-        //   self.#field_name.take()
-        // }
-
-        // #[doc = #clear_fn_doc]
-        // #[inline]
-        // pub #constable fn #clear_fn(&mut self) -> &mut Self {
-        //   self.#field_name = ::core::option::Option::None;
-        //   self
-        // }
-
-        // #[doc = #set_fn_doc]
-        // #[inline]
-        // pub #constable fn #set_fn(&mut self, value: #) -> &mut Self {
-        //   self.#field_name = ::core::option::Option::Some(value);
-        //   self
-        // }
-
-        // #[doc = #update_fn_doc]
-        // #[inline]
-        // pub #constable fn #update_fn(&mut self, value: #owned_ty) -> &mut Self {
-        //   self.#field_name = value;
-        //   self
-        // }
-
-        // #[doc = #set_fn_doc]
-        // #[inline]
-        // pub #constable fn #with_fn(mut self, value: #ty) -> Self {
-        //   self.#field_name = ::core::option::Option::Some(value);
-        //   self
-        // }
-
-        // #[doc = #clear_fn_doc]
-        // #[inline]
-        // pub #constable fn #without_fn(mut self) -> Self {
-        //   self.#field_name = ::core::option::Option::None;
-        //   self
-        // }
-
-        // #[doc = #update_fn_doc]
-        // #[inline]
-        // pub #constable fn #maybe_fn(mut self, value: #owned_ty) -> Self {
-        //   self.#field_name = value;
-        //   self
-        // }
-      }
+      let output_type = &f.output_type;
+      super::accessors(field_name, output_type, f.copy())
     });
 
     let (ig, tg, where_clauses) = self.partial().generics().split_for_impl();

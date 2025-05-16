@@ -12,10 +12,10 @@ const _: () = {
   into_target!(Network: &str => Rc<str> {
     |val: &str| Ok(Rc::from(val))
   });
-  type_ref!( Network: &str => Rc<str> {
+  type_ref!(Network: &str => Rc<str> {
     |val: &str| Ok(Rc::from(val))
   });
-  type_owned!( Network: SmolStr => Rc<str> {
+  type_owned!(Network: SmolStr => Rc<str> {
     |val: &SmolStr| Ok(Rc::from(val.as_ref()))
   });
   str_message!(Rc<str> => SmolStr);

@@ -1,7 +1,7 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge,
+  decode_bridge, default_wire_format, encode_bridge, encoded_state, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target, selectable, type_ref,
 };
@@ -25,6 +25,11 @@ decode_bridge!(
       convert: |src: &str| SmolStr::new(src);
     },
   },
+);
+
+flatten_state!(SmolStr);
+encoded_state!(
+  &'a Network: SmolStr as LengthDelimited => &'a str
 );
 
 into_target!(Network: &str => SmolStr {

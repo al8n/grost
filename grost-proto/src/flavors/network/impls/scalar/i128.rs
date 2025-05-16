@@ -5,13 +5,15 @@ use crate::{
   decode::Decode,
   decode_owned_scalar, default_wire_format,
   encode::Encode,
+  encoded_state, flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
-  message, partial_encode_scalar, selectable, state, try_from_bridge,
+  message, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: i128 as Varint);
 selectable!(@scalar Network: i128, NonZeroI128);
-state!(@scalar &'a Network: i128 as Varint, i128 as Fixed128, NonZeroI128 as Varint, NonZeroI128 as Fixed128);
+encoded_state!(@scalar &'a Network: i128 as Varint, i128 as Fixed128, NonZeroI128 as Varint, NonZeroI128 as Fixed128);
+flatten_state!(i128, NonZeroI128);
 
 impl Encode<Network, Fixed128> for i128 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

@@ -3,10 +3,10 @@ use crate::{
   decode::Decode,
   default_wire_format,
   encode::Encode,
+  encoded_state,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
   partial_encode_scalar,
   selector::Selectable,
-  state,
 };
 
 default_wire_format!(Network: [u8] as LengthDelimited);
@@ -15,7 +15,7 @@ impl Selectable<Network, LengthDelimited> for [u8] {
   type Selector = bool;
 }
 
-state!(&'a Network: [u8] as LengthDelimited => &'a [u8]);
+encoded_state!(&'a Network: [u8] as LengthDelimited => &'a [u8]);
 
 impl Encode<Network, LengthDelimited> for [u8] {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

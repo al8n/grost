@@ -23,7 +23,22 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::encoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
+    $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
+    $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
+    $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
+    $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
+    $($crate::decode_owned_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+  };
+  (@without_flatten_state $flavor:ty:$wf:ty {
+    $(
+      $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
+    ),+$(,)?
+  }) => {
+    $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
+    $($crate::encoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
@@ -164,24 +179,37 @@ macro_rules! selectable {
   };
 }
 
-/// A macro emits basic [`State<_>`](super::State) implementations for `Self`
+/// A macro emits basic [`State<Encoded<'_, Flavor, WireFormat>>`](super::State) implementations for `Self`
 #[macro_export]
-macro_rules! state {
+macro_rules! encoded_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       impl<$lifetime, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Encoded<$lifetime, $flavor, $wf>> for $ty {
         type Input = & $lifetime [u8];
         type Output = $target;
       }
+    )*
+  };
+  (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
+    $crate::encoded_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+  };
+}
 
-      impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Flatten<$flavor, $wf, S>> for $ty {
+/// A macro emits basic [`State<Flatten<Base>>`](super::State) implementations for `Self`
+#[macro_export]
+macro_rules! flatten_state {
+  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $(
+      impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+        $crate::__private::convert::Flatten<S>
+      > for $ty {
         type Input = $ty;
         type Output = $ty;
       }
     )*
   };
-  (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+  (@scalar $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $crate::flatten_state!($($ty $([ $(const $g: usize),* ])? => $ty),+);
   };
 }
 

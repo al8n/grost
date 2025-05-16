@@ -1,13 +1,15 @@
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state, flatten_state,
   flavors::network::{DecodeError, Fixed8, Network, Varint},
-  selectable, state, try_from_bridge,
+  selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
 
 default_wire_format!(Network: i8 as Fixed8);
 selectable!(@scalar Network:i8, NonZeroI8);
-state!(@scalar &'a Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
+encoded_state!(@scalar &'a Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
+flatten_state!(i8, NonZeroI8);
+
 bridge!(
   Network: u8 {
     i8 as Fixed8 {

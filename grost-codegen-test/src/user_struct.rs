@@ -3540,17 +3540,17 @@ const _: () = {
     }
 };
 const _: () = {
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : User as
         ::grost::__private::flavors::network::LengthDelimited => PartialUserRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network >
     );
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : PartialUser as
         ::grost::__private::flavors::network::LengthDelimited => PartialUserRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network >
     );
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : PartialUserRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network > as
         ::grost::__private::flavors::network::LengthDelimited => PartialUserRef <
@@ -11537,17 +11537,17 @@ const _: () = {
     }
 };
 const _: () = {
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : Comment as
         ::grost::__private::flavors::network::LengthDelimited => PartialCommentRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network >
     );
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : PartialComment as
         ::grost::__private::flavors::network::LengthDelimited => PartialCommentRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network >
     );
-    ::grost::__private::state!(
+    ::grost::__private::encoded_state(
         & '__grost_lifetime__::grost::__private::flavors::Network : PartialCommentRef <
         '__grost_lifetime__, ::grost::__private::flavors::Network > as
         ::grost::__private::flavors::network::LengthDelimited => PartialCommentRef <

@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  Encoded, IntoTarget, Message, PartialMessage, State, TypeRef,
+  Encoded, Flatten, IntoTarget, Message, PartialMessage, State, TypeRef,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   flavors::{
@@ -12,6 +12,15 @@ use crate::{
 };
 
 use super::larger_than_array_capacity;
+
+impl<A, S> State<Flatten<S>> for ArrayVec<A>
+where
+  A: Array,
+  S: ?Sized,
+{
+  type Input = Self;
+  type Output = Self;
+}
 
 impl<A> Encode<Network, LengthDelimited> for ArrayVec<A>
 where

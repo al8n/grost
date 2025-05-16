@@ -1,13 +1,14 @@
 use uuid_1::Uuid;
 
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state, flatten_state,
   flavors::network::{Fixed128, Network, Varint},
-  selectable, state,
+  selectable,
 };
 
 selectable!(@scalar Network:Uuid);
-state!(@scalar &'a Network: Uuid as Fixed128, Uuid as Varint);
+encoded_state!(@scalar &'a Network: Uuid as Fixed128, Uuid as Varint);
+flatten_state!(Uuid);
 
 bridge!(
   Network: u128 {

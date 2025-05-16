@@ -74,7 +74,7 @@ impl Network {
     partial_ref_struct_name: &syn::Ident,
   ) -> proc_macro2::TokenStream {
     quote! {
-      #path_to_grost::__private::state!(
+      #path_to_grost::__private::encoded_state!(
         &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #struct_name
           as #path_to_grost::__private::flavors::network::LengthDelimited
           => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
@@ -138,7 +138,7 @@ impl FlavorGenerator for Network {
 
       #partial_struct_encoded_state
 
-      #path_to_grost::__private::state!(
+      #path_to_grost::__private::encoded_state!(
         &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
           as #path_to_grost::__private::flavors::network::LengthDelimited
           => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>

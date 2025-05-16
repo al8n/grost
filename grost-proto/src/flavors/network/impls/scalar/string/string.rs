@@ -1,12 +1,14 @@
 use crate::{
+  encoded_state, flatten_state,
   flavors::{Network, network::LengthDelimited},
-  selectable, state,
+  selectable,
 };
 
 selectable!(@scalar Network:String);
-state!(
+encoded_state!(
   &'a Network: String as LengthDelimited => &'a str
 );
+flatten_state!(String);
 
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {

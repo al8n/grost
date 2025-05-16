@@ -1,12 +1,11 @@
 use crate::{
-  default_wire_format,
+  default_wire_format, encoded_state,
   flavors::{Network, network::LengthDelimited},
-  state,
 };
 
 use std::vec::Vec;
 
-state!(
+encoded_state!(
   &'a Network: Vec<u8> as LengthDelimited => &'a [u8]
 );
 default_wire_format!(Network: Vec<u8> as LengthDelimited);

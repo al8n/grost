@@ -1,9 +1,9 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge,
+  decode_bridge, default_wire_format, encode_bridge, encoded_state, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, selectable, state, type_ref,
+  into_target, selectable, type_ref,
 };
 use bytes_1::Bytes;
 
@@ -33,9 +33,10 @@ into_target!(Network: &[u8] => Bytes {
 type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
-state!(
+encoded_state!(
   &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
+flatten_state!(Bytes);
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>

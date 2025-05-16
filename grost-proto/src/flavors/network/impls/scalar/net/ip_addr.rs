@@ -4,13 +4,14 @@ use crate::{
   decode::{Decode, DecodeOwned},
   default_wire_format,
   encode::Encode,
+  encoded_state, flatten_state,
   flavors::{
     Network,
     network::{
       Context, DecodeError, EncodeError, Fixed32, Fixed128, LengthDelimited, Unknown, Varint,
     },
   },
-  partial_encode_scalar, selectable, state,
+  partial_encode_scalar, selectable,
 };
 
 macro_rules! ip_addr {
@@ -152,7 +153,8 @@ ip_addr!(Ipv4Addr::Fixed32(u32));
 ip_addr!(Ipv6Addr::Fixed128(u128));
 selectable!(@scalar Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
-state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
+encoded_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
+flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;

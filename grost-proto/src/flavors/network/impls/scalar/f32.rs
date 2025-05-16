@@ -1,12 +1,13 @@
 use crate::{
-  bridge, default_wire_format,
+  bridge, default_wire_format, encoded_state, flatten_state,
   flavors::network::{Fixed32, Network, Varint},
-  selectable, state,
+  selectable,
 };
 
 default_wire_format!(Network: f32 as Fixed32);
 selectable!(@scalar Network:f32);
-state!(@scalar &'a Network: f32 as Fixed32, f32 as Varint);
+encoded_state!(@scalar &'a Network: f32 as Fixed32, f32 as Varint);
+flatten_state!(f32);
 bridge!(
   Network: u32 {
     f32 as Fixed32 {

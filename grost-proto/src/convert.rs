@@ -58,58 +58,46 @@ impl<T: ?Sized> State<Base> for T {
 }
 
 /// A state which shows that the type is in its flatten state.
-pub struct Flatten<F: ?Sized, W: ?Sized, S: ?Sized = Optional> {
-  _wf: core::marker::PhantomData<W>,
-  _flavor: core::marker::PhantomData<F>,
+pub struct Flatten<S: ?Sized = Optional> {
   _state: core::marker::PhantomData<S>,
 }
 
-impl<F, W, S, T> State<Flatten<F, W, S>> for &T
+impl<S, T> State<Flatten<S>> for &T
 where
-  F: ?Sized,
-  W: ?Sized,
   S: ?Sized,
-  T: State<Flatten<F, W, S>>,
+  T: State<Flatten<S>>,
 {
   type Input = T::Input;
   type Output = T::Output;
 }
 
-impl<F, W, T> State<Flatten<F, W, Base>> for [T]
+impl<T> State<Flatten<Base>> for [T]
 where
-  F: ?Sized,
-  W: ?Sized,
-  T: State<Flatten<F, W, Base>>,
+  T: State<Flatten<Base>>,
 {
   type Input = T::Input;
   type Output = T::Output;
 }
 
-impl<F, W, T> State<Flatten<F, W>> for [T]
+impl<T> State<Flatten> for [T]
 where
-  F: ?Sized,
-  W: ?Sized,
-  T: State<Flatten<F, W>>,
+  T: State<Flatten>,
 {
   type Input = Self;
   type Output = Self;
 }
 
-impl<F, W, T, const N: usize> State<Flatten<F, W, Base>> for [T; N]
+impl<T, const N: usize> State<Flatten<Base>> for [T; N]
 where
-  F: ?Sized,
-  W: ?Sized,
-  T: State<Flatten<F, W, Base>>,
+  T: State<Flatten<Base>>,
 {
   type Input = T::Input;
   type Output = T::Output;
 }
 
-impl<F, W, T, const N: usize> State<Flatten<F, W>> for [T; N]
+impl<T, const N: usize> State<Flatten> for [T; N]
 where
-  F: ?Sized,
-  W: ?Sized,
-  T: State<Flatten<F, W>>,
+  T: State<Flatten>,
 {
   type Input = Self;
   type Output = Self;
@@ -284,11 +272,9 @@ macro_rules! wrapper_impl {
   };
   (@flatten $($ty:ty),+$(,)?) => {
     $(
-      impl<F, W, S, T> State<Flatten<F, W, S>> for $ty
+      impl<S, T> State<Flatten<S>> for $ty
       where
-        T: State<Flatten<F, W, S>> + ?Sized,
-        F: ?Sized,
-        W: ?Sized,
+        T: State<Flatten<S>> + ?Sized,
         S: ?Sized,
       {
         type Input = T::Input;
@@ -298,11 +284,9 @@ macro_rules! wrapper_impl {
   };
   (@flatten(Sized) $($ty:ty),+$(,)?) => {
     $(
-      impl<F, W, S, T> State<Flatten<F, W, S>> for $ty
+      impl<S, T> State<Flatten<S>> for $ty
       where
-        T: State<Flatten<F, W, S>>,
-        F: ?Sized,
-        W: ?Sized,
+        T: State<Flatten<S>>,
       {
         type Input = T::Input;
         type Output = T::Output;
@@ -311,21 +295,17 @@ macro_rules! wrapper_impl {
   };
   (@flatten(Sized, ?Optional) $($ty:ty),+$(,)?) => {
     $(
-      impl<F, W, T> State<Flatten<F, W>> for $ty
+      impl<T> State<Flatten> for $ty
       where
-        T: State<Flatten<F, W>>,
-        F: ?Sized,
-        W: ?Sized,
+        T: State<Flatten>,
       {
         type Input = Self;
         type Output = Self;
       }
 
-      impl<F, W, T> State<Flatten<F, W, Base>> for $ty
+      impl<T> State<Flatten<Base>> for $ty
       where
-        T: State<Flatten<F, W, Base>>,
-        F: ?Sized,
-        W: ?Sized,
+        T: State<Flatten<Base>>,
       {
         type Input = T::Input;
         type Output = T::Output;
@@ -436,21 +416,17 @@ where
   type Output = T::Output;
 }
 
-impl<F, W, T> State<Flatten<F, W>> for Option<T>
+impl<T> State<Flatten> for Option<T>
 where
-  T: State<Flatten<F, W>>,
-  F: ?Sized,
-  W: ?Sized,
+  T: State<Flatten>,
 {
   type Input = T::Input;
   type Output = T::Output;
 }
 
-impl<F, W, T> State<Flatten<F, W, Base>> for Option<T>
+impl<T> State<Flatten<Base>> for Option<T>
 where
-  T: State<Flatten<F, W, Base>>,
-  F: ?Sized,
-  W: ?Sized,
+  T: State<Flatten<Base>>,
 {
   type Input = T::Input;
   type Output = T::Output;

@@ -29,7 +29,6 @@ pub struct User {
     tag = 3,
     schema(description = "The email of the user"),
     wire = "grost::flavors::network::LengthDelimited",
-    copy,
     partial_ref(copy),
     optional(repeated)
   )]

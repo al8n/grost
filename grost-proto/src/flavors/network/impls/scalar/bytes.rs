@@ -231,10 +231,11 @@ macro_rules! array_bytes {
       $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
-    $crate::state!(
+    $crate::encoded_state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a [::core::primitive::u8]
     );
+    $crate::flatten_state!($ty [const N: usize]);
   };
 }
 
