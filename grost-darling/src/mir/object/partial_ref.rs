@@ -183,7 +183,6 @@ impl PartialRefObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
-    
     add_partial_ref_constraints(
       &mut generics,
       path_to_grost,
@@ -205,7 +204,7 @@ impl PartialRefObject {
         let vis = f.vis();
         let name = f.name();
         let attrs = f.meta().partial_ref().attrs();
-        let output_type = syn::parse2(quote!{ <#ty as #encoded_state>::Output })?;
+        let output_type = syn::parse2(quote! { <#ty as #encoded_state>::Output })?;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
           #vis #name: ::core::option::Option<#output_type>
@@ -217,7 +216,7 @@ impl PartialRefObject {
           object_type: ty.clone(),
           output_type,
           wire: wf,
-          copy: meta.partial_ref().copy(),
+          copy: meta.partial_ref().copy() | copyable,
         })
       })
       .collect::<Result<Vec<_>, darling::Error>>()?;
@@ -285,89 +284,89 @@ where
       }
     });
 
-    let fields_accessors = partial_ref_object.fields.iter()
-      .map(|f| {
-        let field_name = f.name();
-        let ref_fn = format_ident!("{}_ref", field_name);
-        let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
-        let ref_mut_fn = format_ident!("{}_mut", field_name);
-        let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
-        let set_fn = format_ident!("set_{}", field_name);
-        let set_fn_doc = format!(" Set the `{field_name}` to the given value");
-        let update_fn = format_ident!("update_{}", field_name);
-        let update_fn_doc = format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
-        let clear_fn = format_ident!("clear_{}", field_name);
-        let clear_fn_doc = format!(" Clear the value of `{field_name}`");
-        let take_fn = format_ident!("take_{}", field_name);
-        let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
-        let with_fn = format_ident!("with_{}", field_name);
-        let without_fn = format_ident!("without_{}", field_name);
-        let maybe_fn = format_ident!("maybe_{}", field_name);
-        let ty = &f.output_type;
-        let constable = f.copy.then(|| quote! { const });
+    let fields_accessors = partial_ref_object.fields.iter().map(|f| {
+      let field_name = f.name();
+      let ref_fn = format_ident!("{}_ref", field_name);
+      let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
+      let ref_mut_fn = format_ident!("{}_mut", field_name);
+      let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+      let set_fn = format_ident!("set_{}", field_name);
+      let set_fn_doc = format!(" Set the `{field_name}` to the given value");
+      let update_fn = format_ident!("update_{}", field_name);
+      let update_fn_doc =
+        format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
+      let clear_fn = format_ident!("clear_{}", field_name);
+      let clear_fn_doc = format!(" Clear the value of `{field_name}`");
+      let take_fn = format_ident!("take_{}", field_name);
+      let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
+      let with_fn = format_ident!("with_{}", field_name);
+      let without_fn = format_ident!("without_{}", field_name);
+      let maybe_fn = format_ident!("maybe_{}", field_name);
+      let ty = &f.output_type;
+      let constable = f.copy.then(|| quote! { const });
 
-        quote! {
-          #[doc = #ref_fn_doc]
-          #[inline]
-          pub const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
-            self.#field_name.as_ref()
-          }
-
-          #[doc = #ref_mut_fn_doc]
-          #[inline]
-          pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
-            self.#field_name.as_mut()
-          }
-
-          #[doc = #take_fn_doc]
-          #[inline]
-          pub const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
-            self.#field_name.take()
-          }
-
-          #[doc = #clear_fn_doc]
-          #[inline]
-          pub #constable fn #clear_fn(&mut self) -> &mut Self {
-            self.#field_name = ::core::option::Option::None;
-            self
-          }
-
-          #[doc = #set_fn_doc]
-          #[inline]
-          pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
-            self.#field_name = ::core::option::Option::Some(value);
-            self
-          }
-
-          #[doc = #update_fn_doc]
-          #[inline]
-          pub #constable fn #update_fn(&mut self, value: ::core::option::Option<#ty>) -> &mut Self {
-            self.#field_name = value;
-            self
-          }
-
-          #[doc = #set_fn_doc]
-          #[inline]
-          pub #constable fn #with_fn(mut self, value: #ty) -> Self {
-            self.#field_name = ::core::option::Option::Some(value);
-            self
-          }
-
-          #[doc = #clear_fn_doc]
-          #[inline]
-          pub #constable fn #without_fn(mut self) -> Self {
-            self.#field_name = ::core::option::Option::None;
-            self
-          }
-
-          #[doc = #update_fn_doc]
-          #[inline]
-          pub #constable fn #maybe_fn(mut self, value: ::core::option::Option<#ty>) -> Self {
-            self.#field_name = value;
-            self
-          }
+      quote! {
+        #[doc = #ref_fn_doc]
+        #[inline]
+        pub const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
+          self.#field_name.as_ref()
         }
-      });
+
+        #[doc = #ref_mut_fn_doc]
+        #[inline]
+        pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
+          self.#field_name.as_mut()
+        }
+
+        #[doc = #take_fn_doc]
+        #[inline]
+        pub const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
+          self.#field_name.take()
+        }
+
+        #[doc = #clear_fn_doc]
+        #[inline]
+        pub #constable fn #clear_fn(&mut self) -> &mut Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+
+        #[doc = #set_fn_doc]
+        #[inline]
+        pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+          self.#field_name = ::core::option::Option::Some(value);
+          self
+        }
+
+        #[doc = #update_fn_doc]
+        #[inline]
+        pub #constable fn #update_fn(&mut self, value: ::core::option::Option<#ty>) -> &mut Self {
+          self.#field_name = value;
+          self
+        }
+
+        #[doc = #set_fn_doc]
+        #[inline]
+        pub #constable fn #with_fn(mut self, value: #ty) -> Self {
+          self.#field_name = ::core::option::Option::Some(value);
+          self
+        }
+
+        #[doc = #clear_fn_doc]
+        #[inline]
+        pub #constable fn #without_fn(mut self) -> Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+
+        #[doc = #update_fn_doc]
+        #[inline]
+        pub #constable fn #maybe_fn(mut self, value: ::core::option::Option<#ty>) -> Self {
+          self.#field_name = value;
+          self
+        }
+      }
+    });
 
     let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
     let ubfn = &partial_ref_object.unknown_buffer_field_name;
@@ -491,7 +490,8 @@ where
 
     let where_clause = generics.make_where_clause();
 
-    let copy_constraint = (f.meta().partial_ref().copy() || copy).then(|| quote! { + ::core::marker::Copy });
+    let copy_constraint =
+      (f.meta().partial_ref().copy() || copy).then(|| quote! { + ::core::marker::Copy });
 
     where_clause.predicates.push(syn::parse2(quote! {
       #wf: #path_to_grost::__private::reflection::Reflectable<#flavor_generic>

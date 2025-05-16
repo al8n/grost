@@ -284,10 +284,14 @@ pub(super) struct TypeHintMeta {
 impl TypeHintMeta {
   pub(super) fn into_specification(self) -> Option<TypeSpecification> {
     if let Some(optional) = self.optional {
-      return Some(TypeSpecification::Optional(TypeSpecification::from_hint(&optional.0).map(Arc::new)));
+      return Some(TypeSpecification::Optional(
+        TypeSpecification::from_hint(&optional.0).map(Arc::new),
+      ));
     }
     if let Some(repeated) = self.repeated {
-      return Some(TypeSpecification::Repeated(TypeSpecification::from_hint(&repeated.0).map(Arc::new)));
+      return Some(TypeSpecification::Repeated(
+        TypeSpecification::from_hint(&repeated.0).map(Arc::new),
+      ));
     }
     if let Some(map) = self.map {
       return TypeSpecification::from_hint(&map.0);

@@ -1,9 +1,9 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge, encoded_state,
+  decode_bridge, default_wire_format, encode_bridge,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target, referenceable, selectable, type_ref,
+  into_target, selectable, state, type_ref,
 };
 use bytes_1::Bytes;
 
@@ -33,10 +33,7 @@ into_target!(Network: &[u8] => Bytes {
 type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
-referenceable!(
-  Network: Bytes as LengthDelimited => &'a [u8]
-);
-encoded_state!(
+state!(
   &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
 

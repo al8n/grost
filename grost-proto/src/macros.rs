@@ -23,14 +23,13 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::encoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::decode_owned_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::referenceable_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$flavor, $wf> for $ty {
@@ -165,39 +164,24 @@ macro_rules! selectable {
   };
 }
 
-/// A macro emits [`Referenceable`](super::Referenceable) implementations for primitive types.
+/// A macro emits basic [`State<_>`](super::State) implementations for `Self`
 #[macro_export]
-macro_rules! referenceable_scalar {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::referenceable!($flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
-  };
-}
-
-/// A macro emits [`Referenceable`](super::Referenceable) implementations for `Self`
-#[macro_export]
-macro_rules! referenceable {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Referenceable<$flavor, $wf> for $ty {
-        type Ref<'a> = $target where Self: 'a;
-      }
-    )*
-  };
-}
-
-/// A macro emits [`State<Encoded<'a, Flavor, WireFormat>>`](super::State) implementations for `Self`
-#[macro_export]
-macro_rules! encoded_state {
+macro_rules! state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       impl<$lifetime, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Encoded<$lifetime, $flavor, $wf>> for $ty {
         type Input = & $lifetime [u8];
         type Output = $target;
       }
+
+      impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Flatten<$flavor, $wf, S>> for $ty {
+        type Input = $ty;
+        type Output = $ty;
+      }
     )*
   };
   (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::encoded_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+    $crate::state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
   };
 }
 

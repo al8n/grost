@@ -133,7 +133,7 @@ pub trait BytesBuffer {
     self.len() == 0
   }
 
-  /// Extracts a slice containing the entire vector.
+  /// Flattens a slice containing the entire vector.
   fn as_bytes(&self) -> &[u8];
 
   /// Returns a slice of self for the provided range.

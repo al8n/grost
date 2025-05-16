@@ -9,7 +9,7 @@ const _: () = {
       Network,
       network::{DecodeError, LengthDelimited},
     },
-    into_target, referenceable, type_owned, type_ref,
+    into_target, type_owned, type_ref,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -42,7 +42,7 @@ const _: () = {
           $ty $([ $(const $g: usize),* ])?
         );
 
-        $crate::encoded_state!(&'a Network:
+        $crate::state!(&'a Network:
           $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => &'a str
         );
 
@@ -63,9 +63,6 @@ const _: () = {
         type_ref!(Network: &str => $ty {
           |val: &str| <$ty>::new(val).map_err(|_| DecodeError::custom(ERR_MSG))
         });
-        referenceable!(
-          Network: $ty as $crate::__private::flavors::network::LengthDelimited => &'a str
-        );
         type_owned!( Network: SmolStr => $ty {
           |val: &SmolStr| <$ty>::new(val.as_str()).map_err(|_| DecodeError::custom(ERR_MSG))
         });

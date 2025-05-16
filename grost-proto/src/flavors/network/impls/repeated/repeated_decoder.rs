@@ -1,25 +1,5 @@
 use core::marker::PhantomData;
 
-use crate::{
-  Referenceable,
-  flavors::{
-    Network,
-    network::{Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Repeated, Varint},
-  },
-};
-
-macro_rules! impl_referenceable {
-  ($($wf:ty),+$(,)?) => {
-    $(
-      impl<V> Referenceable<Network, Repeated<$wf>> for [V] {
-        type Ref<'a> = RepeatedDecoder<'a, V>
-        where
-          Self: 'a;
-      }
-    )*
-  };
-}
-
 /// Decoder for repeated fields.
 pub struct RepeatedDecoder<'a, V: ?Sized> {
   src: &'a [u8],
@@ -68,5 +48,3 @@ impl<'a, V: ?Sized> RepeatedDecoder<'a, V> {
     self.offset
   }
 }
-
-impl_referenceable!(Fixed16, Fixed32, Fixed64, Fixed128, Varint, LengthDelimited,);

@@ -245,7 +245,7 @@ macro_rules! array_str {
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
 
-    $crate::encoded_state!(
+    $crate::state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a str
     );

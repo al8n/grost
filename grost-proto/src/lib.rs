@@ -82,7 +82,6 @@ pub mod __private {
     decode_owned_scalar,
     default_wire_format,
     encode::*,
-    encoded_state,
     flavors::{self, RawTag},
     indexer,
     // map::MapSelector,
@@ -92,6 +91,7 @@ pub mod __private {
     reflection,
     selectable,
     selector::{self, *},
+    state,
   };
   pub use varing;
 }

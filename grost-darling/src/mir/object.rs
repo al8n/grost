@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use quote::{ToTokens, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;
@@ -266,17 +266,22 @@ where
     let selector_iter_impl = self.derive_selector_iter();
     let selector_impl = self.derive_selector();
     let partial_ref_object_impl = self.derive_partial_ref_object();
+    let partial_impl = self.derive_partial_object();
 
     quote! {
-      #reflection_impl
+      const _: () = {
+        #reflection_impl
 
-      #indexer_impl
+        #indexer_impl
 
-      #selector_impl
+        #selector_impl
 
-      #selector_iter_impl
+        #selector_iter_impl
 
-      #partial_ref_object_impl
+        #partial_ref_object_impl
+
+        #partial_impl
+      };
     }
   }
 }
@@ -286,7 +291,7 @@ where
   M: crate::meta::object::Object,
 {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let partial_object = self.partial();
+    let partial_object = self.partial().to_token_stream();
     let partial_ref_object = self.partial_ref().to_token_stream();
     let selector = self.selector().to_token_stream();
     let selector_iter = self.selector_iter().to_token_stream();

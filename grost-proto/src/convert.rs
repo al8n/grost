@@ -7,23 +7,6 @@ use super::{
   flavors::Flavor,
 };
 
-// pub trait Transform<S: ?Sized> {
-//   type Input: ?Sized;
-//   type Output;
-
-//   fn transform_ref(input: &Self::Input) -> Result<Self::Output, F::DecodeError>
-//   where
-//     F: Flavor;
-
-//   fn transform(input: Self::Input) -> Result<Self::Output, F::DecodeError>
-//   where
-//     F: Flavor,
-//     Self::Input: Sized,
-//   {
-//     Self::transform_ref(&input)
-//   }
-// }
-
 /// A trait for types that can be transformed from the input type to the output type.
 ///
 /// The generic `S` can be any type representing a state.
@@ -38,6 +21,98 @@ pub trait State<S: ?Sized> {
 pub struct Encoded<'a, F: ?Sized, W: ?Sized> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
+}
+
+impl<'a, F, W, T> State<Encoded<'a, F, W>> for &'a T
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Encoded<'a, F, W>>,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+/// A state which shows the type in optional state.
+pub struct Optional;
+
+impl<T> State<Optional> for Option<T> {
+  type Input = T;
+  type Output = Self;
+}
+
+impl<T> State<Optional> for &T
+where
+  T: State<Optional>,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+/// A state which shows the type in base state.
+pub struct Base;
+
+impl<T: ?Sized> State<Base> for T {
+  type Input = T;
+  type Output = T;
+}
+
+/// A state which shows that the type is in its flatten state.
+pub struct Flatten<F: ?Sized, W: ?Sized, S: ?Sized = Optional> {
+  _wf: core::marker::PhantomData<W>,
+  _flavor: core::marker::PhantomData<F>,
+  _state: core::marker::PhantomData<S>,
+}
+
+impl<F, W, S, T> State<Flatten<F, W, S>> for &T
+where
+  F: ?Sized,
+  W: ?Sized,
+  S: ?Sized,
+  T: State<Flatten<F, W, S>>,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<F, W, T> State<Flatten<F, W, Base>> for [T]
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Flatten<F, W, Base>>,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<F, W, T> State<Flatten<F, W>> for [T]
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Flatten<F, W>>,
+{
+  type Input = Self;
+  type Output = Self;
+}
+
+impl<F, W, T, const N: usize> State<Flatten<F, W, Base>> for [T; N]
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Flatten<F, W, Base>>,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<F, W, T, const N: usize> State<Flatten<F, W>> for [T; N]
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Flatten<F, W>>,
+{
+  type Input = Self;
+  type Output = Self;
 }
 
 /// A partial message which may or may not contain all of fields of a [`Message`].
@@ -120,28 +195,6 @@ where
   }
 }
 
-/// A trait that bridges the type to a reference type for the given wire format and flavor.
-///
-/// A type can reference to itself or to another type.
-pub trait Referenceable<F: ?Sized, W: ?Sized> {
-  /// The reference type for this type for the given wire format and flavor.
-  type Ref<'a>
-  where
-    Self: 'a;
-}
-
-impl<F, W, T> Referenceable<F, W> for &T
-where
-  T: ?Sized + Referenceable<F, W>,
-  W: ?Sized,
-  F: ?Sized,
-{
-  type Ref<'a>
-    = T::Ref<'a>
-  where
-    Self: 'a;
-}
-
 /// A trait for types that can be converted to another type.
 ///
 /// This trait enables bidirectional conversion between encoded
@@ -214,23 +267,63 @@ where
 }
 
 macro_rules! wrapper_impl {
-  (@referenceable $($ty:ty),+$(,)?) => {
-    $(
-      impl<F, W, T> Referenceable<F, W> for $ty
-      where
-        T: Referenceable<F, W> + ?Sized,
-        F: ?Sized,
-        W: ?Sized,
-      {
-        type Ref<'a> = T::Ref<'a> where Self: 'a;
-      }
-    )*
-  };
-  (@transform_encoded $($ty:ty),+$(,)?) => {
+  (@encoded_state $($ty:ty),+$(,)?) => {
     $(
       impl<'a, F, W, T> State<Encoded<'a, F, W>> for $ty
       where
         T: State<Encoded<'a, F, W>> + ?Sized,
+        F: ?Sized,
+        W: ?Sized,
+      {
+        type Input = T::Input;
+        type Output = T::Output;
+      }
+
+      wrapper_impl!(@flatten $ty);
+    )*
+  };
+  (@flatten $($ty:ty),+$(,)?) => {
+    $(
+      impl<F, W, S, T> State<Flatten<F, W, S>> for $ty
+      where
+        T: State<Flatten<F, W, S>> + ?Sized,
+        F: ?Sized,
+        W: ?Sized,
+        S: ?Sized,
+      {
+        type Input = T::Input;
+        type Output = T::Output;
+      }
+    )*
+  };
+  (@flatten(Sized) $($ty:ty),+$(,)?) => {
+    $(
+      impl<F, W, S, T> State<Flatten<F, W, S>> for $ty
+      where
+        T: State<Flatten<F, W, S>>,
+        F: ?Sized,
+        W: ?Sized,
+      {
+        type Input = T::Input;
+        type Output = T::Output;
+      }
+    )*
+  };
+  (@flatten(Sized, ?Optional) $($ty:ty),+$(,)?) => {
+    $(
+      impl<F, W, T> State<Flatten<F, W>> for $ty
+      where
+        T: State<Flatten<F, W>>,
+        F: ?Sized,
+        W: ?Sized,
+      {
+        type Input = Self;
+        type Output = Self;
+      }
+
+      impl<F, W, T> State<Flatten<F, W, Base>> for $ty
+      where
+        T: State<Flatten<F, W, Base>>,
         F: ?Sized,
         W: ?Sized,
       {
@@ -333,21 +426,29 @@ wrapper_impl!(@type_owned Option<T>:Some);
 wrapper_impl!(@partial_message Option<T>);
 wrapper_impl!(@message Option<T>);
 
-impl<F, W, T> Referenceable<F, W> for Option<T>
-where
-  T: Referenceable<F, W>,
-  F: ?Sized,
-  W: ?Sized,
-{
-  type Ref<'a>
-    = T::Ref<'a>
-  where
-    Self: 'a;
-}
-
 impl<'a, F, W, T> State<Encoded<'a, F, W>> for Option<T>
 where
   T: State<Encoded<'a, F, W>>,
+  F: ?Sized,
+  W: ?Sized,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<F, W, T> State<Flatten<F, W>> for Option<T>
+where
+  T: State<Flatten<F, W>>,
+  F: ?Sized,
+  W: ?Sized,
+{
+  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<F, W, T> State<Flatten<F, W, Base>> for Option<T>
+where
+  T: State<Flatten<F, W, Base>>,
   F: ?Sized,
   W: ?Sized,
 {
@@ -416,16 +517,28 @@ const _: () = {
     Arc<T>,
   );
   wrapper_impl!(
-    @referenceable
+    @encoded_state
     Box<T>,
     Rc<T>,
     Arc<T>,
   );
+
   wrapper_impl!(
-    @transform_encoded
-    Box<T>,
-    Rc<T>,
-    Arc<T>,
+    @flatten(Sized, ?Optional)
+    std::vec::Vec<T>,
+    std::collections::VecDeque<T>,
+    std::collections::LinkedList<T>,
+    std::collections::BTreeSet<T>,
+  );
+};
+
+#[cfg(feature = "std")]
+const _: () = {
+  use std::collections::HashSet;
+
+  wrapper_impl!(
+    @flatten(Sized)
+    HashSet<T>,
   );
 };
 
@@ -458,11 +571,7 @@ const _: () = {
     Arc<T>,
   );
   wrapper_impl!(
-    @referenceable
-    Arc<T>,
-  );
-  wrapper_impl!(
-    @transform_encoded
+    @encoded_state
     Arc<T>,
   );
 };

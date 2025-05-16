@@ -1,20 +1,16 @@
 use crate::{
-  encoded_state,
   flavors::{Network, network::LengthDelimited},
-  selectable,
+  selectable, state,
 };
 
 selectable!(@scalar Network:String);
-encoded_state!(
+state!(
   &'a Network: String as LengthDelimited => &'a str
 );
 
 #[cfg(feature = "smol_str_0_3")]
 const _: () = {
-  use crate::{
-    flavors::network::{LengthDelimited, Network},
-    referenceable,
-  };
+  use crate::flavors::network::Network;
   use smol_str_0_3::SmolStr;
   use std::string::String;
 
@@ -36,9 +32,6 @@ const _: () = {
   type_ref!( Network: &str => String {
     |val: &str| Ok(String::from(val))
   });
-  referenceable!(
-    Network: String as LengthDelimited => &'a str
-  );
   type_owned!(Network: SmolStr => String {
     |val: &SmolStr| Ok(String::from(val.clone()))
   });
