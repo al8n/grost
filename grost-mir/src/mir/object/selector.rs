@@ -8,6 +8,12 @@ use crate::ast::{
   object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
 };
 
+const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
+
+fn selected_const_generic_param() -> syn::Ident {
+  format_ident!("{GROST_SELECTED_CONST}")
+}
+
 #[derive(Debug, Clone)]
 pub struct SelectorField {
   field: syn::Field,
@@ -55,6 +61,7 @@ impl SelectorField {
 #[derive(Debug, Clone)]
 pub struct SelectorIter {
   selector: Ident,
+  selector_generics: Generics,
   indexer: Ident,
   name: Ident,
   vis: Visibility,
@@ -85,7 +92,6 @@ impl SelectorIter {
     let vis = self.vis();
     let indexer_name = &self.indexer;
     let gl = grost_lifetime();
-    let fg = grost_flavor_generic();
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
     let attrs = self.attrs();
@@ -97,6 +103,7 @@ impl SelectorIter {
     } else {
       None
     };
+    let (_, tg, _) = self.selector_generics.split_for_impl();
 
     quote! {
       #(#attrs)*
@@ -104,7 +111,7 @@ impl SelectorIter {
       #[allow(non_camel_case_types, clippy::type_complexity)]
       #vis struct #iter_name #generics #where_clause
       {
-        selector: &#gl #selector_name<#fg>,
+        selector: &#gl #selector_name #tg,
         index: ::core::option::Option<#indexer_name>,
         num: ::core::primitive::usize,
         yielded: ::core::primitive::usize,
@@ -262,6 +269,8 @@ impl Selector {
     );
 
     let lt = grost_lifetime();
+
+    // Push our lifetime generic parameter in the front
     generics
       .params
       .push(syn::GenericParam::Lifetime(syn::LifetimeParam::new(
@@ -286,10 +295,6 @@ impl Selector {
         .cloned(),
     );
 
-    generics.params.push(GenericParam::Const(syn::parse2(
-      quote! { const __GROST_SELECTED__: ::core::primitive::bool = true },
-    )?));
-
     if let Some(where_clause) = original_generics.where_clause.as_ref() {
       generics
         .make_where_clause()
@@ -297,8 +302,15 @@ impl Selector {
         .extend(where_clause.predicates.iter().cloned());
     }
 
+    // push our const generic parameter in the end
+    let const_selected_param = selected_const_generic_param();
+    generics.params.push(GenericParam::Const(syn::parse2(
+      quote! { const #const_selected_param: ::core::primitive::bool = true },
+    )?));
+
     Ok(SelectorIter {
       selector: self.name.clone(),
+      selector_generics: original_generics,
       indexer,
       name,
       attrs: iter_meta.attrs().to_vec(),
@@ -348,14 +360,14 @@ where
     let name = selector.name();
     let indexer_name = self.indexer().name();
     let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
-
+    let (_, selector_tg, _) = selector_iter.selector_generics.split_for_impl();
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #iter_name #tg #where_clauses
       {
         #[inline]
-        const fn new(selector: &'__grost_lifetime__ #name<__GROST_FLAVOR__>, num: ::core::primitive::usize) -> Self {
+        const fn new(selector: &'__grost_lifetime__ #name #selector_tg, num: ::core::primitive::usize) -> Self {
           Self {
             selector,
             index: ::core::option::Option::Some(#indexer_name::FIRST),
@@ -491,7 +503,43 @@ where
 
     let num_fields = self.fields.len();
     let name_str = name.to_string();
-    let iter_name = self.selector_iter().name();
+    let iter = self.selector_iter();
+    let iter_name = iter.name();
+    let selector_generics = self.selector().generics();
+    let has_lifetime = selector_generics.lifetimes().count() > 0;
+    let iter_lifetime_params = selector_generics.lifetimes().map(|p| {
+      let lifetime = &p.lifetime;
+      quote!(#lifetime)
+    });
+    let iter_lifetime_params_with_angle = if has_lifetime {
+      Some(quote!(< #(#iter_lifetime_params),* >))
+    } else {
+      None
+    };
+
+    let fg = grost_flavor_generic();
+    let (selected_iter_generics, unselected_iter_generics) = {
+      let params = |selected: bool| {
+        selector_generics.lifetimes().map(|p| {
+          let lifetime = &p.lifetime;
+          quote!(#lifetime)
+        }).chain(
+          selector_generics.type_params().map(|p| {
+            let ident = &p.ident;
+            quote!(#ident)
+          }).chain(selector_generics.const_params().map(|p| {
+            let ident = &p.ident;
+            quote!(#ident)
+          }))
+          .chain([quote!(#selected)])
+        )
+      };
+
+      let selected_iter_generics = params(true);
+      let unselected_iter_generics = params(false);
+      (selected_iter_generics, unselected_iter_generics)
+    };
+
     let indexer_name = self.indexer.name();
 
     let is_selected = self.indexer.variants().iter().map(|f| {
@@ -665,14 +713,14 @@ where
 
         /// Returns an iterator over the selected fields.
         #[inline]
-        pub fn iter_selected(&self) -> #iter_name<__GROST_FLAVOR__, true>
+        pub fn iter_selected #iter_lifetime_params_with_angle (&self) -> #iter_name <'_, #(#selected_iter_generics),*>
         {
           #iter_name::new(self, self.selected())
         }
 
         /// Returns an iterator over the unselected fields.
         #[inline]
-        pub fn iter_unselected(&self) -> #iter_name<__GROST_FLAVOR__, false>
+        pub fn iter_unselected #iter_lifetime_params_with_angle (&self) -> #iter_name <'_, #(#unselected_iter_generics),*>
         {
           #iter_name::new(self, self.unselected())
         }

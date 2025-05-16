@@ -175,11 +175,26 @@ impl PartialObject {
       .map(|f| PartialField::from_input(f, path_to_grost, meta.copy()))
       .collect::<Result<Vec<_>, darling::Error>>()?;
 
+    let mut generics = input.generics().clone();
+    generics.type_params().map(|p| p.ident.clone()).collect::<Vec<_>>().into_iter().try_for_each(|ident| {
+      let where_clause = generics.make_where_clause();
+
+      syn::parse2(quote!(#ident: #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>))
+        .and_then(|s| {
+          syn::parse2(quote!(<#ident as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output: ::core::marker::Sized))
+          .map(|c| (s, c))
+        })
+        .map(|(s, c)| {
+          where_clause.predicates.push(s);
+          where_clause.predicates.push(c);
+        })
+    })?;
+
     Ok(Self {
       path_to_grost: path_to_grost.clone(),
       name: input.partial_name(),
       vis: input.vis().clone(),
-      generics: input.generics().clone(),
+      generics,
       fields,
       attrs: meta.partial().attrs().to_vec(),
       copy: meta.copy(),
