@@ -1,5 +1,5 @@
 use crate::{
-  default_wire_format, encoded_state,
+  encoded_state,
   flavors::{Network, network::LengthDelimited},
   selectable,
 };

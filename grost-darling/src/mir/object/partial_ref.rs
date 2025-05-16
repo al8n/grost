@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use quote::{ToTokens, quote};
+use quote::{format_ident, quote};
 use syn::{Attribute, GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_quote};
 
 use crate::{
@@ -8,21 +8,47 @@ use crate::{
   meta::object::{Field as _, ObjectExt as _},
 };
 
-use super::super::wire_format_reflection_ty;
+use super::{super::wire_format_reflection_ty, Object};
 
 #[derive(Debug, Clone)]
 pub struct PartialRefField {
   field: syn::Field,
   tag: NonZeroU32,
   wire: Type,
+  object_type: Type,
+  output_type: Type,
   copy: bool,
 }
 
 impl PartialRefField {
+  /// Returns the name of the field
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    self.field.ident.as_ref().unwrap()
+  }
+
   /// Returns the field tag.
   #[inline]
   pub const fn tag(&self) -> NonZeroU32 {
     self.tag
+  }
+
+  /// Returns the type of the field
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.field.ty
+  }
+
+  /// Returns the corresponding field type of the original object
+  #[inline]
+  pub const fn object_type(&self) -> &Type {
+    &self.object_type
+  }
+
+  /// Returns the type of the field without `Option`
+  #[inline]
+  pub const fn output_type(&self) -> &Type {
+    &self.output_type
   }
 
   /// Returns the field wire format type.
@@ -53,6 +79,8 @@ pub struct PartialRefObject {
   generics: Generics,
   fields: Vec<PartialRefField>,
   attrs: Vec<Attribute>,
+  unknown_buffer_generic: Ident,
+  unknown_buffer_field_name: Ident,
   copy: bool,
 }
 
@@ -98,6 +126,7 @@ impl PartialRefObject {
   {
     let fields = input.fields();
     let meta = input.meta();
+    let copyable = meta.partial_ref().copy() | fields.iter().all(|f| f.meta().partial_ref().copy());
     let reflection_name = input.reflection_name();
     let fg = grost_flavor_generic();
     let lt = grost_lifetime();
@@ -154,6 +183,7 @@ impl PartialRefObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
+    
     add_partial_ref_constraints(
       &mut generics,
       path_to_grost,
@@ -161,6 +191,7 @@ impl PartialRefObject {
       fields.iter().copied(),
       &fg,
       &lt,
+      copyable,
     )?;
 
     let fields = fields
@@ -174,14 +205,17 @@ impl PartialRefObject {
         let vis = f.vis();
         let name = f.name();
         let attrs = f.meta().partial_ref().attrs();
+        let output_type = syn::parse2(quote!{ <#ty as #encoded_state>::Output })?;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
-          #vis #name: ::core::option::Option<<#ty as #encoded_state>::Output>
+          #vis #name: ::core::option::Option<#output_type>
         })?;
 
         Ok(PartialRefField {
           field,
           tag,
+          object_type: ty.clone(),
+          output_type,
           wire: wf,
           copy: meta.partial_ref().copy(),
         })
@@ -190,22 +224,21 @@ impl PartialRefObject {
 
     Ok(Self {
       parent_name: input.name().clone(),
+      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      unknown_buffer_generic: ubg,
       path_to_grost: path_to_grost.clone(),
       name: input.partial_ref_name(),
       vis: input.vis().clone(),
       generics,
       fields,
       attrs: meta.partial_ref().attrs().to_vec(),
-      copy: meta.partial_ref().copy(),
+      copy: copyable,
     })
   }
-}
 
-impl ToTokens for PartialRefObject {
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+  pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let name = self.name();
     let vis = self.vis();
-    let ubg = grost_unknown_buffer_generic();
     let fields = self.fields().iter().map(PartialRefField::field);
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
@@ -222,17 +255,197 @@ impl ToTokens for PartialRefObject {
     } else {
       quote! {}
     };
+    let ubfn = &self.unknown_buffer_field_name;
+    let ubg = &self.unknown_buffer_generic;
 
-    tokens.extend(quote! {
+    quote! {
       #(#attrs)*
       #doc
       #[allow(clippy::type_complexity, non_camel_case_types)]
       #vis struct #name #generics #where_clause
       {
-        __grost_unknown_buffer__: ::core::option::Option<#ubg>,
+        #ubfn: ::core::option::Option<#ubg>,
         #(#fields),*
       }
+    }
+  }
+}
+
+impl<M> Object<M>
+where
+  M: crate::meta::object::Object,
+{
+  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
+    let partial_ref_object = self.partial_ref();
+    let name = partial_ref_object.name();
+    let fields_init = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        #field_name: ::core::option::Option::None,
+      }
     });
+
+    let fields_accessors = partial_ref_object.fields.iter()
+      .map(|f| {
+        let field_name = f.name();
+        let ref_fn = format_ident!("{}_ref", field_name);
+        let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
+        let ref_mut_fn = format_ident!("{}_mut", field_name);
+        let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+        let set_fn = format_ident!("set_{}", field_name);
+        let set_fn_doc = format!(" Set the `{field_name}` to the given value");
+        let update_fn = format_ident!("update_{}", field_name);
+        let update_fn_doc = format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
+        let clear_fn = format_ident!("clear_{}", field_name);
+        let clear_fn_doc = format!(" Clear the value of `{field_name}`");
+        let take_fn = format_ident!("take_{}", field_name);
+        let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
+        let with_fn = format_ident!("with_{}", field_name);
+        let without_fn = format_ident!("without_{}", field_name);
+        let maybe_fn = format_ident!("maybe_{}", field_name);
+        let ty = &f.output_type;
+        let constable = f.copy.then(|| quote! { const });
+
+        quote! {
+          #[doc = #ref_fn_doc]
+          #[inline]
+          pub const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
+            self.#field_name.as_ref()
+          }
+
+          #[doc = #ref_mut_fn_doc]
+          #[inline]
+          pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
+            self.#field_name.as_mut()
+          }
+
+          #[doc = #take_fn_doc]
+          #[inline]
+          pub const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
+            self.#field_name.take()
+          }
+
+          #[doc = #clear_fn_doc]
+          #[inline]
+          pub #constable fn #clear_fn(&mut self) -> &mut Self {
+            self.#field_name = ::core::option::Option::None;
+            self
+          }
+
+          #[doc = #set_fn_doc]
+          #[inline]
+          pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+            self.#field_name = ::core::option::Option::Some(value);
+            self
+          }
+
+          #[doc = #update_fn_doc]
+          #[inline]
+          pub #constable fn #update_fn(&mut self, value: ::core::option::Option<#ty>) -> &mut Self {
+            self.#field_name = value;
+            self
+          }
+
+          #[doc = #set_fn_doc]
+          #[inline]
+          pub #constable fn #with_fn(mut self, value: #ty) -> Self {
+            self.#field_name = ::core::option::Option::Some(value);
+            self
+          }
+
+          #[doc = #clear_fn_doc]
+          #[inline]
+          pub #constable fn #without_fn(mut self) -> Self {
+            self.#field_name = ::core::option::Option::None;
+            self
+          }
+
+          #[doc = #update_fn_doc]
+          #[inline]
+          pub #constable fn #maybe_fn(mut self, value: ::core::option::Option<#ty>) -> Self {
+            self.#field_name = value;
+            self
+          }
+        }
+      });
+
+    let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
+    let ubfn = &partial_ref_object.unknown_buffer_field_name;
+    let ubg = &partial_ref_object.unknown_buffer_generic;
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::default::Default for #name #tg #where_clauses
+      {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #where_clauses
+      {
+        /// Creates an empty partial struct.
+        #[inline]
+        pub const fn new() -> Self {
+          Self {
+            #(#fields_init)*
+            #ubfn: ::core::option::Option::None,
+          }
+        }
+
+        /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+          self.#ubfn.as_ref()
+        }
+
+        /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+          self.#ubfn.as_mut()
+        }
+
+        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        // /// Takes the unknown buffer out if the unknown buffer is not `None`.
+        // #[inline]
+        // pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
+        //   self.#ubfn.take()
+        // }
+
+        // /// Set the value of unknown buffer
+        // #[inline]
+        // pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
+        //   self.#ubfn = ::core::option::Option::Some(buffer);
+        //   self
+        // }
+
+        // /// Clears the unknown buffer.
+        // #[inline]
+        // pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+        //   self.#ubfn = ::core::option::Option::None;
+        //   self
+        // }
+
+        // /// Set the value of unknown buffer
+        // #[inline]
+        // pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
+        //   self.#ubfn = ::core::option::Option::Some(buffer);
+        //   self
+        // }
+
+        // /// Clears the unknown buffer.
+        // #[inline]
+        // pub fn without_unknown_buffer(mut self) -> Self {
+        //   self.#ubfn = ::core::option::Option::None;
+        //   self
+        // }
+
+        #(#fields_accessors)*
+      }
+    }
   }
 }
 
@@ -260,6 +473,7 @@ fn add_partial_ref_constraints<'a, I>(
   mut fields: impl Iterator<Item = &'a I>,
   flavor_generic: &syn::Ident,
   lifetime: &syn::Lifetime,
+  copy: bool,
 ) -> darling::Result<()>
 where
   I: crate::meta::object::Field + 'a,
@@ -277,6 +491,8 @@ where
 
     let where_clause = generics.make_where_clause();
 
+    let copy_constraint = (f.meta().partial_ref().copy() || copy).then(|| quote! { + ::core::marker::Copy });
+
     where_clause.predicates.push(syn::parse2(quote! {
       #wf: #path_to_grost::__private::reflection::Reflectable<#flavor_generic>
     })?);
@@ -284,7 +500,7 @@ where
       #ty: #encoded_state
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
-      <#ty as #encoded_state>::Output: ::core::marker::Sized
+      <#ty as #encoded_state>::Output: ::core::marker::Sized #copy_constraint
     })?);
 
     Ok(())

@@ -265,6 +265,7 @@ where
     let indexer_impl = self.derive_indexer();
     let selector_iter_impl = self.derive_selector_iter();
     let selector_impl = self.derive_selector();
+    let partial_ref_object_impl = self.derive_partial_ref_object();
 
     quote! {
       #reflection_impl
@@ -274,6 +275,8 @@ where
       #selector_impl
 
       #selector_iter_impl
+
+      #partial_ref_object_impl
     }
   }
 }
@@ -284,7 +287,7 @@ where
 {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let partial_object = self.partial();
-    let partial_ref_object = self.partial_ref();
+    let partial_ref_object = self.partial_ref().to_token_stream();
     let selector = self.selector().to_token_stream();
     let selector_iter = self.selector_iter().to_token_stream();
     let indexer = self.indexer().to_token_stream();
