@@ -3,7 +3,7 @@ use std::num::NonZeroU32;
 use quote::quote;
 use syn::{Attribute, Generics, Ident, Type, Visibility, parse::Parser};
 
-use crate::meta::object::{ObjectExt as _, TypeSpecification};
+use crate::ast::object::{ObjectExt as _, TypeSpecification};
 
 use super::Object;
 
@@ -78,7 +78,7 @@ impl PartialField {
     copy: bool,
   ) -> darling::Result<Self>
   where
-    I: crate::meta::object::Field,
+    I: crate::ast::object::Field,
   {
     let meta = input.meta();
     let ty = input.ty();
@@ -166,7 +166,7 @@ impl PartialObject {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::meta::object::Object,
+    O: crate::ast::object::Object,
   {
     let meta = input.meta();
     let fields = input
@@ -206,7 +206,7 @@ impl PartialObject {
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   /// Generates a partial object of the object
   pub fn derive_partial_object(&self) -> proc_macro2::TokenStream {

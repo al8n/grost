@@ -9,9 +9,13 @@ readme.workspace = true
 rust-version.workspace = true
 categories.workspace = true
 metadata.workspace = true
-description = "The Mid-level Intermediate Representation (MIR) for Grost schema"
+description = "The Mid-level Intermediate Representation (MIR) for Grost schema types."
 
 [dependencies]
+grost-darling.workspace = true
+derive_more = { workspace = true, features = ["try_unwrap", "unwrap", "is_variant"] }
+
+heck.workspace = true
 syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true
 quote.workspace = true

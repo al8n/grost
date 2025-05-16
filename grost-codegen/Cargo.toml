@@ -36,7 +36,7 @@ either.workspace = true
 heck.workspace = true
 indexmap = "2"
 grost-proto = { workspace = true, features = ["codegen"] }
-grost-darling.workspace = true
+grost-mir.workspace = true
 paste.workspace = true
 prettyplease.workspace = true
 proc-macro2 = { workspace = true, features = ["default"] }

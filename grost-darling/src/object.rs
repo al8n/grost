@@ -105,14 +105,14 @@ impl ToTokens for ObjectFieldDeriveInput {
         #custom_meta_field
 
         #[darling(flatten)]
-        __meta__: #path_to_crate::__private::meta::object::FieldMeta,
+        __meta__: #path_to_crate::__private::ast::object::FieldMeta,
       }
 
       impl #ig #derive_input_name #tg #w {
         #accessors
       }
 
-      impl #ig #path_to_crate::__private::meta::object::Field for #derive_input_name #tg #w {
+      impl #ig #path_to_crate::__private::ast::object::Field for #derive_input_name #tg #w {
         fn name(&self) -> &#path_to_crate::__private::syn::Ident {
           self.ident.as_ref().expect("the field of the named struct must have a name")
         }
@@ -129,7 +129,7 @@ impl ToTokens for ObjectFieldDeriveInput {
           &self.attrs
         }
 
-        fn meta(&self) -> &#path_to_crate::__private::meta::object::FieldMeta {
+        fn meta(&self) -> &#path_to_crate::__private::ast::object::FieldMeta {
           &self.__meta__
         }
       }
@@ -239,14 +239,14 @@ impl ToTokens for ObjectDeriveInput {
         __path_to_crate__: #path_to_crate::__private::syn::Path,
         #[darling(flatten)]
         #[doc(hidden)]
-        __meta__: #path_to_crate::__private::meta::object::ObjectMeta,
+        __meta__: #path_to_crate::__private::ast::object::ObjectMeta,
       }
 
       impl #ig #derive_input_name #tg #w {
         #accessors
       }
 
-      impl #ig #path_to_crate::__private::meta::object::Object for #derive_input_name #tg #w {
+      impl #ig #path_to_crate::__private::ast::object::Object for #derive_input_name #tg #w {
         type Field = #field;
 
         fn path(&self) -> &#path_to_crate::__private::syn::Path {
@@ -273,7 +273,7 @@ impl ToTokens for ObjectDeriveInput {
           self.data.as_ref().take_struct().expect(#expect_msg).fields
         }
 
-        fn meta(&self) -> &#path_to_crate::__private::meta::object::ObjectMeta {
+        fn meta(&self) -> &#path_to_crate::__private::ast::object::ObjectMeta {
           &self.__meta__
         }
       }

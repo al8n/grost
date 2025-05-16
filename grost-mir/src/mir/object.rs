@@ -9,7 +9,7 @@ pub use partial_ref::{PartialRefField, PartialRefObject};
 pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
-use crate::meta::{
+use crate::ast::{
   SchemaMeta,
   object::{ObjectExt as _, TypeSpecification},
 };
@@ -103,7 +103,7 @@ impl<M> Field<M> {
 
   fn from_input(input: M) -> darling::Result<Self>
   where
-    M: crate::meta::object::Field,
+    M: crate::ast::object::Field,
   {
     let meta = input.meta();
     Ok(Self {
@@ -124,7 +124,7 @@ impl<M> Field<M> {
 
 pub struct Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   name: Ident,
   path_to_grost: Path,
@@ -143,7 +143,7 @@ where
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   #[inline]
   pub const fn meta(&self) -> &M {
@@ -173,7 +173,7 @@ where
   #[inline]
   pub const fn fields(&self) -> &[Field<M::Field>]
   where
-    M: crate::meta::object::Object,
+    M: crate::ast::object::Object,
   {
     self.fields.as_slice()
   }
@@ -216,7 +216,7 @@ where
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   pub fn from_derive_input(input: &syn::DeriveInput) -> darling::Result<Self>
   where
@@ -288,7 +288,7 @@ where
 
 impl<M> ToTokens for Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let partial_object = self.partial().to_token_stream();

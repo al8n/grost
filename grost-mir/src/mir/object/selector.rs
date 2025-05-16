@@ -3,9 +3,9 @@ use syn::{GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_
 
 use super::{super::wire_format_reflection_ty, Object};
 
-use crate::{
+use crate::ast::{
   grost_flavor_generic, grost_lifetime,
-  meta::object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
+  object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
 };
 
 #[derive(Debug, Clone)]
@@ -151,7 +151,7 @@ impl Selector {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::meta::object::Object,
+    O: crate::ast::object::Object,
   {
     let name = input.selector_name();
 
@@ -339,7 +339,7 @@ impl Selector {
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   pub(super) fn derive_selector_iter(&self) -> proc_macro2::TokenStream {
     let selector_iter = self.selector_iter();
@@ -862,7 +862,7 @@ fn add_selector_constraints<'a, I>(
   fg: &syn::Ident,
 ) -> darling::Result<()>
 where
-  I: crate::meta::object::Field + 'a,
+  I: crate::ast::object::Field + 'a,
 {
   fields.try_for_each(move |f| {
     let ty = f.ty();

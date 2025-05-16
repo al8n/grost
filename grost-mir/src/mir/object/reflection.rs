@@ -4,9 +4,9 @@ use syn::{
   parse::{Parse, Parser},
 };
 
-use crate::{
+use crate::ast::{
   grost_flavor_generic,
-  meta::object::{Field, ObjectExt},
+  object::{Field, ObjectExt},
 };
 
 use super::Object;
@@ -33,7 +33,7 @@ impl Reflection {
 
   pub(super) fn from_input<O>(input: &O) -> darling::Result<Self>
   where
-    O: crate::meta::object::Object,
+    O: crate::ast::object::Object,
   {
     let name = input.reflection_name();
     let parent_name = input.name().clone();
@@ -94,7 +94,7 @@ impl Reflection {
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   pub(super) fn derive_reflection(&self) -> proc_macro2::TokenStream {
     let path_to_grost = &self.path_to_grost;

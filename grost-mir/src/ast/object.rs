@@ -2,9 +2,7 @@ use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident};
 
-use super::SchemaMeta;
-
-use crate::Attributes;
+use super::{Attributes, SchemaMeta};
 
 pub use field::*;
 

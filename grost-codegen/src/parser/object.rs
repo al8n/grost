@@ -8,23 +8,22 @@ mod selector;
 mod sealed {
   use super::super::default_path;
 
-  #[derive(grost_darling::ObjectField)]
+  #[derive(grost_mir::ObjectField)]
   #[grost(attributes(grost))]
   pub struct ObjectField;
 
-  #[derive(grost_darling::Object)]
+  #[derive(grost_mir::Object)]
   #[grost(attributes(grost), field = "ObjectFieldDeriveInput")]
   pub struct Object;
 }
 
 pub struct Object {
-  object: grost_darling::mir::object::Object<sealed::ObjectDeriveInput>,
+  object: grost_mir::object::Object<sealed::ObjectDeriveInput>,
 }
 
 impl Object {
   pub fn from_derive_input(input: &DeriveInput) -> darling::Result<Self> {
-    let object =
-      grost_darling::mir::object::Object::<sealed::ObjectDeriveInput>::from_derive_input(input)?;
+    let object = grost_mir::object::Object::<sealed::ObjectDeriveInput>::from_derive_input(input)?;
 
     Ok(Self { object })
   }

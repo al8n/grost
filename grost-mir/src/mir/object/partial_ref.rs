@@ -3,9 +3,9 @@ use std::num::NonZeroU32;
 use quote::{format_ident, quote};
 use syn::{Attribute, GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_quote};
 
-use crate::{
+use crate::ast::{
   grost_flavor_generic, grost_lifetime, grost_unknown_buffer_generic,
-  meta::object::{Field as _, ObjectExt as _},
+  object::{Field as _, ObjectExt as _},
 };
 
 use super::{super::wire_format_reflection_ty, Object};
@@ -122,7 +122,7 @@ impl PartialRefObject {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::meta::object::Object,
+    O: crate::ast::object::Object,
   {
     let fields = input.fields();
     let meta = input.meta();
@@ -272,7 +272,7 @@ impl PartialRefObject {
 
 impl<M> Object<M>
 where
-  M: crate::meta::object::Object,
+  M: crate::ast::object::Object,
 {
   pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
     let partial_ref_object = self.partial_ref();
@@ -397,7 +397,7 @@ fn add_partial_ref_constraints<'a, I>(
   copy: bool,
 ) -> darling::Result<()>
 where
-  I: crate::meta::object::Field + 'a,
+  I: crate::ast::object::Field + 'a,
 {
   fields.try_for_each(move |f| {
     let ty = f.ty();

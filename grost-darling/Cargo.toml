@@ -9,13 +9,12 @@ readme.workspace = true
 rust-version.workspace = true
 categories.workspace = true
 metadata.workspace = true
-description = "A crate for who want to developing proc-macro based on Grost"
+description = "The proc macros for `grost-mir`."
+
+[lib]
+proc-macro = true
 
 [dependencies]
-grost-darling-derive.workspace = true
-derive_more = { workspace = true, features = ["try_unwrap", "unwrap", "is_variant"] }
-
-heck.workspace = true
 syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true
 quote.workspace = true

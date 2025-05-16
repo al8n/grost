@@ -4,9 +4,8 @@ members = [
   "grost-codegen",
   "grost-codegen-test",
   "grost-darling",
-  "grost-darling/derive",
-  "grost-derive",
   "grost-mir",
+  "grost-derive",
   "grost-parser",
   "grost-proto",
 ]
@@ -44,5 +43,5 @@ grost-codegen = { version = "0.1", path = "./grost-codegen", default-features = 
 grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }
 grost-parser = { version = "0.1", path = "./grost-parser", default-features = false }
 grost-proto = { version = "0.1", path = "./grost-proto", default-features = false }
+grost-mir = { version = "0.1", path = "./grost-mir", default-features = false }
 grost-darling = { version = "0.1", path = "./grost-darling", default-features = false }
-grost-darling-derive = { version = "0.1", path = "./grost-darling/derive" }
