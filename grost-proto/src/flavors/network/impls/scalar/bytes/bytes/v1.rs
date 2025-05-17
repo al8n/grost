@@ -1,7 +1,7 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge, encoded_state, flatten_state,
+  decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target, selectable, type_ref,
 };
@@ -33,7 +33,7 @@ into_target!(Network: &[u8] => Bytes {
 type_ref!( Network: &[u8] => Bytes {
   |val: &[u8]| Ok(Bytes::copy_from_slice(val))
 });
-encoded_state!(
+decoded_state!(
   &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
 flatten_state!(Bytes);
@@ -69,7 +69,7 @@ impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
 impl PartialMessage<Network, LengthDelimited> for Bytes {
   type UnknownBuffer<B> = ();
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;
@@ -88,7 +88,7 @@ impl PartialMessage<Network, LengthDelimited> for Bytes {
 impl Message<Network, LengthDelimited> for Bytes {
   type Partial = Self;
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;

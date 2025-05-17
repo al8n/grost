@@ -4,13 +4,13 @@ use syn::{GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_
 use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
-  grost_flavor_generic, grost_lifetime,
+  grost_flavor_param, grost_lifetime,
   object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
 
-fn selected_const_generic_param() -> syn::Ident {
+fn selected_const_generic_ident() -> syn::Ident {
   format_ident!("{GROST_SELECTED_CONST}")
 }
 
@@ -59,14 +59,56 @@ impl SelectorField {
 }
 
 #[derive(Debug, Clone)]
+struct SelectorIterGenerics {
+  lifetime: syn::Lifetime,
+  selected_param: syn::ConstParam,
+  generics: Generics,
+}
+
+impl core::ops::Deref for SelectorIterGenerics {
+  type Target = Generics;
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    &self.generics
+  }
+}
+
+impl SelectorIterGenerics {
+  const fn new(
+    lifetime: syn::Lifetime,
+    selected_param: syn::ConstParam,
+    generics: Generics,
+  ) -> Self {
+    Self {
+      lifetime,
+      selected_param,
+      generics,
+    }
+  }
+
+  pub const fn lifetime(&self) -> &syn::Lifetime {
+    &self.lifetime
+  }
+
+  pub const fn selected_param(&self) -> &syn::ConstParam {
+    &self.selected_param
+  }
+
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+}
+
+#[derive(Debug, Clone)]
 pub struct SelectorIter {
   selector: Ident,
-  selector_generics: Generics,
+  selector_generics: SelectorGenerics,
   indexer: Ident,
   name: Ident,
   vis: Visibility,
   attrs: Vec<syn::Attribute>,
-  generics: Generics,
+  generics: SelectorIterGenerics,
 }
 
 impl SelectorIter {
@@ -79,7 +121,17 @@ impl SelectorIter {
   }
 
   pub const fn generics(&self) -> &Generics {
-    &self.generics
+    self.generics.generics()
+  }
+
+  /// Returns the selected const generic parameter.
+  pub const fn selected_param(&self) -> &syn::ConstParam {
+    self.generics.selected_param()
+  }
+
+  /// Returns the lifetime generic parameter.
+  pub const fn lifetime(&self) -> &syn::Lifetime {
+    self.generics.lifetime()
   }
 
   pub const fn attrs(&self) -> &[syn::Attribute] {
@@ -121,11 +173,43 @@ impl SelectorIter {
 }
 
 #[derive(Debug, Clone)]
+struct SelectorGenerics {
+  flavor_param: syn::TypeParam,
+  generics: Generics,
+}
+
+impl core::ops::Deref for SelectorGenerics {
+  type Target = Generics;
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    &self.generics
+  }
+}
+
+impl SelectorGenerics {
+  const fn new(flavor_param: syn::TypeParam, generics: Generics) -> Self {
+    Self {
+      flavor_param,
+      generics,
+    }
+  }
+
+  pub const fn flavor_param(&self) -> &syn::TypeParam {
+    &self.flavor_param
+  }
+
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+}
+
+#[derive(Debug, Clone)]
 pub struct Selector {
   parent_name: Ident,
   name: Ident,
   vis: Visibility,
-  generics: Generics,
+  generics: SelectorGenerics,
   attrs: Vec<syn::Attribute>,
   fields: Vec<SelectorField>,
 }
@@ -138,7 +222,13 @@ impl Selector {
 
   #[inline]
   pub const fn generics(&self) -> &Generics {
-    &self.generics
+    self.generics.generics()
+  }
+
+  /// Returns the flavor generic parameter.
+  #[inline]
+  pub const fn flavor_param(&self) -> &syn::TypeParam {
+    self.generics.flavor_param()
   }
 
   #[inline]
@@ -164,7 +254,7 @@ impl Selector {
 
     let vis = input.vis().clone();
     let reflection_name = input.reflection_name();
-    let fg = grost_flavor_generic();
+    let fgp = grost_flavor_param();
 
     let mut generics = Generics::default();
     let original_generics = input.generics();
@@ -187,9 +277,7 @@ impl Selector {
         .cloned(),
     );
 
-    generics.params.push(syn::GenericParam::Type(syn::parse2(
-      quote! { #fg: ?::core::marker::Sized },
-    )?));
+    generics.params.push(syn::GenericParam::Type(fgp.clone()));
 
     // push the original const generic parameters last
     generics.params.extend(
@@ -212,7 +300,7 @@ impl Selector {
       path_to_grost,
       &reflection_name,
       input.fields().iter().copied(),
-      &fg,
+      &fgp,
     )?;
 
     let fields = input
@@ -221,15 +309,16 @@ impl Selector {
       .map(|f| {
         let ty = f.ty();
         let tag = f.meta().tag();
-        let wfr = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fg);
-        let wf = wire_format_ty(path_to_grost, &wfr, &fg);
+        let wfr = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fgp);
+        let wf = wire_format_ty(path_to_grost, &wfr, &fgp);
 
         let attrs = f.meta().selector().attrs();
         let vis = f.vis();
         let name = f.name();
+        let fgi = &fgp.ident;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
-          #vis #name: <#ty as #path_to_grost::__private::Selectable<#fg, #wf>>::Selector
+          #vis #name: <#ty as #path_to_grost::__private::Selectable<#fgi, #wf>>::Selector
         })?;
 
         Ok(SelectorField {
@@ -245,7 +334,7 @@ impl Selector {
       name,
       vis,
       attrs,
-      generics,
+      generics: SelectorGenerics::new(fgp, generics),
       fields,
     })
   }
@@ -303,10 +392,12 @@ impl Selector {
     }
 
     // push our const generic parameter in the end
-    let const_selected_param = selected_const_generic_param();
-    generics.params.push(GenericParam::Const(syn::parse2(
-      quote! { const #const_selected_param: ::core::primitive::bool = true },
-    )?));
+    let const_selected_ident = selected_const_generic_ident();
+    let const_selected_param: syn::ConstParam =
+      syn::parse2(quote! { const #const_selected_ident: ::core::primitive::bool = true })?;
+    generics
+      .params
+      .push(GenericParam::Const(const_selected_param.clone()));
 
     Ok(SelectorIter {
       selector: self.name.clone(),
@@ -315,7 +406,7 @@ impl Selector {
       name,
       attrs: iter_meta.attrs().to_vec(),
       vis: self.vis.clone(),
-      generics,
+      generics: SelectorIterGenerics::new(lt.clone(), const_selected_param, generics),
     })
   }
 
@@ -396,7 +487,8 @@ where
     let name = selector.name();
     let path_to_grost = &self.path_to_grost;
     let fns = self.selector_field_fns(&self.path_to_grost);
-    let fg = grost_flavor_generic();
+    let fgp = self.selector.flavor_param();
+    let fg = &fgp.ident;
     let (ig, tg, selector_where_clauses) = selector.generics().split_for_impl();
 
     let empty = self.selector.fields().iter().map(|f| {
@@ -517,22 +609,27 @@ where
       None
     };
 
-    let fg = grost_flavor_generic();
     let (selected_iter_generics, unselected_iter_generics) = {
       let params = |selected: bool| {
-        selector_generics.lifetimes().map(|p| {
-          let lifetime = &p.lifetime;
-          quote!(#lifetime)
-        }).chain(
-          selector_generics.type_params().map(|p| {
-            let ident = &p.ident;
-            quote!(#ident)
-          }).chain(selector_generics.const_params().map(|p| {
-            let ident = &p.ident;
-            quote!(#ident)
-          }))
-          .chain([quote!(#selected)])
-        )
+        selector_generics
+          .lifetimes()
+          .map(|p| {
+            let lifetime = &p.lifetime;
+            quote!(#lifetime)
+          })
+          .chain(
+            selector_generics
+              .type_params()
+              .map(|p| {
+                let ident = &p.ident;
+                quote!(#ident)
+              })
+              .chain(selector_generics.const_params().map(|p| {
+                let ident = &p.ident;
+                quote!(#ident)
+              }))
+              .chain([quote!(#selected)]),
+          )
       };
 
       let selected_iter_generics = params(true);
@@ -750,7 +847,8 @@ where
     &self,
     path_to_grost: &syn::Path,
   ) -> impl Iterator<Item = proc_macro2::TokenStream> {
-    let fg = grost_flavor_generic();
+    let fgp = grost_flavor_param();
+    let fg = fgp.ident;
     self.selector.fields().iter().map(move |f| {
       let ty = f.ty();
       let field_name = f.name();
@@ -764,7 +862,8 @@ where
     &self,
     path_to_grost: &syn::Path,
   ) -> impl Iterator<Item = proc_macro2::TokenStream> {
-    let fg = grost_flavor_generic();
+    let fgp = grost_flavor_param();
+    let fg = fgp.ident;
     self.selector.fields().iter().map(move |f| {
       let ty = f.ty();
       let field_name = f.name();
@@ -782,7 +881,8 @@ where
     self.selector.fields().iter().map(move |f| {
       let ty = f.ty();
       let field_name = f.name();
-      let fg = grost_flavor_generic();
+      let fgp = grost_flavor_param();
+      let fg = fgp.ident;
       let select_fn_name = format_ident!("select_{}", field_name);
       let select_fn_doc = format!(" Select the `{}.{}` field", self.name, field_name);
       let unselect_fn_name = format_ident!("unselect_{}", field_name);
@@ -887,13 +987,15 @@ where
   }
 }
 
-fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::Ident) -> syn::Type {
+fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::TypeParam) -> syn::Type {
+  let fg = &fg.ident;
   parse_quote! {
     <#wf as #path_to_grost::__private::reflection::Reflectable<#fg>>::Reflection
   }
 }
 
-fn selector_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::Ident) -> syn::Type {
+fn selector_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::TypeParam) -> syn::Type {
+  let fg = &fg.ident;
   parse_quote! {
     #path_to_grost::__private::Selectable<
       #fg,
@@ -907,11 +1009,12 @@ fn add_selector_constraints<'a, I>(
   path_to_grost: &syn::Path,
   field_reflection: &syn::Ident,
   mut fields: impl Iterator<Item = &'a I>,
-  fg: &syn::Ident,
+  fg: &syn::TypeParam,
 ) -> darling::Result<()>
 where
   I: crate::ast::object::Field + 'a,
 {
+  let fgi = &fg.ident;
   fields.try_for_each(move |f| {
     let ty = f.ty();
     let wfr = wire_format_reflection_ty(path_to_grost, field_reflection, f.meta().tag().get(), fg);
@@ -921,7 +1024,7 @@ where
     let where_clause = generics.make_where_clause();
 
     where_clause.predicates.push(syn::parse2(quote! {
-      #wfr: #path_to_grost::__private::reflection::Reflectable<#fg>
+      #wfr: #path_to_grost::__private::reflection::Reflectable<#fgi>
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
       #ty: #selector_ty

@@ -3,16 +3,16 @@ use core::num::NonZeroU32;
 use crate::{
   buffer::Buffer,
   decode::Decode,
-  decode_owned_scalar, default_wire_format,
+  decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
-  encoded_state, flatten_state,
+  flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed32, Network, Unknown, Varint},
   message, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u32 as Varint);
 selectable!(@scalar Network: u32, NonZeroU32);
-encoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
+decoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
 flatten_state!(u32, NonZeroU32);
 
 impl Encode<Network, Fixed32> for u32 {

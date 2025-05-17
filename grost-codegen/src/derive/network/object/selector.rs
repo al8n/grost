@@ -10,7 +10,7 @@ impl Network {
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
     let partial_struct_name = struct_.partial_struct_name();
-    let partial_ref_name = struct_.partial_ref_name();
+    let partial_decoded_name = struct_.partial_decoded_name();
     let selector = struct_.selector_name();
 
     let selectable_impl = |name: &syn::Ident| -> proc_macro2::TokenStream {
@@ -62,7 +62,7 @@ impl Network {
       impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
         #path_to_grost::__private::flavors::Network,
         #path_to_grost::__private::flavors::network::LengthDelimited,
-      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
       {
         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
       }
@@ -72,7 +72,7 @@ impl Network {
       impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
         #path_to_grost::__private::flavors::Network,
         #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
-      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
       {
         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
       }
@@ -84,7 +84,7 @@ impl Network {
         #path_to_grost::__private::flavors::network::Repeated<
           #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
         >,
-      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
       {
         type Selector = #selector<#path_to_grost::__private::flavors::Network>;
       }

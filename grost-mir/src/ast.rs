@@ -79,13 +79,13 @@ pub fn grost_lifetime() -> syn::Lifetime {
 /// Returns a generic parameter `__GROST_FLAVOR__`, which is used to represent
 /// the a flavor generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
-pub fn grost_flavor_generic() -> syn::Ident {
-  quote::format_ident!("__GROST_FLAVOR__")
+pub fn grost_flavor_param() -> syn::TypeParam {
+  syn::parse_quote!(__GROST_FLAVOR__: ?::core::marker::Sized)
 }
 
 /// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
 /// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
 /// This is used to avoid conflicts with other generic parameters in the code.
-pub fn grost_unknown_buffer_generic() -> syn::Ident {
-  quote::format_ident!("__GROST_UNKNOWN_BUFFER__")
+pub fn grost_unknown_buffer_param() -> syn::TypeParam {
+  quote::format_ident!("__GROST_UNKNOWN_BUFFER__").into()
 }

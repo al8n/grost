@@ -4,7 +4,7 @@ macro_rules! bytes_message {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type UnknownBuffer<B> = ();
 
-      type Encoded<'a> = &'a [::core::primitive::u8]
+      type Decoded<'a> = &'a [::core::primitive::u8]
         where
           Self: Sized + 'a;
 
@@ -20,7 +20,7 @@ macro_rules! bytes_message {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Partial = Self;
 
-      type Encoded<'a> = &'a [::core::primitive::u8]
+      type Decoded<'a> = &'a [::core::primitive::u8]
         where
           Self: Sized + 'a;
 
@@ -192,7 +192,7 @@ macro_rules! array_bytes {
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type UnknownBuffer<B> = ();
 
-      type Encoded<'a>
+      type Decoded<'a>
         = &'a [::core::primitive::u8]
       where
         Self: ::core::marker::Sized + 'a;
@@ -211,7 +211,7 @@ macro_rules! array_bytes {
     impl<const $g: ::core::primitive::usize> $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Partial = Self;
 
-      type Encoded<'a>
+      type Decoded<'a>
         = &'a [::core::primitive::u8]
       where
         Self: ::core::marker::Sized + 'a;
@@ -231,7 +231,7 @@ macro_rules! array_bytes {
       $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
-    $crate::encoded_state!(
+    $crate::decoded_state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a [::core::primitive::u8]
     );

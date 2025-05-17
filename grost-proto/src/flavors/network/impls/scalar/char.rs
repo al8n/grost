@@ -1,12 +1,12 @@
 use crate::{
-  default_wire_format, encoded_state, flatten_state,
+  decoded_state, default_wire_format, flatten_state,
   flavors::network::{DecodeError, Fixed32, Network, Varint},
   selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: char as Fixed32);
 selectable!(@scalar Network:char);
-encoded_state!(@scalar &'a Network: char as Fixed32, char as Varint);
+decoded_state!(@scalar &'a Network: char as Fixed32, char as Varint);
 flatten_state!(char);
 try_from_bridge!(
   Network: u32 {

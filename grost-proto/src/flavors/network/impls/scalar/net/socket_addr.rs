@@ -2,9 +2,9 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
 use crate::{
   decode::Decode,
-  decode_owned_scalar, default_wire_format,
+  decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
-  encoded_state, flatten_state,
+  flatten_state,
   flavors::{
     Network,
     network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
@@ -147,7 +147,7 @@ default_wire_format!(
   SocketAddr as LengthDelimited;
 );
 selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
-encoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
+decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {

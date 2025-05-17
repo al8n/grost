@@ -1,11 +1,11 @@
 use crate::{
-  encoded_state, flatten_state,
+  decoded_state, flatten_state,
   flavors::{Network, network::LengthDelimited},
   selectable,
 };
 
 selectable!(@scalar Network:String);
-encoded_state!(
+decoded_state!(
   &'a Network: String as LengthDelimited => &'a str
 );
 flatten_state!(String);

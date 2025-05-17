@@ -8,7 +8,7 @@ use syn::{
 };
 
 use crate::ast::{
-  grost_flavor_generic,
+  grost_flavor_param,
   object::{Field, ObjectExt},
 };
 
@@ -137,7 +137,8 @@ where
   pub(super) fn derive_indexer(&self) -> proc_macro2::TokenStream {
     let name = self.indexer.name();
     let num_fields = self.fields().len();
-    let fg = grost_flavor_generic();
+    let fgp = grost_flavor_param();
+    let fg = &fgp.ident;
     let reflection_name = self.reflection.name();
     let path_to_grost = &self.path_to_grost;
 
@@ -148,9 +149,7 @@ where
     let struct_name = self.name();
     let (_, tg, w) = self.generics().split_for_impl();
     let mut generics = self.generics().clone();
-    generics.params.push(syn::GenericParam::Type(
-      syn::parse2(quote! { #fg: ?::core::marker::Sized }).unwrap(),
-    ));
+    generics.params.push(syn::GenericParam::Type(fgp.clone()));
     let (ig, _, _) = generics.split_for_impl();
 
     let prev = self.indexer.variants().windows(2).rev().map(|f| {

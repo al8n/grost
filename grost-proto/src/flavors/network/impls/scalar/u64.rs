@@ -3,16 +3,16 @@ use core::num::NonZeroU64;
 use crate::{
   buffer::Buffer,
   decode::Decode,
-  decode_owned_scalar, default_wire_format,
+  decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
-  encoded_state, flatten_state,
+  flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint},
   message, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u64 as Varint);
 selectable!(@scalar Network: u64, NonZeroU64);
-encoded_state!(@scalar &'a Network: u64 as Fixed64, NonZeroU64 as Fixed64, u64 as Varint, NonZeroU64 as Varint);
+decoded_state!(@scalar &'a Network: u64 as Fixed64, NonZeroU64 as Fixed64, u64 as Varint, NonZeroU64 as Varint);
 flatten_state!(u64, NonZeroU64);
 
 impl Encode<Network, Fixed64> for u64 {

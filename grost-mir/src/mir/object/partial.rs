@@ -241,6 +241,11 @@ where
     });
 
     let (ig, tg, where_clauses) = self.partial().generics().split_for_impl();
+    let flatten_state = super::derive_flatten_state(
+      &self.path_to_grost,
+      self.partial().generics(),
+      self.partial().name(),
+    );
 
     quote! {
       #[automatically_derived]
@@ -250,6 +255,8 @@ where
           Self::new()
         }
       }
+
+      #flatten_state
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]

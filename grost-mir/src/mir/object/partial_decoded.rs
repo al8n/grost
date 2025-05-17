@@ -1,17 +1,19 @@
 use std::num::NonZeroU32;
 
 use quote::{format_ident, quote};
-use syn::{Attribute, GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_quote};
+use syn::{
+  Attribute, GenericParam, Generics, Ident, Type, TypeParam, Visibility, parse::Parser, parse_quote,
+};
 
 use crate::ast::{
-  grost_flavor_generic, grost_lifetime, grost_unknown_buffer_generic,
+  grost_flavor_param, grost_lifetime, grost_unknown_buffer_param,
   object::{Field as _, ObjectExt as _},
 };
 
 use super::{super::wire_format_reflection_ty, Object};
 
 #[derive(Debug, Clone)]
-pub struct PartialRefField {
+pub struct PartialDecodedField {
   field: syn::Field,
   tag: NonZeroU32,
   wire: Type,
@@ -20,7 +22,7 @@ pub struct PartialRefField {
   copy: bool,
 }
 
-impl PartialRefField {
+impl PartialDecodedField {
   /// Returns the name of the field
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -70,21 +72,72 @@ impl PartialRefField {
   }
 }
 
+/// The generic parameters of the [`PartialDecodedObject`].
 #[derive(Debug, Clone)]
-pub struct PartialRefObject {
+struct PartialDecodedObjectGenerics {
+  generics: Generics,
+  lifetime: syn::Lifetime,
+  unknown_buffer_generic: TypeParam,
+  flavor_generic: TypeParam,
+}
+
+impl core::ops::Deref for PartialDecodedObjectGenerics {
+  type Target = Generics;
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    &self.generics
+  }
+}
+
+impl PartialDecodedObjectGenerics {
+  const fn new(
+    lifetime: syn::Lifetime,
+    flavor_generic: TypeParam,
+    unknown_buffer_generic: TypeParam,
+    generics: Generics,
+  ) -> Self {
+    Self {
+      generics,
+      lifetime,
+      flavor_generic,
+      unknown_buffer_generic,
+    }
+  }
+
+  /// Returns the lifetime generic parameter of the partial object.
+  #[inline]
+  pub const fn lifetime(&self) -> &syn::Lifetime {
+    &self.lifetime
+  }
+
+  /// Returns the unknown buffer generic parameter of the partial object.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    &self.unknown_buffer_generic
+  }
+
+  /// Returns the flavor generic parameter of the partial object.
+  #[inline]
+  pub const fn flavor_param(&self) -> &TypeParam {
+    &self.flavor_generic
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct PartialDecodedObject {
   parent_name: Ident,
   path_to_grost: syn::Path,
   name: Ident,
   vis: Visibility,
-  generics: Generics,
-  fields: Vec<PartialRefField>,
+  generics: PartialDecodedObjectGenerics,
+  fields: Vec<PartialDecodedField>,
   attrs: Vec<Attribute>,
-  unknown_buffer_generic: Ident,
   unknown_buffer_field_name: Ident,
   copy: bool,
 }
 
-impl PartialRefObject {
+impl PartialDecodedObject {
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
@@ -102,17 +155,35 @@ impl PartialRefObject {
 
   #[inline]
   pub const fn generics(&self) -> &Generics {
-    &self.generics
+    &self.generics.generics
   }
 
   #[inline]
-  pub fn fields(&self) -> &[PartialRefField] {
+  pub fn fields(&self) -> &[PartialDecodedField] {
     self.fields.as_slice()
   }
 
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
+  }
+
+  /// Returns the grost lifetime generic parameter of the partial object.
+  #[inline]
+  pub const fn lifetime(&self) -> &syn::Lifetime {
+    self.generics.lifetime()
+  }
+
+  /// Returns unknown buffer generic parameter of the partial object.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    self.generics.unknown_buffer_param()
+  }
+
+  /// Returns the flavor generic parameter of the partial object.
+  #[inline]
+  pub const fn flavor_param(&self) -> &TypeParam {
+    self.generics.flavor_param()
   }
 
   #[inline]
@@ -126,13 +197,13 @@ impl PartialRefObject {
   {
     let fields = input.fields();
     let meta = input.meta();
-    let copyable = meta.partial_ref().copy() | fields.iter().all(|f| f.meta().partial_ref().copy());
+    let copyable =
+      meta.partial_decoded().copy() | fields.iter().all(|f| f.meta().partial_decoded().copy());
     let reflection_name = input.reflection_name();
-    let fg = grost_flavor_generic();
-    let lt = grost_lifetime();
-    let ubg = grost_unknown_buffer_generic();
-
     let mut generics = Generics::default();
+    let lt = grost_lifetime();
+    let flavor_param = grost_flavor_param();
+    let unknown_buffer_param = grost_unknown_buffer_param();
     let original_generics = input.generics();
 
     // push the lifetime generic parameter first
@@ -159,13 +230,13 @@ impl PartialRefObject {
         .cloned(),
     );
 
-    generics.params.push(syn::GenericParam::Type(syn::parse2(
-      quote! { #fg: ?::core::marker::Sized },
-    )?));
+    generics
+      .params
+      .push(syn::GenericParam::Type(flavor_param.clone()));
 
     generics
       .params
-      .push(syn::GenericParam::Type(syn::parse2(quote! { #ubg })?));
+      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
 
     // push the original const generic parameters last
     generics.params.extend(
@@ -183,15 +254,18 @@ impl PartialRefObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
-    add_partial_ref_constraints(
+    add_partial_decoded_constraints(
       &mut generics,
       path_to_grost,
       &reflection_name,
       fields.iter().copied(),
-      &fg,
+      &flavor_param,
       &lt,
       copyable,
     )?;
+
+    let generics =
+      PartialDecodedObjectGenerics::new(lt, flavor_param, unknown_buffer_param, generics);
 
     let fields = fields
       .iter()
@@ -199,24 +273,34 @@ impl PartialRefObject {
         let ty = f.ty();
         let meta = f.meta();
         let tag = meta.tag();
-        let wf = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fg);
-        let encoded_state = encode_state_ty(path_to_grost, &wf, &fg, &lt);
+        let wf = wire_format_reflection_ty(
+          path_to_grost,
+          &reflection_name,
+          tag.get(),
+          generics.flavor_param(),
+        );
+        let decoded_state = decoded_state_ty(
+          path_to_grost,
+          &wf,
+          generics.flavor_param(),
+          generics.lifetime(),
+        );
         let vis = f.vis();
         let name = f.name();
-        let attrs = f.meta().partial_ref().attrs();
-        let output_type = syn::parse2(quote! { <#ty as #encoded_state>::Output })?;
+        let attrs = f.meta().partial_decoded().attrs();
+        let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
           #vis #name: ::core::option::Option<#output_type>
         })?;
 
-        Ok(PartialRefField {
+        Ok(PartialDecodedField {
           field,
           tag,
           object_type: ty.clone(),
           output_type,
           wire: wf,
-          copy: meta.partial_ref().copy() | copyable,
+          copy: meta.partial_decoded().copy() | copyable,
         })
       })
       .collect::<Result<Vec<_>, darling::Error>>()?;
@@ -224,13 +308,12 @@ impl PartialRefObject {
     Ok(Self {
       parent_name: input.name().clone(),
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-      unknown_buffer_generic: ubg,
       path_to_grost: path_to_grost.clone(),
-      name: input.partial_ref_name(),
+      name: input.partial_decoded_name(),
       vis: input.vis().clone(),
       generics,
       fields,
-      attrs: meta.partial_ref().attrs().to_vec(),
+      attrs: meta.partial_decoded().attrs().to_vec(),
       copy: copyable,
     })
   }
@@ -238,7 +321,7 @@ impl PartialRefObject {
   pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let name = self.name();
     let vis = self.vis();
-    let fields = self.fields().iter().map(PartialRefField::field);
+    let fields = self.fields().iter().map(PartialDecodedField::field);
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
     let attrs = self.attrs();
@@ -255,7 +338,7 @@ impl PartialRefObject {
       quote! {}
     };
     let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_generic;
+    let ubg = &self.unknown_buffer_param().ident;
 
     quote! {
       #(#attrs)*
@@ -274,9 +357,9 @@ impl<M> Object<M>
 where
   M: crate::ast::object::Object,
 {
-  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
-    let partial_ref_object = self.partial_ref();
-    let name = partial_ref_object.name();
+  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
+    let partial_decoded_object = self.partial_decoded();
+    let name = partial_decoded_object.name();
     let fields_init = self.fields.iter().map(|f| {
       let field_name = f.name();
       quote! {
@@ -284,15 +367,20 @@ where
       }
     });
 
-    let fields_accessors = partial_ref_object.fields.iter().map(|f| {
+    let fields_accessors = partial_decoded_object.fields.iter().map(|f| {
       let field_name = f.name();
       let ty = &f.output_type;
       super::accessors(field_name, ty, f.copy())
     });
 
-    let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
-    let ubfn = &partial_ref_object.unknown_buffer_field_name;
-    let ubg = &partial_ref_object.unknown_buffer_generic;
+    let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
+    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
+    let ubg = &partial_decoded_object.unknown_buffer_param().ident;
+    let flatten_state = super::derive_flatten_state(
+      &self.path_to_grost,
+      partial_decoded_object.generics(),
+      partial_decoded_object.name(),
+    );
 
     quote! {
       #[automatically_derived]
@@ -303,6 +391,8 @@ where
           Self::new()
         }
       }
+
+      #flatten_state
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -370,35 +460,37 @@ where
   }
 }
 
-fn encode_state_ty(
+fn decoded_state_ty(
   path_to_grost: &syn::Path,
   wf: &syn::Type,
-  flavor_generic: &syn::Ident,
+  flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
 ) -> syn::Type {
+  let flavor_ident = &flavor_param.ident;
   parse_quote! {
     #path_to_grost::__private::convert::State<
-      #path_to_grost::__private::convert::Encoded<
+      #path_to_grost::__private::convert::Decoded<
         #lifetime,
-        #flavor_generic,
-        <#wf as #path_to_grost::__private::reflection::Reflectable<#flavor_generic>>::Reflection,
+        #flavor_ident,
+        <#wf as #path_to_grost::__private::reflection::Reflectable<#flavor_ident>>::Reflection,
       >
     >
   }
 }
 
-fn add_partial_ref_constraints<'a, I>(
+fn add_partial_decoded_constraints<'a, I>(
   generics: &mut syn::Generics,
   path_to_grost: &syn::Path,
   field_reflection: &syn::Ident,
   mut fields: impl Iterator<Item = &'a I>,
-  flavor_generic: &syn::Ident,
+  flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
   copy: bool,
 ) -> darling::Result<()>
 where
   I: crate::ast::object::Field + 'a,
 {
+  let flavor_ident = &flavor_param.ident;
   fields.try_for_each(move |f| {
     let ty = f.ty();
     let meta = f.meta();
@@ -406,23 +498,23 @@ where
       path_to_grost,
       field_reflection,
       meta.tag().get(),
-      flavor_generic,
+      flavor_param,
     );
-    let encoded_state = encode_state_ty(path_to_grost, &wf, flavor_generic, lifetime);
+    let decoded_state = decoded_state_ty(path_to_grost, &wf, flavor_param, lifetime);
 
     let where_clause = generics.make_where_clause();
 
     let copy_constraint =
-      (f.meta().partial_ref().copy() || copy).then(|| quote! { + ::core::marker::Copy });
+      (f.meta().partial_decoded().copy() || copy).then(|| quote! { + ::core::marker::Copy });
 
     where_clause.predicates.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::reflection::Reflectable<#flavor_generic>
+      #wf: #path_to_grost::__private::reflection::Reflectable<#flavor_ident>
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
-      #ty: #encoded_state
+      #ty: #decoded_state
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
-      <#ty as #encoded_state>::Output: ::core::marker::Sized #copy_constraint
+      <#ty as #decoded_state>::Output: ::core::marker::Sized #copy_constraint
     })?);
 
     Ok(())

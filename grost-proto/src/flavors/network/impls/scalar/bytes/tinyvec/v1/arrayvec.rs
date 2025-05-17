@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  Encoded, Flatten, IntoTarget, Message, PartialMessage, State, TypeRef,
+  Decoded, Flatten, IntoTarget, Message, PartialMessage, State, TypeRef,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   flavors::{
@@ -129,7 +129,7 @@ where
 {
   type UnknownBuffer<B> = ();
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [A::Item]
   where
     Self: Sized + 'a;
@@ -145,7 +145,7 @@ where
     Self: Sized + 'static;
 }
 
-impl<'a, A> State<Encoded<'a, Network, LengthDelimited>> for ArrayVec<A>
+impl<'a, A> State<Decoded<'a, Network, LengthDelimited>> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
@@ -159,7 +159,7 @@ where
 {
   type Partial = Self;
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [A::Item]
   where
     Self: Sized + 'a;

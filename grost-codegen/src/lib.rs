@@ -140,7 +140,7 @@ impl SchemaGenerator {
 
         let object_impl = s.derive_object();
         let partial_object_impl = s.derive_partial_object(&self.grost_path);
-        let partial_ref_object_impl = s.derive_partial_ref_object(&self.grost_path);
+        let partial_decoded_object_impl = s.derive_partial_decoded_object(&self.grost_path);
 
         let indexer_impl = s.derive_indexer(&self.grost_path);
         let selector_impl = s.derive_selector(&self.grost_path);
@@ -157,7 +157,7 @@ impl SchemaGenerator {
           };
 
           const _: () = {
-            #partial_ref_object_impl
+            #partial_decoded_object_impl
           };
 
           const _: () = {
@@ -222,7 +222,7 @@ impl SchemaGenerator {
     let objects = self.structs.iter().map(|s| {
       let defination = s.generate_object();
       let partial_defination = s.generate_partial_object();
-      let partial_ref_generate_object = s.generate_partial_ref_object(&self.grost_path);
+      let partial_decoded_generate_object = s.generate_partial_decoded_object(&self.grost_path);
       let indexer = s.generate_indexer();
       let reflection_defination = s.generate_reflection();
       let selector = s.generate_selector(&self.grost_path);
@@ -233,7 +233,7 @@ impl SchemaGenerator {
 
         #partial_defination
 
-        #partial_ref_generate_object
+        #partial_decoded_generate_object
 
         #indexer
 
@@ -255,9 +255,9 @@ impl SchemaGenerator {
   // pub fn generate_struct(&self, struct_: &Object) -> Result<proc_macro2::TokenStream, Box<dyn core::error::Error + Send + Sync + 'static>> {
   //   let codec = self.flavors.iter().map(|(_, f)| {
   //     let codec = f.generate_struct_codec(&self.grost_path, struct_);
-  //     let partial_ref_defination = struct_.partial_ref_generate_object(&self.grost_path, f);
+  //     let partial_decoded_defination = struct_.partial_decoded_generate_object(&self.grost_path, f);
   //     quote! {
-  //       #partial_ref_defination
+  //       #partial_decoded_defination
   //       #codec
   //     }
   //   });
@@ -332,14 +332,14 @@ pub fn grost_lifetime() -> syn::Lifetime {
 /// Returns a generic parameter `__GROST_FLAVOR__`, which is used to represent
 /// the a flavor generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
-pub fn grost_flavor_generic() -> syn::Ident {
+pub fn grost_flavor_param() -> syn::Ident {
   quote::format_ident!("__GROST_FLAVOR__")
 }
 
 /// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
 /// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
 /// This is used to avoid conflicts with other generic parameters in the code.
-pub fn grost_unknown_buffer_generic() -> syn::Ident {
+pub fn grost_unknown_buffer_param() -> syn::Ident {
   quote::format_ident!("__GROST_UNKNOWN_BUFFER__")
 }
 

@@ -42,7 +42,7 @@ const _: () = {
           $ty $([ $(const $g: usize),* ])?
         );
 
-        $crate::encoded_state!(&'a Network:
+        $crate::decoded_state!(&'a Network:
           $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => &'a str
         );
 

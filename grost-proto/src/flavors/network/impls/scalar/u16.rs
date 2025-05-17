@@ -3,16 +3,16 @@ use core::num::NonZeroU16;
 use crate::{
   buffer::Buffer,
   decode::Decode,
-  decode_owned_scalar, default_wire_format,
+  decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
-  encoded_state, flatten_state,
+  flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
   message, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u16 as Varint);
 selectable!(@scalar Network: u16, NonZeroU16);
-encoded_state!(@scalar &'a Network: u16 as Fixed16, NonZeroU16 as Fixed16, u16 as Varint, NonZeroU16 as Varint);
+decoded_state!(@scalar &'a Network: u16 as Fixed16, NonZeroU16 as Fixed16, u16 as Varint, NonZeroU16 as Varint);
 flatten_state!(u16, NonZeroU16);
 
 impl Encode<Network, Fixed16> for u16 {

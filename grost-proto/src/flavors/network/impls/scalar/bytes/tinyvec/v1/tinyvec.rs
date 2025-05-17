@@ -1,12 +1,12 @@
 use tinyvec_1::TinyVec;
 
 use crate::{
-  default_wire_format, encoded_state, flatten_state,
+  decoded_state, default_wire_format, flatten_state,
   flavors::{Network, network::LengthDelimited},
 };
 
 default_wire_format!(Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited);
-encoded_state!(
+decoded_state!(
   &'a Network: TinyVec<[u8; N]> [const N: usize] as LengthDelimited => &'a [u8]
 );
 flatten_state!(TinyVec<[u8; N]> [const N: usize]);

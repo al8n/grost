@@ -18,16 +18,16 @@ pub trait State<S: ?Sized> {
 }
 
 /// A state which shows the type in encoded state.
-pub struct Encoded<'a, F: ?Sized, W: ?Sized> {
+pub struct Decoded<'a, F: ?Sized, W: ?Sized> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
 }
 
-impl<'a, F, W, T> State<Encoded<'a, F, W>> for &'a T
+impl<'a, F, W, T> State<Decoded<'a, F, W>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,
-  T: State<Encoded<'a, F, W>>,
+  T: State<Decoded<'a, F, W>>,
 {
   type Input = T::Input;
   type Output = T::Output;
@@ -110,7 +110,7 @@ pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F,
   /// A encoded representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and decoded from raw bytes.
-  type Encoded<'a>
+  type Decoded<'a>
   where
     Self: Sized + 'a;
 
@@ -133,7 +133,7 @@ pub trait PartialMessage<F: Flavor + ?Sized, W: WireFormat<F>>: PartialEncode<F,
 /// This trait defines how output types can be encoded, decoded,
 /// borrowed, and converted between different representations.
 ///
-/// * `Encoded<'a>` - A encoded representation with lifetime 'a
+/// * `Decoded<'a>` - A encoded representation with lifetime 'a
 /// * `Borrowed<'a>` - A borrowed view with lifetime 'a
 /// * `EncodedOwned` - An owned encoded representation
 pub trait Message<F: Flavor + ?Sized, W: WireFormat<F>>: Encode<F, W> {
@@ -143,7 +143,7 @@ pub trait Message<F: Flavor + ?Sized, W: WireFormat<F>>: Encode<F, W> {
   /// A encoded representation of this type with lifetime 'a.
   ///
   /// This type can be converted back to the original type and decoded from raw bytes.
-  type Encoded<'a>: Copy + TypeRef<F, Self> + Encode<F, W> + Decode<'a, F, W, Self::Encoded<'a>>
+  type Decoded<'a>: Copy + TypeRef<F, Self> + Encode<F, W> + Decode<'a, F, W, Self::Decoded<'a>>
   where
     Self: Sized + 'a;
 
@@ -257,9 +257,9 @@ where
 macro_rules! wrapper_impl {
   (@encoded_state $($ty:ty),+$(,)?) => {
     $(
-      impl<'a, F, W, T> State<Encoded<'a, F, W>> for $ty
+      impl<'a, F, W, T> State<Decoded<'a, F, W>> for $ty
       where
-        T: State<Encoded<'a, F, W>> + ?Sized,
+        T: State<Decoded<'a, F, W>> + ?Sized,
         F: ?Sized,
         W: ?Sized,
       {
@@ -365,7 +365,7 @@ macro_rules! wrapper_impl {
       impl<T, F, W> PartialMessage<F, W> for $ty
       where
         T: PartialMessage<F, W> + Clone + 'static,
-        for<'a> T::Encoded<'a>: TypeRef<F, $ty>,
+        for<'a> T::Decoded<'a>: TypeRef<F, $ty>,
         for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
         T::EncodedOwned: TypeOwned<F, $ty>,
         F: Flavor + ?Sized,
@@ -373,7 +373,7 @@ macro_rules! wrapper_impl {
       {
         type UnknownBuffer<B> = T::UnknownBuffer<B>;
 
-        type Encoded<'a> = T::Encoded<'a>;
+        type Decoded<'a> = T::Decoded<'a>;
         type Borrowed<'a> = T::Borrowed<'a>;
         type EncodedOwned = T::EncodedOwned;
       }
@@ -384,7 +384,7 @@ macro_rules! wrapper_impl {
       impl<T, F, W> Message<F, W> for $ty
       where
         T: Message<F, W> + Clone + 'static,
-        for<'a> T::Encoded<'a>: TypeRef<F, $ty>,
+        for<'a> T::Decoded<'a>: TypeRef<F, $ty>,
         for<'a> T::Borrowed<'a>: TypeBorrowed<'a, F, $ty>,
         T::EncodedOwned: TypeOwned<F, $ty>,
         F: Flavor + ?Sized,
@@ -392,7 +392,7 @@ macro_rules! wrapper_impl {
       {
         type Partial = T::Partial;
 
-        type Encoded<'a> = T::Encoded<'a>;
+        type Decoded<'a> = T::Decoded<'a>;
         type Borrowed<'a> = T::Borrowed<'a>;
         type EncodedOwned = T::EncodedOwned;
       }
@@ -406,9 +406,9 @@ wrapper_impl!(@type_owned Option<T>:Some);
 wrapper_impl!(@partial_message Option<T>);
 wrapper_impl!(@message Option<T>);
 
-impl<'a, F, W, T> State<Encoded<'a, F, W>> for Option<T>
+impl<'a, F, W, T> State<Decoded<'a, F, W>> for Option<T>
 where
-  T: State<Encoded<'a, F, W>>,
+  T: State<Decoded<'a, F, W>>,
   F: ?Sized,
   W: ?Sized,
 {

@@ -99,7 +99,7 @@ impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
 impl<const N: usize> PartialMessage<Network, LengthDelimited> for [u8; N] {
   type UnknownBuffer<B> = ();
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;
@@ -118,7 +118,7 @@ impl<const N: usize> PartialMessage<Network, LengthDelimited> for [u8; N] {
 impl<const N: usize> Message<Network, LengthDelimited> for [u8; N] {
   type Partial = Self;
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;

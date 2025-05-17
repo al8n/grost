@@ -30,7 +30,7 @@
 // // }
 
 // // fn encode_title_ref(
-// //   _: &<String as Message<Network, LengthDelimited>>::Encoded<'_>,
+// //   _: &<String as Message<Network, LengthDelimited>>::Decoded<'_>,
 // //   _: &Context,
 // //   _: &[u8],
 // // ) -> core::result::Result<usize, grost::flavors::network::EncodeError> {
@@ -57,7 +57,7 @@
 // //   for CommentReflection<CommentTitleField<EncodeReflection<EncodeRefField<'a>>>, Network>
 // // {
 // //   type Target = fn(
-// //     &<String as Message<Network, LengthDelimited>>::Encoded<'a>,
+// //     &<String as Message<Network, LengthDelimited>>::Decoded<'a>,
 // //     &Context,
 // //     &[u8],
 // //   ) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
@@ -65,7 +65,7 @@
 // //   fn deref(&self) -> &Self::Target {
 // //     #[allow(clippy::type_complexity)]
 // //     const ENCODE_FN: fn(
-// //       &<String as Message<Network, LengthDelimited>>::Encoded<'_>,
+// //       &<String as Message<Network, LengthDelimited>>::Decoded<'_>,
 // //       &Context,
 // //       &[u8],
 // //     ) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_title_ref;

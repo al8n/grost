@@ -17,8 +17,8 @@ pub mod field;
 
 mod index;
 
+mod partial_decoded_object;
 mod partial_object;
-mod partial_ref_object;
 mod reflection;
 mod selector;
 
@@ -195,7 +195,7 @@ impl Object {
     format_ident!("{}FieldIndex", self.name.name_str())
   }
 
-  pub fn partial_ref_name(&self) -> Ident {
+  pub fn partial_decoded_name(&self) -> Ident {
     format_ident!("Partial{}Ref", self.name.name_str())
   }
 

@@ -15,14 +15,14 @@ mod type_spec;
 
 /// The meta of the partial reference object field
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialRefFieldMeta {
+pub struct PartialDecodedFieldMeta {
   #[darling(default)]
   copy: bool,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl PartialRefFieldMeta {
+impl PartialDecodedFieldMeta {
   /// Returns the attributes of the partial reference object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
@@ -61,7 +61,7 @@ pub struct FieldMeta {
   #[darling(default)]
   partial: PartialFieldMeta,
   #[darling(default)]
-  partial_ref: PartialRefFieldMeta,
+  partial_decoded: PartialDecodedFieldMeta,
   #[darling(default)]
   selector: SelectorFieldMeta,
   #[darling(default)]
@@ -89,8 +89,8 @@ impl FieldMeta {
   }
 
   /// Returns the information about the partial reference object field
-  pub const fn partial_ref(&self) -> &PartialRefFieldMeta {
-    &self.partial_ref
+  pub const fn partial_decoded(&self) -> &PartialDecodedFieldMeta {
+    &self.partial_decoded
   }
 
   /// Returns whether the field type is copyable

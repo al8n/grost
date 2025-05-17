@@ -1,5 +1,5 @@
 use crate::{
-  bridge, default_wire_format, encoded_state, flatten_state,
+  bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed8, Network, Varint},
   selectable,
 };
@@ -7,7 +7,7 @@ use crate::{
 default_wire_format!(Network: bool as Fixed8);
 
 selectable!(@scalar Network:bool);
-encoded_state!(@scalar &'a Network: bool as Fixed8, bool as Varint);
+decoded_state!(@scalar &'a Network: bool as Fixed8, bool as Varint);
 flatten_state!(bool);
 bridge!(
   Network: u8 {

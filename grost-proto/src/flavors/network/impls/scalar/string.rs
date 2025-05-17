@@ -4,7 +4,7 @@ macro_rules! str_message {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type UnknownBuffer<B> = ();
 
-      type Encoded<'a> = &'a str
+      type Decoded<'a> = &'a str
         where
           Self: Sized + 'a;
 
@@ -20,7 +20,7 @@ macro_rules! str_message {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Partial = Self;
 
-      type Encoded<'a> = &'a str
+      type Decoded<'a> = &'a str
         where
           Self: Sized + 'a;
 
@@ -205,7 +205,7 @@ macro_rules! array_str {
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type UnknownBuffer<B> = ();
 
-      type Encoded<'a>
+      type Decoded<'a>
         = &'a ::core::primitive::str
       where
         Self: ::core::marker::Sized + 'a;
@@ -224,7 +224,7 @@ macro_rules! array_str {
     impl<const $g: ::core::primitive::usize> $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Partial = Self;
 
-      type Encoded<'a>
+      type Decoded<'a>
         = &'a ::core::primitive::str
       where
         Self: ::core::marker::Sized + 'a;
@@ -245,7 +245,7 @@ macro_rules! array_str {
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
 
-    $crate::encoded_state!(
+    $crate::decoded_state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a str
     );

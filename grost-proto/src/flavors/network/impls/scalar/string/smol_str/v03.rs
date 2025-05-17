@@ -1,7 +1,7 @@
 use crate::{
   Message, PartialMessage,
   decode::{Decode, DecodeOwned},
-  decode_bridge, default_wire_format, encode_bridge, encoded_state, flatten_state,
+  decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target, selectable, type_ref,
 };
@@ -28,7 +28,7 @@ decode_bridge!(
 );
 
 flatten_state!(SmolStr);
-encoded_state!(
+decoded_state!(
   &'a Network: SmolStr as LengthDelimited => &'a str
 );
 
@@ -70,7 +70,7 @@ impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
 impl PartialMessage<Network, LengthDelimited> for SmolStr {
   type UnknownBuffer<B> = ();
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a str
   where
     Self: Sized + 'a;
@@ -89,7 +89,7 @@ impl PartialMessage<Network, LengthDelimited> for SmolStr {
 impl Message<Network, LengthDelimited> for SmolStr {
   type Partial = Self;
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a str
   where
     Self: Sized + 'a;

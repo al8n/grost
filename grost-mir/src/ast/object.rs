@@ -29,7 +29,7 @@ impl PartialObjectMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialRefObjectMeta {
+pub struct PartialDecodedObjectMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
@@ -38,7 +38,7 @@ pub struct PartialRefObjectMeta {
   copy: bool,
 }
 
-impl PartialRefObjectMeta {
+impl PartialDecodedObjectMeta {
   /// Returns the name of the partial reference object
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -137,7 +137,7 @@ pub struct ObjectMeta {
   #[darling(default)]
   partial: PartialObjectMeta,
   #[darling(default)]
-  partial_ref: PartialRefObjectMeta,
+  partial_decoded: PartialDecodedObjectMeta,
   #[darling(default)]
   selector: SelectorMeta,
   #[darling(default)]
@@ -167,8 +167,8 @@ impl ObjectMeta {
   }
 
   /// Returns the partial reference object information
-  pub const fn partial_ref(&self) -> &PartialRefObjectMeta {
-    &self.partial_ref
+  pub const fn partial_decoded(&self) -> &PartialDecodedObjectMeta {
+    &self.partial_decoded
   }
 
   /// Returns the selector information
@@ -237,13 +237,13 @@ pub trait ObjectExt: Object {
   }
 
   #[inline]
-  fn partial_ref_name(&self) -> Ident {
+  fn partial_decoded_name(&self) -> Ident {
     self
       .meta()
-      .partial_ref()
+      .partial_decoded()
       .name()
       .cloned()
-      .unwrap_or_else(|| format_ident!("PartialRef{}", self.name()))
+      .unwrap_or_else(|| format_ident!("PartialDecoded{}", self.name()))
   }
 
   #[inline]

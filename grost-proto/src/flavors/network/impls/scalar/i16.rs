@@ -1,9 +1,9 @@
 use crate::{
   buffer::Buffer,
   decode::Decode,
-  decode_owned_scalar, default_wire_format,
+  decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
-  encoded_state, flatten_state,
+  flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
   message, partial_encode_scalar, selectable, try_from_bridge,
 };
@@ -11,7 +11,7 @@ use core::num::NonZeroI16;
 
 default_wire_format!(Network: i16 as Varint);
 selectable!(@scalar Network: i16, NonZeroI16);
-encoded_state!(@scalar &'a Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
+decoded_state!(@scalar &'a Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
 flatten_state!(i16, NonZeroI16);
 
 impl Encode<Network, Fixed16> for i16 {

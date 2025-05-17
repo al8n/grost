@@ -23,7 +23,7 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::encoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
@@ -38,7 +38,7 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::encoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
@@ -179,19 +179,19 @@ macro_rules! selectable {
   };
 }
 
-/// A macro emits basic [`State<Encoded<'_, Flavor, WireFormat>>`](super::State) implementations for `Self`
+/// A macro emits basic [`State<Decoded<'_, Flavor, WireFormat>>`](super::State) implementations for `Self`
 #[macro_export]
-macro_rules! encoded_state {
+macro_rules! decoded_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
-      impl<$lifetime, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Encoded<$lifetime, $flavor, $wf>> for $ty {
+      impl<$lifetime, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<$lifetime, $flavor, $wf>> for $ty {
         type Input = & $lifetime [u8];
         type Output = $target;
       }
     )*
   };
   (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::encoded_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+    $crate::decoded_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
   };
 }
 
@@ -328,7 +328,7 @@ macro_rules! message {
   (@impl) => {
     type Partial = Self;
 
-    type Encoded<'a>
+    type Decoded<'a>
       = Self
     where
       Self: ::core::marker::Sized + 'a;
@@ -346,7 +346,7 @@ macro_rules! message {
   (@impl_partial) => {
     type UnknownBuffer<B> = ();
 
-    type Encoded<'a>
+    type Decoded<'a>
       = Self
     where
       Self: ::core::marker::Sized + 'a;
@@ -1019,7 +1019,7 @@ macro_rules! network_zst {
       impl $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
         type UnknownBuffer<B> = ();
 
-        type Encoded<'a>
+        type Decoded<'a>
           = Self
         where
           Self: Sized + 'a;
@@ -1038,7 +1038,7 @@ macro_rules! network_zst {
       impl $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
         type Partial = Self;
 
-        type Encoded<'a>
+        type Decoded<'a>
           = Self
         where
           Self: Sized + 'a;
@@ -1265,7 +1265,7 @@ macro_rules! network_phantom {
       impl<T: ?::core::marker::Sized> $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
         type UnknownBuffer<B> = ();
 
-        type Encoded<'a>
+        type Decoded<'a>
           = Self
         where
           Self: Sized + 'a;
@@ -1284,7 +1284,7 @@ macro_rules! network_phantom {
       impl<T: ?::core::marker::Sized> $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
         type Partial = Self;
 
-        type Encoded<'a>
+        type Decoded<'a>
           = Self
         where
           Self: Sized + 'a;

@@ -7,42 +7,75 @@ mod sealed {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
-pub struct User<I: Sized> {
+pub struct User<I> {
   #[grost(
-    tag = 4,
+    tag = 1,
     schema(description = "The id of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     selector(select = "all"),
-    partial_ref(copy,),
-    default = sealed::default_user,
+    partial_decoded(copy,)
   )]
   id: I,
 
   #[grost(
-    tag = 1,
+    tag = 2,
     schema(description = "The nick name of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     selector(select = "all"),
-    partial_ref(copy,),
+    partial_decoded(copy,),
     default = sealed::default_user,
   )]
   name: String,
   #[grost(
-    tag = 2,
+    tag = 3,
     schema(description = "The age of the user"),
     wire = "grost::flavors::network::Varint",
     copy,
-    partial_ref(copy)
+    partial_decoded(copy)
   )]
   age: u8,
   #[grost(
-    tag = 3,
+    tag = 4,
     schema(description = "The email of the user"),
     wire = "grost::flavors::network::LengthDelimited",
-    partial_ref(copy),
+    partial_decoded(copy),
     optional(repeated)
   )]
   emails: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Object)]
+pub struct Comment<I> {
+  #[grost(
+    tag = 1,
+    schema(description = "The id of the comment"),
+    wire = "grost::flavors::network::LengthDelimited",
+    selector(select = "all"),
+    partial_decoded(copy,)
+  )]
+  id: I,
+  #[grost(
+    tag = 2,
+    schema(description = "The user who made the comment"),
+    wire = "grost::flavors::network::LengthDelimited",
+    partial_decoded(copy)
+  )]
+  user: User<I>,
+  #[grost(
+    tag = 2,
+    schema(description = "The replyers who reply the comment"),
+    wire = "grost::flavors::network::Repeated<grost::flavors::network::LengthDelimited>",
+    partial_decoded(copy),
+    repeated
+  )]
+  replyers: Vec<User<I>>,
+  #[grost(
+    tag = 4,
+    schema(description = "The content of the comment"),
+    wire = "grost::flavors::network::LengthDelimited",
+    partial_decoded(copy)
+  )]
+  content: String,
 }
 
 #[test]

@@ -5,7 +5,7 @@ use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
-pub use partial_ref::{PartialRefField, PartialRefObject};
+pub use partial_decoded::{PartialDecodedField, PartialDecodedObject};
 pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
@@ -16,7 +16,7 @@ use crate::ast::{
 
 mod indexer;
 mod partial;
-mod partial_ref;
+mod partial_decoded;
 mod reflection;
 mod selector;
 
@@ -133,7 +133,7 @@ where
   generics: Generics,
   fields: Vec<Field<M::Field>>,
   partial: PartialObject,
-  partial_ref: PartialRefObject,
+  partial_decoded: PartialDecodedObject,
   reflection: Reflection,
   selector: Selector,
   selector_iter: SelectorIter,
@@ -189,8 +189,8 @@ where
   }
 
   #[inline]
-  pub const fn partial_ref(&self) -> &PartialRefObject {
-    &self.partial_ref
+  pub const fn partial_decoded(&self) -> &PartialDecodedObject {
+    &self.partial_decoded
   }
 
   #[inline]
@@ -228,7 +228,7 @@ where
   pub fn from_object(input: M) -> darling::Result<Self> {
     let path_to_grost = input.path();
     let partial_object = PartialObject::from_input(path_to_grost, &input)?;
-    let partial_ref_object = PartialRefObject::from_input(path_to_grost, &input)?;
+    let partial_decoded_object = PartialDecodedObject::from_input(path_to_grost, &input)?;
     let selector = Selector::from_input(path_to_grost, &input)?;
     let selector_iter = selector.selector_iter(
       input.selector_iter_name(),
@@ -251,7 +251,7 @@ where
         .map(Field::from_input)
         .collect::<Result<Vec<_>, darling::Error>>()?,
       partial: partial_object,
-      partial_ref: partial_ref_object,
+      partial_decoded: partial_decoded_object,
       reflection,
       selector_iter,
       selector,
@@ -265,8 +265,12 @@ where
     let indexer_impl = self.derive_indexer();
     let selector_iter_impl = self.derive_selector_iter();
     let selector_impl = self.derive_selector();
-    let partial_ref_object_impl = self.derive_partial_ref_object();
+    let partial_decoded_object_impl = self.derive_partial_decoded_object();
     let partial_impl = self.derive_partial_object();
+
+    let path_to_grost = self.path();
+
+    let flatten_state = derive_flatten_state(path_to_grost, self.generics(), self.name());
 
     quote! {
       const _: () = {
@@ -278,9 +282,16 @@ where
 
         #selector_iter_impl
 
-        #partial_ref_object_impl
+        #partial_decoded_object_impl
 
         #partial_impl
+
+        // impl #prig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten> for #partial_decoded_object_name #prtg #prw {
+        //   type Input = Self;
+        //   type Output = Self;
+        // }
+
+        #flatten_state
       };
     }
   }
@@ -292,7 +303,7 @@ where
 {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let partial_object = self.partial().to_token_stream();
-    let partial_ref_object = self.partial_ref().to_token_stream();
+    let partial_decoded_object = self.partial_decoded().to_token_stream();
     let selector = self.selector().to_token_stream();
     let selector_iter = self.selector_iter().to_token_stream();
     let indexer = self.indexer().to_token_stream();
@@ -305,7 +316,7 @@ where
 
       #partial_object
 
-      #partial_ref_object
+      #partial_decoded_object
 
       #indexer
 
@@ -315,6 +326,32 @@ where
 
       #impls
     });
+  }
+}
+
+fn derive_flatten_state(
+  path_to_grost: &Path,
+  generics: &Generics,
+  name: &Ident,
+) -> proc_macro2::TokenStream {
+  let mut all_generics = generics.clone();
+  all_generics.params.push(
+    syn::parse2(quote! {
+      __GROST_FLATTEN_STATE__: ?::core::marker::Sized
+    })
+    .unwrap(),
+  );
+
+  let (ig, _, w) = all_generics.split_for_impl();
+  let (_, tg, _) = generics.split_for_impl();
+
+  quote! {
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
+    impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>> for #name #tg #w {
+      type Output = Self;
+      type Input = Self;
+    }
   }
 }
 

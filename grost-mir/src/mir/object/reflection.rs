@@ -5,7 +5,7 @@ use syn::{
 };
 
 use crate::ast::{
-  grost_flavor_generic,
+  grost_flavor_param,
   object::{Field, ObjectExt},
 };
 
@@ -101,7 +101,8 @@ where
     let reflection = self.reflection();
     let reflection_name = reflection.name();
     let name = self.name();
-    let fg = grost_flavor_generic();
+    let fgp = grost_flavor_param();
+    let fg = &fgp.ident;
     let (ig, tg, wc) = self.generics().split_for_impl();
     let field_reflection_fns = reflection.fields.iter().map(|f| {
       let field_name = f.ident.as_ref().unwrap();

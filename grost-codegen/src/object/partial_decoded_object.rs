@@ -1,18 +1,21 @@
 use quote::ToTokens;
 
-use crate::{grost_flavor_generic, grost_lifetime, grost_unknown_buffer_generic};
+use crate::{grost_flavor_param, grost_lifetime, grost_unknown_buffer_param};
 
 use super::*;
 
 impl Object {
   /// Generates a partial reference object of the object
-  pub fn generate_partial_ref_object(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
+  pub fn generate_partial_decoded_object(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> proc_macro2::TokenStream {
     let field_reflection = self.field_reflection_name();
-    let name = self.partial_ref_name();
+    let name = self.partial_decoded_name();
     let vis = self.visibility.as_ref();
     let lg = grost_lifetime();
-    let fg = grost_flavor_generic();
-    let ubg = grost_unknown_buffer_generic();
+    let fg = grost_flavor_param();
+    let ubg = grost_unknown_buffer_param();
     let where_clauses = constraints(path_to_grost, &field_reflection, self.fields(), &fg, &lg);
     let fields = self.fields.iter().map(|f| {
       let field_name = f.name();
@@ -39,8 +42,11 @@ impl Object {
   }
 
   /// Derives implementations for the partial reference object
-  pub fn derive_partial_ref_object(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-    let name = self.partial_ref_name();
+  pub fn derive_partial_decoded_object(
+    &self,
+    path_to_grost: &syn::Path,
+  ) -> proc_macro2::TokenStream {
+    let name = self.partial_decoded_name();
     let fields_init = self.fields.iter().map(|f| {
       let field_name = f.name();
       quote! {
@@ -48,8 +54,8 @@ impl Object {
       }
     });
     let field_reflection_name = self.field_reflection_name();
-    let ubg = grost_unknown_buffer_generic();
-    let fg = grost_flavor_generic();
+    let ubg = grost_unknown_buffer_param();
+    let fg = grost_flavor_param();
     let lg = grost_lifetime();
     let where_clauses = constraints(
       path_to_grost,
@@ -157,7 +163,7 @@ fn encode_state_ty(
 ) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::convert::State<
-      #path_to_grost::__private::convert::Encoded<
+      #path_to_grost::__private::convert::Decoded<
         #lifetime,
         #flavor_generic,
         <#wf as #path_to_grost::__private::reflection::Reflectable<#flavor_generic>>::Reflection,

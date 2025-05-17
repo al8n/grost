@@ -235,7 +235,7 @@ impl<const N: usize, L: LenType> TypeRef<Network, String<N, L>> for &str {
 impl<const N: usize, L: LenType> PartialMessage<Network> for String<N, L> {
   type UnknownBuffer<B> = ();
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a str
   where
     Self: Sized + 'a;
@@ -254,7 +254,7 @@ impl<const N: usize, L: LenType> PartialMessage<Network> for String<N, L> {
 impl<const N: usize, L: LenType> Message<Network> for String<N, L> {
   type Partial = Self;
 
-  type Encoded<'a>
+  type Decoded<'a>
     = &'a str
   where
     Self: Sized + 'a;
