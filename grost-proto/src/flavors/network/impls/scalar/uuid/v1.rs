@@ -3,12 +3,17 @@ use uuid_1::Uuid;
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed128, Network, Varint},
-  selectable,
+  reflection::Type,
+  schema_type_reflection, selectable,
 };
 
 selectable!(@scalar Network:Uuid);
 decoded_state!(@scalar &'a Network: Uuid as Fixed128, Uuid as Varint);
 flatten_state!(Uuid);
+schema_type_reflection! {
+  Network:
+    Uuid => Type::scalar("Uuid", "Universally Unique Identifier (UUID)."),
+}
 
 bridge!(
   Network: u128 {

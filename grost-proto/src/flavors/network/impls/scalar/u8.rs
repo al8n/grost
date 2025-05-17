@@ -7,13 +7,20 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed8, Network, Unknown, Varint},
-  message, partial_encode_scalar, selectable, try_from_bridge,
+  message, partial_encode_scalar,
+  reflection::Type,
+  schema_type_reflection, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u8 as Fixed8);
 selectable!(@scalar Network: u8, NonZeroU8);
 decoded_state!(@scalar &'a Network: u8 as Fixed8, NonZeroU8 as Fixed8, u8 as Varint, NonZeroU8 as Varint);
 flatten_state!(u8, NonZeroU8);
+schema_type_reflection! {
+  Network:
+    u8 => Type::scalar("u8", "8-bit unsigned integer"),
+    NonZeroU8 => Type::scalar("NonZeroU8", "Non-zero 8-bit unsigned integer"),
+}
 
 impl Encode<Network, Fixed8> for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

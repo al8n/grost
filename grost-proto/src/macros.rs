@@ -195,6 +195,22 @@ macro_rules! decoded_state {
   };
 }
 
+/// A macro emits [`impl Reflectable<Flavor> for SchemaTypeReflection<Self>`](super::reflection::Reflectable) implementations for `Self`
+#[macro_export]
+macro_rules! schema_type_reflection {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $expr:expr),+$(,)?) => {
+    $(
+      impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::reflection::Reflectable<$flavor> for $crate::__private::reflection::SchemaTypeReflection<$ty> {
+        type Reflection = $crate::__private::reflection::Type<$flavor>;
+
+        const REFLECTION: &Self::Reflection = &{
+          $expr
+        };
+      }
+    )*
+  };
+}
+
 /// A macro emits basic [`State<Flatten<Base>>`](super::State) implementations for `Self`
 #[macro_export]
 macro_rules! flatten_state {

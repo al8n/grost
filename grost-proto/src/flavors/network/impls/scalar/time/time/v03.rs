@@ -1,5 +1,13 @@
 use time_0_3::{Date, Duration, PrimitiveDateTime, UtcDateTime};
 
-use crate::network_varint;
+use crate::{flavors::Network, network_varint, reflection::Type, schema_type_reflection};
 
 network_varint!(Date, Duration, UtcDateTime, PrimitiveDateTime,);
+
+schema_type_reflection! {
+  Network:
+    Date => Type::scalar("Date", "Date in the proleptic Gregorian calendar."),
+    Duration => Type::duration(),
+    UtcDateTime => Type::utc(),
+    PrimitiveDateTime => Type::scalar("PrimitiveDateTime", "Combined date and time"),
+}

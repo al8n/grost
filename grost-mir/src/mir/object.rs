@@ -10,7 +10,8 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  object::{Field as _, ObjectExt as _, TypeSpecification}, SchemaMeta
+  SchemaMeta,
+  object::{Field as _, ObjectExt as _, TypeSpecification},
 };
 
 mod indexer;
@@ -312,9 +313,12 @@ where
         .unwrap(),
       );
     });
-    
+
     if let Some(ref where_clause) = original_generics.where_clause {
-      generics.make_where_clause().predicates.extend(where_clause.predicates.iter().cloned());
+      generics
+        .make_where_clause()
+        .predicates
+        .extend(where_clause.predicates.iter().cloned());
     }
 
     let (_, _, w) = generics.split_for_impl();
@@ -323,7 +327,7 @@ where
       let field_name = f.name();
       let default = match f.default() {
         Some(p) => quote! { #p() },
-        None => quote!{ ::core::default::Default::default() },
+        None => quote! { ::core::default::Default::default() },
       };
 
       quote! {
@@ -356,9 +360,10 @@ where
   }
 
   fn derive_accessors(&self) -> proc_macro2::TokenStream {
-    let fns = self.fields.iter().map(|f| {
-      accessors(f.name(), f.ty(), f.copy())
-    });
+    let fns = self
+      .fields
+      .iter()
+      .map(|f| accessors(f.name(), f.ty(), f.copy()));
     let (ig, tg, w) = self.generics().split_for_impl();
     let name = self.name();
 
@@ -468,7 +473,6 @@ fn accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStr
     }
   }
 }
-
 
 fn optional_accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStream {
   let ref_fn = format_ident!("{}_ref", field_name);

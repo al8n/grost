@@ -5,6 +5,8 @@ use crate::{
   encode::Encode,
   flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
   partial_encode_scalar,
+  reflection::Type,
+  schema_type_reflection,
   selector::Selectable,
 };
 
@@ -15,6 +17,11 @@ impl Selectable<Network, LengthDelimited> for [u8] {
 }
 
 decoded_state!(&'a Network: [u8] as LengthDelimited => &'a [u8]);
+
+schema_type_reflection! {
+  Network:
+    [u8] => Type::bytes(),
+}
 
 impl Encode<Network, LengthDelimited> for [u8] {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

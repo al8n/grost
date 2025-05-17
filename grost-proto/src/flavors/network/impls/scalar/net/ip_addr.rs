@@ -11,7 +11,9 @@ use crate::{
       Context, DecodeError, EncodeError, Fixed32, Fixed128, LengthDelimited, Unknown, Varint,
     },
   },
-  partial_encode_scalar, selectable,
+  partial_encode_scalar,
+  reflection::Type,
+  schema_type_reflection, selectable,
 };
 
 macro_rules! ip_addr {
@@ -155,7 +157,12 @@ selectable!(@scalar Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 decoded_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
-
+schema_type_reflection! {
+  Network:
+    Ipv4Addr => Type::scalar("Ipv4", "IPv4 address"),
+    Ipv6Addr => Type::scalar("Ipv6", "IPv6 address"),
+    IpAddr => Type::scalar("Ip", "IP address"),
+}
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
 const IPV4_TAG: u8 = 4;

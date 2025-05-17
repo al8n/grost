@@ -65,7 +65,7 @@ mod struct_;
 /// The type in the Graph protocol schema
 #[derive(Debug)]
 pub enum Type<F: Flavor + ?Sized> {
-  Primitive {
+  Scalar {
     name: &'static str,
     description: &'static str,
   },
@@ -89,6 +89,33 @@ impl<F: Flavor + ?Sized> Clone for Type<F> {
 
 impl<F: Flavor + ?Sized> Copy for Type<F> {}
 
+impl<F: Flavor + ?Sized> Type<F> {
+  /// Construct a scalar type
+  pub const fn scalar(name: &'static str, description: &'static str) -> Self {
+    Self::Scalar { name, description }
+  }
+
+  /// Creates a string schema type
+  pub const fn string() -> Self {
+    Self::scalar("string", "A string")
+  }
+
+  /// Creates a bytes schema type
+  pub const fn bytes() -> Self {
+    Self::scalar("bytes", "A bytes")
+  }
+
+  /// Creates a boolean schema type
+  pub const fn duration() -> Self {
+    Self::scalar("Duration", "A duration")
+  }
+
+  /// Creates a UTC schema type
+  pub const fn utc() -> Self {
+    Self::scalar("Utc", "A UTC")
+  }
+}
+
 phantom!(
   /// Reflection to the identifier of a field
   IdentifierReflection,
@@ -101,7 +128,9 @@ phantom!(
   /// Reflection to the wire type of a field
   WireTypeReflection,
   /// Reflection to length related
-  Len
+  Len,
+  /// Reflection to the schema type
+  SchemaTypeReflection,
 );
 
 zst!(
@@ -115,6 +144,16 @@ pub trait Reflectable<F: ?Sized> {
 
   /// The reflection of this type
   const REFLECTION: &Self::Reflection;
+}
+
+impl<T, F: ?Sized> Reflectable<F> for SchemaTypeReflection<&T>
+where
+  SchemaTypeReflection<T>: Reflectable<F>,
+{
+  type Reflection = <SchemaTypeReflection<T> as Reflectable<F>>::Reflection;
+
+  const REFLECTION: &'static Self::Reflection =
+    <SchemaTypeReflection<T> as Reflectable<F>>::REFLECTION;
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].

@@ -32,6 +32,44 @@ macro_rules! str_message {
         where
           Self: Sized + 'static;
     }
+
+    $crate::schema_type_reflection! {
+      $crate::__private::flavors::Network:
+        $ty => $crate::__private::reflection::Type::string(),
+    }
+  };
+  (@without_type_reflection $ty:ty => $owned_ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
+      type UnknownBuffer<B> = ();
+
+      type Decoded<'a> = &'a str
+        where
+          Self: Sized + 'a;
+
+      type Borrowed<'a> = &'a Self
+        where
+          Self: 'a;
+
+      type EncodedOwned = $owned_ty
+        where
+          Self: Sized + 'static;
+    }
+
+    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
+      type Partial = Self;
+
+      type Decoded<'a> = &'a str
+        where
+          Self: Sized + 'a;
+
+      type Borrowed<'a> = &'a Self
+        where
+          Self: 'a;
+
+      type EncodedOwned = $owned_ty
+        where
+          Self: Sized + 'static;
+    }
   };
 }
 
@@ -251,6 +289,11 @@ macro_rules! array_str {
     );
 
     $crate::flatten_state!($ty [const N: usize]);
+
+    $crate::schema_type_reflection! {
+      $crate::__private::flavors::Network:
+        $ty [const N: usize] => $crate::__private::reflection::Type::string(),
+    }
   };
 }
 

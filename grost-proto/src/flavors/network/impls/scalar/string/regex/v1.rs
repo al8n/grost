@@ -9,7 +9,9 @@ const _: () = {
       Network,
       network::{DecodeError, LengthDelimited},
     },
-    into_target, type_owned, type_ref,
+    into_target,
+    reflection::Type,
+    schema_type_reflection, type_owned, type_ref,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -48,7 +50,7 @@ const _: () = {
 
         $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);
 
-        str_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);
+        str_message!(@without_type_reflection $ty => $owned_ty $([ $(const $g: usize),* ])?);
       )*
     };
   }
@@ -98,4 +100,10 @@ const _: () = {
     Regex as LengthDelimited;
     BytesRegex as LengthDelimited;
   );
+
+  schema_type_reflection! {
+    Network:
+      Regex => Type::scalar("regex", "Regular expression"),
+      BytesRegex => Type::scalar("BytesRegex", "Bytes regular expression"),
+  }
 };

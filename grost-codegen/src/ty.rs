@@ -250,68 +250,68 @@ impl Ty {
     &self.repr
   }
 
-  // TODO(al8n): remove this fn, because we can do this by Reflectable trait
-  pub(crate) fn to_type_reflection<F>(
-    &self,
-    path_to_grost: &syn::Path,
-    flavor: &F,
-  ) -> proc_macro2::TokenStream
-  where
-    F: super::FlavorGenerator + ?Sized,
-  {
-    let flavor_ty = flavor.ty();
-    match &self.repr {
-      TyRepr::Primitive(ty) => {
-        let description = self.description().unwrap_or_default();
-        let name = self.schema_type();
+  // // TODO(al8n): remove this fn, because we can do this by Reflectable trait
+  // pub(crate) fn to_type_reflection<F>(
+  //   &self,
+  //   path_to_grost: &syn::Path,
+  //   flavor: &F,
+  // ) -> proc_macro2::TokenStream
+  // where
+  //   F: super::FlavorGenerator + ?Sized,
+  // {
+  //   let flavor_ty = flavor.ty();
+  //   match &self.repr {
+  //     TyRepr::Primitive(ty) => {
+  //       let description = self.description().unwrap_or_default();
+  //       let name = self.schema_type();
 
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Primitive {
-            name: #name,
-            description: #description,
-          }
-        }
-      }
-      TyRepr::List { ty, item } => {
-        let inner = item.to_type_reflection(path_to_grost, flavor);
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::List(&#inner)
-        }
-      }
-      TyRepr::Map { ty, key, value } => {
-        let inner_key = key.to_type_reflection(path_to_grost, flavor);
-        let inner_value = value.to_type_reflection(path_to_grost, flavor);
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Map {
-            key: &#inner_key,
-            value: &#inner_value,
-          }
-        }
-      }
-      TyRepr::Enum(ty) => {
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
-        }
-      }
-      TyRepr::Object(ty) => {
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Object(<
-            #ty as #path_to_grost::__private::reflection::Reflectable<
-              #flavor_ty,
-            >
-          >::REFLECTION)
-        }
-      }
-      TyRepr::Union(_) => todo!(),
-      TyRepr::Interface(_) => todo!(),
-      TyRepr::Optional(ty) => {
-        let inner = ty.to_type_reflection(path_to_grost, flavor);
-        quote! {
-          #path_to_grost::__private::reflection::Type::<#flavor_ty>::Optional(&#inner)
-        }
-      }
-    }
-  }
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Primitive {
+  //           name: #name,
+  //           description: #description,
+  //         }
+  //       }
+  //     }
+  //     TyRepr::List { ty, item } => {
+  //       let inner = item.to_type_reflection(path_to_grost, flavor);
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::List(&#inner)
+  //       }
+  //     }
+  //     TyRepr::Map { ty, key, value } => {
+  //       let inner_key = key.to_type_reflection(path_to_grost, flavor);
+  //       let inner_value = value.to_type_reflection(path_to_grost, flavor);
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Map {
+  //           key: &#inner_key,
+  //           value: &#inner_value,
+  //         }
+  //       }
+  //     }
+  //     TyRepr::Enum(ty) => {
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
+  //       }
+  //     }
+  //     TyRepr::Object(ty) => {
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Object(<
+  //           #ty as #path_to_grost::__private::reflection::Reflectable<
+  //             #flavor_ty,
+  //           >
+  //         >::REFLECTION)
+  //       }
+  //     }
+  //     TyRepr::Union(_) => todo!(),
+  //     TyRepr::Interface(_) => todo!(),
+  //     TyRepr::Optional(ty) => {
+  //       let inner = ty.to_type_reflection(path_to_grost, flavor);
+  //       quote! {
+  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Optional(&#inner)
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 impl ToTokens for Ty {

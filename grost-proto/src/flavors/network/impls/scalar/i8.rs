@@ -1,7 +1,8 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{DecodeError, Fixed8, Network, Varint},
-  selectable, try_from_bridge,
+  reflection::Type,
+  schema_type_reflection, selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
 
@@ -9,6 +10,11 @@ default_wire_format!(Network: i8 as Fixed8);
 selectable!(@scalar Network:i8, NonZeroI8);
 decoded_state!(@scalar &'a Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
 flatten_state!(i8, NonZeroI8);
+schema_type_reflection! {
+  Network:
+    i8 => Type::scalar("i8", "8-bit signed integer"),
+    NonZeroI8 => Type::scalar("NonZeroI8", "Non-zero 8-bit signed integer"),
+}
 
 bridge!(
   Network: u8 {

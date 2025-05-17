@@ -1,4 +1,4 @@
-use grost_codegen::parser::Object;
+use grost_codegen::Object;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
