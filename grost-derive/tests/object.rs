@@ -80,7 +80,7 @@ pub struct Comment<I> {
 
 #[test]
 fn t() {
-  // let user = PartialUser {
+  // let user = PartialDecodedUser {
   //   age: Some(1),
   //   name: Some("user".to_string()),
   //   emails: None,

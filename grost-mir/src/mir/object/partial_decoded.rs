@@ -129,6 +129,7 @@ pub struct PartialDecodedObject {
   parent_name: Ident,
   path_to_grost: syn::Path,
   name: Ident,
+  ty: Type,
   vis: Visibility,
   generics: PartialDecodedObjectGenerics,
   fields: Vec<PartialDecodedField>,
@@ -138,9 +139,61 @@ pub struct PartialDecodedObject {
 }
 
 impl PartialDecodedObject {
+  /// Returns the name of the decoded object.
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
+  }
+
+  /// Returns the type of the partial object.
+  /// 
+  /// e.g. if the [`name`](PartialDecodedObject::name) returns `PartialDecodedUser`, the type will be `PartialDecodedUser<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>`.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns a type which replace the corresponding generic parameters with the given lifetime or concrete types.
+  /// 
+  /// e.g. if the [`name`](PartialDecodedObject::name) returns `PartialDecodedUser`,
+  /// and the given flavor type is `grost::flavors::Network` and the given unknown buffer type is `()`,
+  /// the output type will be `PartialDecodedUser<'__grost_lifetime__, grost::flavors::Network, ()>`.
+  pub fn type_with(
+    &self,
+    lifetime: Option<&syn::Lifetime>,
+    flavor: Option<&Type>,
+    unknown_buffer: Option<&Type>,
+  ) -> syn::Result<Type> {
+    let iter = self.generics.params.iter().map(|param| {
+      match param {
+        GenericParam::Lifetime(lt) if lt.lifetime.eq(self.lifetime()) && lifetime.is_some() => {
+          quote! { #lifetime }
+        },
+        GenericParam::Lifetime(lt) => {
+          let lt = &lt.lifetime;
+          quote! { #lt }
+        },
+        GenericParam::Type(tp) if tp.ident == self.generics.flavor_param().ident && flavor.is_some() => {
+          quote! { #flavor }
+        }
+        GenericParam::Type(tp) if tp.ident == self.generics.unknown_buffer_param().ident && unknown_buffer.is_some() => {
+          quote! { #unknown_buffer }
+        }
+        GenericParam::Type(tp) => {
+          let ident = &tp.ident;
+          quote! { #ident }
+        },
+        GenericParam::Const(cp) => {
+          let ident = &cp.ident;
+          quote! { #ident }
+        },
+      }
+    });
+
+    let name = self.name();
+    syn::parse2(quote! {
+      #name <#(#iter),*>
+    })
   }
 
   #[inline]
@@ -153,6 +206,7 @@ impl PartialDecodedObject {
     &self.vis
   }
 
+  /// Returns the default generic parameters of the partial object.
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics.generics
@@ -305,11 +359,16 @@ impl PartialDecodedObject {
       })
       .collect::<Result<Vec<_>, darling::Error>>()?;
 
+    let name = input.partial_decoded_name();
+    let (_, tg, _) = generics.split_for_impl();
     Ok(Self {
       parent_name: input.name().clone(),
+      ty: syn::parse2(quote! {
+        #name #tg
+      })?,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
       path_to_grost: path_to_grost.clone(),
-      name: input.partial_decoded_name(),
+      name,
       vis: input.vis().clone(),
       generics,
       fields,
