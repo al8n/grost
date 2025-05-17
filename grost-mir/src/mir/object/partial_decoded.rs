@@ -429,7 +429,7 @@ where
     let fields_accessors = partial_decoded_object.fields.iter().map(|f| {
       let field_name = f.name();
       let ty = &f.output_type;
-      super::accessors(field_name, ty, f.copy())
+      super::optional_accessors(field_name, ty, f.copy())
     });
 
     let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();

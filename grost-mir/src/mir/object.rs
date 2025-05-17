@@ -10,8 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  SchemaMeta,
-  object::{ObjectExt as _, TypeSpecification},
+  object::{Field as _, ObjectExt as _, TypeSpecification}, SchemaMeta
 };
 
 mod indexer;
@@ -101,7 +100,7 @@ impl<M> Field<M> {
     &self.meta
   }
 
-  fn from_input(input: M) -> darling::Result<Self>
+  fn from_input(input: M, copy: bool) -> darling::Result<Self>
   where
     M: crate::ast::object::Field,
   {
@@ -113,7 +112,7 @@ impl<M> Field<M> {
       tag: meta.tag(),
       specification: meta.type_specification().cloned(),
       attrs: meta.partial().attrs().to_vec(),
-      copy: meta.copy(),
+      copy,
       schema: meta.schema().clone(),
       default: meta.default().cloned(),
       wire: meta.wire().cloned(),
@@ -248,7 +247,10 @@ where
         .fields()
         .into_iter()
         .cloned()
-        .map(Field::from_input)
+        .map(|f| {
+          let copy = input.meta().copy() | f.meta().copy();
+          Field::from_input(f, copy)
+        })
         .collect::<Result<Vec<_>, darling::Error>>()?,
       partial: partial_object,
       partial_decoded: partial_decoded_object,
@@ -269,8 +271,9 @@ where
     let partial_impl = self.derive_partial_object();
 
     let path_to_grost = self.path();
-
     let flatten_state = derive_flatten_state(path_to_grost, self.generics(), self.name());
+    let accessors = self.derive_accessors();
+    let default = self.derive_default();
 
     quote! {
       const _: () = {
@@ -286,13 +289,85 @@ where
 
         #partial_impl
 
-        // impl #prig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten> for #partial_decoded_object_name #prtg #prw {
-        //   type Input = Self;
-        //   type Output = Self;
-        // }
+        #default
 
         #flatten_state
+
+        #accessors
       };
+    }
+  }
+
+  fn derive_default(&self) -> proc_macro2::TokenStream {
+    let name = self.name();
+    let mut generics = Generics::default();
+    let original_generics = self.generics();
+
+    original_generics.type_params().for_each(|tp| {
+      let ident = &tp.ident;
+      generics.make_where_clause().predicates.push(
+        syn::parse2(quote! {
+          #ident: ::core::default::Default
+        })
+        .unwrap(),
+      );
+    });
+    
+    if let Some(ref where_clause) = original_generics.where_clause {
+      generics.make_where_clause().predicates.extend(where_clause.predicates.iter().cloned());
+    }
+
+    let (_, _, w) = generics.split_for_impl();
+    let (ig, tg, _) = original_generics.split_for_impl();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let default = match f.default() {
+        Some(p) => quote! { #p() },
+        None => quote!{ ::core::default::Default::default() },
+      };
+
+      quote! {
+        #field_name: #default
+      }
+    });
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::default::Default for #name #tg #w
+      {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #w {
+        /// Creates a new instance with default values.
+        #[inline]
+        pub fn new() -> Self {
+          Self {
+            #(#fields),*
+          }
+        }
+      }
+    }
+  }
+
+  fn derive_accessors(&self) -> proc_macro2::TokenStream {
+    let fns = self.fields.iter().map(|f| {
+      accessors(f.name(), f.ty(), f.copy())
+    });
+    let (ig, tg, w) = self.generics().split_for_impl();
+    let name = self.name();
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #w {
+        #(#fns)*
+      }
     }
   }
 }
@@ -356,6 +431,46 @@ fn derive_flatten_state(
 }
 
 fn accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStream {
+  let ref_fn = format_ident!("{}_ref", field_name);
+  let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
+  let ref_mut_fn = format_ident!("{}_mut", field_name);
+  let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+  let set_fn = format_ident!("set_{}", field_name);
+  let set_fn_doc = format!(" Set the `{field_name}` to the given value");
+  let with_fn = format_ident!("with_{}", field_name);
+  let constable = copy.then(|| quote! { const });
+
+  quote! {
+    #[doc = #ref_fn_doc]
+    #[inline]
+    pub const fn #ref_fn(&self) -> &#ty {
+      &self.#field_name
+    }
+
+    #[doc = #ref_mut_fn_doc]
+    #[inline]
+    pub const fn #ref_mut_fn(&mut self) -> &mut #ty {
+      &mut self.#field_name
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+      self.#field_name = value;
+      self
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    pub #constable fn #with_fn(mut self, value: #ty) -> Self {
+      self.#field_name = value;
+      self
+    }
+  }
+}
+
+
+fn optional_accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStream {
   let ref_fn = format_ident!("{}_ref", field_name);
   let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
   let ref_mut_fn = format_ident!("{}_mut", field_name);

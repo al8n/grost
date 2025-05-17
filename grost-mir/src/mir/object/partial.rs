@@ -237,7 +237,7 @@ where
     let fields_accessors = self.partial().fields().iter().map(|f| {
       let field_name = f.name();
       let output_type = &f.output_type;
-      super::accessors(field_name, output_type, f.copy())
+      super::optional_accessors(field_name, output_type, f.copy())
     });
 
     let (ig, tg, where_clauses) = self.partial().generics().split_for_impl();

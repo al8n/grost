@@ -420,7 +420,7 @@ impl<T> State<Flatten> for Option<T>
 where
   T: State<Flatten>,
 {
-  type Input = T::Input;
+  type Input = Self;
   type Output = T::Output;
 }
 
