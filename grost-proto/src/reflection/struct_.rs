@@ -62,7 +62,7 @@ pub struct ObjectFieldReflectionBuilder<F: Flavor + ?Sized> {
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
   pub schema_name: &'static str,
-  pub schema_type: Type<F>,
+  pub schema_type: &'static Type<F>,
   pub identifier: F::Identifier,
 }
 
@@ -87,7 +87,7 @@ pub struct ObjectFieldReflection<F: Flavor + ?Sized> {
   #[debug("{}", (self.ty)())]
   ty: fn() -> &'static str,
   schema_name: &'static str,
-  schema_type: Type<F>,
+  schema_type: &'static Type<F>,
   identifier: F::Identifier,
 }
 
@@ -124,8 +124,8 @@ impl<F: Flavor> ObjectFieldReflection<F> {
   ///
   /// This will returns the type in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_type(&self) -> &Type<F> {
-    &self.schema_type
+  pub const fn schema_type(&self) -> &'static Type<F> {
+    self.schema_type
   }
 
   /// Get the identifier of the field

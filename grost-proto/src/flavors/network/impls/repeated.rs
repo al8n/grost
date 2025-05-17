@@ -451,6 +451,23 @@ macro_rules! impl_selectable {
 
 macro_rules! repeated {
   ($ty:ty) => {
+    impl<V> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    where
+      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+    {
+      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+
+      const REFLECTION: &'static Self::Reflection = {
+        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        } else {
+          &$crate::__private::reflection::Type::List(
+            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+          )
+        }
+      };
+    }
+
     repeated_impl!(
       @fixed $ty:
       $crate::__private::flavors::network::Fixed8,
@@ -524,6 +541,24 @@ macro_rules! repeated {
       ]
     );
 
+    impl<V, A> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    where
+      A: $trait<Item = V>,
+      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+    {
+      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+
+      const REFLECTION: &'static Self::Reflection = {
+        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        } else {
+          &$crate::__private::reflection::Type::List(
+            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+          )
+        }
+      };
+    }
+
     impl<V, A, W: ?::core::marker::Sized, const I: ::core::primitive::u32> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
       V: $crate::__private::Selectable<$crate::__private::flavors::Network, W>,
@@ -576,6 +611,23 @@ macro_rules! repeated {
         $crate::__private::flavors::network::LengthDelimited,
       ]
     );
+
+    impl<V, const N: usize> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    where
+      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+    {
+      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+
+      const REFLECTION: &'static Self::Reflection = {
+        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        } else {
+          &$crate::__private::reflection::Type::List(
+            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+          )
+        }
+      };
+    }
 
     impl<V, W: ?::core::marker::Sized, const I: ::core::primitive::u32, const N: usize> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where

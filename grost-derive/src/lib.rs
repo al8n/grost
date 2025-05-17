@@ -1,4 +1,4 @@
-use grost_codegen::Object;
+use grost_codegen::{FlavorGenerator, Object, SchemaGeneratorBuilder, network::Network};
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
@@ -11,9 +11,19 @@ pub fn object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     Err(e) => return e.write_errors().into(),
   };
 
-  let definations = object.derive_defination();
+  let network = Network::new(object.path());
+  let mut builder = SchemaGeneratorBuilder::new();
+  let Ok(_) = builder.add_flavor(network.name(), network) else {
+    panic!("failed to add flavor");
+  };
+  builder.objects_mut().insert(object);
+  let generator = builder.build();
+  let codegen = match generator.derive() {
+    Ok(codegen) => codegen,
+    Err(e) => return e.into_compile_error().into(),
+  };
   quote!(
-    #definations
+    #codegen
   )
   .into()
 }

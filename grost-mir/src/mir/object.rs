@@ -106,6 +106,7 @@ impl<M> Field<M> {
     M: crate::ast::object::Field,
   {
     let meta = input.meta();
+
     Ok(Self {
       name: input.name().clone(),
       ty: input.ty().clone(),

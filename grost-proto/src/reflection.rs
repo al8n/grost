@@ -114,6 +114,14 @@ impl<F: Flavor + ?Sized> Type<F> {
   pub const fn utc() -> Self {
     Self::scalar("Utc", "A UTC")
   }
+
+  /// Returns `true` if this type is `byte` or `u8`
+  pub const fn is_byte(self) -> bool {
+    match self {
+      Type::Scalar { name, .. } => matches!(name.as_bytes(), b"byte" | b"u8"),
+      _ => false,
+    }
+  }
 }
 
 phantom!(
@@ -146,14 +154,24 @@ pub trait Reflectable<F: ?Sized> {
   const REFLECTION: &Self::Reflection;
 }
 
-impl<T, F: ?Sized> Reflectable<F> for SchemaTypeReflection<&T>
+impl<T, F: Flavor + ?Sized> Reflectable<F> for SchemaTypeReflection<&T>
 where
-  SchemaTypeReflection<T>: Reflectable<F>,
+  SchemaTypeReflection<T>: Reflectable<F, Reflection = Type<F>>,
 {
   type Reflection = <SchemaTypeReflection<T> as Reflectable<F>>::Reflection;
 
   const REFLECTION: &'static Self::Reflection =
     <SchemaTypeReflection<T> as Reflectable<F>>::REFLECTION;
+}
+
+impl<T, F: Flavor + ?Sized> Reflectable<F> for SchemaTypeReflection<Option<T>>
+where
+  SchemaTypeReflection<T>: Reflectable<F, Reflection = Type<F>>,
+{
+  type Reflection = <SchemaTypeReflection<T> as Reflectable<F>>::Reflection;
+
+  const REFLECTION: &'static Self::Reflection =
+    &Type::Optional(<SchemaTypeReflection<T> as Reflectable<F>>::REFLECTION);
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].

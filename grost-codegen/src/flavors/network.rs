@@ -108,7 +108,8 @@ impl FlavorGenerator for Network {
   //   })
   // }
 
-  fn derive_object(&self, struct_: &Object) -> Result<proc_macro2::TokenStream, syn::Error> {
+  fn derive_object(&self, object: &Object) -> Result<proc_macro2::TokenStream, syn::Error> {
+    Self::derive_object(self, object)
     // let default_format = self.derive_default_format(path_to_grost, struct_.name().name());
     // let partial_decoded_struct_name = struct_.partial_decoded_name();
     // let struct_encoded_state = self.derive_encoded_state(
@@ -129,32 +130,32 @@ impl FlavorGenerator for Network {
     // let encode_reflection = self.derive_encode_reflection(path_to_grost, struct_);
     // let partial_encode = self.derive_partial_encode(path_to_grost, struct_);
 
-    Ok(quote! {
-      // #struct_encoded_state
+    // Ok(quote! {
+    //   // #struct_encoded_state
 
-      // #partial_struct_encoded_state
+    //   // #partial_struct_encoded_state
 
-      // #path_to_grost::__private::decoded_state!(
-      //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
-      //     as #path_to_grost::__private::flavors::network::LengthDelimited
-      //     => #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
-      // );
+    //   // #path_to_grost::__private::decoded_state!(
+    //   //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+    //   //     as #path_to_grost::__private::flavors::network::LengthDelimited
+    //   //     => #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+    //   // );
 
-      // #default_format
+    //   // #default_format
 
-      // #selectable
+    //   // #selectable
 
-      // #selector
+    //   // #selector
 
-      // #reflectable
+    //   // #reflectable
 
-      // #indexing
+    //   // #indexing
 
-      // #partial_encode
+    //   // #partial_encode
 
-      // #encode
+    //   // #encode
 
-      // #encode_reflection
-    })
+    //   // #encode_reflection
+    // })
   }
 }

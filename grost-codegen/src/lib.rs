@@ -99,6 +99,31 @@ impl SchemaGenerator {
     &self.flavors
   }
 
+  pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+    let objects = self
+      .structs
+      .iter()
+      .map(|object| {
+        let basic = object.derive();
+        self
+          .flavors
+          .values()
+          .map(|flavor| flavor.derive_object(object))
+          .collect::<syn::Result<Vec<_>>>()
+          .map(|stream| {
+            quote! {
+              #basic
+
+              #(#stream)*
+            }
+          })
+      })
+      .collect::<syn::Result<Vec<_>>>()?;
+    Ok(quote! {
+      #(#objects)*
+    })
+  }
+
   // /// Returns a new `SchemaGenerator` with the given `grost_path`
   // #[inline]
   // pub const fn enums(&self) -> &IndexSet<Enum> {

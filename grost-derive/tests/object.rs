@@ -1,3 +1,4 @@
+use grost::flavors::Network;
 use grost_derive::Object;
 
 mod sealed {
@@ -7,16 +8,15 @@ mod sealed {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
-pub struct User<I> {
-  #[grost(
-    tag = 1,
-    schema(description = "The id of the user"),
-    wire = "grost::flavors::network::LengthDelimited",
-    selector(select = "all"),
-    partial_decoded(copy,)
-  )]
-  id: I,
-
+pub struct User {
+  // #[grost(
+  //   tag = 1,
+  //   schema(description = "The id of the user"),
+  //   wire = "grost::flavors::network::LengthDelimited",
+  //   selector(select = "all"),
+  //   partial_decoded(copy,),
+  // )]
+  // id: I,
   #[grost(
     tag = 2,
     schema(description = "The nick name of the user"),
@@ -44,39 +44,39 @@ pub struct User<I> {
   emails: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Object)]
-pub struct Comment<I> {
-  #[grost(
-    tag = 1,
-    schema(description = "The id of the comment"),
-    wire = "grost::flavors::network::LengthDelimited",
-    selector(select = "all"),
-    partial_decoded(copy,)
-  )]
-  id: I,
-  #[grost(
-    tag = 2,
-    schema(description = "The user who made the comment"),
-    wire = "grost::flavors::network::LengthDelimited",
-    partial_decoded(copy)
-  )]
-  user: User<I>,
-  #[grost(
-    tag = 2,
-    schema(description = "The replyers who reply the comment"),
-    wire = "grost::flavors::network::Repeated<grost::flavors::network::LengthDelimited>",
-    partial_decoded(copy),
-    repeated
-  )]
-  replyers: Vec<User<I>>,
-  #[grost(
-    tag = 4,
-    schema(description = "The content of the comment"),
-    wire = "grost::flavors::network::LengthDelimited",
-    partial_decoded(copy)
-  )]
-  content: String,
-}
+// #[derive(Debug, Clone, PartialEq, Eq, Object)]
+// pub struct Comment<I> {
+//   #[grost(
+//     tag = 1,
+//     schema(description = "The id of the comment"),
+//     wire = "grost::flavors::network::LengthDelimited",
+//     selector(select = "all"),
+//     partial_decoded(copy,)
+//   )]
+//   id: I,
+//   #[grost(
+//     tag = 2,
+//     schema(description = "The user who made the comment"),
+//     wire = "grost::flavors::network::LengthDelimited",
+//     partial_decoded(copy)
+//   )]
+//   user: User<I>,
+//   #[grost(
+//     tag = 2,
+//     schema(description = "The replyers who reply the comment"),
+//     wire = "grost::flavors::network::Repeated<grost::flavors::network::LengthDelimited>",
+//     partial_decoded(copy),
+//     repeated
+//   )]
+//   replyers: Vec<User<I>>,
+//   #[grost(
+//     tag = 4,
+//     schema(description = "The content of the comment"),
+//     wire = "grost::flavors::network::LengthDelimited",
+//     partial_decoded(copy)
+//   )]
+//   content: String,
+// }
 
 #[test]
 fn t() {
@@ -85,4 +85,5 @@ fn t() {
   //   name: Some("user".to_string()),
   //   emails: None,
   // };
+  println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
 }
