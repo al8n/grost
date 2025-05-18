@@ -3,12 +3,12 @@ use syn::DeriveInput;
 
 #[allow(unused)]
 mod sealed {
-  #[derive(grost_mir::ObjectField)]
+  #[derive(grost_mir::Field)]
   #[grost(attributes(grost))]
-  pub struct ObjectField;
+  pub struct Field;
 
   #[derive(grost_mir::Object)]
-  #[grost(attributes(grost), field = "ObjectFieldDeriveInput")]
+  #[grost(attributes(grost), field = "FieldDeriveInput")]
   pub struct Object;
 }
 

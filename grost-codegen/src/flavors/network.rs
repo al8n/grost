@@ -47,7 +47,7 @@ impl Network {
 
   //   let identifier = self.field_identifier(path_to_grost, field);
   //   quote! {
-  //     #path_to_grost::__private::reflection::ObjectFieldReflectionBuilder::<#flavor_ty> {
+  //     #path_to_grost::__private::reflection::ObjectFieldBuilder::<#flavor_ty> {
   //       identifier: #identifier,
   //       name: #field_name,
   //       ty: ::core::any::type_name::<#field_ty>,

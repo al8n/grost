@@ -29,11 +29,11 @@ pub fn object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   input.to_token_stream().into()
 }
 
-#[proc_macro_derive(ObjectField, attributes(grost))]
+#[proc_macro_derive(Field, attributes(grost))]
 pub fn field(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let input_struct = parse_macro_input!(input as DeriveInput);
 
-  let input = match object::ObjectFieldDeriveInput::from_derive_input(&input_struct) {
+  let input = match object::FieldDeriveInput::from_derive_input(&input_struct) {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
   };

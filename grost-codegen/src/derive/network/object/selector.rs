@@ -100,7 +100,7 @@ impl Network {
     quote! {
       #[automatically_derived]
       impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::Iterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network, N> {
-        type Item = &'static #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>;
+        type Item = &'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>;
 
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
           loop {
@@ -159,10 +159,10 @@ impl Network {
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
       let reflection = quote! {
-        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
           <
             #field_reflection<
-              #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
@@ -192,10 +192,10 @@ impl Network {
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
       let reflection = quote! {
-        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
           <
             #field_reflection<
-              #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>,
+              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>,
               #path_to_grost::__private::flavors::Network,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
@@ -221,13 +221,13 @@ impl Network {
     quote! {
       #[automatically_derived]
       impl ::core::ops::Index<(#indexer_name, ::core::primitive::bool)> for #selector_name<#path_to_grost::__private::flavors::Network> {
-        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>>;
+        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>>;
 
         fn index(
           &self,
           (indexer, select): (#indexer_name, ::core::primitive::bool),
         ) -> &Self::Output {
-          const NONE: &::core::option::Option<&'static #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
+          const NONE: &::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
 
           match indexer {
             #(#index_trait_select),*
@@ -237,13 +237,13 @@ impl Network {
 
       #[automatically_derived]
       impl ::core::ops::Index<#indexer_name> for #selector_name<#path_to_grost::__private::flavors::Network> {
-        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>>;
+        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>>;
 
         fn index(
           &self,
           indexer: #indexer_name,
         ) -> &Self::Output {
-          const NONE: &::core::option::Option<&#path_to_grost::__private::reflection::ObjectFieldReflection<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
+          const NONE: &::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
 
           match indexer {
             #(#index_selector),*

@@ -16,7 +16,7 @@ struct Field {
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
-pub struct ObjectFieldDeriveInput {
+pub struct FieldDeriveInput {
   ident: Ident,
   vis: Visibility,
   generics: syn::Generics,
@@ -31,7 +31,7 @@ pub struct ObjectFieldDeriveInput {
   meta: Vec<syn::Attribute>,
 }
 
-impl ToTokens for ObjectFieldDeriveInput {
+impl ToTokens for FieldDeriveInput {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let name = &self.ident;
     let derive_input_name = self
@@ -46,7 +46,7 @@ impl ToTokens for ObjectFieldDeriveInput {
     let meta = &self.meta;
 
     let custom_meta_field = match self.data.as_ref() {
-      Data::Enum(_) => unreachable!("ObjectFieldDeriveInput should not be used for enums"),
+      Data::Enum(_) => unreachable!("FieldDeriveInput should not be used for enums"),
       Data::Struct(fields) => {
         if fields.is_unit() || fields.is_empty() {
           None

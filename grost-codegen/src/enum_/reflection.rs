@@ -344,7 +344,7 @@ impl Enum {
       }
 
       #[automatically_derived]
-      impl<F> #reflection_name<#path_to_grost::__private::reflection::EnumReflection, F>
+      impl<F> #reflection_name<#path_to_grost::__private::reflection::Enum, F>
       where
         F: ?::core::marker::Sized,
       {
@@ -363,7 +363,7 @@ impl Enum {
         #[allow(non_camel_case_types)]
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>() -> #reflection_name<
-          #path_to_grost::__private::reflection::EnumReflection,
+          #path_to_grost::__private::reflection::Enum,
           __GROST_FLAVOR__,
         >
         where
@@ -378,9 +378,9 @@ impl Enum {
       impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::reflection::Reflectable<
         __GROST_FLAVOR__,
       > for #name {
-        type Reflection = #path_to_grost::__private::reflection::EnumReflection;
+        type Reflection = #path_to_grost::__private::reflection::Enum;
         const REFLECTION: &Self::Reflection = & {
-          #path_to_grost::__private::reflection::EnumReflectionBuilder {
+          #path_to_grost::__private::reflection::EnumBuilder {
             name: #name_str,
             schema_name: #schema_name,
             description: #description,
@@ -396,8 +396,8 @@ impl Enum {
       #[allow(non_camel_case_types)]
       impl<__GROST_FLAVOR__: ?::core::marker::Sized> #path_to_grost::__private::reflection::Reflectable<
         __GROST_FLAVOR__,
-      > for #reflection_name<#path_to_grost::__private::reflection::EnumReflection, __GROST_FLAVOR__> {
-        type Reflection = #path_to_grost::__private::reflection::EnumReflection;
+      > for #reflection_name<#path_to_grost::__private::reflection::Enum, __GROST_FLAVOR__> {
+        type Reflection = #path_to_grost::__private::reflection::Enum;
         const REFLECTION: &Self::Reflection = <
           #name as
             #path_to_grost::__private::reflection::Reflectable<

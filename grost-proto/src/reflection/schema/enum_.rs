@@ -312,7 +312,7 @@ impl EnumVariantReflection {
 }
 
 #[doc(hidden)]
-pub struct EnumReflectionBuilder {
+pub struct EnumBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
   pub variants: &'static [&'static EnumVariantReflection],
@@ -320,10 +320,10 @@ pub struct EnumReflectionBuilder {
   pub repr: EnumRepr,
 }
 
-impl EnumReflectionBuilder {
+impl EnumBuilder {
   #[inline]
-  pub const fn build(self) -> EnumReflection {
-    EnumReflection {
+  pub const fn build(self) -> Enum {
+    Enum {
       name: self.name,
       schema_name: self.schema_name,
       variants: self.variants,
@@ -335,7 +335,7 @@ impl EnumReflectionBuilder {
 
 /// The information of an enum in the Graph protocol buffer
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct EnumReflection {
+pub struct Enum {
   name: &'static str,
   schema_name: &'static str,
   description: &'static str,
@@ -343,7 +343,7 @@ pub struct EnumReflection {
   repr: EnumRepr,
 }
 
-impl EnumReflection {
+impl Enum {
   /// Get the name of the enum
   #[inline]
   pub const fn name(&self) -> &'static str {

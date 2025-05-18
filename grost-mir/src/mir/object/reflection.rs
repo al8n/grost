@@ -107,7 +107,7 @@ impl Reflection {
               #vis #field_name: #path_to_grost::__private::reflection::Reflection<
                 #object_name #tg,
                 #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::ObjectFieldReflection,
+                  #path_to_grost::__private::reflection::Field,
                   #tag,
                 >,
                 #flavor,
@@ -175,10 +175,10 @@ where
             #[allow(clippy::type_complexity, non_camel_case_types)]
             impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #ty #wc_with_flavor
             {
-              type Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection;
+              type Reflection = #path_to_grost::__private::reflection::ObjectField;
 
               const REFLECTION: &'static Self::Reflection = &{
-                #path_to_grost::__private::reflection::ObjectFieldReflectionBuilder {
+                #path_to_grost::__private::reflection::ObjectFieldBuilder {
                   name: #field_name_str,
                   ty: ::core::any::type_name::<#object_ty>,
                   schema_name: #schema_name,
@@ -224,7 +224,7 @@ where
             #path_to_grost::__private::reflection::Type::Object(
               <#path_to_grost::__private::reflection::Reflection<
                 #name #tg,
-                #path_to_grost::__private::reflection::ObjectReflection,
+                #path_to_grost::__private::reflection::Object,
                 #fg,
               > as #path_to_grost::__private::reflection::Reflectable<#name #tg>>::REFLECTION
             )
@@ -235,15 +235,15 @@ where
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::Reflection<
           #name #tg,
-          #path_to_grost::__private::reflection::ObjectReflection,
+          #path_to_grost::__private::reflection::Object,
           #fg,
         >
         #wc_with_flavor
         {
-          type Reflection = #path_to_grost::__private::reflection::ObjectReflection;
+          type Reflection = #path_to_grost::__private::reflection::Object;
 
           const REFLECTION: &'static Self::Reflection = &{
-            #path_to_grost::__private::reflection::ObjectReflectionBuilder {
+            #path_to_grost::__private::reflection::ObjectBuilder {
               name: #name_str,
               schema_name: #schema_name,
               schema_description: #schema_description,
@@ -261,7 +261,7 @@ where
           #[inline]
           pub const fn reflection<#fg>() -> #path_to_grost::__private::reflection::Reflection<
             Self,
-            #path_to_grost::__private::reflection::ObjectReflection,
+            #path_to_grost::__private::reflection::Object,
             #fg,
           >
           where

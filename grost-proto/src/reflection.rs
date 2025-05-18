@@ -2,8 +2,7 @@ use core::marker::PhantomData;
 
 use super::flavors::Flavor;
 
-pub use enum_::*;
-pub use struct_::*;
+pub use schema::*;
 
 macro_rules! phantom {
   ($(
@@ -56,80 +55,14 @@ macro_rules! zst {
   };
 }
 
-mod enum_;
-mod struct_;
-
-/// The type in the Graph protocol schema
-#[derive(Debug)]
-pub enum Type {
-  Scalar {
-    name: &'static str,
-    description: &'static str,
-  },
-  List(&'static Type),
-  Map {
-    key: &'static Type,
-    value: &'static Type,
-  },
-  Optional(&'static Type),
-  Object(&'static ObjectReflection),
-  UintEnum(EnumReflection),
-  Union(),
-  Interface(),
-}
-
-impl Clone for Type {
-  fn clone(&self) -> Self {
-    *self
-  }
-}
-
-impl Copy for Type {}
-
-impl Type {
-  /// Construct a scalar type
-  pub const fn scalar(name: &'static str, description: &'static str) -> Self {
-    Self::Scalar { name, description }
-  }
-
-  /// Creates a string schema type
-  pub const fn string() -> Self {
-    Self::scalar("string", "A string")
-  }
-
-  /// Creates a bytes schema type
-  pub const fn bytes() -> Self {
-    Self::scalar("bytes", "A bytes")
-  }
-
-  /// Creates a boolean schema type
-  pub const fn duration() -> Self {
-    Self::scalar("Duration", "A duration")
-  }
-
-  /// Creates a UTC schema type
-  pub const fn utc() -> Self {
-    Self::scalar("Utc", "A UTC")
-  }
-
-  /// Returns `true` if this type is `byte` or `u8`
-  pub const fn is_byte(self) -> bool {
-    match self {
-      Type::Scalar { name, .. } => matches!(name.as_bytes(), b"byte" | b"u8"),
-      _ => false,
-    }
-  }
-}
+mod decoded;
+mod schema;
 
 phantom!(
   /// Reflection to the identifier of a field
   IdentifierReflection,
-  /// Reflection to the encoded identifier of a field
-  EncodedIdentifierReflection,
   /// Reflection to the tag of a field
   TagReflection,
-  /// Reflection to the encoded tag of a field
-  EncodedTagReflection,
   /// Reflection to the wire type of a field
   WireTypeReflection,
   /// Reflection to length related
@@ -154,6 +87,8 @@ pub trait Reflectable<F: ?Sized> {
 }
 
 pub struct Identified<T: ?Sized, const TAG: u32>(PhantomData<T>);
+
+
 
 impl<T: ?Sized, F: ?Sized> Reflectable<T> for Reflection<&T, Type, F>
 where
@@ -242,11 +177,11 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-impl<T, F, const TAG: u32> Reflection<T, Identified<ObjectFieldReflection, TAG>, F>
+impl<T, F, const TAG: u32> Reflection<T, Identified<ObjectField, TAG>, F>
 where
   T: ?Sized,
   F: ?Sized + Flavor,
-  Self: Reflectable<T>,
+  Self: Reflectable<T, Reflection = ObjectField>,
 {
   /// Returns the relection to the wire format of the field.
   #[inline]
@@ -338,6 +273,15 @@ where
     Reflection::new()
   }
 
+  /// Returns the reflection to the corresponding field in decoded struct.
+  #[inline]
+  pub const fn decoded(
+    &self,
+  ) -> decoded::DecodedReflection<T, Identified<ObjectField, TAG>, F>
+  {
+    decoded::DecodedReflection::new()
+  }
+
   /// Returns the reflection to the encode fn of the field.
   #[inline]
   pub const fn encode(
@@ -402,64 +346,6 @@ where
     Reflection::new()
   }
 
-  /// Returns the reflection to the encode fn to encode decoded field.
-  #[inline]
-  pub const fn encode_decoded<'a>(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      EncodeReflection<
-        super::Decoded<
-          'a,
-          F,
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        EncodeReflection<
-          super::Decoded<
-            'a,
-            F,
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T>,
-  {
-    Reflection::new()
-  }
-
-  /// Returns the reflection to fn which will give the length of the encoded data.
-  #[inline]
-  pub const fn encoded_decoded_len<'a>(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
-    'a,
-    F,
-    <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-  >>>, TAG>, F>
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
-      'a,
-      F,
-      <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-    >>>, TAG>, F>: Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
-
   /// Returns the reflection to the partial encode fn for the field.
   #[inline]
   pub const fn partial_encode(
@@ -520,6 +406,64 @@ where
       >,
       F,
     >: Reflectable<T, Reflection = usize>,
+  {
+    Reflection::new()
+  }
+
+    /// Returns the reflection to the encode fn to encode decoded field.
+  #[inline]
+  pub const fn encode_decoded<'a>(
+    &self,
+  ) -> Reflection<
+    T,
+    Identified<
+      EncodeReflection<
+        super::Decoded<
+          'a,
+          F,
+          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+        >,
+      >,
+      TAG,
+    >,
+    F,
+  >
+  where
+    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+    Reflection<
+      T,
+      Identified<
+        EncodeReflection<
+          super::Decoded<
+            'a,
+            F,
+            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+          >,
+        >,
+        TAG,
+      >,
+      F,
+    >: Reflectable<T>,
+  {
+    Reflection::new()
+  }
+
+  /// Returns the reflection to fn which will give the length of the encoded data.
+  #[inline]
+  pub const fn encoded_decoded_len<'a>(
+    &self,
+  ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+    'a,
+    F,
+    <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+  >>>, TAG>, F>
+  where
+    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+      'a,
+      F,
+      <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+    >>>, TAG>, F>: Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
@@ -603,4 +547,10 @@ where
   {
     Reflection::new()
   }
+}
+
+#[allow(clippy::type_complexity)]
+pub trait Encoder<T: ?Sized, F: Flavor> {
+  const ENCODE: fn(&T, &F::Context, &mut [u8]) -> Result<usize, F::EncodeError>;
+  const ENCODED_LEN: fn(&T, &F::Context) -> usize;
 }

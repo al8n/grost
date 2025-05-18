@@ -252,7 +252,7 @@ const _: () = {
     }
   }
   #[automatically_derived]
-  impl<F> ColorReflection<::grost::__private::reflection::EnumReflection, F>
+  impl<F> ColorReflection<::grost::__private::reflection::Enum, F>
   where
     F: ?::core::marker::Sized,
   {
@@ -292,7 +292,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     #[inline]
     pub const fn reflection<__GROST_FLAVOR__>()
-    -> ColorReflection<::grost::__private::reflection::EnumReflection, __GROST_FLAVOR__>
+    -> ColorReflection<::grost::__private::reflection::Enum, __GROST_FLAVOR__>
     where
       __GROST_FLAVOR__: ?::core::marker::Sized,
     {
@@ -304,9 +304,9 @@ const _: () = {
   impl<__GROST_FLAVOR__: ?::core::marker::Sized>
     ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__> for Color
   {
-    type Reflection = ::grost::__private::reflection::EnumReflection;
+    type Reflection = ::grost::__private::reflection::Enum;
     const REFLECTION: &Self::Reflection = &{
-      ::grost::__private::reflection::EnumReflectionBuilder {
+      ::grost::__private::reflection::EnumBuilder {
         name: "Color",
         schema_name: "Color",
         description: "",
@@ -336,9 +336,9 @@ const _: () = {
   #[allow(non_camel_case_types)]
   impl<__GROST_FLAVOR__: ?::core::marker::Sized>
     ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>
-    for ColorReflection<::grost::__private::reflection::EnumReflection, __GROST_FLAVOR__>
+    for ColorReflection<::grost::__private::reflection::Enum, __GROST_FLAVOR__>
   {
-    type Reflection = ::grost::__private::reflection::EnumReflection;
+    type Reflection = ::grost::__private::reflection::Enum;
     const REFLECTION: &Self::Reflection =
       <Color as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::REFLECTION;
   }

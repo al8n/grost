@@ -1649,7 +1649,7 @@ const _: () = {
     impl<
         F,
         const TAG: ::core::primitive::u32,
-    > UserFieldReflection<::grost::__private::reflection::ObjectFieldReflection<F>, F, TAG>
+    > UserFieldReflection<::grost::__private::reflection::Field<F>, F, TAG>
     where
         F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
@@ -1947,7 +1947,7 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl<F> UserReflection<::grost::__private::reflection::ObjectReflection<F>, F>
+    impl<F> UserReflection<::grost::__private::reflection::Object<F>, F>
     where
         F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
@@ -1961,7 +1961,7 @@ const _: () = {
         pub const fn name(
             &self,
         ) -> UserFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             1u32,
         > {
@@ -1972,7 +1972,7 @@ const _: () = {
         pub const fn age(
             &self,
         ) -> UserFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             2u32,
         > {
@@ -1983,7 +1983,7 @@ const _: () = {
         pub const fn email(
             &self,
         ) -> UserFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             3u32,
         > {
@@ -1996,7 +1996,7 @@ const _: () = {
         #[allow(non_camel_case_types)]
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>() -> UserReflection<
-            ::grost::__private::reflection::ObjectReflection<__GROST_FLAVOR__>,
+            ::grost::__private::reflection::Object<__GROST_FLAVOR__>,
             __GROST_FLAVOR__,
         >
         where
@@ -2028,37 +2028,37 @@ const _: () = {
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>(
             &self,
-        ) -> &'static ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>
+        ) -> &'static ::grost::__private::reflection::Field<__GROST_FLAVOR__>
         where
             __GROST_FLAVOR__: ::grost::__private::flavors::Flavor
                 + ?::core::marker::Sized,
             UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 1u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
             UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 2u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
             UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 3u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
@@ -2066,7 +2066,7 @@ const _: () = {
             match self {
                 Self::Name => {
                     <UserFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -2077,7 +2077,7 @@ const _: () = {
                 }
                 Self::Age => {
                     <UserFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -2088,7 +2088,7 @@ const _: () = {
                 }
                 Self::Email => {
                     <UserFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -3669,7 +3669,7 @@ const _: () = {
     #[automatically_derived]
     impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::Iterator
     for UserSelectorIter<'__grost_lifetime__, ::grost::__private::flavors::Network, N> {
-        type Item = &'static ::grost::__private::reflection::ObjectFieldReflection<
+        type Item = &'static ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
@@ -3727,16 +3727,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for UserFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         1u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -3765,16 +3765,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for UserFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         2u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -3803,16 +3803,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for UserFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         3u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -4099,7 +4099,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -4125,7 +4125,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -4151,7 +4151,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <UserFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -4485,17 +4485,17 @@ const _: () = {
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::Network,
     > for User {
-        type Reflection = ::grost::__private::reflection::ObjectReflection<
+        type Reflection = ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectBuilder::<
             ::grost::__private::flavors::Network,
         > {
             name: "User",
             schema_name: "User",
             fields: &[
                 <UserFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -4504,7 +4504,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::REFLECTION,
                 <UserFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -4513,7 +4513,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::REFLECTION,
                 <UserFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -4531,12 +4531,12 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for UserReflection<
-        ::grost::__private::reflection::ObjectReflection<
+        ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectReflection<
+        type Reflection = ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >;
         const REFLECTION: &Self::Reflection = <User as ::grost::__private::reflection::Reflectable<
@@ -4547,7 +4547,7 @@ const _: () = {
     impl ::core::ops::Index<(UserFieldIndex, ::core::primitive::bool)>
     for UserSelector<::grost::__private::flavors::Network> {
         type Output = ::core::option::Option<
-            &'static ::grost::__private::reflection::ObjectFieldReflection<
+            &'static ::grost::__private::reflection::Field<
                 ::grost::__private::flavors::Network,
             >,
         >;
@@ -4556,19 +4556,19 @@ const _: () = {
             (indexer, select): (UserFieldIndex, ::core::primitive::bool),
         ) -> &Self::Output {
             const NONE: &::core::option::Option<
-                &'static ::grost::__private::reflection::ObjectFieldReflection<
+                &'static ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
             > = &::core::option::Option::None;
             match indexer {
                 UserFieldIndex::Name => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -4586,12 +4586,12 @@ const _: () = {
                 }
                 UserFieldIndex::Age => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -4609,12 +4609,12 @@ const _: () = {
                 }
                 UserFieldIndex::Email => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -4637,25 +4637,25 @@ const _: () = {
     impl ::core::ops::Index<UserFieldIndex>
     for UserSelector<::grost::__private::flavors::Network> {
         type Output = ::core::option::Option<
-            &'static ::grost::__private::reflection::ObjectFieldReflection<
+            &'static ::grost::__private::reflection::Field<
                 ::grost::__private::flavors::Network,
             >,
         >;
         fn index(&self, indexer: UserFieldIndex) -> &Self::Output {
             const NONE: &::core::option::Option<
-                &::grost::__private::reflection::ObjectFieldReflection<
+                &::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
             > = &::core::option::Option::None;
             match indexer {
                 UserFieldIndex::Name => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -4674,12 +4674,12 @@ const _: () = {
                 }
                 UserFieldIndex::Age => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -4698,12 +4698,12 @@ const _: () = {
                 }
                 UserFieldIndex::Email => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <UserFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -9176,7 +9176,7 @@ const _: () = {
     impl<
         F,
         const TAG: ::core::primitive::u32,
-    > CommentFieldReflection<::grost::__private::reflection::ObjectFieldReflection<F>, F, TAG>
+    > CommentFieldReflection<::grost::__private::reflection::Field<F>, F, TAG>
     where
         F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
@@ -9474,7 +9474,7 @@ const _: () = {
         }
     }
     #[automatically_derived]
-    impl<F> CommentReflection<::grost::__private::reflection::ObjectReflection<F>, F>
+    impl<F> CommentReflection<::grost::__private::reflection::Object<F>, F>
     where
         F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
     {
@@ -9488,7 +9488,7 @@ const _: () = {
         pub const fn user(
             &self,
         ) -> CommentFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             1u32,
         > {
@@ -9499,7 +9499,7 @@ const _: () = {
         pub const fn replyer(
             &self,
         ) -> CommentFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             2u32,
         > {
@@ -9510,7 +9510,7 @@ const _: () = {
         pub const fn title(
             &self,
         ) -> CommentFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             3u32,
         > {
@@ -9521,7 +9521,7 @@ const _: () = {
         pub const fn content(
             &self,
         ) -> CommentFieldReflection<
-            ::grost::__private::reflection::ObjectFieldReflection<F>,
+            ::grost::__private::reflection::Field<F>,
             F,
             4u32,
         > {
@@ -9534,7 +9534,7 @@ const _: () = {
         #[allow(non_camel_case_types)]
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>() -> CommentReflection<
-            ::grost::__private::reflection::ObjectReflection<__GROST_FLAVOR__>,
+            ::grost::__private::reflection::Object<__GROST_FLAVOR__>,
             __GROST_FLAVOR__,
         >
         where
@@ -9566,47 +9566,47 @@ const _: () = {
         #[inline]
         pub const fn reflection<__GROST_FLAVOR__>(
             &self,
-        ) -> &'static ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>
+        ) -> &'static ::grost::__private::reflection::Field<__GROST_FLAVOR__>
         where
             __GROST_FLAVOR__: ::grost::__private::flavors::Flavor
                 + ?::core::marker::Sized,
             CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 1u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
             CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 2u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
             CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 3u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
             CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<__GROST_FLAVOR__>,
+                ::grost::__private::reflection::Field<__GROST_FLAVOR__>,
                 __GROST_FLAVOR__,
                 4u32,
             >: ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+                Reflection = ::grost::__private::reflection::Field<
                     __GROST_FLAVOR__,
                 >,
             >,
@@ -9614,7 +9614,7 @@ const _: () = {
             match self {
                 Self::User => {
                     <CommentFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -9625,7 +9625,7 @@ const _: () = {
                 }
                 Self::Replyer => {
                     <CommentFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -9636,7 +9636,7 @@ const _: () = {
                 }
                 Self::Title => {
                     <CommentFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -9647,7 +9647,7 @@ const _: () = {
                 }
                 Self::Content => {
                     <CommentFieldReflection<
-                        ::grost::__private::reflection::ObjectFieldReflection<
+                        ::grost::__private::reflection::Field<
                             __GROST_FLAVOR__,
                         >,
                         __GROST_FLAVOR__,
@@ -11670,7 +11670,7 @@ const _: () = {
         ::grost::__private::flavors::Network,
         N,
     > {
-        type Item = &'static ::grost::__private::reflection::ObjectFieldReflection<
+        type Item = &'static ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
@@ -11736,16 +11736,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for CommentFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         1u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -11775,16 +11775,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for CommentFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         2u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -11820,16 +11820,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for CommentFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         3u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -11858,16 +11858,16 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for CommentFieldReflection<
-        ::grost::__private::reflection::ObjectFieldReflection<
+        ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
         4u32,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
+        type Reflection = ::grost::__private::reflection::Field<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectFieldBuilder::<
             ::grost::__private::flavors::Network,
         > {
             identifier: ::grost::__private::flavors::network::Identifier::new(
@@ -12235,7 +12235,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -12261,7 +12261,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -12287,7 +12287,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -12313,7 +12313,7 @@ const _: () = {
         type Reflection = ::grost::__private::flavors::network::Identifier;
         const REFLECTION: &Self::Reflection = &{
             <CommentFieldReflection<
-                ::grost::__private::reflection::ObjectFieldReflection<
+                ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
                 ::grost::__private::flavors::Network,
@@ -12757,17 +12757,17 @@ const _: () = {
     impl ::grost::__private::reflection::Reflectable<
         ::grost::__private::flavors::Network,
     > for Comment {
-        type Reflection = ::grost::__private::reflection::ObjectReflection<
+        type Reflection = ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >;
-        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectReflectionBuilder::<
+        const REFLECTION: &Self::Reflection = &::grost::__private::reflection::ObjectBuilder::<
             ::grost::__private::flavors::Network,
         > {
             name: "Comment",
             schema_name: "Comment",
             fields: &[
                 <CommentFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -12776,7 +12776,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::REFLECTION,
                 <CommentFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -12785,7 +12785,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::REFLECTION,
                 <CommentFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -12794,7 +12794,7 @@ const _: () = {
                     ::grost::__private::flavors::Network,
                 >>::REFLECTION,
                 <CommentFieldReflection<
-                    ::grost::__private::reflection::ObjectFieldReflection<
+                    ::grost::__private::reflection::Field<
                         ::grost::__private::flavors::Network,
                     >,
                     ::grost::__private::flavors::Network,
@@ -12812,12 +12812,12 @@ const _: () = {
         ::grost::__private::flavors::Network,
     >
     for CommentReflection<
-        ::grost::__private::reflection::ObjectReflection<
+        ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >,
         ::grost::__private::flavors::Network,
     > {
-        type Reflection = ::grost::__private::reflection::ObjectReflection<
+        type Reflection = ::grost::__private::reflection::Object<
             ::grost::__private::flavors::Network,
         >;
         const REFLECTION: &Self::Reflection = <Comment as ::grost::__private::reflection::Reflectable<
@@ -12828,7 +12828,7 @@ const _: () = {
     impl ::core::ops::Index<(CommentFieldIndex, ::core::primitive::bool)>
     for CommentSelector<::grost::__private::flavors::Network> {
         type Output = ::core::option::Option<
-            &'static ::grost::__private::reflection::ObjectFieldReflection<
+            &'static ::grost::__private::reflection::Field<
                 ::grost::__private::flavors::Network,
             >,
         >;
@@ -12837,19 +12837,19 @@ const _: () = {
             (indexer, select): (CommentFieldIndex, ::core::primitive::bool),
         ) -> &Self::Output {
             const NONE: &::core::option::Option<
-                &'static ::grost::__private::reflection::ObjectFieldReflection<
+                &'static ::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
             > = &::core::option::Option::None;
             match indexer {
                 CommentFieldIndex::User => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -12867,12 +12867,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Replyer => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -12890,12 +12890,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Title => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -12913,12 +12913,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Content => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -12941,25 +12941,25 @@ const _: () = {
     impl ::core::ops::Index<CommentFieldIndex>
     for CommentSelector<::grost::__private::flavors::Network> {
         type Output = ::core::option::Option<
-            &'static ::grost::__private::reflection::ObjectFieldReflection<
+            &'static ::grost::__private::reflection::Field<
                 ::grost::__private::flavors::Network,
             >,
         >;
         fn index(&self, indexer: CommentFieldIndex) -> &Self::Output {
             const NONE: &::core::option::Option<
-                &::grost::__private::reflection::ObjectFieldReflection<
+                &::grost::__private::reflection::Field<
                     ::grost::__private::flavors::Network,
                 >,
             > = &::core::option::Option::None;
             match indexer {
                 CommentFieldIndex::User => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -12978,12 +12978,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Replyer => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -13002,12 +13002,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Title => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,
@@ -13026,12 +13026,12 @@ const _: () = {
                 }
                 CommentFieldIndex::Content => {
                     const REFLECTION: ::core::option::Option<
-                        &::grost::__private::reflection::ObjectFieldReflection<
+                        &::grost::__private::reflection::Field<
                             ::grost::__private::flavors::Network,
                         >,
                     > = ::core::option::Option::Some(
                         <CommentFieldReflection<
-                            ::grost::__private::reflection::ObjectFieldReflection<
+                            ::grost::__private::reflection::Field<
                                 ::grost::__private::flavors::Network,
                             >,
                             ::grost::__private::flavors::Network,

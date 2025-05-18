@@ -181,11 +181,11 @@ where
         reflections_constraints.push(quote! {
           #path_to_grost::__private::reflection::Reflection<
             #struct_name #tg,
-            #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::ObjectFieldReflection, #tag>,
+            #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::Field, #tag>,
             #fg,
           >: #path_to_grost::__private::reflection::Reflectable<
             #struct_name #tg,
-            Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection,
+            Reflection = #path_to_grost::__private::reflection::Field,
           >
         });
 
@@ -194,7 +194,7 @@ where
             <
               #path_to_grost::__private::reflection::Reflection<
                 #struct_name #tg,
-                #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::ObjectFieldReflection, #tag>,
+                #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::Field, #tag>,
                 #fg,
               > as #path_to_grost::__private::reflection::Reflectable<
                 #struct_name #tg,
@@ -221,7 +221,7 @@ where
         #[inline]
         pub const fn reflection #ig (
           &self,
-        ) -> &'static #path_to_grost::__private::reflection::ObjectFieldReflection
+        ) -> &'static #path_to_grost::__private::reflection::Field
         where
           #(#reflections_constraints),*
         {
