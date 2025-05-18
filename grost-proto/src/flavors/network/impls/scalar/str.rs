@@ -3,7 +3,7 @@ use crate::{
   decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   reflection::Type,
-  type_reflection, selectable, try_decode_bridge,
+  selectable, try_decode_bridge, type_reflection,
 };
 
 default_wire_format!(

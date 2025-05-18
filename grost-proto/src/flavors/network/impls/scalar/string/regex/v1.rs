@@ -11,7 +11,7 @@ const _: () = {
     },
     into_target,
     reflection::Type,
-    type_reflection, type_owned, type_ref,
+    type_owned, type_ref, type_reflection,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";

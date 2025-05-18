@@ -309,7 +309,13 @@ impl Selector {
       .map(|f| {
         let ty = f.ty();
         let tag = f.meta().tag();
-        let wfr = wire_format_reflection_ty(path_to_grost, input.name(), input.generics(), tag.get(), &fgp);
+        let wfr = wire_format_reflection_ty(
+          path_to_grost,
+          input.name(),
+          input.generics(),
+          tag.get(),
+          &fgp,
+        );
         let wf = wire_format_ty(path_to_grost, &wfr, ty);
 
         let attrs = f.meta().selector().attrs();
@@ -987,11 +993,7 @@ where
   }
 }
 
-fn wire_format_ty(
-  path_to_grost: &syn::Path,
-  wf: &syn::Type,
-  ty: &syn::Type,
-) -> syn::Type {
+fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, ty: &syn::Type) -> syn::Type {
   parse_quote! {
     <#wf as #path_to_grost::__private::reflection::Reflectable<#ty>>::Reflection
   }
@@ -1020,7 +1022,13 @@ where
 {
   fields.try_for_each(move |f| {
     let ty = f.ty();
-    let wfr = wire_format_reflection_ty(path_to_grost, object_name, object_generics, f.meta().tag().get(), fg);
+    let wfr = wire_format_reflection_ty(
+      path_to_grost,
+      object_name,
+      object_generics,
+      f.meta().tag().get(),
+      fg,
+    );
     let wf = wire_format_ty(path_to_grost, &wfr, ty);
     let selector_ty = selector_ty(path_to_grost, &wf, fg);
 

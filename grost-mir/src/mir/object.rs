@@ -264,8 +264,15 @@ where
     })
   }
 
-  fn derive(&self) -> proc_macro2::TokenStream {
-    let reflection_impl = self.derive_reflection();
+  /// Derives the object.
+  pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+    let partial_object = self.partial().to_token_stream();
+    let partial_decoded_object = self.partial_decoded().to_token_stream();
+    let selector = self.selector().to_token_stream();
+    let selector_iter = self.selector_iter().to_token_stream();
+    let indexer = self.indexer().to_token_stream();
+
+    let reflection_impl = self.derive_reflection()?;
     let indexer_impl = self.derive_indexer();
     let selector_iter_impl = self.derive_selector_iter();
     let selector_impl = self.derive_selector();
@@ -277,7 +284,17 @@ where
     let accessors = self.derive_accessors();
     let default = self.derive_default();
 
-    quote! {
+    Ok(quote! {
+      #partial_object
+
+      #partial_decoded_object
+
+      #indexer
+
+      #selector
+
+      #selector_iter
+
       const _: () = {
         #reflection_impl
 
@@ -297,7 +314,7 @@ where
 
         #accessors
       };
-    }
+    })
   }
 
   fn derive_default(&self) -> proc_macro2::TokenStream {
@@ -375,38 +392,6 @@ where
         #(#fns)*
       }
     }
-  }
-}
-
-impl<M> ToTokens for Object<M>
-where
-  M: crate::ast::object::Object,
-{
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let partial_object = self.partial().to_token_stream();
-    let partial_decoded_object = self.partial_decoded().to_token_stream();
-    let selector = self.selector().to_token_stream();
-    let selector_iter = self.selector_iter().to_token_stream();
-    let indexer = self.indexer().to_token_stream();
-    let reflection = self.reflection().to_token_stream();
-
-    let impls = self.derive();
-
-    tokens.extend(quote! {
-      #reflection
-
-      #partial_object
-
-      #partial_decoded_object
-
-      #indexer
-
-      #selector
-
-      #selector_iter
-
-      #impls
-    });
   }
 }
 

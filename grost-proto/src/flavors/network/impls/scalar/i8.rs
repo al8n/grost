@@ -2,7 +2,7 @@ use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{DecodeError, Fixed8, Network, Varint},
   reflection::Type,
-  type_reflection, selectable, try_from_bridge,
+  selectable, try_from_bridge, type_reflection,
 };
 use core::num::NonZeroI8;
 

@@ -11,7 +11,7 @@ use crate::{
   },
   partial_encode_scalar,
   reflection::Type,
-  type_reflection, selectable,
+  selectable, type_reflection,
 };
 
 const PORT_SIZE: usize = 2;

@@ -7,7 +7,7 @@ use crate::{
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
   message, partial_encode_scalar,
   reflection::Type,
-  type_reflection, selectable, try_from_bridge,
+  selectable, try_from_bridge, type_reflection,
 };
 use core::num::NonZeroI16;
 

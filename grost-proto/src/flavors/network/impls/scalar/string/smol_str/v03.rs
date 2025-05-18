@@ -5,7 +5,7 @@ use crate::{
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target,
   reflection::Type,
-  type_reflection, selectable, type_ref,
+  selectable, type_ref, type_reflection,
 };
 use smol_str_0_3::SmolStr;
 

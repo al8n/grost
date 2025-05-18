@@ -6,7 +6,10 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::{buffer::BytesBuffer, reflection::{Reflectable, Reflection, Type}};
+use crate::{
+  buffer::BytesBuffer,
+  reflection::{Reflectable, Reflection, Type},
+};
 
 mod context;
 mod error;

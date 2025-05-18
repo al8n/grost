@@ -2,7 +2,7 @@ use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed64, Network, Varint},
   reflection::Type,
-  type_reflection, selectable,
+  selectable, type_reflection,
 };
 
 default_wire_format!(Network: f64 as Fixed64);

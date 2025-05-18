@@ -103,22 +103,24 @@ impl SchemaGenerator {
     let objects = self
       .structs
       .iter()
-      .map(|object| {
-        let basic = object.derive();
-        self
-          .flavors
-          .values()
-          .map(|flavor| flavor.derive_object(object))
-          .collect::<syn::Result<Vec<_>>>()
-          .map(|stream| {
-            quote! {
-              #basic
+      .flat_map(|object| {
+        object.derive().map(|basic| {
+          self
+            .flavors
+            .values()
+            .map(|flavor| flavor.derive_object(object))
+            .collect::<syn::Result<Vec<_>>>()
+            .map(|stream| {
+              quote! {
+                #basic
 
-              #(#stream)*
-            }
-          })
+                #(#stream)*
+              }
+            })
+        })
       })
       .collect::<syn::Result<Vec<_>>>()?;
+
     Ok(quote! {
       #(#objects)*
     })

@@ -2,7 +2,9 @@ use core::marker::PhantomData;
 
 phantom!(
   /// Reflection to an encode fn.
-  EncodeReflection
+  EncodeReflection,
+  /// Reflection to an partial encode fn.
+  PartialEncodeReflection,
 );
 
 impl EncodeReflection<EncodeField> {

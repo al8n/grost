@@ -1,4 +1,11 @@
-use grost::{convert::Decoded, flavors::{network::{Identifier, LengthDelimited, Tag, WireType}, Network, RawTag}, reflection::{Identified, Reflectable, Reflection}};
+use grost::{
+  convert::Decoded,
+  flavors::{
+    Network, RawTag,
+    network::{Identifier, LengthDelimited, Tag, WireType},
+  },
+  reflection::{Identified, Reflectable, Reflection},
+};
 use grost_derive::Object;
 
 mod sealed {
@@ -14,7 +21,7 @@ pub struct User<I> {
     schema(description = "The id of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     selector(select = "all"),
-    partial_decoded(copy,),
+    partial_decoded(copy,)
   )]
   id: I,
   #[grost(

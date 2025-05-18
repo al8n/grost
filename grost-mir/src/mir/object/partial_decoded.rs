@@ -570,7 +570,14 @@ where
       meta.tag().get(),
       flavor_param,
     );
-    let decoded_state = decoded_state_ty(path_to_grost, object_name, object_generics, &wf, flavor_param, lifetime);
+    let decoded_state = decoded_state_ty(
+      path_to_grost,
+      object_name,
+      object_generics,
+      &wf,
+      flavor_param,
+      lifetime,
+    );
 
     let where_clause = generics.make_where_clause();
 

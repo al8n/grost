@@ -13,7 +13,7 @@ use crate::{
   },
   partial_encode_scalar,
   reflection::Type,
-  type_reflection, selectable,
+  selectable, type_reflection,
 };
 
 macro_rules! ip_addr {

@@ -45,11 +45,7 @@ impl Object {
     Ok(Self { object })
   }
 
-  pub fn derive(&self) -> proc_macro2::TokenStream {
-    let object = &self.object;
-
-    quote! {
-      #object
-    }
+  pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+    self.object.derive()
   }
 }

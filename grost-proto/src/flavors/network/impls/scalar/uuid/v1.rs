@@ -4,7 +4,7 @@ use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed128, Network, Varint},
   reflection::Type,
-  type_reflection, selectable,
+  selectable, type_reflection,
 };
 
 selectable!(@scalar Network:Uuid);
