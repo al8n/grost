@@ -338,6 +338,8 @@ impl PartialDecodedObject {
         );
         let decoded_state = decoded_state_ty(
           path_to_grost,
+          input.name(),
+          input.generics(),
           &wf,
           generics.flavor_param(),
           generics.lifetime(),
@@ -524,17 +526,20 @@ where
 
 fn decoded_state_ty(
   path_to_grost: &syn::Path,
+  object_name: &Ident,
+  object_generics: &Generics,
   wf: &syn::Type,
   flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
 ) -> syn::Type {
   let flavor_ident = &flavor_param.ident;
+  let (_, tg, _) = object_generics.split_for_impl();
   parse_quote! {
     #path_to_grost::__private::convert::State<
       #path_to_grost::__private::convert::Decoded<
         #lifetime,
         #flavor_ident,
-        <#wf as #path_to_grost::__private::reflection::Reflectable<#flavor_ident>>::Reflection,
+        <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #tg>>::Reflection,
       >
     >
   }
@@ -542,7 +547,7 @@ fn decoded_state_ty(
 
 #[allow(clippy::too_many_arguments)]
 fn add_partial_decoded_constraints<'a, I>(
-  name: &syn::Ident,
+  object_name: &syn::Ident,
   object_generics: &Generics,
   generics: &mut Generics,
   path_to_grost: &syn::Path,
@@ -554,17 +559,18 @@ fn add_partial_decoded_constraints<'a, I>(
 where
   I: crate::ast::object::Field + 'a,
 {
+  let (_, tg, _) = object_generics.split_for_impl();
   fields.try_for_each(move |f| {
     let ty = f.ty();
     let meta = f.meta();
     let wf = wire_format_reflection_ty(
       path_to_grost,
-      name,
+      object_name,
       object_generics,
       meta.tag().get(),
       flavor_param,
     );
-    let decoded_state = decoded_state_ty(path_to_grost, &wf, flavor_param, lifetime);
+    let decoded_state = decoded_state_ty(path_to_grost, object_name, object_generics, &wf, flavor_param, lifetime);
 
     let where_clause = generics.make_where_clause();
 
@@ -572,7 +578,7 @@ where
       (f.meta().partial_decoded().copy() || copy).then(|| quote! { + ::core::marker::Copy });
 
     where_clause.predicates.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::reflection::Reflectable<#ty>
+      #wf: #path_to_grost::__private::reflection::Reflectable<#object_name #tg>
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
       #ty: #decoded_state

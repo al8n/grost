@@ -146,7 +146,7 @@ where
     let last_variant_name = self.indexer.variants().last().unwrap().name();
 
     let struct_name = self.name();
-    let (object_ig, tg, w) = self.generics().split_for_impl();
+    let (_, tg, w) = self.generics().split_for_impl();
     let mut generics = self.generics().clone();
     generics.params.push(syn::GenericParam::Type(fgp.clone()));
     let (ig, _, _) = generics.split_for_impl();
@@ -223,7 +223,6 @@ where
           &self,
         ) -> &'static #path_to_grost::__private::reflection::ObjectFieldReflection
         where
-          #fg: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
           #(#reflections_constraints),*
         {
           match self {
