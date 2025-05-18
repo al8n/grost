@@ -1,15 +1,15 @@
-use super::{Flavor, Type};
+use super::Type;
 
 #[doc(hidden)]
-pub struct ObjectReflectionBuilder<F: Flavor + ?Sized> {
+pub struct ObjectReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
-  pub fields: &'static [&'static ObjectFieldReflection<F>],
+  pub fields: &'static [&'static ObjectFieldReflection],
 }
 
-impl<F: Flavor + ?Sized> ObjectReflectionBuilder<F> {
+impl ObjectReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> ObjectReflection<F> {
+  pub const fn build(self) -> ObjectReflection {
     ObjectReflection {
       name: self.name,
       schema_name: self.schema_name,
@@ -20,21 +20,21 @@ impl<F: Flavor + ?Sized> ObjectReflectionBuilder<F> {
 
 /// The struct information of an object in the Graph protocol buffer
 #[derive(Debug)]
-pub struct ObjectReflection<F: Flavor + ?Sized> {
+pub struct ObjectReflection {
   name: &'static str,
   schema_name: &'static str,
-  fields: &'static [&'static ObjectFieldReflection<F>],
+  fields: &'static [&'static ObjectFieldReflection],
 }
 
-impl<F: Flavor + ?Sized> Clone for ObjectReflection<F> {
+impl Clone for ObjectReflection {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor + ?Sized> Copy for ObjectReflection<F> {}
+impl Copy for ObjectReflection {}
 
-impl<F: Flavor + ?Sized> ObjectReflection<F> {
+impl ObjectReflection {
   /// Get the name of the struct
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -51,55 +51,52 @@ impl<F: Flavor + ?Sized> ObjectReflection<F> {
 
   /// Get the fields of this struct
   #[inline]
-  pub const fn fields(&self) -> &'static [&'static ObjectFieldReflection<F>] {
+  pub const fn fields(&self) -> &'static [&'static ObjectFieldReflection] {
     self.fields
   }
 }
 
 #[doc(hidden)]
-pub struct ObjectFieldReflectionBuilder<F: Flavor + ?Sized> {
+pub struct ObjectFieldReflectionBuilder {
   pub name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
   pub schema_name: &'static str,
-  pub schema_type: &'static Type<F>,
-  pub identifier: F::Identifier,
+  pub schema_type: &'static Type,
 }
 
-impl<F: Flavor + ?Sized> ObjectFieldReflectionBuilder<F> {
+impl ObjectFieldReflectionBuilder {
   #[inline]
-  pub const fn build(self) -> ObjectFieldReflection<F> {
+  pub const fn build(self) -> ObjectFieldReflection {
     ObjectFieldReflection {
       name: self.name,
       ty: self.ty,
       schema_name: self.schema_name,
       schema_type: self.schema_type,
-      identifier: self.identifier,
     }
   }
 }
 
 /// The information of a field in the Graph protocol buffer
 #[derive(derive_more::Debug)]
-pub struct ObjectFieldReflection<F: Flavor + ?Sized> {
+pub struct ObjectFieldReflection {
   name: &'static str,
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   #[debug("{}", (self.ty)())]
   ty: fn() -> &'static str,
   schema_name: &'static str,
-  schema_type: &'static Type<F>,
-  identifier: F::Identifier,
+  schema_type: &'static Type,
 }
 
-impl<F: Flavor> Clone for ObjectFieldReflection<F> {
+impl Clone for ObjectFieldReflection {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor> Copy for ObjectFieldReflection<F> {}
+impl Copy for ObjectFieldReflection {}
 
-impl<F: Flavor> ObjectFieldReflection<F> {
+impl ObjectFieldReflection {
   /// Get the name of the field
   #[inline]
   pub const fn name(&self) -> &'static str {
@@ -124,13 +121,7 @@ impl<F: Flavor> ObjectFieldReflection<F> {
   ///
   /// This will returns the type in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_type(&self) -> &'static Type<F> {
+  pub const fn schema_type(&self) -> &'static Type {
     self.schema_type
-  }
-
-  /// Get the identifier of the field
-  #[inline]
-  pub const fn identifier(&self) -> F::Identifier {
-    self.identifier
   }
 }

@@ -2,7 +2,7 @@ use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed128, Network, Varint},
   reflection::Type,
-  schema_type_reflection, selectable,
+  type_reflection, selectable,
 };
 use rust_decimal_1::Decimal as f128;
 
@@ -10,7 +10,7 @@ default_wire_format!(Network: f128 as Fixed128);
 selectable!(@scalar Network:f128);
 decoded_state!(@scalar &'a Network: f128 as Fixed128, f128 as Varint);
 flatten_state!(f128);
-schema_type_reflection! {
+type_reflection! {
   Network:
     f128 => Type::scalar("f128", "A 128 bit representation of a fixed-precision decimal number."),
 }

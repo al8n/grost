@@ -11,7 +11,7 @@ use crate::{
   },
   partial_encode_scalar,
   reflection::Type,
-  schema_type_reflection, selectable,
+  type_reflection, selectable,
 };
 
 const PORT_SIZE: usize = 2;
@@ -151,7 +151,7 @@ default_wire_format!(
 selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
 decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
-schema_type_reflection! {
+type_reflection! {
   Network:
     SocketAddrV4 => Type::scalar("SocketAddrV4", "IPv4 socket address"),
     SocketAddrV6 => Type::scalar("SocketAddrV6", "IPv6 socket address"),

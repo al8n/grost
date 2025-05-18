@@ -64,7 +64,7 @@ impl Network {
               name: #field_name_str,
               ty: ::core::any::type_name::<#field_ty>,
               schema_name: #schema_name,
-              schema_type: <#path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#path_to_grost::__private::flavors::Network>>::REFLECTION,
+              schema_type: <#path_to_grost::__private::reflection::Reflection<#field_ty, #path_to_grost::__private::reflection::Type, #path_to_grost::__private::flavors::Network> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
             }.build()
           };
         }

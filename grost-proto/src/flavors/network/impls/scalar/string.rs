@@ -33,7 +33,7 @@ macro_rules! str_message {
           Self: Sized + 'static;
     }
 
-    $crate::schema_type_reflection! {
+    $crate::type_reflection! {
       $crate::__private::flavors::Network:
         $ty => $crate::__private::reflection::Type::string(),
     }
@@ -290,7 +290,7 @@ macro_rules! array_str {
 
     $crate::flatten_state!($ty [const N: usize]);
 
-    $crate::schema_type_reflection! {
+    $crate::type_reflection! {
       $crate::__private::flavors::Network:
         $ty [const N: usize] => $crate::__private::reflection::Type::string(),
     }

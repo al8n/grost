@@ -9,14 +9,14 @@ use crate::{
   flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
   message, partial_encode_scalar,
   reflection::Type,
-  schema_type_reflection, selectable, try_from_bridge,
+  type_reflection, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u128 as Varint);
 selectable!(@scalar Network: u128, NonZeroU128);
 decoded_state!(@scalar &'a Network: u128 as Fixed128, NonZeroU128 as Fixed128, u128 as Varint, NonZeroU128 as Varint);
 flatten_state!(u128, NonZeroU128);
-schema_type_reflection! {
+type_reflection! {
   Network:
     u128 => Type::scalar("u128", "128-bit unsigned integer"),
     NonZeroU128 => Type::scalar("NonZeroU128", "Non-zero 128-bit unsigned integer"),

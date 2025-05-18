@@ -64,32 +64,32 @@ mod struct_;
 
 /// The type in the Graph protocol schema
 #[derive(Debug)]
-pub enum Type<F: Flavor + ?Sized> {
+pub enum Type {
   Scalar {
     name: &'static str,
     description: &'static str,
   },
-  List(&'static Type<F>),
+  List(&'static Type),
   Map {
-    key: &'static Type<F>,
-    value: &'static Type<F>,
+    key: &'static Type,
+    value: &'static Type,
   },
-  Optional(&'static Type<F>),
-  Object(&'static ObjectReflection<F>),
+  Optional(&'static Type),
+  Object(&'static ObjectReflection),
   UintEnum(EnumReflection),
   Union(),
   Interface(),
 }
 
-impl<F: Flavor + ?Sized> Clone for Type<F> {
+impl Clone for Type {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F: Flavor + ?Sized> Copy for Type<F> {}
+impl Copy for Type {}
 
-impl<F: Flavor + ?Sized> Type<F> {
+impl Type {
   /// Construct a scalar type
   pub const fn scalar(name: &'static str, description: &'static str) -> Self {
     Self::Scalar { name, description }
@@ -137,8 +137,6 @@ phantom!(
   WireTypeReflection,
   /// Reflection to length related
   Len,
-  /// Reflection to the schema type
-  SchemaTypeReflection,
 );
 
 zst!(
@@ -154,24 +152,16 @@ pub trait Reflectable<F: ?Sized> {
   const REFLECTION: &Self::Reflection;
 }
 
-impl<T, F: Flavor + ?Sized> Reflectable<F> for SchemaTypeReflection<&T>
+pub struct Identified<T: ?Sized, const TAG: u32>(PhantomData<T>);
+
+impl<T: ?Sized, F: ?Sized> Reflectable<T> for Reflection<&T, Type, F>
 where
-  SchemaTypeReflection<T>: Reflectable<F, Reflection = Type<F>>,
+  Reflection<T, Type, F>: Reflectable<F, Reflection = Type>,
 {
-  type Reflection = <SchemaTypeReflection<T> as Reflectable<F>>::Reflection;
+  type Reflection = Type;
 
   const REFLECTION: &'static Self::Reflection =
-    <SchemaTypeReflection<T> as Reflectable<F>>::REFLECTION;
-}
-
-impl<T, F: Flavor + ?Sized> Reflectable<F> for SchemaTypeReflection<Option<T>>
-where
-  SchemaTypeReflection<T>: Reflectable<F, Reflection = Type<F>>,
-{
-  type Reflection = <SchemaTypeReflection<T> as Reflectable<F>>::Reflection;
-
-  const REFLECTION: &'static Self::Reflection =
-    &Type::Optional(<SchemaTypeReflection<T> as Reflectable<F>>::REFLECTION);
+    <Reflection<T, Type, F> as Reflectable<F>>::REFLECTION;
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
@@ -179,21 +169,33 @@ where
 pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized> {
   _r: PhantomData<R>,
   _f: PhantomData<F>,
-  t: T,
+  _t: PhantomData<T>,
+}
+
+impl<T, R, F> Default for Reflection<T, R, F>
+where
+  T: ?Sized,
+  R: ?Sized,
+  F: ?Sized,
+{
+  fn default() -> Self {
+    Self::new()
+  }
 }
 
 impl<T, R, F> Reflection<T, R, F>
 where
-  R: ?Sized + 'static,
-  F: Flavor + ?Sized,
+  T: ?Sized,
+  R: ?Sized,
+  F: ?Sized,
 {
   /// Creates a new [`Reflection`].
   #[inline]
-  pub const fn new(t: T) -> Self {
+  pub const fn new() -> Self {
     Self {
       _r: PhantomData,
       _f: PhantomData,
-      t,
+      _t: PhantomData,
     }
   }
 }
@@ -221,15 +223,13 @@ where
 // {
 // }
 
-// impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
-// where
-//   T: Reflectable<R, F>,
-//   R: ?Sized + 'static,
-//   F: Flavor + ?Sized,
-// {
-//   type Target = R;
+impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
+where
+  Self: Reflectable<T>,
+{
+  type Target = <Self as Reflectable<T>>::Reflection;
 
-//   fn deref(&self) -> &Self::Target {
-//     T::REFLECTION
-//   }
-// }
+  fn deref(&self) -> &Self::Target {
+    Self::REFLECTION
+  }
+}

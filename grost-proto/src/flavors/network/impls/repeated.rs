@@ -451,18 +451,18 @@ macro_rules! impl_selectable {
 
 macro_rules! repeated {
   ($ty:ty) => {
-    impl<V> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    impl<V> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, $crate::__private::flavors::Network>
     where
-      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+      $crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::Type>,
     {
-      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+      type Reflection = $crate::__private::reflection::Type;
 
       const REFLECTION: &'static Self::Reflection = {
-        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
-          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        if <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::bytes()
         } else {
           &$crate::__private::reflection::Type::List(
-            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+            <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION
           )
         }
       };
@@ -541,19 +541,19 @@ macro_rules! repeated {
       ]
     );
 
-    impl<V, A> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    impl<V, A> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, $crate::__private::flavors::Network>
     where
       A: $trait<Item = V>,
-      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+      $crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::Type>,
     {
-      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+      type Reflection = $crate::__private::reflection::Type;
 
       const REFLECTION: &'static Self::Reflection = {
-        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
-          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        if <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::bytes()
         } else {
           &$crate::__private::reflection::Type::List(
-            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+            <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION
           )
         }
       };
@@ -612,18 +612,18 @@ macro_rules! repeated {
       ]
     );
 
-    impl<V, const N: usize> $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network> for $crate::__private::reflection::SchemaTypeReflection<$ty>
+    impl<V, const N: usize> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, $crate::__private::flavors::Network>
     where
-      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network, Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>>,
+      $crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::Type>,
     {
-      type Reflection = $crate::__private::reflection::Type<$crate::__private::flavors::Network>;
+      type Reflection = $crate::__private::reflection::Type;
 
       const REFLECTION: &'static Self::Reflection = {
-        if <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION.is_byte() {
-          &$crate::__private::reflection::Type::<$crate::__private::flavors::Network>::bytes()
+        if <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION.is_byte() {
+          &$crate::__private::reflection::Type::bytes()
         } else {
           &$crate::__private::reflection::Type::List(
-            <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<$crate::__private::flavors::Network>>::REFLECTION
+            <$crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, $crate::__private::flavors::Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION
           )
         }
       };

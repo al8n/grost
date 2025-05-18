@@ -83,11 +83,11 @@ impl Reflection {
     let vis = &self.vis;
 
     quote! {
-      #[doc = #doc]
-      #vis struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-        _reflect: ::core::marker::PhantomData<R>,
-        _flavor: ::core::marker::PhantomData<F>,
-      }
+      // #[doc = #doc]
+      // #vis struct #reflection_name<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
+      //   _reflect: ::core::marker::PhantomData<R>,
+      //   _flavor: ::core::marker::PhantomData<F>,
+      // }
     }
   }
 }
@@ -120,451 +120,452 @@ where
 
     quote! {
       const _: () = {
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::WireFormatReflection,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized,
-        {
-          /// Returns the relection to the wire format of the field.
-          #[inline]
-          pub const fn wire_format(&self) -> Self
-          {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::WireFormatReflection,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized,
+        // {
+        //   /// Returns the relection to the wire format of the field.
+        //   #[inline]
+        //   pub const fn wire_format(&self) -> Self
+        //   {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::TagReflection<
-              <F as #path_to_grost::__private::flavors::Flavor>::Tag,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to a tag of the field.
-          #[inline]
-          pub const fn tag(&self) -> Self
-          {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::TagReflection<
+        //       <F as #path_to_grost::__private::flavors::Flavor>::Tag,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to a tag of the field.
+        //   #[inline]
+        //   pub const fn tag(&self) -> Self
+        //   {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::EncodedTagReflection<
-              <F as #path_to_grost::__private::flavors::Flavor>::Tag,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to the encoded tag of the field.
-          #[inline]
-          pub const fn encoded_tag(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::EncodedTagReflection<
+        //       <F as #path_to_grost::__private::flavors::Flavor>::Tag,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to the encoded tag of the field.
+        //   #[inline]
+        //   pub const fn encoded_tag(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::EncodedTagReflection<
-                <F as #path_to_grost::__private::flavors::Flavor>::Tag,
-              >,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns length of the relection to the encoded tag of the field.
-          #[inline]
-          pub const fn encoded_tag_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::Len<
+        //       #path_to_grost::__private::reflection::EncodedTagReflection<
+        //         <F as #path_to_grost::__private::flavors::Flavor>::Tag,
+        //       >,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns length of the relection to the encoded tag of the field.
+        //   #[inline]
+        //   pub const fn encoded_tag_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::WireTypeReflection<
-              <F as #path_to_grost::__private::flavors::Flavor>::WireType,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to the wire type of the field.
-          #[inline]
-          pub const fn wire_type(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::WireTypeReflection<
+        //       <F as #path_to_grost::__private::flavors::Flavor>::WireType,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to the wire type of the field.
+        //   #[inline]
+        //   pub const fn wire_type(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::IdentifierReflection<
-              <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to the identifier of the field.
-          #[inline]
-          pub const fn identifier(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::IdentifierReflection<
+        //       <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to the identifier of the field.
+        //   #[inline]
+        //   pub const fn identifier(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::EncodedIdentifierReflection<
-              <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to the encoded identifier of the field.
-          #[inline]
-          pub const fn encoded_identifier(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+        //       <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to the encoded identifier of the field.
+        //   #[inline]
+        //   pub const fn encoded_identifier(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::EncodedIdentifierReflection<
-                <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
-              >,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the relection to the encoded identifier of the field.
-          #[inline]
-          pub const fn encoded_identifier_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::Len<
+        //       #path_to_grost::__private::reflection::EncodedIdentifierReflection<
+        //         <F as #path_to_grost::__private::flavors::Flavor>::Identifier,
+        //       >,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the relection to the encoded identifier of the field.
+        //   #[inline]
+        //   pub const fn encoded_identifier_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::encode::EncodeField,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the encode fn.
-          #[inline]
-          pub const fn encode(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::encode::EncodeField,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the encode fn.
+        //   #[inline]
+        //   pub const fn encode(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField,>,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to fn which will give the length of the encoded data.
-          #[inline]
-          pub const fn encoded_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::Len<#path_to_grost::__private::reflection::encode::EncodeField,>,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to fn which will give the length of the encoded data.
+        //   #[inline]
+        //   pub const fn encoded_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::encode::EncodeRefField,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the reference encode fn.
-          #[inline]
-          pub const fn encode_ref(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::encode::EncodeRefField,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the reference encode fn.
+        //   #[inline]
+        //   pub const fn encode_ref(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::Len<
-                #path_to_grost::__private::reflection::encode::EncodeRefField,
-              >,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
-          #[inline]
-          pub const fn encoded_ref_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::Len<
+        //         #path_to_grost::__private::reflection::encode::EncodeRefField,
+        //       >,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
+        //   #[inline]
+        //   pub const fn encoded_ref_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::encode::PartialEncodeField,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the partial encode fn.
-          #[inline]
-          pub const fn partial_encode(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::encode::PartialEncodeField,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the partial encode fn.
+        //   #[inline]
+        //   pub const fn partial_encode(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::Len<
-                #path_to_grost::__private::reflection::encode::PartialEncodeField,
-              >,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
-          #[inline]
-          pub const fn partial_encoded_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::Len<
+        //         #path_to_grost::__private::reflection::encode::PartialEncodeField,
+        //       >,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
+        //   #[inline]
+        //   pub const fn partial_encoded_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the partial reference encode fn.
-          #[inline]
-          pub const fn partial_encode_ref(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the partial reference encode fn.
+        //   #[inline]
+        //   pub const fn partial_encode_ref(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-          (
-            #path_to_grost::__private::reflection::encode::EncodeReflection<
-              #path_to_grost::__private::reflection::Len<
-                #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
-              >,
-            >,
-            #path_to_grost::__private::RawTag<TAG>,
-          ),
-          F,
-        >
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
-          #[inline]
-          pub const fn partial_encoded_ref_len(&self) -> Self {
-            #reflection_name::new_in()
-          }
-        }
+        // #[automatically_derived]
+        // #[allow(clippy::type_complexity, non_camel_case_types)]
+        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
+        //   (
+        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
+        //       #path_to_grost::__private::reflection::Len<
+        //         #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
+        //       >,
+        //     >,
+        //     #path_to_grost::__private::RawTag<TAG>,
+        //   ),
+        //   F,
+        // >
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
+        //   #[inline]
+        //   pub const fn partial_encoded_ref_len(&self) -> Self {
+        //     #reflection_name::new_in()
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
-        where
-          R: ?::core::marker::Sized,
-          F: ?::core::marker::Sized,
-          Self: #path_to_grost::__private::reflection::Reflectable<F>,
-        {
-          type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
+        // #[automatically_derived]
+        // impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
+        // where
+        //   R: ?::core::marker::Sized,
+        //   F: ?::core::marker::Sized,
+        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        // {
+        //   type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
 
-          fn deref(&self) -> &Self::Target {
-            <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
-          }
-        }
+        //   fn deref(&self) -> &Self::Target {
+        //     <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
-        where
-          R: ?::core::marker::Sized,
-          F: ?::core::marker::Sized,
-          Self: ::core::ops::Deref,
-        {
-          fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
-            self
-          }
-        }
+        // #[automatically_derived]
+        // impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
+        // where
+        //   R: ?::core::marker::Sized,
+        //   F: ?::core::marker::Sized,
+        //   Self: ::core::ops::Deref,
+        // {
+        //   fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
+        //     self
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
-        where
-          R: ?::core::marker::Sized,
-          F: ?::core::marker::Sized,
-          Self: #path_to_grost::__private::reflection::Reflectable<F>,
-          <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
-        {
-          fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-            ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
-          }
-        }
+        // #[automatically_derived]
+        // impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
+        // where
+        //   R: ?::core::marker::Sized,
+        //   F: ?::core::marker::Sized,
+        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        //   <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
+        // {
+        //   fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+        //     ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
-        where
-          R: ?::core::marker::Sized,
-          F: ?::core::marker::Sized,
-          Self: #path_to_grost::__private::reflection::Reflectable<F>,
-          <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
-        {
-          fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-            ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
-          }
-        }
+        // #[automatically_derived]
+        // impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
+        // where
+        //   R: ?::core::marker::Sized,
+        //   F: ?::core::marker::Sized,
+        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
+        //   <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
+        // {
+        //   fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
+        //     ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #reflection_name<R, F> {
-          fn clone(&self) -> Self {
-            *self
-          }
-        }
+        // #[automatically_derived]
+        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #reflection_name<R, F> {
+        //   fn clone(&self) -> Self {
+        //     *self
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #reflection_name<R, F> {}
+        // #[automatically_derived]
+        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #reflection_name<R, F> {}
 
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> #reflection_name<R, F> {
-          const fn new_in() -> Self {
-            Self {
-              _reflect: ::core::marker::PhantomData,
-              _flavor: ::core::marker::PhantomData,
-            }
-          }
-        }
+        // #[automatically_derived]
+        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> #reflection_name<R, F> {
+        //   const fn new_in() -> Self {
+        //     Self {
+        //       _reflect: ::core::marker::PhantomData,
+        //       _flavor: ::core::marker::PhantomData,
+        //     }
+        //   }
+        // }
 
-        #[automatically_derived]
-        impl<F> #reflection_name<#path_to_grost::__private::reflection::ObjectReflection<F>, F>
-        where
-          F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          /// Returns the reflection of the struct.
-          #[inline]
-          const fn new() -> Self {
-            Self::new_in()
-          }
+        // #[automatically_derived]
+        // impl<F> #reflection_name<#path_to_grost::__private::reflection::ObjectReflection<F>, F>
+        // where
+        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        // {
+        //   /// Returns the reflection of the struct.
+        //   #[inline]
+        //   const fn new() -> Self {
+        //     Self::new_in()
+        //   }
 
-          #(#field_reflection_fns)*
-        }
+        //   #(#field_reflection_fns)*
+        // }
 
         #[automatically_derived]
         impl #ig #name #tg #wc {
           /// Returns the reflection of the struct.
           #[allow(non_camel_case_types)]
           #[inline]
-          pub const fn reflection<#fg>() -> #reflection_name<
-            #path_to_grost::__private::reflection::ObjectReflection<#fg>,
+          pub const fn reflection<#fg>() -> #path_to_grost::__private::reflection::Reflection<
+            Self,
+            #path_to_grost::__private::reflection::ObjectReflection,
             #fg,
           >
           where
             #fg: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
           {
-            #reflection_name::new()
+            #path_to_grost::__private::reflection::Reflection::new()
           }
         }
       };

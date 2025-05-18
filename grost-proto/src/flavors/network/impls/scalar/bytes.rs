@@ -33,7 +33,7 @@ macro_rules! bytes_message {
           Self: Sized + 'static;
     }
 
-    // $crate::schema_type_reflection! {
+    // $crate::type_reflection! {
     //   $crate::__private::flavors::Network:
     //     $ty $([ $(const $g: usize),* ])? => $crate::__private::reflection::Type::bytes(),
     // }

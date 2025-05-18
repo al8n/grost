@@ -1,4 +1,4 @@
-use crate::{flavors::Network, network_varint, reflection::Type, schema_type_reflection};
+use crate::{flavors::Network, network_varint, reflection::Type, type_reflection};
 pub use arbitrary_int_1::*;
 
 macro_rules! impl_arbitrary_int {
@@ -7,7 +7,7 @@ macro_rules! impl_arbitrary_int {
       seq_macro::seq!(N in $start..=$end {
         network_varint!(#(u~N,)*);
 
-        schema_type_reflection! {
+        type_reflection! {
           Network:
             #(u~N => Type::scalar(stringify!(u~N), concat!(stringify!(N), "-bit unsigned integer")),)*
         }

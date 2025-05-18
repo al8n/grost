@@ -5,7 +5,7 @@ use crate::{
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target,
   reflection::Type,
-  schema_type_reflection, selectable, type_ref,
+  type_reflection, selectable, type_ref,
 };
 use bytes_1::Bytes;
 
@@ -39,7 +39,7 @@ decoded_state!(
   &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
 flatten_state!(Bytes);
-schema_type_reflection! {
+type_reflection! {
   Network:
     Bytes => Type::bytes(),
 }

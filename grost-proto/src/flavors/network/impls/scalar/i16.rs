@@ -7,7 +7,7 @@ use crate::{
   flavors::network::{Context, DecodeError, EncodeError, Fixed16, Network, Unknown, Varint},
   message, partial_encode_scalar,
   reflection::Type,
-  schema_type_reflection, selectable, try_from_bridge,
+  type_reflection, selectable, try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -15,7 +15,7 @@ default_wire_format!(Network: i16 as Varint);
 selectable!(@scalar Network: i16, NonZeroI16);
 decoded_state!(@scalar &'a Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
 flatten_state!(i16, NonZeroI16);
-schema_type_reflection! {
+type_reflection! {
   Network:
     i16 => Type::scalar("i16", "16-bit signed integer"),
     NonZeroI16 => Type::scalar("NonZeroI16", "Non-zero 16-bit signed integer"),

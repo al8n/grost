@@ -139,7 +139,6 @@ where
     let num_fields = self.fields().len();
     let fgp = grost_flavor_param();
     let fg = &fgp.ident;
-    let reflection_name = self.reflection.name();
     let path_to_grost = &self.path_to_grost;
 
     let first_variant_name = self.indexer.variants().first().unwrap().name();
@@ -147,7 +146,7 @@ where
     let last_variant_name = self.indexer.variants().last().unwrap().name();
 
     let struct_name = self.name();
-    let (_, tg, w) = self.generics().split_for_impl();
+    let (object_ig, tg, w) = self.generics().split_for_impl();
     let mut generics = self.generics().clone();
     generics.params.push(syn::GenericParam::Type(fgp.clone()));
     let (ig, _, _) = generics.split_for_impl();
@@ -180,29 +179,25 @@ where
         let field_variant = f.name();
 
         reflections_constraints.push(quote! {
-          #reflection_name<
-            (
-              #path_to_grost::__private::reflection::ObjectFieldReflection<#fg>,
-              #path_to_grost::__private::RawTag<#tag>,
-            ),
+          #path_to_grost::__private::reflection::Reflection<
+            #struct_name #tg,
+            #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::ObjectFieldReflection, #tag>,
             #fg,
           >: #path_to_grost::__private::reflection::Reflectable<
-            #fg,
-            Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection<#fg>,
+            #struct_name #tg,
+            Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection,
           >
         });
 
         quote! {
           Self::#field_variant => {
             <
-              #reflection_name<
-                (
-                  #path_to_grost::__private::reflection::ObjectFieldReflection<#fg>,
-                  #path_to_grost::__private::RawTag<#tag>,
-                ),
+              #path_to_grost::__private::reflection::Reflection<
+                #struct_name #tg,
+                #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::ObjectFieldReflection, #tag>,
                 #fg,
               > as #path_to_grost::__private::reflection::Reflectable<
-                #fg,
+                #struct_name #tg,
               >
             >::REFLECTION
           }
@@ -218,20 +213,15 @@ where
       }
 
       #[automatically_derived]
-      impl #name {
-        /// The number of variants of this field indexer.
-        pub const VARIANTS: ::core::primitive::usize = #num_fields;
-        /// The first field indexer.
-        pub const FIRST: Self = Self::#first_variant_name;
-        /// The last field indexer.
-        pub const LAST: Self = Self::#last_variant_name;
-
+      #[allow(non_camel_case_types)]
+      impl #name
+      {
         /// Returns the field reflection of the corresponding field.
         #[allow(non_camel_case_types, clippy::type_complexity)]
         #[inline]
-        pub const fn reflection<#fg>(
+        pub const fn reflection #ig (
           &self,
-        ) -> &'static #path_to_grost::__private::reflection::ObjectFieldReflection<#fg>
+        ) -> &'static #path_to_grost::__private::reflection::ObjectFieldReflection
         where
           #fg: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized,
           #(#reflections_constraints),*
@@ -240,6 +230,16 @@ where
             #(#reflections),*
           }
         }
+      }
+
+      #[automatically_derived]
+      impl #name {
+        /// The number of variants of this field indexer.
+        pub const VARIANTS: ::core::primitive::usize = #num_fields;
+        /// The first field indexer.
+        pub const FIRST: Self = Self::#first_variant_name;
+        /// The last field indexer.
+        pub const LAST: Self = Self::#last_variant_name;
 
         /// Returns the next field indexer.
         ///

@@ -5,7 +5,7 @@ use crate::{
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
   into_target,
   reflection::Type,
-  schema_type_reflection, selectable, type_ref,
+  type_reflection, selectable, type_ref,
 };
 use smol_str_0_3::SmolStr;
 
@@ -33,7 +33,7 @@ flatten_state!(SmolStr);
 decoded_state!(
   &'a Network: SmolStr as LengthDelimited => &'a str
 );
-schema_type_reflection! {
+type_reflection! {
   Network:
     SmolStr => Type::string(),
 }

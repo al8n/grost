@@ -13,7 +13,7 @@ use crate::{
   },
   partial_encode_scalar,
   reflection::Type,
-  schema_type_reflection, selectable,
+  type_reflection, selectable,
 };
 
 macro_rules! ip_addr {
@@ -157,7 +157,7 @@ selectable!(@scalar Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 decoded_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
-schema_type_reflection! {
+type_reflection! {
   Network:
     Ipv4Addr => Type::scalar("Ipv4", "IPv4 address"),
     Ipv6Addr => Type::scalar("Ipv6", "IPv6 address"),

@@ -253,7 +253,6 @@ impl Selector {
     let name = input.selector_name();
 
     let vis = input.vis().clone();
-    let reflection_name = input.reflection_name();
     let fgp = grost_flavor_param();
 
     let mut generics = Generics::default();
@@ -296,9 +295,10 @@ impl Selector {
     }
 
     add_selector_constraints(
+      input.name(),
+      input.generics(),
       &mut generics,
       path_to_grost,
-      &reflection_name,
       input.fields().iter().copied(),
       &fgp,
     )?;
@@ -309,8 +309,8 @@ impl Selector {
       .map(|f| {
         let ty = f.ty();
         let tag = f.meta().tag();
-        let wfr = wire_format_reflection_ty(path_to_grost, &reflection_name, tag.get(), &fgp);
-        let wf = wire_format_ty(path_to_grost, &wfr, &fgp);
+        let wfr = wire_format_reflection_ty(path_to_grost, input.name(), input.generics(), tag.get(), &fgp);
+        let wf = wire_format_ty(path_to_grost, &wfr, ty);
 
         let attrs = f.meta().selector().attrs();
         let vis = f.vis();
@@ -987,10 +987,13 @@ where
   }
 }
 
-fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::TypeParam) -> syn::Type {
-  let fg = &fg.ident;
+fn wire_format_ty(
+  path_to_grost: &syn::Path,
+  wf: &syn::Type,
+  ty: &syn::Type,
+) -> syn::Type {
   parse_quote! {
-    <#wf as #path_to_grost::__private::reflection::Reflectable<#fg>>::Reflection
+    <#wf as #path_to_grost::__private::reflection::Reflectable<#ty>>::Reflection
   }
 }
 
@@ -1005,26 +1008,26 @@ fn selector_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::TypeParam) -
 }
 
 fn add_selector_constraints<'a, I>(
+  object_name: &Ident,
+  object_generics: &Generics,
   generics: &mut Generics,
   path_to_grost: &syn::Path,
-  field_reflection: &syn::Ident,
   mut fields: impl Iterator<Item = &'a I>,
   fg: &syn::TypeParam,
 ) -> darling::Result<()>
 where
   I: crate::ast::object::Field + 'a,
 {
-  let fgi = &fg.ident;
   fields.try_for_each(move |f| {
     let ty = f.ty();
-    let wfr = wire_format_reflection_ty(path_to_grost, field_reflection, f.meta().tag().get(), fg);
-    let wf = wire_format_ty(path_to_grost, &wfr, fg);
+    let wfr = wire_format_reflection_ty(path_to_grost, object_name, object_generics, f.meta().tag().get(), fg);
+    let wf = wire_format_ty(path_to_grost, &wfr, ty);
     let selector_ty = selector_ty(path_to_grost, &wf, fg);
 
     let where_clause = generics.make_where_clause();
 
     where_clause.predicates.push(syn::parse2(quote! {
-      #wfr: #path_to_grost::__private::reflection::Reflectable<#fgi>
+      #wfr: #path_to_grost::__private::reflection::Reflectable<#ty>
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
       #ty: #selector_ty

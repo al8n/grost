@@ -2,7 +2,7 @@ use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed8, Network, Varint},
   reflection::Type,
-  schema_type_reflection, selectable,
+  type_reflection, selectable,
 };
 
 default_wire_format!(Network: bool as Fixed8);
@@ -10,7 +10,7 @@ default_wire_format!(Network: bool as Fixed8);
 selectable!(@scalar Network:bool);
 decoded_state!(@scalar &'a Network: bool as Fixed8, bool as Varint);
 flatten_state!(bool);
-schema_type_reflection! {
+type_reflection! {
   Network:
     bool => Type::scalar("bool", "boolean"),
 }

@@ -195,13 +195,13 @@ macro_rules! decoded_state {
   };
 }
 
-/// A macro emits [`impl Reflectable<Flavor> for SchemaTypeReflection<Self>`](super::reflection::Reflectable) implementations for `Self`
+/// A macro emits [`impl Reflectable<Self> for Reflection<Self, Type, Flavor>`](super::reflection::Reflectable) implementations for `Self`
 #[macro_export]
-macro_rules! schema_type_reflection {
+macro_rules! type_reflection {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $expr:expr),+$(,)?) => {
     $(
-      impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::reflection::Reflectable<$flavor> for $crate::__private::reflection::SchemaTypeReflection<$ty> {
-        type Reflection = $crate::__private::reflection::Type<$flavor>;
+      impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, $flavor> {
+        type Reflection = $crate::__private::reflection::Type;
 
         const REFLECTION: &Self::Reflection = &{
           $expr

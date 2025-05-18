@@ -3,6 +3,14 @@
 use std::prelude::rust_2024::*;
 #[macro_use]
 extern crate std;
+use grost::{
+    convert::Decoded,
+    flavors::{
+        network::{Identifier, LengthDelimited, Tag, WireType},
+        Network, RawTag,
+    },
+    reflection::{Identified, Reflectable, Reflection},
+};
 use grost_derive::Object;
 mod sealed {
     pub fn default_user() -> String {
@@ -15,7 +23,7 @@ pub struct User<I> {
         schema(description = "The id of the user"),
         wire = "grost::flavors::network::LengthDelimited",
         selector(select = "all"),
-        partial_decoded(copy)
+        partial_decoded(copy),
     )]
     id: I,
     #[grost(
@@ -96,11 +104,6 @@ impl<I: ::core::cmp::Eq> ::core::cmp::Eq for User<I> {
         let _: ::core::cmp::AssertParamIsEq<Option<Vec<String>>>;
     }
 }
-/// The reflection of the [`User`].
-pub struct UserReflection<R: ?::core::marker::Sized, F: ?::core::marker::Sized> {
-    _reflect: ::core::marker::PhantomData<R>,
-    _flavor: ::core::marker::PhantomData<F>,
-}
 #[allow(non_camel_case_types, clippy::type_complexity)]
 pub struct PartialUser<I>
 where
@@ -141,22 +144,24 @@ pub struct PartialDecodedUser<
     __GROST_UNKNOWN_BUFFER__,
 >
 where
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<1u32>,
-        ),
+            1u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<I>,
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
@@ -167,33 +172,36 @@ where
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
             >>::Reflection,
         >,
     >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<2u32>,
-        ),
+            2u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<String>,
     String: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
@@ -204,33 +212,36 @@ where
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
             >>::Reflection,
         >,
     >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<3u32>,
-        ),
+            3u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<u8>,
     u8: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
@@ -241,35 +252,38 @@ where
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
             >>::Reflection,
         >,
     >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<4u32>,
-        ),
+            4u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
     Option<
         Vec<String>,
     >: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
@@ -282,11 +296,12 @@ where
         ::grost::__private::convert::Decoded<
             '__grost_lifetime__,
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
                 __GROST_FLAVOR__,
@@ -300,11 +315,12 @@ where
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -317,11 +333,12 @@ where
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -334,11 +351,12 @@ where
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -353,11 +371,12 @@ where
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -453,118 +472,134 @@ impl ::core::fmt::Debug for UserIndex {
 #[allow(non_camel_case_types, clippy::type_complexity)]
 pub struct UserSelector<I, __GROST_FLAVOR__: ?::core::marker::Sized>
 where
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<1u32>,
-        ),
+            1u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<I>,
     I: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<2u32>,
-        ),
+            2u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<String>,
     String: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<3u32>,
-        ),
+            3u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<u8>,
     u8: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<4u32>,
-        ),
+            4u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
     Option<
         Vec<String>,
     >: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<
+            Option<Vec<String>>,
+        >>::Reflection,
     >,
 {
     id: <I as ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
     >>::Selector,
     name: <String as ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
     >>::Selector,
     age: <u8 as ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
     >>::Selector,
     emails: <Option<
         Vec<String>,
     > as ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<
+            Option<Vec<String>>,
+        >>::Reflection,
     >>::Selector,
 }
 /// An iterator over the selected fields of the [`UserSelector`]
@@ -576,75 +611,85 @@ pub struct UserSelectorIter<
     const __GROST_SELECTED__: ::core::primitive::bool = true,
 >
 where
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<1u32>,
-        ),
+            1u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<I>,
     I: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<2u32>,
-        ),
+            2u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<String>,
     String: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<3u32>,
-        ),
+            3u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<u8>,
     u8: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
     >,
-    UserReflection<
-        (
+    ::grost::__private::reflection::Reflection<
+        User<I>,
+        ::grost::__private::reflection::Identified<
             ::grost::__private::reflection::WireFormatReflection,
-            ::grost::__private::RawTag<4u32>,
-        ),
+            4u32,
+        >,
         __GROST_FLAVOR__,
-    >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+    >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
     Option<
         Vec<String>,
     >: ::grost::__private::Selectable<
         __GROST_FLAVOR__,
-        <UserReflection<
-            (
+        <::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
+        > as ::grost::__private::reflection::Reflectable<
+            Option<Vec<String>>,
+        >>::Reflection,
     >,
 {
     selector: &'__grost_lifetime__ UserSelector<I, __GROST_FLAVOR__>,
@@ -655,539 +700,20 @@ where
 const _: () = {
     const _: () = {
         #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized,
-        {
-            /// Returns the relection to the wire format of the field.
-            #[inline]
-            pub const fn wire_format(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::TagReflection<
-                    <F as ::grost::__private::flavors::Flavor>::Tag,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to a tag of the field.
-            #[inline]
-            pub const fn tag(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::EncodedTagReflection<
-                    <F as ::grost::__private::flavors::Flavor>::Tag,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to the encoded tag of the field.
-            #[inline]
-            pub const fn encoded_tag(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::Len<
-                    ::grost::__private::reflection::EncodedTagReflection<
-                        <F as ::grost::__private::flavors::Flavor>::Tag,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns length of the relection to the encoded tag of the field.
-            #[inline]
-            pub const fn encoded_tag_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::WireTypeReflection<
-                    <F as ::grost::__private::flavors::Flavor>::WireType,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to the wire type of the field.
-            #[inline]
-            pub const fn wire_type(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::IdentifierReflection<
-                    <F as ::grost::__private::flavors::Flavor>::Identifier,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to the identifier of the field.
-            #[inline]
-            pub const fn identifier(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::EncodedIdentifierReflection<
-                    <F as ::grost::__private::flavors::Flavor>::Identifier,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to the encoded identifier of the field.
-            #[inline]
-            pub const fn encoded_identifier(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::Len<
-                    ::grost::__private::reflection::EncodedIdentifierReflection<
-                        <F as ::grost::__private::flavors::Flavor>::Identifier,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the relection to the encoded identifier of the field.
-            #[inline]
-            pub const fn encoded_identifier_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::encode::EncodeField,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the encode fn.
-            #[inline]
-            pub const fn encode(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::Len<
-                        ::grost::__private::reflection::encode::EncodeField,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to fn which will give the length of the encoded data.
-            #[inline]
-            pub const fn encoded_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::encode::EncodeRefField,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the reference encode fn.
-            #[inline]
-            pub const fn encode_ref(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::Len<
-                        ::grost::__private::reflection::encode::EncodeRefField,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the reference encode fn which will give the length of the encoded data.
-            #[inline]
-            pub const fn encoded_ref_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::encode::PartialEncodeField,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the partial encode fn.
-            #[inline]
-            pub const fn partial_encode(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::Len<
-                        ::grost::__private::reflection::encode::PartialEncodeField,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the partial encode fn which will give the length of the encoded data.
-            #[inline]
-            pub const fn partial_encoded_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::encode::PartialEncodeRefField,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the partial reference encode fn.
-            #[inline]
-            pub const fn partial_encode_ref(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl<
-            F,
-            const TAG: ::core::primitive::u32,
-        > UserReflection<
-            (
-                ::grost::__private::reflection::encode::EncodeReflection<
-                    ::grost::__private::reflection::Len<
-                        ::grost::__private::reflection::encode::PartialEncodeRefField,
-                    >,
-                >,
-                ::grost::__private::RawTag<TAG>,
-            ),
-            F,
-        >
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
-            #[inline]
-            pub const fn partial_encoded_ref_len(&self) -> Self {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
-        impl<R, F> ::core::ops::Deref for UserReflection<R, F>
-        where
-            R: ?::core::marker::Sized,
-            F: ?::core::marker::Sized,
-            Self: ::grost::__private::reflection::Reflectable<F>,
-        {
-            type Target = <Self as ::grost::__private::reflection::Reflectable<
-                F,
-            >>::Reflection;
-            fn deref(&self) -> &Self::Target {
-                <Self as ::grost::__private::reflection::Reflectable<F>>::REFLECTION
-            }
-        }
-        #[automatically_derived]
-        impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target>
-        for UserReflection<R, F>
-        where
-            R: ?::core::marker::Sized,
-            F: ?::core::marker::Sized,
-            Self: ::core::ops::Deref,
-        {
-            fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
-                self
-            }
-        }
-        #[automatically_derived]
-        impl<R, F> ::core::fmt::Debug for UserReflection<R, F>
-        where
-            R: ?::core::marker::Sized,
-            F: ?::core::marker::Sized,
-            Self: ::grost::__private::reflection::Reflectable<F>,
-            <Self as ::grost::__private::reflection::Reflectable<
-                F,
-            >>::Reflection: ::core::fmt::Debug,
-        {
-            fn fmt(
-                &self,
-                f: &mut ::core::fmt::Formatter<'_>,
-            ) -> ::core::result::Result<(), ::core::fmt::Error> {
-                ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
-            }
-        }
-        #[automatically_derived]
-        impl<R, F> ::core::fmt::Display for UserReflection<R, F>
-        where
-            R: ?::core::marker::Sized,
-            F: ?::core::marker::Sized,
-            Self: ::grost::__private::reflection::Reflectable<F>,
-            <Self as ::grost::__private::reflection::Reflectable<
-                F,
-            >>::Reflection: ::core::fmt::Display,
-        {
-            fn fmt(
-                &self,
-                f: &mut ::core::fmt::Formatter<'_>,
-            ) -> ::core::result::Result<(), ::core::fmt::Error> {
-                ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
-            }
-        }
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone
-        for UserReflection<R, F> {
-            fn clone(&self) -> Self {
-                *self
-            }
-        }
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy
-        for UserReflection<R, F> {}
-        #[automatically_derived]
-        impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> UserReflection<R, F> {
-            const fn new_in() -> Self {
-                Self {
-                    _reflect: ::core::marker::PhantomData,
-                    _flavor: ::core::marker::PhantomData,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl<F> UserReflection<::grost::__private::reflection::ObjectReflection<F>, F>
-        where
-            F: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
-        {
-            /// Returns the reflection of the struct.
-            #[inline]
-            const fn new() -> Self {
-                Self::new_in()
-            }
-            /// Returns the field reflection of the field `User.id`.
-            #[inline]
-            pub const fn id(
-                &self,
-            ) -> UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<F>,
-                    ::grost::__private::RawTag<1u32>,
-                ),
-                F,
-            > {
-                UserReflection::new_in()
-            }
-            /// Returns the field reflection of the field `User.name`.
-            #[inline]
-            pub const fn name(
-                &self,
-            ) -> UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<F>,
-                    ::grost::__private::RawTag<2u32>,
-                ),
-                F,
-            > {
-                UserReflection::new_in()
-            }
-            /// Returns the field reflection of the field `User.age`.
-            #[inline]
-            pub const fn age(
-                &self,
-            ) -> UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<F>,
-                    ::grost::__private::RawTag<3u32>,
-                ),
-                F,
-            > {
-                UserReflection::new_in()
-            }
-            /// Returns the field reflection of the field `User.emails`.
-            #[inline]
-            pub const fn emails(
-                &self,
-            ) -> UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<F>,
-                    ::grost::__private::RawTag<4u32>,
-                ),
-                F,
-            > {
-                UserReflection::new_in()
-            }
-        }
-        #[automatically_derived]
         impl<I> User<I> {
             /// Returns the reflection of the struct.
             #[allow(non_camel_case_types)]
             #[inline]
-            pub const fn reflection<__GROST_FLAVOR__>() -> UserReflection<
-                ::grost::__private::reflection::ObjectReflection<__GROST_FLAVOR__>,
+            pub const fn reflection<__GROST_FLAVOR__>() -> ::grost::__private::reflection::Reflection<
+                Self,
+                ::grost::__private::reflection::ObjectReflection,
                 __GROST_FLAVOR__,
             >
             where
                 __GROST_FLAVOR__: ?::core::marker::Sized
                     + ::grost::__private::flavors::Flavor,
             {
-                UserReflection::new()
+                ::grost::__private::reflection::Reflection::new()
             }
         }
     };
@@ -1200,6 +726,115 @@ const _: () = {
         type Indexer = UserIndex;
     }
     #[automatically_derived]
+    #[allow(non_camel_case_types)]
+    impl UserIndex {
+        /// Returns the field reflection of the corresponding field.
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        #[inline]
+        pub const fn reflection<I, __GROST_FLAVOR__: ?::core::marker::Sized>(
+            &self,
+        ) -> &'static ::grost::__private::reflection::ObjectFieldReflection
+        where
+            __GROST_FLAVOR__: ::grost::__private::flavors::Flavor
+                + ?::core::marker::Sized,
+            ::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
+                    ::grost::__private::reflection::ObjectFieldReflection,
+                    1u32,
+                >,
+                __GROST_FLAVOR__,
+            >: ::grost::__private::reflection::Reflectable<
+                User<I>,
+                Reflection = ::grost::__private::reflection::ObjectFieldReflection,
+            >,
+            ::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
+                    ::grost::__private::reflection::ObjectFieldReflection,
+                    2u32,
+                >,
+                __GROST_FLAVOR__,
+            >: ::grost::__private::reflection::Reflectable<
+                User<I>,
+                Reflection = ::grost::__private::reflection::ObjectFieldReflection,
+            >,
+            ::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
+                    ::grost::__private::reflection::ObjectFieldReflection,
+                    3u32,
+                >,
+                __GROST_FLAVOR__,
+            >: ::grost::__private::reflection::Reflectable<
+                User<I>,
+                Reflection = ::grost::__private::reflection::ObjectFieldReflection,
+            >,
+            ::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
+                    ::grost::__private::reflection::ObjectFieldReflection,
+                    4u32,
+                >,
+                __GROST_FLAVOR__,
+            >: ::grost::__private::reflection::Reflectable<
+                User<I>,
+                Reflection = ::grost::__private::reflection::ObjectFieldReflection,
+            >,
+        {
+            match self {
+                Self::Id => {
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
+                            ::grost::__private::reflection::ObjectFieldReflection,
+                            1u32,
+                        >,
+                        __GROST_FLAVOR__,
+                    > as ::grost::__private::reflection::Reflectable<
+                        User<I>,
+                    >>::REFLECTION
+                }
+                Self::Name => {
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
+                            ::grost::__private::reflection::ObjectFieldReflection,
+                            2u32,
+                        >,
+                        __GROST_FLAVOR__,
+                    > as ::grost::__private::reflection::Reflectable<
+                        User<I>,
+                    >>::REFLECTION
+                }
+                Self::Age => {
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
+                            ::grost::__private::reflection::ObjectFieldReflection,
+                            3u32,
+                        >,
+                        __GROST_FLAVOR__,
+                    > as ::grost::__private::reflection::Reflectable<
+                        User<I>,
+                    >>::REFLECTION
+                }
+                Self::Emails => {
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
+                            ::grost::__private::reflection::ObjectFieldReflection,
+                            4u32,
+                        >,
+                        __GROST_FLAVOR__,
+                    > as ::grost::__private::reflection::Reflectable<
+                        User<I>,
+                    >>::REFLECTION
+                }
+            }
+        }
+    }
+    #[automatically_derived]
     impl UserIndex {
         /// The number of variants of this field indexer.
         pub const VARIANTS: ::core::primitive::usize = 4usize;
@@ -1207,129 +842,6 @@ const _: () = {
         pub const FIRST: Self = Self::Id;
         /// The last field indexer.
         pub const LAST: Self = Self::Emails;
-        /// Returns the field reflection of the corresponding field.
-        #[allow(non_camel_case_types, clippy::type_complexity)]
-        #[inline]
-        pub const fn reflection<__GROST_FLAVOR__>(
-            &self,
-        ) -> &'static ::grost::__private::reflection::ObjectFieldReflection<
-            __GROST_FLAVOR__,
-        >
-        where
-            __GROST_FLAVOR__: ::grost::__private::flavors::Flavor
-                + ?::core::marker::Sized,
-            UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<
-                        __GROST_FLAVOR__,
-                    >,
-                    ::grost::__private::RawTag<1u32>,
-                ),
-                __GROST_FLAVOR__,
-            >: ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-                    __GROST_FLAVOR__,
-                >,
-            >,
-            UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<
-                        __GROST_FLAVOR__,
-                    >,
-                    ::grost::__private::RawTag<2u32>,
-                ),
-                __GROST_FLAVOR__,
-            >: ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-                    __GROST_FLAVOR__,
-                >,
-            >,
-            UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<
-                        __GROST_FLAVOR__,
-                    >,
-                    ::grost::__private::RawTag<3u32>,
-                ),
-                __GROST_FLAVOR__,
-            >: ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-                    __GROST_FLAVOR__,
-                >,
-            >,
-            UserReflection<
-                (
-                    ::grost::__private::reflection::ObjectFieldReflection<
-                        __GROST_FLAVOR__,
-                    >,
-                    ::grost::__private::RawTag<4u32>,
-                ),
-                __GROST_FLAVOR__,
-            >: ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-                Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-                    __GROST_FLAVOR__,
-                >,
-            >,
-        {
-            match self {
-                Self::Id => {
-                    <UserReflection<
-                        (
-                            ::grost::__private::reflection::ObjectFieldReflection<
-                                __GROST_FLAVOR__,
-                            >,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
-                        __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::REFLECTION
-                }
-                Self::Name => {
-                    <UserReflection<
-                        (
-                            ::grost::__private::reflection::ObjectFieldReflection<
-                                __GROST_FLAVOR__,
-                            >,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
-                        __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::REFLECTION
-                }
-                Self::Age => {
-                    <UserReflection<
-                        (
-                            ::grost::__private::reflection::ObjectFieldReflection<
-                                __GROST_FLAVOR__,
-                            >,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
-                        __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::REFLECTION
-                }
-                Self::Emails => {
-                    <UserReflection<
-                        (
-                            ::grost::__private::reflection::ObjectFieldReflection<
-                                __GROST_FLAVOR__,
-                            >,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
-                        __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::REFLECTION
-                }
-            }
-        }
         /// Returns the next field indexer.
         ///
         /// Returns `None` if there are no more fields.
@@ -1396,82 +908,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::fmt::Debug
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -1492,82 +1006,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::cmp::PartialEq
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -1581,82 +1097,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::cmp::Eq
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {}
@@ -1665,82 +1183,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::hash::Hash
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -1756,82 +1276,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::clone::Clone
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -1849,132 +1371,132 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::marker::Copy
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
         <I as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >>::Selector: ::core::marker::Copy,
         <String as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >>::Selector: ::core::marker::Copy,
         <u8 as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >>::Selector: ::core::marker::Copy,
         <Option<
             Vec<String>,
         > as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >>::Selector: ::core::marker::Copy,
     {}
@@ -1986,82 +1508,84 @@ const _: () = {
     > ::grost::__private::Selector<__GROST_FLAVOR__>
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -2077,43 +1601,40 @@ const _: () = {
         fn flip(&mut self) -> &mut Self {
             <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.id);
             <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.name);
             <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.age);
@@ -2121,14 +1642,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
@@ -2138,43 +1660,40 @@ const _: () = {
         fn merge(&mut self, other: Self) -> &mut Self {
             <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.id, other.id);
             <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.name, other.name);
             <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.age, other.age);
@@ -2182,14 +1701,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
@@ -2202,82 +1722,84 @@ const _: () = {
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> ::core::default::Default
     for UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -2289,82 +1811,84 @@ const _: () = {
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl<I, __GROST_FLAVOR__: ?::core::marker::Sized> UserSelector<I, __GROST_FLAVOR__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -2376,52 +1900,50 @@ const _: () = {
             Self {
                 id: <<I as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 name: <<String as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 age: <<u8 as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 emails: <<Option<
                     Vec<String>,
                 > as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
+                        Option<Vec<String>>,
                     >>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
             }
@@ -2432,52 +1954,50 @@ const _: () = {
             Self {
                 id: <<I as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
                 name: <<String as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
                 age: <<u8 as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
                 emails: <<Option<
                     Vec<String>,
                 > as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
+                        Option<Vec<String>>,
                     >>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
             }
@@ -2488,52 +2008,50 @@ const _: () = {
             Self {
                 id: <<I as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
                 name: <<String as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
                 age: <<u8 as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
                 emails: <<Option<
                     Vec<String>,
                 > as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
+                        Option<Vec<String>>,
                     >>::Reflection,
                 >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
             }
@@ -2543,43 +2061,40 @@ const _: () = {
         pub fn is_empty(&self) -> ::core::primitive::bool {
             <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.id)
                 && <<String as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.name)
                 && <<u8 as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.age)
@@ -2587,14 +2102,15 @@ const _: () = {
                     Vec<String>,
                 > as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
+                        Option<Vec<String>>,
                     >>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
@@ -2605,43 +2121,40 @@ const _: () = {
         pub fn is_all(&self) -> ::core::primitive::bool {
             <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_all(&self.id)
                 && <<String as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.name)
                 && <<u8 as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
-                    > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
-                    >>::Reflection,
+                    > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.age)
@@ -2649,14 +2162,15 @@ const _: () = {
                     Vec<String>,
                 > as ::grost::__private::Selectable<
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
-                        __GROST_FLAVOR__,
+                        Option<Vec<String>>,
                     >>::Reflection,
                 >>::Selector as ::grost::__private::Selector<
                     __GROST_FLAVOR__,
@@ -2736,15 +2250,14 @@ const _: () = {
             self
                 .id = <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -2754,15 +2267,14 @@ const _: () = {
             self
                 .id = <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -2772,15 +2284,14 @@ const _: () = {
             &mut self,
             value: <I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector,
         ) -> &mut Self {
             self.id = value;
@@ -2792,15 +2303,14 @@ const _: () = {
             mut self,
             val: <I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector,
         ) -> Self {
             self.id = val;
@@ -2812,15 +2322,14 @@ const _: () = {
             &self,
         ) -> &<I as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >>::Selector {
             &self.id
         }
@@ -2830,15 +2339,14 @@ const _: () = {
             &mut self,
         ) -> &mut <I as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >>::Selector {
             &mut self.id
         }
@@ -2848,15 +2356,14 @@ const _: () = {
             self
                 .id = <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -2866,15 +2373,14 @@ const _: () = {
             self
                 .id = <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -2883,15 +2389,14 @@ const _: () = {
         pub fn is_id_selected(&self) -> ::core::primitive::bool {
             !<<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.id)
@@ -2901,15 +2406,14 @@ const _: () = {
         pub fn is_id_unselected(&self) -> ::core::primitive::bool {
             <<I as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.id)
@@ -2920,15 +2424,14 @@ const _: () = {
             self
                 .name = <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -2938,15 +2441,14 @@ const _: () = {
             self
                 .name = <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -2956,15 +2458,14 @@ const _: () = {
             &mut self,
             value: <String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector,
         ) -> &mut Self {
             self.name = value;
@@ -2976,15 +2477,14 @@ const _: () = {
             mut self,
             val: <String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector,
         ) -> Self {
             self.name = val;
@@ -2996,15 +2496,14 @@ const _: () = {
             &self,
         ) -> &<String as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >>::Selector {
             &self.name
         }
@@ -3014,15 +2513,14 @@ const _: () = {
             &mut self,
         ) -> &mut <String as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >>::Selector {
             &mut self.name
         }
@@ -3032,15 +2530,14 @@ const _: () = {
             self
                 .name = <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -3050,15 +2547,14 @@ const _: () = {
             self
                 .name = <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -3067,15 +2563,14 @@ const _: () = {
         pub fn is_name_selected(&self) -> ::core::primitive::bool {
             !<<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.name)
@@ -3085,15 +2580,14 @@ const _: () = {
         pub fn is_name_unselected(&self) -> ::core::primitive::bool {
             <<String as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.name)
@@ -3104,15 +2598,14 @@ const _: () = {
             self
                 .age = <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -3122,15 +2615,14 @@ const _: () = {
             self
                 .age = <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -3140,15 +2632,14 @@ const _: () = {
             &mut self,
             value: <u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector,
         ) -> &mut Self {
             self.age = value;
@@ -3160,15 +2651,14 @@ const _: () = {
             mut self,
             val: <u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector,
         ) -> Self {
             self.age = val;
@@ -3180,15 +2670,14 @@ const _: () = {
             &self,
         ) -> &<u8 as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >>::Selector {
             &self.age
         }
@@ -3198,15 +2687,14 @@ const _: () = {
             &mut self,
         ) -> &mut <u8 as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >>::Selector {
             &mut self.age
         }
@@ -3216,15 +2704,14 @@ const _: () = {
             self
                 .age = <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
@@ -3234,15 +2721,14 @@ const _: () = {
             self
                 .age = <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
@@ -3251,15 +2737,14 @@ const _: () = {
         pub fn is_age_selected(&self) -> ::core::primitive::bool {
             !<<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.age)
@@ -3269,15 +2754,14 @@ const _: () = {
         pub fn is_age_unselected(&self) -> ::core::primitive::bool {
             <<u8 as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
-                > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
-                >>::Reflection,
+                > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.age)
@@ -3290,14 +2774,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
@@ -3310,14 +2795,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
@@ -3330,14 +2816,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector,
         ) -> &mut Self {
@@ -3352,14 +2839,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector,
         ) -> Self {
@@ -3374,14 +2862,15 @@ const _: () = {
             Vec<String>,
         > as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >>::Selector {
             &self.emails
@@ -3394,14 +2883,15 @@ const _: () = {
             Vec<String>,
         > as ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >>::Selector {
             &mut self.emails
@@ -3414,14 +2904,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
@@ -3434,14 +2925,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
             self
@@ -3453,14 +2945,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
@@ -3473,14 +2966,15 @@ const _: () = {
                 Vec<String>,
             > as ::grost::__private::Selectable<
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
-                    __GROST_FLAVOR__,
+                    Option<Vec<String>>,
                 >>::Reflection,
             >>::Selector as ::grost::__private::Selector<
                 __GROST_FLAVOR__,
@@ -3496,82 +2990,84 @@ const _: () = {
         const __GROST_SELECTED__: ::core::primitive::bool,
     > UserSelectorIter<'__grost_lifetime__, I, __GROST_FLAVOR__, __GROST_SELECTED__>
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<1u32>,
-                ),
+                    1u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<I>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<2u32>,
-                ),
+                    2u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<String>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<3u32>,
-                ),
+                    3u32,
+                >,
                 __GROST_FLAVOR__,
-            > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
-            >>::Reflection,
+            > as ::grost::__private::reflection::Reflectable<u8>>::Reflection,
         >,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::Selectable<
             __GROST_FLAVOR__,
-            <UserReflection<
-                (
+            <::grost::__private::reflection::Reflection<
+                User<I>,
+                ::grost::__private::reflection::Identified<
                     ::grost::__private::reflection::WireFormatReflection,
-                    ::grost::__private::RawTag<4u32>,
-                ),
+                    4u32,
+                >,
                 __GROST_FLAVOR__,
             > as ::grost::__private::reflection::Reflectable<
-                __GROST_FLAVOR__,
+                Option<Vec<String>>,
             >>::Reflection,
         >,
     {
@@ -3613,22 +3109,24 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
     >
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3639,33 +3137,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3676,33 +3177,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3713,35 +3217,38 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3754,11 +3261,12 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3788,22 +3296,24 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
     >
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3814,33 +3324,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3851,33 +3364,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3888,35 +3404,38 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3929,11 +3448,12 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3958,22 +3478,24 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
     >
     where
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<1u32>,
-            ),
+                1u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<I>,
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -3984,33 +3506,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<1u32>,
-                    ),
+                        1u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<2u32>,
-            ),
+                2u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<String>,
         String: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -4021,33 +3546,36 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<2u32>,
-                    ),
+                        2u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<3u32>,
-            ),
+                3u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<u8>,
         u8: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -4058,35 +3586,38 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<3u32>,
-                    ),
+                        3u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
             >,
         >>::Output: ::core::marker::Sized + ::core::marker::Copy,
-        UserReflection<
-            (
+        ::grost::__private::reflection::Reflection<
+            User<I>,
+            ::grost::__private::reflection::Identified<
                 ::grost::__private::reflection::WireFormatReflection,
-                ::grost::__private::RawTag<4u32>,
-            ),
+                4u32,
+            >,
             __GROST_FLAVOR__,
-        >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
+        >: ::grost::__private::reflection::Reflectable<Option<Vec<String>>>,
         Option<
             Vec<String>,
         >: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -4099,11 +3630,12 @@ const _: () = {
             ::grost::__private::convert::Decoded<
                 '__grost_lifetime__,
                 __GROST_FLAVOR__,
-                <UserReflection<
-                    (
+                <::grost::__private::reflection::Reflection<
+                    User<I>,
+                    ::grost::__private::reflection::Identified<
                         ::grost::__private::reflection::WireFormatReflection,
-                        ::grost::__private::RawTag<4u32>,
-                    ),
+                        4u32,
+                    >,
                     __GROST_FLAVOR__,
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
@@ -4145,11 +3677,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4168,11 +3701,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4191,11 +3725,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4219,11 +3754,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4243,11 +3779,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<1u32>,
-                            ),
+                                1u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4267,11 +3804,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<1u32>,
-                        ),
+                            1u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4297,11 +3835,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<1u32>,
-                            ),
+                                1u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4322,11 +3861,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4345,11 +3885,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4368,11 +3909,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4396,11 +3938,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4420,11 +3963,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<2u32>,
-                            ),
+                                2u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4444,11 +3988,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<2u32>,
-                        ),
+                            2u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4474,11 +4019,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<2u32>,
-                            ),
+                                2u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4499,11 +4045,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4522,11 +4069,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4545,11 +4093,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4573,11 +4122,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4597,11 +4147,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<3u32>,
-                            ),
+                                3u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4621,11 +4172,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<3u32>,
-                        ),
+                            3u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4651,11 +4203,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<3u32>,
-                            ),
+                                3u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4678,11 +4231,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4703,11 +4257,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4728,11 +4283,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4758,11 +4314,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4784,11 +4341,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<4u32>,
-                            ),
+                                4u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -4810,11 +4368,12 @@ const _: () = {
                 ::grost::__private::convert::Decoded<
                     '__grost_lifetime__,
                     __GROST_FLAVOR__,
-                    <UserReflection<
-                        (
+                    <::grost::__private::reflection::Reflection<
+                        User<I>,
+                        ::grost::__private::reflection::Identified<
                             ::grost::__private::reflection::WireFormatReflection,
-                            ::grost::__private::RawTag<4u32>,
-                        ),
+                            4u32,
+                        >,
                         __GROST_FLAVOR__,
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
@@ -4842,11 +4401,12 @@ const _: () = {
                     ::grost::__private::convert::Decoded<
                         '__grost_lifetime__,
                         __GROST_FLAVOR__,
-                        <UserReflection<
-                            (
+                        <::grost::__private::reflection::Reflection<
+                            User<I>,
+                            ::grost::__private::reflection::Identified<
                                 ::grost::__private::reflection::WireFormatReflection,
-                                ::grost::__private::RawTag<4u32>,
-                            ),
+                                4u32,
+                            >,
                             __GROST_FLAVOR__,
                         > as ::grost::__private::reflection::Reflectable<
                             __GROST_FLAVOR__,
@@ -5426,266 +4986,6 @@ const _: () = {
         }
     }
 };
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::ObjectFieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::RawTag<1u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-        ::grost::__private::flavors::Network,
-    >;
-    const REFLECTION: &Self::Reflection = &{
-        ::grost::__private::reflection::ObjectFieldReflectionBuilder::<
-            ::grost::__private::flavors::Network,
-        > {
-            identifier: ::grost::__private::flavors::network::Identifier::new(
-                <grost::flavors::network::LengthDelimited as ::grost::__private::flavors::WireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::WIRE_TYPE,
-                ::grost::__private::flavors::network::Tag::new(1u32),
-            ),
-            name: "id",
-            ty: ::core::any::type_name::<I>,
-            schema_name: "id",
-            schema_type: <::grost::__private::reflection::SchemaTypeReflection<
-                I,
-            > as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION,
-        }
-            .build()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::ObjectFieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::RawTag<2u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-        ::grost::__private::flavors::Network,
-    >;
-    const REFLECTION: &Self::Reflection = &{
-        ::grost::__private::reflection::ObjectFieldReflectionBuilder::<
-            ::grost::__private::flavors::Network,
-        > {
-            identifier: ::grost::__private::flavors::network::Identifier::new(
-                <grost::flavors::network::LengthDelimited as ::grost::__private::flavors::WireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::WIRE_TYPE,
-                ::grost::__private::flavors::network::Tag::new(2u32),
-            ),
-            name: "name",
-            ty: ::core::any::type_name::<String>,
-            schema_name: "name",
-            schema_type: <::grost::__private::reflection::SchemaTypeReflection<
-                String,
-            > as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION,
-        }
-            .build()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::ObjectFieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::RawTag<3u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-        ::grost::__private::flavors::Network,
-    >;
-    const REFLECTION: &Self::Reflection = &{
-        ::grost::__private::reflection::ObjectFieldReflectionBuilder::<
-            ::grost::__private::flavors::Network,
-        > {
-            identifier: ::grost::__private::flavors::network::Identifier::new(
-                <grost::flavors::network::Varint as ::grost::__private::flavors::WireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::WIRE_TYPE,
-                ::grost::__private::flavors::network::Tag::new(3u32),
-            ),
-            name: "age",
-            ty: ::core::any::type_name::<u8>,
-            schema_name: "age",
-            schema_type: <::grost::__private::reflection::SchemaTypeReflection<
-                u8,
-            > as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION,
-        }
-            .build()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::ObjectFieldReflection<
-            ::grost::__private::flavors::Network,
-        >,
-        ::grost::__private::RawTag<4u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::reflection::ObjectFieldReflection<
-        ::grost::__private::flavors::Network,
-    >;
-    const REFLECTION: &Self::Reflection = &{
-        ::grost::__private::reflection::ObjectFieldReflectionBuilder::<
-            ::grost::__private::flavors::Network,
-        > {
-            identifier: ::grost::__private::flavors::network::Identifier::new(
-                <grost::flavors::network::LengthDelimited as ::grost::__private::flavors::WireFormat<
-                    ::grost::__private::flavors::Network,
-                >>::WIRE_TYPE,
-                ::grost::__private::flavors::network::Tag::new(4u32),
-            ),
-            name: "emails",
-            ty: ::core::any::type_name::<Option<Vec<String>>>,
-            schema_name: "emails",
-            schema_type: <::grost::__private::reflection::SchemaTypeReflection<
-                Option<Vec<String>>,
-            > as ::grost::__private::reflection::Reflectable<
-                ::grost::__private::flavors::Network,
-            >>::REFLECTION,
-        }
-            .build()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::RawTag<1u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::flavors::network::Identifier;
-    const REFLECTION: &Self::Reflection = &{
-        <UserReflection<
-            (
-                ::grost::__private::reflection::ObjectFieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::RawTag<1u32>,
-            ),
-            ::grost::__private::flavors::Network,
-        > as ::grost::__private::reflection::Reflectable<
-            ::grost::__private::flavors::Network,
-        >>::REFLECTION
-            .identifier()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::RawTag<2u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::flavors::network::Identifier;
-    const REFLECTION: &Self::Reflection = &{
-        <UserReflection<
-            (
-                ::grost::__private::reflection::ObjectFieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::RawTag<2u32>,
-            ),
-            ::grost::__private::flavors::Network,
-        > as ::grost::__private::reflection::Reflectable<
-            ::grost::__private::flavors::Network,
-        >>::REFLECTION
-            .identifier()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::RawTag<3u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::flavors::network::Identifier;
-    const REFLECTION: &Self::Reflection = &{
-        <UserReflection<
-            (
-                ::grost::__private::reflection::ObjectFieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::RawTag<3u32>,
-            ),
-            ::grost::__private::flavors::Network,
-        > as ::grost::__private::reflection::Reflectable<
-            ::grost::__private::flavors::Network,
-        >>::REFLECTION
-            .identifier()
-    };
-}
-#[automatically_derived]
-#[allow(non_camel_case_types, clippy::type_complexity)]
-impl ::grost::__private::reflection::Reflectable<::grost::__private::flavors::Network>
-for UserReflection<
-    (
-        ::grost::__private::reflection::IdentifierReflection<
-            ::grost::__private::flavors::network::Identifier,
-        >,
-        ::grost::__private::RawTag<4u32>,
-    ),
-    ::grost::__private::flavors::Network,
-> {
-    type Reflection = ::grost::__private::flavors::network::Identifier;
-    const REFLECTION: &Self::Reflection = &{
-        <UserReflection<
-            (
-                ::grost::__private::reflection::ObjectFieldReflection<
-                    ::grost::__private::flavors::Network,
-                >,
-                ::grost::__private::RawTag<4u32>,
-            ),
-            ::grost::__private::flavors::Network,
-        > as ::grost::__private::reflection::Reflectable<
-            ::grost::__private::flavors::Network,
-        >>::REFLECTION
-            .identifier()
-    };
-}
 extern crate test;
 #[rustc_test_marker = "t"]
 #[doc(hidden)]
@@ -5695,9 +4995,9 @@ pub const t: test::TestDescAndFn = test::TestDescAndFn {
         ignore: false,
         ignore_message: ::core::option::Option::None,
         source_file: "grost-derive/tests/object.rs",
-        start_line: 82usize,
+        start_line: 104usize,
         start_col: 4usize,
-        end_line: 82usize,
+        end_line: 104usize,
         end_col: 5usize,
         compile_fail: false,
         no_run: false,

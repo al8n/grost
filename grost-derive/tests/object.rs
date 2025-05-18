@@ -1,4 +1,4 @@
-use grost::flavors::Network;
+use grost::{convert::Decoded, flavors::{network::{Identifier, LengthDelimited, Tag, WireType}, Network, RawTag}, reflection::{Identified, Reflectable, Reflection}};
 use grost_derive::Object;
 
 mod sealed {
@@ -8,15 +8,15 @@ mod sealed {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
-pub struct User {
-  // #[grost(
-  //   tag = 1,
-  //   schema(description = "The id of the user"),
-  //   wire = "grost::flavors::network::LengthDelimited",
-  //   selector(select = "all"),
-  //   partial_decoded(copy,),
-  // )]
-  // id: I,
+pub struct User<I> {
+  #[grost(
+    tag = 1,
+    schema(description = "The id of the user"),
+    wire = "grost::flavors::network::LengthDelimited",
+    selector(select = "all"),
+    partial_decoded(copy,),
+  )]
+  id: I,
   #[grost(
     tag = 2,
     schema(description = "The nick name of the user"),
@@ -78,6 +78,28 @@ pub struct User {
 //   content: String,
 // }
 
+// impl Reflectable1<User> for Reflection<Identified<User, 1>, Identifier, Network> {
+//   type Reflection = Identifier;
+
+//   const REFLECTION: &Self::Reflection = &Identifier::new(WireType::LengthDelimited, Tag::new(1));
+// }
+// impl Reflectable1<User> for Reflection<Identified<User, 1>, Tag, Network> {
+//   type Reflection = Tag;
+
+//   const REFLECTION: &Self::Reflection = &Tag::new(1);
+// }
+// impl Reflectable1<User> for Reflection<Identified<User, 1>, Tag, ()> {
+//   type Reflection = Tag;
+
+//   const REFLECTION: &Self::Reflection = &Tag::new(1);
+// }
+
+// impl<'a> Reflectable1<User> for Reflection<Identified<User, 1>, Decoded<'a, Network, LengthDelimited>, Network> {
+//   type Reflection = Tag;
+
+//   const REFLECTION: &'static Self::Reflection = &Tag::new(1);
+// }
+
 #[test]
 fn t() {
   // let user = PartialDecodedUser {
@@ -85,5 +107,5 @@ fn t() {
   //   name: Some("user".to_string()),
   //   emails: None,
   // };
-  println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
+  // println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
 }

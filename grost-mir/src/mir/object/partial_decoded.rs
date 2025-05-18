@@ -255,7 +255,6 @@ impl PartialDecodedObject {
     let meta = input.meta();
     let copyable =
       meta.partial_decoded().copy() | fields.iter().all(|f| f.meta().partial_decoded().copy());
-    let reflection_name = input.reflection_name();
     let mut generics = Generics::default();
     let lt = grost_lifetime();
     let flavor_param = grost_flavor_param();
@@ -311,9 +310,10 @@ impl PartialDecodedObject {
     }
 
     add_partial_decoded_constraints(
+      input.name(),
+      input.generics(),
       &mut generics,
       path_to_grost,
-      &reflection_name,
       fields.iter().copied(),
       &flavor_param,
       &lt,
@@ -331,7 +331,8 @@ impl PartialDecodedObject {
         let tag = meta.tag();
         let wf = wire_format_reflection_ty(
           path_to_grost,
-          &reflection_name,
+          input.name(),
+          input.generics(),
           tag.get(),
           generics.flavor_param(),
         );
@@ -539,10 +540,12 @@ fn decoded_state_ty(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn add_partial_decoded_constraints<'a, I>(
-  generics: &mut syn::Generics,
+  name: &syn::Ident,
+  object_generics: &Generics,
+  generics: &mut Generics,
   path_to_grost: &syn::Path,
-  field_reflection: &syn::Ident,
   mut fields: impl Iterator<Item = &'a I>,
   flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
@@ -551,13 +554,13 @@ fn add_partial_decoded_constraints<'a, I>(
 where
   I: crate::ast::object::Field + 'a,
 {
-  let flavor_ident = &flavor_param.ident;
   fields.try_for_each(move |f| {
     let ty = f.ty();
     let meta = f.meta();
     let wf = wire_format_reflection_ty(
       path_to_grost,
-      field_reflection,
+      name,
+      object_generics,
       meta.tag().get(),
       flavor_param,
     );
@@ -569,7 +572,7 @@ where
       (f.meta().partial_decoded().copy() || copy).then(|| quote! { + ::core::marker::Copy });
 
     where_clause.predicates.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::reflection::Reflectable<#flavor_ident>
+      #wf: #path_to_grost::__private::reflection::Reflectable<#ty>
     })?);
     where_clause.predicates.push(syn::parse2(quote! {
       #ty: #decoded_state

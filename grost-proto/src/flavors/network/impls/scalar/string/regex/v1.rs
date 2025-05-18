@@ -11,7 +11,7 @@ const _: () = {
     },
     into_target,
     reflection::Type,
-    schema_type_reflection, type_owned, type_ref,
+    type_reflection, type_owned, type_ref,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -101,7 +101,7 @@ const _: () = {
     BytesRegex as LengthDelimited;
   );
 
-  schema_type_reflection! {
+  type_reflection! {
     Network:
       Regex => Type::scalar("regex", "Regular expression"),
       BytesRegex => Type::scalar("BytesRegex", "Bytes regular expression"),
