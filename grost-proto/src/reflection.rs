@@ -2,7 +2,6 @@ use core::marker::PhantomData;
 
 use super::flavors::Flavor;
 
-use encode::EncodeField;
 pub use enum_::*;
 pub use struct_::*;
 
@@ -56,9 +55,6 @@ macro_rules! zst {
     }
   };
 }
-
-/// Reflection for encoding.
-pub mod encode;
 
 mod enum_;
 mod struct_;
@@ -138,6 +134,10 @@ phantom!(
   WireTypeReflection,
   /// Reflection to length related
   Len,
+  /// Reflection to an encode fn.
+  EncodeReflection,
+  /// Reflection to an partial encode fn.
+  PartialEncodeReflection,
 );
 
 zst!(
@@ -201,31 +201,37 @@ where
   }
 }
 
-// impl<T, R, F> Clone for Reflection<T, R, F>
-// where
-//   T: Reflectable<R, F> + Clone,
-//   R: ?Sized + 'static,
-//   F: Flavor + ?Sized,
-// {
-//   fn clone(&self) -> Self {
-//     Self {
-//       _r: PhantomData,
-//       _f: PhantomData,
-//       t: self.t.clone(),
-//     }
-//   }
-// }
+impl<T, R, F> core::fmt::Debug for Reflection<T, R, F>
+where
+  T: ?Sized,
+  R: ?Sized,
+  F: ?Sized,
+  Self: Reflectable<T>,
+  <Self as Reflectable<T>>::Reflection: core::fmt::Debug,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    core::ops::Deref::deref(self).fmt(f)
+  }
+}
 
-// impl<T, R, F> Copy for Reflection<T, R, F>
-// where
-//   T: Reflectable<R, F> + Copy,
-//   R: ?Sized + 'static,
-//   F: Flavor + ?Sized,
-// {
-// }
+impl<T, R, F> core::fmt::Display for Reflection<T, R, F>
+where
+  T: ?Sized,
+  R: ?Sized,
+  F: ?Sized,
+  Self: Reflectable<T>,
+  <Self as Reflectable<T>>::Reflection: core::fmt::Display,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    core::ops::Deref::deref(self).fmt(f)
+  }
+}
 
 impl<T, R, F> core::ops::Deref for Reflection<T, R, F>
 where
+  T: ?Sized,
+  R: ?Sized,
+  F: ?Sized,
   Self: Reflectable<T>,
 {
   type Target = <Self as Reflectable<T>>::Reflection;
@@ -236,8 +242,10 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-impl<T: ?Sized, F: ?Sized, const TAG: u32> Reflection<T, Identified<ObjectFieldReflection, TAG>, F>
+impl<T, F, const TAG: u32> Reflection<T, Identified<ObjectFieldReflection, TAG>, F>
 where
+  T: ?Sized,
+  F: ?Sized + Flavor,
   Self: Reflectable<T>,
 {
   /// Returns the relection to the wire format of the field.
@@ -253,8 +261,7 @@ where
   #[inline]
   pub const fn tag(&self) -> Reflection<T, Identified<TagReflection<F::Tag>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<TagReflection<F::Tag>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<TagReflection<F::Tag>, TAG>, F>: Reflectable<T, Reflection = F::Tag>,
   {
     Reflection::new()
   }
@@ -265,8 +272,8 @@ where
     &self,
   ) -> Reflection<T, Identified<WireTypeReflection<F::WireType>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<WireTypeReflection<F::WireType>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<WireTypeReflection<F::WireType>, TAG>, F>:
+      Reflectable<T, Reflection = F::WireType>,
   {
     Reflection::new()
   }
@@ -277,8 +284,8 @@ where
     &self,
   ) -> Reflection<T, Identified<IdentifierReflection<F::Identifier>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<IdentifierReflection<F::Identifier>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<IdentifierReflection<F::Identifier>, TAG>, F>:
+      Reflectable<T, Reflection = F::Identifier>,
   {
     Reflection::new()
   }
@@ -287,10 +294,10 @@ where
   #[inline]
   pub const fn encoded_identifier(
     &self,
-  ) -> Reflection<T, Identified<EncodedIdentifierReflection<F::Identifier>, TAG>, F>
+  ) -> Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<EncodedIdentifierReflection<F::Identifier>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>:
+      Reflectable<T, Reflection = [u8]>,
   {
     Reflection::new()
   }
@@ -299,21 +306,22 @@ where
   #[inline]
   pub const fn encoded_identifier_len(
     &self,
-  ) -> Reflection<T, Identified<Len<EncodedIdentifierReflection<F::Identifier>>, TAG>, F>
+  ) -> Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<Len<EncodedIdentifierReflection<F::Identifier>>, TAG>, F>:
-      Reflectable<T>,
+    Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>:
+      Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
 
   /// Returns the reflection to the encoded tag of the field.
   #[inline]
-  pub const fn encoded_tag(&self) -> Reflection<T, Identified<EncodedTagReflection<F::Tag>, TAG>, F>
+  pub const fn encoded_tag(
+    &self,
+  ) -> Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<EncodedTagReflection<F::Tag>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>:
+      Reflectable<T, Reflection = [u8]>,
   {
     Reflection::new()
   }
@@ -322,10 +330,10 @@ where
   #[inline]
   pub const fn encoded_tag_len(
     &self,
-  ) -> Reflection<T, Identified<Len<EncodedTagReflection<F::Tag>>, TAG>, F>
+  ) -> Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>
   where
-    F: Flavor,
-    Reflection<T, Identified<Len<EncodedTagReflection<F::Tag>>, TAG>, F>: Reflectable<T>,
+    Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>:
+      Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
@@ -337,7 +345,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::EncodeReflection<
+      EncodeReflection<
         <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
       >,
       TAG,
@@ -345,12 +353,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::EncodeReflection<
+        EncodeReflection<
           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
         >,
         TAG,
@@ -368,7 +375,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::EncodeReflection<
+      EncodeReflection<
         Len<
           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
         >,
@@ -378,12 +385,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::EncodeReflection<
+        EncodeReflection<
           Len<
             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
           >,
@@ -391,7 +397,7 @@ where
         TAG,
       >,
       F,
-    >: Reflectable<T>,
+    >: Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
@@ -403,7 +409,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::EncodeReflection<
+      EncodeReflection<
         super::Decoded<
           'a,
           F,
@@ -415,12 +421,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::EncodeReflection<
+        EncodeReflection<
           super::Decoded<
             'a,
             F,
@@ -439,19 +444,18 @@ where
   #[inline]
   pub const fn encoded_decoded_len<'a>(
     &self,
-  ) -> Reflection<T, Identified<encode::EncodeReflection<Len<super::Decoded<
+  ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
     'a,
     F,
     <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
   >>>, TAG>, F>
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<T, Identified<encode::EncodeReflection<Len<super::Decoded<
+    Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
       'a,
       F,
       <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-    >>>, TAG>, F>: Reflectable<T>,
+    >>>, TAG>, F>: Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
@@ -463,7 +467,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::PartialEncodeReflection<
+      PartialEncodeReflection<
         <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
       >,
       TAG,
@@ -471,12 +475,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::PartialEncodeReflection<
+        PartialEncodeReflection<
           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
         >,
         TAG,
@@ -494,7 +497,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::PartialEncodeReflection<
+      PartialEncodeReflection<
         Len<
           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
         >,
@@ -504,12 +507,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::PartialEncodeReflection<
+        PartialEncodeReflection<
           Len<
             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
           >,
@@ -517,7 +519,7 @@ where
         TAG,
       >,
       F,
-    >: Reflectable<T>,
+    >: Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }
@@ -529,7 +531,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::PartialEncodeReflection<
+      PartialEncodeReflection<
         super::Decoded<
           'a,
           F,
@@ -541,12 +543,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::PartialEncodeReflection<
+        PartialEncodeReflection<
           super::Decoded<
             'a,
             F,
@@ -568,7 +569,7 @@ where
   ) -> Reflection<
     T,
     Identified<
-      encode::PartialEncodeReflection<
+      PartialEncodeReflection<
         Len<
           super::Decoded<
             'a,
@@ -582,12 +583,11 @@ where
     F,
   >
   where
-    F: Flavor,
     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
     Reflection<
       T,
       Identified<
-        encode::PartialEncodeReflection<
+        PartialEncodeReflection<
           Len<
             super::Decoded<
               'a,
@@ -599,7 +599,7 @@ where
         TAG,
       >,
       F,
-    >: Reflectable<T>,
+    >: Reflectable<T, Reflection = usize>,
   {
     Reflection::new()
   }

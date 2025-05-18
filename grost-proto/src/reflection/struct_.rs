@@ -4,6 +4,7 @@ use super::Type;
 pub struct ObjectReflectionBuilder {
   pub name: &'static str,
   pub schema_name: &'static str,
+  pub schema_description: &'static str,
   pub fields: &'static [&'static ObjectFieldReflection],
 }
 
@@ -13,6 +14,7 @@ impl ObjectReflectionBuilder {
     ObjectReflection {
       name: self.name,
       schema_name: self.schema_name,
+      schema_description: self.schema_description,
       fields: self.fields,
     }
   }
@@ -23,6 +25,7 @@ impl ObjectReflectionBuilder {
 pub struct ObjectReflection {
   name: &'static str,
   schema_name: &'static str,
+  schema_description: &'static str,
   fields: &'static [&'static ObjectFieldReflection],
 }
 
@@ -47,6 +50,14 @@ impl ObjectReflection {
   #[inline]
   pub const fn schema_name(&self) -> &'static str {
     self.schema_name
+  }
+
+  /// Get the schema description of the struct.
+  ///
+  /// This will returns the description in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_description(&self) -> &'static str {
+    self.schema_description
   }
 
   /// Get the fields of this struct

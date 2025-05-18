@@ -1,9 +1,5 @@
-use heck::ToSnakeCase;
 use quote::{format_ident, quote};
-use syn::{
-  Fields, FieldsNamed, Ident,
-  parse::{Parse, Parser},
-};
+use syn::{Ident, parse::Parser};
 
 use crate::ast::{
   SchemaMeta, grost_flavor_param,
@@ -42,6 +38,7 @@ pub struct Reflection {
   name: Ident,
   vis: syn::Visibility,
   generics: syn::Generics,
+  schema: SchemaMeta,
   #[allow(clippy::type_complexity)]
   fields: Vec<Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>>,
 }
@@ -129,6 +126,7 @@ impl Reflection {
 
     Ok(Self {
       parent_name,
+      schema: input.meta().schema().clone(),
       name,
       fields,
       generics: reflection_generics,
@@ -151,6 +149,7 @@ where
     let (ig, tg, wc) = self.generics().split_for_impl();
     let (ig_with_flavor, _, wc_with_flavor) = self.reflection().generics.split_for_impl();
     let mut field_reflectable_impl = vec![];
+    let mut field_reflections = vec![];
     let field_reflection_fns = self
       .reflection
       .fields
@@ -168,6 +167,9 @@ where
             .schema
             .description()
             .unwrap_or_default();
+          field_reflections.push(quote! {
+            <#ty as #path_to_grost::__private::reflection::Reflectable<#name #tg>>::REFLECTION
+          });
           field_reflectable_impl.push(quote! {
             #[automatically_derived]
             #[allow(clippy::type_complexity, non_camel_case_types)]
@@ -201,125 +203,56 @@ where
       })
       .collect::<Result<Vec<_>, _>>()?;
 
+    let name_str = name.to_string();
+    let schema_name = self.reflection.schema.name().unwrap_or(name_str.as_str());
+    let schema_description = self.reflection.schema.description().unwrap_or_default();
     Ok(quote! {
       const _: () = {
-        // #[automatically_derived]
-        // #[allow(clippy::type_complexity, non_camel_case_types)]
-        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-        //   (
-        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
-        //       #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
-        //     >,
-        //     #path_to_grost::__private::RawTag<TAG>,
-        //   ),
-        //   F,
-        // >
-        // where
-        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        // {
-        //   /// Returns the reflection to the partial reference encode fn.
-        //   #[inline]
-        //   pub const fn partial_encode_ref(&self) -> Self {
-        //     #reflection_name::new_in()
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // #[allow(clippy::type_complexity, non_camel_case_types)]
-        // impl<F, const TAG: ::core::primitive::u32> #reflection_name<
-        //   (
-        //     #path_to_grost::__private::reflection::encode::EncodeReflection<
-        //       #path_to_grost::__private::reflection::Len<
-        //         #path_to_grost::__private::reflection::encode::PartialEncodeRefField,
-        //       >,
-        //     >,
-        //     #path_to_grost::__private::RawTag<TAG>,
-        //   ),
-        //   F,
-        // >
-        // where
-        //   F: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        // {
-        //   /// Returns the reflection to the partial reference encode fn which will give the length of the encoded data.
-        //   #[inline]
-        //   pub const fn partial_encoded_ref_len(&self) -> Self {
-        //     #reflection_name::new_in()
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R, F> ::core::ops::Deref for #reflection_name<R, F>
-        // where
-        //   R: ?::core::marker::Sized,
-        //   F: ?::core::marker::Sized,
-        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
-        // {
-        //   type Target = <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection;
-
-        //   fn deref(&self) -> &Self::Target {
-        //     <Self as #path_to_grost::__private::reflection::Reflectable<F>>::REFLECTION
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R, F> ::core::convert::AsRef<<Self as ::core::ops::Deref>::Target> for #reflection_name<R, F>
-        // where
-        //   R: ?::core::marker::Sized,
-        //   F: ?::core::marker::Sized,
-        //   Self: ::core::ops::Deref,
-        // {
-        //   fn as_ref(&self) -> &<Self as ::core::ops::Deref>::Target {
-        //     self
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R, F> ::core::fmt::Debug for #reflection_name<R, F>
-        // where
-        //   R: ?::core::marker::Sized,
-        //   F: ?::core::marker::Sized,
-        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
-        //   <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Debug,
-        // {
-        //   fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-        //     ::core::fmt::Debug::fmt(::core::ops::Deref::deref(self), f)
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R, F> ::core::fmt::Display for #reflection_name<R, F>
-        // where
-        //   R: ?::core::marker::Sized,
-        //   F: ?::core::marker::Sized,
-        //   Self: #path_to_grost::__private::reflection::Reflectable<F>,
-        //   <Self as #path_to_grost::__private::reflection::Reflectable<F>>::Reflection: ::core::fmt::Display,
-        // {
-        //   fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::result::Result<(), ::core::fmt::Error> {
-        //     ::core::fmt::Display::fmt(::core::ops::Deref::deref(self), f)
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::clone::Clone for #reflection_name<R, F> {
-        //   fn clone(&self) -> Self {
-        //     *self
-        //   }
-        // }
-
-        // #[automatically_derived]
-        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> ::core::marker::Copy for #reflection_name<R, F> {}
-
-        // #[automatically_derived]
-        // impl<R: ?::core::marker::Sized, F: ?::core::marker::Sized> #reflection_name<R, F> {
-        //   const fn new_in() -> Self {
-        //     Self {
-        //       _reflect: ::core::marker::PhantomData,
-        //       _flavor: ::core::marker::PhantomData,
-        //     }
-        //   }
-        // }
-
         #(#field_reflectable_impl)*
+
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::Reflection<
+          #name #tg,
+          #path_to_grost::__private::reflection::Type,
+          #fg,
+        >
+        #wc_with_flavor {
+          type Reflection = #path_to_grost::__private::reflection::Type;
+
+          const REFLECTION: &'static Self::Reflection = &{
+            #path_to_grost::__private::reflection::Type::Object(
+              <#path_to_grost::__private::reflection::Reflection<
+                #name #tg,
+                #path_to_grost::__private::reflection::ObjectReflection,
+                #fg,
+              > as #path_to_grost::__private::reflection::Reflectable<#name #tg>>::REFLECTION
+            )
+          };
+        }
+
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::Reflection<
+          #name #tg,
+          #path_to_grost::__private::reflection::ObjectReflection,
+          #fg,
+        >
+        #wc_with_flavor
+        {
+          type Reflection = #path_to_grost::__private::reflection::ObjectReflection;
+
+          const REFLECTION: &'static Self::Reflection = &{
+            #path_to_grost::__private::reflection::ObjectReflectionBuilder {
+              name: #name_str,
+              schema_name: #schema_name,
+              schema_description: #schema_description,
+              fields: &[
+                #(#field_reflections),*
+              ],
+            }.build()
+          };
+        }
 
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
