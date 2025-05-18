@@ -6,17 +6,44 @@ use syn::{
 };
 
 use crate::ast::{
-  grost_flavor_param,
+  SchemaMeta, grost_flavor_param,
   object::{Field, ObjectExt},
 };
 
 use super::Object;
 
+pub struct ReflectionField {
+  field: syn::Field,
+  tag: u32,
+  object_ty: syn::Type,
+  schema: SchemaMeta,
+}
+
+impl ReflectionField {
+  pub const fn field(&self) -> &syn::Field {
+    &self.field
+  }
+
+  pub const fn tag(&self) -> u32 {
+    self.tag
+  }
+
+  pub const fn object_ty(&self) -> &syn::Type {
+    &self.object_ty
+  }
+
+  pub const fn schema(&self) -> &SchemaMeta {
+    &self.schema
+  }
+}
+
 pub struct Reflection {
   parent_name: Ident,
   name: Ident,
   vis: syn::Visibility,
-  fields: Vec<Box<dyn Fn(&syn::Type) -> syn::Result<syn::Field> + 'static>>,
+  generics: syn::Generics,
+  #[allow(clippy::type_complexity)]
+  fields: Vec<Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>>,
 }
 
 impl Reflection {
@@ -28,7 +55,10 @@ impl Reflection {
     &self.vis
   }
 
-  pub const fn fields(&self) -> &[Box<dyn Fn(&syn::Type) -> syn::Result<syn::Field> + 'static>] {
+  #[allow(clippy::type_complexity)]
+  pub const fn fields(
+    &self,
+  ) -> &[Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>] {
     self.fields.as_slice()
   }
 
@@ -41,11 +71,18 @@ impl Reflection {
     let vis = input.vis().clone();
     let path_to_grost = input.path();
     let object_name = input.name();
+    let flavor_param = grost_flavor_param();
 
+    let mut reflection_generics = input.generics().clone();
+    reflection_generics
+      .params
+      .push(syn::GenericParam::Type(flavor_param.clone()));
+    let wc = reflection_generics.make_where_clause();
+    let fg = &flavor_param.ident;
     let fields = input
       .fields()
       .iter()
-      .map(move |f| {
+      .map(|f| {
         let field_name = f.name().clone();
         let object_name = object_name.clone();
         let field_doc = format!(
@@ -56,28 +93,45 @@ impl Reflection {
         let vis = f.vis().clone();
         let generics = input.generics().clone();
         let path_to_grost = path_to_grost.clone();
+        let ty = f.ty().clone();
+        let schema = f.meta().schema().clone();
 
-        Box::new(move |flavor: &syn::Type| {
+        syn::parse2(quote! {
+          #path_to_grost::__private::reflection::Reflection<#ty, #path_to_grost::__private::reflection::Type, #fg>: #path_to_grost::__private::reflection::Reflectable<#ty, Reflection = #path_to_grost::__private::reflection::Type>
+        })
+        .map(|constraints| {
+          wc.predicates.push(constraints);
+
+          Box::new(move |flavor: &syn::Type| {
           let (_, tg, _) = generics.split_for_impl();
-          syn::Field::parse_named.parse2(quote! {
-            #[doc = #field_doc]
-            #vis #field_name: #path_to_grost::__private::reflection::Reflection<
-              #object_name #tg,
-              #path_to_grost::__private::reflection::Identified<
-                #path_to_grost::__private::reflection::ObjectFieldReflection,
-                #tag,
-              >,
-              #flavor,
-            >
-          })
-        }) as Box<dyn Fn(&syn::Type) -> syn::Result<syn::Field> + 'static>
+          syn::Field::parse_named
+            .parse2(quote! {
+              #[doc = #field_doc]
+              #vis #field_name: #path_to_grost::__private::reflection::Reflection<
+                #object_name #tg,
+                #path_to_grost::__private::reflection::Identified<
+                  #path_to_grost::__private::reflection::ObjectFieldReflection,
+                  #tag,
+                >,
+                #flavor,
+              >
+            })
+            .map(|f| ReflectionField {
+              field: f,
+              tag,
+              object_ty: ty.clone(),
+              schema: schema.clone(),
+            })
+          }) as Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>
+        })
       })
-      .collect::<Vec<Box<dyn Fn(&syn::Type) -> syn::Result<syn::Field> + 'static>>>();
+      .collect::<Result<Vec<_>, _>>()?;
 
     Ok(Self {
       parent_name,
       name,
       fields,
+      generics: reflection_generics,
       vis,
     })
   }
@@ -93,17 +147,46 @@ where
     let fgp = grost_flavor_param();
     let fg = &fgp.ident;
     let fgty: syn::Type = syn::parse2(quote! { #fg }).unwrap();
+
     let (ig, tg, wc) = self.generics().split_for_impl();
+    let (ig_with_flavor, _, wc_with_flavor) = self.reflection().generics.split_for_impl();
+    let mut field_reflectable_impl = vec![];
     let field_reflection_fns = self
       .reflection
       .fields
       .iter()
       .map(|f| {
         (f)(&fgty).map(|field| {
-          let field_name = field.ident.unwrap();
+          let field_name = field.field.ident.unwrap();
+          let field_name_str = field_name.to_string();
           let doc = format!(" Returns the field reflection of the field `{name}.{field_name}`.",);
-          let ty = &field.ty;
+          let object_ty = &field.object_ty;
+          let ty = &field.field.ty;
           let field_reflection_name = format_ident!("{}_reflection", field_name);
+          let schema_name = field.schema.name().unwrap_or(field_name_str.as_str());
+          let schema_description = field
+            .schema
+            .description()
+            .unwrap_or_default();
+          field_reflectable_impl.push(quote! {
+            #[automatically_derived]
+            #[allow(clippy::type_complexity, non_camel_case_types)]
+            impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #ty #wc_with_flavor
+            {
+              type Reflection = #path_to_grost::__private::reflection::ObjectFieldReflection;
+
+              const REFLECTION: &'static Self::Reflection = &{
+                #path_to_grost::__private::reflection::ObjectFieldReflectionBuilder {
+                  name: #field_name_str,
+                  ty: ::core::any::type_name::<#object_ty>,
+                  schema_name: #schema_name,
+                  schema_description: #schema_description,
+                  schema_type: <#path_to_grost::__private::reflection::Reflection<#object_ty, #path_to_grost::__private::reflection::Type, #fg> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
+                }.build()
+              };
+            }
+          });
+
           quote! {
             #[doc = #doc]
             #[inline]
@@ -235,6 +318,8 @@ where
         //     }
         //   }
         // }
+
+        #(#field_reflectable_impl)*
 
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]

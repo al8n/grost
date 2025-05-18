@@ -62,6 +62,7 @@ pub struct ObjectFieldReflectionBuilder {
   /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
   pub ty: fn() -> &'static str,
   pub schema_name: &'static str,
+  pub schema_description: &'static str,
   pub schema_type: &'static Type,
 }
 
@@ -73,6 +74,7 @@ impl ObjectFieldReflectionBuilder {
       ty: self.ty,
       schema_name: self.schema_name,
       schema_type: self.schema_type,
+      schema_description: self.schema_description,
     }
   }
 }
@@ -85,6 +87,7 @@ pub struct ObjectFieldReflection {
   #[debug("{}", (self.ty)())]
   ty: fn() -> &'static str,
   schema_name: &'static str,
+  schema_description: &'static str,
   schema_type: &'static Type,
 }
 
@@ -115,6 +118,14 @@ impl ObjectFieldReflection {
   #[inline]
   pub const fn schema_name(&self) -> &'static str {
     self.schema_name
+  }
+
+  /// Get the schema description of the field.
+  ///
+  /// This will returns the description in the Graph protocol buffer schema file.
+  #[inline]
+  pub const fn schema_description(&self) -> &'static str {
+    self.schema_description
   }
 
   /// Get the schema type of the field.

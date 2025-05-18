@@ -109,6 +109,7 @@ pub struct User<I> {
 
 #[test]
 fn t() {
+  let refl = User::<String>::reflection::<Network>();
   // let user = PartialDecodedUser {
   //   age: Some(1),
   //   name: Some("user".to_string()),
