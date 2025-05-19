@@ -9,9 +9,7 @@ use crate::{
     Network,
     network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
   },
-  partial_encode_scalar,
-  reflection::Type,
-  selectable, type_reflection,
+  partial_encode_scalar, selectable,
 };
 
 const PORT_SIZE: usize = 2;
@@ -151,12 +149,6 @@ default_wire_format!(
 selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
 decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
-type_reflection! {
-  Network:
-    SocketAddrV4 => Type::scalar("SocketAddrV4", "IPv4 socket address"),
-    SocketAddrV6 => Type::scalar("SocketAddrV6", "IPv6 socket address"),
-    SocketAddr => Type::scalar("SocketAddr", "Socket address"),
-}
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

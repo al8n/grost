@@ -1,10 +1,3 @@
-use grost::{
-  flavors::{
-    Network, RawTag,
-    network::{Identifier, LengthDelimited, Tag, WireType},
-  },
-  reflection::{Reflectable, Reflection},
-};
 use grost_derive::Object;
 
 mod sealed {
@@ -86,6 +79,8 @@ pub struct Comment<I> {
 
 #[test]
 fn t() {
+  use grost::flavors::Network;
+
   let refl = Comment::<String>::user_reflection::<Network>();
   println!("{:?}", refl.identifier().encoded());
   println!("{:?}", refl.tag().encoded());

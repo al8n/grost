@@ -1,5 +1,3 @@
-use quote::{ToTokens, format_ident, quote};
-
 use crate::Object;
 
 use super::FlavorGenerator;

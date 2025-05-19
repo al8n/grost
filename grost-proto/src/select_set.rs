@@ -1,5 +1,3 @@
-use crate::flavors::{Flavor, Network};
-
 // struct UserSelection {
 //   age: Option<<u8 as Selectable>::Selector>,
 //   name: Option<<str as Selectable>::Selector>,

@@ -1,15 +1,4 @@
 #[allow(unused_macros)]
-macro_rules! str_message {
-  ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    $crate::type_reflection! {
-      $crate::__private::flavors::Network:
-        $ty => $crate::__private::reflection::Type::string(),
-    }
-  };
-  (@without_type_reflection $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {};
-}
-
-#[allow(unused_macros)]
 macro_rules! str_bridge {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
     from_str: $from_str: expr;
@@ -31,9 +20,6 @@ macro_rules! str_bridge {
           },
         },
       );
-
-      str_message!($ty $([ $(const $g: usize),* ])?);
-
       $crate::default_wire_format!(Network: $ty as $crate::__private::flavors::network::LengthDelimited);
     )*
   };
@@ -173,11 +159,6 @@ macro_rules! array_str {
     );
 
     $crate::flatten_state!($ty [const N: usize]);
-
-    $crate::type_reflection! {
-      $crate::__private::flavors::Network:
-        $ty [const N: usize] => $crate::__private::reflection::Type::string(),
-    }
   };
 }
 

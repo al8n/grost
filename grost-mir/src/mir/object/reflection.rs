@@ -75,7 +75,6 @@ impl Reflection {
       .params
       .push(syn::GenericParam::Type(flavor_param.clone()));
     let wc = reflection_generics.make_where_clause();
-    let fg = &flavor_param.ident;
     let fields = input
       .fields()
       .iter()
@@ -94,7 +93,7 @@ impl Reflection {
         let schema = f.meta().schema().clone();
 
         syn::parse2(quote! {
-          #path_to_grost::__private::reflection::Reflection<#ty, #path_to_grost::__private::reflection::Type, #fg>: #path_to_grost::__private::reflection::Reflectable<#ty, Reflection = #path_to_grost::__private::reflection::Type>
+          #path_to_grost::__private::reflection::TypeReflection<#ty>: #path_to_grost::__private::reflection::Reflectable<#ty, Reflection = #path_to_grost::__private::reflection::Type>
         })
         .map(|constraints| {
           wc.predicates.push(constraints);
@@ -145,7 +144,7 @@ where
     let fgty: syn::Type = syn::parse2(quote! { #fg }).unwrap();
 
     let (ig, tg, wc) = self.generics().split_for_impl();
-    let (ig_with_flavor, _, wc_with_flavor) = self.reflection().generics.split_for_impl();
+    let (ig_with_flavor, _, wc_with_constraints) = self.reflection().generics.split_for_impl();
     let mut field_reflectable_impl = vec![];
     let mut field_reflections = vec![];
     let field_reflection_fns = self
@@ -166,12 +165,16 @@ where
             .description()
             .unwrap_or_default();
           field_reflections.push(quote! {
-            <#ty as #path_to_grost::__private::reflection::Reflectable<#name #tg>>::REFLECTION
+            &#path_to_grost::__private::reflection::ObjectFieldBuilder {
+              name: #schema_name,
+              description: #schema_description,
+              ty: <#path_to_grost::__private::reflection::TypeReflection<#object_ty> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
+            }.build()
           });
           field_reflectable_impl.push(quote! {
             #[automatically_derived]
             #[allow(clippy::type_complexity, non_camel_case_types)]
-            impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #ty #wc_with_flavor
+            impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #ty #wc_with_constraints
             {
               type Reflection = #path_to_grost::__private::reflection::ObjectField;
 
@@ -179,7 +182,7 @@ where
                 #path_to_grost::__private::reflection::ObjectFieldBuilder {
                   name: #schema_name,
                   description: #schema_description,
-                  ty: <#path_to_grost::__private::reflection::Reflection<#object_ty, #path_to_grost::__private::reflection::Type, #fg> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
+                  ty: <#path_to_grost::__private::reflection::TypeReflection<#object_ty> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
                 }.build()
               };
             }
@@ -208,21 +211,21 @@ where
 
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::Reflection<
+        impl #ig #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::TypeReflection<
           #name #tg,
-          #path_to_grost::__private::reflection::Type,
-          #fg,
         >
-        #wc_with_flavor {
+        #wc_with_constraints {
           type Reflection = #path_to_grost::__private::reflection::Type;
 
           const REFLECTION: &'static Self::Reflection = &{
             #path_to_grost::__private::reflection::Type::Object(
-              <#path_to_grost::__private::reflection::ObjectReflection<
-                #name #tg,
-                #path_to_grost::__private::reflection::Object,
-                #fg,
-              > as #path_to_grost::__private::reflection::Reflectable<#name #tg>>::REFLECTION
+              &#path_to_grost::__private::reflection::ObjectBuilder {
+                name: #schema_name,
+                description: #schema_description,
+                fields: &[
+                  #(#field_reflections),*
+                ],
+              }.build()
             )
           };
         }
@@ -234,7 +237,7 @@ where
           #path_to_grost::__private::reflection::Object,
           #fg,
         >
-        #wc_with_flavor
+        #wc_with_constraints
         {
           type Reflection = #path_to_grost::__private::reflection::Object;
 

@@ -198,7 +198,7 @@ macro_rules! decoded_state {
 macro_rules! type_reflection {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $expr:expr),+$(,)?) => {
     $(
-      impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, $flavor> {
+      impl$(<$(const $g: ::core::primitive::usize),*>)? $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty> {
         type Reflection = $crate::__private::reflection::Type;
 
         const REFLECTION: &Self::Reflection = &{

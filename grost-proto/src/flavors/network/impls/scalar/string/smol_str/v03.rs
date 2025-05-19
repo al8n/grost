@@ -2,8 +2,7 @@ use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  reflection::Type,
-  selectable, type_reflection,
+  selectable,
 };
 use smol_str_0_3::SmolStr;
 
@@ -31,10 +30,6 @@ flatten_state!(SmolStr);
 decoded_state!(
   &'a Network: SmolStr as LengthDelimited => &'a str
 );
-type_reflection! {
-  Network:
-    SmolStr => Type::string(),
-}
 
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>

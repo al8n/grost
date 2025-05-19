@@ -7,20 +7,13 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed32, Network, Unknown, Varint},
-  partial_encode_scalar,
-  reflection::Type,
-  selectable, try_from_bridge, type_reflection,
+  partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u32 as Varint);
 selectable!(@scalar Network: u32, NonZeroU32);
 decoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
 flatten_state!(u32, NonZeroU32);
-type_reflection! {
-  Network:
-    u32 => Type::scalar("u32", "32-bit unsigned integer"),
-    NonZeroU32 => Type::scalar("NonZeroU32", "Non-zero 32-bit unsigned integer"),
-}
 
 impl Encode<Network, Fixed32> for u32 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

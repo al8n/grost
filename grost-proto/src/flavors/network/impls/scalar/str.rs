@@ -2,8 +2,7 @@ use crate::{
   decode::Decode,
   decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  reflection::Type,
-  selectable, try_decode_bridge, type_reflection,
+  selectable, try_decode_bridge,
 };
 
 default_wire_format!(
@@ -12,10 +11,6 @@ default_wire_format!(
 selectable!(@scalar Network:str);
 decoded_state!(&'a Network: str as LengthDelimited => &'a str);
 flatten_state!(str);
-type_reflection! {
-  Network:
-    str => Type::string(),
-}
 
 encode_bridge!(
   Network: [u8] {

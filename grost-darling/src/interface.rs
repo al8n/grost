@@ -1,4 +1,4 @@
-use darling::{FromDeriveInput, util::Ignored};
+use darling::FromDeriveInput;
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(grost), forward_attrs, supports(struct_named))]

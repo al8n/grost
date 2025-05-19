@@ -1,14 +1,4 @@
 #[allow(unused_macros)]
-macro_rules! bytes_message {
-  ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    // $crate::type_reflection! {
-    //   $crate::__private::flavors::Network:
-    //     $ty $([ $(const $g: usize),* ])? => $crate::__private::reflection::Type::bytes(),
-    // }
-  };
-}
-
-#[allow(unused_macros)]
 macro_rules! impl_selectable_for_bytes {
   ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $(<$(const $g: usize),* >)? $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
@@ -41,8 +31,6 @@ macro_rules! bytes_bridge {
       );
 
       impl_selectable_for_bytes!($ty $([ $(const $g: usize),* ])?);
-
-      bytes_message!($ty $([ $(const $g: usize),* ])?);
     )*
   };
 }
@@ -150,7 +138,7 @@ macro_rules! array_bytes {
 
     $crate::default_wire_format!(
       $crate::__private::flavors::Network:
-        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited,
     );
     $crate::decoded_state!(
       &'a $crate::__private::flavors::Network:

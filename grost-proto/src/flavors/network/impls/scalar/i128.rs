@@ -7,20 +7,13 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
-  partial_encode_scalar,
-  reflection::Type,
-  selectable, try_from_bridge, type_reflection,
+  partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: i128 as Varint);
 selectable!(@scalar Network: i128, NonZeroI128);
 decoded_state!(@scalar &'a Network: i128 as Varint, i128 as Fixed128, NonZeroI128 as Varint, NonZeroI128 as Fixed128);
 flatten_state!(i128, NonZeroI128);
-type_reflection! {
-  Network:
-    i128 => Type::scalar("i128", "128-bit signed integer"),
-    NonZeroI128 => Type::scalar("NonZeroI128", "Non-zero 128-bit signed integer"),
-}
 
 impl Encode<Network, Fixed128> for i128 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {

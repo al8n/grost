@@ -6,10 +6,7 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::{
-  buffer::BytesBuffer,
-  reflection::{Reflectable, Reflection, Type},
-};
+use crate::buffer::BytesBuffer;
 
 mod context;
 mod error;
@@ -142,52 +139,3 @@ impl Flavor for Network {
     }
   }
 }
-
-impl<T> Reflectable<Option<T>> for Reflection<Option<T>, Type, Network>
-where
-  Reflection<T, Type, Network>: Reflectable<T, Reflection = Type>,
-{
-  type Reflection = Type;
-
-  const REFLECTION: &'static Self::Reflection =
-    &Type::Optional(<Reflection<T, Type, Network> as Reflectable<T>>::REFLECTION);
-}
-
-#[allow(unused_macro_rules)]
-macro_rules! impl_type_reflection_for_map {
-  ($(@<$g:ident>)? $ty:ty) => {
-    impl <K, V, $($g)?> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::Reflection<$ty, $crate::__private::reflection::Type, Network>
-    where
-      $crate::__private::reflection::Reflection<K, $crate::__private::reflection::Type, Network>: $crate::__private::reflection::Reflectable<K, Reflection = $crate::__private::reflection::Type>,
-      $crate::__private::reflection::Reflection<V, $crate::__private::reflection::Type, Network>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::Type>,
-    {
-      type Reflection = $crate::__private::reflection::Type;
-
-      const REFLECTION: &'static Self::Reflection =
-        &Type::Map {
-          key: <Reflection<K, $crate::__private::reflection::Type, Network> as $crate::__private::reflection::Reflectable<K>>::REFLECTION,
-          value: <Reflection<V, $crate::__private::reflection::Type, Network> as $crate::__private::reflection::Reflectable<V>>::REFLECTION,
-        };
-    }
-  };
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-const _: () = {
-  impl_type_reflection_for_map!(std::collections::BTreeMap<K, V>);
-};
-
-#[cfg(feature = "std")]
-const _: () = {
-  impl_type_reflection_for_map!(@<S> std::collections::HashMap<K, V, S>);
-};
-
-#[cfg(feature = "hashbrown_0_15")]
-const _: () = {
-  impl_type_reflection_for_map!(@<S> hashbrown_0_15::HashMap<K, V, S>);
-};
-
-#[cfg(feature = "indexmap_2")]
-const _: () = {
-  impl_type_reflection_for_map!(@<S> indexmap_2::IndexMap<K, V, S>);
-};

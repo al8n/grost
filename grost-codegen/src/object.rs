@@ -1,5 +1,4 @@
 use grost_mir::ast::Output;
-use quote::quote;
 use syn::DeriveInput;
 
 #[allow(unused)]

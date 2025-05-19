@@ -1,11 +1,9 @@
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, format_ident};
 use smol_str::{SmolStr, format_smolstr};
 use syn::{Lifetime, Type, parse_quote};
 
 pub use int::Int;
 pub use uint::Uint;
-
-use crate::SafeIdent;
 
 mod int;
 mod uint;

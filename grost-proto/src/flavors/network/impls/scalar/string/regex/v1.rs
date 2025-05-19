@@ -7,8 +7,6 @@ const _: () = {
       Network,
       network::{DecodeError, LengthDelimited},
     },
-    reflection::Type,
-    type_reflection,
   };
 
   const ERR_MSG: &str = "invalid regex pattern";
@@ -44,8 +42,6 @@ const _: () = {
         );
 
         $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);
-
-        str_message!(@without_type_reflection $ty $([ $(const $g: usize),* ])?);
       )*
     };
   }
@@ -70,10 +66,4 @@ const _: () = {
     Regex as LengthDelimited;
     BytesRegex as LengthDelimited;
   );
-
-  type_reflection! {
-    Network:
-      Regex => Type::scalar("regex", "Regular expression"),
-      BytesRegex => Type::scalar("BytesRegex", "Bytes regular expression"),
-  }
 };

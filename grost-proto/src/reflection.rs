@@ -77,6 +77,8 @@ phantom!(
   EncodeReflection,
   /// Reflection to an partial encode fn.
   PartialEncodeReflection,
+  /// Reflection to the schema [`Type`].
+  TypeReflection,
 );
 
 /// Reflectable.
@@ -86,34 +88,6 @@ pub trait Reflectable<F: ?Sized> {
   /// The reflection of this type
   const REFLECTION: &Self::Reflection;
 }
-
-macro_rules! blank_type_reflection_impl {
-  ($($ty:ty),+$(,)?) => {
-    $(
-      impl<T: ?Sized, F: ?Sized> Reflectable<T> for Reflection<$ty, Type, F>
-      where
-        Reflection<T, Type, F>: Reflectable<F, Reflection = Type>,
-      {
-        type Reflection = Type;
-
-        const REFLECTION: &'static Self::Reflection =
-          <Reflection<T, Type, F> as Reflectable<F>>::REFLECTION;
-      }
-    )*
-  };
-}
-
-blank_type_reflection_impl!(&T, ::core::marker::PhantomData<T>);
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-const _: () = {
-  blank_type_reflection_impl!(std::boxed::Box<T>, std::rc::Rc<T>, std::sync::Arc<T>);
-};
-
-#[cfg(feature = "triomphe_0_1")]
-const _: () = {
-  blank_type_reflection_impl!(triomphe_0_1::Arc<T>);
-};
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
 #[repr(transparent)]
