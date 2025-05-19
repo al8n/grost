@@ -85,10 +85,6 @@ impl PartialField {
     let name = input.name();
     let vis = input.vis();
     let attrs = input.attrs();
-    // let optional = input
-    //   .meta()
-    //   .type_specification()
-    //   .is_some_and(|f| f.is_optional());
     let output_type = syn::parse2(quote! {
       <#ty as #path_to_grost::__private::convert::State<
         #path_to_grost::__private::convert::Flatten

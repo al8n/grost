@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 pub use case::*;
 pub use flavors::*;
 // pub use enum_::*;
@@ -7,7 +5,7 @@ pub use object::*;
 pub use safe_ident::*;
 
 use indexmap::{IndexMap, IndexSet};
-use quote::{ToTokens, quote};
+use quote::quote;
 
 mod case;
 mod flavors;
@@ -110,11 +108,37 @@ impl SchemaGenerator {
             .values()
             .map(|flavor| flavor.derive_object(object))
             .collect::<syn::Result<Vec<_>>>()
-            .map(|stream| {
-              quote! {
+            .and_then(|stream| {
+              let stream = quote! {
                 #basic
 
                 #(#stream)*
+              };
+              if let Some(p) = object.output().path() {
+                std::fs::OpenOptions::new()
+                  .write(true)
+                  .create(true)
+                  .read(true)
+                  .truncate(true)
+                  .open(p)
+                  .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))
+                  .and_then(|mut file| {
+                    use std::io::Write;
+
+                    let stream_string = if object.output().format() {
+                      let f: syn::File = syn::parse2(stream)?;
+                      prettyplease::unparse(&f)
+                    } else {
+                      stream.to_string()
+                    };
+
+                    file
+                      .write_all(stream_string.as_bytes())
+                      .map(|_| quote! {})
+                      .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))
+                  })
+              } else {
+                Ok(stream)
               }
             })
         })

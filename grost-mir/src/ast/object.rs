@@ -2,7 +2,7 @@ use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident};
 
-use super::{Attributes, SchemaMeta};
+use super::{Attributes, Output, SchemaMeta};
 
 pub use field::*;
 
@@ -133,6 +133,8 @@ pub struct ObjectMeta {
   #[darling(default)]
   default: Option<syn::Path>,
   #[darling(default)]
+  output: Output,
+  #[darling(default)]
   schema: SchemaMeta,
   #[darling(default)]
   partial: PartialObjectMeta,
@@ -194,6 +196,11 @@ impl ObjectMeta {
   /// Returns whether the object is copyable
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+
+  /// Returns the derived code output configuration
+  pub const fn output(&self) -> &Output {
+    &self.output
   }
 }
 

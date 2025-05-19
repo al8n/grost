@@ -19,6 +19,7 @@ grost-codegen = { path = "../grost-codegen" }
 proc-macro2 = { workspace = true, features = ["default"] }
 quote = { workspace = true, features = ["default"] }
 syn = { workspace = true, features = ["full"] }
+prettyplease.workspace = true
 
 [dev-dependencies]
 grost = { path = "../grost" }

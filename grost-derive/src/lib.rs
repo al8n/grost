@@ -22,6 +22,7 @@ pub fn object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     Ok(codegen) => codegen,
     Err(e) => return e.into_compile_error().into(),
   };
+
   quote!(
     #codegen
   )

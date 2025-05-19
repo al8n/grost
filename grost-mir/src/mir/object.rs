@@ -10,7 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  SchemaMeta,
+  Output, SchemaMeta,
   object::{Field as _, ObjectExt as _, TypeSpecification},
 };
 
@@ -113,7 +113,7 @@ impl<M> Field<M> {
       vis: input.vis().clone(),
       tag: meta.tag(),
       specification: meta.type_specification().cloned(),
-      attrs: meta.partial().attrs().to_vec(),
+      attrs: input.attrs().to_vec(),
       copy,
       schema: meta.schema().clone(),
       default: meta.default().cloned(),
@@ -138,7 +138,9 @@ where
   reflection: Reflection,
   selector: Selector,
   selector_iter: SelectorIter,
+  attrs: Vec<Attribute>,
   indexer: Indexer,
+  output: Output,
   meta: M,
 }
 
@@ -184,6 +186,12 @@ where
     &self.schema
   }
 
+  /// Returns the derived code output configuration.
+  #[inline]
+  pub const fn output(&self) -> &Output {
+    &self.output
+  }
+
   #[inline]
   pub const fn partial(&self) -> &PartialObject {
     &self.partial
@@ -213,6 +221,11 @@ where
   pub const fn indexer(&self) -> &Indexer {
     &self.indexer
   }
+
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
 }
 
 impl<M> Object<M>
@@ -238,9 +251,11 @@ where
     )?;
     let indexer = Indexer::from_input(&input)?;
     let reflection = Reflection::from_input(&input)?;
+    let output = input.meta().output().clone();
 
     Ok(Self {
       name: input.name().clone(),
+      attrs: input.attrs().to_vec(),
       path_to_grost: path_to_grost.clone(),
       schema: input.meta().schema().clone(),
       vis: input.vis().clone(),
@@ -260,12 +275,14 @@ where
       selector_iter,
       selector,
       meta: input,
+      output,
       indexer,
     })
   }
 
   /// Derives the object.
   pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+    let this = self.derive_struct();
     let partial_object = self.partial().to_token_stream();
     let partial_decoded_object = self.partial_decoded().to_token_stream();
     let selector = self.selector().to_token_stream();
@@ -285,6 +302,8 @@ where
     let default = self.derive_default();
 
     Ok(quote! {
+      #this
+
       #partial_object
 
       #partial_decoded_object
@@ -315,6 +334,35 @@ where
         #accessors
       };
     })
+  }
+
+  fn derive_struct(&self) -> proc_macro2::TokenStream {
+    if self.output().path().is_none() {
+      return quote! {};
+    }
+
+    let name = self.name();
+    let vis = self.vis();
+    let generics = self.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let field_ty = f.ty();
+      let field_vis = f.vis();
+      let field_attrs = f.attrs();
+      quote! {
+        #(#field_attrs)*
+        #field_vis #field_name: #field_ty
+      }
+    });
+
+    quote! {
+      #(#attrs)*
+      #vis struct #name #generics #where_clause {
+        #(#fields),*
+      }
+    }
   }
 
   fn derive_default(&self) -> proc_macro2::TokenStream {

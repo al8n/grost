@@ -69,6 +69,52 @@ impl SchemaMeta {
   }
 }
 
+#[derive(Debug, Default, Clone, FromMeta)]
+struct OutputInner {
+  #[darling(default)]
+  path: Option<std::path::PathBuf>,
+  #[darling(default)]
+  format: bool,
+}
+
+/// Configures the output of the generated code, this is useful when you want to
+/// debug the generated code.
+#[derive(Debug, Default, Clone)]
+pub struct Output {
+  path: Option<std::path::PathBuf>,
+  format: bool,
+}
+
+impl Output {
+  /// Returns the path to the output file
+  pub const fn path(&self) -> Option<&std::path::PathBuf> {
+    self.path.as_ref()
+  }
+
+  /// Returns `true` if the output should be formatted
+  pub const fn format(&self) -> bool {
+    self.format
+  }
+}
+
+impl FromMeta for Output {
+  fn from_value(value: &syn::Lit) -> darling::Result<Self> {
+    let inner = <std::path::PathBuf as FromMeta>::from_value(value)?;
+    Ok(Self {
+      path: Some(inner),
+      format: false,
+    })
+  }
+
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let inner = <OutputInner as FromMeta>::from_list(items)?;
+    Ok(Self {
+      path: inner.path,
+      format: inner.format,
+    })
+  }
+}
+
 /// Returns a `'__grost_lifetime__` lifetime, which is the lifetime name used
 /// in the generated code. This is used to avoid conflicts with other
 /// lifetimes in the code.

@@ -1,3 +1,4 @@
+use grost_mir::ast::Output;
 use quote::quote;
 use syn::DeriveInput;
 
@@ -47,5 +48,9 @@ impl Object {
 
   pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
     self.object.derive()
+  }
+
+  pub(super) fn output(&self) -> &Output {
+    self.object.output()
   }
 }
