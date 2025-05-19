@@ -104,13 +104,11 @@ impl Reflection {
           syn::Field::parse_named
             .parse2(quote! {
               #[doc = #field_doc]
-              #vis #field_name: #path_to_grost::__private::reflection::Reflection<
+              #vis #field_name: #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #object_name #tg,
-                #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::Field,
-                  #tag,
-                >,
+                #path_to_grost::__private::reflection::ObjectField,
                 #flavor,
+                #tag,
               >
             })
             .map(|f| ReflectionField {
@@ -196,7 +194,7 @@ where
             where
               #fg: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
             {
-              #path_to_grost::__private::reflection::Reflection::new()
+              #path_to_grost::__private::reflection::ObjectFieldReflection::new()
             }
           }
         })
@@ -222,7 +220,7 @@ where
 
           const REFLECTION: &'static Self::Reflection = &{
             #path_to_grost::__private::reflection::Type::Object(
-              <#path_to_grost::__private::reflection::Reflection<
+              <#path_to_grost::__private::reflection::ObjectReflection<
                 #name #tg,
                 #path_to_grost::__private::reflection::Object,
                 #fg,
@@ -233,7 +231,7 @@ where
 
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::Reflection<
+        impl #ig_with_flavor #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::ObjectReflection<
           #name #tg,
           #path_to_grost::__private::reflection::Object,
           #fg,
@@ -259,7 +257,7 @@ where
         impl #ig #name #tg #wc {
           /// Returns the reflection of the struct.
           #[inline]
-          pub const fn reflection<#fg>() -> #path_to_grost::__private::reflection::Reflection<
+          pub const fn reflection<#fg>() -> #path_to_grost::__private::reflection::ObjectReflection<
             Self,
             #path_to_grost::__private::reflection::Object,
             #fg,
@@ -267,7 +265,7 @@ where
           where
             #fg: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
           {
-            #path_to_grost::__private::reflection::Reflection::new()
+            #path_to_grost::__private::reflection::ObjectReflection::new()
           }
 
           #(#field_reflection_fns)*

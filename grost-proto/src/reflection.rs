@@ -1,8 +1,7 @@
 use core::marker::PhantomData;
 
-use super::flavors::Flavor;
-
 pub use schema::*;
+pub use wire_format::WireFormatReflection;
 
 macro_rules! phantom {
   ($(
@@ -12,6 +11,7 @@ macro_rules! phantom {
     paste::paste! {
       $(
         $(#[$meta])*
+        #[repr(transparent)]
         pub struct $name<R: ?::core::marker::Sized>(::core::marker::PhantomData<R>);
 
         impl<R: ?::core::marker::Sized> ::core::clone::Clone for $name<R> {
@@ -40,6 +40,7 @@ macro_rules! phantom {
   };
 }
 
+#[allow(unused_macros)]
 macro_rules! zst {
   ($(
     $(#[$meta:meta])*
@@ -48,6 +49,7 @@ macro_rules! zst {
     paste::paste! {
       $(
         $(#[$meta])*
+        #[repr(transparent)]
         #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
         pub struct $name;
       )*
@@ -56,7 +58,11 @@ macro_rules! zst {
 }
 
 mod decoded;
+mod identifier;
 mod schema;
+mod tag;
+mod wire_format;
+mod wire_type;
 
 phantom!(
   /// Reflection to the identifier of a field
@@ -73,11 +79,6 @@ phantom!(
   PartialEncodeReflection,
 );
 
-zst!(
-  /// Reflection to the wire format of a field
-  WireFormatReflection
-);
-
 /// Reflectable.
 pub trait Reflectable<F: ?Sized> {
   type Reflection: ?Sized + 'static;
@@ -85,10 +86,6 @@ pub trait Reflectable<F: ?Sized> {
   /// The reflection of this type
   const REFLECTION: &Self::Reflection;
 }
-
-pub struct Identified<T: ?Sized, const TAG: u32>(PhantomData<T>);
-
-
 
 impl<T: ?Sized, F: ?Sized> Reflectable<T> for Reflection<&T, Type, F>
 where
@@ -176,381 +173,333 @@ where
   }
 }
 
-#[allow(clippy::type_complexity)]
-impl<T, F, const TAG: u32> Reflection<T, Identified<ObjectField, TAG>, F>
-where
-  T: ?Sized,
-  F: ?Sized + Flavor,
-  Self: Reflectable<T, Reflection = ObjectField>,
-{
-  /// Returns the relection to the wire format of the field.
-  #[inline]
-  pub const fn wire_format(&self) -> Reflection<T, Identified<WireFormatReflection, TAG>, F>
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-  {
-    Reflection::new()
-  }
+// #[allow(clippy::type_complexity)]
+// impl<T, F, const TAG: u32> Reflection<T, Identified<ObjectField, TAG>, F>
+// where
+//   T: ?Sized,
+//   F: ?Sized + Flavor,
+//   Self: Reflectable<T, Reflection = ObjectField>,
+// {
+//   /// Returns the reflection to the encoded identifier of the field.
+//   #[inline]
+//   pub const fn encoded_identifier(
+//     &self,
+//   ) -> Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>
+//   where
+//     Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>:
+//       Reflectable<T, Reflection = [u8]>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the tag of the field.
-  #[inline]
-  pub const fn tag(&self) -> Reflection<T, Identified<TagReflection<F::Tag>, TAG>, F>
-  where
-    Reflection<T, Identified<TagReflection<F::Tag>, TAG>, F>: Reflectable<T, Reflection = F::Tag>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the length of the encoded identifier of the field.
+//   #[inline]
+//   pub const fn encoded_identifier_len(
+//     &self,
+//   ) -> Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>
+//   where
+//     Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>:
+//       Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the wire type of the field.
-  #[inline]
-  pub const fn wire_type(
-    &self,
-  ) -> Reflection<T, Identified<WireTypeReflection<F::WireType>, TAG>, F>
-  where
-    Reflection<T, Identified<WireTypeReflection<F::WireType>, TAG>, F>:
-      Reflectable<T, Reflection = F::WireType>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the encoded tag of the field.
+//   #[inline]
+//   pub const fn encoded_tag(
+//     &self,
+//   ) -> Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>
+//   where
+//     Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>:
+//       Reflectable<T, Reflection = [u8]>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the identifier of the field.
-  #[inline]
-  pub const fn identifier(
-    &self,
-  ) -> Reflection<T, Identified<IdentifierReflection<F::Identifier>, TAG>, F>
-  where
-    Reflection<T, Identified<IdentifierReflection<F::Identifier>, TAG>, F>:
-      Reflectable<T, Reflection = F::Identifier>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the length of the encoded tag of the field.
+//   #[inline]
+//   pub const fn encoded_tag_len(
+//     &self,
+//   ) -> Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>
+//   where
+//     Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>:
+//       Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the encoded identifier of the field.
-  #[inline]
-  pub const fn encoded_identifier(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>
-  where
-    Reflection<T, Identified<EncodeReflection<IdentifierReflection<F::Identifier>>, TAG>, F>:
-      Reflectable<T, Reflection = [u8]>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the corresponding field in decoded struct.
+//   #[inline]
+//   pub const fn decoded(
+//     &self,
+//   ) -> decoded::DecodedReflection<T, Identified<ObjectField, TAG>, F>
+//   {
+//     decoded::DecodedReflection::new()
+//   }
 
-  /// Returns the reflection to the length of the encoded identifier of the field.
-  #[inline]
-  pub const fn encoded_identifier_len(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>
-  where
-    Reflection<T, Identified<EncodeReflection<Len<IdentifierReflection<F::Identifier>>>, TAG>, F>:
-      Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the encode fn of the field.
+//   #[inline]
+//   pub const fn encode(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       EncodeReflection<
+//         <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         EncodeReflection<
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the encoded tag of the field.
-  #[inline]
-  pub const fn encoded_tag(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>
-  where
-    Reflection<T, Identified<EncodeReflection<TagReflection<F::Tag>>, TAG>, F>:
-      Reflectable<T, Reflection = [u8]>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to fn which will give the length of the encoded data.
+//   #[inline]
+//   pub const fn encoded_len(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       EncodeReflection<
+//         Len<
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         EncodeReflection<
+//           Len<
+//             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//           >,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the length of the encoded tag of the field.
-  #[inline]
-  pub const fn encoded_tag_len(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>
-  where
-    Reflection<T, Identified<EncodeReflection<Len<TagReflection<F::Tag>>>, TAG>, F>:
-      Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the partial encode fn for the field.
+//   #[inline]
+//   pub const fn partial_encode(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       PartialEncodeReflection<
+//         <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         PartialEncodeReflection<
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the corresponding field in decoded struct.
-  #[inline]
-  pub const fn decoded(
-    &self,
-  ) -> decoded::DecodedReflection<T, Identified<ObjectField, TAG>, F>
-  {
-    decoded::DecodedReflection::new()
-  }
+//   /// Returns the reflection to fn which will give the length of the encoded data.
+//   #[inline]
+//   pub const fn partial_encoded_len(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       PartialEncodeReflection<
+//         Len<
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         PartialEncodeReflection<
+//           Len<
+//             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//           >,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the encode fn of the field.
-  #[inline]
-  pub const fn encode(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      EncodeReflection<
-        <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        EncodeReflection<
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T>,
-  {
-    Reflection::new()
-  }
+//     /// Returns the reflection to the encode fn to encode decoded field.
+//   #[inline]
+//   pub const fn encode_decoded<'a>(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       EncodeReflection<
+//         super::Decoded<
+//           'a,
+//           F,
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         EncodeReflection<
+//           super::Decoded<
+//             'a,
+//             F,
+//             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//           >,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to fn which will give the length of the encoded data.
-  #[inline]
-  pub const fn encoded_len(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      EncodeReflection<
-        Len<
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        EncodeReflection<
-          Len<
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to fn which will give the length of the encoded data.
+//   #[inline]
+//   pub const fn encoded_decoded_len<'a>(
+//     &self,
+//   ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//     'a,
+//     F,
+//     <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//   >>>, TAG>, F>
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//       'a,
+//       F,
+//       <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//     >>>, TAG>, F>: Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to the partial encode fn for the field.
-  #[inline]
-  pub const fn partial_encode(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      PartialEncodeReflection<
-        <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        PartialEncodeReflection<
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T>,
-  {
-    Reflection::new()
-  }
+//   /// Returns the reflection to the partial encode fn which can encode the decoded field.
+//   #[inline]
+//   pub const fn partial_encode_decoded<'a>(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       PartialEncodeReflection<
+//         super::Decoded<
+//           'a,
+//           F,
+//           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//         >,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         PartialEncodeReflection<
+//           super::Decoded<
+//             'a,
+//             F,
+//             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//           >,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T>,
+//   {
+//     Reflection::new()
+//   }
 
-  /// Returns the reflection to fn which will give the length of the encoded data.
-  #[inline]
-  pub const fn partial_encoded_len(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      PartialEncodeReflection<
-        Len<
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        PartialEncodeReflection<
-          Len<
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
-
-    /// Returns the reflection to the encode fn to encode decoded field.
-  #[inline]
-  pub const fn encode_decoded<'a>(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      EncodeReflection<
-        super::Decoded<
-          'a,
-          F,
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        EncodeReflection<
-          super::Decoded<
-            'a,
-            F,
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T>,
-  {
-    Reflection::new()
-  }
-
-  /// Returns the reflection to fn which will give the length of the encoded data.
-  #[inline]
-  pub const fn encoded_decoded_len<'a>(
-    &self,
-  ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
-    'a,
-    F,
-    <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-  >>>, TAG>, F>
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
-      'a,
-      F,
-      <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-    >>>, TAG>, F>: Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
-
-  /// Returns the reflection to the partial encode fn which can encode the decoded field.
-  #[inline]
-  pub const fn partial_encode_decoded<'a>(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      PartialEncodeReflection<
-        super::Decoded<
-          'a,
-          F,
-          <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        PartialEncodeReflection<
-          super::Decoded<
-            'a,
-            F,
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T>,
-  {
-    Reflection::new()
-  }
-
-  /// Returns the reflection to fn which will give the length of the encoded data.
-  #[inline]
-  pub const fn partial_encoded_decoded_len<'a>(
-    &self,
-  ) -> Reflection<
-    T,
-    Identified<
-      PartialEncodeReflection<
-        Len<
-          super::Decoded<
-            'a,
-            F,
-            <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-          >,
-        >,
-      >,
-      TAG,
-    >,
-    F,
-  >
-  where
-    Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-    Reflection<
-      T,
-      Identified<
-        PartialEncodeReflection<
-          Len<
-            super::Decoded<
-              'a,
-              F,
-              <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
-            >,
-          >,
-        >,
-        TAG,
-      >,
-      F,
-    >: Reflectable<T, Reflection = usize>,
-  {
-    Reflection::new()
-  }
-}
-
-#[allow(clippy::type_complexity)]
-pub trait Encoder<T: ?Sized, F: Flavor> {
-  const ENCODE: fn(&T, &F::Context, &mut [u8]) -> Result<usize, F::EncodeError>;
-  const ENCODED_LEN: fn(&T, &F::Context) -> usize;
-}
+//   /// Returns the reflection to fn which will give the length of the encoded data.
+//   #[inline]
+//   pub const fn partial_encoded_decoded_len<'a>(
+//     &self,
+//   ) -> Reflection<
+//     T,
+//     Identified<
+//       PartialEncodeReflection<
+//         Len<
+//           super::Decoded<
+//             'a,
+//             F,
+//             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//           >,
+//         >,
+//       >,
+//       TAG,
+//     >,
+//     F,
+//   >
+//   where
+//     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
+//     Reflection<
+//       T,
+//       Identified<
+//         PartialEncodeReflection<
+//           Len<
+//             super::Decoded<
+//               'a,
+//               F,
+//               <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
+//             >,
+//           >,
+//         >,
+//         TAG,
+//       >,
+//       F,
+//     >: Reflectable<T, Reflection = usize>,
+//   {
+//     Reflection::new()
+//   }
+// }

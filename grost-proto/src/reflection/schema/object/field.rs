@@ -1,8 +1,14 @@
 use core::marker::PhantomData;
 
-use crate::{flavors::Flavor, reflection::WireFormatReflection};
+use crate::{
+  flavors::Flavor,
+  reflection::{IdentifierReflection, TagReflection, WireFormatReflection, WireTypeReflection},
+};
 
-use super::{super::{Type, super::Reflectable}, Object, ObjectReflection};
+use super::{
+  super::{super::Reflectable, Type},
+  Object, ObjectReflection,
+};
 
 pub struct ObjectFieldReflection<O: ?Sized, T: ?Sized, F: ?Sized, const TAG: u32> {
   _object: PhantomData<O>,
@@ -35,67 +41,6 @@ where
       _flavor: PhantomData,
       _target: PhantomData,
     }
-  }
-}
-
-impl<O, T, F, const TAG: u32> Reflectable<O> for ObjectFieldReflection<&O, T, F, TAG>
-where
-  O: ?Sized,
-  F: ?Sized,
-  T: ?Sized,
-  ObjectFieldReflection<O, T, F, TAG>: Reflectable<O, Reflection = ObjectField>,
-  ObjectReflection<O, Object, F>: Reflectable<O, Reflection = Object>,
-{
-  type Reflection = ObjectField;
-
-  const REFLECTION: &'static Self::Reflection = <ObjectFieldReflection<O, T, F, TAG> as Reflectable<O>>::REFLECTION;
-}
-
-impl<O, F, const TAG: u32> ObjectFieldReflection<O, ObjectField, F, TAG>
-where
-  O: ?Sized,
-  F: ?Sized + Flavor,
-  Self: Reflectable<O, Reflection = ObjectField>,
-  ObjectReflection<O, Object, F>: Reflectable<O, Reflection = Object>,
-{
-  /// Returns the relection to the wire format of the field.
-  #[inline]
-  pub const fn wire_format(&self) -> ObjectFieldReflection<O, WireFormatReflection, F, TAG>
-  where
-    ObjectFieldReflection<O, WireFormatReflection, F, TAG>: Reflectable<O>,
-  {
-    ObjectFieldReflection::new()
-  }
-
-  /// Returns the reflection to the tag of the field.
-  #[inline]
-  pub const fn tag(&self) -> ObjectFieldReflection<O, F::Tag, F, TAG>
-  where
-    ObjectFieldReflection<O, F::Tag, F, TAG>: Reflectable<O, Reflection = F::Tag>,
-  {
-    ObjectFieldReflection::new()
-  }
-
-  /// Returns the reflection to the wire type of the field.
-  #[inline]
-  pub const fn wire_type(
-    &self,
-  ) -> ObjectFieldReflection<O, F::WireType, F, TAG>
-  where
-    ObjectFieldReflection<O, F::WireType, F, TAG>: Reflectable<O, Reflection = F::WireType>,
-  {
-    ObjectFieldReflection::new()
-  }
-
-  /// Returns the reflection to the identifier of the field.
-  #[inline]
-  pub const fn identifier(
-    &self,
-  ) -> ObjectFieldReflection<O, F::Identifier, F, TAG>
-  where
-    ObjectFieldReflection<O, F::Identifier, F, TAG>: Reflectable<O, Reflection = F::Identifier>,
-  {
-    ObjectFieldReflection::new()
   }
 }
 
@@ -136,6 +81,68 @@ where
 
   fn deref(&self) -> &Self::Target {
     Self::REFLECTION
+  }
+}
+
+impl<O, T, F, const TAG: u32> Reflectable<O> for ObjectFieldReflection<&O, T, F, TAG>
+where
+  O: ?Sized,
+  F: ?Sized,
+  T: ?Sized,
+  ObjectFieldReflection<O, T, F, TAG>: Reflectable<O, Reflection = ObjectField>,
+  ObjectReflection<O, Object, F>: Reflectable<O, Reflection = Object>,
+{
+  type Reflection = ObjectField;
+
+  const REFLECTION: &'static Self::Reflection =
+    <ObjectFieldReflection<O, T, F, TAG> as Reflectable<O>>::REFLECTION;
+}
+
+impl<O, F, const TAG: u32> ObjectFieldReflection<O, ObjectField, F, TAG>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = ObjectField>,
+  ObjectReflection<O, Object, F>: Reflectable<O, Reflection = Object>,
+{
+  /// Returns the relection to the wire format of the field.
+  #[inline]
+  pub const fn wire_format(&self) -> WireFormatReflection<O, F, TAG>
+  where
+    WireFormatReflection<O, F, TAG>: Reflectable<O>,
+  {
+    WireFormatReflection::new()
+  }
+
+  /// Returns the reflection to the tag of the field.
+  #[inline]
+  pub const fn tag(&self) -> TagReflection<ObjectFieldReflection<O, F::Tag, F, TAG>>
+  where
+    TagReflection<ObjectFieldReflection<O, F::Tag, F, TAG>>: Reflectable<O, Reflection = F::Tag>,
+  {
+    TagReflection::new()
+  }
+
+  /// Returns the reflection to the wire type of the field.
+  #[inline]
+  pub const fn wire_type(&self) -> WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
+  where
+    WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>:
+      Reflectable<O, Reflection = F::WireType>,
+  {
+    WireTypeReflection::new()
+  }
+
+  /// Returns the reflection to the identifier of the field.
+  #[inline]
+  pub const fn identifier(
+    &self,
+  ) -> IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>
+  where
+    IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>:
+      Reflectable<O, Reflection = F::Identifier>,
+  {
+    IdentifierReflection::new()
   }
 }
 
@@ -219,4 +226,3 @@ impl ObjectField {
     self.schema_type
   }
 }
-

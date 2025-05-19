@@ -47,13 +47,10 @@ fn derive_field_wire_format_reflections<'a>(
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #path_to_grost::__private::reflection::Reflectable<
         #name #tg
-      > for #path_to_grost::__private::reflection::Reflection<
+      > for #path_to_grost::__private::reflection::WireFormatReflection<
         #name #tg,
-        #path_to_grost::__private::reflection::Identified<
-          #path_to_grost::__private::reflection::WireFormatReflection,
-          #tag,
-        >,
         #path_to_grost::__private::flavors::Network,
+        #tag,
       >
       #wc
       {
@@ -86,13 +83,13 @@ fn derive_field_identifier_reflections<'a>(
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl #ig #path_to_grost::__private::reflection::Reflectable<
           #name #tg
-        > for #path_to_grost::__private::reflection::Reflection<
-          #name #tg,
-          #path_to_grost::__private::reflection::Identified<
-            #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
+        > for #path_to_grost::__private::reflection::IdentifierReflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
+            #name #tg,
+            #path_to_grost::__private::flavors::network::Identifier,
+            #path_to_grost::__private::flavors::Network,
             #tag,
-          >,
-          #path_to_grost::__private::flavors::Network,
+          >
         >
         #wc
         {
@@ -117,47 +114,45 @@ fn derive_field_encoded_identifier_reflections<'a>(
   let generics = object.generics();
   let (ig, tg, wc) = generics.split_for_impl();
   object.fields().iter().map(move |f| {
-      let tag = f.tag().get();
-      quote! {
-        #[automatically_derived]
-        #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::reflection::Reflectable<
-          #name #tg
-        > for #path_to_grost::__private::reflection::Reflection<
-          #name #tg,
-          #path_to_grost::__private::reflection::Identified<
-            #path_to_grost::__private::reflection::EncodeReflection<
-              #path_to_grost::__private::reflection::IdentifierReflection<
-                #path_to_grost::__private::flavors::network::Identifier,
-              >
-            >,
+    let tag = f.tag().get();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::reflection::Reflectable<
+        #name #tg
+      > for #path_to_grost::__private::reflection::EncodeReflection<
+        #path_to_grost::__private::reflection::IdentifierReflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
+            #name #tg,
+            #path_to_grost::__private::flavors::network::Identifier,
+            #path_to_grost::__private::flavors::Network,
             #tag,
-          >,
-          #path_to_grost::__private::flavors::Network,
+          >
         >
-        #wc
-        {
-          type Reflection = [::core::primitive::u8];
+      >
+      #wc
+      {
+        type Reflection = [::core::primitive::u8];
 
-          const REFLECTION: &Self::Reflection = {
-            <
-              #path_to_grost::__private::reflection::Reflection<
+        const REFLECTION: &Self::Reflection = {
+          <
+            #path_to_grost::__private::reflection::IdentifierReflection<
+              #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #name #tg,
-                #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
-                  #tag,
-                >,
+                #path_to_grost::__private::flavors::network::Identifier,
                 #path_to_grost::__private::flavors::Network,
-              > as #path_to_grost::__private::reflection::Reflectable<
-                #name #tg,
+                #tag,
               >
-            >::REFLECTION
-              .encode()
-              .as_slice()
-          };
-        }
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #name #tg,
+            >
+          >::REFLECTION
+            .encode()
+            .as_slice()
+        };
       }
-    })
+    }
+  })
 }
 
 fn derive_field_encoded_identifier_len_reflections<'a>(
@@ -174,19 +169,17 @@ fn derive_field_encoded_identifier_len_reflections<'a>(
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #path_to_grost::__private::reflection::Reflectable<
         #name #tg
-      > for #path_to_grost::__private::reflection::Reflection<
-        #name #tg,
-        #path_to_grost::__private::reflection::Identified<
-          #path_to_grost::__private::reflection::EncodeReflection<
-            #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::IdentifierReflection<
-                #path_to_grost::__private::flavors::network::Identifier,
-              >,
-            >,
-          >,
-          #tag,
-        >,
-        #path_to_grost::__private::flavors::Network,
+      > for #path_to_grost::__private::reflection::Len<
+        #path_to_grost::__private::reflection::EncodeReflection<
+          #path_to_grost::__private::reflection::IdentifierReflection<
+            #path_to_grost::__private::reflection::ObjectFieldReflection<
+              #name #tg,
+              #path_to_grost::__private::flavors::network::Identifier,
+              #path_to_grost::__private::flavors::Network,
+              #tag,
+            >
+          >
+        >
       >
       #wc
       {
@@ -194,17 +187,15 @@ fn derive_field_encoded_identifier_len_reflections<'a>(
 
         const REFLECTION: &Self::Reflection = &{
           <
-            #path_to_grost::__private::reflection::Reflection<
-              #name #tg,
-              #path_to_grost::__private::reflection::Identified<
-                #path_to_grost::__private::reflection::EncodeReflection<
-                  #path_to_grost::__private::reflection::IdentifierReflection<
-                    #path_to_grost::__private::flavors::network::Identifier,
-                  >
-                >,
-                #tag,
-              >,
-              #path_to_grost::__private::flavors::Network,
+            #path_to_grost::__private::reflection::EncodeReflection<
+              #path_to_grost::__private::reflection::IdentifierReflection<
+                #path_to_grost::__private::reflection::ObjectFieldReflection<
+                  #name #tg,
+                  #path_to_grost::__private::flavors::network::Identifier,
+                  #path_to_grost::__private::flavors::Network,
+                  #tag,
+                >
+              >
             > as #path_to_grost::__private::reflection::Reflectable<
               #name #tg,
             >
@@ -224,41 +215,41 @@ fn derive_field_tag_reflections<'a>(
   let generics = object.generics();
   let (ig, tg, wc) = generics.split_for_impl();
   object.fields().iter().map(move |f| {
-      let tag = f.tag().get();
-      quote! {
-        #[automatically_derived]
-        #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::reflection::Reflectable<
-          #name #tg
-        > for #path_to_grost::__private::reflection::Reflection<
+    let tag = f.tag().get();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::reflection::Reflectable<
+        #name #tg
+      > for #path_to_grost::__private::reflection::TagReflection<
+        #path_to_grost::__private::reflection::ObjectFieldReflection<
           #name #tg,
-          #path_to_grost::__private::reflection::Identified<
-            #path_to_grost::__private::reflection::TagReflection<#path_to_grost::__private::flavors::network::Tag>,
-            #tag,
-          >,
+          #path_to_grost::__private::flavors::network::Tag,
           #path_to_grost::__private::flavors::Network,
+          #tag,
         >
-        #wc
-        {
-          type Reflection = #path_to_grost::__private::flavors::network::Tag;
+      >
+      #wc
+      {
+        type Reflection = #path_to_grost::__private::flavors::network::Tag;
 
-          const REFLECTION: &Self::Reflection = &{
-            <
-              #path_to_grost::__private::reflection::Reflection<
+        const REFLECTION: &Self::Reflection = &{
+          <
+            #path_to_grost::__private::reflection::IdentifierReflection<
+              #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #name #tg,
-                #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
-                  #tag,
-                >,
+                #path_to_grost::__private::flavors::network::Identifier,
                 #path_to_grost::__private::flavors::Network,
-              > as #path_to_grost::__private::reflection::Reflectable<
-                #name #tg,
+                #tag,
               >
-            >::REFLECTION.tag()
-          };
-        }
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #name #tg,
+            >
+          >::REFLECTION.tag()
+        };
       }
-    })
+    }
+  })
 }
 
 fn derive_field_encoded_tag_reflections<'a>(
@@ -269,47 +260,45 @@ fn derive_field_encoded_tag_reflections<'a>(
   let generics = object.generics();
   let (ig, tg, wc) = generics.split_for_impl();
   object.fields().iter().map(move |f| {
-      let tag = f.tag().get();
-      quote! {
-        #[automatically_derived]
-        #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::reflection::Reflectable<
-          #name #tg
-        > for #path_to_grost::__private::reflection::Reflection<
-          #name #tg,
-          #path_to_grost::__private::reflection::Identified<
-            #path_to_grost::__private::reflection::EncodeReflection<
-              #path_to_grost::__private::reflection::TagReflection<
-                #path_to_grost::__private::flavors::network::Tag
-              >
-            >,
+    let tag = f.tag().get();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::reflection::Reflectable<
+        #name #tg
+      > for #path_to_grost::__private::reflection::EncodeReflection<
+        #path_to_grost::__private::reflection::TagReflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
+            #name #tg,
+            #path_to_grost::__private::flavors::network::Tag,
+            #path_to_grost::__private::flavors::Network,
             #tag,
-          >,
-          #path_to_grost::__private::flavors::Network,
+          >
         >
-        #wc
-        {
-          type Reflection = [::core::primitive::u8];
+      >
+      #wc
+      {
+        type Reflection = [::core::primitive::u8];
 
-          const REFLECTION: &Self::Reflection = {
-            <
-              #path_to_grost::__private::reflection::Reflection<
+        const REFLECTION: &Self::Reflection = {
+          <
+            #path_to_grost::__private::reflection::TagReflection<
+              #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #name #tg,
-                #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::TagReflection<#path_to_grost::__private::flavors::network::Tag>,
-                  #tag,
-                >,
+                #path_to_grost::__private::flavors::network::Tag,
                 #path_to_grost::__private::flavors::Network,
-              > as #path_to_grost::__private::reflection::Reflectable<
-                #name #tg,
+                #tag,
               >
-            >::REFLECTION
-            .encode()
-            .as_slice()
-          };
-        }
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #name #tg,
+            >
+          >::REFLECTION
+          .encode()
+          .as_slice()
+        };
       }
-    })
+    }
+  })
 }
 
 fn derive_field_encoded_tag_len_reflections<'a>(
@@ -326,19 +315,17 @@ fn derive_field_encoded_tag_len_reflections<'a>(
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #path_to_grost::__private::reflection::Reflectable<
         #name #tg
-      > for #path_to_grost::__private::reflection::Reflection<
-        #name #tg,
-        #path_to_grost::__private::reflection::Identified<
-          #path_to_grost::__private::reflection::EncodeReflection<
-            #path_to_grost::__private::reflection::Len<
-              #path_to_grost::__private::reflection::TagReflection<
-                #path_to_grost::__private::flavors::network::Tag
-              >
-            >,
-          >,
-          #tag,
-        >,
-        #path_to_grost::__private::flavors::Network,
+      > for #path_to_grost::__private::reflection::Len<
+        #path_to_grost::__private::reflection::EncodeReflection<
+          #path_to_grost::__private::reflection::TagReflection<
+            #path_to_grost::__private::reflection::ObjectFieldReflection<
+              #name #tg,
+              #path_to_grost::__private::flavors::network::Tag,
+              #path_to_grost::__private::flavors::Network,
+              #tag,
+            >
+          >
+        >
       >
       #wc
       {
@@ -346,17 +333,15 @@ fn derive_field_encoded_tag_len_reflections<'a>(
 
         const REFLECTION: &Self::Reflection = &{
           <
-            #path_to_grost::__private::reflection::Reflection<
-              #name #tg,
-              #path_to_grost::__private::reflection::Identified<
-                #path_to_grost::__private::reflection::EncodeReflection<
-                  #path_to_grost::__private::reflection::TagReflection<
-                    #path_to_grost::__private::flavors::network::Tag
-                  >
-                >,
-                #tag,
-              >,
-              #path_to_grost::__private::flavors::Network,
+            #path_to_grost::__private::reflection::EncodeReflection<
+              #path_to_grost::__private::reflection::TagReflection<
+                #path_to_grost::__private::reflection::ObjectFieldReflection<
+                  #name #tg,
+                  #path_to_grost::__private::flavors::network::Tag,
+                  #path_to_grost::__private::flavors::Network,
+                  #tag,
+                >
+              >
             > as #path_to_grost::__private::reflection::Reflectable<
               #name #tg,
             >
@@ -376,39 +361,39 @@ fn derive_field_wire_type_reflections<'a>(
   let generics = object.generics();
   let (ig, tg, wc) = generics.split_for_impl();
   object.fields().iter().map(move |f| {
-      let tag = f.tag().get();
-      quote! {
-        #[automatically_derived]
-        #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::reflection::Reflectable<
-          #name #tg
-        > for #path_to_grost::__private::reflection::Reflection<
+    let tag = f.tag().get();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::reflection::Reflectable<
+        #name #tg
+      > for #path_to_grost::__private::reflection::WireTypeReflection<
+        #path_to_grost::__private::reflection::ObjectFieldReflection<
           #name #tg,
-          #path_to_grost::__private::reflection::Identified<
-            #path_to_grost::__private::reflection::WireTypeReflection<#path_to_grost::__private::flavors::network::WireType>,
-            #tag,
-          >,
+          #path_to_grost::__private::flavors::network::WireType,
           #path_to_grost::__private::flavors::Network,
+          #tag,
         >
-        #wc
-        {
-          type Reflection = #path_to_grost::__private::flavors::network::WireType;
+      >
+      #wc
+      {
+        type Reflection = #path_to_grost::__private::flavors::network::WireType;
 
-          const REFLECTION: &Self::Reflection = &{
-            <
-              #path_to_grost::__private::reflection::Reflection<
+        const REFLECTION: &Self::Reflection = &{
+          <
+            #path_to_grost::__private::reflection::IdentifierReflection<
+              #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #name #tg,
-                #path_to_grost::__private::reflection::Identified<
-                  #path_to_grost::__private::reflection::IdentifierReflection<#path_to_grost::__private::flavors::network::Identifier>,
-                  #tag,
-                >,
+                #path_to_grost::__private::flavors::network::Identifier,
                 #path_to_grost::__private::flavors::Network,
-              > as #path_to_grost::__private::reflection::Reflectable<
-                #name #tg,
+                #tag,
               >
-            >::REFLECTION.wire_type()
-          };
-        }
+            > as #path_to_grost::__private::reflection::Reflectable<
+              #name #tg,
+            >
+          >::REFLECTION.wire_type()
+        };
       }
-    })
+    }
+  })
 }

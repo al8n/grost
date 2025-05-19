@@ -1,9 +1,5 @@
 use core::marker::PhantomData;
 
-use crate::flavors::Flavor;
-
-use super::{Identified, ObjectField, Reflectable, Reflection};
-
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
 #[repr(transparent)]
 pub struct DecodedReflection<T: ?Sized, R: ?Sized, F: ?Sized> {
@@ -38,14 +34,4 @@ where
       _t: PhantomData,
     }
   }
-}
-
-#[allow(clippy::type_complexity)]
-impl<T, F, const TAG: u32> DecodedReflection<T, Identified<ObjectField, TAG>, F>
-where
-  T: ?Sized,
-  F: ?Sized + Flavor,
-  Reflection<T, Identified<ObjectField, TAG>, F>: Reflectable<T, Reflection = ObjectField>,
-{
-
 }

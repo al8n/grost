@@ -1,10 +1,8 @@
-
 pub use enum_::*;
 pub use object::*;
 
 mod enum_;
 mod object;
-
 
 /// The type in the Graph protocol schema
 #[derive(Debug)]

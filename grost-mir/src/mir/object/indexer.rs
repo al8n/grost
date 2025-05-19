@@ -179,23 +179,25 @@ where
         let field_variant = f.name();
 
         reflections_constraints.push(quote! {
-          #path_to_grost::__private::reflection::Reflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
             #struct_name #tg,
-            #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::Field, #tag>,
+            #path_to_grost::__private::reflection::ObjectField,
             #fg,
+            #tag,
           >: #path_to_grost::__private::reflection::Reflectable<
             #struct_name #tg,
-            Reflection = #path_to_grost::__private::reflection::Field,
+            Reflection = #path_to_grost::__private::reflection::ObjectField,
           >
         });
 
         quote! {
           Self::#field_variant => {
             <
-              #path_to_grost::__private::reflection::Reflection<
+              #path_to_grost::__private::reflection::ObjectFieldReflection<
                 #struct_name #tg,
-                #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::Field, #tag>,
+                #path_to_grost::__private::reflection::ObjectField,
                 #fg,
+                #tag,
               > as #path_to_grost::__private::reflection::Reflectable<
                 #struct_name #tg,
               >
@@ -221,7 +223,7 @@ where
         #[inline]
         pub const fn reflection #ig (
           &self,
-        ) -> &'static #path_to_grost::__private::reflection::Field
+        ) -> &'static #path_to_grost::__private::reflection::ObjectField
         where
           #(#reflections_constraints),*
         {

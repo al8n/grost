@@ -1,10 +1,9 @@
 use grost::{
-  convert::Decoded,
   flavors::{
     Network, RawTag,
     network::{Identifier, LengthDelimited, Tag, WireType},
   },
-  reflection::{Identified, Reflectable, Reflection},
+  reflection::{Reflectable, Reflection},
 };
 use grost_derive::Object;
 
@@ -88,7 +87,10 @@ pub struct Comment<I> {
 #[test]
 fn t() {
   let refl = Comment::<String>::user_reflection::<Network>();
-  println!("{:?}", refl);
+  println!("{:?}", refl.identifier().encoded());
+  println!("{:?}", refl.tag().encoded());
+  println!("{:?}", refl.wire_type());
+  println!("{:?}", refl.wire_format());
   // let user = PartialDecodedUser {
   //   age: Some(1),
   //   name: Some("user".to_string()),

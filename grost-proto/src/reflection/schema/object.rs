@@ -1,5 +1,5 @@
-use core::marker::PhantomData;
 use super::super::Reflectable;
+use core::marker::PhantomData;
 
 pub use field::*;
 
@@ -48,7 +48,8 @@ where
 {
   type Reflection = Object;
 
-  const REFLECTION: &'static Self::Reflection = <ObjectReflection<O, T, F> as Reflectable<O>>::REFLECTION;
+  const REFLECTION: &'static Self::Reflection =
+    <ObjectReflection<O, T, F> as Reflectable<O>>::REFLECTION;
 }
 
 #[doc(hidden)]
@@ -117,4 +118,3 @@ impl Object {
     self.fields
   }
 }
-

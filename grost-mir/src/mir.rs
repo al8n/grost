@@ -13,10 +13,10 @@ fn wire_format_reflection_ty(
   let ident = &flavor_param.ident;
   let (_, tg, _) = object_generics.split_for_impl();
   parse_quote! {
-    #path_to_grost::__private::reflection::Reflection<
+    #path_to_grost::__private::reflection::WireFormatReflection<
       #object_name #tg,
-      #path_to_grost::__private::reflection::Identified<#path_to_grost::__private::reflection::WireFormatReflection, #tag>,
       #ident,
+      #tag,
     >
   }
 }
