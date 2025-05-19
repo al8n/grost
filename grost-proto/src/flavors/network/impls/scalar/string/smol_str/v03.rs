@@ -1,11 +1,9 @@
 use crate::{
-  Message, PartialMessage,
   decode::{Decode, DecodeOwned},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target,
   reflection::Type,
-  selectable, type_ref, type_reflection,
+  selectable, type_reflection,
 };
 use smol_str_0_3::SmolStr;
 
@@ -38,13 +36,6 @@ type_reflection! {
     SmolStr => Type::string(),
 }
 
-into_target!(Network: &str => SmolStr {
-  |val: &str| Ok(SmolStr::new(val))
-});
-type_ref!(Network: &str => SmolStr {
-  |val: &str| Ok(SmolStr::new(val))
-});
-
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
   where
@@ -71,42 +62,4 @@ impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
     )
     .map(|(len, bytes)| (len, SmolStr::new(bytes)))
   }
-}
-
-impl PartialMessage<Network, LengthDelimited> for SmolStr {
-  type UnknownBuffer<B> = ();
-
-  type Decoded<'a>
-    = &'a str
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
-impl Message<Network, LengthDelimited> for SmolStr {
-  type Partial = Self;
-
-  type Decoded<'a>
-    = &'a str
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
 }

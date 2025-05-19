@@ -86,7 +86,6 @@ pub mod __private {
     flavors::{self, RawTag},
     indexer,
     // map::MapSelector,
-    message,
     network_varint,
     partial_encode_scalar,
     reflection,

@@ -1,5 +1,4 @@
 use crate::{
-  IntoTarget, Message, PartialMessage, TypeRef,
   decode::{Decode, DecodeOwned},
   decode_owned_scalar,
   encode::Encode,
@@ -96,44 +95,6 @@ impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
   }
 }
 
-impl<const N: usize> PartialMessage<Network, LengthDelimited> for [u8; N] {
-  type UnknownBuffer<B> = ();
-
-  type Decoded<'a>
-    = &'a [u8]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
-impl<const N: usize> Message<Network, LengthDelimited> for [u8; N] {
-  type Partial = Self;
-
-  type Decoded<'a>
-    = &'a [u8]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
 macro_rules! encode_fixed {
   ($this:ident($buf:ident) as $fixed:literal) => {{
     let buf_len = $buf.len();
@@ -214,18 +175,6 @@ macro_rules! impl_fixed {
 }
 
 impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
-
-impl<const N: usize> IntoTarget<Network, [u8; N]> for &[u8] {
-  fn into_target(self) -> Result<[u8; N], DecodeError> {
-    self.try_into().map_err(|_| DecodeError::buffer_underflow())
-  }
-}
-
-impl<const N: usize> TypeRef<Network, [u8; N]> for &[u8] {
-  fn to(&self) -> Result<[u8; N], DecodeError> {
-    (*self).into_target()
-  }
-}
 
 #[inline]
 fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {

@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed8, Network, Unknown, Varint},
-  message, partial_encode_scalar,
+  partial_encode_scalar,
   reflection::Type,
   selectable, try_from_bridge, type_reflection,
 };
@@ -121,7 +121,6 @@ impl<'de> Decode<'de, Network, Varint, Self> for u8 {
 }
 
 decode_owned_scalar!(Network: u8 as Fixed8, u8 as Varint);
-message!(Network: u8 as Fixed8, u8 as Varint);
 try_from_bridge!(
   Network: u8 {
     NonZeroU8 as Fixed8 {

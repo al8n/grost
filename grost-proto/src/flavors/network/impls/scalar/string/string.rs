@@ -3,6 +3,7 @@ use crate::{
   flavors::{Network, network::LengthDelimited},
   selectable,
 };
+use std::string::String;
 
 selectable!(@scalar Network:String);
 decoded_state!(
@@ -10,31 +11,7 @@ decoded_state!(
 );
 flatten_state!(String);
 
-#[cfg(feature = "smol_str_0_3")]
-const _: () = {
-  use crate::flavors::network::Network;
-  use smol_str_0_3::SmolStr;
-  use std::string::String;
-
-  use crate::{into_target, type_owned, type_ref};
-
-  str_bridge!(Network: String {
-    from_str: |val: &str| String::from(val);
-    as_str: AsRef::as_ref;
-
-    type EncodedOwned = SmolStr;
-  },);
-
-  into_target!(Network: SmolStr => String {
-    |val: SmolStr| Ok(String::from(val))
-  });
-  into_target!(Network: &str => String {
-    |val: &str| Ok(String::from(val))
-  });
-  type_ref!( Network: &str => String {
-    |val: &str| Ok(String::from(val))
-  });
-  type_owned!(Network: SmolStr => String {
-    |val: &SmolStr| Ok(String::from(val.clone()))
-  });
-};
+str_bridge!(Network: String {
+  from_str: |val: &str| String::from(val);
+  as_str: AsRef::as_ref;
+},);

@@ -1,11 +1,9 @@
 use crate::{
-  Message, PartialMessage,
   decode::{Decode, DecodeOwned},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
-  into_target,
   reflection::Type,
-  selectable, type_ref, type_reflection,
+  selectable, type_reflection,
 };
 use bytes_1::Bytes;
 
@@ -29,12 +27,6 @@ decode_bridge!(
   },
 );
 
-into_target!(Network: &[u8] => Bytes {
-  |val: &[u8]| Ok(Bytes::copy_from_slice(val))
-});
-type_ref!( Network: &[u8] => Bytes {
-  |val: &[u8]| Ok(Bytes::copy_from_slice(val))
-});
 decoded_state!(
   &'a Network: Bytes as LengthDelimited => &'a [u8]
 );
@@ -70,42 +62,4 @@ impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
     )
     .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
   }
-}
-
-impl PartialMessage<Network, LengthDelimited> for Bytes {
-  type UnknownBuffer<B> = ();
-
-  type Decoded<'a>
-    = &'a [u8]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
-impl Message<Network, LengthDelimited> for Bytes {
-  type Partial = Self;
-
-  type Decoded<'a>
-    = &'a [u8]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
 }

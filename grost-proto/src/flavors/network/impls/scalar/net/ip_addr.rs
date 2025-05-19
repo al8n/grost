@@ -146,8 +146,6 @@ macro_rules! ip_addr {
       Network: $addr as $variant,
       $addr as Varint,
     );
-
-    $crate::message!(Network: $addr as $variant);
   };
 }
 

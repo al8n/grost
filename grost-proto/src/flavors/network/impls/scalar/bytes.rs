@@ -1,38 +1,6 @@
 #[allow(unused_macros)]
 macro_rules! bytes_message {
-  ($ty:ty => $owned_ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-      type UnknownBuffer<B> = ();
-
-      type Decoded<'a> = &'a [::core::primitive::u8]
-        where
-          Self: Sized + 'a;
-
-      type Borrowed<'a> = &'a Self
-        where
-          Self: 'a;
-
-      type EncodedOwned = $owned_ty
-        where
-          Self: Sized + 'static;
-    }
-
-    impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-      type Partial = Self;
-
-      type Decoded<'a> = &'a [::core::primitive::u8]
-        where
-          Self: Sized + 'a;
-
-      type Borrowed<'a> = &'a Self
-        where
-          Self: 'a;
-
-      type EncodedOwned = $owned_ty
-        where
-          Self: Sized + 'static;
-    }
-
+  ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     // $crate::type_reflection! {
     //   $crate::__private::flavors::Network:
     //     $ty $([ $(const $g: usize),* ])? => $crate::__private::reflection::Type::bytes(),
@@ -54,8 +22,6 @@ macro_rules! bytes_bridge {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
     from_slice: $from_bytes: expr;
     as_slice: $to_bytes: expr;
-
-    type EncodedOwned = $owned_ty:ty;
   }), +$(,)?) => {
     $(
       $crate::encode_bridge!(
@@ -76,7 +42,7 @@ macro_rules! bytes_bridge {
 
       impl_selectable_for_bytes!($ty $([ $(const $g: usize),* ])?);
 
-      bytes_message!($ty => $owned_ty $([ $(const $g: usize),* ])?);
+      bytes_message!($ty $([ $(const $g: usize),* ])?);
     )*
   };
 }
@@ -180,56 +146,6 @@ macro_rules! array_bytes {
 
     impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, Self> for $ty {
       $crate::decode_owned_scalar!(@impl $crate::__private::flavors::Network as $crate::__private::flavors::network::LengthDelimited);
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::IntoTarget<$crate::__private::flavors::Network, $ty> for &[u8] {
-      fn into_target(self) -> ::core::result::Result<$ty, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
-        $from_bytes(self)
-      }
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::TypeRef<$crate::__private::flavors::Network, $ty> for &[u8] {
-      fn to(&self) -> ::core::result::Result<$ty, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError> {
-        $from_bytes(*self)
-      }
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-      type UnknownBuffer<B> = ();
-
-      type Decoded<'a>
-        = &'a [::core::primitive::u8]
-      where
-        Self: ::core::marker::Sized + 'a;
-
-      type Borrowed<'a>
-        = &'a Self
-      where
-        Self: 'a;
-
-      type EncodedOwned
-        = Self
-      where
-        Self: ::core::marker::Sized + 'static;
-    }
-
-    impl<const $g: ::core::primitive::usize> $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-      type Partial = Self;
-
-      type Decoded<'a>
-        = &'a [::core::primitive::u8]
-      where
-        Self: ::core::marker::Sized + 'a;
-
-      type Borrowed<'a>
-        = &'a Self
-      where
-        Self: 'a;
-
-      type EncodedOwned
-        = Self
-      where
-        Self: ::core::marker::Sized + 'static;
     }
 
     $crate::default_wire_format!(

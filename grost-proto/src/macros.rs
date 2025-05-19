@@ -26,7 +26,6 @@ macro_rules! varint {
     $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
-    $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
@@ -40,7 +39,6 @@ macro_rules! varint {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
     $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
-    $($crate::message!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
@@ -229,84 +227,6 @@ macro_rules! flatten_state {
   };
 }
 
-/// A macro emits [`TypeRef`](super::TypeRef) implementations for `Self`
-#[macro_export]
-macro_rules! type_ref {
-  ($flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<$flavor, $target> for $ty {
-        $crate::type_ref!(@impl $flavor: $target { $expr });
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeRef<$flavor, ::core::option::Option<$target>> for $ty {
-        $crate::type_ref!(@optional_impl $flavor: $target);
-      }
-    )*
-  };
-  (@impl $flavor:ty: $target:ty { $expr: expr }) => {
-    fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      $expr(self)
-    }
-  };
-  (@optional_impl $flavor:ty: $target:ty) => {
-    fn to(&self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      <Self as $crate::__private::TypeRef<$flavor, $target>>::to(self).map(::core::option::Option::Some)
-    }
-  };
-}
-
-/// A macro emits [`TypeOwned`](super::TypeOwned) implementations for `Self`
-#[macro_export]
-macro_rules! type_owned {
-  ( $flavor:ty: $($ty:ty => $target:ty { $expr: expr } $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, $target> for $ty {
-        $crate::type_owned!(@impl $flavor: $target { $expr });
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::TypeOwned<$flavor, ::core::option::Option<$target>> for $ty {
-        $crate::type_owned!(@optional_impl $flavor: $target);
-      }
-    )*
-  };
-  (@impl $flavor:ty: $target:ty { $expr: expr }) => {
-    fn to(&self) -> ::core::result::Result<$target, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      $expr(self)
-    }
-  };
-  (@optional_impl $flavor:ty: $target:ty) => {
-    fn to(&self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      <Self as $crate::__private::TypeOwned<$flavor, $target>>::to(self).map(::core::option::Option::Some)
-    }
-  };
-}
-
-/// A macro emits [`IntoTarget`](super::IntoTarget) implementations for `Self`
-#[macro_export]
-macro_rules! into_target {
-  ($flavor:ty: $($ty:ty => $target:ty { $expr:expr } $([ $( const $g:ident: usize), +$(,)? ])? ),+$(,)?) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, $target> for $ty {
-        $crate::into_target!(@impl $flavor: $target { $expr });
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::IntoTarget<$flavor, ::core::option::Option<$target>> for $ty {
-        $crate::into_target!(@optional_impl $flavor: $target);
-      }
-    )*
-  };
-  (@impl $flavor:ty: $target:ty { $expr:expr }) => {
-    fn into_target(self) -> ::core::result::Result<$target, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      $expr(self)
-    }
-  };
-  (@optional_impl $flavor:ty: $target:ty) => {
-    fn into_target(self) -> ::core::result::Result<::core::option::Option<$target>, <$flavor as $crate::__private::flavors::Flavor>::DecodeError> {
-      <Self as $crate::__private::IntoTarget<$flavor, $target>>::into_target(self).map(::core::option::Option::Some)
-    }
-  };
-}
-
 /// A macro emits [`DefaultWireFormat`](crate::flavors::DefaultWireFormat) implementations.
 #[macro_export]
 macro_rules! default_wire_format {
@@ -320,62 +240,6 @@ macro_rules! default_wire_format {
         }
       )*
     )*
-  };
-}
-
-/// A macro emits [`Message`](super::Message) implementations for `Self`.
-///
-/// **NB:** this macro can only be used for types that implements [`Copy`](::core::marker::Copy).
-#[macro_export]
-macro_rules! message {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty),+$(,)?) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Message<$flavor, $format> for $ty {
-        $crate::message!(@impl);
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialMessage<$flavor, $format> for $ty {
-        $crate::message!(@impl_partial);
-      }
-    )*
-
-    // $($crate::conversion!($flavor: $ty $([ $(const $g: usize),* ])? );)*
-  };
-  (@impl) => {
-    type Partial = Self;
-
-    type Decoded<'a>
-      = Self
-    where
-      Self: ::core::marker::Sized + 'a;
-
-    type Borrowed<'a>
-      = &'a Self
-    where
-      Self: 'a;
-
-    type EncodedOwned
-      = Self
-    where
-      Self: ::core::marker::Sized + 'static;
-  };
-  (@impl_partial) => {
-    type UnknownBuffer<B> = ();
-
-    type Decoded<'a>
-      = Self
-    where
-      Self: ::core::marker::Sized + 'a;
-
-    type Borrowed<'a>
-      = &'a Self
-    where
-      Self: 'a;
-
-    type EncodedOwned
-      = Self
-    where
-      Self: ::core::marker::Sized + 'static;
   };
 }
 
@@ -1032,44 +896,6 @@ macro_rules! network_zst {
         __assert::<$ty>();
       };
 
-      impl $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
-        type UnknownBuffer<B> = ();
-
-        type Decoded<'a>
-          = Self
-        where
-          Self: Sized + 'a;
-
-        type Borrowed<'a>
-          = &'a Self
-        where
-          Self: 'a;
-
-        type EncodedOwned
-          = Self
-        where
-          Self: Sized + 'static;
-      }
-
-      impl $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
-        type Partial = Self;
-
-        type Decoded<'a>
-          = Self
-        where
-          Self: Sized + 'a;
-
-        type Borrowed<'a>
-          = &'a Self
-        where
-          Self: 'a;
-
-        type EncodedOwned
-          = Self
-        where
-          Self: Sized + 'static;
-      }
-
       impl $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
         #[inline]
         fn encode(
@@ -1276,44 +1102,6 @@ macro_rules! network_phantom {
         {
           <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, $crate::__private::flavors::network::Zst, Self>>::decode_length_delimited::<()>(ctx, src.as_bytes())
         }
-      }
-
-      impl<T: ?::core::marker::Sized> $crate::__private::PartialMessage<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
-        type UnknownBuffer<B> = ();
-
-        type Decoded<'a>
-          = Self
-        where
-          Self: Sized + 'a;
-
-        type Borrowed<'a>
-          = &'a Self
-        where
-          Self: 'a;
-
-        type EncodedOwned
-          = Self
-        where
-          Self: Sized + 'static;
-      }
-
-      impl<T: ?::core::marker::Sized> $crate::__private::Message<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst> for $ty {
-        type Partial = Self;
-
-        type Decoded<'a>
-          = Self
-        where
-          Self: Sized + 'a;
-
-        type Borrowed<'a>
-          = &'a Self
-        where
-          Self: 'a;
-
-        type EncodedOwned
-          = Self
-        where
-          Self: Sized + 'static;
       }
     )*
   };

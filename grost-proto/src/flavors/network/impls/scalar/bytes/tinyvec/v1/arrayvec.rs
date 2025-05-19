@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, ArrayVec};
 
 use crate::{
-  Decoded, Flatten, IntoTarget, Message, PartialMessage, State, TypeRef,
+  Decoded, Flatten, State,
   decode::{Decode, DecodeOwned},
   encode::{Encode, PartialEncode},
   flavors::{
@@ -123,76 +123,12 @@ where
   }
 }
 
-impl<A> PartialMessage<Network, LengthDelimited> for ArrayVec<A>
-where
-  A: Array<Item = u8> + Clone,
-{
-  type UnknownBuffer<B> = ();
-
-  type Decoded<'a>
-    = &'a [A::Item]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
 impl<'a, A> State<Decoded<'a, Network, LengthDelimited>> for ArrayVec<A>
 where
   A: Array<Item = u8>,
 {
   type Input = &'a [u8];
   type Output = &'a [u8];
-}
-
-impl<A> Message<Network, LengthDelimited> for ArrayVec<A>
-where
-  A: Array<Item = u8> + Clone,
-{
-  type Partial = Self;
-
-  type Decoded<'a>
-    = &'a [A::Item]
-  where
-    Self: Sized + 'a;
-
-  type Borrowed<'a>
-    = &'a Self
-  where
-    Self: 'a;
-
-  type EncodedOwned
-    = Self
-  where
-    Self: Sized + 'static;
-}
-
-impl<A> IntoTarget<Network, ArrayVec<A>> for &[A::Item]
-where
-  A: Array,
-  A::Item: Clone,
-{
-  fn into_target(self) -> Result<ArrayVec<A>, DecodeError> {
-    decode_to_array(self).map(|(_, arr)| arr)
-  }
-}
-
-impl<A> TypeRef<Network, ArrayVec<A>> for &[A::Item]
-where
-  A: Array,
-  A::Item: Clone,
-{
-  fn to(&self) -> Result<ArrayVec<A>, DecodeError> {
-    decode_to_array(self).map(|(_, arr)| arr)
-  }
 }
 
 #[inline]

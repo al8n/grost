@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, DecodeError, EncodeError, Fixed64, Network, Unknown, Varint},
-  message, partial_encode_scalar,
+  partial_encode_scalar,
   reflection::Type,
   selectable, try_from_bridge, type_reflection,
 };
@@ -120,7 +120,6 @@ impl<'de> Decode<'de, Network, Varint, Self> for i64 {
 }
 
 decode_owned_scalar!(Network: i64 as Fixed64, i64 as Varint);
-message!(Network: i64 as Fixed64, i64 as Varint);
 try_from_bridge!(
   Network: i64 {
     NonZeroI64 as Fixed64 {
