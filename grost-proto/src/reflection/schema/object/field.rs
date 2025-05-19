@@ -149,11 +149,8 @@ where
 #[doc(hidden)]
 pub struct ObjectFieldBuilder {
   pub name: &'static str,
-  /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
-  pub ty: fn() -> &'static str,
-  pub schema_name: &'static str,
-  pub schema_description: &'static str,
-  pub schema_type: &'static Type,
+  pub description: &'static str,
+  pub ty: &'static Type,
 }
 
 impl ObjectFieldBuilder {
@@ -162,9 +159,7 @@ impl ObjectFieldBuilder {
     ObjectField {
       name: self.name,
       ty: self.ty,
-      schema_name: self.schema_name,
-      schema_type: self.schema_type,
-      schema_description: self.schema_description,
+      description: self.description,
     }
   }
 }
@@ -173,12 +168,8 @@ impl ObjectFieldBuilder {
 #[derive(derive_more::Debug)]
 pub struct ObjectField {
   name: &'static str,
-  /// A hack to avoid https://github.com/rust-lang/rust/issues/63084
-  #[debug("{}", (self.ty)())]
-  ty: fn() -> &'static str,
-  schema_name: &'static str,
-  schema_description: &'static str,
-  schema_type: &'static Type,
+  description: &'static str,
+  ty: &'static Type,
 }
 
 impl Clone for ObjectField {
@@ -190,39 +181,27 @@ impl Clone for ObjectField {
 impl Copy for ObjectField {}
 
 impl ObjectField {
-  /// Get the name of the field
-  #[inline]
-  pub const fn name(&self) -> &'static str {
-    self.name
-  }
-
-  /// Returns the name of the field type
-  // TODO(al8n): make this const if https://github.com/rust-lang/rust/issues/63084 const stable
-  pub fn ty(&self) -> &'static str {
-    (self.ty)()
-  }
-
   /// Get the schema name of the field.
   ///
   /// This will returns the name in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_name(&self) -> &'static str {
-    self.schema_name
+  pub const fn name(&self) -> &'static str {
+    self.name
   }
 
   /// Get the schema description of the field.
   ///
   /// This will returns the description in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_description(&self) -> &'static str {
-    self.schema_description
+  pub const fn description(&self) -> &'static str {
+    self.description
   }
 
   /// Get the schema type of the field.
   ///
   /// This will returns the type in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_type(&self) -> &'static Type {
-    self.schema_type
+  pub const fn ty(&self) -> &'static Type {
+    self.ty
   }
 }

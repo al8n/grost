@@ -177,11 +177,9 @@ where
 
               const REFLECTION: &'static Self::Reflection = &{
                 #path_to_grost::__private::reflection::ObjectFieldBuilder {
-                  name: #field_name_str,
-                  ty: ::core::any::type_name::<#object_ty>,
-                  schema_name: #schema_name,
-                  schema_description: #schema_description,
-                  schema_type: <#path_to_grost::__private::reflection::Reflection<#object_ty, #path_to_grost::__private::reflection::Type, #fg> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
+                  name: #schema_name,
+                  description: #schema_description,
+                  ty: <#path_to_grost::__private::reflection::Reflection<#object_ty, #path_to_grost::__private::reflection::Type, #fg> as #path_to_grost::__private::reflection::Reflectable<#object_ty>>::REFLECTION,
                 }.build()
               };
             }
@@ -242,9 +240,8 @@ where
 
           const REFLECTION: &'static Self::Reflection = &{
             #path_to_grost::__private::reflection::ObjectBuilder {
-              name: #name_str,
-              schema_name: #schema_name,
-              schema_description: #schema_description,
+              name: #schema_name,
+              description: #schema_description,
               fields: &[
                 #(#field_reflections),*
               ],

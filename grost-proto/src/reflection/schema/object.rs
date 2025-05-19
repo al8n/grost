@@ -55,8 +55,7 @@ where
 #[doc(hidden)]
 pub struct ObjectBuilder {
   pub name: &'static str,
-  pub schema_name: &'static str,
-  pub schema_description: &'static str,
+  pub description: &'static str,
   pub fields: &'static [&'static ObjectField],
 }
 
@@ -65,8 +64,7 @@ impl ObjectBuilder {
   pub const fn build(self) -> Object {
     Object {
       name: self.name,
-      schema_name: self.schema_name,
-      schema_description: self.schema_description,
+      description: self.description,
       fields: self.fields,
     }
   }
@@ -76,8 +74,7 @@ impl ObjectBuilder {
 #[derive(Debug)]
 pub struct Object {
   name: &'static str,
-  schema_name: &'static str,
-  schema_description: &'static str,
+  description: &'static str,
   fields: &'static [&'static ObjectField],
 }
 
@@ -90,26 +87,20 @@ impl Clone for Object {
 impl Copy for Object {}
 
 impl Object {
-  /// Get the name of the struct
-  #[inline]
-  pub const fn name(&self) -> &'static str {
-    self.name
-  }
-
   /// Get the schema name of the struct.
   ///
   /// This will returns the name in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_name(&self) -> &'static str {
-    self.schema_name
+  pub const fn name(&self) -> &'static str {
+    self.name
   }
 
   /// Get the schema description of the struct.
   ///
   /// This will returns the description in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn schema_description(&self) -> &'static str {
-    self.schema_description
+  pub const fn description(&self) -> &'static str {
+    self.description
   }
 
   /// Get the fields of this struct
