@@ -169,5 +169,3 @@ mod array;
 #[allow(clippy::module_inception)]
 mod bytes;
 mod heapless;
-mod bstr;
-mod tinyvec;

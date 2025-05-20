@@ -1,14 +1,8 @@
 use crate::{
   buffer::Buffer,
   decode::Decode,
-  decoded_state, default_wire_format,
-  encode::Encode,
-  flavors::network::{Context, DecodeError, EncodeError, LengthDelimited, Network, Unknown},
-  partial_encode_scalar,
-  selection::Selectable,
+  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
 };
-
-decoded_state!(&'a Network: [u8] as LengthDelimited => &'a [u8]);
 
 impl<'de> Decode<'de, Network, LengthDelimited, &'de [u8]> for [u8] {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, &'de [u8]), DecodeError>

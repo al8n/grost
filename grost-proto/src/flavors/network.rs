@@ -1,6 +1,7 @@
 pub use context::Context;
 pub use error::{DecodeError, EncodeError};
 pub use identifier::Identifier;
+pub use impls::RepeatedDecoder;
 pub use tag::Tag;
 pub use unknown::Unknown;
 pub use wire_type::*;

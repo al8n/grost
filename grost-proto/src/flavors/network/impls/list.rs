@@ -1,4 +1,12 @@
-use crate::{encode::{Encode, PartialEncode}, flavors::{network::{Context, EncodeError, LengthDelimited, WireType}, DefaultWireFormat, Network, WireFormat}, reflection::{Reflectable, Type, TypeReflection}, selection::Selector};
+use crate::{
+  encode::{Encode, PartialEncode},
+  flavors::{
+    DefaultWireFormat, Network, WireFormat,
+    network::{Context, EncodeError, LengthDelimited, WireType},
+  },
+  reflection::{Reflectable, Type, TypeReflection},
+  selection::Selector,
+};
 
 macro_rules! list {
   (@flatten_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
@@ -16,6 +24,17 @@ macro_rules! list {
       {
         type Input = T::Input;
         type Output = T::Output;
+      }
+    )*
+  };
+  (@decoded_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<'a, T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W>> for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+      {
+        type Input = &'a [u8];
+        type Output = $crate::__private::flavors::network::RepeatedDecoder<'a, $ty, (), W>;
       }
     )*
   };
@@ -113,6 +132,7 @@ macro_rules! list {
 }
 
 list!(@flatten_state [T; N] [const N: usize], [T]);
+list!(@decoded_state [T; N] [const N: usize], [T]);
 list!(@wire_format [T; N] [const N: usize], [T]);
 list!(@selectable [T; N] [const N: usize], [T]);
 list!(
@@ -132,23 +152,31 @@ where
         let buf_len = buf.len();
         for value in self.iter() {
           if offset >= buf_len {
-            return Err(EncodeError::insufficient_buffer(self.encoded_len(context), buf_len));
+            return Err(EncodeError::insufficient_buffer(
+              self.encoded_len(context),
+              buf_len,
+            ));
           }
 
-          offset += value.encode_length_delimited(context, &mut buf[offset..])
+          offset += value
+            .encode_length_delimited(context, &mut buf[offset..])
             .map_err(|e| e.update(self.encoded_len(context), buf_len))?;
         }
         Ok(offset)
-      },
+      }
       _ => {
         let mut offset = 0;
         let buf_len = buf.len();
         for value in self.iter() {
           if offset >= buf_len {
-            return Err(EncodeError::insufficient_buffer(self.encoded_len(context), buf_len));
+            return Err(EncodeError::insufficient_buffer(
+              self.encoded_len(context),
+              buf_len,
+            ));
           }
 
-          offset += value.encode(context, &mut buf[offset..])
+          offset += value
+            .encode(context, &mut buf[offset..])
             .map_err(|e| e.update(self.encoded_len(context), buf_len))?;
         }
         Ok(offset)
@@ -160,7 +188,10 @@ where
     match <T::Format as WireFormat<Network>>::WIRE_TYPE {
       WireType::Zst => 0,
       WireType::Varint => self.iter().map(|v| v.encoded_len(context)).sum(),
-      WireType::LengthDelimited => self.iter().map(|v| v.encoded_length_delimited_len(context)).sum(),
+      WireType::LengthDelimited => self
+        .iter()
+        .map(|v| v.encoded_length_delimited_len(context))
+        .sum(),
       WireType::Fixed8 => self.len(),
       WireType::Fixed16 => self.len() * 2,
       WireType::Fixed32 => self.len() * 4,
@@ -186,8 +217,9 @@ where
   ) -> Result<usize, EncodeError> {
     let encoded_len = self.encoded_len(context);
     let buf_len = buf.len();
-    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf)
-      .map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_length_delimited_len(context), buf_len))?;
+    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
+      EncodeError::from_varint_error(e).update(self.encoded_length_delimited_len(context), buf_len)
+    })?;
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
@@ -198,7 +230,8 @@ where
       return Err(EncodeError::insufficient_buffer(encoded_len, buf_len));
     }
 
-    self.encode(context, &mut buf[offset..])
+    self
+      .encode(context, &mut buf[offset..])
       .map(|v| {
         #[cfg(debug_assertions)]
         {
@@ -234,23 +267,31 @@ where
         let buf_len = buf.len();
         for value in self.iter() {
           if offset >= buf_len {
-            return Err(EncodeError::insufficient_buffer(self.partial_encoded_len(context, selector), buf_len));
+            return Err(EncodeError::insufficient_buffer(
+              self.partial_encoded_len(context, selector),
+              buf_len,
+            ));
           }
 
-          offset += value.partial_encode_length_delimited(context, &mut buf[offset..], selector)
+          offset += value
+            .partial_encode_length_delimited(context, &mut buf[offset..], selector)
             .map_err(|e| e.update(self.partial_encoded_len(context, selector), buf_len))?;
         }
         Ok(offset)
-      },
+      }
       _ => {
         let mut offset = 0;
         let buf_len = buf.len();
         for value in self.iter() {
           if offset >= buf_len {
-            return Err(EncodeError::insufficient_buffer(self.partial_encoded_len(context, selector), buf_len));
+            return Err(EncodeError::insufficient_buffer(
+              self.partial_encoded_len(context, selector),
+              buf_len,
+            ));
           }
 
-          offset += value.partial_encode(context, &mut buf[offset..], selector)
+          offset += value
+            .partial_encode(context, &mut buf[offset..], selector)
             .map_err(|e| e.update(self.partial_encoded_len(context, selector), buf_len))?;
         }
         Ok(offset)
@@ -258,15 +299,25 @@ where
     }
   }
 
-  fn partial_encoded_len(&self, context: &<Network as crate::flavors::Flavor>::Context, selector: &Self::Selector) -> usize {
+  fn partial_encoded_len(
+    &self,
+    context: &<Network as crate::flavors::Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
     if selector.is_empty() {
       return 0;
     }
 
     match <T::Format as WireFormat<Network>>::WIRE_TYPE {
       WireType::Zst => 0,
-      WireType::Varint => self.iter().map(|v| v.partial_encoded_len(context, selector)).sum(),
-      WireType::LengthDelimited => self.iter().map(|v| v.partial_encoded_length_delimited_len(context, selector)).sum(),
+      WireType::Varint => self
+        .iter()
+        .map(|v| v.partial_encoded_len(context, selector))
+        .sum(),
+      WireType::LengthDelimited => self
+        .iter()
+        .map(|v| v.partial_encoded_length_delimited_len(context, selector))
+        .sum(),
       WireType::Fixed8 => self.len(),
       WireType::Fixed16 => self.len() * 2,
       WireType::Fixed32 => self.len() * 4,
@@ -309,8 +360,12 @@ where
     }
 
     let buf_len = buf.len();
-    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf)
-      .map_err(|e| EncodeError::from_varint_error(e).update(self.partial_encoded_length_delimited_len(context, selector), buf_len))?;
+    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
+      EncodeError::from_varint_error(e).update(
+        self.partial_encoded_length_delimited_len(context, selector),
+        buf_len,
+      )
+    })?;
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
@@ -321,7 +376,8 @@ where
       return Err(EncodeError::insufficient_buffer(encoded_len, buf_len));
     }
 
-    self.partial_encode(context, &mut buf[offset..], selector)
+    self
+      .partial_encode(context, &mut buf[offset..], selector)
       .map(|v| {
         #[cfg(debug_assertions)]
         {
@@ -330,16 +386,21 @@ where
 
         required
       })
-      .map_err(|e| e.update(self.partial_encoded_length_delimited_len(context, selector), buf_len))
+      .map_err(|e| {
+        e.update(
+          self.partial_encoded_length_delimited_len(context, selector),
+          buf_len,
+        )
+      })
   }
 }
-
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
   use std::vec::Vec;
 
   list!(@flatten_state Vec<T>);
+  list!(@decoded_state Vec<T>);
   list!(@wire_format Vec<T>);
   list!(@selectable Vec<T>);
   list!(
@@ -352,6 +413,7 @@ const _: () = {
   use smallvec_1::SmallVec;
 
   list!(@flatten_state SmallVec<[T; N]> [const N: usize]);
+  list!(@decoded_state SmallVec<[T; N]> [const N: usize]);
   list!(@wire_format SmallVec<[T; N]> [const N: usize]);
   list!(@selectable SmallVec<[T; N]> [const N: usize]);
   list!(
@@ -364,6 +426,7 @@ const _: () = {
   use arrayvec_0_7::ArrayVec;
 
   list!(@flatten_state ArrayVec<T, N> [const N: usize]);
+  list!(@decoded_state ArrayVec<T, N> [const N: usize]);
   list!(@wire_format ArrayVec<T, N> [const N: usize]);
   list!(@selectable ArrayVec<T, N> [const N: usize]);
   list!(
@@ -376,15 +439,23 @@ const _: () = {
   use tinyvec_1::ArrayVec;
 
   list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(
+    @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
+  );
 
   #[cfg(any(feature = "std", feature = "alloc"))]
   const _: () = {
     use tinyvec_1::TinyVec;
 
     list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(
+      @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
+    );
   };
 };
