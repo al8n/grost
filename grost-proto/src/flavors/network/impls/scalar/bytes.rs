@@ -1,7 +1,7 @@
 #[allow(unused_macros)]
 macro_rules! impl_selectable_for_bytes {
   ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $(<$(const $g: usize),* >)? $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
+    impl $(<$(const $g: usize),* >)? $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Selector = bool;
     }
   };
@@ -94,7 +94,7 @@ macro_rules! array_bytes {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
       type Selector = ::core::primitive::bool;
     }
 
@@ -165,32 +165,9 @@ pub fn larger_than_array_capacity<const N: usize>() -> crate::flavors::network::
 }
 
 mod array;
-
-mod arrayvec;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod arc;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod boxed;
-
 #[cfg(any(feature = "std", feature = "alloc"))]
 #[allow(clippy::module_inception)]
 mod bytes;
-
 mod heapless;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod rc;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod smallvec;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod triomphe;
-
 mod bstr;
 mod tinyvec;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod vec;

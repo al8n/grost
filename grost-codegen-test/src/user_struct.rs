@@ -211,7 +211,7 @@ where
         __GROST_FLAVOR__,
         1u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    ::std::string::String: ::grost::__private::Selectable<
+    ::std::string::String: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -224,7 +224,7 @@ where
         __GROST_FLAVOR__,
         2u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    u32: ::grost::__private::Selectable<
+    u32: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -239,7 +239,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         ::std::string::String,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -248,7 +248,7 @@ where
         > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
     >,
 {
-    name: <::std::string::String as ::grost::__private::Selectable<
+    name: <::std::string::String as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -256,7 +256,7 @@ where
             1u32,
         > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
     >>::Selector,
-    age: <u32 as ::grost::__private::Selectable<
+    age: <u32 as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -266,7 +266,7 @@ where
     >>::Selector,
     email: <::core::option::Option<
         ::std::string::String,
-    > as ::grost::__private::Selectable<
+    > as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -288,7 +288,7 @@ where
         __GROST_FLAVOR__,
         1u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    ::std::string::String: ::grost::__private::Selectable<
+    ::std::string::String: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -301,7 +301,7 @@ where
         __GROST_FLAVOR__,
         2u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    u32: ::grost::__private::Selectable<
+    u32: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -316,7 +316,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         ::std::string::String,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <UserFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -597,7 +597,7 @@ where
         __GROST_FLAVOR__,
         1u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    User: ::grost::__private::Selectable<
+    User: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -612,7 +612,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         User,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -625,7 +625,7 @@ where
         __GROST_FLAVOR__,
         3u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    ::std::string::String: ::grost::__private::Selectable<
+    ::std::string::String: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -640,7 +640,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         ::std::string::String,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -649,7 +649,7 @@ where
         > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
     >,
 {
-    user: <User as ::grost::__private::Selectable<
+    user: <User as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -659,7 +659,7 @@ where
     >>::Selector,
     replyer: <::core::option::Option<
         User,
-    > as ::grost::__private::Selectable<
+    > as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -667,7 +667,7 @@ where
             2u32,
         > as ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>>::Reflection,
     >>::Selector,
-    title: <::std::string::String as ::grost::__private::Selectable<
+    title: <::std::string::String as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -677,7 +677,7 @@ where
     >>::Selector,
     content: <::core::option::Option<
         ::std::string::String,
-    > as ::grost::__private::Selectable<
+    > as ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -699,7 +699,7 @@ where
         __GROST_FLAVOR__,
         1u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    User: ::grost::__private::Selectable<
+    User: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -714,7 +714,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         User,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -727,7 +727,7 @@ where
         __GROST_FLAVOR__,
         3u32,
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-    ::std::string::String: ::grost::__private::Selectable<
+    ::std::string::String: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -742,7 +742,7 @@ where
     >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
     ::core::option::Option<
         ::std::string::String,
-    >: ::grost::__private::Selectable<
+    >: ::grost::__private::selection::Selectable<
         __GROST_FLAVOR__,
         <CommentFieldReflection<
             ::grost::__private::reflection::WireFormatReflection,
@@ -2169,7 +2169,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2184,7 +2184,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2201,7 +2201,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2228,7 +2228,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2243,7 +2243,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2260,7 +2260,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2284,7 +2284,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2299,7 +2299,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2316,7 +2316,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2336,7 +2336,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2351,7 +2351,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2368,7 +2368,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2394,7 +2394,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2409,7 +2409,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2426,7 +2426,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2447,7 +2447,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl<__GROST_FLAVOR__> ::grost::__private::Selector<__GROST_FLAVOR__>
+    impl<__GROST_FLAVOR__> ::grost::__private::selection::Selector<__GROST_FLAVOR__>
     for UserSelector<__GROST_FLAVOR__>
     where
         UserFieldReflection<
@@ -2455,7 +2455,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2470,7 +2470,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2487,7 +2487,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2508,7 +2508,7 @@ const _: () = {
             Self::unselected(self)
         }
         fn flip(&mut self) -> &mut Self {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2517,10 +2517,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.name);
-            <<u32 as ::grost::__private::Selectable<
+            <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2529,12 +2529,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.age);
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2543,13 +2543,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.email);
             self
         }
         fn merge(&mut self, other: Self) -> &mut Self {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2558,10 +2558,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.name, other.name);
-            <<u32 as ::grost::__private::Selectable<
+            <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2570,12 +2570,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.age, other.age);
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2584,7 +2584,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.email, other.email);
             self
@@ -2599,7 +2599,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2614,7 +2614,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2631,7 +2631,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2655,7 +2655,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2670,7 +2670,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2687,7 +2687,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -2704,7 +2704,7 @@ const _: () = {
         #[inline]
         pub const fn new() -> Self {
             Self {
-                name: <<::std::string::String as ::grost::__private::Selectable<
+                name: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2713,8 +2713,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
-                age: <<u32 as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                age: <<u32 as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2723,10 +2723,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 email: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2735,14 +2735,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
             }
         }
         /// Returns a selector which selects nothing.
         #[inline]
         pub const fn empty() -> Self {
             Self {
-                name: <<::std::string::String as ::grost::__private::Selectable<
+                name: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2751,8 +2751,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
-                age: <<u32 as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
+                age: <<u32 as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2761,10 +2761,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
                 email: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2773,14 +2773,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
             }
         }
         /// Returns a selector which selects all.
         #[inline]
         pub const fn all() -> Self {
             Self {
-                name: <<::std::string::String as ::grost::__private::Selectable<
+                name: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2789,8 +2789,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
-                age: <<u32 as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
+                age: <<u32 as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2799,10 +2799,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
                 email: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2811,13 +2811,13 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
             }
         }
         /// Returns `true` if the selector selects nothing.
         #[inline]
         pub fn is_empty(&self) -> ::core::primitive::bool {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2826,10 +2826,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.name)
-                && <<u32 as ::grost::__private::Selectable<
+                && <<u32 as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2838,12 +2838,12 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.age)
                 && <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2852,14 +2852,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.email)
         }
         /// Returns `true` if the selector selects all.
         #[inline]
         pub fn is_all(&self) -> ::core::primitive::bool {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2868,10 +2868,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_all(&self.name)
-                && <<u32 as ::grost::__private::Selectable<
+                && <<u32 as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2880,12 +2880,12 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.age)
                 && <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <UserFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -2894,7 +2894,7 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.email)
         }
@@ -2959,7 +2959,7 @@ const _: () = {
         /// Select the `User.name` field
         #[inline]
         pub fn select_name(&mut self) -> &mut Self {
-            self.name = <<::std::string::String as ::grost::__private::Selectable<
+            self.name = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2968,13 +2968,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `User.name` field
         #[inline]
         pub fn unselect_name(&mut self) -> &mut Self {
-            self.name = <<::std::string::String as ::grost::__private::Selectable<
+            self.name = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -2983,14 +2983,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `User.name` field
         #[inline]
         pub fn update_name(
             &mut self,
-            value: <::std::string::String as ::grost::__private::Selectable<
+            value: <::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3008,7 +3008,7 @@ const _: () = {
         #[inline]
         pub fn maybe_name(
             mut self,
-            val: <::std::string::String as ::grost::__private::Selectable<
+            val: <::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3026,7 +3026,7 @@ const _: () = {
         #[inline]
         pub const fn name_ref(
             &self,
-        ) -> &<::std::string::String as ::grost::__private::Selectable<
+        ) -> &<::std::string::String as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3042,7 +3042,7 @@ const _: () = {
         #[inline]
         pub const fn name_mut(
             &mut self,
-        ) -> &mut <::std::string::String as ::grost::__private::Selectable<
+        ) -> &mut <::std::string::String as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3057,7 +3057,7 @@ const _: () = {
         /// Set the `User.name` field
         #[inline]
         pub fn with_name(mut self) -> Self {
-            self.name = <<::std::string::String as ::grost::__private::Selectable<
+            self.name = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3066,13 +3066,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `User.name` field
         #[inline]
         pub fn without_name(mut self) -> Self {
-            self.name = <<::std::string::String as ::grost::__private::Selectable<
+            self.name = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3081,13 +3081,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `User.name` field is selected
         #[inline]
         pub fn is_name_selected(&self) -> ::core::primitive::bool {
-            !<<::std::string::String as ::grost::__private::Selectable<
+            !<<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3096,14 +3096,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.name)
         }
         /// Returns `true` if the `User.name` field is unselected
         #[inline]
         pub fn is_name_unselected(&self) -> ::core::primitive::bool {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3112,14 +3112,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.name)
         }
         /// Select the `User.age` field
         #[inline]
         pub fn select_age(&mut self) -> &mut Self {
-            self.age = <<u32 as ::grost::__private::Selectable<
+            self.age = <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3128,13 +3128,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `User.age` field
         #[inline]
         pub fn unselect_age(&mut self) -> &mut Self {
-            self.age = <<u32 as ::grost::__private::Selectable<
+            self.age = <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3143,14 +3143,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `User.age` field
         #[inline]
         pub fn update_age(
             &mut self,
-            value: <u32 as ::grost::__private::Selectable<
+            value: <u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3168,7 +3168,7 @@ const _: () = {
         #[inline]
         pub fn maybe_age(
             mut self,
-            val: <u32 as ::grost::__private::Selectable<
+            val: <u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3186,7 +3186,7 @@ const _: () = {
         #[inline]
         pub const fn age_ref(
             &self,
-        ) -> &<u32 as ::grost::__private::Selectable<
+        ) -> &<u32 as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3202,7 +3202,7 @@ const _: () = {
         #[inline]
         pub const fn age_mut(
             &mut self,
-        ) -> &mut <u32 as ::grost::__private::Selectable<
+        ) -> &mut <u32 as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3217,7 +3217,7 @@ const _: () = {
         /// Set the `User.age` field
         #[inline]
         pub fn with_age(mut self) -> Self {
-            self.age = <<u32 as ::grost::__private::Selectable<
+            self.age = <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3226,13 +3226,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `User.age` field
         #[inline]
         pub fn without_age(mut self) -> Self {
-            self.age = <<u32 as ::grost::__private::Selectable<
+            self.age = <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3241,13 +3241,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `User.age` field is selected
         #[inline]
         pub fn is_age_selected(&self) -> ::core::primitive::bool {
-            !<<u32 as ::grost::__private::Selectable<
+            !<<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3256,14 +3256,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.age)
         }
         /// Returns `true` if the `User.age` field is unselected
         #[inline]
         pub fn is_age_unselected(&self) -> ::core::primitive::bool {
-            <<u32 as ::grost::__private::Selectable<
+            <<u32 as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3272,7 +3272,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.age)
         }
@@ -3281,7 +3281,7 @@ const _: () = {
         pub fn select_email(&mut self) -> &mut Self {
             self.email = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3290,7 +3290,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `User.email` field
@@ -3298,7 +3298,7 @@ const _: () = {
         pub fn unselect_email(&mut self) -> &mut Self {
             self.email = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3307,7 +3307,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `User.email` field
@@ -3316,7 +3316,7 @@ const _: () = {
             &mut self,
             value: <::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3336,7 +3336,7 @@ const _: () = {
             mut self,
             val: <::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3356,7 +3356,7 @@ const _: () = {
             &self,
         ) -> &<::core::option::Option<
             ::std::string::String,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3374,7 +3374,7 @@ const _: () = {
             &mut self,
         ) -> &mut <::core::option::Option<
             ::std::string::String,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3391,7 +3391,7 @@ const _: () = {
         pub fn with_email(mut self) -> Self {
             self.email = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3400,7 +3400,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `User.email` field
@@ -3408,7 +3408,7 @@ const _: () = {
         pub fn without_email(mut self) -> Self {
             self.email = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3417,7 +3417,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `User.email` field is selected
@@ -3425,7 +3425,7 @@ const _: () = {
         pub fn is_email_selected(&self) -> ::core::primitive::bool {
             !<<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3434,7 +3434,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.email)
         }
@@ -3443,7 +3443,7 @@ const _: () = {
         pub fn is_email_unselected(&self) -> ::core::primitive::bool {
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <UserFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -3452,7 +3452,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.email)
         }
@@ -3472,7 +3472,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3487,7 +3487,7 @@ const _: () = {
             __GROST_FLAVOR__,
             2u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        u32: ::grost::__private::Selectable<
+        u32: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3504,7 +3504,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <UserFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -3564,7 +3564,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for User {
@@ -3572,7 +3572,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -3584,7 +3584,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -3597,7 +3597,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for PartialUser {
@@ -3605,7 +3605,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -3617,7 +3617,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -3632,7 +3632,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         '__grost_lifetime__,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for PartialUserRef<'__grost_lifetime__, ::grost::__private::flavors::Network> {
@@ -3642,7 +3642,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         '__grost_lifetime__,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -3655,7 +3655,7 @@ const _: () = {
     impl<
         '__grost_lifetime__,
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -4664,7 +4664,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.name) {
                         NONE
@@ -4688,7 +4688,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.age) {
                         NONE
@@ -4712,7 +4712,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.email) {
                         NONE
@@ -4733,7 +4733,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -4829,7 +4829,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -4856,7 +4856,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -4873,7 +4873,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -4955,7 +4955,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5052,7 +5052,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5075,7 +5075,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5092,7 +5092,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5177,7 +5177,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5278,7 +5278,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5305,7 +5305,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5322,7 +5322,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<User as ::grost::__private::Selectable<
+            selector: &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -5974,7 +5974,7 @@ const _: () = {
         f: &T,
         ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
         selector: ::core::option::Option<
-            &<T as ::grost::__private::Selectable<
+            &<T as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 W,
             >>::Selector,
@@ -5984,7 +5984,7 @@ const _: () = {
     where
         T: ::grost::__private::PartialEncode<::grost::__private::flavors::Network, W>
             + ::grost::__private::Encode<::grost::__private::flavors::Network, W>
-            + ::grost::__private::Selectable<::grost::__private::flavors::Network, W>
+            + ::grost::__private::selection::Selectable<::grost::__private::flavors::Network, W>
             + ?::core::marker::Sized,
         W: ::grost::__private::flavors::WireFormat<::grost::__private::flavors::Network>,
     {
@@ -6025,7 +6025,7 @@ const _: () = {
             &::std::string::String,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6040,7 +6040,7 @@ const _: () = {
                 f: &::std::string::String,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6120,7 +6120,7 @@ const _: () = {
         type Reflection = fn(
             &::std::string::String,
             &::grost::__private::flavors::network::Context,
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6131,7 +6131,7 @@ const _: () = {
             fn encoded_len(
                 f: &::std::string::String,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6294,7 +6294,7 @@ const _: () = {
                 >,
             >>::Output,
             &::grost::__private::flavors::network::Context,
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6313,7 +6313,7 @@ const _: () = {
                     >,
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6365,7 +6365,7 @@ const _: () = {
             >>::Output,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6388,7 +6388,7 @@ const _: () = {
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6641,7 +6641,7 @@ const _: () = {
             &u32,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<u32 as ::grost::__private::Selectable<
+            &<u32 as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <u32 as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6656,7 +6656,7 @@ const _: () = {
                 f: &u32,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<u32 as ::grost::__private::Selectable<
+                selector: &<u32 as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6736,7 +6736,7 @@ const _: () = {
         type Reflection = fn(
             &u32,
             &::grost::__private::flavors::network::Context,
-            &<u32 as ::grost::__private::Selectable<
+            &<u32 as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <u32 as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6747,7 +6747,7 @@ const _: () = {
             fn encoded_len(
                 f: &u32,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<u32 as ::grost::__private::Selectable<
+                selector: &<u32 as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6910,7 +6910,7 @@ const _: () = {
                 >,
             >>::Output,
             &::grost::__private::flavors::network::Context,
-            &<u32 as ::grost::__private::Selectable<
+            &<u32 as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <u32 as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -6929,7 +6929,7 @@ const _: () = {
                     >,
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<u32 as ::grost::__private::Selectable<
+                selector: &<u32 as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -6981,7 +6981,7 @@ const _: () = {
             >>::Output,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<u32 as ::grost::__private::Selectable<
+            &<u32 as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <u32 as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -7004,7 +7004,7 @@ const _: () = {
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<u32 as ::grost::__private::Selectable<
+                selector: &<u32 as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <u32 as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -7259,7 +7259,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -7278,7 +7278,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -7378,7 +7378,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -7393,7 +7393,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -7589,7 +7589,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -7618,7 +7618,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -7691,7 +7691,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -7724,7 +7724,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -9730,7 +9730,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9747,7 +9747,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9762,7 +9762,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9779,7 +9779,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9806,7 +9806,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9823,7 +9823,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9838,7 +9838,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9855,7 +9855,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9880,7 +9880,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9897,7 +9897,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9912,7 +9912,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9929,7 +9929,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9949,7 +9949,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9966,7 +9966,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9981,7 +9981,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -9998,7 +9998,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10025,7 +10025,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10042,7 +10042,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10057,7 +10057,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10074,7 +10074,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10096,7 +10096,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl<__GROST_FLAVOR__> ::grost::__private::Selector<__GROST_FLAVOR__>
+    impl<__GROST_FLAVOR__> ::grost::__private::selection::Selector<__GROST_FLAVOR__>
     for CommentSelector<__GROST_FLAVOR__>
     where
         CommentFieldReflection<
@@ -10104,7 +10104,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10121,7 +10121,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10136,7 +10136,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10153,7 +10153,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10174,7 +10174,7 @@ const _: () = {
             Self::unselected(self)
         }
         fn flip(&mut self) -> &mut Self {
-            <<User as ::grost::__private::Selectable<
+            <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10183,12 +10183,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.user);
             <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10197,10 +10197,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.replyer);
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10209,12 +10209,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.title);
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10223,13 +10223,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::flip(&mut self.content);
             self
         }
         fn merge(&mut self, other: Self) -> &mut Self {
-            <<User as ::grost::__private::Selectable<
+            <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10238,12 +10238,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.user, other.user);
             <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10252,10 +10252,10 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.replyer, other.replyer);
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10264,12 +10264,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.title, other.title);
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10278,7 +10278,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::merge(&mut self.content, other.content);
             self
@@ -10293,7 +10293,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10310,7 +10310,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10325,7 +10325,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10342,7 +10342,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10366,7 +10366,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10383,7 +10383,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10398,7 +10398,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10415,7 +10415,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10432,7 +10432,7 @@ const _: () = {
         #[inline]
         pub const fn new() -> Self {
             Self {
-                user: <<User as ::grost::__private::Selectable<
+                user: <<User as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10441,10 +10441,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 replyer: <<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10453,8 +10453,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
-                title: <<::std::string::String as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                title: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10463,10 +10463,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
                 content: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10475,14 +10475,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT,
             }
         }
         /// Returns a selector which selects nothing.
         #[inline]
         pub const fn empty() -> Self {
             Self {
-                user: <<User as ::grost::__private::Selectable<
+                user: <<User as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10491,10 +10491,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
                 replyer: <<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10503,8 +10503,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
-                title: <<::std::string::String as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
+                title: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10513,10 +10513,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
                 content: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10525,14 +10525,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE,
             }
         }
         /// Returns a selector which selects all.
         #[inline]
         pub const fn all() -> Self {
             Self {
-                user: <<User as ::grost::__private::Selectable<
+                user: <<User as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10541,10 +10541,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
                 replyer: <<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10553,8 +10553,8 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
-                title: <<::std::string::String as ::grost::__private::Selectable<
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
+                title: <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10563,10 +10563,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
                 content: <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10575,13 +10575,13 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::ALL,
+                >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::ALL,
             }
         }
         /// Returns `true` if the selector selects nothing.
         #[inline]
         pub fn is_empty(&self) -> ::core::primitive::bool {
-            <<User as ::grost::__private::Selectable<
+            <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10590,12 +10590,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.user)
                 && <<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10604,10 +10604,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.replyer)
-                && <<::std::string::String as ::grost::__private::Selectable<
+                && <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10616,12 +10616,12 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.title)
                 && <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10630,14 +10630,14 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_empty(&self.content)
         }
         /// Returns `true` if the selector selects all.
         #[inline]
         pub fn is_all(&self) -> ::core::primitive::bool {
-            <<User as ::grost::__private::Selectable<
+            <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10646,12 +10646,12 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_all(&self.user)
                 && <<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10660,10 +10660,10 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.replyer)
-                && <<::std::string::String as ::grost::__private::Selectable<
+                && <<::std::string::String as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10672,12 +10672,12 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.title)
                 && <<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     __GROST_FLAVOR__,
                     <CommentFieldReflection<
                         ::grost::__private::reflection::WireFormatReflection,
@@ -10686,7 +10686,7 @@ const _: () = {
                     > as ::grost::__private::reflection::Reflectable<
                         __GROST_FLAVOR__,
                     >>::Reflection,
-                >>::Selector as ::grost::__private::Selector<
+                >>::Selector as ::grost::__private::selection::Selector<
                     __GROST_FLAVOR__,
                 >>::is_all(&self.content)
         }
@@ -10759,7 +10759,7 @@ const _: () = {
         /// Select the `Comment.user` field
         #[inline]
         pub fn select_user(&mut self) -> &mut Self {
-            self.user = <<User as ::grost::__private::Selectable<
+            self.user = <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10768,13 +10768,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `Comment.user` field
         #[inline]
         pub fn unselect_user(&mut self) -> &mut Self {
-            self.user = <<User as ::grost::__private::Selectable<
+            self.user = <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10783,14 +10783,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `Comment.user` field
         #[inline]
         pub fn update_user(
             &mut self,
-            value: <User as ::grost::__private::Selectable<
+            value: <User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10808,7 +10808,7 @@ const _: () = {
         #[inline]
         pub fn maybe_user(
             mut self,
-            val: <User as ::grost::__private::Selectable<
+            val: <User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10826,7 +10826,7 @@ const _: () = {
         #[inline]
         pub const fn user_ref(
             &self,
-        ) -> &<User as ::grost::__private::Selectable<
+        ) -> &<User as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10842,7 +10842,7 @@ const _: () = {
         #[inline]
         pub const fn user_mut(
             &mut self,
-        ) -> &mut <User as ::grost::__private::Selectable<
+        ) -> &mut <User as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -10857,7 +10857,7 @@ const _: () = {
         /// Set the `Comment.user` field
         #[inline]
         pub fn with_user(mut self) -> Self {
-            self.user = <<User as ::grost::__private::Selectable<
+            self.user = <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10866,13 +10866,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `Comment.user` field
         #[inline]
         pub fn without_user(mut self) -> Self {
-            self.user = <<User as ::grost::__private::Selectable<
+            self.user = <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10881,13 +10881,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `Comment.user` field is selected
         #[inline]
         pub fn is_user_selected(&self) -> ::core::primitive::bool {
-            !<<User as ::grost::__private::Selectable<
+            !<<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10896,14 +10896,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.user)
         }
         /// Returns `true` if the `Comment.user` field is unselected
         #[inline]
         pub fn is_user_unselected(&self) -> ::core::primitive::bool {
-            <<User as ::grost::__private::Selectable<
+            <<User as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10912,7 +10912,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.user)
         }
@@ -10921,7 +10921,7 @@ const _: () = {
         pub fn select_replyer(&mut self) -> &mut Self {
             self.replyer = <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10930,7 +10930,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `Comment.replyer` field
@@ -10938,7 +10938,7 @@ const _: () = {
         pub fn unselect_replyer(&mut self) -> &mut Self {
             self.replyer = <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10947,7 +10947,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `Comment.replyer` field
@@ -10956,7 +10956,7 @@ const _: () = {
             &mut self,
             value: <::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10976,7 +10976,7 @@ const _: () = {
             mut self,
             val: <::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -10996,7 +10996,7 @@ const _: () = {
             &self,
         ) -> &<::core::option::Option<
             User,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11014,7 +11014,7 @@ const _: () = {
             &mut self,
         ) -> &mut <::core::option::Option<
             User,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11031,7 +11031,7 @@ const _: () = {
         pub fn with_replyer(mut self) -> Self {
             self.replyer = <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11040,7 +11040,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `Comment.replyer` field
@@ -11048,7 +11048,7 @@ const _: () = {
         pub fn without_replyer(mut self) -> Self {
             self.replyer = <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11057,7 +11057,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `Comment.replyer` field is selected
@@ -11065,7 +11065,7 @@ const _: () = {
         pub fn is_replyer_selected(&self) -> ::core::primitive::bool {
             !<<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11074,7 +11074,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.replyer)
         }
@@ -11083,7 +11083,7 @@ const _: () = {
         pub fn is_replyer_unselected(&self) -> ::core::primitive::bool {
             <<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11092,14 +11092,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.replyer)
         }
         /// Select the `Comment.title` field
         #[inline]
         pub fn select_title(&mut self) -> &mut Self {
-            self.title = <<::std::string::String as ::grost::__private::Selectable<
+            self.title = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11108,13 +11108,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `Comment.title` field
         #[inline]
         pub fn unselect_title(&mut self) -> &mut Self {
-            self.title = <<::std::string::String as ::grost::__private::Selectable<
+            self.title = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11123,14 +11123,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `Comment.title` field
         #[inline]
         pub fn update_title(
             &mut self,
-            value: <::std::string::String as ::grost::__private::Selectable<
+            value: <::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11148,7 +11148,7 @@ const _: () = {
         #[inline]
         pub fn maybe_title(
             mut self,
-            val: <::std::string::String as ::grost::__private::Selectable<
+            val: <::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11166,7 +11166,7 @@ const _: () = {
         #[inline]
         pub const fn title_ref(
             &self,
-        ) -> &<::std::string::String as ::grost::__private::Selectable<
+        ) -> &<::std::string::String as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11182,7 +11182,7 @@ const _: () = {
         #[inline]
         pub const fn title_mut(
             &mut self,
-        ) -> &mut <::std::string::String as ::grost::__private::Selectable<
+        ) -> &mut <::std::string::String as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11197,7 +11197,7 @@ const _: () = {
         /// Set the `Comment.title` field
         #[inline]
         pub fn with_title(mut self) -> Self {
-            self.title = <<::std::string::String as ::grost::__private::Selectable<
+            self.title = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11206,13 +11206,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `Comment.title` field
         #[inline]
         pub fn without_title(mut self) -> Self {
-            self.title = <<::std::string::String as ::grost::__private::Selectable<
+            self.title = <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11221,13 +11221,13 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `Comment.title` field is selected
         #[inline]
         pub fn is_title_selected(&self) -> ::core::primitive::bool {
-            !<<::std::string::String as ::grost::__private::Selectable<
+            !<<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11236,14 +11236,14 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.title)
         }
         /// Returns `true` if the `Comment.title` field is unselected
         #[inline]
         pub fn is_title_unselected(&self) -> ::core::primitive::bool {
-            <<::std::string::String as ::grost::__private::Selectable<
+            <<::std::string::String as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11252,7 +11252,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.title)
         }
@@ -11261,7 +11261,7 @@ const _: () = {
         pub fn select_content(&mut self) -> &mut Self {
             self.content = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11270,7 +11270,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unselect the `Comment.content` field
@@ -11278,7 +11278,7 @@ const _: () = {
         pub fn unselect_content(&mut self) -> &mut Self {
             self.content = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11287,7 +11287,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Update the `Comment.content` field
@@ -11296,7 +11296,7 @@ const _: () = {
             &mut self,
             value: <::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11316,7 +11316,7 @@ const _: () = {
             mut self,
             val: <::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11336,7 +11336,7 @@ const _: () = {
             &self,
         ) -> &<::core::option::Option<
             ::std::string::String,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11354,7 +11354,7 @@ const _: () = {
             &mut self,
         ) -> &mut <::core::option::Option<
             ::std::string::String,
-        > as ::grost::__private::Selectable<
+        > as ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11371,7 +11371,7 @@ const _: () = {
         pub fn with_content(mut self) -> Self {
             self.content = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11380,7 +11380,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::DEFAULT;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::DEFAULT;
             self
         }
         /// Unset the `Comment.content` field
@@ -11388,7 +11388,7 @@ const _: () = {
         pub fn without_content(mut self) -> Self {
             self.content = <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11397,7 +11397,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<__GROST_FLAVOR__>>::NONE;
+            >>::Selector as ::grost::__private::selection::Selector<__GROST_FLAVOR__>>::NONE;
             self
         }
         /// Returns `true` if the `Comment.content` field is selected
@@ -11405,7 +11405,7 @@ const _: () = {
         pub fn is_content_selected(&self) -> ::core::primitive::bool {
             !<<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11414,7 +11414,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.content)
         }
@@ -11423,7 +11423,7 @@ const _: () = {
         pub fn is_content_unselected(&self) -> ::core::primitive::bool {
             <<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 __GROST_FLAVOR__,
                 <CommentFieldReflection<
                     ::grost::__private::reflection::WireFormatReflection,
@@ -11432,7 +11432,7 @@ const _: () = {
                 > as ::grost::__private::reflection::Reflectable<
                     __GROST_FLAVOR__,
                 >>::Reflection,
-            >>::Selector as ::grost::__private::Selector<
+            >>::Selector as ::grost::__private::selection::Selector<
                 __GROST_FLAVOR__,
             >>::is_empty(&self.content)
         }
@@ -11452,7 +11452,7 @@ const _: () = {
             __GROST_FLAVOR__,
             1u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        User: ::grost::__private::Selectable<
+        User: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11469,7 +11469,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             User,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11484,7 +11484,7 @@ const _: () = {
             __GROST_FLAVOR__,
             3u32,
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
-        ::std::string::String: ::grost::__private::Selectable<
+        ::std::string::String: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11501,7 +11501,7 @@ const _: () = {
         >: ::grost::__private::reflection::Reflectable<__GROST_FLAVOR__>,
         ::core::option::Option<
             ::std::string::String,
-        >: ::grost::__private::Selectable<
+        >: ::grost::__private::selection::Selectable<
             __GROST_FLAVOR__,
             <CommentFieldReflection<
                 ::grost::__private::reflection::WireFormatReflection,
@@ -11561,7 +11561,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for Comment {
@@ -11569,7 +11569,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -11581,7 +11581,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -11594,7 +11594,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for PartialComment {
@@ -11602,7 +11602,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl ::grost::__private::Selectable<
+    impl ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -11614,7 +11614,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -11629,7 +11629,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         '__grost_lifetime__,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
     > for PartialCommentRef<'__grost_lifetime__, ::grost::__private::flavors::Network> {
@@ -11639,7 +11639,7 @@ const _: () = {
     #[allow(non_camel_case_types)]
     impl<
         '__grost_lifetime__,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::LengthDelimited,
@@ -11652,7 +11652,7 @@ const _: () = {
     impl<
         '__grost_lifetime__,
         const I: ::core::primitive::u32,
-    > ::grost::__private::Selectable<
+    > ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::Repeated<
             ::grost::__private::flavors::network::Stream<
@@ -12968,7 +12968,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.user) {
                         NONE
@@ -12992,7 +12992,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.replyer) {
                         NONE
@@ -13016,7 +13016,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.title) {
                         NONE
@@ -13040,7 +13040,7 @@ const _: () = {
                             ::grost::__private::flavors::Network,
                         >>::REFLECTION,
                     );
-                    if ::grost::__private::Selector::<
+                    if ::grost::__private::selection::Selector::<
                         ::grost::__private::flavors::Network,
                     >::is_empty(&self.content) {
                         NONE
@@ -13061,7 +13061,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13186,7 +13186,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13217,7 +13217,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13234,7 +13234,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13316,7 +13316,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13447,7 +13447,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13474,7 +13474,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13491,7 +13491,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13576,7 +13576,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13711,7 +13711,7 @@ const _: () = {
         fn partial_encoded_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13742,7 +13742,7 @@ const _: () = {
         fn partial_encoded_length_delimited_len(
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -13759,7 +13759,7 @@ const _: () = {
             &self,
             ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             buf: &mut [::core::primitive::u8],
-            selector: &<Comment as ::grost::__private::Selectable<
+            selector: &<Comment as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
             >>::Selector,
@@ -14495,7 +14495,7 @@ const _: () = {
         f: &T,
         ctx: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
         selector: ::core::option::Option<
-            &<T as ::grost::__private::Selectable<
+            &<T as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 W,
             >>::Selector,
@@ -14505,7 +14505,7 @@ const _: () = {
     where
         T: ::grost::__private::PartialEncode<::grost::__private::flavors::Network, W>
             + ::grost::__private::Encode<::grost::__private::flavors::Network, W>
-            + ::grost::__private::Selectable<::grost::__private::flavors::Network, W>
+            + ::grost::__private::selection::Selectable<::grost::__private::flavors::Network, W>
             + ?::core::marker::Sized,
         W: ::grost::__private::flavors::WireFormat<::grost::__private::flavors::Network>,
     {
@@ -14546,7 +14546,7 @@ const _: () = {
             &User,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<User as ::grost::__private::Selectable<
+            &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <User as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -14561,7 +14561,7 @@ const _: () = {
                 f: &User,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<User as ::grost::__private::Selectable<
+                selector: &<User as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -14641,7 +14641,7 @@ const _: () = {
         type Reflection = fn(
             &User,
             &::grost::__private::flavors::network::Context,
-            &<User as ::grost::__private::Selectable<
+            &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <User as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -14652,7 +14652,7 @@ const _: () = {
             fn encoded_len(
                 f: &User,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<User as ::grost::__private::Selectable<
+                selector: &<User as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -14815,7 +14815,7 @@ const _: () = {
                 >,
             >>::Output,
             &::grost::__private::flavors::network::Context,
-            &<User as ::grost::__private::Selectable<
+            &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <User as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -14834,7 +14834,7 @@ const _: () = {
                     >,
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<User as ::grost::__private::Selectable<
+                selector: &<User as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -14886,7 +14886,7 @@ const _: () = {
             >>::Output,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<User as ::grost::__private::Selectable<
+            &<User as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <User as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -14909,7 +14909,7 @@ const _: () = {
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<User as ::grost::__private::Selectable<
+                selector: &<User as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <User as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -15164,7 +15164,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     User,
@@ -15183,7 +15183,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
@@ -15283,7 +15283,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     User,
@@ -15298,7 +15298,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
@@ -15494,7 +15494,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     User,
@@ -15523,7 +15523,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
@@ -15596,7 +15596,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 User,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     User,
@@ -15629,7 +15629,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     User,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         User,
@@ -15951,7 +15951,7 @@ const _: () = {
             &::std::string::String,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -15966,7 +15966,7 @@ const _: () = {
                 f: &::std::string::String,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -16046,7 +16046,7 @@ const _: () = {
         type Reflection = fn(
             &::std::string::String,
             &::grost::__private::flavors::network::Context,
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -16057,7 +16057,7 @@ const _: () = {
             fn encoded_len(
                 f: &::std::string::String,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -16220,7 +16220,7 @@ const _: () = {
                 >,
             >>::Output,
             &::grost::__private::flavors::network::Context,
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -16239,7 +16239,7 @@ const _: () = {
                     >,
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -16291,7 +16291,7 @@ const _: () = {
             >>::Output,
             &::grost::__private::flavors::network::Context,
             &mut [::core::primitive::u8],
-            &<::std::string::String as ::grost::__private::Selectable<
+            &<::std::string::String as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Network,
@@ -16314,7 +16314,7 @@ const _: () = {
                 >>::Output,
                 ctx: &::grost::__private::flavors::network::Context,
                 buf: &mut [::core::primitive::u8],
-                selector: &<::std::string::String as ::grost::__private::Selectable<
+                selector: &<::std::string::String as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::std::string::String as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Network,
@@ -16569,7 +16569,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -16588,7 +16588,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -16688,7 +16688,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -16703,7 +16703,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -16899,7 +16899,7 @@ const _: () = {
             &::grost::__private::flavors::network::Context,
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -16928,7 +16928,7 @@ const _: () = {
                 ctx: &::grost::__private::flavors::network::Context,
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,
@@ -17001,7 +17001,7 @@ const _: () = {
             &mut [::core::primitive::u8],
             &<::core::option::Option<
                 ::std::string::String,
-            > as ::grost::__private::Selectable<
+            > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Network,
                 <::core::option::Option<
                     ::std::string::String,
@@ -17034,7 +17034,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
                 selector: &<::core::option::Option<
                     ::std::string::String,
-                > as ::grost::__private::Selectable<
+                > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Network,
                     <::core::option::Option<
                         ::std::string::String,

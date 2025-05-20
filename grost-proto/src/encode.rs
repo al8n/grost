@@ -1,6 +1,8 @@
+use crate::selection::Selector;
+
 use super::{
   flavors::{Flavor, Identifier, WireFormat},
-  selector::Selectable,
+  selection::Selectable,
 };
 
 pub use error::EncodeError;
@@ -64,7 +66,15 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// This is used to determine the buffer size required for encoding.
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize;
+  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
+    let encoded_len = self.encoded_len(context);
+    if encoded_len == 0 {
+      return 0;
+    }
+
+    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
+    len_size + encoded_len
+  }
 
   /// Encodes the message into the provided buffer with length-delimited.
   ///
@@ -75,37 +85,30 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
     &self,
     context: &F::Context,
     buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError>;
-
-  /// Encodes the message into the provided buffer with identifier and length-delimited.
-  ///
-  /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encode_identified(
-    &self,
-    context: &F::Context,
-    identifier: &F::Identifier,
-    buf: &mut [u8],
   ) -> Result<usize, F::EncodeError> {
-    let wt = identifier.wire_type();
-    if W::WIRE_TYPE != wt {
-      return Err(
-        super::encode::EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wt)
-          .into(),
-      );
+    let encoded_len = self.encoded_len(context);
+    let buf_len = buf.len();
+    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf)
+      .map_err(|e| EncodeError::from_varint_error(e).update(self.encoded_length_delimited_len(context), buf_len))?;
+
+    let required = encoded_len + offset;
+    if offset + encoded_len > buf_len {
+      return Err(EncodeError::insufficient_buffer(required, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf)?;
-    offset += self.encode_length_delimited(context, &mut buf[offset..])?;
-    Ok(offset)
-  }
+    if offset >= buf_len {
+      return Err(EncodeError::insufficient_buffer(encoded_len, buf_len).into());
+    }
 
-  /// Returns the number of bytes needed to encode the message with identifier and length-delimited.
-  fn encoded_identified_len(&self, context: &F::Context, identifier: &F::Identifier) -> usize {
-    let identified_len = identifier.encoded_len();
-    let encoded_length_delimited_len = self.encoded_length_delimited_len(context);
-    identified_len + encoded_length_delimited_len
+    self.encode(context, &mut buf[offset..])
+      .map(|v| {
+        #[cfg(debug_assertions)]
+        {
+          crate::debug_assert_write_eq::<Self>(v, encoded_len);
+        }
+
+        required
+      })
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
@@ -213,7 +216,15 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> usize;
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    let encoded_len = self.partial_encoded_len(context, selector);
+    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
+    len_size + encoded_len
+  }
 
   /// Encodes the message into the provided buffer with length-delimited.
   ///
@@ -225,43 +236,34 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError>;
-
-  /// Encodes the message into the provided buffer with identifier and length-delimited.
-  ///
-  /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn partial_encode_identified(
-    &self,
-    context: &F::Context,
-    identifier: &F::Identifier,
-    buf: &mut [u8],
-    selector: &Self::Selector,
   ) -> Result<usize, F::EncodeError> {
-    let wt = identifier.wire_type();
-    if W::WIRE_TYPE != wt {
-      return Err(
-        super::encode::EncodeError::unsupported_wire_type(core::any::type_name::<Self>(), wt)
-          .into(),
-      );
+    if selector.is_empty() {
+      return Ok(0);
     }
 
-    let mut offset = identifier.encode(buf)?;
-    offset += self.partial_encode_length_delimited(context, &mut buf[offset..], selector)?;
-    Ok(offset)
-  }
+    let encoded_len = self.partial_encoded_len(context, selector);
+    let buf_len = buf.len();
+    let offset = varing::encode_u32_varint_to(encoded_len as u32, buf)
+      .map_err(|e| EncodeError::from_varint_error(e).update(self.partial_encoded_length_delimited_len(context, selector), buf_len))?;
 
-  /// Returns the number of bytes needed to encode the message with identifier and length-delimited.
-  fn partial_encoded_identified_len(
-    &self,
-    context: &F::Context,
-    identifier: &F::Identifier,
-    selector: &Self::Selector,
-  ) -> usize {
-    let identified_len = identifier.encoded_len();
-    let encoded_length_delimited_len = self.partial_encoded_length_delimited_len(context, selector);
-    identified_len + encoded_length_delimited_len
+    let required = encoded_len + offset;
+    if offset + encoded_len > buf_len {
+      return Err(EncodeError::insufficient_buffer(required, buf_len).into());
+    }
+
+    if offset >= buf_len {
+      return Err(EncodeError::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    self.partial_encode(context, &mut buf[offset..], selector)
+      .map(|v| {
+        #[cfg(debug_assertions)]
+        {
+          crate::debug_assert_write_eq::<Self>(v, encoded_len);
+        }
+
+        required
+      })
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).

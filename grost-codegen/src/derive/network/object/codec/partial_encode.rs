@@ -102,7 +102,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -118,7 +118,7 @@ impl Network {
         fn partial_encoded_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -133,7 +133,7 @@ impl Network {
         fn partial_encoded_length_delimited_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -147,7 +147,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -273,7 +273,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -308,7 +308,7 @@ impl Network {
         fn partial_encoded_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -335,7 +335,7 @@ impl Network {
         fn partial_encoded_length_delimited_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -349,7 +349,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -474,7 +474,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -509,7 +509,7 @@ impl Network {
         fn partial_encoded_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -536,7 +536,7 @@ impl Network {
         fn partial_encoded_length_delimited_len(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
@@ -550,7 +550,7 @@ impl Network {
           &self,
           ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#struct_name as #path_to_grost::__private::Selectable<
+          selector: &<#struct_name as #path_to_grost::__private::selection::Selectable<
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,

@@ -324,7 +324,7 @@ impl Selector {
         let fgi = &fgp.ident;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
-          #vis #name: <#ty as #path_to_grost::__private::Selectable<#fgi, #wf>>::Selector
+          #vis #name: <#ty as #path_to_grost::__private::selection::Selectable<#fgi, #wf>>::Selector
         })?;
 
         Ok(SelectorField {
@@ -502,7 +502,7 @@ where
       let field_name = f.name();
 
       quote! {
-        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::NONE
+        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::NONE
       }
     });
 
@@ -511,7 +511,7 @@ where
       let field_name = f.name();
 
       quote! {
-        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::ALL
+        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::ALL
       }
     });
 
@@ -520,7 +520,7 @@ where
       let field_name = f.name();
 
       quote! {
-        #field_name: <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT
+        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::DEFAULT
       }
     });
 
@@ -529,7 +529,7 @@ where
       let field_name = f.name();
 
       quote! {
-        <#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+        <#ty as #path_to_grost::__private::selection::Selector<#fg>>::is_empty(&self.#field_name)
       }
     });
 
@@ -538,7 +538,7 @@ where
       let field_name = f.name();
 
       quote! {
-        <#ty as #path_to_grost::__private::Selector<#fg>>::is_all(&self.#field_name)
+        <#ty as #path_to_grost::__private::selection::Selector<#fg>>::is_all(&self.#field_name)
       }
     });
 
@@ -719,7 +719,7 @@ where
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #ig #path_to_grost::__private::Selector<#fg> for #name #tg #selector_where_clauses
+      impl #ig #path_to_grost::__private::selection::Selector<#fg> for #name #tg #selector_where_clauses
       {
         const ALL: Self = Self::all();
         const DEFAULT: Self = Self::new();
@@ -859,7 +859,7 @@ where
       let ty = f.ty();
       let field_name = f.name();
       quote! {
-        <#ty as #path_to_grost::__private::Selector<#fg>>::merge(&mut self.#field_name, other.#field_name);
+        <#ty as #path_to_grost::__private::selection::Selector<#fg>>::merge(&mut self.#field_name, other.#field_name);
       }
     })
   }
@@ -875,7 +875,7 @@ where
       let field_name = f.name();
 
       quote! {
-        <#ty as #path_to_grost::__private::Selector<#fg>>::flip(&mut self.#field_name);
+        <#ty as #path_to_grost::__private::selection::Selector<#fg>>::flip(&mut self.#field_name);
       }
     })
   }
@@ -926,14 +926,14 @@ where
         #[doc = #select_fn_doc]
         #[inline]
         pub fn #select_fn_name(&mut self) -> &mut Self {
-          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT;
+          self.#field_name = <#ty as #path_to_grost::__private::selection::Selector<#fg>>::DEFAULT;
           self
         }
 
         #[doc = #unselect_fn_doc]
         #[inline]
         pub fn #unselect_fn_name(&mut self) -> &mut Self {
-          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::NONE;
+          self.#field_name = <#ty as #path_to_grost::__private::selection::Selector<#fg>>::NONE;
           self
         }
 
@@ -966,27 +966,27 @@ where
         #[doc = #with_fn_doc]
         #[inline]
         pub fn #with_fn_name(mut self) -> Self {
-          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::DEFAULT;
+          self.#field_name = <#ty as #path_to_grost::__private::selection::Selector<#fg>>::DEFAULT;
           self
         }
 
         #[doc = #without_fn_doc]
         #[inline]
         pub fn #without_fn_name(mut self) -> Self {
-          self.#field_name = <#ty as #path_to_grost::__private::Selector<#fg>>::NONE;
+          self.#field_name = <#ty as #path_to_grost::__private::selection::Selector<#fg>>::NONE;
           self
         }
 
         #[doc = #is_field_selected_fn_doc]
         #[inline]
         pub fn #is_field_selected_fn_name(&self) -> ::core::primitive::bool {
-          !<#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+          !<#ty as #path_to_grost::__private::selection::Selector<#fg>>::is_empty(&self.#field_name)
         }
 
         #[doc = #is_field_unselected_fn_doc]
         #[inline]
         pub fn #is_field_unselected_fn_name(&self) -> ::core::primitive::bool {
-          <#ty as #path_to_grost::__private::Selector<#fg>>::is_empty(&self.#field_name)
+          <#ty as #path_to_grost::__private::selection::Selector<#fg>>::is_empty(&self.#field_name)
         }
       }
     })
@@ -1002,7 +1002,7 @@ fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, ty: &syn::Type) -> 
 fn selector_ty(path_to_grost: &syn::Path, wf: &syn::Type, fg: &syn::TypeParam) -> syn::Type {
   let fg = &fg.ident;
   parse_quote! {
-    #path_to_grost::__private::Selectable<
+    #path_to_grost::__private::selection::Selectable<
       #fg,
       #wf,
     >

@@ -62,38 +62,6 @@ where
   type Output = T::Output;
 }
 
-impl<T> State<Flatten<Base>> for [T]
-where
-  T: State<Flatten<Base>>,
-{
-  type Input = T::Input;
-  type Output = T::Output;
-}
-
-impl<T> State<Flatten> for [T]
-where
-  T: State<Flatten>,
-{
-  type Input = Self;
-  type Output = Self;
-}
-
-impl<T, const N: usize> State<Flatten<Base>> for [T; N]
-where
-  T: State<Flatten<Base>>,
-{
-  type Input = T::Input;
-  type Output = T::Output;
-}
-
-impl<T, const N: usize> State<Flatten> for [T; N]
-where
-  T: State<Flatten>,
-{
-  type Input = Self;
-  type Output = Self;
-}
-
 macro_rules! wrapper_impl {
   (@decoded_state $($ty:ty),+$(,)?) => {
     $(
@@ -193,7 +161,6 @@ const _: () = {
 
   wrapper_impl!(
     @flatten(Sized, ?Optional)
-    std::vec::Vec<T>,
     std::collections::VecDeque<T>,
     std::collections::LinkedList<T>,
     std::collections::BTreeSet<T>,

@@ -29,7 +29,7 @@ macro_rules! repeated_impl {
           _: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -70,7 +70,7 @@ macro_rules! repeated_impl {
           _: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -113,7 +113,7 @@ macro_rules! repeated_impl {
           _: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -154,7 +154,7 @@ macro_rules! repeated_impl {
           context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -197,7 +197,7 @@ macro_rules! repeated_impl {
           context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -238,7 +238,7 @@ macro_rules! repeated_impl {
           context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
           selector: &Self::Selector,
         ) -> ::core::primitive::usize {
-          if $crate::__private::Selector::is_empty(selector) {
+          if $crate::__private::selection::Selector::is_empty(selector) {
             return 0;
           }
 
@@ -394,36 +394,36 @@ macro_rules! repeated_impl {
 macro_rules! impl_selectable_for_repeated {
   ($ty:ty as $wf:ty) => {
     impl<V>
-      $crate::__private::Selectable<
+      $crate::__private::selection::Selectable<
         $crate::__private::flavors::Network,
         $crate::__private::flavors::network::Repeated<$wf>,
       > for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, $wf>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $wf>,
     {
       type Selector = V::Selector;
     }
   };
   (@constn $ty:ty as $wf:ty) => {
     impl<V, const N: usize>
-      $crate::__private::Selectable<
+      $crate::__private::selection::Selectable<
         $crate::__private::flavors::Network,
         $crate::__private::flavors::network::Repeated<$wf>,
       > for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, $wf>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $wf>,
     {
       type Selector = V::Selector;
     }
   };
   (@tinyvec $trait:ident:$ty:ty as $wf:ty) => {
     impl<V, A>
-      $crate::__private::Selectable<
+      $crate::__private::selection::Selectable<
         $crate::__private::flavors::Network,
         $crate::__private::flavors::network::Repeated<$wf>,
       > for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, $wf>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $wf>,
       A: $trait<Item = V>,
     {
       type Selector = V::Selector;
@@ -474,9 +474,9 @@ macro_rules! repeated {
       ]
     );
 
-    impl<V, W: ?::core::marker::Sized, const I: ::core::primitive::u32> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
+    impl<V, W: ?::core::marker::Sized, const I: ::core::primitive::u32> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, W>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W>,
     {
       type Selector = V::Selector;
     }
@@ -524,9 +524,9 @@ macro_rules! repeated {
       ]
     );
 
-    impl<V, A, W: ?::core::marker::Sized, const I: ::core::primitive::u32> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
+    impl<V, A, W: ?::core::marker::Sized, const I: ::core::primitive::u32> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, W>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W>,
       A: $trait<Item = V>,
     {
       type Selector = V::Selector;
@@ -577,9 +577,9 @@ macro_rules! repeated {
       ]
     );
 
-    impl<V, W: ?::core::marker::Sized, const I: ::core::primitive::u32, const N: usize> $crate::__private::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
+    impl<V, W: ?::core::marker::Sized, const I: ::core::primitive::u32, const N: usize> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$crate::__private::flavors::network::Stream<W, I>>> for $ty
     where
-      V: $crate::__private::Selectable<$crate::__private::flavors::Network, W>,
+      V: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W>,
     {
       type Selector = V::Selector;
     }
@@ -666,7 +666,7 @@ macro_rules! repeated {
       buf: &mut [u8],
       selector: &Self::Selector,
     ) -> Result<usize, $crate::__private::flavors::network::EncodeError> {
-      if $crate::__private::Selector::is_empty(selector) {
+      if $crate::__private::selection::Selector::is_empty(selector) {
         return Ok(0);
       }
 
@@ -706,7 +706,7 @@ macro_rules! repeated {
     }
 
     fn partial_encoded_len(&self, context: &$crate::__private::flavors::network::Context, selector: &Self::Selector) -> usize {
-      if $crate::__private::Selector::is_empty(selector) {
+      if $crate::__private::selection::Selector::is_empty(selector) {
         return 0;
       }
 
@@ -736,13 +736,13 @@ macro_rules! repeated {
   };
 }
 
-mod map;
+// mod map;
 
-mod arrayvec;
-mod repeated_decoder;
-mod slice;
-mod smallvec;
-mod tinyvec;
+// mod arrayvec;
+// mod repeated_decoder;
+// mod slice;
+// mod smallvec;
+// mod tinyvec;
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod vec;
+// #[cfg(any(feature = "std", feature = "alloc"))]
+// mod vec;

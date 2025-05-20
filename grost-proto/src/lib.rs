@@ -36,7 +36,7 @@ pub mod encode;
 pub mod indexer;
 
 /// The selection related types and traits
-pub mod selector;
+pub mod selection;
 
 /// Traits for conversions between types.
 pub mod convert;
@@ -90,7 +90,7 @@ pub mod __private {
     partial_encode_scalar,
     reflection,
     selectable,
-    selector::{self, *},
+    selection::{self, *},
   };
   pub use varing;
 }

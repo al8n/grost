@@ -12,48 +12,6 @@ use crate::{
   partial_encode_scalar,
 };
 
-impl<const N: usize> Encode<Network, LengthDelimited> for [u8; N] {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let this_len = self.len();
-    let buf_len = buf.len();
-    if buf_len < this_len {
-      return Err(EncodeError::insufficient_buffer(this_len, buf_len));
-    }
-
-    buf[..this_len].copy_from_slice(self.as_slice());
-    Ok(this_len)
-  }
-
-  fn encoded_len(&self, _: &Context) -> usize {
-    self.len()
-  }
-
-  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
-    let this_len = self.len();
-    let len_size = varing::encoded_u32_varint_len(this_len as u32);
-    len_size + this_len
-  }
-
-  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let this_len = self.len();
-    let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
-    let buf_len = buf.len();
-    if buf_len < offset + this_len {
-      return Err(EncodeError::insufficient_buffer(this_len + offset, buf_len));
-    }
-
-    buf[offset..offset + this_len].copy_from_slice(self.as_slice());
-    offset += this_len;
-    Ok(offset)
-  }
-}
-
-impl<W: ?Sized, const N: usize> Selectable<Network, W> for [u8; N] {
-  type Selector = bool;
-}
-
-partial_encode_scalar!(Network: [u8; N] [const N: usize] as LengthDelimited);
-
 impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N] {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
@@ -143,7 +101,7 @@ macro_rules! impl_fixed {
         }
       }
 
-      partial_encode_scalar!(Network: [u8; $size] as $wt);
+      // partial_encode_scalar!(Network: [u8; $size] as $wt);
 
       impl<'de> Decode<'de, Network, $wt, Self> for [u8; $size] {
         fn decode<UB>(
@@ -220,60 +178,4 @@ fn larger_than_array_capacity<const N: usize>() -> DecodeError {
   DecodeError::custom(std::format!(
     "cannot decode array with length greater than the capacity {N}"
   ))
-}
-
-#[cfg(all(test, feature = "std"))]
-mod tests {
-  use super::*;
-
-  macro_rules! quickcheck_fixed {
-    ($input:ident($len:literal, $wt:ident)) => {
-      paste::paste! {
-        quickcheck::quickcheck! {
-          fn [< fuzzy_encode_decode_array_ $len >](input: $input) -> bool {
-            let input: [u8; $len] = input.to_le_bytes();
-            let mut buf = [0u8; $len];
-            let context = Context::new();
-
-            let encoded = <[u8; $len] as Encode<Network, $wt>>::encode(&input, &context, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, $wt, _>>::decode::<()>(&context, &buf).unwrap();
-            let encoded_len = <[u8; $len] as Encode<Network, $wt>>::encoded_len(&input, &context);
-            assert_eq!(encoded, encoded_len);
-            assert_eq!(encoded, decoded_len);
-            assert_eq!(input, decoded);
-
-            let mut buf = [0; 512];
-            let encoded = <[u8; $len] as Encode<Network, LengthDelimited>>::encode(&input, &context, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, LengthDelimited, _>>::decode::<()>(&context, &buf).unwrap();
-            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_len(&input, &context,);
-            assert_eq!(encoded, encoded_len);
-            assert_eq!(encoded, decoded_len);
-            assert_eq!(input, decoded);
-
-            let encoded = <[u8; $len] as Encode<Network, $wt>>::encode_length_delimited(&input, &context, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, $wt, _>>::decode_length_delimited::<()>(&context, &buf).unwrap();
-            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(&input, &context);
-            assert_eq!(encoded, encoded_len);
-            assert_eq!(encoded, decoded_len);
-            assert_eq!(input, decoded);
-
-            let encoded = <[u8; $len] as Encode<Network, LengthDelimited>>::encode_length_delimited(&input, &context, &mut buf).unwrap();
-            let (decoded_len, decoded) = <[u8; $len] as Decode<'_, Network, LengthDelimited, _>>::decode_length_delimited::<()>(&context, &buf).unwrap();
-            let encoded_len = <[u8; $len] as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(&input, &context,);
-            assert_eq!(encoded, encoded_len);
-            assert_eq!(encoded, decoded_len);
-            assert_eq!(input, decoded);
-
-            true
-          }
-        }
-      }
-    };
-  }
-
-  quickcheck_fixed!(u8(1, Fixed8));
-  quickcheck_fixed!(u16(2, Fixed16));
-  quickcheck_fixed!(u32(4, Fixed32));
-  quickcheck_fixed!(u64(8, Fixed64));
-  quickcheck_fixed!(u128(16, Fixed128));
 }

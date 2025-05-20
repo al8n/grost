@@ -64,7 +64,7 @@ impl Network {
       fn insufficient_buffer_error<T, W>(
         f: &T,
         ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
-        selector: ::core::option::Option<&<T as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, W>>::Selector>,
+        selector: ::core::option::Option<&<T as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, W>>::Selector>,
         buf_len: ::core::primitive::usize,
       ) -> #path_to_grost::__private::flavors::network::EncodeError
       where
@@ -76,7 +76,7 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             W,
           >
-          + #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, W>
+          + #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, W>
           + ?::core::marker::Sized,
         W: #path_to_grost::__private::flavors::WireFormat<
             #path_to_grost::__private::flavors::Network,
@@ -298,7 +298,7 @@ impl Network {
         &#rust_ty,
         &#path_to_grost::__private::flavors::network::Context,
         &mut [::core::primitive::u8],
-        &<#rust_ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+        &<#rust_ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
       ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
     };
 
@@ -309,7 +309,7 @@ impl Network {
           f: &::core::option::Option<#atomic_ty>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#rust_ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#rust_ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
           #encoded_len_fn
 
@@ -362,7 +362,7 @@ impl Network {
           f: &#ty,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
           #encoded_len_fn
 
@@ -544,7 +544,7 @@ impl Network {
         fn encoded_len(
           f: &#ty,
           ctx: &#path_to_grost::__private::flavors::network::Context,
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize {
           match f {
             ::core::option::Option::None => 0,
@@ -559,7 +559,7 @@ impl Network {
         fn encoded_len(
           f: &#ty,
           ctx: &#path_to_grost::__private::flavors::network::Context,
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize {
           #impl_
         }
@@ -573,7 +573,7 @@ impl Network {
       fn(
         &#ty,
         &#path_to_grost::__private::flavors::network::Context,
-        &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+        &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
       ) -> ::core::primitive::usize
     };
 
@@ -646,7 +646,7 @@ impl Network {
           >>::Output>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> #ret {
           match field {
             ::core::option::Option::None => ::core::result::Result::Ok(0),
@@ -711,7 +711,7 @@ impl Network {
           >>::Output,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> #ret {
           #encoded_identifier_len
 
@@ -777,7 +777,7 @@ impl Network {
           >>::Output>,
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
-          &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
       }
     } else {
@@ -792,7 +792,7 @@ impl Network {
           >>::Output,
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
-          &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
       }
     };
@@ -844,7 +844,7 @@ impl Network {
             >
           >>::Output>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize {
           match f {
             ::core::option::Option::None => 0,
@@ -879,7 +879,7 @@ impl Network {
             >
           >>::Output,
           ctx: &#path_to_grost::__private::flavors::network::Context,
-          selector: &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize {
           (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Network>().#field_name().encoded_identifier_len())
             + <<#ty as #path_to_grost::__private::convert::State<
@@ -915,7 +915,7 @@ impl Network {
             >
           >>::Output>,
           &#path_to_grost::__private::flavors::network::Context,
-          &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize
       }
     } else {
@@ -929,7 +929,7 @@ impl Network {
             >
           >>::Output,
           &#path_to_grost::__private::flavors::network::Context,
-          &<#ty as #path_to_grost::__private::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
+          &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
         ) -> ::core::primitive::usize
       }
     };

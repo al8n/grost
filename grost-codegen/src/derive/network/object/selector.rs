@@ -17,7 +17,7 @@ impl Network {
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl #path_to_grost::__private::Selectable<
+        impl #path_to_grost::__private::selection::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::LengthDelimited,
         > for #name
@@ -27,7 +27,7 @@ impl Network {
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl #path_to_grost::__private::Selectable<
+        impl #path_to_grost::__private::selection::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
         > for #name
@@ -37,7 +37,7 @@ impl Network {
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl<const I: ::core::primitive::u32> #path_to_grost::__private::Selectable<
+        impl<const I: ::core::primitive::u32> #path_to_grost::__private::selection::Selectable<
           #path_to_grost::__private::flavors::Network,
           #path_to_grost::__private::flavors::network::Repeated<
             #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
@@ -59,7 +59,7 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
+      impl<'__grost_lifetime__> #path_to_grost::__private::selection::Selectable<
         #path_to_grost::__private::flavors::Network,
         #path_to_grost::__private::flavors::network::LengthDelimited,
       > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
@@ -69,7 +69,7 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'__grost_lifetime__> #path_to_grost::__private::Selectable<
+      impl<'__grost_lifetime__> #path_to_grost::__private::selection::Selectable<
         #path_to_grost::__private::flavors::Network,
         #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
       > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
@@ -79,7 +79,7 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'__grost_lifetime__, const I: ::core::primitive::u32> #path_to_grost::__private::Selectable<
+      impl<'__grost_lifetime__, const I: ::core::primitive::u32> #path_to_grost::__private::selection::Selectable<
         #path_to_grost::__private::flavors::Network,
         #path_to_grost::__private::flavors::network::Repeated<
           #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
@@ -209,7 +209,7 @@ impl Network {
         #indexer_name::#field_variant => {
           #reflection
 
-          if #path_to_grost::__private::Selector::<#path_to_grost::__private::flavors::Network>::is_empty(&self.#field_name) {
+          if #path_to_grost::__private::selection::Selector::<#path_to_grost::__private::flavors::Network>::is_empty(&self.#field_name) {
             NONE
           } else {
             &REFLECTION

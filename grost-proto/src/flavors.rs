@@ -1,4 +1,4 @@
-use crate::selector::Selectable;
+use crate::selection::Selectable;
 
 use super::buffer::BytesBuffer;
 

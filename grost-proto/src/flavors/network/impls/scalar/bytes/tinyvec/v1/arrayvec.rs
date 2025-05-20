@@ -13,68 +13,6 @@ use crate::{
 
 use super::larger_than_array_capacity;
 
-impl<A, S> State<Flatten<S>> for ArrayVec<A>
-where
-  A: Array,
-  S: ?Sized,
-{
-  type Input = Self;
-  type Output = Self;
-}
-
-impl<A> Encode<Network, LengthDelimited> for ArrayVec<A>
-where
-  A: Array<Item = u8>,
-{
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let this_len = self.len();
-    let buf_len = buf.len();
-    if buf_len < this_len {
-      return Err(EncodeError::insufficient_buffer(this_len, buf_len));
-    }
-
-    buf[..this_len].copy_from_slice(self.as_slice());
-    Ok(this_len)
-  }
-
-  fn encoded_len(&self, _: &Context) -> usize {
-    self.len()
-  }
-
-  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
-    let this_len = self.len();
-    let len_size = varing::encoded_u32_varint_len(this_len as u32);
-    len_size + this_len
-  }
-
-  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
-    let this_len = self.len();
-    let mut offset = varing::encode_u32_varint_to(this_len as u32, buf)?;
-    let buf_len = buf.len();
-    if buf_len < offset + this_len {
-      return Err(EncodeError::insufficient_buffer(this_len + offset, buf_len));
-    }
-
-    buf[offset..offset + this_len].copy_from_slice(self.as_slice());
-    offset += this_len;
-    Ok(offset)
-  }
-}
-
-impl<A> Selectable<Network, LengthDelimited> for ArrayVec<A>
-where
-  A: Array<Item = u8>,
-{
-  type Selector = bool;
-}
-
-impl<A> PartialEncode<Network, LengthDelimited> for ArrayVec<A>
-where
-  A: Array<Item = u8>,
-{
-  partial_encode_scalar!(@impl Network as LengthDelimited);
-}
-
 impl<'de, A> Decode<'de, Network, LengthDelimited, Self> for ArrayVec<A>
 where
   A: Array<Item = u8>,
