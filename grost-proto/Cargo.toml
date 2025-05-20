@@ -103,6 +103,7 @@ arbitrary = [
 quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck"]
 
 [dependencies]
+auto_enums = "0.8"
 ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
 paste.workspace = true

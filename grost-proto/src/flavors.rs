@@ -148,7 +148,7 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
 
 /// The wire format used for encoding and decoding.
 pub trait WireFormat<F: Flavor + ?Sized>:
-  Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType> + 'static
+  Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType>
 {
   /// The cooresponding value to the wire type.
   const WIRE_TYPE: F::WireType;
@@ -166,7 +166,7 @@ pub trait DefaultWireFormat<F: Flavor + ?Sized> {
 
 impl<T, F> DefaultWireFormat<F> for &T
 where
-  T: DefaultWireFormat<F>,
+  T: DefaultWireFormat<F> + ?Sized,
   F: Flavor + ?Sized,
 {
   type Format = T::Format;

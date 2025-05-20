@@ -119,7 +119,7 @@ where
 impl<'a, L, UB, W, T> Iterator for RepeatedDecoder<'a, L, UB, W>
 where
   L: core::ops::Deref<Target = [T]>,
-  W: sealed::Sealed,
+  W: sealed::Sealed + 'a,
   T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,
   T::Output: Sized,
   TypeReflection<T>: Reflectable<T, Reflection = Type>,

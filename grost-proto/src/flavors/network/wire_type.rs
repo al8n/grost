@@ -44,6 +44,158 @@ fixed_size!(
   Fixed128: 16,
 );
 
+/// A wire format for borrowed data.
+///
+/// ## Why we need `Borrowed` wire format wrapper?
+///
+/// e.g. when implementing `Encode` for `[T]`, we know that if `[T]` is encodable,
+/// then `[&T]` must be encodable. But we cannot write the following code,
+/// as `T` must be `Sized`, requried by `[T]`:
+///
+/// ```ignore
+/// // We cannot write this code, as `T` must be `Sized`
+/// impl<T: ?Sized> Encode<Network, LengthDelimited> for [T] { ... }
+/// ```
+///
+/// We cannot write another impl for `[&T]`, it will reports conflicting implementations.
+///
+/// ```ignore
+/// // This implementation will conflict with the above one.
+/// impl<T: ?Sized> Encode<Network, LengthDelimited> for [&T] { ... }
+/// ```
+///
+/// Hence, we need this wrapper type to indicate that the data is in borrowed state,
+/// and we can implement `Encode` for `[&T]` like this:
+///
+/// ```ignore
+/// impl<'a, T: ?Sized> Encode<Network, Borrowed<'a, LengthDelimited>> for [&'a T] { ... }
+/// ```
+///
+/// This is quite useful, when you have the following struct:
+///
+/// ```ignore
+/// struct Friends(Vec<String>);
+/// ```
+///
+/// And somehow, in a gossip network, you receive three friends names from different peers.
+///
+/// ```ignore
+/// let peer1_subscriber = subscribe_peer(1);
+/// let peer2_subscriber = subscribe_peer(2);
+/// let peer3_subscriber = subscribe_peer(3);
+///
+/// let alice_from_peer1 = peer1_subscriber.next().await;
+/// let bob_from_peer2 = peer2_subscriber.next().await;
+/// let charlie_from_peer3 = peer3_subscriber.next().await;
+///
+/// let borrowed_friends: &[&str] = &[alice_from_peer1, bob_from_peer2, charlie_from_peer3];
+/// ```
+///
+/// Tranditional serialization frameworks would require you to create a new `Vec<String>`
+/// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `[&String]`
+/// to encode it, you can just encode the borrowed slice directly as there is a blanket
+/// implementation `impl<'a, T> Encode<Network, Borrowed<'a, LengthDelimited>> for [&'a T]` in
+/// this crate.
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("borrowed")]
+pub struct Borrowed<'a, W: ?Sized>(PhantomData<&'a W>);
+
+impl<W: ?Sized> Clone for Borrowed<'_, W> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<W: ?Sized> Copy for Borrowed<'_, W> {}
+
+impl<'a, W: WireFormat<Network>> From<Borrowed<'a, W>> for WireType {
+  fn from(_: Borrowed<'a, W>) -> Self {
+    W::WIRE_TYPE
+  }
+}
+
+impl<'a, W: WireFormat<Network>> WireFormat<Network> for Borrowed<'a, W> {
+  const NAME: &'static str = "borrowed";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self(PhantomData);
+}
+
+/// A wire format for borrowed data.
+///
+/// ## Why we need `Borrowed` wire format wrapper?
+///
+/// e.g. when implementing `Encode` for `[T]`, we know that if `[T]` is encodable,
+/// then `[&T]` must be encodable. But we cannot write the following code,
+/// as `T` must be `Sized`, requried by `[T]`:
+///
+/// ```ignore
+/// // We cannot write this code, as `T` must be `Sized`
+/// impl<T: ?Sized> Encode<Network, LengthDelimited> for [T] { ... }
+/// ```
+///
+/// We cannot write another impl for `[&T]`, it will reports conflicting implementations.
+///
+/// ```ignore
+/// // This implementation will conflict with the above one.
+/// impl<T: ?Sized> Encode<Network, LengthDelimited> for [&T] { ... }
+/// ```
+///
+/// Hence, we need this wrapper type to indicate that the data is in borrowed state,
+/// and we can implement `Encode` for `[&T]` like this:
+///
+/// ```ignore
+/// impl<'a, T: ?Sized> Encode<Network, Borrowed<'a, LengthDelimited>> for [&'a T] { ... }
+/// ```
+///
+/// This is quite useful, when you have the following struct:
+///
+/// ```ignore
+/// struct Friends(Vec<String>);
+/// ```
+///
+/// And somehow, in a gossip network, you receive three friends names from different peers.
+///
+/// ```ignore
+/// let peer1_subscriber = subscribe_peer(1);
+/// let peer2_subscriber = subscribe_peer(2);
+/// let peer3_subscriber = subscribe_peer(3);
+///
+/// let alice_from_peer1 = peer1_subscriber.next().await;
+/// let bob_from_peer2 = peer2_subscriber.next().await;
+/// let charlie_from_peer3 = peer3_subscriber.next().await;
+///
+/// let borrowed_friends: &[&str] = &[alice_from_peer1, bob_from_peer2, charlie_from_peer3];
+/// ```
+///
+/// Tranditional serialization frameworks would require you to create a new `Vec<String>`
+/// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `[&String]`
+/// to encode it, you can just encode the borrowed slice directly as there is a blanket
+/// implementation `impl<'a, T> Encode<Network, Borrowed<'a, LengthDelimited>> for [&'a T]` in
+/// this crate.
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("borrowed")]
+pub struct Packed<W: ?Sized>(PhantomData<W>);
+
+impl<W: ?Sized> Clone for Packed<W> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<W: ?Sized> Copy for Packed<W> {}
+
+impl<W: WireFormat<Network>> From<Packed<W>> for WireType {
+  fn from(_: Packed<W>) -> Self {
+    W::WIRE_TYPE
+  }
+}
+
+impl<W: WireFormat<Network>> WireFormat<Network> for Packed<W> {
+  const NAME: &'static str = "packed";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self(PhantomData);
+}
+
 /// The stream wire format for element encoding within repeated fields.
 ///
 /// When used as `Repeated<Stream>`, this changes the encoding strategy

@@ -1,7 +1,7 @@
 use crate::selection::Selector;
 
 use super::{
-  flavors::{Flavor, Identifier, WireFormat},
+  flavors::{Flavor, WireFormat},
   selection::Selectable,
 };
 
