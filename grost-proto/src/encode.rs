@@ -1,13 +1,10 @@
 use crate::selection::Selector;
 
 use super::{
+  error::Error,
   flavors::{Flavor, WireFormat},
   selection::Selectable,
 };
-
-pub use error::EncodeError;
-
-mod error;
 
 /// A trait for serializing data to binary format with support for various wire types.
 ///
@@ -52,7 +49,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// [`Encode::encoded_len`] can be used to determine the required buffer size.
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
-  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError>;
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error>;
 
   /// Returns the number of bytes needed to encode the message.
   ///
@@ -85,20 +82,20 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
     &self,
     context: &F::Context,
     buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     let encoded_len = self.encoded_len(context);
     let buf_len = buf.len();
     let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
-      EncodeError::from_varint_error(e).update(self.encoded_length_delimited_len(context), buf_len)
+      Error::from_varint_encode_error(e).update(self.encoded_length_delimited_len(context), buf_len)
     })?;
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
-      return Err(EncodeError::insufficient_buffer(required, buf_len).into());
+      return Err(Error::insufficient_buffer(required, buf_len).into());
     }
 
     if offset >= buf_len {
-      return Err(EncodeError::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
     self.encode(context, &mut buf[offset..]).map(|v| {
@@ -115,7 +112,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::EncodeError> {
+  fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::Error> {
     let mut buf = std::vec![0; self.encoded_len(context)];
     self.encode(context, &mut buf)?;
     Ok(buf)
@@ -125,7 +122,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   ///
   /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::EncodeError> {
+  fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::Error> {
     self.encode_to_vec(context).map(Into::into)
   }
 
@@ -134,8 +131,8 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   fn encode_length_delimited_to_vec(
     &self,
     context: &F::Context,
-  ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
-    let mut buf = std::vec![0; self.encoded_len(context)];
+  ) -> Result<std::vec::Vec<u8>, F::Error> {
+    let mut buf = std::vec![0; self.encoded_length_delimited_len(context)];
     self.encode_length_delimited(context, &mut buf)?;
     Ok(buf)
   }
@@ -145,7 +142,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   fn partial_encode_length_delimited_to_bytes(
     &self,
     context: &F::Context,
-  ) -> Result<super::bytes::Bytes, F::EncodeError> {
+  ) -> Result<super::bytes::Bytes, F::Error> {
     self.encode_length_delimited_to_vec(context).map(Into::into)
   }
 }
@@ -197,7 +194,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError>;
+  ) -> Result<usize, F::Error>;
 
   /// Returns the number of bytes needed to encode the message. If the message cannot be encoded as the given wire type,
   /// then it will return `WireTypeNotSupported` err will be returned.
@@ -236,7 +233,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -244,7 +241,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     let encoded_len = self.partial_encoded_len(context, selector);
     let buf_len = buf.len();
     let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
-      EncodeError::from_varint_error(e).update(
+      Error::from_varint_encode_error(e).update(
         self.partial_encoded_length_delimited_len(context, selector),
         buf_len,
       )
@@ -252,11 +249,11 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
-      return Err(EncodeError::insufficient_buffer(required, buf_len).into());
+      return Err(Error::insufficient_buffer(required, buf_len).into());
     }
 
     if offset >= buf_len {
-      return Err(EncodeError::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
     self
@@ -277,7 +274,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
+  ) -> Result<std::vec::Vec<u8>, F::Error> {
     let mut buf = std::vec![0; self.partial_encoded_len(context, selector)];
     self.partial_encode(context, &mut buf, selector)?;
     Ok(buf)
@@ -289,7 +286,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<super::bytes::Bytes, F::EncodeError> {
+  ) -> Result<super::bytes::Bytes, F::Error> {
     self
       .partial_encode_to_vec(context, selector)
       .map(Into::into)
@@ -301,7 +298,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<std::vec::Vec<u8>, F::EncodeError> {
+  ) -> Result<std::vec::Vec<u8>, F::Error> {
     let mut buf = std::vec![0; self.partial_encoded_len(context, selector)];
     self.partial_encode_length_delimited(context, &mut buf, selector)?;
     Ok(buf)
@@ -313,7 +310,7 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<super::bytes::Bytes, F::EncodeError> {
+  ) -> Result<super::bytes::Bytes, F::Error> {
     self
       .partial_encode_length_delimited_to_vec(context, selector)
       .map(Into::into)
@@ -326,7 +323,7 @@ where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
     (*self).encode(context, buf)
   }
 
@@ -338,7 +335,7 @@ where
     &self,
     context: &F::Context,
     buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     (*self).encode_length_delimited(context, buf)
   }
 
@@ -353,7 +350,7 @@ where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
+  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
     if let Some(value) = self {
       value.encode(context, buf)
     } else {
@@ -373,7 +370,7 @@ where
     &self,
     context: &F::Context,
     buf: &mut [u8],
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     if let Some(value) = self {
       value.encode_length_delimited(context, buf)
     } else {
@@ -401,7 +398,7 @@ where
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     (*self).partial_encode(context, buf, selector)
   }
 
@@ -414,7 +411,7 @@ where
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     (*self).partial_encode_length_delimited(context, buf, selector)
   }
 
@@ -438,7 +435,7 @@ where
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     if let Some(value) = self {
       value.partial_encode(context, buf, selector)
     } else {
@@ -459,7 +456,7 @@ where
     context: &F::Context,
     buf: &mut [u8],
     selector: &Self::Selector,
-  ) -> Result<usize, F::EncodeError> {
+  ) -> Result<usize, F::Error> {
     if let Some(value) = self {
       value.partial_encode_length_delimited(context, buf, selector)
     } else {
@@ -490,7 +487,7 @@ macro_rules! deref_encode_impl {
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
-        fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::EncodeError> {
+        fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
           (**self).encode(context, buf)
         }
 
@@ -502,7 +499,7 @@ macro_rules! deref_encode_impl {
           &self,
           context: &F::Context,
           buf: &mut [u8],
-        ) -> Result<usize, F::EncodeError> {
+        ) -> Result<usize, F::Error> {
           (**self).encode_length_delimited(context, buf)
         }
 
@@ -538,7 +535,7 @@ macro_rules! deref_partial_encode_impl {
           context: &F::Context,
           buf: &mut [u8],
           selector: &Self::Selector,
-        ) -> Result<usize, F::EncodeError> {
+        ) -> Result<usize, F::Error> {
           (**self).partial_encode(context, buf, selector)
         }
 
@@ -551,7 +548,7 @@ macro_rules! deref_partial_encode_impl {
           context: &F::Context,
           buf: &mut [u8],
           selector: &Self::Selector,
-        ) -> Result<usize, F::EncodeError> {
+        ) -> Result<usize, F::Error> {
           (**self).partial_encode_length_delimited(context, buf, selector)
         }
 

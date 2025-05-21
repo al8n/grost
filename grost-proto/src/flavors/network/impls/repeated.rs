@@ -250,17 +250,17 @@ macro_rules! repeated_impl {
     )*
   };
   (@encode $wf:ty) => {
-    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
       let mut offset = 0;
       let buf_len = buf.len();
       let encoded_len = <Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context);
       if encoded_len > buf_len {
-        return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(encoded_len, buf_len));
+        return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(encoded_len, buf_len));
       }
 
       for v in self {
         if offset >= buf_len {
-          return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+          return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
         }
         offset += V::encode_length_delimited(v, context, &mut buf[offset..])
           .map_err(|e| e.update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context), buf_len))?;
@@ -285,15 +285,15 @@ macro_rules! repeated_impl {
       &self,
       context: &$crate::__private::flavors::network::Context,
       buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+    ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
       let encoded_len = <Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context);
       let buf_len = buf.len();
       let offset = varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
-        .map_err(|e| $crate::__private::flavors::network::EncodeError::from_varint_error(e)
+        .map_err(|e| $crate::__private::flavors::network::Error::from_varint_error(e)
           .update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_length_delimited_len(self, context), buf_len))?;
       let end = offset + encoded_len;
       if end > buf_len {
-        return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(end, buf_len));
+        return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(end, buf_len));
       }
 
       <Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encode(self, context, &mut buf[offset..])
@@ -313,7 +313,7 @@ macro_rules! repeated_impl {
       context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
       buf: &mut [::core::primitive::u8],
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::EncodeError>
+    ) -> ::core::result::Result<::core::primitive::usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::Error>
     {
       if $crate::selector::Selector::is_empty(selector) {
         return ::core::result::Result::Ok(0);
@@ -323,12 +323,12 @@ macro_rules! repeated_impl {
       let buf_len = buf.len();
       let encoded_len = <Self as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::partial_encoded_len(self, context, selector);
       if encoded_len > buf_len {
-        return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(encoded_len, buf_len));
+        return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(encoded_len, buf_len));
       }
 
       for v in self {
         if offset >= buf_len {
-          return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+          return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
         }
         offset += V::partial_encode_length_delimited(v, context, &mut buf[offset..], selector)
           .map_err(|e| e.update(<Self as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::partial_encoded_len(self, context, selector), buf_len))?;
@@ -362,7 +362,7 @@ macro_rules! repeated_impl {
       context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
       buf: &mut [u8],
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::EncodeError>
+    ) -> ::core::result::Result<::core::primitive::usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::Error>
     {
       if $crate::selector::Selector::is_empty(selector) {
         return ::core::result::Result::Ok(0);
@@ -371,11 +371,11 @@ macro_rules! repeated_impl {
       let encoded_len = <Self as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::partial_encoded_len(self, context, selector);
       let buf_len = buf.len();
       let offset = varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
-        .map_err(|e| $crate::__private::flavors::network::EncodeError::from_varint_error(e)
+        .map_err(|e| $crate::__private::flavors::network::Error::from_varint_error(e)
           .update(<Self as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::partial_encoded_length_delimited_len(self, context, selector), buf_len))?;
       let end = offset + encoded_len;
       if end > buf_len {
-        return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(end, buf_len));
+        return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(end, buf_len));
       }
 
       <Self as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::partial_encode(self, context, &mut buf[offset..], selector)
@@ -603,9 +603,9 @@ macro_rules! repeated {
     }
   };
   (@encode_impl) => {
-    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [u8]) -> Result<usize, $crate::__private::flavors::network::EncodeError> {
+    fn encode(&self, context: &$crate::__private::flavors::network::Context, buf: &mut [u8]) -> Result<usize, $crate::__private::flavors::network::Error> {
       let encoded_identifier = $crate::__private::flavors::network::Identifier::try_from_u32(I)
-        .map_err($crate::__private::flavors::network::EncodeError::from)?
+        .map_err($crate::__private::flavors::network::Error::from)?
         .encode();
       let encoded_identifier_len = encoded_identifier.len();
 
@@ -614,7 +614,7 @@ macro_rules! repeated {
 
       for item in self {
         if offset + encoded_identifier_len >= buf_len {
-          return Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(
+          return Err($crate::__private::flavors::network::Error::insufficient_buffer(
             self.encoded_len(context),
             buf_len,
           ));
@@ -623,7 +623,7 @@ macro_rules! repeated {
         offset += encoded_identifier_len;
 
         if offset >= buf_len {
-          return Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(
+          return Err($crate::__private::flavors::network::Error::insufficient_buffer(
             self.encoded_len(context),
             buf_len,
           ));
@@ -655,7 +655,7 @@ macro_rules! repeated {
       &self,
       context: &$crate::__private::flavors::network::Context,
       buf: &mut [u8],
-    ) -> Result<usize, $crate::__private::flavors::network::EncodeError> {
+    ) -> Result<usize, $crate::__private::flavors::network::Error> {
       self.encode(context, buf)
     }
   };
@@ -665,13 +665,13 @@ macro_rules! repeated {
       context: &$crate::__private::flavors::network::Context,
       buf: &mut [u8],
       selector: &Self::Selector,
-    ) -> Result<usize, $crate::__private::flavors::network::EncodeError> {
+    ) -> Result<usize, $crate::__private::flavors::network::Error> {
       if $crate::__private::selection::Selector::is_empty(selector) {
         return Ok(0);
       }
 
       let encoded_identifier = $crate::__private::flavors::network::Identifier::try_from_u32(I)
-        .map_err($crate::__private::flavors::network::EncodeError::from)?
+        .map_err($crate::__private::flavors::network::Error::from)?
         .encode();
       let encoded_identifier_len = encoded_identifier.len();
 
@@ -680,7 +680,7 @@ macro_rules! repeated {
 
       for item in self {
         if offset + encoded_identifier_len >= buf_len {
-          return Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(
+          return Err($crate::__private::flavors::network::Error::insufficient_buffer(
             self.partial_encoded_len(context, selector),
             buf_len,
           ));
@@ -689,7 +689,7 @@ macro_rules! repeated {
         offset += encoded_identifier_len;
 
         if offset >= buf_len {
-          return Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(
+          return Err($crate::__private::flavors::network::Error::insufficient_buffer(
             self.partial_encoded_len(context, selector),
             buf_len,
           ));
@@ -730,7 +730,7 @@ macro_rules! repeated {
       context: &$crate::__private::flavors::network::Context,
       buf: &mut [u8],
       selector: &Self::Selector,
-    ) -> Result<usize, $crate::__private::flavors::network::EncodeError> {
+    ) -> Result<usize, $crate::__private::flavors::network::Error> {
       self.partial_encode(context, buf, selector)
     }
   };

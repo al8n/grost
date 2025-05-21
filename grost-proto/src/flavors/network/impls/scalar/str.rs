@@ -1,7 +1,7 @@
 use crate::{
   decode::Decode,
   decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
+  flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
   selectable, try_decode_bridge,
 };
 
@@ -35,7 +35,7 @@ macro_rules! impl_ {
         fn decode<UB>(
           context: &Context,
           src: &'de [u8],
-        ) -> Result<(usize, &'de str), DecodeError>
+        ) -> Result<(usize, &'de str), Error>
         where
           &'de str: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -46,7 +46,7 @@ macro_rules! impl_ {
         fn decode_length_delimited<UB>(
           context: &Context,
           src: &'de [u8],
-        ) -> Result<(usize, &'de str), DecodeError>
+        ) -> Result<(usize, &'de str), Error>
         where
           &'de str: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -60,6 +60,6 @@ macro_rules! impl_ {
 
 impl_!(str, [u8], &'de [u8]);
 
-fn decode_str(src: &[u8]) -> Result<&str, DecodeError> {
-  crate::utils::from_utf8(src).map_err(|_| DecodeError::custom("invalid UTF-8"))
+fn decode_str(src: &[u8]) -> Result<&str, Error> {
+  crate::utils::from_utf8(src).map_err(|_| Error::custom("invalid UTF-8"))
 }

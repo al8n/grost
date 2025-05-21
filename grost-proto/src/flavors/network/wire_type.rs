@@ -173,7 +173,7 @@ impl<'a, W: WireFormat<Network>> WireFormat<Network> for Borrowed<'a, W> {
 /// implementation `impl<'a, T> Encode<Network, Borrowed<'a, LengthDelimited>> for [&'a T]` in
 /// this crate.
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("borrowed")]
+#[display("packed")]
 pub struct Packed<W: ?Sized>(PhantomData<W>);
 
 impl<W: ?Sized> Clone for Packed<W> {
@@ -194,6 +194,36 @@ impl<W: WireFormat<Network>> WireFormat<Network> for Packed<W> {
   const NAME: &'static str = "packed";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Self(PhantomData);
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("flatten")]
+pub struct Flatten<W: ?Sized, I: ?Sized> {
+  _w: PhantomData<W>,
+  _i: PhantomData<I>,
+}
+
+impl<W: ?Sized, I: ?Sized> Clone for Flatten<W, I> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<W: ?Sized, I: ?Sized> Copy for Flatten<W, I> {}
+
+impl<W: WireFormat<Network>, I: WireFormat<Network>> From<Flatten<W, I>> for WireType {
+  fn from(_: Flatten<W, I>) -> Self {
+    W::WIRE_TYPE
+  }
+}
+
+impl<W: WireFormat<Network>, I: WireFormat<Network>> WireFormat<Network> for Flatten<W, I> {
+  const NAME: &'static str = "flatten";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self {
+    _w: PhantomData,
+    _i: PhantomData,
+  };
 }
 
 /// The stream wire format for element encoding within repeated fields.

@@ -14,10 +14,10 @@ macro_rules! tuple2_impl {
         K: Encode<Network, $wf>,
         V: Encode<Network, $wf>,
       {
-        fn encode(&self, context: &<Network as crate::flavors::Flavor>::Context, buf: &mut [u8]) -> Result<usize, <Network as crate::flavors::Flavor>::EncodeError> {
+        fn encode(&self, context: &<Network as crate::flavors::Flavor>::Context, buf: &mut [u8]) -> Result<usize, <Network as crate::flavors::Flavor>::Error> {
           let buf_len = buf.len();
           if buf_len < <$merged_wf>::SIZE {
-            return Err(<Network as crate::flavors::Flavor>::EncodeError::insufficient_buffer(<$merged_wf>::SIZE, buf_len));
+            return Err(<Network as crate::flavors::Flavor>::Error::insufficient_buffer(<$merged_wf>::SIZE, buf_len));
           }
           let mut offset = 0;
           let encoded_len = <K as Encode<Network, $wf>>::encode(&self.0, context, buf)
@@ -58,7 +58,7 @@ macro_rules! tuple2_impl {
           &self,
           context: &<Network as crate::flavors::Flavor>::Context,
           buf: &mut [u8],
-        ) -> Result<usize, <Network as crate::flavors::Flavor>::EncodeError> {
+        ) -> Result<usize, <Network as crate::flavors::Flavor>::Error> {
           <Self as Encode<Network, $merged_wf>>::encode(self, context, buf)
         }
       }

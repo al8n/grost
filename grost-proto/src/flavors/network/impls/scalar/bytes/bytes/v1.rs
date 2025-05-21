@@ -1,7 +1,7 @@
 use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
+  flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
   selectable,
 };
 use bytes_1::{Bytes, BytesMut};
@@ -42,7 +42,7 @@ decoded_state!(
 flatten_state!(Bytes, BytesMut);
 
 impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
@@ -52,10 +52,7 @@ impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
       .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
   }
 
-  fn decode_length_delimited_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,

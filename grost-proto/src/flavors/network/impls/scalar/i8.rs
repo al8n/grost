@@ -1,6 +1,6 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
-  flavors::network::{DecodeError, Fixed8, Network, Varint},
+  flavors::network::{Error, Fixed8, Network, Varint},
   selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
@@ -26,11 +26,11 @@ bridge!(
 try_from_bridge!(
   Network: i8 {
     NonZeroI8 as Fixed8 {
-      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroI8| v.get();
     },
     NonZeroI8 as Varint {
-      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroI8| v.get();
     }
   },

@@ -12,23 +12,23 @@
 //       &self,
 //       context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
 //       buf: &mut [u8],
-//     ) -> Result<usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::EncodeError> {
+//     ) -> Result<usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::Error> {
 //       let mut offset = 0;
 //       let buf_len = buf.len();
 //       let encoded_len = <Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context);
 //       if encoded_len > buf_len {
-//         return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(encoded_len, buf_len));
+//         return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(encoded_len, buf_len));
 //       }
 
 //       for (k, v) in self {
 //         if offset >= buf_len {
-//           return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+//           return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
 //         }
 //         offset += K::encode_length_delimited(k, context, &mut buf[offset..])
 //           .map_err(|e| e.update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context), buf_len))?;
 
 //         if offset >= buf_len {
-//           return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+//           return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
 //         }
 //         offset += V::encode_length_delimited(v, context, &mut buf[offset..])
 //           .map_err(|e| e.update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$wf>>>::encoded_len(self, context), buf_len))?;
@@ -47,18 +47,18 @@
 //       &self,
 //       context: &<$crate::__private::flavors::Network as $crate::flavors::Flavor>::Context,
 //       buf: &mut [u8],
-//     ) -> Result<usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::EncodeError> {
+//     ) -> Result<usize, <$crate::__private::flavors::Network as $crate::flavors::Flavor>::Error> {
 //       let mut offset = 0;
 //       let buf_len = buf.len();
 //       let encoded_len = <Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$merged_wf>>>::encoded_len(self, context);
 //       if encoded_len > buf_len {
-//         return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(encoded_len, buf_len));
+//         return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(encoded_len, buf_len));
 //       }
 
 //       for (k, v) in self {
 //         let mut start_offset = offset;
 //         if offset >= buf_len {
-//           return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+//           return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
 //         }
 //         offset += K::encode_length_delimited(k, context, &mut buf[offset..])
 //           .map_err(|e| e.update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$merged_wf>>>::encoded_len(self, context), buf_len))?;
@@ -70,7 +70,7 @@
 
 //         start_offset = offset;
 //         if offset >= buf_len {
-//           return ::core::result::Result::Err($crate::__private::flavors::network::EncodeError::insufficient_buffer(offset, buf_len));
+//           return ::core::result::Result::Err($crate::__private::flavors::network::Error::insufficient_buffer(offset, buf_len));
 //         }
 //         offset += V::encode_length_delimited(v, context, &mut buf[offset..])
 //           .map_err(|e| e.update(<Self as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Repeated<$merged_wf>>>::encoded_len(self, context), buf_len))?;

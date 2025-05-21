@@ -1,7 +1,7 @@
 use crate::{
   decode::{Decode, DecodeOwned},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{Context, DecodeError, LengthDelimited, Network, Unknown},
+  flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
   selectable,
 };
 use smol_str_0_3::SmolStr;
@@ -32,7 +32,7 @@ decoded_state!(
 );
 
 impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
@@ -42,10 +42,7 @@ impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
       .map(|(len, bytes)| (len, SmolStr::new(bytes)))
   }
 
-  fn decode_length_delimited_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,

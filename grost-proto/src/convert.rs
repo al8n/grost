@@ -56,7 +56,7 @@ pub struct Flatten<S: ?Sized = Optional> {
 impl<S, T> State<Flatten<S>> for &T
 where
   S: ?Sized,
-  T: State<Flatten<S>>,
+  T: State<Flatten<S>> + ?Sized,
 {
   type Input = T::Input;
   type Output = T::Output;

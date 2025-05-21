@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flavors::{
     Network, WireFormat,
-    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown, WireType},
+    network::{Context, Error, LengthDelimited, Unknown, WireType},
   },
   reflection::{Reflectable, Type, TypeReflection},
 };
@@ -125,7 +125,7 @@ where
   TypeReflection<T>: Reflectable<T, Reflection = Type>,
   UB: Buffer<Unknown<&'a [u8]>> + 'a,
 {
-  type Item = Result<(usize, T::Output), DecodeError>;
+  type Item = Result<(usize, T::Output), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -143,7 +143,7 @@ where
   W: sealed::Sealed,
   UB: ?Sized,
 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     match self.repr {
       Repr::LengthDelimited {
         src, data_offset, ..
@@ -152,7 +152,7 @@ where
         let src_len = src.len();
         let len = src_len.saturating_sub(data_offset);
         if buf_len < len {
-          return Err(EncodeError::insufficient_buffer(len, buf_len));
+          return Err(Error::insufficient_buffer(len, buf_len));
         }
 
         if len == 0 {
@@ -166,7 +166,7 @@ where
         let buf_len = buf.len();
         let src_len = src.len();
         if buf_len < src_len {
-          return Err(EncodeError::insufficient_buffer(src_len, buf_len));
+          return Err(Error::insufficient_buffer(src_len, buf_len));
         }
 
         buf[..src_len].copy_from_slice(src);
@@ -179,17 +179,13 @@ where
     self.repr.encoded_len()
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     match self.repr {
       Repr::LengthDelimited { src, .. } => {
         let buf_len = buf.len();
         let src_len = src.len();
         if src_len > buf_len {
-          return Err(EncodeError::insufficient_buffer(src_len, buf_len));
+          return Err(Error::insufficient_buffer(src_len, buf_len));
         }
 
         buf[..src_len].copy_from_slice(src);
@@ -199,22 +195,16 @@ where
         let buf_len = buf.len();
         let src_len = src.len();
         let len_size = varing::encode_u32_varint_to(src_len as u32, buf).map_err(|e| {
-          EncodeError::from_varint_error(e)
+          Error::from_varint_encode_error(e)
             .update(self.encoded_length_delimited_len(context), buf_len)
         })?;
         let total = src_len + len_size;
         if total > buf_len {
-          return Err(EncodeError::insufficient_buffer(
-            src_len + len_size,
-            buf_len,
-          ));
+          return Err(Error::insufficient_buffer(src_len + len_size, buf_len));
         }
 
         if len_size >= buf_len {
-          return Err(EncodeError::insufficient_buffer(
-            src_len + len_size,
-            buf_len,
-          ));
+          return Err(Error::insufficient_buffer(src_len + len_size, buf_len));
         }
         buf[len_size..total].copy_from_slice(src);
         Ok(total)
@@ -274,7 +264,7 @@ impl<'a> Repr<'a> {
     }
   }
 
-  fn decode<T, W, UB>(&mut self, ctx: &Context) -> Option<Result<(usize, T::Output), DecodeError>>
+  fn decode<T, W, UB>(&mut self, ctx: &Context) -> Option<Result<(usize, T::Output), Error>>
   where
     W: sealed::Sealed,
     T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,
@@ -299,7 +289,7 @@ impl<'a> Repr<'a> {
   fn decode_length_delimited<T, W, UB>(
     &mut self,
     ctx: &Context,
-  ) -> Option<Result<(usize, T::Output), DecodeError>>
+  ) -> Option<Result<(usize, T::Output), Error>>
   where
     W: sealed::Sealed,
     T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,

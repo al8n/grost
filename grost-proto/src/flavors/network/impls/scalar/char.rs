@@ -1,6 +1,6 @@
 use crate::{
   decoded_state, default_wire_format, flatten_state,
-  flavors::network::{DecodeError, Fixed32, Network, Varint},
+  flavors::network::{Error, Fixed32, Network, Varint},
   selectable, try_from_bridge,
 };
 
@@ -28,9 +28,9 @@ const fn convert_char_to_u32(v: &char) -> u32 {
 }
 
 #[inline]
-fn convert_u32_to_char(v: u32) -> Result<char, DecodeError> {
+fn convert_u32_to_char(v: u32) -> Result<char, Error> {
   match char::from_u32(v) {
     Some(c) => Ok(c),
-    None => Err(DecodeError::custom("invalid char value")),
+    None => Err(Error::custom("invalid char value")),
   }
 }

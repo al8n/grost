@@ -7,7 +7,7 @@ use crate::{
   flatten_state,
   flavors::{
     Network,
-    network::{Context, DecodeError, EncodeError, LengthDelimited, Unknown},
+    network::{Context, Error, LengthDelimited, Unknown},
   },
   partial_encode_scalar, selectable,
 };
@@ -33,9 +33,9 @@ macro_rules! socket_addr_impl {
     $(
       paste::paste! {
         impl Encode<Network, LengthDelimited> for [< SocketAddrV $variant >] {
-          fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+          fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
             if buf.len() < [< SOCKET_ADDR_V $variant _LEN >] {
-              return Err(EncodeError::insufficient_buffer([< SOCKET_ADDR_V $variant _LEN >], buf.len()));
+              return Err(Error::insufficient_buffer([< SOCKET_ADDR_V $variant _LEN >], buf.len()));
             }
 
             buf[0..[< IPV $variant _LEN >]].copy_from_slice(&self.ip().to_bits().to_le_bytes());
@@ -56,9 +56,9 @@ macro_rules! socket_addr_impl {
             &self,
             ctx: &Context,
             buf: &mut [u8],
-          ) -> Result<usize, EncodeError> {
+          ) -> Result<usize, Error> {
             if buf.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
-              return Err(EncodeError::insufficient_buffer(
+              return Err(Error::insufficient_buffer(
                 [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >],
                 buf.len(),
               ));
@@ -78,13 +78,13 @@ macro_rules! socket_addr_impl {
         }
 
         impl<'de> Decode<'de, Network, LengthDelimited, Self> for [< SocketAddrV $variant >] {
-          fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+          fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
             UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
           {
             if src.len() < [< SOCKET_ADDR_V $variant _LEN >] {
-              return Err(DecodeError::buffer_underflow());
+              return Err(Error::buffer_underflow());
             }
 
             let ip = <$bridge>::from_le_bytes(src[0.. [< IPV $variant _LEN >]].try_into().unwrap());
@@ -96,18 +96,18 @@ macro_rules! socket_addr_impl {
           fn decode_length_delimited<UB>(
             context: &Context,
             src: &'de [u8],
-          ) -> Result<(usize, Self), DecodeError>
+          ) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
             UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
           {
             if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
-              return Err(DecodeError::buffer_underflow());
+              return Err(Error::buffer_underflow());
             }
 
-            let (read, remaining) = varing::decode_u32_varint(src).map_err(|_| DecodeError::buffer_underflow())?;
+            let (read, remaining) = varing::decode_u32_varint(src).map_err(|_| Error::buffer_underflow())?;
             if remaining != [< SOCKET_ADDR_V $variant _LEN >] as u32 {
-              return Err(DecodeError::custom(concat!("invalid socket v", $variant, " address length")));
+              return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
             }
 
             let (len, socket_addr) = <Self as Decode<'_, Network, LengthDelimited, Self>>::decode::<UB>(context, &src[read..])?;
@@ -151,12 +151,12 @@ decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     macro_rules! encode_addr {
       ($addr:ident, $variant:literal) => {{
         paste::paste! {
           if buf.len() < 1 + [< SOCKET_ADDR_V $variant _LEN>] {
-            return Err(EncodeError::insufficient_buffer(
+            return Err(Error::insufficient_buffer(
               1 + [< SOCKET_ADDR_V $variant _LEN>],
               buf.len(),
             ));
@@ -191,11 +191,7 @@ impl Encode<Network, LengthDelimited> for SocketAddr {
     }
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     match self {
       Self::V4(addr) => {
         <SocketAddrV4 as Encode<Network, LengthDelimited>>::encode_length_delimited(
@@ -212,14 +208,14 @@ impl Encode<Network, LengthDelimited> for SocketAddr {
 }
 
 impl<'de> Decode<'de, Network, LengthDelimited, Self> for SocketAddr {
-  fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
     let len = src.len();
     if len == 0 {
-      return Err(DecodeError::buffer_underflow());
+      return Err(Error::buffer_underflow());
     }
 
     let tag = src[0];
@@ -239,14 +235,11 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for SocketAddr {
     match tag {
       4 => decode_addr!(4, src),
       6 => decode_addr!(6, src),
-      _ => Err(DecodeError::custom("invalid socket address variant")),
+      _ => Err(Error::custom("invalid socket address variant")),
     }
   }
 
-  fn decode_length_delimited<UB>(
-    context: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -260,12 +253,11 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for SocketAddr {
       }};
     }
 
-    let (read, len) =
-      varing::decode_u32_varint(src).map_err(|_| DecodeError::buffer_underflow())?;
+    let (read, len) = varing::decode_u32_varint(src).map_err(|_| Error::buffer_underflow())?;
     match len as usize {
       SOCKET_ADDR_V4_LEN => decode_addr!(read, 4),
       SOCKET_ADDR_V6_LEN => decode_addr!(read, 6),
-      _ => Err(DecodeError::custom("invalid socket address length")),
+      _ => Err(Error::custom("invalid socket address length")),
     }
   }
 }

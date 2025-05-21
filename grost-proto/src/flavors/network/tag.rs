@@ -1,6 +1,6 @@
 use crate::selectable;
 
-use super::{DecodeError, Network};
+use super::{Error, Network};
 
 /// Invalid tag error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -77,13 +77,13 @@ impl Tag {
 
   /// Decodes the tag from bytes slice.
   #[inline]
-  pub const fn decode(bytes: &[u8]) -> Result<(usize, Self), DecodeError> {
+  pub const fn decode(bytes: &[u8]) -> Result<(usize, Self), Error> {
     match varing::decode_u32_varint(bytes) {
       Ok((len, tag)) => match Self::try_new(tag) {
         Ok(tag) => Ok((len, tag)),
-        Err(e) => Err(DecodeError::parse_tag_error(e)),
+        Err(e) => Err(Error::parse_tag_error(e)),
       },
-      Err(e) => Err(DecodeError::from_varint_error(e)),
+      Err(e) => Err(Error::from_varint_decode_error(e)),
     }
   }
 }

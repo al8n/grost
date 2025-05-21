@@ -5,10 +5,6 @@ use super::{
   flavors::Flavor,
 };
 
-pub use error::DecodeError;
-
-mod error;
-
 /// A trait for types that can be decoded from bytes with a lifetime.
 ///
 /// This trait provides methods to decode data from byte slices,
@@ -24,7 +20,7 @@ where
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
+  fn decode<UB>(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
@@ -36,7 +32,7 @@ where
   fn decode_length_delimited<UB>(
     context: &F::Context,
     src: &'de [u8],
-  ) -> Result<(usize, O), F::DecodeError>
+  ) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     UB: Buffer<F::Unknown<&'de [u8]>> + 'de;
@@ -58,7 +54,7 @@ where
   ///
   /// The function consumes the entire buffer and returns both the
   /// number of bytes consumed and the decoded instance.
-  fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, O), F::DecodeError>
+  fn decode_owned<B, UB>(context: &F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'static,
     B: BytesBuffer + 'static,
@@ -71,7 +67,7 @@ where
   fn decode_length_delimited_owned<B, UB>(
     context: &F::Context,
     src: B,
-  ) -> Result<(usize, O), F::DecodeError>
+  ) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'static,
     B: BytesBuffer + 'static,
@@ -158,7 +154,7 @@ macro_rules! deref_decode_impl {
         W: WireFormat<F>,
         T: Decode<'de, F, W, O> + ?Sized,
       {
-        fn decode<UB>(context: &<F as Flavor>::Context, src: &'de [u8]) -> Result<(usize, O), <F as Flavor>::DecodeError>
+        fn decode<UB>(context: &<F as Flavor>::Context, src: &'de [u8]) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
           UB: Buffer<<F as Flavor>::Unknown<&'de [u8]>> + 'de
@@ -169,7 +165,7 @@ macro_rules! deref_decode_impl {
         fn decode_length_delimited<UB>(
           context: &<F as Flavor>::Context,
           src: &'de [u8],
-        ) -> Result<(usize, O), <F as Flavor>::DecodeError>
+        ) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
           UB: Buffer<<F as Flavor>::Unknown<&'de [u8]>> + 'de
@@ -191,7 +187,7 @@ macro_rules! deref_decode_owned_impl {
         W: WireFormat<F>,
         T: DecodeOwned<F, W, O> + ?Sized,
       {
-        fn decode_owned<B, UB>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::DecodeError>
+        fn decode_owned<B, UB>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'static,
           B: BytesBuffer + 'static,
@@ -203,7 +199,7 @@ macro_rules! deref_decode_owned_impl {
         fn decode_length_delimited_owned<B, UB>(
           context: &<F as Flavor>::Context,
           src: B,
-        ) -> Result<(usize, O), <F as Flavor>::DecodeError>
+        ) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'static,
           B: BytesBuffer + 'static,

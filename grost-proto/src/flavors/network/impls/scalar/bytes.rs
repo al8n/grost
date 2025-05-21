@@ -51,7 +51,7 @@ macro_rules! array_bytes {
         &self,
         context: &$crate::__private::flavors::network::Context,
         buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
         <[::core::primitive::u8] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::encode(
           self.as_slice(),
           context,
@@ -63,7 +63,7 @@ macro_rules! array_bytes {
         &self,
         context: &$crate::__private::flavors::network::Context,
         buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
         <[::core::primitive::u8] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::encode_length_delimited(
           self.as_slice(),
           context,
@@ -106,7 +106,7 @@ macro_rules! array_bytes {
       fn decode<UB>(
         context: &$crate::__private::flavors::network::Context,
         src: &'de [::core::primitive::u8],
-      ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+      ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
       where
         Self: ::core::marker::Sized + 'de,
         UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>>,
@@ -120,7 +120,7 @@ macro_rules! array_bytes {
       fn decode_length_delimited<UB>(
         context: &$crate::__private::flavors::network::Context,
         src: &'de [::core::primitive::u8],
-      ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+      ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
       where
         Self: ::core::marker::Sized + 'de,
         UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>>,
@@ -150,16 +150,16 @@ macro_rules! array_bytes {
 
 #[allow(unused)]
 #[cfg(not(any(feature = "std", feature = "alloc")))]
-pub fn larger_than_array_capacity<const N: usize>() -> crate::flavors::network::DecodeError {
-  crate::flavors::network::DecodeError::custom(
+pub fn larger_than_array_capacity<const N: usize>() -> crate::flavors::network::Error {
+  crate::flavors::network::Error::custom(
     "cannot decode array with length greater than the capacity",
   )
 }
 
 #[allow(unused)]
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub fn larger_than_array_capacity<const N: usize>() -> crate::flavors::network::DecodeError {
-  crate::flavors::network::DecodeError::custom(std::format!(
+pub fn larger_than_array_capacity<const N: usize>() -> crate::flavors::network::Error {
+  crate::flavors::network::Error::custom(std::format!(
     "cannot decode array with length greater than the capacity {N}"
   ))
 }

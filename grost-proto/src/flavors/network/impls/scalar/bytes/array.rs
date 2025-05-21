@@ -3,17 +3,15 @@ use crate::{
   decode_owned_scalar,
   encode::Encode,
   flavors::{
-    Network, Selectable,
+    Network,
     network::{
-      Context, DecodeError, EncodeError, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128,
-      LengthDelimited, Unknown,
+      Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Unknown,
     },
   },
-  partial_encode_scalar,
 };
 
 impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N] {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -21,7 +19,7 @@ impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N
     decode_to_array::<N>(src)
   }
 
-  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -31,7 +29,7 @@ impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N
 }
 
 impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), DecodeError>
+  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
@@ -40,10 +38,7 @@ impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
     Self::decode::<()>(context, src.as_bytes())
   }
 
-  fn decode_length_delimited_owned<B, UB>(
-    context: &Context,
-    src: B,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
     B: crate::buffer::BytesBuffer + 'static,
@@ -57,7 +52,7 @@ macro_rules! encode_fixed {
   ($this:ident($buf:ident) as $fixed:literal) => {{
     let buf_len = $buf.len();
     if buf_len < $fixed {
-      return Err(EncodeError::insufficient_buffer($fixed, buf_len));
+      return Err(Error::insufficient_buffer($fixed, buf_len));
     }
     $buf[..$fixed].copy_from_slice($this.as_slice());
     $fixed
@@ -67,7 +62,7 @@ macro_rules! encode_fixed {
 macro_rules! decode_fixed {
   ($size:literal:$src:ident) => {{
     if $src.len() < $size {
-      return Err(DecodeError::buffer_underflow());
+      return Err(Error::buffer_underflow());
     }
     ($size, $src[..$size].try_into().unwrap())
   }};
@@ -77,7 +72,7 @@ macro_rules! impl_fixed {
   ($($wt:ident($size:literal)),+$(,)?) => {
     $(
       impl Encode<Network, $wt> for [u8; $size] {
-        fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+        fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
           Ok(encode_fixed!(self(buf) as $size))
         }
 
@@ -96,7 +91,7 @@ macro_rules! impl_fixed {
           &self,
           ctx: &Context,
           buf: &mut [u8],
-        ) -> Result<usize, EncodeError> {
+        ) -> Result<usize, Error> {
           <Self as Encode<Network, $wt>>::encode(self, ctx, buf)
         }
       }
@@ -107,7 +102,7 @@ macro_rules! impl_fixed {
         fn decode<UB>(
           _: &Context,
           src: &'de [u8],
-        ) -> Result<(usize, Self), DecodeError>
+        ) -> Result<(usize, Self), Error>
         where
           Self: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -118,7 +113,7 @@ macro_rules! impl_fixed {
         fn decode_length_delimited<UB>(
           ctx: &Context,
           src: &'de [u8],
-        ) -> Result<(usize, Self), DecodeError>
+        ) -> Result<(usize, Self), Error>
         where
           Self: Sized + 'de,
           UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
@@ -135,7 +130,7 @@ macro_rules! impl_fixed {
 impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
 
 #[inline]
-fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), DecodeError> {
+fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
   if N == 0 {
     return Ok((0, [0u8; N]));
   }
@@ -148,9 +143,7 @@ fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Decod
 }
 
 #[inline]
-fn decode_length_delimited_to_array<const N: usize>(
-  src: &[u8],
-) -> Result<(usize, [u8; N]), DecodeError> {
+fn decode_length_delimited_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
   if N == 0 {
     return Ok((0, [0u8; N]));
   }
@@ -158,7 +151,7 @@ fn decode_length_delimited_to_array<const N: usize>(
   let (size_len, size) = varing::decode_u32_varint(src)?;
   let end = size_len + size as usize;
   if end > src.len() {
-    return Err(DecodeError::buffer_underflow());
+    return Err(Error::buffer_underflow());
   }
 
   if end < N {
@@ -169,13 +162,13 @@ fn decode_length_delimited_to_array<const N: usize>(
 }
 
 #[cfg(not(any(feature = "std", feature = "alloc")))]
-fn larger_than_array_capacity<const N: usize>() -> DecodeError {
-  DecodeError::custom("cannot decode array with length greater than the capacity")
+fn larger_than_array_capacity<const N: usize>() -> Error {
+  Error::custom("cannot decode array with length greater than the capacity")
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-fn larger_than_array_capacity<const N: usize>() -> DecodeError {
-  DecodeError::custom(std::format!(
+fn larger_than_array_capacity<const N: usize>() -> Error {
+  Error::custom(std::format!(
     "cannot decode array with length greater than the capacity {N}"
   ))
 }

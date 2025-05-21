@@ -50,7 +50,7 @@ macro_rules! varint {
     }
   };
   (@encode_impl $flavor:ty:$wf:ty) => {
-    fn encode(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    fn encode(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
     }
 
@@ -58,7 +58,7 @@ macro_rules! varint {
       $crate::__private::varing::Varint::encoded_len(self)
     }
 
-    fn encode_length_delimited(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    fn encode_length_delimited(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       <Self as $crate::__private::Encode<$flavor, $wf>>::encode(self, ctx, buf)
     }
 
@@ -72,7 +72,7 @@ macro_rules! varint {
     }
   };
   (@decode_impl $flavor:ty:$wf:ty) => {
-    fn decode<UB>(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    fn decode<UB>(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -80,7 +80,7 @@ macro_rules! varint {
       $crate::__private::varing::Varint::decode(src).map_err(::core::convert::Into::into)
     }
 
-    fn decode_length_delimited<UB>(ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    fn decode_length_delimited<UB>(ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: &'de [::core::primitive::u8]) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -94,7 +94,7 @@ macro_rules! varint {
 #[macro_export]
 macro_rules! partial_encode_scalar {
   (@impl $flavor:ty as $format:ty) => {
-    fn partial_encode(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    fn partial_encode(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       if *s {
         <Self as $crate::__private::Encode<$flavor, $format>>::encode(self, context, buf)
       } else {
@@ -110,7 +110,7 @@ macro_rules! partial_encode_scalar {
       }
     }
 
-    fn partial_encode_length_delimited(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    fn partial_encode_length_delimited(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       if *s {
         <Self as $crate::__private::Encode<$flavor, $format>>::encode_length_delimited(self, context, buf)
       } else {
@@ -442,7 +442,7 @@ macro_rules! encode_bridge {
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       <$bridge as $crate::__private::Encode<$flavor, $format>>::encode(&$to(self), context, buf)
     }
 
@@ -454,7 +454,7 @@ macro_rules! encode_bridge {
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       <$bridge as $crate::__private::Encode<$flavor, $format>>::encode_length_delimited(&$to(self), context, buf)
     }
 
@@ -483,7 +483,7 @@ macro_rules! encode_bridge {
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       buf: &mut [::core::primitive::u8],
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       <$bridge as $crate::__private::PartialEncode<$flavor, $format>>::partial_encode(&$to(self), context, buf, selector)
     }
 
@@ -500,7 +500,7 @@ macro_rules! encode_bridge {
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       buf: &mut [::core::primitive::u8],
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::EncodeError> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       <$bridge as $crate::__private::PartialEncode<$flavor, $format>>::partial_encode_length_delimited(&$to(self), context, buf, selector)
     }
 
@@ -552,7 +552,7 @@ macro_rules! decode_bridge {
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
 
       src: &'de [::core::primitive::u8],
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -563,7 +563,7 @@ macro_rules! decode_bridge {
     fn decode_length_delimited<UB>(
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: &'de [::core::primitive::u8],
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -599,7 +599,7 @@ macro_rules! decode_owned_bridge {
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
 
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -613,7 +613,7 @@ macro_rules! decode_owned_bridge {
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
 
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -643,7 +643,7 @@ macro_rules! decode_owned_scalar {
     fn decode_owned<B, UB>(
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -655,7 +655,7 @@ macro_rules! decode_owned_scalar {
     fn decode_length_delimited_owned<B, UB>(
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -713,7 +713,7 @@ macro_rules! try_decode_bridge {
     fn decode<UB>(
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: &'de [::core::primitive::u8],
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -724,7 +724,7 @@ macro_rules! try_decode_bridge {
     fn decode_length_delimited<UB>(
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: &'de [::core::primitive::u8],
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -773,7 +773,7 @@ macro_rules! try_decode_owned_bridge {
     fn decode_owned<B, UB>(
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -786,7 +786,7 @@ macro_rules! try_decode_owned_bridge {
     fn decode_length_delimited_owned<B, UB>(
       ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
-    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::DecodeError>
+    ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'static,
       B: $crate::__private::BytesBuffer + 'static,
@@ -850,7 +850,7 @@ macro_rules! network_zst {
           &self,
           _: &$crate::__private::flavors::network::Context,
           _: &mut [::core::primitive::u8]
-        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
           ::core::result::Result::Ok(0)
         }
 
@@ -859,7 +859,7 @@ macro_rules! network_zst {
           &self,
           _: &$crate::__private::flavors::network::Context,
           _: &mut [::core::primitive::u8]
-        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
           ::core::result::Result::Ok(0)
         }
 
@@ -884,7 +884,7 @@ macro_rules! network_zst {
         fn decode<UB>(
           _: &$crate::__private::flavors::network::Context,
           _: &'de [::core::primitive::u8],
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'de,
           UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -895,7 +895,7 @@ macro_rules! network_zst {
         fn decode_length_delimited<UB>(
           ctx: &$crate::__private::flavors::network::Context,
           src: &'de [::core::primitive::u8],
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'de,
           UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -906,7 +906,7 @@ macro_rules! network_zst {
       }
 
       impl $crate::__private::DecodeOwned<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst, Self> for $ty {
-        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'static,
           B: $crate::__private::BytesBuffer + 'static,
@@ -916,7 +916,7 @@ macro_rules! network_zst {
             .map(|(n, _)| (n, ::core::default::Default::default()))
         }
 
-        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'static,
           B: $crate::__private::BytesBuffer + 'static,
@@ -970,7 +970,7 @@ macro_rules! network_phantom {
           &self,
           _: &$crate::__private::flavors::network::Context,
           _: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
           ::core::result::Result::Ok(0)
         }
 
@@ -987,7 +987,7 @@ macro_rules! network_phantom {
           &self,
           _: &$crate::__private::flavors::network::Context,
           _: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::network::Error> {
           ::core::result::Result::Ok(0)
         }
 
@@ -1012,7 +1012,7 @@ macro_rules! network_phantom {
         fn decode<UB>(
           _: &$crate::__private::flavors::network::Context,
           _: &'de [::core::primitive::u8],
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'de,
           UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -1023,7 +1023,7 @@ macro_rules! network_phantom {
         fn decode_length_delimited<UB>(
           ctx: &$crate::__private::flavors::network::Context,
           src: &'de [::core::primitive::u8],
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'de,
           UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<&'de [::core::primitive::u8]>> + 'de,
@@ -1033,7 +1033,7 @@ macro_rules! network_phantom {
       }
 
       impl<T: ?::core::marker::Sized + 'static> $crate::__private::DecodeOwned<$crate::__private::flavors::Network, $crate::__private::flavors::network::Zst, Self> for $ty {
-        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        fn decode_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'static,
           B: $crate::__private::BytesBuffer + 'static,
@@ -1042,7 +1042,7 @@ macro_rules! network_phantom {
           <Self as $crate::__private::Decode<'_, $crate::__private::flavors::Network, $crate::__private::flavors::network::Zst, Self>>::decode::<()>(ctx, src.as_bytes())
         }
 
-        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::DecodeError>
+        fn decode_length_delimited_owned<B, UB>(ctx: &$crate::__private::flavors::network::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: ::core::marker::Sized + 'static,
           B: $crate::__private::BytesBuffer + 'static,

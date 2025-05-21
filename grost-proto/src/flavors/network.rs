@@ -1,5 +1,5 @@
 pub use context::Context;
-pub use error::{DecodeError, EncodeError};
+pub use error::{Error, ParseTagError};
 pub use identifier::Identifier;
 pub use impls::RepeatedDecoder;
 pub use tag::Tag;
@@ -30,8 +30,7 @@ impl Flavor for Network {
   type Identifier = Identifier;
   type WireType = WireType;
   type Tag = Tag;
-  type EncodeError = EncodeError;
-  type DecodeError = DecodeError;
+  type Error = Error;
   type Unknown<B> = Unknown<B>;
 
   const NAME: &'static str = "Network";
@@ -40,14 +39,14 @@ impl Flavor for Network {
     _: &Self::Context,
     value: &Self::Unknown<B>,
     buf: &mut [u8],
-  ) -> Result<usize, Self::EncodeError>
+  ) -> Result<usize, Self::Error>
   where
     B: BytesBuffer + Sized,
   {
     let value_bytes = value.raw();
     let value_len = value_bytes.len();
     if value_len > buf.len() {
-      return Err(EncodeError::insufficient_buffer(value_len, buf.len()));
+      return Err(Error::insufficient_buffer(value_len, buf.len()));
     }
 
     buf[..value_len].copy_from_slice(value_bytes);
@@ -61,10 +60,7 @@ impl Flavor for Network {
     value.raw().len()
   }
 
-  fn decode_unknown<B>(
-    _: &Self::Context,
-    buf: B,
-  ) -> Result<(usize, Self::Unknown<B>), Self::DecodeError>
+  fn decode_unknown<B>(_: &Self::Context, buf: B) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
     B: BytesBuffer + Sized,
   {
@@ -85,7 +81,7 @@ impl Flavor for Network {
       ($size:literal, $offset:ident, $buf_len:ident) => {{
         let end = $offset + $size;
         if end > $buf_len {
-          return Err(DecodeError::buffer_underflow());
+          return Err(Error::buffer_underflow());
         }
 
         Ok((
@@ -100,7 +96,7 @@ impl Flavor for Network {
     match identifier.wire_type() {
       WireType::LengthDelimited => {
         if offset >= buf_len {
-          return Err(DecodeError::buffer_underflow());
+          return Err(Error::buffer_underflow());
         }
 
         let (size_len, size) = varing::decode_u32_varint(&src[offset..])?;
@@ -108,7 +104,7 @@ impl Flavor for Network {
         let end = offset + size as usize;
 
         if end > buf_len {
-          return Err(DecodeError::buffer_underflow());
+          return Err(Error::buffer_underflow());
         }
 
         Ok((
@@ -118,7 +114,7 @@ impl Flavor for Network {
       }
       WireType::Varint => {
         if offset >= buf_len {
-          return Err(DecodeError::buffer_underflow());
+          return Err(Error::buffer_underflow());
         }
 
         let size_len = varing::consume_varint(&src[offset..])?;

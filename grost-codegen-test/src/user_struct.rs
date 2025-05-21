@@ -4739,14 +4739,14 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.name {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -4772,7 +4772,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.age {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -4797,7 +4797,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -4879,7 +4879,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -4891,7 +4891,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -4908,7 +4908,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -4961,13 +4961,13 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -4996,7 +4996,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5020,7 +5020,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5098,7 +5098,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -5110,7 +5110,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -5127,7 +5127,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5183,14 +5183,14 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.name {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5221,7 +5221,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.age {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5246,7 +5246,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5328,7 +5328,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -5340,7 +5340,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -5357,7 +5357,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5406,13 +5406,13 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5436,7 +5436,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5460,7 +5460,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5521,7 +5521,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -5533,7 +5533,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -5546,7 +5546,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5592,14 +5592,14 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.name {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5625,7 +5625,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.age {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5650,7 +5650,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5715,7 +5715,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -5727,7 +5727,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -5740,7 +5740,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5788,14 +5788,14 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.name {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5821,7 +5821,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.age {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -5846,7 +5846,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5911,7 +5911,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -5923,7 +5923,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -5936,7 +5936,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -5980,7 +5980,7 @@ const _: () = {
             >>::Selector,
         >,
         buf_len: ::core::primitive::usize,
-    ) -> ::grost::__private::flavors::network::EncodeError
+    ) -> ::grost::__private::flavors::network::Error
     where
         T: ::grost::__private::PartialEncode<::grost::__private::flavors::Network, W>
             + ::grost::__private::Encode<::grost::__private::flavors::Network, W>
@@ -5990,7 +5990,7 @@ const _: () = {
     {
         match selector {
             ::core::option::Option::Some(selector) => {
-                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                ::grost::__private::flavors::network::Error::insufficient_buffer(
                     <T as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::Network,
                         W,
@@ -5999,7 +5999,7 @@ const _: () = {
                 )
             }
             ::core::option::Option::None => {
-                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                ::grost::__private::flavors::network::Error::insufficient_buffer(
                     <T as ::grost::__private::Encode<
                         ::grost::__private::flavors::Network,
                         W,
@@ -6033,7 +6033,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6048,7 +6048,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -6070,7 +6070,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6085,7 +6085,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6205,7 +6205,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6214,7 +6214,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -6236,7 +6236,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6251,7 +6251,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6373,7 +6373,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6396,7 +6396,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<User>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -6418,7 +6418,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6433,7 +6433,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6545,7 +6545,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6562,7 +6562,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<User>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -6584,7 +6584,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6599,7 +6599,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6649,7 +6649,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6664,7 +6664,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -6686,7 +6686,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6701,7 +6701,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -6821,7 +6821,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -6830,7 +6830,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -6852,7 +6852,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6867,7 +6867,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -6989,7 +6989,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7012,7 +7012,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<User>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -7034,7 +7034,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -7049,7 +7049,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -7161,7 +7161,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7178,7 +7178,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<User>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -7200,7 +7200,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -7215,7 +7215,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -7269,7 +7269,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7288,7 +7288,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -7313,7 +7313,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -7330,7 +7330,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -7483,7 +7483,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7492,7 +7492,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: UserFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -7517,7 +7517,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -7534,7 +7534,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -7701,7 +7701,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7734,7 +7734,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::None => ::core::result::Result::Ok(0),
@@ -7759,7 +7759,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -7776,7 +7776,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -7927,7 +7927,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -7950,7 +7950,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::Some(f) => {
@@ -7974,7 +7974,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),
@@ -7991,7 +7991,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),
@@ -13067,14 +13067,14 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.user {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -13099,7 +13099,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13129,7 +13129,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.title {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -13154,7 +13154,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13240,7 +13240,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -13252,7 +13252,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -13269,7 +13269,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13322,13 +13322,13 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13357,7 +13357,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13386,7 +13386,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13415,7 +13415,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13497,7 +13497,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -13509,7 +13509,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -13526,7 +13526,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13582,14 +13582,14 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.user {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -13619,7 +13619,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13649,7 +13649,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.title {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::PartialEncode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -13679,7 +13679,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13765,7 +13765,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::PartialEncode<
                 ::grost::__private::flavors::Network,
@@ -13777,7 +13777,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -13794,7 +13794,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::PartialEncode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13843,13 +13843,13 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13873,7 +13873,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13897,7 +13897,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13921,7 +13921,7 @@ const _: () = {
                     })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -13986,7 +13986,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -13998,7 +13998,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -14011,7 +14011,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14057,14 +14057,14 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.user {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -14089,7 +14089,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14114,7 +14114,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.title {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -14139,7 +14139,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14208,7 +14208,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -14220,7 +14220,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -14233,7 +14233,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14281,14 +14281,14 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let mut offset = 0;
             let buf_len = buf.len();
             if let ::core::option::Option::Some(ref f) = self.user {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -14313,7 +14313,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14338,7 +14338,7 @@ const _: () = {
             if let ::core::option::Option::Some(ref f) = self.title {
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             <Self as ::grost::__private::Encode<
                                 ::grost::__private::flavors::Network,
                                 ::grost::__private::flavors::network::LengthDelimited,
@@ -14363,7 +14363,7 @@ const _: () = {
             }
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14432,7 +14432,7 @@ const _: () = {
             buf: &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::EncodeError,
+            <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
         > {
             let encoded_len = <Self as ::grost::__private::Encode<
                 ::grost::__private::flavors::Network,
@@ -14444,7 +14444,7 @@ const _: () = {
                     buf,
                 )
                 .map_err(|e| {
-                    ::grost::__private::flavors::network::EncodeError::from_varint_error(
+                    ::grost::__private::flavors::network::Error::from_varint_error(
                             e,
                         )
                         .update(
@@ -14457,7 +14457,7 @@ const _: () = {
                 })?;
             if offset >= buf_len {
                 return ::core::result::Result::Err(
-                    ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                    ::grost::__private::flavors::network::Error::insufficient_buffer(
                         <Self as ::grost::__private::Encode<
                             ::grost::__private::flavors::Network,
                             ::grost::__private::flavors::network::LengthDelimited,
@@ -14501,7 +14501,7 @@ const _: () = {
             >>::Selector,
         >,
         buf_len: ::core::primitive::usize,
-    ) -> ::grost::__private::flavors::network::EncodeError
+    ) -> ::grost::__private::flavors::network::Error
     where
         T: ::grost::__private::PartialEncode<::grost::__private::flavors::Network, W>
             + ::grost::__private::Encode<::grost::__private::flavors::Network, W>
@@ -14511,7 +14511,7 @@ const _: () = {
     {
         match selector {
             ::core::option::Option::Some(selector) => {
-                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                ::grost::__private::flavors::network::Error::insufficient_buffer(
                     <T as ::grost::__private::PartialEncode<
                         ::grost::__private::flavors::Network,
                         W,
@@ -14520,7 +14520,7 @@ const _: () = {
                 )
             }
             ::core::option::Option::None => {
-                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                ::grost::__private::flavors::network::Error::insufficient_buffer(
                     <T as ::grost::__private::Encode<
                         ::grost::__private::flavors::Network,
                         W,
@@ -14554,7 +14554,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -14569,7 +14569,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -14591,7 +14591,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -14606,7 +14606,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -14726,7 +14726,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -14735,7 +14735,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -14757,7 +14757,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -14772,7 +14772,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -14894,7 +14894,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -14917,7 +14917,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<Comment>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -14939,7 +14939,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -14954,7 +14954,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -15066,7 +15066,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15083,7 +15083,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<Comment>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -15105,7 +15105,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -15120,7 +15120,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -15174,7 +15174,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15193,7 +15193,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -15218,7 +15218,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -15235,7 +15235,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -15388,7 +15388,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15397,7 +15397,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -15422,7 +15422,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -15439,7 +15439,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -15606,7 +15606,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15639,7 +15639,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::None => ::core::result::Result::Ok(0),
@@ -15666,7 +15666,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -15683,7 +15683,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -15834,7 +15834,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15857,7 +15857,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::Some(f) => {
@@ -15883,7 +15883,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),
@@ -15900,7 +15900,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),
@@ -15959,7 +15959,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -15974,7 +15974,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -15996,7 +15996,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -16011,7 +16011,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -16131,7 +16131,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -16140,7 +16140,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -16162,7 +16162,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -16177,7 +16177,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -16299,7 +16299,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -16322,7 +16322,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<Comment>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -16344,7 +16344,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -16359,7 +16359,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx, selector),
                             buf_len,
                         ),
@@ -16471,7 +16471,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -16488,7 +16488,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 let identifier_len = *<Comment>::reflection::<
                     ::grost::__private::flavors::Network,
@@ -16510,7 +16510,7 @@ const _: () = {
                 let mut offset = 0;
                 if offset > buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -16525,7 +16525,7 @@ const _: () = {
                 offset += identifier_len;
                 if offset >= buf_len {
                     return ::core::result::Result::Err(
-                        ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                        ::grost::__private::flavors::network::Error::insufficient_buffer(
                             (ENCODED_LEN_FN)(f, ctx),
                             buf_len,
                         ),
@@ -16579,7 +16579,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -16598,7 +16598,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -16623,7 +16623,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -16640,7 +16640,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx, selector),
                                     buf_len,
                                 ),
@@ -16793,7 +16793,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -16802,7 +16802,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 const ENCODED_LEN_FN: CommentFieldReflection<
                     ::grost::__private::reflection::encode::EncodeReflection<
@@ -16827,7 +16827,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -16844,7 +16844,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(f, ctx),
                                     buf_len,
                                 ),
@@ -17011,7 +17011,7 @@ const _: () = {
             >>::Selector,
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -17044,7 +17044,7 @@ const _: () = {
                 >>::Selector,
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::None => ::core::result::Result::Ok(0),
@@ -17071,7 +17071,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -17088,7 +17088,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx, selector),
                                     buf_len,
                                 ),
@@ -17239,7 +17239,7 @@ const _: () = {
             &mut [::core::primitive::u8],
         ) -> ::core::result::Result<
             ::core::primitive::usize,
-            ::grost::__private::flavors::network::EncodeError,
+            ::grost::__private::flavors::network::Error,
         >;
         const REFLECTION: &Self::Reflection = &{
             fn encode(
@@ -17262,7 +17262,7 @@ const _: () = {
                 buf: &mut [::core::primitive::u8],
             ) -> ::core::result::Result<
                 ::core::primitive::usize,
-                ::grost::__private::flavors::network::EncodeError,
+                ::grost::__private::flavors::network::Error,
             > {
                 match field {
                     ::core::option::Option::Some(f) => {
@@ -17288,7 +17288,7 @@ const _: () = {
                         let mut offset = 0;
                         if offset > buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),
@@ -17305,7 +17305,7 @@ const _: () = {
                         offset += identifier_len;
                         if offset >= buf_len {
                             return ::core::result::Result::Err(
-                                ::grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                                ::grost::__private::flavors::network::Error::insufficient_buffer(
                                     (ENCODED_LEN_FN)(field, ctx),
                                     buf_len,
                                 ),

@@ -5,7 +5,7 @@ const _: () = {
     default_wire_format,
     flavors::{
       Network,
-      network::{DecodeError, LengthDelimited},
+      network::{Error, LengthDelimited},
     },
   };
 
@@ -50,13 +50,13 @@ const _: () = {
     Network:
       Regex {
         from_str: |s: &str| {
-          Regex::new(s).map_err(|_| DecodeError::custom(ERR_MSG))
+          Regex::new(s).map_err(|_| Error::custom(ERR_MSG))
         };
         as_str: Regex::as_str;
       },
       BytesRegex {
         from_str: |s: &str| {
-          BytesRegex::new(s).map_err(|_| DecodeError::custom(ERR_MSG))
+          BytesRegex::new(s).map_err(|_| Error::custom(ERR_MSG))
         };
         as_str: BytesRegex::as_str;
       },

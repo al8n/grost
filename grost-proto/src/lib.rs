@@ -31,6 +31,8 @@ pub mod buffer;
 pub mod decode;
 /// The encoding trait
 pub mod encode;
+/// The error types
+pub mod error;
 
 /// The indexing related types and traits
 pub mod indexer;

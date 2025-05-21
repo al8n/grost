@@ -87,19 +87,19 @@ impl Identifier {
 
   /// Encodes the identifier.
   #[inline]
-  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
     match self.encode_to_inner(dst) {
       Ok(bytes_written) => Ok(bytes_written),
-      Err(e) => Err(super::EncodeError::from_varint_error(e)),
+      Err(e) => Err(super::Error::from_varint_encode_error(e)),
     }
   }
 
   /// Decodes an identifier from a buffer.
   #[inline]
-  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::DecodeError> {
+  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::Error> {
     match Self::decode_inner(buf) {
       Ok((bytes_read, value)) => Ok((bytes_read, value)),
-      Err(e) => Err(super::DecodeError::from_varint_error(e)),
+      Err(e) => Err(super::Error::from_varint_decode_error(e)),
     }
   }
 
@@ -147,7 +147,7 @@ impl crate::flavors::Identifier<super::Network> for Identifier {
     self.wire_type
   }
 
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
     self.encode_to(dst)
   }
 
@@ -155,7 +155,7 @@ impl crate::flavors::Identifier<super::Network> for Identifier {
     self.encoded_len()
   }
 
-  fn decode<B>(buf: B) -> Result<(usize, Self), super::DecodeError>
+  fn decode<B>(buf: B) -> Result<(usize, Self), super::Error>
   where
     B: crate::buffer::BytesBuffer + Sized,
     Self: Sized,

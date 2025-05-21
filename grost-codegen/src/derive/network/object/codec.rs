@@ -66,7 +66,7 @@ impl Network {
         ctx: &<#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Context,
         selector: ::core::option::Option<&<T as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, W>>::Selector>,
         buf_len: ::core::primitive::usize,
-      ) -> #path_to_grost::__private::flavors::network::EncodeError
+      ) -> #path_to_grost::__private::flavors::network::Error
       where
         T: #path_to_grost::__private::PartialEncode<
             #path_to_grost::__private::flavors::Network,
@@ -84,7 +84,7 @@ impl Network {
       {
         match selector {
           ::core::option::Option::Some(selector) => {
-            #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
               <T as #path_to_grost::__private::PartialEncode<
                 #path_to_grost::__private::flavors::Network,
                 W,
@@ -93,7 +93,7 @@ impl Network {
             )
           }
           ::core::option::Option::None => {
-            #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
               <T as #path_to_grost::__private::Encode<
                 #path_to_grost::__private::flavors::Network,
                 W,
@@ -137,7 +137,7 @@ impl Network {
     };
 
     let reflection = quote! {
-      fn(&#ty, &#path_to_grost::__private::flavors::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      fn(&#ty, &#path_to_grost::__private::flavors::network::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
     };
     let fn_impl = if ty.repr().is_optional() {
       let atomic_ty = ty.repr().encode_atomic_ty();
@@ -146,7 +146,7 @@ impl Network {
           f: &::core::option::Option<#atomic_ty>,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error> {
           #encoded_len_fn
 
           #encoded_identifier_len
@@ -158,7 +158,7 @@ impl Network {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(f, ctx),
                     buf_len,
                   ),
@@ -170,7 +170,7 @@ impl Network {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(f, ctx),
                     buf_len,
                   ),
@@ -197,7 +197,7 @@ impl Network {
           f: &#ty,
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error> {
           #encoded_len_fn
 
           #encoded_identifier_len
@@ -206,7 +206,7 @@ impl Network {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -218,7 +218,7 @@ impl Network {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -299,7 +299,7 @@ impl Network {
         &#path_to_grost::__private::flavors::network::Context,
         &mut [::core::primitive::u8],
         &<#rust_ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
-      ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
     };
 
     let fn_impl = if ty.repr().is_optional() {
@@ -310,7 +310,7 @@ impl Network {
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
           selector: &<#rust_ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error> {
           #encoded_len_fn
 
           #encoded_identifier_len
@@ -322,7 +322,7 @@ impl Network {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(f, ctx, selector),
                     buf_len,
                   ),
@@ -334,7 +334,7 @@ impl Network {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(f, ctx, selector),
                     buf_len,
                   ),
@@ -363,7 +363,7 @@ impl Network {
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: &mut [::core::primitive::u8],
           selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error> {
           #encoded_len_fn
 
           #encoded_identifier_len
@@ -372,7 +372,7 @@ impl Network {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -384,7 +384,7 @@ impl Network {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -615,7 +615,7 @@ impl Network {
     let ty = f.ty();
     let optional = ty.repr().is_optional();
     let ret = quote! {
-      ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
     };
 
     let encoded_identifier = quote! {
@@ -659,7 +659,7 @@ impl Network {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(field, ctx, selector),
                     buf_len,
                   ),
@@ -671,7 +671,7 @@ impl Network {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(field, ctx, selector),
                     buf_len,
                   ),
@@ -721,7 +721,7 @@ impl Network {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -733,7 +733,7 @@ impl Network {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -778,7 +778,7 @@ impl Network {
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
       }
     } else {
       quote! {
@@ -793,7 +793,7 @@ impl Network {
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
           &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #wf>>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
       }
     };
 
@@ -972,7 +972,7 @@ impl Network {
     let ty = f.ty();
     let optional = ty.repr().is_optional();
     let ret = quote! {
-      ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+      ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
     };
 
     let encoded_identifier = quote! {
@@ -1014,7 +1014,7 @@ impl Network {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(field, ctx),
                     buf_len,
                   ),
@@ -1026,7 +1026,7 @@ impl Network {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                  #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                     (ENCODED_LEN_FN)(field, ctx),
                     buf_len,
                   ),
@@ -1075,7 +1075,7 @@ impl Network {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -1087,7 +1087,7 @@ impl Network {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -1130,7 +1130,7 @@ impl Network {
           >>::Output>,
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
       }
     } else {
       quote! {
@@ -1144,7 +1144,7 @@ impl Network {
           >>::Output,
           &#path_to_grost::__private::flavors::network::Context,
           &mut [::core::primitive::u8],
-        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::EncodeError>
+        ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::network::Error>
       }
     };
 

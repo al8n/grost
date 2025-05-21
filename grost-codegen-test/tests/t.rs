@@ -25,7 +25,7 @@
 // //   _: &User,
 // //   _: &Context,
 // //   _: &[u8],
-// // ) -> core::result::Result<usize, grost::flavors::network::EncodeError> {
+// // ) -> core::result::Result<usize, grost::flavors::network::Error> {
 // //   Ok(0)
 // // }
 
@@ -33,7 +33,7 @@
 // //   _: &<String as Message<Network, LengthDelimited>>::Decoded<'_>,
 // //   _: &Context,
 // //   _: &[u8],
-// // ) -> core::result::Result<usize, grost::flavors::network::EncodeError> {
+// // ) -> core::result::Result<usize, grost::flavors::network::Error> {
 // //   Ok(0)
 // // }
 
@@ -41,14 +41,14 @@
 // //   for CommentReflection<CommentUserField<EncodeReflection<EncodeField>>, Network>
 // // {
 // //   type Target =
-// //     fn(&User, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
+// //     fn(&User, &Context, &[u8]) -> core::result::Result<usize, grost::flavors::network::Error>;
 
 // //   fn deref(&self) -> &Self::Target {
 // //     const ENCODE_FN: fn(
 // //       &User,
 // //       &Context,
 // //       &[u8],
-// //     ) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_user;
+// //     ) -> core::result::Result<usize, grost::flavors::network::Error> = encode_user;
 // //     &ENCODE_FN
 // //   }
 // // }
@@ -60,7 +60,7 @@
 // //     &<String as Message<Network, LengthDelimited>>::Decoded<'a>,
 // //     &Context,
 // //     &[u8],
-// //   ) -> core::result::Result<usize, grost::flavors::network::EncodeError>;
+// //   ) -> core::result::Result<usize, grost::flavors::network::Error>;
 
 // //   fn deref(&self) -> &Self::Target {
 // //     #[allow(clippy::type_complexity)]
@@ -68,7 +68,7 @@
 // //       &<String as Message<Network, LengthDelimited>>::Decoded<'_>,
 // //       &Context,
 // //       &[u8],
-// //     ) -> core::result::Result<usize, grost::flavors::network::EncodeError> = encode_title_ref;
+// //     ) -> core::result::Result<usize, grost::flavors::network::Error> = encode_title_ref;
 // //     &ENCODE_FN
 // //   }
 // // }
@@ -109,7 +109,7 @@
 // //   ///
 // //   /// The function consumes the entire buffer and returns both the
 // //   /// number of bytes consumed and the decoded instance.
-// //   fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
+// //   fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::Error>
 // //   where
 // //     O: Sized + 'de,
 // //     Self::Buffer: Buffer<F::Unknown<&'de [u8]>> + 'de;
@@ -163,7 +163,7 @@
 //   ///
 //   /// The function consumes the entire buffer and returns both the
 //   /// number of bytes consumed and the decoded instance.
-//   fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::DecodeError>
+//   fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::Error>
 //   where
 //     O: Sized + 'de,
 //     Self::UnknownBuffer: Buffer<F::Unknown<&'de [u8]>> + 'de;

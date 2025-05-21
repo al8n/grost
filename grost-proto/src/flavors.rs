@@ -1,5 +1,3 @@
-use crate::selection::Selectable;
-
 use super::buffer::BytesBuffer;
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
@@ -134,13 +132,13 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   fn tag(&self) -> F::Tag;
 
   /// Encode the identifier into a buffer.
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, F::EncodeError>;
+  fn encode(&self, dst: &mut [u8]) -> Result<usize, F::Error>;
 
   /// Return the length of the encoded identifier.
   fn encoded_len(&self) -> usize;
 
   /// Decode the identifier from a buffer.
-  fn decode<B>(buf: B) -> Result<(usize, Self), F::DecodeError>
+  fn decode<B>(buf: B) -> Result<(usize, Self), F::Error>
   where
     B: BytesBuffer + Sized,
     Self: Sized;
@@ -248,10 +246,8 @@ pub trait Flavor: core::fmt::Debug + 'static {
   /// The unknown value used for this flavor.
   type Unknown<B>;
 
-  /// The encode error for this flavor.
-  type EncodeError: core::error::Error + From<super::encode::EncodeError<Self>>;
-  /// The decode error for this flavor.
-  type DecodeError: core::error::Error + From<super::decode::DecodeError<Self>>;
+  /// The error for this flavor.
+  type Error: core::error::Error + From<super::error::Error<Self>>;
 
   /// The name of the flavor.
   const NAME: &'static str;
@@ -261,7 +257,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     ctx: &Self::Context,
     value: &Self::Unknown<B>,
     buf: &mut [u8],
-  ) -> Result<usize, Self::EncodeError>
+  ) -> Result<usize, Self::Error>
   where
     B: BytesBuffer;
 
@@ -278,7 +274,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
   fn decode_unknown<B>(
     ctx: &Self::Context,
     buf: B,
-  ) -> Result<(usize, Self::Unknown<B>), Self::DecodeError>
+  ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
     B: BytesBuffer;
 }

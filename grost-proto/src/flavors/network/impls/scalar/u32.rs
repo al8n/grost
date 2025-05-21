@@ -6,7 +6,7 @@ use crate::{
   decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
   flatten_state,
-  flavors::network::{Context, DecodeError, EncodeError, Fixed32, Network, Unknown, Varint},
+  flavors::network::{Context, Error, Fixed32, Network, Unknown, Varint},
   partial_encode_scalar, selectable, try_from_bridge,
 };
 
@@ -16,9 +16,9 @@ decoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 a
 flatten_state!(u32, NonZeroU32);
 
 impl Encode<Network, Fixed32> for u32 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 4 {
-      return Err(EncodeError::insufficient_buffer(4, buf.len()));
+      return Err(Error::insufficient_buffer(4, buf.len()));
     }
 
     buf[..4].copy_from_slice(self.to_le_bytes().as_slice());
@@ -33,17 +33,13 @@ impl Encode<Network, Fixed32> for u32 {
     <Self as Encode<Network, Fixed32>>::encoded_len(self, context)
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     <Self as Encode<Network, Fixed32>>::encode(self, context, buf)
   }
 }
 
 impl Encode<Network, Varint> for u32 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u32_varint_to(*self, buf).map_err(Into::into)
   }
 
@@ -55,11 +51,7 @@ impl Encode<Network, Varint> for u32 {
     <Self as Encode<Network, Varint>>::encoded_len(self, context)
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     <Self as Encode<Network, Varint>>::encode(self, context, buf)
   }
 }
@@ -67,22 +59,19 @@ impl Encode<Network, Varint> for u32 {
 partial_encode_scalar!(Network: u32 as Fixed32, u32 as Varint);
 
 impl<'de> Decode<'de, Network, Fixed32, Self> for u32 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if src.len() < 4 {
-      return Err(DecodeError::buffer_underflow());
+      return Err(Error::buffer_underflow());
     }
 
     Ok((4, u32::from_le_bytes(src[..4].try_into().unwrap())))
   }
 
-  fn decode_length_delimited<UB>(
-    ctx: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -92,7 +81,7 @@ impl<'de> Decode<'de, Network, Fixed32, Self> for u32 {
 }
 
 impl<'de> Decode<'de, Network, Varint, Self> for u32 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -100,10 +89,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for u32 {
     varing::decode_u32_varint(src).map_err(Into::into)
   }
 
-  fn decode_length_delimited<UB>(
-    ctx: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -117,11 +103,11 @@ decode_owned_scalar!(Network: u32 as Fixed32, u32 as Varint);
 try_from_bridge!(
   Network: u32 {
     NonZeroU32 as Fixed32 {
-      try_from: |v: u32| NonZeroU32::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: u32| NonZeroU32::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroU32| v.get();
     },
     NonZeroU32 as Varint {
-      try_from: |v: u32| NonZeroU32::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: u32| NonZeroU32::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroU32| v.get();
     }
   },

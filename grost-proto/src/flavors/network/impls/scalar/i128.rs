@@ -6,7 +6,7 @@ use crate::{
   decode_owned_scalar, decoded_state, default_wire_format,
   encode::Encode,
   flatten_state,
-  flavors::network::{Context, DecodeError, EncodeError, Fixed128, Network, Unknown, Varint},
+  flavors::network::{Context, Error, Fixed128, Network, Unknown, Varint},
   partial_encode_scalar, selectable, try_from_bridge,
 };
 
@@ -16,9 +16,9 @@ decoded_state!(@scalar &'a Network: i128 as Varint, i128 as Fixed128, NonZeroI12
 flatten_state!(i128, NonZeroI128);
 
 impl Encode<Network, Fixed128> for i128 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 16 {
-      return Err(EncodeError::insufficient_buffer(16, buf.len()));
+      return Err(Error::insufficient_buffer(16, buf.len()));
     }
 
     buf[..16].copy_from_slice(self.to_le_bytes().as_slice());
@@ -33,17 +33,13 @@ impl Encode<Network, Fixed128> for i128 {
     <Self as Encode<Network, Fixed128>>::encoded_len(self, context)
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     <Self as Encode<Network, Fixed128>>::encode(self, context, buf)
   }
 }
 
 impl Encode<Network, Varint> for i128 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_i128_varint_to(*self, buf).map_err(Into::into)
   }
 
@@ -55,11 +51,7 @@ impl Encode<Network, Varint> for i128 {
     <Self as Encode<Network, Varint>>::encoded_len(self, context)
   }
 
-  fn encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-  ) -> Result<usize, EncodeError> {
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     <Self as Encode<Network, Varint>>::encode(self, context, buf)
   }
 }
@@ -67,22 +59,19 @@ impl Encode<Network, Varint> for i128 {
 partial_encode_scalar!(Network: i128 as Fixed128, i128 as Varint);
 
 impl<'de> Decode<'de, Network, Fixed128, Self> for i128 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if src.len() < 16 {
-      return Err(DecodeError::buffer_underflow());
+      return Err(Error::buffer_underflow());
     }
 
     Ok((16, i128::from_le_bytes(src[..16].try_into().unwrap())))
   }
 
-  fn decode_length_delimited<UB>(
-    ctx: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -92,7 +81,7 @@ impl<'de> Decode<'de, Network, Fixed128, Self> for i128 {
 }
 
 impl<'de> Decode<'de, Network, Varint, Self> for i128 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
+  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -100,10 +89,7 @@ impl<'de> Decode<'de, Network, Varint, Self> for i128 {
     varing::decode_i128_varint(src).map_err(Into::into)
   }
 
-  fn decode_length_delimited<UB>(
-    ctx: &Context,
-    src: &'de [u8],
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     UB: Buffer<Unknown<&'de [u8]>> + 'de,
@@ -117,11 +103,11 @@ decode_owned_scalar!(Network: i128 as Fixed128, i128 as Varint);
 try_from_bridge!(
   Network: i128 {
     NonZeroI128 as Fixed128 {
-      try_from: |v: i128| NonZeroI128::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: i128| NonZeroI128::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroI128| v.get();
     },
     NonZeroI128 as Varint {
-      try_from: |v: i128| NonZeroI128::new(v).ok_or_else(|| DecodeError::custom("value cannot be zero"));
+      try_from: |v: i128| NonZeroI128::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroI128| v.get();
     }
   },

@@ -78,7 +78,7 @@ impl Network {
       quote! {
         if offset >= buf_len {
           return ::core::result::Result::Err(
-            #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+            #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
               #self_encoded_len,
               buf_len,
             ),
@@ -106,7 +106,7 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -151,18 +151,18 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
             .map_err(|e| {
-              #path_to_grost::__private::flavors::network::EncodeError::from_varint_error(e)
+              #path_to_grost::__private::flavors::network::Error::from_varint_error(e)
                 .update(#self_encoded_length_delimited_len, buf_len)
             })?;
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
             );
           }
 
@@ -223,7 +223,7 @@ impl Network {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 #self_encoded_len,
                 buf_len,
               ),
@@ -244,7 +244,7 @@ impl Network {
           if let ::core::option::Option::Some(ref f) = self.#field_name {
             if offset >= buf_len {
               return ::core::result::Result::Err(
-                #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                   #self_encoded_len,
                   buf_len,
                 ),
@@ -277,7 +277,7 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -289,7 +289,7 @@ impl Network {
           //     for unknown in unknowns {
           //       if offset >= buf_len {
           //         return ::core::result::Result::Err(
-          //           #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_len, buf_len),
+          //           #path_to_grost::__private::flavors::network::Error::insufficient_buffer(#self_encoded_len, buf_len),
           //         );
           //       }
 
@@ -353,18 +353,18 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
             .map_err(|e| {
-              #path_to_grost::__private::flavors::network::EncodeError::from_varint_error(e)
+              #path_to_grost::__private::flavors::network::Error::from_varint_error(e)
                 .update(#self_encoded_length_delimited_len, buf_len)
             })?;
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
             );
           }
 
@@ -424,7 +424,7 @@ impl Network {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                 #self_encoded_len,
                 buf_len,
               ),
@@ -445,7 +445,7 @@ impl Network {
           if let ::core::option::Option::Some(ref f) = self.#field_name {
             if offset >= buf_len {
               return ::core::result::Result::Err(
-                #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(
+                #path_to_grost::__private::flavors::network::Error::insufficient_buffer(
                   #self_encoded_len,
                   buf_len,
                 ),
@@ -478,7 +478,7 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let mut offset = 0;
           let buf_len = buf.len();
 
@@ -490,7 +490,7 @@ impl Network {
           //     for unknown in unknowns {
           //       if offset >= buf_len {
           //         return ::core::result::Result::Err(
-          //           #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_len, buf_len),
+          //           #path_to_grost::__private::flavors::network::Error::insufficient_buffer(#self_encoded_len, buf_len),
           //         );
           //       }
 
@@ -554,18 +554,18 @@ impl Network {
             #path_to_grost::__private::flavors::Network,
             #path_to_grost::__private::flavors::network::LengthDelimited,
           >>::Selector,
-        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::EncodeError> {
+        ) -> ::core::result::Result<::core::primitive::usize, <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::Error> {
           let encoded_len = #self_encoded_len;
           let buf_len = buf.len();
           let offset = #path_to_grost::__private::varing::encode_u32_varint_to(encoded_len as ::core::primitive::u32, buf)
             .map_err(|e| {
-              #path_to_grost::__private::flavors::network::EncodeError::from_varint_error(e)
+              #path_to_grost::__private::flavors::network::Error::from_varint_error(e)
                 .update(#self_encoded_length_delimited_len, buf_len)
             })?;
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::network::EncodeError::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::flavors::network::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
             );
           }
 
