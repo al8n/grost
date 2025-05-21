@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;
@@ -10,7 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  Output, SchemaMeta,
+  SchemaMeta,
   object::{Field as _, ObjectExt as _, TypeSpecification},
 };
 
@@ -140,7 +140,6 @@ where
   selector_iter: SelectorIter,
   attrs: Vec<Attribute>,
   indexer: Indexer,
-  output: Output,
   meta: M,
 }
 
@@ -184,12 +183,6 @@ where
   #[inline]
   pub const fn shema(&self) -> &SchemaMeta {
     &self.schema
-  }
-
-  /// Returns the derived code output configuration.
-  #[inline]
-  pub const fn output(&self) -> &Output {
-    &self.output
   }
 
   #[inline]
@@ -251,7 +244,6 @@ where
     )?;
     let indexer = Indexer::from_input(&input)?;
     let reflection = Reflection::from_input(&input)?;
-    let output = input.meta().output().clone();
 
     Ok(Self {
       name: input.name().clone(),
@@ -275,14 +267,13 @@ where
       selector_iter,
       selector,
       meta: input,
-      output,
       indexer,
     })
   }
 
   /// Derives the object.
   pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
-    let this = self.derive_struct();
+    // let this = self.derive_struct();
     let partial_object = self.partial().to_token_stream();
     let partial_decoded_object = self.partial_decoded().to_token_stream();
     let selector = self.selector().to_token_stream();
@@ -302,7 +293,7 @@ where
     let default = self.derive_default();
 
     Ok(quote! {
-      #this
+      // #this
 
       #partial_object
 
@@ -334,35 +325,6 @@ where
         #accessors
       };
     })
-  }
-
-  fn derive_struct(&self) -> proc_macro2::TokenStream {
-    if self.output().path().is_none() {
-      return quote! {};
-    }
-
-    let name = self.name();
-    let vis = self.vis();
-    let generics = self.generics();
-    let where_clause = generics.where_clause.as_ref();
-    let attrs = self.attrs();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let field_ty = f.ty();
-      let field_vis = f.vis();
-      let field_attrs = f.attrs();
-      quote! {
-        #(#field_attrs)*
-        #field_vis #field_name: #field_ty
-      }
-    });
-
-    quote! {
-      #(#attrs)*
-      #vis struct #name #generics #where_clause {
-        #(#fields),*
-      }
-    }
   }
 
   fn derive_default(&self) -> proc_macro2::TokenStream {
@@ -440,6 +402,36 @@ where
         #(#fns)*
       }
     }
+  }
+}
+
+impl<M> ToTokens for Object<M>
+where
+  M: crate::ast::object::Object,
+{
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let vis = self.vis();
+    let generics = self.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let field_ty = f.ty();
+      let field_vis = f.vis();
+      let field_attrs = f.attrs();
+      quote! {
+        #(#field_attrs)*
+        #field_vis #field_name: #field_ty
+      }
+    });
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #vis struct #name #generics #where_clause {
+        #(#fields),*
+      }
+    });
   }
 }
 

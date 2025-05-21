@@ -4,6 +4,8 @@ pub use flavors::*;
 pub use object::*;
 pub use safe_ident::*;
 
+pub use grost_mir as mir;
+
 use indexmap::{IndexMap, IndexSet};
 use quote::quote;
 
@@ -114,18 +116,19 @@ impl SchemaGenerator {
 
                 #(#stream)*
               };
-              if let Some(p) = object.output().path() {
+
+              if let Some(output) = object.output() {
                 std::fs::OpenOptions::new()
                   .write(true)
                   .create(true)
                   .read(true)
                   .truncate(true)
-                  .open(p)
+                  .open(output.path())
                   .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))
                   .and_then(|mut file| {
                     use std::io::Write;
 
-                    let stream_string = if object.output().format() {
+                    let stream_string = if output.format() {
                       let f: syn::File = syn::parse2(stream)?;
                       prettyplease::unparse(&f)
                     } else {

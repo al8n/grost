@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use darling::FromMeta;
 use quote::quote;
 use syn::{Attribute, parse::Parser};
@@ -69,26 +71,18 @@ impl SchemaMeta {
   }
 }
 
-#[derive(Debug, Default, Clone, FromMeta)]
-struct OutputInner {
-  #[darling(default)]
-  path: Option<std::path::PathBuf>,
-  #[darling(default)]
-  format: bool,
-}
-
 /// Configures the output of the generated code, this is useful when you want to
 /// debug the generated code.
 #[derive(Debug, Default, Clone)]
 pub struct Output {
-  path: Option<std::path::PathBuf>,
+  path: PathBuf,
   format: bool,
 }
 
 impl Output {
   /// Returns the path to the output file
-  pub const fn path(&self) -> Option<&std::path::PathBuf> {
-    self.path.as_ref()
+  pub const fn path(&self) -> &PathBuf {
+    &self.path
   }
 
   /// Returns `true` if the output should be formatted
@@ -98,19 +92,43 @@ impl Output {
 }
 
 impl FromMeta for Output {
-  fn from_value(value: &syn::Lit) -> darling::Result<Self> {
-    let inner = <std::path::PathBuf as FromMeta>::from_value(value)?;
+  fn from_string(value: &str) -> darling::Result<Self> {
     Ok(Self {
-      path: Some(inner),
+      path: PathBuf::from(value),
       format: false,
     })
   }
 
+  // fn from_meta(item: &syn::Meta) -> darling::Result<Self> {
+  //   match item {
+  //     syn::Meta::Path(path) => todo!(),
+  //     syn::Meta::List(meta_list) => todo!(),
+  //     syn::Meta::NameValue(meta_name_value) => todo!(),
+  //   }
+  // }
+
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    let inner = <OutputInner as FromMeta>::from_list(items)?;
+    let mut path = None;
+    let mut format = false;
+    println!("items: {:?}", items);
+    for item in items {
+      match item {
+        darling::ast::NestedMeta::Lit(lit) => {
+          return Err(darling::Error::unexpected_lit_type(lit));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
+          if meta.path().is_ident("path") {
+            path = Some(<PathBuf as FromMeta>::from_meta(meta)?);
+          } else if meta.path().is_ident("format") {
+            format = <bool as FromMeta>::from_meta(meta)?;
+          }
+        }
+      }
+    }
+
     Ok(Self {
-      path: inner.path,
-      format: inner.format,
+      path: path.ok_or_else(|| darling::Error::missing_field("path"))?,
+      format,
     })
   }
 }
