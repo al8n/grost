@@ -1,4 +1,4 @@
-use crate::selection::Selector;
+use crate::{flavors::FlavorError, selection::Selector};
 
 use super::{
   error::Error,
@@ -98,14 +98,20 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
       return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
-    self.encode(context, &mut buf[offset..]).map(|v| {
-      #[cfg(debug_assertions)]
-      {
-        crate::debug_assert_write_eq::<Self>(v, encoded_len);
-      }
+    self
+      .encode(context, &mut buf[offset..])
+      .map(|v| {
+        #[cfg(debug_assertions)]
+        {
+          crate::debug_assert_write_eq::<Self>(v, encoded_len);
+        }
 
-      required
-    })
+        required
+      })
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(required, buf_len);
+        e
+      })
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
@@ -265,6 +271,10 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
         }
 
         required
+      })
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(required, buf_len);
+        e
       })
   }
 

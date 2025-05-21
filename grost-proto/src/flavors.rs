@@ -3,7 +3,6 @@ use super::buffer::BytesBuffer;
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
 pub use network::Network;
-// pub use selector::Select;
 
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {
@@ -224,6 +223,14 @@ const _: () = {
   }
 };
 
+/// The error for the flavor.
+pub trait FlavorError<F: ?Sized + Flavor>:
+  core::error::Error + From<super::error::Error<F>>
+{
+  /// Update the error with the required and remaining buffer capacity.
+  fn update_insufficient_buffer(&mut self, required: usize, remaining: usize);
+}
+
 /// The flavor of the encoding and decoding.
 pub trait Flavor: core::fmt::Debug + 'static {
   /// The identifier used for this flavor.
@@ -243,11 +250,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
   /// The context used for this flavor.
   #[cfg(feature = "quickcheck")]
   type Context: quickcheck::Arbitrary;
+
   /// The unknown value used for this flavor.
   type Unknown<B>;
 
   /// The error for this flavor.
-  type Error: core::error::Error + From<super::error::Error<Self>>;
+  type Error: FlavorError<Self>;
 
   /// The name of the flavor.
   const NAME: &'static str;

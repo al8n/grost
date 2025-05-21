@@ -1,5 +1,8 @@
 use super::{Identifier, Network, Tag, WireType};
-use crate::{error::Error as BaseError, flavors::Flavor};
+use crate::{
+  error::Error as BaseError,
+  flavors::{Flavor, FlavorError},
+};
 use core::num::NonZeroUsize;
 
 pub use super::tag::ParseTagError;
@@ -115,6 +118,19 @@ pub enum Error {
   #[error("{_0}")]
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   Custom(&'static str),
+}
+
+impl FlavorError<Network> for Error {
+  fn update_insufficient_buffer(&mut self, required: usize, remaining: usize) {
+    if let Self::InsufficientBytesBuffer {
+      required: r,
+      remaining: rem,
+    } = self
+    {
+      *r = required;
+      *rem = remaining;
+    }
+  }
 }
 
 impl From<ParseTagError> for Error {
