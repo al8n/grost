@@ -6,63 +6,29 @@ use super::{
   selection::Selectable,
 };
 
-/// A trait for serializing data to binary format with support for various wire types.
+/// A trait for serializing data into a binary format using a specified [`Flavor`] and [`WireFormat`].
 ///
-/// This trait provides methods to encode data into binary representations,
-/// calculate required buffer sizes, and handle length-delimited encoding.
+/// This trait provides methods for encoding a value into a byte buffer or into heap-allocated
+/// containers like [`Vec<u8>`] or [`Bytes`](bytes_1::Bytes). It also supports length-delimited encoding,
+/// commonly used in framed transport protocols (e.g., Protobuf messages).
 ///
-/// ## About the arguments
-///
-/// All methods in this trait take `context` and `wire_type` as arguments.
-///
-/// - `context`: The context for encoding, which may include information about the encoding process,
-///   e.g. the maximum encoded length allowed for a message.
-/// - `wire_type`: The wire type used for encoding the message. This is a type that indicates how the data should be serialized.
-///
-///     **The implementor does not need to encode the `wire_type` to the buffer in `encode_*`
-///   or including the encoded size of the `wire_type` in `*_len`, the wire type is
-///   providing for deciding how to encode the message, because of some types may
-///   support multiple wire types.**
-///
-///   For example, when using the [`Network`] flavor, `u16` can be encoded by LEB128 (varint) or fixed,
-///   this is decided by how the users writing the schema.
-///
-///     - If in the schema code like the below example, then the `u16` will be encoded in LEB128 (varint):
-///
-///       ```graphql
-///       type Foo {
-///         bar: u16
-///       }
-///       ```
-///   
-///     - If in the schema code like the below example, then the `u16` will be encoded in fixed length (2 bytes):
-///
-///       ```graphql
-///       type Foo {
-///         bar: u16 @fixed
-///       }
+/// Types implementing this trait should ensure consistency between `encoded_len` and `encode`.
 pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
   ///
   /// [`Encode::encoded_len`] can be used to determine the required buffer size.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error>;
 
   /// Returns the number of bytes needed to encode the message.
   ///
   /// This is used to determine the buffer size required for encoding.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encoded_len(&self, context: &F::Context) -> usize;
 
   /// Returns the number of bytes needed to encode the message with length-delimited.
   ///
   /// This is used to determine the buffer size required for encoding.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
     let encoded_len = self.encoded_len(context);
     if encoded_len == 0 {
@@ -76,8 +42,6 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// Encodes the message into the provided buffer with length-delimited.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn encode_length_delimited(
     &self,
     context: &F::Context,
@@ -115,8 +79,6 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::Error> {
     let mut buf = std::vec![0; self.encoded_len(context)];
@@ -125,8 +87,6 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   }
 
   /// Encodes the message into a [`Bytes`](::bytes::Bytes).
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   #[cfg(any(feature = "std", feature = "alloc"))]
   fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::Error> {
     self.encode_to_vec(context).map(Into::into)
@@ -153,42 +113,13 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   }
 }
 
-/// A trait for serializing data to binary format with support for various wire types.
+/// A trait for encoding only selected parts of a message based on a [`Selector`](Selectable::Selector).
 ///
-/// This trait provides methods to encode data into binary representations,
-/// calculate required buffer sizes, and handle length-delimited encoding.
+/// `PartialEncode` is useful when you need to serialize only a subset of a message's fields,
+/// as determined by a runtime selector. This is commonly used for filtering, patch updates,
+/// or field projections in protocols with optional fields.
 ///
-/// ## About the arguments
-///
-/// All methods in this trait take `context` and `wire_type` as arguments.
-///
-/// - `context`: The context for encoding, which may include information about the encoding process,
-///   e.g. the maximum encoded length allowed for a message.
-/// - `selector`: The selector type for the message, which determines which fields to include
-/// - `wire_type`: The wire type used for encoding the message. This is a type that indicates how the data should be serialized.
-///
-///     **The implementor does not need to encode the `wire_type` to the buffer in `encode_*`
-///   or including the encoded size of the `wire_type` in `*_len`, the wire type is
-///   providing for deciding how to encode the message, because of some types may
-///   support multiple wire types.**
-///
-///   For example, when using the [`Network`] flavor, `u16` can be encoded by LEB128 (varint) or fixed,
-///   this is decided by how the users writing the schema.
-///
-///     - If in the schema code like the below example, then the `u16` will be encoded in LEB128 (varint):
-///
-///       ```graphql
-///       type Foo {
-///         bar: u16
-///       }
-///       ```
-///   
-///     - If in the schema code like the below example, then the `u16` will be encoded in fixed length (2 bytes):
-///
-///       ```graphql
-///       type Foo {
-///         bar: u16 @fixed
-///       }
+/// This trait complements [`Encode`] by offering more control over which fields are included.
 pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> {
   /// Encodes the message into the provided buffer.
   ///
@@ -232,8 +163,6 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
   /// Encodes the message into the provided buffer with length-delimited.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn partial_encode_length_delimited(
     &self,
     context: &F::Context,

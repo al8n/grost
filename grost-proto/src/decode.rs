@@ -1,26 +1,145 @@
-use crate::flavors::WireFormat;
-
 use super::{
   buffer::{Buffer, BytesBuffer},
   error::Error,
-  flavors::Flavor,
+  flavors::{Flavor, WireFormat},
+  selection::Selectable,
 };
 
-/// A trait for types that can be decoded from bytes with a lifetime.
+/// A trait for decoding types from a byte slice, partially guided by a selector.
 ///
-/// This trait provides methods to decode data from byte slices,
-/// with support for both direct and length-prefixed decoding.
+/// `PartialDecode` is designed for decoding a subset of the fields or structure
+/// of a type based on a selector. This is useful when only a portion of a data
+/// structure is needed, allowing for more efficient parsing.
 ///
-/// * `'de` - The lifetime of the input data
+/// ## Type Parameters
+/// - `'de`: Lifetime of the input data.
+/// - `F`: The decoding flavor (e.g., [`Network`](crate::flavors::Network) or other implementations) implementing the [`Flavor`] trait.
+/// - `W`: The wire format strategy of the flavor.
+/// - `O`: The output type resulting from decoding.
+/// - `B`: The buffer implementation used to store the unknown data during decoding (defaults to `()`, will ignore the unknown data).
+pub trait PartialDecode<'de, F, W, O, B = ()>: Selectable<F, W>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  /// Partially decodes an instance of the type from a byte buffer using a selector.
+  ///
+  /// ## Parameters
+  /// - `context`: Contextual data used during decoding.
+  /// - `src`: The input byte buffer to decode.
+  /// - `selector`: A selector to guide the partial decoding process.
+  ///
+  /// ## Returns
+  /// A tuple containing the number of bytes consumed and the decoded output.
+  fn partial_decode(
+    context: &F::Context,
+    src: &'de [u8],
+    selector: &Self::Selector,
+  ) -> Result<(usize, O), F::Error>
+  where
+    O: Sized + 'de,
+    B: Buffer<F::Unknown<&'de [u8]>> + 'de;
+
+  /// Partially decodes a length-delimited message using a selector.
+  ///
+  /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
+  fn partial_decode_length_delimited(
+    context: &F::Context,
+    src: &'de [u8],
+    selector: &Self::Selector,
+  ) -> Result<(usize, O), F::Error>
+  where
+    O: Sized + 'de,
+    B: Buffer<F::Unknown<&'de [u8]>> + 'de,
+  {
+    let (len_size, len) = varing::decode_u32_varint(src).map_err(Error::from)?;
+    let src_len = src.len();
+    let len = len as usize;
+    let total = len_size + len;
+    if total > src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    if len_size >= src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    Self::partial_decode(context, &src[len_size..total], selector)
+  }
+}
+
+/// A trait for partially decoding types without borrowing from the input buffer.
+///
+/// `PartialDecodeOwned` enables partial decoding into an owned output
+/// from a source that implements [`BytesBuffer`]. This is suitable for
+/// deserialization where lifetimes of source data and output do not overlap.
+///
+/// See also [`PartialDecode`] for more details.
+pub trait PartialDecodeOwned<F, W, O, B = ()>:
+  PartialDecode<'static, F, W, O, B> + 'static
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  /// See [`PartialDecode::partial_decode`].
+  fn partial_decode_owned<D>(
+    context: &F::Context,
+    src: D,
+    selector: &Self::Selector,
+  ) -> Result<(usize, O), F::Error>
+  where
+    O: Sized + 'static,
+    D: BytesBuffer + 'static,
+    B: Buffer<F::Unknown<D>> + 'static;
+
+  /// See [`PartialDecode::partial_decode_length_delimited`].
+  fn partial_decode_length_delimited_owned<D>(
+    context: &F::Context,
+    src: D,
+    selector: &Self::Selector,
+  ) -> Result<(usize, O), F::Error>
+  where
+    O: Sized + 'static,
+    D: BytesBuffer + 'static,
+    B: Buffer<F::Unknown<D>> + 'static,
+  {
+    let bytes = src.as_bytes();
+    let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
+    let src_len = src.len();
+    let len = len as usize;
+    let total = len_size + len;
+    if total > src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    if len_size >= src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    Self::partial_decode_owned::<D>(context, src.slice(len_size..total), selector)
+  }
+}
+
+/// A trait for fully decoding types from a borrowed byte slice.
+///
+/// `Decode` is intended for decoding entire data structures
+/// from a buffer while borrowing the input data.
+///
+/// ## Type Parameters
+///
+/// - `'de`: Lifetime of the input data.
+/// - `F`: The decoding flavor (e.g., [`Network`](crate::flavors::Network) or other implementations) implementing the [`Flavor`] trait.
+/// - `W`: The wire format strategy of the flavor.
+/// - `O`: The output type resulting from decoding.
+/// - `B`: The buffer implementation used to store the unknown data during decoding (defaults to `()`, will ignore the unknown data).
 pub trait Decode<'de, F, W, O, B = ()>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  /// Decodes an instance of this type from a byte buffer.
+  /// Decodes an instance from a raw byte slice.
   ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
+  /// Returns a tuple with the number of bytes consumed and the decoded output.
   fn decode(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
@@ -28,8 +147,7 @@ where
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
+  /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
   fn decode_length_delimited(context: &F::Context, src: &'de [u8]) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
@@ -51,32 +169,25 @@ where
   }
 }
 
-/// A trait for types that can be decoded without borrowing data.
+/// A trait for fully decoding types into owned values from an owned byte buffer.
 ///
-/// Types implementing this trait can be decoded into owned values
-/// without maintaining a borrow of the original data.
+/// Unlike [`Decode`], this trait allows decoding without borrowing the input buffer,
+/// making it suitable for owned deserialization where lifetimes must not overlap.
 ///
-/// This is useful for deserialization scenarios where the input data
-/// may not outlive the decoded value.
+/// See also [`Decode`] for more details.
 pub trait DecodeOwned<F, W, O, B = ()>: Decode<'static, F, W, O, B> + 'static
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  /// Decodes an instance of this type from a byte buffer.
-  ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
+  /// See [`Decode::decode`].
   fn decode_owned<D>(context: &F::Context, src: D) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'static,
     D: BytesBuffer + 'static,
     B: Buffer<F::Unknown<D>> + 'static;
 
-  /// Decodes an instance of this type from a length-delimited byte buffer.
-  ///
-  /// The function consumes the entire buffer and returns both the
-  /// number of bytes consumed and the decoded instance.
+  /// See [`Decode::decode_length_delimited`].
   fn decode_length_delimited_owned<D>(context: &F::Context, src: D) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'static,
@@ -99,76 +210,6 @@ where
     Self::decode_owned::<D>(context, src.slice(len_size..total))
   }
 }
-
-// pub struct Decoded<T, B, UB> {
-//   data: T,
-//   unknown: Option<UB>,
-//   _m: core::marker::PhantomData<B>,
-// }
-
-// impl<T, B, UB> Decoded<T, B, UB> {
-//   /// Creates a new `Decoded` instance with the given data.
-//   #[inline]
-//   pub const fn new(data: T) -> Self {
-//     Self {
-//       data,
-//       unknown: None,
-//       _m: core::marker::PhantomData,
-//     }
-//   }
-
-//   /// Gets the data of the decoded message.
-//   #[inline]
-//   pub const fn data(&self) -> &T {
-//     &self.data
-//   }
-
-//   /// Gets the unknown data of the decoded message.
-//   #[inline]
-//   pub const fn unknown_ref(&self) -> Option<&UB> {
-//     self.unknown.as_ref()
-//   }
-
-//   /// Returns the mutable reference to the unknown data of the decoded message.
-//   #[inline]
-//   pub const fn unknown_mut(&mut self) -> Option<&mut UB> {
-//     self.unknown.as_mut()
-//   }
-
-//   /// Sets the unknown data of the decoded message.
-//   #[inline]
-//   pub fn set_unknown(&mut self, unknown: UB) -> &mut Self {
-//     self.unknown = Some(unknown);
-//     self
-//   }
-
-//   /// Sets the unknown data of the decoded message to `None`.
-//   #[inline]
-//   pub fn with_unknown(mut self) -> Self {
-//     self.unknown = None;
-//     self
-//   }
-
-//   /// Clears the unknown data of the decoded message.
-//   #[inline]
-//   pub fn clear_unknown(&mut self) -> &mut Self {
-//     self.unknown = None;
-//     self
-//   }
-
-//   /// Clears the unknown data of the decoded message.
-//   #[inline]
-//   pub fn without_unknown(mut self) -> Self {
-//     self.unknown = None;
-//     self
-//   }
-
-//   /// Clears the unknown data of the decoded message and returns the data.
-//   #[inline]
-//   pub const fn take_unknown(&mut self) -> Option<UB> {
-//     self.unknown.take()
-//   }
-// }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_impl {
