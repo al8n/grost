@@ -12,8 +12,8 @@ metadata.workspace = true
 
 [features]
 default = ["std"]
-alloc = ["bytes_1", "hostaddr_0_1?/alloc", "tinyvec_1?/alloc"]
-std = ["thiserror/std", "bytes_1/default", "hostaddr_0_1?/default", "tinyvec_1?/default"]
+alloc = ["bytes_1", "smol_str_0_3", "hostaddr_0_1?/alloc", "tinyvec_1?/alloc"]
+std = ["thiserror/std", "bytes_1/default", "smol_str_0_3/default", "hostaddr_0_1?/default", "tinyvec_1?/default"]
 sql = []
 
 # Enable `syn`, `proc-macro2`, and `quote` features for code generation
@@ -21,6 +21,9 @@ codegen = ["dep:syn", "dep:proc-macro2", "dep:quote"]
 
 arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
 arbitrary-int = ["arbitrary-int_1"]
+
+arrayvec_0_7 = ["dep:arrayvec_0_7"]
+arrayvec = ["arrayvec_0_7"]
 
 bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
 bnum = ["bnum_0_13"]
@@ -42,6 +45,15 @@ decimal = ["decimal_1"]
 
 half_2 = ["dep:half_2", "varing/half_2"]
 half = ["half_2"]
+
+hashbrown_0_15 = ["dep:hashbrown_0_15"]
+hashbrown = ["hashbrown_0_15"]
+
+indexmap_2 = ["dep:indexmap_2"]
+indexmap = ["indexmap_2"]
+
+hostaddr_0_1 = ["dep:hostaddr_0_1"]
+hostaddr = ["hostaddr_0_1"]
 
 num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
 num-rational = ["num-rational_0_4"]
@@ -79,17 +91,19 @@ uuid = ["uuid_1"]
 url_2 = ["dep:url_2"]
 url = ["url_2"]
 
-# arbitrary = [
-#   "dep:arbitrary",
-#   "chrono-tz_0_10?/arbitrary",
-#   "smol_str_0_3?/arbitrary",
-#   "ruint_1?/arbitrary",
-#   "rust_decimal_1?/rust-fuzz",
-#   "uuid_1?/arbitrary",
-# ]
+arbitrary = [
+  "dep:arbitrary",
+  "chrono-tz_0_10?/arbitrary",
+  "chrono-tz_0_10?/std",
+  "smol_str_0_3?/arbitrary",
+  "ruint_1?/arbitrary",
+  "rust_decimal_1?/rust-fuzz",
+  "uuid_1?/arbitrary",
+]
 quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck"]
 
 [dependencies]
+auto_enums = "0.8"
 ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
 paste.workspace = true
@@ -97,9 +111,10 @@ simdutf8 = { version = "0.1", default-features = false, optional = true }
 
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bitflags = { version = "2", default-features = false }
-derive_more = { workspace = true, features = ["display", "is_variant", "try_unwrap", "unwrap"] }
+derive_more = { workspace = true, features = ["display", "debug", "is_variant", "try_unwrap", "unwrap"] }
 varing.workspace = true
 quickcheck = { version = "1", optional = true }
+arbitrary = { version = "1", optional = true, features = ["derive"] }
 thiserror.workspace = true
 
 arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
@@ -110,7 +125,9 @@ chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, op
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
 # heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
+hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
 hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
+indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
 num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
 num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
 regex_1 = { package = "regex", version = "1", default-features = false, optional = true }

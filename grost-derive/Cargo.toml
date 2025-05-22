@@ -10,4 +10,16 @@ rust-version.workspace = true
 categories.workspace = true
 metadata.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
+darling = { version = "0.20", features = ["suggestions"] }
+grost-codegen = { path = "../grost-codegen" }
+proc-macro2 = { workspace = true, features = ["default"] }
+quote = { workspace = true, features = ["default"] }
+syn = { workspace = true, features = ["full"] }
+prettyplease.workspace = true
+
+[dev-dependencies]
+grost = { path = "../grost" }

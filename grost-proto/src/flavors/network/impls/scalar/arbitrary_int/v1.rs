@@ -1,11 +1,10 @@
-use crate::network_varint;
 pub use arbitrary_int_1::*;
 
 macro_rules! impl_arbitrary_int {
   ($($start:literal..=$end:literal), +$(,)?) => {
     $(
       seq_macro::seq!(N in $start..=$end {
-        network_varint!(#(u~N,)*);
+        $crate::network_varint!(#(u~N,)*);
       });
     )*
   };

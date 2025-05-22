@@ -1,9 +1,22 @@
-use crate::{bridge, flavors::network::Network, try_from_bridge};
+use crate::{
+  bridge, decoded_state, default_wire_format, flatten_state,
+  flavors::network::{Error, Fixed8, Network, Varint},
+  selectable, try_from_bridge,
+};
 use core::num::NonZeroI8;
+
+default_wire_format!(Network: i8 as Fixed8);
+selectable!(@scalar Network:i8, NonZeroI8);
+decoded_state!(@scalar &'a Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
+flatten_state!(i8, NonZeroI8);
 
 bridge!(
   Network: u8 {
-    i8 {
+    i8 as Fixed8 {
+      from: convert_u8_to_i8;
+      to: convert_i8_to_u8;
+    },
+    i8 as Varint {
       from: convert_u8_to_i8;
       to: convert_i8_to_u8;
     },
@@ -12,8 +25,12 @@ bridge!(
 
 try_from_bridge!(
   Network: i8 {
-    NonZeroI8 {
-      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| crate::error::DecodeError::custom("value cannot be zero"));
+    NonZeroI8 as Fixed8 {
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
+      to: |v: &NonZeroI8| v.get();
+    },
+    NonZeroI8 as Varint {
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
       to: |v: &NonZeroI8| v.get();
     }
   },

@@ -1,6 +1,4 @@
-use crate::Tag;
-
-use super::{BytesBuffer, WireType};
+use super::{BytesBuffer, Tag, WireType};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -84,6 +82,10 @@ where
   where
     B: BytesBuffer,
   {
+    if self.wire_type == WireType::Zst {
+      return &[];
+    }
+
     &self.data.as_bytes()[self.data_offset..]
   }
 

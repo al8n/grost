@@ -1,9 +1,22 @@
-use crate::{bridge, flavors::network::Network};
+use crate::{
+  bridge, decoded_state, default_wire_format, flatten_state,
+  flavors::network::{Fixed64, Network, Varint},
+  selectable,
+};
+
+default_wire_format!(Network: f64 as Fixed64);
+selectable!(@scalar Network:f64);
+decoded_state!(@scalar &'a Network: f64 as Fixed64, f64 as Varint);
+flatten_state!(f64);
 
 bridge!(
   Network: u64 {
-    f64 {
-      from: convert_u64_to_f64;
+    f64 as Fixed64 {
+      from: f64::from_bits;
+      to: convert_f64_to_u64;
+    },
+    f64 as Varint {
+      from: f64::from_bits;
       to: convert_f64_to_u64;
     },
   },
@@ -11,10 +24,5 @@ bridge!(
 
 #[inline]
 const fn convert_f64_to_u64(v: &f64) -> u64 {
-  u64::from_le_bytes(v.to_le_bytes())
-}
-
-#[inline]
-const fn convert_u64_to_f64(v: u64) -> f64 {
-  f64::from_le_bytes(v.to_le_bytes())
+  v.to_bits()
 }

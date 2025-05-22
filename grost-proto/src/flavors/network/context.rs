@@ -1,11 +1,11 @@
 bitflags::bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
   struct Flags: u8 {
-    /// The return error when encountering unsupported wire type is set
+    /// The return error when encountering unsupported wire type is set in decoding
     const ERR_ON_UNSUPPORT_WIRE_TYPE = 0b0000_0001;
-    /// Should return an error when encountering an unknown tag, or identifier
+    /// Should return an error when encountering an unknown tag, or identifier in decoding
     const ERR_ON_UNKNOWN = 0b0000_0010;
-    /// Should skip the unknown identifier
+    /// Should skip the unknown identifier and its data when encoding or decoding
     const SKIP_UNKNOWN = 0b0000_0100;
   }
 }
@@ -24,7 +24,6 @@ bitflags::bitflags! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Context {
   flags: Flags,
-  maximum_message_size: usize,
 }
 
 #[cfg(feature = "quickcheck")]
@@ -34,10 +33,7 @@ const _: () = {
   impl Arbitrary for Context {
     fn arbitrary(g: &mut Gen) -> Self {
       let flags = Flags::from_bits_truncate(*g.choose(&[1, 2, 4]).unwrap());
-      Self {
-        flags,
-        maximum_message_size: u32::MAX as usize,
-      }
+      Self { flags }
     }
   }
 };
@@ -54,7 +50,6 @@ impl Context {
   pub const fn new() -> Self {
     Self {
       flags: Flags::empty(),
-      maximum_message_size: u32::MAX as usize,
     }
   }
 
@@ -158,41 +153,5 @@ impl Context {
   #[inline]
   pub const fn err_on_unknown(&self) -> bool {
     self.flags.contains(Flags::SKIP_UNKNOWN)
-  }
-
-  /// Gets the maximum message size for the context.
-  #[inline]
-  pub const fn maximum_message_size(&self) -> usize {
-    self.maximum_message_size
-  }
-
-  /// Sets the maximum message size for the context.
-  ///
-  /// The maximum message size is clamped to the range of 512 to `u32::MAX`.
-  #[inline]
-  pub const fn set_maximum_message_size(&mut self, maximum_message_size: usize) -> &mut Self {
-    self.maximum_message_size = if maximum_message_size > u32::MAX as usize {
-      u32::MAX as usize
-    } else if maximum_message_size < 512 {
-      512
-    } else {
-      maximum_message_size
-    };
-    self
-  }
-
-  /// Sets the maximum message size for the context.
-  ///
-  /// The maximum message size is clamped to the range of 512 to `u32::MAX`.
-  #[inline]
-  pub const fn with_maximum_message_size(mut self, maximum_message_size: usize) -> Self {
-    self.maximum_message_size = if maximum_message_size > u32::MAX as usize {
-      u32::MAX as usize
-    } else if maximum_message_size < 512 {
-      512
-    } else {
-      maximum_message_size
-    };
-    self
   }
 }

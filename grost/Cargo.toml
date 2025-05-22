@@ -13,131 +13,96 @@ metadata.workspace = true
 [features]
 default = ["std", "simdutf8"]
 alloc = [
-  "bytes",
   "grost-proto/alloc",
   "memchr/alloc",
-  "smol_str",
-  "bstr_1?/alloc",
-  "chrono_0_4?/alloc",
-  "hostaddr_0_1?/alloc",
-  "hostaddr_0_1?/tinyvec_1",
-  "hostaddr_0_1?/bytes_1",
-  "hostaddr_0_1?/smol_str_0_3",
-  "ruint_1?/alloc",
-  "tinyvec_1?/alloc",
 ]
 std = [
-  "bytes_1/default",
   "grost-proto/default",
   "memchr/default",
   "varing/default",
-  "smol_str_0_3/default",
   "thiserror/default",
   "bitflags/std",
-  "arrayvec_0_7?/default", 
-  "bstr_1?/default",
-  "chrono_0_4?/default",
-  "chrono-tz_0_10?/default",
-  "hashbrown_0_15?/default",
-  "hostaddr_0_1?/default",
-  "hostaddr_0_1?/bytes_1",
-  "hostaddr_0_1?/tinyvec_1",
-  "hostaddr_0_1?/smol_str_0_3",
-  "indexmap_2?/default",
-  "regex_1?/default",
-  "ruint_1?/default",
-  "simdutf8?/default",
-  "triomphe_0_1?/default",
-  "tinystr_0_8?/default",
-  "tinyvec_1?/default",
-  "url_2?/default",
-  "uuid_1?/default",
 ]
 
-arrayvec_0_7 = ["dep:arrayvec_0_7"]
-arrayvec = ["arrayvec_0_7"]
+arrayvec_0_7 = ["grost-proto/arrayvec_0_7"]
+arrayvec = ["grost-proto/arrayvec"]
 
-arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
-arbitrary-int = ["arbitrary-int_1"]
+arbitrary-int_1 = ["grost-proto/arbitrary-int_1"]
+arbitrary-int = ["grost-proto/arbitrary-int"]
 
-bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
-bnum = ["bnum_0_13"]
+bnum_0_13 = ["grost-proto/bnum_0_13"]
+bnum = ["grost-proto/bnum"]
 
-bstr_1 = ["dep:bstr_1"]
-bstr = ["bstr_1"]
+bstr_1 = ["grost-proto/bstr_1"]
+bstr = ["grost-proto/bstr"]
 
-bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
-bytes = ["bytes_1"]
+bytes_1 = ["grost-proto/bytes_1"]
+bytes = ["grost-proto/bytes"]
 
-chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
-chrono = ["chrono_0_4"]
+chrono_0_4 = ["grost-proto/chrono_0_4"]
+chrono = ["grost-proto/chrono"]
 
-chrono-tz_0_10 = ["dep:chrono-tz_0_10", "varing/chrono-tz_0_10"]
-chrono-tz = ["chrono-tz_0_10"]
+chrono-tz_0_10 = ["grost-proto/chrono-tz_0_10"]
+chrono-tz = ["grost-proto/chrono-tz"]
 
-decimal_1 = ["dep:rust_decimal_1"]
-decimal = ["decimal_1"]
+decimal_1 = ["grost-proto/decimal_1"]
+decimal = ["grost-proto/decimal"]
 
-half_2 = ["dep:half_2"]
-half = ["half_2"]
+half_2 = ["grost-proto/half_2"]
+half = ["grost-proto/half"]
 
-hashbrown_0_15 = ["dep:hashbrown_0_15"]
-hashbrown = ["hashbrown_0_15"]
+# hashbrown_0_15 = ["grost-proto/hashbrown_0_15"]
+# hashbrown = ["grost-proto/hashbrown"]
 
-heapless_0_8 = ["dep:heapless_0_8"]
-heapless = ["heapless_0_8"]
+# heapless_0_9 = ["grost-proto/heapless_0_9"]
+# heapless = ["grost-proto/heapless"]
 
-hostaddr_0_1 = ["dep:hostaddr_0_1"]
-hostaddr = ["hostaddr_0_1"]
+hostaddr_0_1 = ["grost-proto/hostaddr_0_1"]
+hostaddr = ["grost-proto/hostaddr"]
 
-indexmap_2 = ["dep:indexmap_2"]
-indexmap = ["indexmap_2"]
+# indexmap_2 = ["grost-proto/indexmap_2"]
+# indexmap = ["grost-proto/indexmap"]
 
-num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
-num-rational = ["num-rational_0_4"]
+num-rational_0_4 = ["grost-proto/num-rational_0_4"]
+num-rational = ["grost-proto/num-rational"]
 
-num-complex_0_4 = ["dep:num-complex_0_4", "varing/num-complex_0_4"]
-num-complex = ["num-complex_0_4"]
+num-complex_0_4 = ["grost-proto/num-complex_0_4"]
+num-complex = ["grost-proto/num-complex"]
 
-regex_1 = ["dep:regex_1"]
-regex = ["regex_1"]
+regex_1 = ["grost-proto/regex_1"]
+regex = ["grost-proto/regex"]
 
-ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
-ruint = ["ruint_1"]
+ruint_1 = ["grost-proto/ruint_1"]
+ruint = ["grost-proto/ruint"]
 
-smol_str_0_3 = ["dep:smol_str_0_3", "hostaddr_0_1?/smol_str_0_3"]
-smol_str = ["smol_str_0_3"]
+smol_str_0_3 = ["grost-proto/smol_str_0_3"]
+smol_str = ["grost-proto/smol_str"]
 
-smallvec_1 = ["dep:smallvec_1", "hostaddr_0_1?/smallvec_1"]
-smallvec = ["smallvec_1"]
+smallvec_1 = ["grost-proto/smallvec_1"]
+smallvec = ["grost-proto/smallvec"]
 
-time_0_3 = ["dep:time_0_3", "varing/time_0_3"]
-time = ["time_0_3"]
+time_0_3 = ["grost-proto/time_0_3"]
+time = ["grost-proto/time"]
 
-triomphe_0_1 = ["dep:triomphe_0_1", "hostaddr_0_1?/triomphe_0_1"]
-triomphe = ["triomphe_0_1"]
+triomphe_0_1 = ["grost-proto/triomphe_0_1"]
+triomphe = ["grost-proto/triomphe"]
 
-tinystr_0_8 = ["dep:tinystr_0_8"]
-tinystr = ["tinystr_0_8"]
+tinystr_0_8 = ["grost-proto/tinystr_0_8"]
+tinystr = ["grost-proto/tinystr"]
 
-tinyvec_1 = ["dep:tinyvec_1"]
-tinyvec = ["tinyvec_1"]
+tinyvec_1 = ["grost-proto/tinyvec_1"]
+tinyvec = ["grost-proto/tinyvec"]
 
-url_2 = ["dep:url_2"]
-url = ["url_2"]
+url_2 = ["grost-proto/url_2"]
+url = ["grost-proto/url"]
 
-uuid_1 = ["dep:uuid_1"]
-uuid = ["uuid_1"]
+uuid_1 = ["grost-proto/uuid_1"]
+uuid = ["grost-proto/uuid"]
 
 arbitrary = [
   "dep:arbitrary",
-  "chrono-tz_0_10?/arbitrary",
-  "smol_str_0_3?/arbitrary",
-  "ruint_1?/arbitrary",
-  "rust_decimal_1?/rust-fuzz",
-  "uuid_1?/arbitrary",
 ]
-quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck"]
+quickcheck = ["grost-proto/quickcheck"]
 
 [dependencies]
 varing.workspace = true
@@ -154,30 +119,30 @@ thiserror = { version = "2", default-features = false }
 simdutf8 = { version = "0.1", default-features = false, optional = true }
 
 # Optional dependencies
-arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
+# arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
 arbitrary = { version = "1", optional = true, features = ["derive"] }
-arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
-bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
-bstr_1 = { package = "bstr", version = "1", default-features = false, optional = true }
-bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
-chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
-chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
-half_2 = { package = "half", version = "2", default-features = false, optional = true }
-hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
-heapless_0_8 = { package = "heapless", version = "0.8", default-features = false, optional = true }
-hostaddr_0_1 = { package = "hostaddr", version = "0.1", default-features = false, optional = true }
-indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
-num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
-num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
-quickcheck = { version = "1", default-features = false, optional = true }
-regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
-ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
-rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
-smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
-smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true }
-triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
-tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
-tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
-time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
-url_2 = { package = "url", version = "2", default-features = false, optional = true }
-uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
+# arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+# bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
+# bstr_1 = { package = "bstr", version = "1", default-features = false, optional = true }
+# bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
+# chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
+# chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
+# half_2 = { package = "half", version = "2", default-features = false, optional = true }
+# hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
+# heapless_0_8 = { package = "heapless", version = "0.8", default-features = false, optional = true }
+# hostaddr_0_1 = { package = "hostaddr", version = "0.1", default-features = false, optional = true }
+# indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
+# num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
+# num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
+# quickcheck = { version = "1", default-features = false, optional = true }
+# regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
+# ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
+# rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+# smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
+# smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true }
+# triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
+# tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
+# tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
+# time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
+# url_2 = { package = "url", version = "2", default-features = false, optional = true }
+# uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }

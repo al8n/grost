@@ -1,276 +1,164 @@
-use std::sync::Arc;
-
 pub use case::*;
-pub use enum_::*;
-pub use flavor::*;
-use indexmap::IndexMap;
+pub use flavors::*;
+// pub use enum_::*;
+pub use object::*;
 pub use safe_ident::*;
-pub use struct_::*;
 
-use heck::ToShoutySnakeCase;
-use quote::{ToTokens, format_ident, quote};
-use smol_str::SmolStr;
-use syn::Ident;
+pub use grost_mir as mir;
+
+use indexmap::{IndexMap, IndexSet};
+use quote::quote;
 
 mod case;
-/// Enum structs
-mod enum_;
-mod flavor;
-mod network;
+mod flavors;
+// /// Enum structs
+// mod enum_;
+mod object;
 mod safe_ident;
-/// structs
-mod struct_;
 
 /// Types for the generator
 pub mod ty;
 
-pub trait Generator {
-  type Error;
-
-  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error>;
-  fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error>;
+pub struct SchemaGeneratorBuilder {
+  structs: IndexSet<Object>,
+  // enums: IndexSet<Enum>,
+  flavors: IndexMap<&'static str, Box<dyn FlavorGenerator + 'static>>,
 }
 
-pub trait EnumCodecGenerator {
-  /// Generates the codec for the unit enum
-  fn generate_enum_codec(
-    &self,
-    path_to_grost: &syn::Path,
-    enum_: &Enum,
-  ) -> proc_macro2::TokenStream;
-}
-
-// /// The flavor wants to be generated
-// #[derive(Clone)]
-// pub struct Flavor {
-//   ty: syn::Type,
-//   name: SmolStr,
-//   enum_codec_generator: Option<Arc<dyn EnumCodecGenerator>>,
-// }
-
-// impl Flavor {
-//   /// Returns a new `Flavor`
-//   pub fn new(ty: syn::Type, name: impl Into<SmolStr>) -> Self {
-//     let name = name.into();
-//     Self {
-//       ty,
-//       enum_codec_generator: if name.eq("network") {
-//         Some(Arc::new(EnumCodecNetworkFlavorGenerator))
-//       } else {
-//         None
-//       },
-//       name,
-//     }
-//   }
-
-//   /// Returns the `Network` flavor
-//   pub fn network(path_to_grost: &syn::Path) -> Self {
-//     Self::new(
-//       syn::parse_quote!(#path_to_grost::__private::flavors::Network),
-//       "network",
-//     )
-//   }
-
-//   /// Sets the codec generator for the unit enum
-//   pub fn set_enum_codec_generator(
-//     &mut self,
-//     enum_codec_generator: impl EnumCodecGenerator + 'static,
-//   ) -> &mut Self {
-//     self.enum_codec_generator = Some(Arc::new(enum_codec_generator));
-//     self
-//   }
-
-//   /// Sets the codec generator for the unit enum
-//   pub fn with_enum_codec_generator(
-//     mut self,
-//     enum_codec_generator: impl EnumCodecGenerator + 'static,
-//   ) -> Self {
-//     self.enum_codec_generator = Some(Arc::new(enum_codec_generator));
-//     self
-//   }
-
-//   /// Returns the type of the flavor
-//   pub fn ty(&self) -> &syn::Type {
-//     &self.ty
-//   }
-
-//   /// Returns the name of the flavor
-//   pub fn name(&self) -> &str {
-//     &self.name
-//   }
-
-//   fn field_reflection_name(&self, field_name: &str) -> Ident {
-//     let flavor_name_ssc = self.name().to_shouty_snake_case();
-//     format_ident!(
-//       "{flavor_name_ssc}_FLAVOR_{}_REFLECTION",
-//       field_name.to_shouty_snake_case()
-//     )
-//   }
-
-//   fn struct_reflection_name(&self) -> Ident {
-//     let flavor_name_ssc = self.name().to_shouty_snake_case();
-//     format_ident!("{flavor_name_ssc}_FLAVOR_REFLECTION")
-//   }
-// }
-
-/// The default generator
-pub struct DefaultGenerator {
-  grost_path: syn::Path,
-  derive: bool,
-  flavors: IndexMap<SmolStr, Box<dyn Flavor + 'static>>,
-}
-
-impl Default for DefaultGenerator {
+impl Default for SchemaGeneratorBuilder {
   fn default() -> Self {
-    let grost_path = syn::parse_str("::grost").unwrap();
-    let network = Box::new(network::Network::new(&grost_path)) as Box<dyn Flavor>;
-    let k = core::any::type_name::<network::Network>();
-    Self {
-      flavors: {
-        let mut flavors = IndexMap::new();
-        flavors.insert(SmolStr::new(k), network);
-        flavors
-      },
-      grost_path,
-      derive: false,
-    }
+    Self::new()
   }
 }
 
-impl DefaultGenerator {
-  /// Returns a new `DefaultGenerator`
+impl SchemaGeneratorBuilder {
+  /// Returns a new `SchemaGeneratorBuilder`
   pub fn new() -> Self {
-    Self::default()
-  }
-
-  /// Returns a new `DefaultGenerator` with the given `grost_path`
-  pub fn with_grost_path(mut self, grost_path: syn::Path) -> Self {
-    self.grost_path = grost_path;
-    for (flavor_name, flavor) in self.flavors.iter_mut() {
-      if flavor_name.eq(core::any::type_name::<network::Network>()) {
-        let path = &self.grost_path;
-        flavor.set_ty(syn::parse_quote!(#path::__private::flavors::Network));
-      }
+    Self {
+      flavors: IndexMap::new(),
+      structs: IndexSet::new(),
+      // enums: IndexSet::new(),
     }
-    self
   }
 
-  /// Sets the generator to adapt derive macros
-  pub fn with_derive(mut self) -> Self {
-    self.derive = true;
-    self
+  pub fn build(self) -> SchemaGenerator {
+    SchemaGenerator {
+      structs: self.structs,
+      flavors: self.flavors,
+      // enums: self.enums,
+    }
   }
+
+  /// Adds a flavor derive generator to the schema builder
+  pub fn add_flavor<F>(&mut self, name: &'static str, flavor: F) -> Result<&mut Self, F>
+  where
+    F: FlavorGenerator + 'static,
+  {
+    if self.flavors.contains_key(flavor.name()) {
+      return Err(flavor);
+    }
+
+    self.flavors.insert(name, Box::new(flavor));
+    Ok(self)
+  }
+
+  /// Returns the objects in the schema builder
+  pub fn objects_mut(&mut self) -> &mut IndexSet<Object> {
+    &mut self.structs
+  }
+
+  // /// Returns the enums in the schema builder
+  // pub fn enums_mut(&mut self) -> &mut IndexSet<Enum> {
+  //   &mut self.enums
+  // }
+
+  // /// Returns the enums in the schema builder
+  // pub fn enums(&mut self) -> &IndexSet<Enum> {
+  //   &mut self.enums
+  // }
 }
 
-impl core::fmt::Debug for DefaultGenerator {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.debug_struct("DefaultGenerator")
-      .field("grost_path", &self.grost_path.to_token_stream().to_string())
-      .field("derive", &self.derive)
-      .finish()
-  }
+/// The schema generator is used to generate the objects, enums, unions and
+/// interfaces in a grost schema to the corresponding Rust definitions.
+pub struct SchemaGenerator {
+  structs: IndexSet<Object>,
+  // enums: IndexSet<Enum>,
+  flavors: IndexMap<&'static str, Box<dyn FlavorGenerator + 'static>>,
 }
 
-impl Generator for DefaultGenerator {
-  type Error = ();
+impl SchemaGenerator {
+  /// Returns a new `SchemaGenerator` with the given `grost_path`
+  #[inline]
+  pub const fn structs(&self) -> &IndexSet<Object> {
+    &self.structs
+  }
 
-  fn generate_struct(&self, struct_: &Struct) -> Result<proc_macro2::TokenStream, Self::Error> {
-    let defination = (!self.derive).then(|| struct_.struct_defination());
-    let basic = struct_.struct_basic(&self.grost_path);
-    let selection = struct_.generate_selection(&self.grost_path, &self.flavors);
-    let reflections = self
-      .flavors
+  /// Returns the flavor generators of the schema generator
+  #[inline]
+  pub const fn flavors(&self) -> &IndexMap<&'static str, Box<dyn FlavorGenerator + 'static>> {
+    &self.flavors
+  }
+
+  pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+    let objects = self
+      .structs
       .iter()
-      .map(|(_, f)| struct_.generate_reflection(&self.grost_path, &**f));
+      .flat_map(|object| {
+        object.derive().map(|basic| {
+          self
+            .flavors
+            .values()
+            .map(|flavor| flavor.derive_object(object))
+            .collect::<syn::Result<Vec<_>>>()
+            .and_then(|stream| {
+              let stream = quote! {
+                #basic
+
+                #(#stream)*
+              };
+
+              if let Some(output) = object.output() {
+                std::fs::OpenOptions::new()
+                  .write(true)
+                  .create(true)
+                  .read(true)
+                  .truncate(true)
+                  .open(output.path())
+                  .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))
+                  .and_then(|mut file| {
+                    use std::io::Write;
+
+                    let stream_string = if output.format() {
+                      let f: syn::File = syn::parse2(stream)?;
+                      prettyplease::unparse(&f)
+                    } else {
+                      stream.to_string()
+                    };
+
+                    file
+                      .write_all(stream_string.as_bytes())
+                      .map(|_| quote! {})
+                      .map_err(|e| syn::Error::new(proc_macro2::Span::call_site(), e))
+                  })
+              } else {
+                Ok(stream)
+              }
+            })
+        })
+      })
+      .collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {
-      #defination
-      #(#reflections)*
-      #basic
-      #selection
+      #(#objects)*
     })
   }
 
-  fn generate_enum(&self, enum_: &Enum) -> Result<proc_macro2::TokenStream, Self::Error> {
-    let defination = (!self.derive).then(|| enum_.enum_defination());
-    let name = enum_.name();
-    let as_str = enum_.enum_as_str();
-    let from_str = enum_.enum_from_str();
-    let is_variant = enum_.enum_is_variant();
-    let reflection = enum_.generate_reflection(&self.grost_path);
-    #[cfg(feature = "quickcheck")]
-    let quickcheck = self
-      .flavors
-      .iter()
-      .map(|(_, f)| enum_.enum_quickcheck(&self.grost_path, f));
-    #[cfg(not(feature = "quickcheck"))]
-    let quickcheck = core::iter::once(quote! {}).into_iter();
-    #[cfg(feature = "arbitrary")]
-    let arbitrary = enum_.enum_arbitrary(&self.grost_path);
-    #[cfg(not(feature = "arbitrary"))]
-    let arbitrary = quote! {};
-    let repr_conversion = enum_.enum_repr_conversion(&self.grost_path);
-    let codecs = self
-      .flavors
-      .iter()
-      .map(|(_, f)| f.generate_enum_codec(&self.grost_path, enum_));
-    let conversions = self
-      .flavors
-      .iter()
-      .map(|(_, f)| enum_.enum_conversion(&self.grost_path, f));
-
-    Ok(quote! {
-      #defination
-
-      impl #name {
-        #reflection
-      }
-
-      #as_str
-      #from_str
-      #is_variant
-      #repr_conversion
-
-      #(#codecs)*
-      #(#conversions)*
-      #(#quickcheck)*
-      #arbitrary
-    })
-  }
+  // /// Returns a new `SchemaGenerator` with the given `grost_path`
+  // #[inline]
+  // pub const fn enums(&self) -> &IndexSet<Enum> {
+  //   &self.enums
+  // }
 }
-
-// trait WireTypeExt {
-//   fn raw(&self) -> &'static str;
-//   fn to_tokens(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream;
-// }
-
-// impl WireTypeExt for grost_proto::flavors::network::WireType {
-//   fn raw(&self) -> &'static str {
-//     match self {
-//       Self::Zst => "WireType::Zst",
-//       Self::Varint => "WireType::Varint",
-//       Self::LengthDelimited => "WireType::LengthDelimited",
-//       Self::Byte => "WireType::Byte",
-//       Self::Fixed16 => "WireType::Fixed16",
-//       Self::Fixed32 => "WireType::Fixed32",
-//       Self::Fixed64 => "WireType::Fixed64",
-//       Self::Fixed128 => "WireType::Fixed128",
-//     }
-//   }
-
-//   fn to_tokens(&self, path_to_grost: &syn::Path) -> proc_macro2::TokenStream {
-//     match self {
-//       Self::Zst => quote! { #path_to_grost::__private::WireType::Zst },
-//       Self::Varint => quote! { #path_to_grost::__private::WireType::Varint },
-//       Self::LengthDelimited => quote! { #path_to_grost::__private::WireType::LengthDelimited },
-//       Self::Byte => quote! { #path_to_grost::__private::WireType::Byte },
-//       Self::Fixed16 => quote! { #path_to_grost::__private::WireType::Fixed16 },
-//       Self::Fixed32 => quote! { #path_to_grost::__private::WireType::Fixed32 },
-//       Self::Fixed64 => quote! { #path_to_grost::__private::WireType::Fixed64 },
-//       Self::Fixed128 => quote! { #path_to_grost::__private::WireType::Fixed128 },
-//     }
-//   }
-// }
 
 #[cfg(test)]
 mod tests;

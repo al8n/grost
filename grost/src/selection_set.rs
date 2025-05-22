@@ -24,14 +24,14 @@
 // use crate::flavors::network::{EncodeError, Identifier};
 
 // pub struct SelectionSet<S, UB> {
-//   selection: S,
+//   selector: S,
 //   unknown_buffer: Option<UB>,
 // }
 
 // impl<S, UB> SelectionSet<S, UB> {
 //   /// Creates a new selection set with the given selection and unknown buffer.
 //   #[inline]
-//   pub const fn new(selection: S, unknown_buffer: Option<UB>) -> Self {
+//   pub const fn new(selector: S, unknown_buffer: Option<UB>) -> Self {
 //     Self {
 //       selection,
 //       unknown_buffer,
@@ -356,8 +356,8 @@
 // //   S: Message,
 // //   B: for<'a> From<&'a [u8]> + AsRef<[u8]> + Clone,
 // // {
-// //   type Encoded<'a>
-// //     = EncodedSelectionSet<'a, S::Encoded<'a>>
+// //   type Decoded<'a>
+// //     = EncodedSelectionSet<'a, S::Decoded<'a>>
 // //   where
 // //     Self: Sized + 'a;
 
@@ -529,7 +529,7 @@
 // //   }
 // // }
 
-// // impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Encoded<'a>>
+// // impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Decoded<'a>>
 // // where
 // //   S: Message,
 // //   B: From<&'a [u8]>,
@@ -544,7 +544,7 @@
 // //   }
 // // }
 
-// // impl<'a, S, B> TypeRef<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Encoded<'a>>
+// // impl<'a, S, B> TypeRef<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Decoded<'a>>
 // // where
 // //   S: Message,
 // //   B: From<&'a [u8]>,

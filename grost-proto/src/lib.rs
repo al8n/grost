@@ -9,10 +9,14 @@ extern crate std;
 #[cfg(feature = "bytes_1")]
 pub use bytes_1 as bytes;
 
+#[cfg(feature = "smol_str_0_3")]
+pub use smol_str_0_3 as smol_str;
+
+#[cfg(feature = "quickcheck")]
+pub use quickcheck;
+
 pub use convert::*;
-pub use error::*;
-pub use select_set::SelectionSet;
-pub use tag::Tag;
+// pub use select_set::SelectionSet;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
@@ -27,13 +31,22 @@ pub mod buffer;
 pub mod decode;
 /// The encoding trait
 pub mod encode;
+/// The error types
+pub mod error;
 
-mod convert;
-mod error;
+/// The indexing related types and traits
+pub mod indexer;
+
+/// The selection related types and traits
+pub mod selection;
+
+/// Traits for conversions between types.
+pub mod convert;
+
 #[macro_use]
 mod macros;
+mod map;
 mod select_set;
-mod tag;
 mod utils;
 
 #[doc(hidden)]
@@ -63,38 +76,23 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::{
-    DecodeError, EncodeError,
     buffer::*,
-    convert::*,
+    convert::{self, *},
+    debug_assert_read_eq,
+    debug_assert_write_eq,
     decode::*,
+    decode_owned_scalar,
+    decoded_state,
+    default_wire_format,
     encode::*,
-    flavors::{self, *},
+    flavors::{self, RawTag},
+    indexer,
+    // map::MapSelector,
+    network_varint,
+    partial_encode_scalar,
+    reflection,
+    selectable,
+    selection::{self, *},
   };
   pub use varing;
 }
-
-// /// A trait that defines how to select fields in a struct.
-// pub trait Selection<F: flavors::Flavor + ?Sized> {
-//   /// Encodes the selections into the provided buffer.
-//   fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError>;
-
-//   /// Returns the length of the encoded selections.
-//   fn encoded_len(&self) -> usize;
-
-//   /// Decodes the selection set from the provided buffer.
-//   #[allow(clippy::type_complexity)]
-//   fn decode<'de, UB, UT>(buf: &'de [u8]) -> Result<(usize, SelectionSet<Self, UT, UB>), DecodeError<F>>
-//   where
-//     UB: buffer::Buffer<unknown::Unknown<F, &'de [u8]>> + 'de,
-//     UT: buffer::Buffer<Tag> + 'de,
-//     Self: Sized;
-
-//   /// Decodes the selection set from the provided owned buffer.
-//   #[allow(clippy::type_complexity)]
-//   fn decode_owned<B, UB, UT>(buf: B) -> Result<(usize, SelectionSet<Self, UT, UB>), DecodeError<F>>
-//   where
-//     B: buffer::BytesBuffer + 'static,
-//     UB: buffer::Buffer<unknown::Unknown<F, B>> + 'static,
-//     UT: buffer::Buffer<Tag> + 'static,
-//     Self: Sized;
-// }

@@ -62,7 +62,7 @@ where
     context: &Context,
     wire_type: WireType,
     buf: &mut [u8],
-    selection: &Self::Selection,
+    selector: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     self
       .as_ref()
@@ -74,7 +74,7 @@ where
     &self,
     context: &Context,
     wire_type: WireType,
-    selection: &Self::Selection,
+    selector: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     self
       .as_ref()
@@ -86,7 +86,7 @@ where
     &self,
     context: &Context,
     wire_type: WireType,
-    selection: &Self::Selection,
+    selector: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     self
       .as_ref()
@@ -99,7 +99,7 @@ where
     context: &Context,
     wire_type: WireType,
     buf: &mut [u8],
-    selection: &Self::Selection,
+    selector: &Self::Selector,
   ) -> Result<usize, EncodeError> {
     self
       .as_ref()

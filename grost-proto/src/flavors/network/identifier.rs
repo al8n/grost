@@ -1,7 +1,6 @@
 use varing::Varint;
 
-use super::WireType;
-use crate::Tag;
+use super::{Tag, WireType, tag::ParseTagError};
 
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
@@ -47,12 +46,31 @@ impl Identifier {
   }
 
   /// Creates an identifier from a `u32` value.
+  ///
+  /// # Panics
+  /// This function will panic if the tag is not in range `1..=536870911`
   #[inline]
   pub const fn from_u32(val: u32) -> Self {
     let wire_type = val & 0b111; // Get last 3 bits for wire type
     let tag = val >> 3; // Shift right to get the tag
     // Using from_u8_unchecked since we know wire_type is within 0-7
     Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag::new(tag))
+  }
+
+  /// Creates an identifier from a `u32` value.
+  ///
+  /// # Panics
+  /// This function will panic if the tag is not in range `1..=536870911`
+  #[inline]
+  pub const fn try_from_u32(val: u32) -> Result<Self, ParseTagError> {
+    let wire_type = val & 0b111; // Get last 3 bits for wire type
+    let tag = val >> 3; // Shift right to get the tag
+    // Using from_u8_unchecked since we know wire_type is within 0-7
+    // Self::new(WireType::from_u8_unchecked(wire_type as u8), Tag::new(tag))
+    match Tag::try_new(tag) {
+      Ok(tag) => Ok(Self::new(WireType::from_u8_unchecked(wire_type as u8), tag)),
+      Err(e) => Err(e),
+    }
   }
 
   /// Encodes the identifier.
@@ -69,19 +87,19 @@ impl Identifier {
 
   /// Encodes the identifier.
   #[inline]
-  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
     match self.encode_to_inner(dst) {
       Ok(bytes_written) => Ok(bytes_written),
-      Err(e) => Err(super::EncodeError::from_varint_error(e)),
+      Err(e) => Err(super::Error::from_varint_encode_error(e)),
     }
   }
 
   /// Decodes an identifier from a buffer.
   #[inline]
-  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::DecodeError> {
+  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::Error> {
     match Self::decode_inner(buf) {
       Ok((bytes_read, value)) => Ok((bytes_read, value)),
-      Err(e) => Err(super::DecodeError::from_varint_error(e)),
+      Err(e) => Err(super::Error::from_varint_decode_error(e)),
     }
   }
 
@@ -121,11 +139,15 @@ impl Varint for Identifier {
 }
 
 impl crate::flavors::Identifier<super::Network> for Identifier {
-  fn wire_type(&self) -> WireType {
-    self.wire_type()
+  fn tag(&self) -> Tag {
+    self.tag
   }
 
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+  fn wire_type(&self) -> WireType {
+    self.wire_type
+  }
+
+  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
     self.encode_to(dst)
   }
 
@@ -133,7 +155,7 @@ impl crate::flavors::Identifier<super::Network> for Identifier {
     self.encoded_len()
   }
 
-  fn decode<B>(buf: B) -> Result<(usize, Self), super::DecodeError>
+  fn decode<B>(buf: B) -> Result<(usize, Self), super::Error>
   where
     B: crate::buffer::BytesBuffer + Sized,
     Self: Sized,
