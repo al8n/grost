@@ -28,14 +28,6 @@ impl Encode<Network, Fixed32> for u32 {
   fn encoded_len(&self, _: &Context) -> usize {
     4
   }
-
-  fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Network, Fixed32>>::encoded_len(self, context)
-  }
-
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Network, Fixed32>>::encode(self, context, buf)
-  }
 }
 
 impl Encode<Network, Varint> for u32 {
@@ -46,23 +38,15 @@ impl Encode<Network, Varint> for u32 {
   fn encoded_len(&self, _: &Context) -> usize {
     varing::encoded_u32_varint_len(*self)
   }
-
-  fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Network, Varint>>::encoded_len(self, context)
-  }
-
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Network, Varint>>::encode(self, context, buf)
-  }
 }
 
 partial_encode_scalar!(Network: u32 as Fixed32, u32 as Varint);
 
-impl<'de> Decode<'de, Network, Fixed32, Self> for u32 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, B> Decode<'de, Network, Fixed32, Self, B> for u32 {
+  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if src.len() < 4 {
       return Err(Error::buffer_underflow());
@@ -70,31 +54,15 @@ impl<'de> Decode<'de, Network, Fixed32, Self> for u32 {
 
     Ok((4, u32::from_le_bytes(src[..4].try_into().unwrap())))
   }
-
-  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    <Self as Decode<'_, Network, Fixed32, Self>>::decode::<UB>(ctx, src)
-  }
 }
 
-impl<'de> Decode<'de, Network, Varint, Self> for u32 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, B> Decode<'de, Network, Varint, Self, B> for u32 {
+  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     varing::decode_u32_varint(src).map_err(Into::into)
-  }
-
-  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    <Self as Decode<'_, Network, Fixed32, Self>>::decode::<UB>(ctx, src)
   }
 }
 

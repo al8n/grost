@@ -27,7 +27,10 @@ pub fn derive_object(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 }
 
 #[proc_macro_attribute]
-pub fn object(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn object(
+  args: proc_macro::TokenStream,
+  input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
   let object = match Object::from_attribute_input(args.into(), input.into()) {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
@@ -47,5 +50,6 @@ pub fn object(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> 
 
   quote! {
     #codegen
-  }.into()
+  }
+  .into()
 }

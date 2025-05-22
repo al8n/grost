@@ -202,18 +202,20 @@ impl ToTokens for ObjectDeriveInput {
         if fields.is_unit() || fields.is_empty() {
           (None, None, None)
         } else {
-          (Some(quote! {
-            #[darling(flatten)]
-            #[doc(hidden)]
-            __custom_meta__: #name,
-          }),
-          Some(quote! {
-            #[doc(hidden)]
-            __custom_meta__: #name,
-          }),
-          Some(quote! {
-            __custom_meta__: args.__custom_meta__,
-          }))
+          (
+            Some(quote! {
+              #[darling(flatten)]
+              #[doc(hidden)]
+              __custom_meta__: #name,
+            }),
+            Some(quote! {
+              #[doc(hidden)]
+              __custom_meta__: #name,
+            }),
+            Some(quote! {
+              __custom_meta__: args.__custom_meta__,
+            }),
+          )
         }
       }
     };
@@ -446,7 +448,7 @@ impl ToTokens for ObjectDeriveInput {
             &self.__args__.__meta__
           }
         }
-      };      
+      };
     });
   }
 }

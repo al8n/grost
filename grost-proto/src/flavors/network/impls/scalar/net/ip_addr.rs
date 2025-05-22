@@ -88,53 +88,31 @@ macro_rules! ip_addr {
       }
     }
 
-    impl<'de> Decode<'de, Network, $variant, Self> for $addr {
-      fn decode<UB>(
+    impl<'de, B> Decode<'de, Network, $variant, Self, B> for $addr {
+      fn decode(
         ctx: &Context,
         src: &'de [u8],
       ) -> Result<(usize, Self), Error>
       where
         Self: Sized + 'de,
-        UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+        B: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
       {
-        <$convert as Decode<'de, Network, $variant, $convert>>::decode::<UB>(ctx, src)
+        <$convert as Decode<'de, Network, $variant, $convert, B>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
-      }
-
-      fn decode_length_delimited<UB>(
-        context: &Context,
-        src: &'de [u8],
-      ) -> Result<(usize, Self), Error>
-      where
-        Self: Sized + 'de,
-        UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
-      {
-        <Self as Decode<'de, Network, $variant, Self>>::decode::<()>(context, src)
       }
     }
 
-    impl<'de> Decode<'de, Network, Varint, Self> for $addr {
-      fn decode<UB>(
+    impl<'de, B> Decode<'de, Network, Varint, Self, B> for $addr {
+      fn decode(
         ctx: &Context,
         src: &'de [u8],
       ) -> Result<(usize, Self), Error>
       where
         Self: Sized + 'de,
-        UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+        B: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
       {
-        <$convert as Decode<'de, Network, Varint, $convert>>::decode::<UB>(ctx, src)
+        <$convert as Decode<'de, Network, Varint, $convert, B>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
-      }
-
-      fn decode_length_delimited<UB>(
-        context: &Context,
-        src: &'de [u8],
-      ) -> Result<(usize, Self), Error>
-      where
-        Self: Sized + 'de,
-        UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
-      {
-        <Self as Decode<'de, Network, Varint, Self>>::decode::<()>(context, src)
       }
     }
 
@@ -234,11 +212,11 @@ impl Encode<Network, LengthDelimited> for IpAddr {
   }
 }
 
-impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, B> Decode<'de, Network, LengthDelimited, Self, B> for IpAddr {
+  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    B: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
     macro_rules! decode_ip_variant {
       ($repr:ident($variant:literal)) => {{
@@ -268,10 +246,10 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
     })
   }
 
-  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+  fn decode_length_delimited(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    B: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
   {
     macro_rules! decode_ip_variant {
       ($variant:ident($repr:ident, $read:ident)) => {{
@@ -296,23 +274,26 @@ impl<'de> Decode<'de, Network, LengthDelimited, Self> for IpAddr {
   }
 }
 
-impl DecodeOwned<Network, LengthDelimited, Self> for IpAddr {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+impl<B> DecodeOwned<Network, LengthDelimited, Self, B> for IpAddr {
+  fn decode_owned<D>(context: &Context, src: D) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+    D: crate::buffer::BytesBuffer + 'static,
+    B: crate::buffer::Buffer<Unknown<D>> + 'static,
   {
-    Self::decode::<()>(context, src.as_bytes())
+    <Self as Decode<'_, Network, LengthDelimited, Self, ()>>::decode(context, src.as_bytes())
   }
 
-  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+  fn decode_length_delimited_owned<D>(context: &Context, src: D) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+    D: crate::buffer::BytesBuffer + 'static,
+    B: crate::buffer::Buffer<Unknown<D>> + 'static,
   {
-    Self::decode_length_delimited::<()>(context, src.as_bytes())
+    <Self as Decode<'_, Network, LengthDelimited, Self, ()>>::decode_length_delimited(
+      context,
+      src.as_bytes(),
+    )
   }
 }
 
@@ -327,7 +308,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Network, Fixed32>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<Network, Fixed32, Ipv4Addr>>::decode_length_delimited::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<Network, Fixed32, Ipv4Addr>>::decode_length_delimited(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -335,7 +316,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Network, Varint>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<'_, Network, Varint, Ipv4Addr>>::decode_length_delimited::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<'_, Network, Varint, Ipv4Addr>>::decode_length_delimited(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -348,7 +329,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Network, Fixed128>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<Network, Fixed128, Ipv6Addr>>::decode_length_delimited::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<Network, Fixed128, Ipv6Addr>>::decode_length_delimited(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -356,7 +337,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Network, Varint>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<'_, Network, Varint, Ipv6Addr>>::decode_length_delimited::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<'_, Network, Varint, Ipv6Addr>>::decode_length_delimited(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -369,7 +350,7 @@ mod tests {
       let encoded_len = ip.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = IpAddr::decode_length_delimited::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <IpAddr as Decode<Network, LengthDelimited, IpAddr>>::decode_length_delimited(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -377,7 +358,7 @@ mod tests {
       let encoded_len = ip.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = IpAddr::decode::<()>(&Context::default(), &buf).unwrap();
+      let (len, decoded) = <IpAddr as Decode<Network, LengthDelimited, IpAddr>>::decode(&Context::default(), &buf).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 

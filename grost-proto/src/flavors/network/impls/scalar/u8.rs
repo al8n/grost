@@ -58,11 +58,11 @@ impl Encode<Network, Varint> for u8 {
 
 partial_encode_scalar!(Network: u8 as Fixed8, u8 as Varint);
 
-impl<'de> Decode<'de, Network, Fixed8, Self> for u8 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, B> Decode<'de, Network, Fixed8, Self, B> for u8 {
+  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     if src.is_empty() {
       return Err(Error::buffer_underflow());
@@ -71,31 +71,15 @@ impl<'de> Decode<'de, Network, Fixed8, Self> for u8 {
     let value = src[0];
     Ok((1, value))
   }
-
-  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    <Self as Decode<'_, Network, Fixed8, Self>>::decode::<UB>(ctx, src)
-  }
 }
 
-impl<'de> Decode<'de, Network, Varint, Self> for u8 {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, B> Decode<'de, Network, Varint, Self, B> for u8 {
+  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buffer<Unknown<&'de [u8]>> + 'de,
   {
     varing::decode_u8_varint(src).map_err(Into::into)
-  }
-
-  fn decode_length_delimited<UB>(ctx: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    <Self as Decode<'_, Network, Fixed8, Self>>::decode::<UB>(ctx, src)
   }
 }
 

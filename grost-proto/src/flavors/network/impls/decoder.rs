@@ -120,7 +120,7 @@ impl<'a, L, UB, W, T> Iterator for RepeatedDecoder<'a, L, UB, W>
 where
   L: core::ops::Deref<Target = [T]>,
   W: sealed::Sealed + 'a,
-  T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,
+  T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output, UB> + 'a,
   T::Output: Sized,
   TypeReflection<T>: Reflectable<T, Reflection = Type>,
   UB: Buffer<Unknown<&'a [u8]>> + 'a,
@@ -267,7 +267,8 @@ impl<'a> Repr<'a> {
   fn decode<T, W, UB>(&mut self, ctx: &Context) -> Option<Result<(usize, T::Output), Error>>
   where
     W: sealed::Sealed,
-    T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,
+    T:
+      State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output, UB> + 'a,
     T::Output: Sized,
     TypeReflection<T>: Reflectable<T, Reflection = Type>,
     UB: Buffer<Unknown<&'a [u8]>> + 'a,
@@ -279,7 +280,7 @@ impl<'a> Repr<'a> {
           return None;
         }
 
-        Some(T::decode::<UB>(ctx, &src[*offset..]).inspect(|(read, _)| {
+        Some(T::decode(ctx, &src[*offset..]).inspect(|(read, _)| {
           *offset += read;
         }))
       }
@@ -292,7 +293,8 @@ impl<'a> Repr<'a> {
   ) -> Option<Result<(usize, T::Output), Error>>
   where
     W: sealed::Sealed,
-    T: State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output> + 'a,
+    T:
+      State<Decoded<'a, Network, W>, Input = &'a [u8]> + Decode<'a, Network, W, T::Output, UB> + 'a,
     T::Output: Sized,
     TypeReflection<T>: Reflectable<T, Reflection = Type>,
     UB: Buffer<Unknown<&'a [u8]>> + 'a,
@@ -305,7 +307,7 @@ impl<'a> Repr<'a> {
         }
 
         Some(
-          T::decode_length_delimited::<UB>(ctx, &src[*offset..]).inspect(|(read, _)| {
+          T::decode_length_delimited(ctx, &src[*offset..]).inspect(|(read, _)| {
             *offset += read;
           }),
         )

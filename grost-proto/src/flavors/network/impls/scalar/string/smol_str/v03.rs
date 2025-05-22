@@ -31,27 +31,14 @@ decoded_state!(
   &'a Network: SmolStr as LengthDelimited => &'a str
 );
 
-impl DecodeOwned<Network, LengthDelimited, Self> for SmolStr {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+impl<B> DecodeOwned<Network, LengthDelimited, Self, B> for SmolStr {
+  fn decode_owned<D>(context: &Context, src: D) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+    D: crate::buffer::BytesBuffer + 'static,
+    B: crate::buffer::Buffer<Unknown<D>> + 'static,
   {
-    <str as Decode<'_, Network, LengthDelimited, &str>>::decode::<()>(context, src.as_bytes())
+    <str as Decode<'_, Network, LengthDelimited, &str, ()>>::decode(context, src.as_bytes())
       .map(|(len, bytes)| (len, SmolStr::new(bytes)))
-  }
-
-  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-  {
-    <str as Decode<'_, Network, LengthDelimited, &str>>::decode_length_delimited::<()>(
-      context,
-      src.as_bytes(),
-    )
-    .map(|(len, bytes)| (len, SmolStr::new(bytes)))
   }
 }

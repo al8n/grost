@@ -52,7 +52,10 @@ impl Object {
     Ok(Self { object })
   }
 
-  pub fn from_attribute_input(args: proc_macro2::TokenStream, input: proc_macro2::TokenStream) -> darling::Result<Self> {
+  pub fn from_attribute_input(
+    args: proc_macro2::TokenStream,
+    input: proc_macro2::TokenStream,
+  ) -> darling::Result<Self> {
     let input = sealed::ObjectInput::from_attribute_input(args, input)?;
     let object = grost_mir::object::Object::<sealed::ObjectInput>::from_object(input)?;
 
@@ -60,19 +63,18 @@ impl Object {
   }
 
   pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
-    self.object.derive()
-      .map(|t| {
-        if self.object.meta().derived() {
-          t
-        } else {
-          let obj = &self.object;
-          quote::quote! {
-            #obj
+    self.object.derive().map(|t| {
+      if self.object.meta().derived() {
+        t
+      } else {
+        let obj = &self.object;
+        quote::quote! {
+          #obj
 
-            #t
-          }
+          #t
         }
-      })
+      }
+    })
   }
 
   pub(super) fn output(&self) -> Option<&Output> {

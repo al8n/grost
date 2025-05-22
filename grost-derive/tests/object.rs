@@ -77,9 +77,6 @@ pub struct User<I> {
 //   content: String,
 // }
 
-
-
-
 #[test]
 fn t() {
   // use grost::flavors::Network;

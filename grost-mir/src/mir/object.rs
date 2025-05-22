@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;

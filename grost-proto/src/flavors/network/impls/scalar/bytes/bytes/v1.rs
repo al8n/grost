@@ -41,27 +41,14 @@ decoded_state!(
 );
 flatten_state!(Bytes, BytesMut);
 
-impl DecodeOwned<Network, LengthDelimited, Self> for Bytes {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+impl<B> DecodeOwned<Network, LengthDelimited, Self, B> for Bytes {
+  fn decode_owned<D>(context: &Context, src: D) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+    D: crate::buffer::BytesBuffer + 'static,
+    B: crate::buffer::Buffer<Unknown<D>> + 'static,
   {
-    <&[u8] as Decode<'_, Network, LengthDelimited, &[u8]>>::decode::<()>(context, src.as_bytes())
+    <&[u8] as Decode<'_, Network, LengthDelimited, &[u8], ()>>::decode(context, src.as_bytes())
       .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
-  }
-
-  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-  {
-    <&[u8] as Decode<'_, Network, LengthDelimited, &[u8]>>::decode_length_delimited::<()>(
-      context,
-      src.as_bytes(),
-    )
-    .map(|(len, bytes)| (len, Bytes::copy_from_slice(bytes)))
   }
 }

@@ -31,27 +31,16 @@ try_decode_bridge!(
 macro_rules! impl_ {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de> Decode<'de, Network, LengthDelimited, &'de str> for $ty {
-        fn decode<UB>(
+      impl<'de, B> Decode<'de, Network, LengthDelimited, &'de str, B> for $ty {
+        fn decode(
           context: &Context,
           src: &'de [u8],
         ) -> Result<(usize, &'de str), Error>
         where
           &'de str: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+          B: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
         {
-          <&'de str as Decode<'de, Network, LengthDelimited, &'de str>>::decode::<UB>(context, src)
-        }
-
-        fn decode_length_delimited<UB>(
-          context: &Context,
-          src: &'de [u8],
-        ) -> Result<(usize, &'de str), Error>
-        where
-          &'de str: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
-        {
-          <&'de str as Decode<'de, Network, LengthDelimited, &'de str>>::decode_length_delimited::<UB>(context, src)
+          <&'de str as Decode<'de, Network, LengthDelimited, &'de str, B>>::decode(context, src)
         }
       }
     )*

@@ -10,43 +10,43 @@ use crate::{
   },
 };
 
-impl<'de, const N: usize> Decode<'de, Network, LengthDelimited, Self> for [u8; N] {
-  fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    decode_to_array::<N>(src)
-  }
+// impl<'de, B, const N: usize> Decode<'de, Network, LengthDelimited, Self, B> for [u8; N] {
+//   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+//   where
+//     Self: Sized + 'de,
+//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//   {
+//     decode_to_array::<N>(src)
+//   }
 
-  fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
-  {
-    decode_length_delimited_to_array::<N>(src)
-  }
-}
+//   fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+//   where
+//     Self: Sized + 'de,
+//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//   {
+//     decode_length_delimited_to_array::<N>(src)
+//   }
+// }
 
-impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
-  fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-  {
-    Self::decode::<()>(context, src.as_bytes())
-  }
+// impl<const N: usize> DecodeOwned<Network, LengthDelimited, Self> for [u8; N] {
+//   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+//   where
+//     Self: Sized + 'static,
+//     B: crate::buffer::BytesBuffer + 'static,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+//   {
+//     Self::decode::<()>(context, src.as_bytes())
+//   }
 
-  fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'static,
-    B: crate::buffer::BytesBuffer + 'static,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-  {
-    Self::decode_length_delimited::<()>(context, src.as_bytes())
-  }
-}
+//   fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
+//   where
+//     Self: Sized + 'static,
+//     B: crate::buffer::BytesBuffer + 'static,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
+//   {
+//     Self::decode_length_delimited::<()>(context, src.as_bytes())
+//   }
+// }
 
 macro_rules! encode_fixed {
   ($this:ident($buf:ident) as $fixed:literal) => {{
@@ -127,7 +127,7 @@ macro_rules! impl_fixed {
   };
 }
 
-impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
+// impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
 
 #[inline]
 fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
