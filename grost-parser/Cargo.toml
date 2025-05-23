@@ -11,3 +11,5 @@ categories.workspace = true
 metadata.workspace = true
 
 [dependencies]
+pest = "2.8"
+pest_derive = "2.8"

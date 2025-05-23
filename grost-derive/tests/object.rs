@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use grost::{
   buffer::Buf, flavors::{network::LengthDelimited, Network}, selection::{Selectable, Selector}, Decode, PartialDecode
 };
@@ -7,6 +9,11 @@ use grost_derive::{Object, object};
 //   pub fn default_user() -> String {
 //     String::from("user")
 //   }
+// }
+
+// struct Generic<T: ?Sized, W: ?Sized> {
+//   _w: PhantomData<W>,
+//   t: T,
 // }
 
 // #[object(output(path = "grost-derive/tests/user.rs", format))]
@@ -50,48 +57,48 @@ pub struct User<I> {
 //   type Selector = UserSelector<Network>;
 // }
 
-impl<'de, UB> PartialDecode<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
-  fn partial_decode<B>(
-    context: &<Network as grost::Flavor>::Context,
-    src: B,
-    selector: &Self::Selector,
-  ) -> Result<(usize, Option<Self>), <Network as grost::Flavor>::Error>
-  where
-    Self: Sized + 'de,
-    B: Buf<'de>,
-    UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de
-  {
-    if selector.is_empty() {
-      return Ok((0, None));
-    }
+// impl<'de, UB> PartialDecode<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
+//   fn partial_decode<B>(
+//     context: &<Network as grost::Flavor>::Context,
+//     src: B,
+//     selector: &Self::Selector,
+//   ) -> Result<(usize, Option<Self>), <Network as grost::Flavor>::Error>
+//   where
+//     Self: Sized + 'de,
+//     B: Buf<'de>,
+//     UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de
+//   {
+//     if selector.is_empty() {
+//       return Ok((0, None));
+//     }
 
-    let bytes = src.as_bytes();
-    let mut this = Self::new();
+//     let bytes = src.as_bytes();
+//     let mut this = Self::new();
 
-    let mut offset = 0;
-    let buf_len = bytes.len();
-    while offset < buf_len {
+//     let mut offset = 0;
+//     let buf_len = bytes.len();
+//     while offset < buf_len {
       
-    }
+//     }
 
-    Ok((offset, Some(this)))
-  }
+//     Ok((offset, Some(this)))
+//   }
 
-    fn skip<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<usize, <Network as grost::Flavor>::Error>
-    where
-      Self: Sized + 'de,
-      B: Buf<'de>
-    {
-      todo!()
-    }
-  // fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
-  // where
-  //   Self: Sized + 'de,
-  //   B: Buf + 'de,
-  //   UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
-  //   todo!()
-  // }
-}
+//     fn skip<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<usize, <Network as grost::Flavor>::Error>
+//     where
+//       Self: Sized + 'de,
+//       B: Buf<'de>
+//     {
+//       todo!()
+//     }
+//   // fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
+//   // where
+//   //   Self: Sized + 'de,
+//   //   B: Buf + 'de,
+//   //   UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
+//   //   todo!()
+//   // }
+// }
 
 // fn assert_<F, W, T: DecodeOwned1<F, W, T, ()>>()
 // where
