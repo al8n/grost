@@ -113,7 +113,7 @@ impl<'de, UB> Decode<'de, Network, Fixed8, Self, UB> for u8 {
       return Err(Error::buffer_underflow());
     }
 
-    let value = src.chunk()[0];
+    let value = src.as_bytes()[0];
     Ok((1, value))
   }
 }
@@ -125,7 +125,7 @@ impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for u8 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_u8_varint(src.chunk()).map_err(Into::into)
+    varing::decode_u8_varint(src.as_bytes()).map_err(Into::into)
   }
 }
 

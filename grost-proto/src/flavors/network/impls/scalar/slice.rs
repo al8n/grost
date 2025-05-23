@@ -16,7 +16,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, &'de [u8], UB> for [u8] {
       return Err(Error::buffer_underflow());
     }
 
-    Ok((src_len, src.chunk()))
+    Ok((src_len, src.as_bytes()))
   }
 }
 

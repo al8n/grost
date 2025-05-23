@@ -316,7 +316,7 @@ impl Selector {
           tag.get(),
           &fgp,
         );
-        let wf = wire_format_ty(path_to_grost, &wfr, ty);
+        let wf = wire_format_ty(path_to_grost, input.name(), input.generics(), &wfr);
 
         let attrs = f.meta().selector().attrs();
         let vis = f.vis();
@@ -663,6 +663,9 @@ where
       }
     });
 
+    let object_name = self.name();
+    let (object_ig, object_tg, object_where_clause) = self.generics.split_for_impl();
+    let flavor_generic = selector.flavor_param();
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
@@ -846,6 +849,16 @@ where
 
         #(#fns)*
       }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #object_ig #object_name #object_tg #object_where_clause {
+        /// Returns the selector with default selections
+        #[inline]
+        pub const fn select < #flavor_generic >() -> #name #tg #selector_where_clauses {
+          #name::new()
+        }
+      }
     }
   }
 
@@ -993,9 +1006,15 @@ where
   }
 }
 
-fn wire_format_ty(path_to_grost: &syn::Path, wf: &syn::Type, ty: &syn::Type) -> syn::Type {
+fn wire_format_ty(
+  path_to_grost: &syn::Path,
+  object_name: &Ident,
+  object_generics: &Generics,
+  wf: &syn::Type,
+) -> syn::Type {
+  let (_, tg, _) = object_generics.split_for_impl();
   parse_quote! {
-    <#wf as #path_to_grost::__private::reflection::Reflectable<#ty>>::Reflection
+    <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #tg>>::Reflection
   }
 }
 
@@ -1029,14 +1048,15 @@ where
       f.meta().tag().get(),
       fg,
     );
-    let wf = wire_format_ty(path_to_grost, &wfr, ty);
+    let wf = wire_format_ty(path_to_grost, object_name, object_generics, &wfr);
     let selector_ty = selector_ty(path_to_grost, &wf, fg);
+    let (_, tg, _) = object_generics.split_for_impl();
+    let wf_constraint = quote! {
+      #wfr: #path_to_grost::__private::reflection::Reflectable<#object_name #tg>
+    };
 
     let where_clause = generics.make_where_clause();
-
-    where_clause.predicates.push(syn::parse2(quote! {
-      #wfr: #path_to_grost::__private::reflection::Reflectable<#ty>
-    })?);
+    where_clause.predicates.push(syn::parse2(wf_constraint)?);
     where_clause.predicates.push(syn::parse2(quote! {
       #ty: #selector_ty
     })?);

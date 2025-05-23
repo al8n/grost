@@ -64,7 +64,7 @@ impl<'de, UB> Decode<'de, Network, Fixed16, Self, UB> for i16 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    let src = src.chunk();
+    let src = src.as_bytes();
     if src.len() < 2 {
       return Err(Error::buffer_underflow());
     }
@@ -80,7 +80,7 @@ impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i16 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_i16_varint(src.chunk()).map_err(Into::into)
+    varing::decode_i16_varint(src.as_bytes()).map_err(Into::into)
   }
 }
 

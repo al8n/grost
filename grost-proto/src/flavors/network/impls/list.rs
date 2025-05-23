@@ -1,5 +1,5 @@
 use crate::{
-  Base, State,
+  Innermost, State,
   encode::{Encode, PartialEncode},
   flavors::{
     Network, WireFormat,
@@ -265,9 +265,9 @@ macro_rules! list {
         type Output = $ty;
       }
 
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::State<$crate::__private::convert::Flatten<$crate::__private::convert::Base>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::State<$crate::__private::convert::Flatten<$crate::__private::convert::Innermost>> for $ty
       where
-        T: $crate::__private::convert::State<$crate::__private::convert::Flatten<$crate::__private::convert::Base>>,
+        T: $crate::__private::convert::State<$crate::__private::convert::Flatten<$crate::__private::convert::Innermost>>,
       {
         type Input = T::Input;
         type Output = T::Output;
@@ -604,7 +604,7 @@ impl<T, N, W, I> Encode<Network, Flatten<W, I>> for [N]
 where
   W: WireFormat<Network>,
   I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Base>, Output = T> + Encode<Network, W>,
+  N: State<crate::convert::Flatten<Innermost>, Output = T> + Encode<Network, W>,
   T: Encode<Network, I> + ?Sized,
 {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -643,7 +643,7 @@ impl<T, N, W, I> Selectable<Network, Flatten<W, I>> for [N]
 where
   W: WireFormat<Network>,
   I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Base>, Output = T>,
+  N: State<crate::convert::Flatten<Innermost>, Output = T>,
   T: Selectable<Network, I> + ?Sized,
 {
   type Selector = T::Selector;
@@ -653,7 +653,7 @@ impl<T, N, W, I> PartialEncode<Network, Flatten<W, I>> for [N]
 where
   W: WireFormat<Network>,
   I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Base>, Output = T>
+  N: State<crate::convert::Flatten<Innermost>, Output = T>
     + PartialEncode<Network, W, Selector = T::Selector>,
   T: PartialEncode<Network, I> + ?Sized,
 {

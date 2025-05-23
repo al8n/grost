@@ -24,32 +24,30 @@ where
   type Output = T::Output;
 }
 
-/// A state which shows the type in optional state.
-pub struct Optional;
-
-impl<T> State<Optional> for Option<T> {
+impl<T> State<Option<Innermost>> for Option<T> {
   type Input = T;
   type Output = Self;
 }
 
-impl<T> State<Optional> for &T
+impl<T> State<Option<Innermost>> for &T
 where
-  T: State<Optional>,
+  T: State<Option<Innermost>>,
 {
   type Input = T::Input;
   type Output = T::Output;
 }
 
-/// A state which shows the type in base state.
-pub struct Base;
+/// A sub-state of [`Flatten`] which means get the innermost type for flattening.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Innermost(());
 
-impl<T: ?Sized> State<Base> for T {
+impl<T: ?Sized> State<Innermost> for T {
   type Input = T;
   type Output = T;
 }
 
 /// A state which shows that the type is in its flatten state.
-pub struct Flatten<S: ?Sized = Optional> {
+pub struct Flatten<S: ?Sized = Option<Innermost>> {
   _state: core::marker::PhantomData<S>,
 }
 
@@ -111,9 +109,9 @@ macro_rules! wrapper_impl {
         type Output = Self;
       }
 
-      impl<T> State<Flatten<Base>> for $ty
+      impl<T> State<Flatten<Innermost>> for $ty
       where
-        T: State<Flatten<Base>>,
+        T: State<Flatten<Innermost>>,
       {
         type Input = T::Input;
         type Output = T::Output;
@@ -140,9 +138,9 @@ where
   type Output = T::Output;
 }
 
-impl<T> State<Flatten<Base>> for Option<T>
+impl<T> State<Flatten<Innermost>> for Option<T>
 where
-  T: State<Flatten<Base>>,
+  T: State<Flatten<Innermost>>,
 {
   type Input = T::Input;
   type Output = T::Output;

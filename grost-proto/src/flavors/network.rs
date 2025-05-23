@@ -67,7 +67,7 @@ impl Flavor for Network {
   where
     B: Buf<'de>,
   {
-    let src = buf.chunk();
+    let src = buf.as_bytes();
     let (identifier_len, identifier) = Identifier::decode(src)?;
     let (wire_type, tag) = identifier.into_components();
     macro_rules! slice {

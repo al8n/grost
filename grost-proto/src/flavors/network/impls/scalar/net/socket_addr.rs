@@ -84,7 +84,7 @@ macro_rules! socket_addr_impl {
             B: crate::buffer::Buf<'de>,
             UB: crate::buffer::Buffer<Unknown<B>> + 'de,
           {
-            let src = src.chunk();
+            let src = src.as_bytes();
             if src.len() < [< SOCKET_ADDR_V $variant _LEN >] {
               return Err(Error::buffer_underflow());
             }
@@ -108,7 +108,7 @@ macro_rules! socket_addr_impl {
               return Err(Error::buffer_underflow());
             }
 
-            let (read, remaining) = varing::decode_u32_varint(src.chunk()).map_err(|_| Error::buffer_underflow())?;
+            let (read, remaining) = varing::decode_u32_varint(src.as_bytes()).map_err(|_| Error::buffer_underflow())?;
             if remaining != [< SOCKET_ADDR_V $variant _LEN >] as u32 {
               return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
             }
@@ -216,8 +216,8 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
       return Err(Error::buffer_underflow());
     }
 
-    let chunk = src.chunk();
-    let tag = chunk[0];
+    let as_bytes = src.as_bytes();
+    let tag = as_bytes[0];
 
     macro_rules! decode_addr {
       ($variant:literal, $src:ident) => {{
@@ -254,7 +254,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
     }
 
     let (read, len) =
-      varing::decode_u32_varint(src.chunk()).map_err(|_| Error::buffer_underflow())?;
+      varing::decode_u32_varint(src.as_bytes()).map_err(|_| Error::buffer_underflow())?;
     match len as usize {
       SOCKET_ADDR_V4_LEN => decode_addr!(read, 4),
       SOCKET_ADDR_V6_LEN => decode_addr!(read, 6),

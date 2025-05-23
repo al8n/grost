@@ -160,6 +160,6 @@ impl crate::flavors::Identifier<super::Network> for Identifier {
     B: crate::buffer::Buf<'de> + Sized,
     Self: Sized,
   {
-    Self::decode(buf.chunk())
+    Self::decode(buf.as_bytes())
   }
 }

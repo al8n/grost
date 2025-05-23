@@ -76,7 +76,7 @@ macro_rules! varint {
       B: $crate::__private::Buf<'de>,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
-      $crate::__private::varing::Varint::decode(src.chunk()).map_err(::core::convert::Into::into)
+      $crate::__private::varing::Varint::decode(src.as_bytes()).map_err(::core::convert::Into::into)
     }
   };
 }
@@ -159,7 +159,7 @@ macro_rules! partial_decode_scalar {
       Self: ::core::marker::Sized + 'de,
       B: $crate::__private::Buf<'de>,
     {
-      ($expr)(context, buf.chunk())
+      ($expr)(context, buf.as_bytes())
     }
   };
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty => $expr:expr ),+$(,)?) => {
@@ -229,7 +229,7 @@ macro_rules! type_reflection {
   };
 }
 
-/// A macro emits basic [`State<Flatten<Base>>`](super::State) implementations for `Self`
+/// A macro emits basic [`State<Flatten<_>>`](super::State) implementations for `Self`
 #[macro_export]
 macro_rules! flatten_state {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {

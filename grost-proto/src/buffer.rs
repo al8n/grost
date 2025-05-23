@@ -123,9 +123,6 @@ const _: () = {
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
 pub trait Buf<'a>: 'a {
-  // /// Advances the buffer by `n` bytes.
-  // fn advance(&mut self, n: usize);
-
   /// Returns the number of bytes remaining in the buffer.
   fn len(&self) -> usize;
 
@@ -135,31 +132,17 @@ pub trait Buf<'a>: 'a {
   /// Returns a slice of self for the provided range.
   fn slice(&self, range: impl RangeBounds<usize>) -> Self;
 
-  // /// Splits the buf into two at the given index.
-  // ///
-  // /// Afterwards `self` contains elements `[at, len)`, and the returned
-  // /// `Buf` contains elements `[0, at)`.
-  // fn split_to(&mut self, at: usize) -> Self;
-
-  // /// Splits the buf into two at the given index.
-  // ///
-  // /// Afterwards `self` contains elements `[0, at)`, and the returned `Buf`
-  // /// contains elements `[at, len)`.
-  // fn split_off(&mut self, at: usize) -> Self;
-
-  /// Returns a slice of the buffer.
-  fn chunk(&self) -> &'a [u8];
+  /// Returns the bytes of the buffer.
+  fn as_bytes(&self) -> &'a [u8];
 }
 
 impl<'a> Buf<'a> for &'a [u8] {
-  // fn advance(&mut self, n: usize) {
-  //   *self = &self[n..];
-  // }
-
+  #[inline]
   fn len(&self) -> usize {
     <[u8]>::len(self)
   }
 
+  #[inline]
   fn is_empty(&self) -> bool {
     <[u8]>::is_empty(self)
   }
@@ -182,54 +165,8 @@ impl<'a> Buf<'a> for &'a [u8] {
     &self[begin..end]
   }
 
-  // fn split_to(&mut self, at: usize) -> Self {
-  //   let len = self.len();
-
-  //   if len == at {
-  //     let old = *self;
-  //     *self = &[];
-  //     return old;
-  //   }
-
-  //   if at == 0 {
-  //     return &[];
-  //   }
-
-  //   assert!(
-  //     at <= len,
-  //     "split_to out of bounds: {:?} <= {:?}",
-  //     at,
-  //     len,
-  //   );
-
-  //   let output = &self[..at];
-  //   *self = &self[at..];
-
-  //   output
-  // }
-
-  // fn split_off(&mut self, at: usize) -> Self {
-  //   let len = self.len();
-
-  //   if len == at {
-  //     return &[];
-  //   }
-
-  //   if at == 0 {
-  //     return *self;
-  //   }
-
-  //   assert!(
-  //     at <= len,
-  //     "split_off out of bounds: {:?} <= {:?}",
-  //     at,
-  //     len,
-  //   );
-
-  //   &self[at..]
-  // }
-
-  fn chunk(&self) -> &'a [u8] {
+  #[inline]
+  fn as_bytes(&self) -> &'a [u8] {
     self
   }
 }
@@ -261,7 +198,7 @@ impl<'a> Buf<'a> for &'a [u8] {
 //     //   self.split_off(at)
 //     // }
 
-//     fn chunk(&self) -> &[u8] {
+//     fn as_bytes(&self) -> &[u8] {
 //       self.as_ref()
 //     }
 //   }

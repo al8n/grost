@@ -54,8 +54,8 @@ where
     B: Buf<'de>,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
-    let chunk = src.chunk();
-    let (len_size, len) = varing::decode_u32_varint(chunk).map_err(Error::from)?;
+    let as_bytes = src.as_bytes();
+    let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
     let src_len = src.len();
     let len = len as usize;
     let total = len_size + len;
@@ -112,8 +112,8 @@ where
     B: Buf<'de> + 'de,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
-    let chunk = src.chunk();
-    let (len_size, len) = varing::decode_u32_varint(chunk).map_err(Error::from)?;
+    let as_bytes = src.as_bytes();
+    let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
     let src_len = src.len();
     let len = len as usize;
     let total = len_size + len;
@@ -129,6 +129,7 @@ where
   }
 }
 
+/// A data structure that can be deserialized without borrowing any data from the source buffer.
 pub trait DecodeOwned<F, W, O, UB = ()>: for<'de> Decode<'de, F, W, O, UB>
 where
   F: Flavor + ?Sized,
@@ -143,48 +144,6 @@ where
   T: for<'de> Decode<'de, F, W, O, UB>,
 {
 }
-
-// /// A trait for fully decoding types into owned values from an owned byte buffer.
-// ///
-// /// Unlike [`Decode`], this trait allows decoding without borrowing the input buffer,
-// /// making it suitable for owned deserialization where lifetimes must not overlap.
-// ///
-// /// See also [`Decode`] for more details.
-// pub trait DecodeOwned<F, W, O, B = ()>: Decode<'static, F, W, O, B> + 'static
-// where
-//   F: Flavor + ?Sized,
-//   W: WireFormat<F>,
-// {
-//   /// See [`Decode::decode`].
-//   fn decode_owned<D>(context: &F::Context, src: D) -> Result<(usize, O), F::Error>
-//   where
-//     O: Sized + 'static,
-//     D: BytesBuffer + 'static,
-//     B: Buffer<F::Unknown<D>> + 'static;
-
-//   /// See [`Decode::decode_length_delimited`].
-//   fn decode_length_delimited_owned<D>(context: &F::Context, src: D) -> Result<(usize, O), F::Error>
-//   where
-//     O: Sized + 'static,
-//     D: BytesBuffer + 'static,
-//     B: Buffer<F::Unknown<D>> + 'static,
-//   {
-//     let bytes = src.as_bytes();
-//     let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
-//     let src_len = src.len();
-//     let len = len as usize;
-//     let total = len_size + len;
-//     if total > src_len {
-//       return Err(Error::buffer_underflow().into());
-//     }
-
-//     if len_size >= src_len {
-//       return Err(Error::buffer_underflow().into());
-//     }
-
-//     Self::decode_owned::<D>(context, src.slice(len_size..total))
-//   }
-// }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_impl {

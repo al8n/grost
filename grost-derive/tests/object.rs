@@ -1,62 +1,84 @@
 use grost::{
-  Decode1,
+  Decode, PartialDecode,
   buffer::Buf,
-  decode::DecodeOwned1,
   flavors::{Network, network::LengthDelimited},
+  selection::Selectable,
 };
 use grost_derive::{Object, object};
 
-mod sealed {
-  pub fn default_user() -> String {
-    String::from("user")
-  }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Object)]
-pub struct User<I> {
-  #[grost(
-    tag = 1,
-    schema(description = "The id of the user"),
-    wire = "grost::flavors::network::LengthDelimited",
-    selector(select = "all"),
-    partial_decoded(copy,)
-  )]
-  id: I,
-  #[grost(
-    tag = 2,
-    schema(description = "The nick name of the user"),
-    wire = "grost::flavors::network::LengthDelimited",
-    selector(select = "all"),
-    partial_decoded(copy,),
-    default = sealed::default_user,
-  )]
-  name: String,
-  #[grost(
-    tag = 3,
-    schema(description = "The age of the user"),
-    wire = "grost::flavors::network::Varint",
-    copy,
-    partial_decoded(copy)
-  )]
-  age: u8,
-  // #[grost(
-  //   tag = 4,
-  //   schema(description = "The email of the user"),
-  //   wire = "grost::flavors::network::LengthDelimited",
-  //   partial_decoded(copy),
-  //   optional(repeated)
-  // )]
-  // emails: Option<Vec<String>>,
-}
-
-// impl<'de, UB> Decode1<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
-//   fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
-//   where
-//     Self: Sized + 'de,
-//     B: Buf + 'de,
-//     UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
-//     todo!()
+// mod sealed {
+//   pub fn default_user() -> String {
+//     String::from("user")
 //   }
+// }
+
+// #[object(output(path = "grost-derive/tests/user.rs", format))]
+// #[derive(Debug, Clone, PartialEq, Eq)]
+// pub struct User<I> {
+//   #[grost(
+//     tag = 1,
+//     schema(description = "The id of the user"),
+//     wire = "grost::flavors::network::LengthDelimited",
+//     selector(select = "all"),
+//     partial_decoded(copy,)
+//   )]
+//   id: I,
+//   #[grost(
+//     tag = 2,
+//     schema(description = "The nick name of the user"),
+//     wire = "grost::flavors::network::LengthDelimited",
+//     selector(select = "all"),
+//     partial_decoded(copy,),
+//   )]
+//   name: String,
+//   #[grost(
+//     tag = 3,
+//     schema(description = "The age of the user"),
+//     wire = "grost::flavors::network::Varint",
+//     copy,
+//     partial_decoded(copy)
+//   )]
+//   age: u8,
+//   // #[grost(
+//   //   tag = 4,
+//   //   schema(description = "The email of the user"),
+//   //   wire = "grost::flavors::network::LengthDelimited",
+//   //   partial_decoded(copy),
+//   //   optional(repeated)
+//   // )]
+//   // emails: Option<Vec<String>>,
+// }
+
+// impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
+//   type Selector = UserSelector<Network>;
+// }
+
+// impl<'de, UB> PartialDecode<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
+//     fn partial_decode<B>(
+//         context: &<Network as grost::Flavor>::Context,
+//         src: B,
+//         selector: &Self::Selector,
+//       ) -> Result<(usize, Option<Self>), <Network as grost::Flavor>::Error>
+//       where
+//         Self: Sized + 'de,
+//         B: Buf<'de>,
+//         UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
+//         todo!()
+//     }
+
+//     fn skip<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<usize, <Network as grost::Flavor>::Error>
+//       where
+//         Self: Sized + 'de,
+//         B: Buf<'de> {
+//         todo!()
+//     }
+//   // fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
+//   // where
+//   //   Self: Sized + 'de,
+//   //   B: Buf + 'de,
+//   //   UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
+//   //   todo!()
+//   // }
 // }
 
 // fn assert_<F, W, T: DecodeOwned1<F, W, T, ()>>()

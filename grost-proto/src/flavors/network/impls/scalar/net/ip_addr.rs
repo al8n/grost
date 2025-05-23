@@ -217,7 +217,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
     B: Buf<'de> + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
-    let src = src.chunk();
+    let src = src.as_bytes();
     macro_rules! decode_ip_variant {
       ($repr:ident($variant:literal)) => {{
         paste::paste! {
@@ -252,7 +252,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
     B: Buf<'de> + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
-    let src = src.chunk();
+    let src = src.as_bytes();
 
     macro_rules! decode_ip_variant {
       ($variant:ident($repr:ident, $read:ident)) => {{

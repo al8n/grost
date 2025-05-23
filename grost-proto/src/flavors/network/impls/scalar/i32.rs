@@ -65,12 +65,12 @@ impl<'de, UB> Decode<'de, Network, Fixed32, Self, UB> for i32 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    let chunk = src.chunk();
+    let as_bytes = src.as_bytes();
     if src.len() < 4 {
       return Err(Error::buffer_underflow());
     }
 
-    Ok((4, i32::from_le_bytes(chunk[..4].try_into().unwrap())))
+    Ok((4, i32::from_le_bytes(as_bytes[..4].try_into().unwrap())))
   }
 }
 
@@ -81,7 +81,7 @@ impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i32 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_i32_varint(src.chunk()).map_err(Into::into)
+    varing::decode_i32_varint(src.as_bytes()).map_err(Into::into)
   }
 }
 

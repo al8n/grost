@@ -86,7 +86,7 @@ where
       return &[];
     }
 
-    &self.data.chunk()[self.data_offset..]
+    &self.data.as_bytes()[self.data_offset..]
   }
 
   /// Returns the raw data of the unknown data type.
@@ -98,7 +98,7 @@ where
   where
     B: Buf<'a>,
   {
-    self.data.chunk()
+    self.data.as_bytes()
   }
 
   /// Converts the unknown data type to an borrowed type.

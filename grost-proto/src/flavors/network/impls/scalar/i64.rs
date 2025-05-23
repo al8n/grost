@@ -65,7 +65,7 @@ impl<'de, UB> Decode<'de, Network, Fixed64, Self, UB> for i64 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    let src = src.chunk();
+    let src = src.as_bytes();
     if src.len() < 8 {
       return Err(Error::buffer_underflow());
     }
@@ -81,7 +81,7 @@ impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i64 {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_i64_varint(src.chunk()).map_err(Into::into)
+    varing::decode_i64_varint(src.as_bytes()).map_err(Into::into)
   }
 }
 
