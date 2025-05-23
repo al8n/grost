@@ -4,8 +4,7 @@ use syn::{GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_
 use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
-  grost_flavor_param, grost_lifetime,
-  object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
+  grost_flavor_param, grost_lifetime, grost_wire_format_param, object::{Field, ObjectExt as _, Selection, SelectorIterMeta}
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
@@ -666,6 +665,7 @@ where
     let object_name = self.name();
     let (object_ig, object_tg, object_where_clause) = self.generics.split_for_impl();
     let flavor_generic = selector.flavor_param();
+    let selectable = self.derive_selectable();
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
@@ -859,6 +859,89 @@ where
           #name::new()
         }
       }
+
+      #selectable
+    }
+  }
+
+  fn derive_selectable(&self) -> proc_macro2::TokenStream {
+    let name = self.name();
+    let path_to_grost = &self.path_to_grost;
+    let wire_format_param = grost_wire_format_param();
+    let wire_format_ident = &wire_format_param.ident;
+    let flavor_param = self.selector.flavor_param();
+    let flavor_ident = &flavor_param.ident;
+
+    let object_selectable = {
+      let mut generics = self.selector.generics().clone();
+      generics.params.push(GenericParam::Type(wire_format_param.clone()));    
+
+      let (ig, _, where_clauses) = generics.split_for_impl();
+      let (_, object_tg, _) = self.generics.split_for_impl();
+      let selector_name = self.selector.name();
+      let (_, selector_tg, _) = self.selector.generics().split_for_impl();
+      quote! {
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ident, #wire_format_ident> for #name #object_tg #where_clauses
+        {
+          type Selector = #selector_name #selector_tg;
+        }
+      }
+    };
+
+    let partial_object_selectable = {
+      let name = self.partial.name();
+      let mut generics = self.selector.generics().clone();
+      generics.params.push(GenericParam::Type(wire_format_param.clone()));
+
+      self.partial().generics().where_clause.as_ref().unwrap().predicates.iter().for_each(|p| {
+        generics.make_where_clause().predicates.push(p.clone());
+      });
+
+      let (ig, _, where_clauses) = generics.split_for_impl();
+      let (_, object_tg, _) = self.partial.generics().split_for_impl();
+      let selector_name = self.selector.name();
+      let (_, selector_tg, _) = self.selector.generics().split_for_impl();
+      quote! {
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ident, #wire_format_ident> for #name #object_tg #where_clauses
+        {
+          type Selector = #selector_name #selector_tg;
+        }
+      }
+    };
+
+    let partial_decoded_object_selectable = {
+      let name = self.partial_decoded.name();
+      let mut generics = self.partial_decoded().generics().clone();
+      generics.params.push(GenericParam::Type(wire_format_param.clone()));
+
+      self.selector().generics().where_clause.as_ref().unwrap().predicates.iter().for_each(|p| {
+        generics.make_where_clause().predicates.push(p.clone());
+      });
+
+      let (ig, _, where_clauses) = generics.split_for_impl();
+      let (_, object_tg, _) = self.partial_decoded.generics().split_for_impl();
+      let selector_name = self.selector.name();
+      let (_, selector_tg, _) = self.selector.generics().split_for_impl();
+      quote! {
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ident, #wire_format_ident> for #name #object_tg #where_clauses
+        {
+          type Selector = #selector_name #selector_tg;
+        }
+      }
+    };
+
+    quote! {
+      #object_selectable
+
+      #partial_object_selectable
+
+      #partial_decoded_object_selectable
     }
   }
 

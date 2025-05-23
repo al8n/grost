@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 
 use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
+use syn::{Attribute, GenericParam, Generics, Ident, Path, Type, Visibility};
 
 pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
@@ -10,8 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  SchemaMeta,
-  object::{Field as _, ObjectExt as _, TypeSpecification},
+  grost_wire_format_param, object::{Field as _, ObjectExt as _, TypeSpecification}, SchemaMeta
 };
 
 mod indexer;
