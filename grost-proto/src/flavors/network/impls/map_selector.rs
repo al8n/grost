@@ -127,7 +127,7 @@
 //   fn decode<UB>(context: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
 //   where
 //     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
 //   {
 //     let mut offset = 0;
 //     let buf_len = src.len();
@@ -189,7 +189,7 @@
 //   ) -> Result<(usize, Self), DecodeError>
 //   where
 //     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
 //   {
 //     let (mut offset, data_len) = varing::decode_u32_varint(src)?;
 //     let data_len = data_len as usize;

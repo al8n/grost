@@ -1,9 +1,9 @@
 use core::num::NonZeroI64;
 
 use crate::{
-  buffer::Buffer,
+  buffer::{Buf, Buffer},
   decode::Decode,
-  decode_owned_scalar, decoded_state, default_wire_format,
+  decoded_state, default_wire_format,
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed64, Network, Unknown, Varint},
@@ -58,12 +58,14 @@ impl Encode<Network, Varint> for i64 {
 
 partial_encode_scalar!(Network: i64 as Fixed64, i64 as Varint);
 
-impl<'de, B> Decode<'de, Network, Fixed64, Self, B> for i64 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, UB> Decode<'de, Network, Fixed64, Self, UB> for i64 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
+    let src = src.chunk();
     if src.len() < 8 {
       return Err(Error::buffer_underflow());
     }
@@ -72,17 +74,17 @@ impl<'de, B> Decode<'de, Network, Fixed64, Self, B> for i64 {
   }
 }
 
-impl<'de, B> Decode<'de, Network, Varint, Self, B> for i64 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i64 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_i64_varint(src).map_err(Into::into)
+    varing::decode_i64_varint(src.chunk()).map_err(Into::into)
   }
 }
 
-decode_owned_scalar!(Network: i64 as Fixed64, i64 as Varint);
 try_from_bridge!(
   Network: i64 {
     NonZeroI64 as Fixed64 {

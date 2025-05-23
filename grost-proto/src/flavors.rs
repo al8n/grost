@@ -1,4 +1,4 @@
-use super::buffer::BytesBuffer;
+use super::buffer::Buf;
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -137,9 +137,9 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   fn encoded_len(&self) -> usize;
 
   /// Decode the identifier from a buffer.
-  fn decode<B>(buf: B) -> Result<(usize, Self), F::Error>
+  fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
   where
-    B: BytesBuffer + Sized,
+    B: Buf<'de> + Sized,
     Self: Sized;
 }
 
@@ -261,30 +261,30 @@ pub trait Flavor: core::fmt::Debug + 'static {
   const NAME: &'static str;
 
   /// Encodes the unknown value into a buffer.
-  fn encode_unknown<B>(
+  fn encode_unknown<'de, B>(
     ctx: &Self::Context,
     value: &Self::Unknown<B>,
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: BytesBuffer;
+    B: Buf<'de>;
 
   /// Returns the length of the encoded unknown value.
-  fn encoded_unknown_len<B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: BytesBuffer;
+    B: Buf<'de>;
 
   /// Decodes an unknown value from a buffer.
   ///
   /// This function is used as a handler for unknown identifiers when decoding
   /// a message. It is called when the identifier is not recognized by the
   /// flavor.
-  fn decode_unknown<B>(
+  fn decode_unknown<'de, B>(
     ctx: &Self::Context,
     buf: B,
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: BytesBuffer;
+    B: Buf<'de>;
 }
 
 /// A raw tag for a field.

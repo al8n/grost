@@ -1,4 +1,4 @@
-use super::{BytesBuffer, Tag, WireType};
+use super::{Buf, Tag, WireType};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -78,15 +78,15 @@ where
   /// Note: The data does not include the wire type and the tag.
   /// If you want to access the original data, use [`raw`] instead.
   #[inline]
-  pub fn data(&self) -> &[u8]
+  pub fn data<'a>(&'a self) -> &'a [u8]
   where
-    B: BytesBuffer,
+    B: Buf<'a>,
   {
     if self.wire_type == WireType::Zst {
       return &[];
     }
 
-    &self.data.as_bytes()[self.data_offset..]
+    &self.data.chunk()[self.data_offset..]
   }
 
   /// Returns the raw data of the unknown data type.
@@ -94,11 +94,11 @@ where
   /// Note: The data includes the wire type and the tag.
   /// If you want to access the actual data, use [`data`] instead.
   #[inline]
-  pub fn raw(&self) -> &[u8]
+  pub fn raw<'a>(&self) -> &'a [u8]
   where
-    B: BytesBuffer,
+    B: Buf<'a>,
   {
-    self.data.as_bytes()
+    self.data.chunk()
   }
 
   /// Converts the unknown data type to an borrowed type.
@@ -113,14 +113,12 @@ where
   }
 }
 
-impl<B> Unknown<B>
-where
-  B: BytesBuffer + ?Sized,
-{
+impl<B: ?Sized> Unknown<B> {
   /// Converts the `Unknown<B>` to `Unknown<N>`.
   pub fn map<'a, N>(&'a self) -> Unknown<N>
   where
     N: From<&'a [u8]>,
+    B: Buf<'a>,
   {
     Unknown {
       tag: self.tag,

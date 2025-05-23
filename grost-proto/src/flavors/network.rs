@@ -7,7 +7,7 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::buffer::BytesBuffer;
+use crate::buffer::Buf;
 
 mod context;
 mod error;
@@ -35,13 +35,13 @@ impl Flavor for Network {
 
   const NAME: &'static str = "Network";
 
-  fn encode_unknown<B>(
+  fn encode_unknown<'a, B>(
     _: &Self::Context,
     value: &Self::Unknown<B>,
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: BytesBuffer + Sized,
+    B: Buf<'a>,
   {
     let value_bytes = value.raw();
     let value_len = value_bytes.len();
@@ -53,18 +53,21 @@ impl Flavor for Network {
     Ok(value_len)
   }
 
-  fn encoded_unknown_len<B>(_: &Self::Context, value: &Self::Unknown<B>) -> usize
+  fn encoded_unknown_len<'a, B>(_: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: BytesBuffer,
+    B: Buf<'a>,
   {
     value.raw().len()
   }
 
-  fn decode_unknown<B>(_: &Self::Context, buf: B) -> Result<(usize, Self::Unknown<B>), Self::Error>
+  fn decode_unknown<'de, B>(
+    _: &Self::Context,
+    buf: B,
+  ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: BytesBuffer + Sized,
+    B: Buf<'de>,
   {
-    let src = buf.as_bytes();
+    let src = buf.chunk();
     let (identifier_len, identifier) = Identifier::decode(src)?;
     let (wire_type, tag) = identifier.into_components();
     macro_rules! slice {

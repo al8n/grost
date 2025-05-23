@@ -94,7 +94,7 @@ impl<'de> Decode<'de, Select, Zst, Self> for bool {
   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     if src.is_empty() {
       return Err(DecodeError::buffer_underflow());
@@ -121,7 +121,7 @@ impl<'de> Decode<'de, Select, Zst, Self> for bool {
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     <Self as Decode<'de, Select, Zst, Self>>::decode::<UB>(context, src)
   }

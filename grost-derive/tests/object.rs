@@ -1,3 +1,9 @@
+use grost::{
+  Decode1,
+  buffer::Buf,
+  decode::DecodeOwned1,
+  flavors::{Network, network::LengthDelimited},
+};
 use grost_derive::{Object, object};
 
 mod sealed {
@@ -33,15 +39,39 @@ pub struct User<I> {
     partial_decoded(copy)
   )]
   age: u8,
-  #[grost(
-    tag = 4,
-    schema(description = "The email of the user"),
-    wire = "grost::flavors::network::LengthDelimited",
-    partial_decoded(copy),
-    optional(repeated)
-  )]
-  emails: Option<Vec<String>>,
+  // #[grost(
+  //   tag = 4,
+  //   schema(description = "The email of the user"),
+  //   wire = "grost::flavors::network::LengthDelimited",
+  //   partial_decoded(copy),
+  //   optional(repeated)
+  // )]
+  // emails: Option<Vec<String>>,
 }
+
+// impl<'de, UB> Decode1<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
+//   fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
+//   where
+//     Self: Sized + 'de,
+//     B: Buf + 'de,
+//     UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de {
+//     todo!()
+//   }
+// }
+
+// fn assert_<F, W, T: DecodeOwned1<F, W, T, ()>>()
+// where
+//   F: grost::Flavor,
+//   W: grost::flavors::WireFormat<F>,
+// {
+//   // This is a test to ensure that the trait bounds are correct.
+//   // If the trait bounds are not correct, this test will fail to compile.
+// }
+
+// #[test]
+// fn t() {
+//   assert_::<_, _, PartialDecodedUser<'static, String, Network, _>>();
+// }
 
 // #[derive(Debug, Clone, PartialEq, Eq, Object)]
 // pub struct Comment<I> {

@@ -121,39 +121,47 @@ const _: () = {
   }
 };
 
-pub trait BytesBuffer {
-  // /// Creates a new buffer.
-  // fn new() -> Self;
+/// A trait for implementing custom buffers that can store and manipulate byte sequences.
+pub trait Buf<'a>: 'a {
+  // /// Advances the buffer by `n` bytes.
+  // fn advance(&mut self, n: usize);
 
-  /// Returns the length of the buffer.
+  /// Returns the number of bytes remaining in the buffer.
   fn len(&self) -> usize;
 
-  /// Returns `true` if the buffer is empty.
-  fn is_empty(&self) -> bool {
-    self.len() == 0
-  }
-
-  /// Flattens a slice containing the entire vector.
-  fn as_bytes(&self) -> &[u8];
+  /// Returns `true` if there are remaining bytes in the buffer.
+  fn is_empty(&self) -> bool;
 
   /// Returns a slice of self for the provided range.
-  ///
-  /// This will increment the reference count for the underlying memory and
-  /// return a new `Bytes` handle set to the slice.
   fn slice(&self, range: impl RangeBounds<usize>) -> Self;
+
+  // /// Splits the buf into two at the given index.
+  // ///
+  // /// Afterwards `self` contains elements `[at, len)`, and the returned
+  // /// `Buf` contains elements `[0, at)`.
+  // fn split_to(&mut self, at: usize) -> Self;
+
+  // /// Splits the buf into two at the given index.
+  // ///
+  // /// Afterwards `self` contains elements `[0, at)`, and the returned `Buf`
+  // /// contains elements `[at, len)`.
+  // fn split_off(&mut self, at: usize) -> Self;
+
+  /// Returns a slice of the buffer.
+  fn chunk(&self) -> &'a [u8];
 }
 
-impl BytesBuffer for &[u8] {
-  // fn new() -> Self {
-  //   &[]
+impl<'a> Buf<'a> for &'a [u8] {
+  // fn advance(&mut self, n: usize) {
+  //   *self = &self[n..];
   // }
-
-  fn is_empty(&self) -> bool {
-    <[u8]>::is_empty(self)
-  }
 
   fn len(&self) -> usize {
     <[u8]>::len(self)
+  }
+
+  fn is_empty(&self) -> bool {
+    <[u8]>::is_empty(self)
   }
 
   fn slice(&self, range: impl RangeBounds<usize>) -> Self {
@@ -174,70 +182,90 @@ impl BytesBuffer for &[u8] {
     &self[begin..end]
   }
 
-  fn as_bytes(&self) -> &[u8] {
+  // fn split_to(&mut self, at: usize) -> Self {
+  //   let len = self.len();
+
+  //   if len == at {
+  //     let old = *self;
+  //     *self = &[];
+  //     return old;
+  //   }
+
+  //   if at == 0 {
+  //     return &[];
+  //   }
+
+  //   assert!(
+  //     at <= len,
+  //     "split_to out of bounds: {:?} <= {:?}",
+  //     at,
+  //     len,
+  //   );
+
+  //   let output = &self[..at];
+  //   *self = &self[at..];
+
+  //   output
+  // }
+
+  // fn split_off(&mut self, at: usize) -> Self {
+  //   let len = self.len();
+
+  //   if len == at {
+  //     return &[];
+  //   }
+
+  //   if at == 0 {
+  //     return *self;
+  //   }
+
+  //   assert!(
+  //     at <= len,
+  //     "split_off out of bounds: {:?} <= {:?}",
+  //     at,
+  //     len,
+  //   );
+
+  //   &self[at..]
+  // }
+
+  fn chunk(&self) -> &'a [u8] {
     self
   }
 }
 
-#[cfg(feature = "bytes_1")]
-impl BytesBuffer for bytes_1::Bytes {
-  // fn new() -> Self {
-  //   bytes_1::Bytes::new()
-  // }
+// #[cfg(feature = "bytes_1")]
+// const _: () = {
+//   impl<'a> Buf<'a> for bytes_1::Bytes {
+//     // fn advance(&mut self, n: usize) {
+//     //   bytes_1::Buf::advance(self, n);
+//     // }
 
-  fn len(&self) -> usize {
-    self.len()
-  }
+//     fn len(&self) -> usize {
+//       self.len()
+//     }
 
-  fn is_empty(&self) -> bool {
-    self.is_empty()
-  }
+//     fn is_empty(&self) -> bool {
+//       self.is_empty()
+//     }
 
-  fn slice(&self, range: impl RangeBounds<usize>) -> Self {
-    self.slice(range)
-  }
+//     fn slice(&self, range: impl RangeBounds<usize>) -> Self {
+//       self.slice(range)
+//     }
 
-  fn as_bytes(&self) -> &[u8] {
-    self.as_ref()
-  }
-}
+//     // fn split_to(&mut self, at: usize) -> Self {
+//     //   self.split_to(at)
+//     // }
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-impl BytesBuffer for Vec<u8> {
-  // fn new() -> Self {
-  //   Vec::new()
-  // }
+//     // fn split_off(&mut self, at: usize) -> Self {
+//     //   self.split_off(at)
+//     // }
 
-  fn len(&self) -> usize {
-    self.len()
-  }
-
-  fn is_empty(&self) -> bool {
-    self.is_empty()
-  }
-
-  fn slice(&self, range: impl RangeBounds<usize>) -> Self {
-    let len = self.len();
-
-    let begin = match range.start_bound() {
-      Bound::Included(&n) => n,
-      Bound::Excluded(&n) => n.checked_add(1).expect("out of range"),
-      Bound::Unbounded => 0,
-    };
-
-    let end = match range.end_bound() {
-      Bound::Included(&n) => n.checked_add(1).expect("out of range"),
-      Bound::Excluded(&n) => n,
-      Bound::Unbounded => len,
-    };
-
-    self[begin..end].to_vec()
-  }
-
-  fn as_bytes(&self) -> &[u8] {
-    self.as_slice()
-  }
-}
+//     fn chunk(&self) -> &[u8] {
+//       self.as_ref()
+//     }
+//   }
+// };
 
 #[cfg(feature = "heapless_0_9")]
 impl<const N: usize, L: heapless_0_9::LenType> BytesBuffer for heapless_0_9::Vec<u8, N, L> {

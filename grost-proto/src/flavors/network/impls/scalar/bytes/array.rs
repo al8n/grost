@@ -1,6 +1,5 @@
 use crate::{
   decode::{Decode, DecodeOwned},
-  decode_owned_scalar,
   encode::Encode,
   flavors::{
     Network,
@@ -14,7 +13,7 @@ use crate::{
 //   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
 //   where
 //     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
 //   {
 //     decode_to_array::<N>(src)
 //   }
@@ -22,7 +21,7 @@ use crate::{
 //   fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
 //   where
 //     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
 //   {
 //     decode_length_delimited_to_array::<N>(src)
 //   }
@@ -105,7 +104,7 @@ macro_rules! impl_fixed {
         ) -> Result<(usize, Self), Error>
         where
           Self: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+          UB: crate::buffer::Buffer<Unknown<B>> + 'de,
         {
           Ok(decode_fixed!($size: src))
         }
@@ -116,7 +115,7 @@ macro_rules! impl_fixed {
         ) -> Result<(usize, Self), Error>
         where
           Self: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+          UB: crate::buffer::Buffer<Unknown<B>> + 'de,
         {
           <Self as Decode<'de, Network, $wt, Self>>::decode::<UB>(ctx, src)
         }

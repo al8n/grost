@@ -119,7 +119,7 @@ macro_rules! codec {
         ) -> Result<(usize, Self), DecodeError>
         where
           Self: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+          UB: crate::buffer::Buffer<Unknown<B>> + 'de,
         {
           match wire_type {
             WireType::Varint => <Self as varing::Varint>::decode(src).map_err(Into::into),
@@ -192,7 +192,7 @@ macro_rules! codec {
         ) -> Result<(usize, Self), DecodeError>
         where
           Self: Sized + 'de,
-          UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+          UB: crate::buffer::Buffer<Unknown<B>> + 'de,
         {
           match wire_type {
             WireType::Varint => <Self as varing::Varint>::decode(src).map_err(Into::into),

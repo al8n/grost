@@ -134,7 +134,7 @@ impl<'de, const N: usize, L: LenType> Decode<'de, Network, Self> for Vec<u8, N, 
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     match wire_type {
       WireType::Zst if N == 0 => Ok((0, Self::new())),
@@ -157,7 +157,7 @@ impl<'de, const N: usize, L: LenType> Decode<'de, Network, Self> for Vec<u8, N, 
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    UB: crate::buffer::Buffer<Unknown<&'de [u8]>> + 'de,
+    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     match wire_type {
       WireType::Zst if N == 0 => Ok((0, Self::new())),

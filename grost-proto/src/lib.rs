@@ -78,20 +78,12 @@ pub mod __private {
   pub use super::{
     buffer::*,
     convert::{self, *},
-    debug_assert_read_eq,
-    debug_assert_write_eq,
+    debug_assert_read_eq, debug_assert_write_eq,
     decode::*,
-    decode_owned_scalar,
-    decoded_state,
-    default_wire_format,
+    decoded_state, default_wire_format,
     encode::*,
     flavors::{self, RawTag},
-    indexer,
-    // map::MapSelector,
-    network_varint,
-    partial_encode_scalar,
-    reflection,
-    selectable,
+    indexer, network_varint, partial_encode_scalar, reflection, selectable,
     selection::{self, *},
   };
   pub use varing;

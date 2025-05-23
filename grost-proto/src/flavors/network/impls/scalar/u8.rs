@@ -1,13 +1,13 @@
 use core::num::NonZeroU8;
 
 use crate::{
-  buffer::Buffer,
+  buffer::{Buf, Buffer},
   decode::Decode,
-  decode_owned_scalar, decoded_state, default_wire_format,
+  decoded_state, default_wire_format,
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed8, Network, Unknown, Varint},
-  partial_encode_scalar, selectable, try_from_bridge,
+  partial_decode_scalar, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u8 as Fixed8);
@@ -57,33 +57,79 @@ impl Encode<Network, Varint> for u8 {
 }
 
 partial_encode_scalar!(Network: u8 as Fixed8, u8 as Varint);
+partial_decode_scalar!(Network:
+  u8 as Fixed8 => |_, src: &'de [u8]| {
+    if src.is_empty() {
+      return Err(Error::buffer_underflow());
+    }
 
-impl<'de, B> Decode<'de, Network, Fixed8, Self, B> for u8 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+    Ok(1)
+  },
+  u8 as Varint => |_, src: &'de [u8]| {
+    if src.is_empty() {
+      return Err(Error::buffer_underflow());
+    }
+
+    varing::consume_varint(src).map_err(Into::into)
+  },
+);
+
+// impl<B> PartialDecodeOwned<Network, Fixed8, Self, B> for u8 {
+//   fn partial_decode_owned<D>(
+//     _: &Context,
+//     src: D,
+//     selector: &Self::Selector,
+//   ) -> Result<(usize, Option<Self>), Error>
+//   where
+//     Self: Sized,
+//     D: BytesBuffer + 'static,
+//     B: Buffer<Unknown<D>> + 'static,
+//   {
+//     if <bool as Selector<Network>>::is_empty(selector) {
+//       if src.is_empty() {
+//         return Ok((0, None));
+//       }
+
+//       Ok((1, None))
+//     } else {
+//       if src.is_empty() {
+//         return Err(Error::buffer_underflow());
+//       }
+
+//       let value = src.as_bytes()[0];
+//       Ok((1, Some(value)))
+//     }
+//   }
+// }
+
+impl<'de, UB> Decode<'de, Network, Fixed8, Self, UB> for u8 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
     if src.is_empty() {
       return Err(Error::buffer_underflow());
     }
 
-    let value = src[0];
+    let value = src.chunk()[0];
     Ok((1, value))
   }
 }
 
-impl<'de, B> Decode<'de, Network, Varint, Self, B> for u8 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for u8 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_u8_varint(src).map_err(Into::into)
+    varing::decode_u8_varint(src.chunk()).map_err(Into::into)
   }
 }
 
-decode_owned_scalar!(Network: u8 as Fixed8, u8 as Varint);
+// decode_owned_scalar!(Network: u8 as Fixed8, u8 as Varint);
 try_from_bridge!(
   Network: u8 {
     NonZeroU8 as Fixed8 {

@@ -1,9 +1,9 @@
 use core::num::NonZeroI32;
 
 use crate::{
-  buffer::Buffer,
+  buffer::{Buf, Buffer},
   decode::Decode,
-  decode_owned_scalar, decoded_state, default_wire_format,
+  decoded_state, default_wire_format,
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed32, Network, Unknown, Varint},
@@ -58,31 +58,32 @@ impl Encode<Network, Varint> for i32 {
 
 partial_encode_scalar!(Network: i32 as Fixed32, i32 as Varint);
 
-impl<'de, B> Decode<'de, Network, Fixed32, Self, B> for i32 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, UB> Decode<'de, Network, Fixed32, Self, UB> for i32 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
+    let chunk = src.chunk();
     if src.len() < 4 {
       return Err(Error::buffer_underflow());
     }
 
-    Ok((4, i32::from_le_bytes(src[..4].try_into().unwrap())))
+    Ok((4, i32::from_le_bytes(chunk[..4].try_into().unwrap())))
   }
 }
 
-impl<'de, B> Decode<'de, Network, Varint, Self, B> for i32 {
-  fn decode(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
+impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i32 {
+  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buffer<Unknown<&'de [u8]>> + 'de,
+    B: Buf<'de>,
+    UB: Buffer<Unknown<B>> + 'de,
   {
-    varing::decode_i32_varint(src).map_err(Into::into)
+    varing::decode_i32_varint(src.chunk()).map_err(Into::into)
   }
 }
-
-decode_owned_scalar!(Network: i32 as Fixed32, i32 as Varint);
 
 try_from_bridge!(
   Network: i32 {
