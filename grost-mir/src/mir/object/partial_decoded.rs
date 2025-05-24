@@ -16,7 +16,6 @@ use super::{super::wire_format_reflection_ty, Object};
 #[derive(Clone, derive_more::Debug)]
 pub struct PartialDecodedField {
   field: syn::Field,
-  object_field_ty: Type,
   tag: NonZeroU32,
   wire: Type,
   object_type: Type,
@@ -271,7 +270,70 @@ impl PartialDecodedObject {
     Ok(generics)
   }
 
-  /// Returns the constraints of the field which replaces the generic parameters with the given lifetime or concrete types.
+  /// Returns fields which replaces the generic parameters with the given lifetime or concrete types.
+  #[inline]
+  pub fn fields_with(
+    &self,
+    lifetime: Option<&syn::Lifetime>,
+    flavor: Option<&Type>,
+    unknown_buffer: Option<&Type>,
+  ) -> syn::Result<Vec<PartialDecodedField>> {
+    let path_to_grost = &self.path_to_grost;
+    self.fields().iter().map(|f| {
+      let ty = f.object_type();
+      let tag = f.tag();
+      let flavor = flavor.map(|t| quote!(#t)).unwrap_or_else(|| {
+          let flavor_param = self.flavor_param();
+          let ident = &flavor_param.ident;
+          quote!(#ident)
+        });
+      let wf = wire_format_reflection_ty(
+        path_to_grost,
+        &self.parent_name,
+        &self.object_generics.split_for_impl().1,
+        tag.get(),
+        &flavor,
+      );
+      let decoded_state = decoded_state_ty(
+        path_to_grost,
+        &self.parent_name,
+        &self.object_generics.split_for_impl().1,
+        &wf,
+        &flavor,
+        lifetime.unwrap_or_else(|| self.lifetime()),
+      );
+      let vis = &f.field.vis;
+      let name = f.name();
+      let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
+      let field = syn::Field::parse_named.parse2(quote! {
+        #vis #name: ::core::option::Option<#output_type>
+      })?;
+
+      let constraints = constraints(
+        path_to_grost,
+        &self.parent_name,
+        &self.object_generics.split_for_impl().1,
+        ty,
+        &wf,
+        &decoded_state,
+        &flavor,
+        f.copy(),
+      )?
+      .collect();
+
+      Ok(PartialDecodedField {
+        field,
+        tag,
+        object_type: ty.clone(),
+        output_type,
+        constraints,
+        wire: wf,
+        copy: f.copy(),
+      })
+    }).collect()
+  }
+
+  /// Returns the constraints which replaces the generic parameters with the given lifetime or concrete types.
   #[inline]
   pub fn constraints_with(
     &self,
@@ -290,7 +352,7 @@ impl PartialDecodedObject {
     let mut predicates = Punctuated::new();
 
     self.fields.iter().try_for_each(|f| {
-      let object_field_ty = &f.object_field_ty;
+      let object_field_ty = f.object_type();
       let wf = wire_format_reflection_ty(
         path_to_grost,
         object_name,
@@ -314,6 +376,7 @@ impl PartialDecodedObject {
         object_field_ty,
         &wf,
         &decoded_state,
+        &flavor,
         f.copy,
       )? {
         predicates.push(p);
@@ -360,6 +423,12 @@ impl PartialDecodedObject {
   #[inline]
   pub const fn unknown_buffer_param(&self) -> &TypeParam {
     self.generics.unknown_buffer_param()
+  }
+
+  /// Returns the field name of the unknown buffer.
+  #[inline]
+  pub const fn unknown_buffer_field_name(&self) -> &Ident {
+    &self.unknown_buffer_field_name
   }
 
   /// Returns the flavor generic parameter of the partial object.
@@ -413,7 +482,12 @@ impl PartialDecodedObject {
 
     generics
       .params
-      .push(syn::GenericParam::Type(flavor_param.clone()));
+      .push(syn::GenericParam::Type({
+        let ident = &flavor_param.ident;
+        syn::parse2(quote! {
+          #ident: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor
+        })?
+      }));
 
     generics
       .params
@@ -488,12 +562,12 @@ impl PartialDecodedObject {
           ty,
           &wf,
           &decoded_state,
+          &generics.flavor_param().ident,
           f.meta().partial_decoded().copy() || copyable,
         )?
         .collect();
         Ok(PartialDecodedField {
           field,
-          object_field_ty: ty.clone(),
           tag,
           object_type: ty.clone(),
           output_type,
@@ -684,6 +758,7 @@ fn decoded_state_ty(
   }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn constraints(
   path_to_grost: &syn::Path,
   object_name: &syn::Ident,
@@ -691,6 +766,7 @@ fn constraints(
   ty: &syn::Type,
   wf: &syn::Type,
   decoded_state: &syn::Type,
+  flavor: impl ToTokens,
   copy: bool,
 ) -> syn::Result<impl Iterator<Item = WherePredicate>> {
   let copy_constraint = copy.then(|| quote! { + ::core::marker::Copy });
@@ -699,6 +775,10 @@ fn constraints(
     [
       syn::parse2(quote! {
         #wf: #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>
+      })?,
+      syn::parse2(quote! {
+        <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>>::Reflection:
+          #path_to_grost::__private::flavors::WireFormat<#flavor>
       })?,
       syn::parse2(quote! {
         #ty: #decoded_state
@@ -752,6 +832,7 @@ where
       ty,
       &wf,
       &decoded_state,
+      &flavor_param.ident,
       f.meta().partial_decoded().copy() || copy,
     )?);
 

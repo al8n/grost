@@ -138,4 +138,31 @@ impl Flavor for Network {
       )),
     }
   }
+
+  fn skip<'de, B>(
+    _: &Self::Context,
+    wire_type: Self::WireType,
+    buf: B,
+  ) -> Result<usize, Self::Error>
+  where
+    B: Buf<'de>,
+  {
+    Ok(match wire_type {
+      WireType::Zst => 0,
+      WireType::Varint => varing::consume_varint(buf.as_bytes())?,
+      WireType::LengthDelimited => {
+        let (size_len, size) = varing::decode_u32_varint(buf.as_bytes())?;
+        let size = size as usize;
+        if size > buf.len() {
+          return Err(Error::buffer_underflow());
+        }
+        size_len + size
+      }
+      WireType::Fixed8 => 1,
+      WireType::Fixed16 => 2,
+      WireType::Fixed32 => 4,
+      WireType::Fixed64 => 8,
+      WireType::Fixed128 => 16,
+    })
+  }
 }

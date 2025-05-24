@@ -285,6 +285,15 @@ pub trait Flavor: core::fmt::Debug + 'static {
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
     B: Buf<'de>;
+
+  /// Skips number of bytes in the buffer according to the wire type.
+  fn skip<'de, B>(
+    ctx: &Self::Context,
+    wire_type: Self::WireType,
+    buf: B,
+  ) -> Result<usize, Self::Error>
+  where
+    B: Buf<'de>;
 }
 
 /// A raw tag for a field.

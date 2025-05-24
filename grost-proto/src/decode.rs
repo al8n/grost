@@ -69,12 +69,6 @@ where
 
     Self::partial_decode(context, src.slice(len_size..total), selector)
   }
-
-  /// Skips the type without actually decoding it. Returns the number of bytes skipped.
-  fn skip<B>(context: &F::Context, src: B) -> Result<usize, F::Error>
-  where
-    O: Sized + 'de,
-    B: Buf<'de>;
 }
 
 /// A trait for fully decoding types from a borrowed byte slice.

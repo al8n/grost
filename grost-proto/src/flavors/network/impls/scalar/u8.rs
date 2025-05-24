@@ -63,14 +63,14 @@ partial_decode_scalar!(Network:
       return Err(Error::buffer_underflow());
     }
 
-    Ok(1)
+    Ok((1, None))
   },
   u8 as Varint => |_, src: &'de [u8]| {
     if src.is_empty() {
       return Err(Error::buffer_underflow());
     }
 
-    varing::consume_varint(src).map_err(Into::into)
+    varing::consume_varint(src).map(|val| (val, None)).map_err(Into::into)
   },
 );
 

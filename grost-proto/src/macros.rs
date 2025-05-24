@@ -132,7 +132,7 @@ macro_rules! partial_encode_scalar {
 /// flavor and wire format.
 #[macro_export]
 macro_rules! partial_decode_scalar {
-  (@impl $flavor:ty as $format:ty => $expr:expr ) => {
+  (@impl $flavor:ty as $format:ty => $on_empty:expr ) => {
     fn partial_decode<B>(
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
       buf: B,
@@ -144,28 +144,16 @@ macro_rules! partial_decode_scalar {
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
       if <Self::Selector as $crate::__private::Selector<$flavor>>::is_empty(s) {
-        <Self as $crate::__private::PartialDecode<'de, $flavor, $format, Self, UB>>::skip(context, buf)
-          .map(|read| (read, ::core::option::Option::None))
+        ($on_empty)(context, buf.as_bytes())
       } else {
         <Self as $crate::__private::Decode<'_, $flavor, $format, Self, UB>>::decode(context, buf).map(|(read, val)| (read, ::core::option::Option::Some(val)))
       }
     }
-
-    fn skip<B>(
-      context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: B,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
-    where
-      Self: ::core::marker::Sized + 'de,
-      B: $crate::__private::Buf<'de>,
-    {
-      ($expr)(context, buf.as_bytes())
-    }
   };
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty => $expr:expr ),+$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty => $on_empty:expr ),+$(,)?) => {
     $(
       impl<'de, UB, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialDecode<'de, $flavor, $format, Self, UB> for $ty {
-        $crate::partial_decode_scalar!(@impl $flavor as $format => $expr );
+        $crate::partial_decode_scalar!(@impl $flavor as $format => $on_empty );
       }
     )*
   };
