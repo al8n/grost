@@ -3,8 +3,13 @@ use crate::Object;
 
 use quote::{ToTokens, quote};
 
+mod encode;
+
 impl Network {
-  pub(super) fn derive_reflection(&self, object: &Object) -> syn::Result<proc_macro2::TokenStream> {
+  pub(super) fn derive_object_reflection(
+    &self,
+    object: &Object,
+  ) -> syn::Result<proc_macro2::TokenStream> {
     let field_identifier_reflections = derive_field_identifier_reflections(object);
     let field_encoded_identifier_reflections = derive_field_encoded_identifier_reflections(object);
     let field_encoded_identifier_len_reflections =

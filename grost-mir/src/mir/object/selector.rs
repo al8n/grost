@@ -312,9 +312,9 @@ impl Selector {
         let wfr = wire_format_reflection_ty(
           path_to_grost,
           input.name(),
-          input.generics(),
+          &input.generics().split_for_impl().1,
           tag.get(),
-          &fgp,
+          &fgp.ident,
         );
         let wf = wire_format_ty(path_to_grost, input.name(), input.generics(), &wfr);
 
@@ -1150,9 +1150,9 @@ where
     let wfr = wire_format_reflection_ty(
       path_to_grost,
       object_name,
-      object_generics,
+      &object_generics.split_for_impl().1,
       f.meta().tag().get(),
-      fg,
+      &fg.ident,
     );
     let wf = wire_format_ty(path_to_grost, object_name, object_generics, &wfr);
     let selector_ty = selector_ty(path_to_grost, &wf, fg);
