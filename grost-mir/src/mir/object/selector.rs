@@ -4,7 +4,8 @@ use syn::{GenericParam, Generics, Ident, Type, Visibility, parse::Parser, parse_
 use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
-  grost_flavor_param, grost_lifetime, grost_wire_format_param, object::{Field, ObjectExt as _, Selection, SelectorIterMeta}
+  grost_flavor_param, grost_lifetime, grost_wire_format_param,
+  object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
@@ -874,7 +875,9 @@ where
 
     let object_selectable = {
       let mut generics = self.selector.generics().clone();
-      generics.params.push(GenericParam::Type(wire_format_param.clone()));    
+      generics
+        .params
+        .push(GenericParam::Type(wire_format_param.clone()));
 
       let (ig, _, where_clauses) = generics.split_for_impl();
       let (_, object_tg, _) = self.generics.split_for_impl();
@@ -893,11 +896,21 @@ where
     let partial_object_selectable = {
       let name = self.partial.name();
       let mut generics = self.selector.generics().clone();
-      generics.params.push(GenericParam::Type(wire_format_param.clone()));
+      generics
+        .params
+        .push(GenericParam::Type(wire_format_param.clone()));
 
-      self.partial().generics().where_clause.as_ref().unwrap().predicates.iter().for_each(|p| {
-        generics.make_where_clause().predicates.push(p.clone());
-      });
+      self
+        .partial()
+        .generics()
+        .where_clause
+        .as_ref()
+        .unwrap()
+        .predicates
+        .iter()
+        .for_each(|p| {
+          generics.make_where_clause().predicates.push(p.clone());
+        });
 
       let (ig, _, where_clauses) = generics.split_for_impl();
       let (_, object_tg, _) = self.partial.generics().split_for_impl();
@@ -916,11 +929,21 @@ where
     let partial_decoded_object_selectable = {
       let name = self.partial_decoded.name();
       let mut generics = self.partial_decoded().generics().clone();
-      generics.params.push(GenericParam::Type(wire_format_param.clone()));
+      generics
+        .params
+        .push(GenericParam::Type(wire_format_param.clone()));
 
-      self.selector().generics().where_clause.as_ref().unwrap().predicates.iter().for_each(|p| {
-        generics.make_where_clause().predicates.push(p.clone());
-      });
+      self
+        .selector()
+        .generics()
+        .where_clause
+        .as_ref()
+        .unwrap()
+        .predicates
+        .iter()
+        .for_each(|p| {
+          generics.make_where_clause().predicates.push(p.clone());
+        });
 
       let (ig, _, where_clauses) = generics.split_for_impl();
       let (_, object_tg, _) = self.partial_decoded.generics().split_for_impl();

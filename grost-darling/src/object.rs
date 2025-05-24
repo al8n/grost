@@ -38,6 +38,10 @@ impl ToTokens for FieldDeriveInput {
       .rename
       .clone()
       .unwrap_or_else(|| format_ident!("{}DeriveInput", self.ident));
+    let hidden_derive_input_name = self
+      .rename
+      .clone()
+      .unwrap_or_else(|| format_ident!("__{}DeriveInput__", self.ident));
     let vis = &self.vis;
     let path_to_crate = &self.path_to_crate;
     let (ig, tg, w) = self.generics.split_for_impl();
@@ -45,20 +49,30 @@ impl ToTokens for FieldDeriveInput {
     let attributes = self.attributes.iter();
     let meta = &self.meta;
 
-    let custom_meta_field = match self.data.as_ref() {
-      Data::Enum(_) => unreachable!("FieldDeriveInput should not be used for enums"),
-      Data::Struct(fields) => {
-        if fields.is_unit() || fields.is_empty() {
-          None
-        } else {
-          Some(quote! {
-            #[darling(flatten)]
-            #[doc(hidden)]
-            __custom_meta__: #name,
-          })
+    let (custom_meta_field, custom_meta_field_without_darling, into_outer) =
+      match self.data.as_ref() {
+        Data::Enum(_) => unreachable!("FieldDeriveInput should not be used for enums"),
+        Data::Struct(fields) => {
+          if fields.is_unit() || fields.is_empty() {
+            (None, None, None)
+          } else {
+            (
+              Some(quote! {
+                #[darling(flatten)]
+                #[doc(hidden)]
+                __custom_meta__: #name,
+              }),
+              Some(quote! {
+                #[doc(hidden)]
+                __custom_meta__: #name,
+              }),
+              Some(quote! {
+                __custom_meta__: input.__custom_meta__,
+              }),
+            )
+          }
         }
-      }
-    };
+      };
 
     let fields = self.data.as_ref().take_struct().unwrap();
     let accessors = if fields.is_unit() || fields.is_empty() {
@@ -77,11 +91,13 @@ impl ToTokens for FieldDeriveInput {
         );
         quote! {
           #[doc = #doc]
+          #[inline]
           #field_vis fn #fn_name(&self) -> &#field_ty {
             &self.__custom_meta__.#field_name
           }
 
           #[doc = #doc_mut]
+          #[inline]
           #field_vis fn #fn_mut_name(&mut self) -> &mut #field_ty {
             &mut self.__custom_meta__.#field_name
           }
@@ -94,45 +110,92 @@ impl ToTokens for FieldDeriveInput {
 
     tokens.extend(quote! {
       #(#meta)*
-      #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromField)]
-      #[darling(attributes(#(#attributes),*), forward_attrs)]
+      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
       #vis struct #derive_input_name #tg #w {
         ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
         vis: #path_to_crate::__private::syn::Visibility,
         ty: #path_to_crate::__private::syn::Type,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
 
-        #custom_meta_field
+        #custom_meta_field_without_darling
 
-        #[darling(flatten)]
         __meta__: #path_to_crate::__private::ast::object::FieldMeta,
       }
 
-      impl #ig #derive_input_name #tg #w {
-        #accessors
-      }
+      const _: () = {
+        use #path_to_crate::__private::darling;
 
-      impl #ig #path_to_crate::__private::ast::object::Field for #derive_input_name #tg #w {
-        fn name(&self) -> &#path_to_crate::__private::syn::Ident {
-          self.ident.as_ref().expect("the field of the named struct must have a name")
+        #[derive(::core::fmt::Debug, ::core::clone::Clone, darling::FromField)]
+        #[darling(attributes(#(#attributes),*), forward_attrs)]
+        struct #hidden_derive_input_name #tg #w {
+          ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
+          vis: #path_to_crate::__private::syn::Visibility,
+          ty: #path_to_crate::__private::syn::Type,
+          attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
+
+          #custom_meta_field
+
+          #[darling(flatten)]
+          __meta__: #path_to_crate::__private::ast::object::FieldMeta,
         }
 
-        fn ty(&self) -> &#path_to_crate::__private::syn::Type {
-          &self.ty
+        darling::uses_type_params!(#derive_input_name #tg, ty);
+        darling::uses_lifetimes!(#derive_input_name #tg, ty);
+
+        impl #ig ::core::convert::From<#hidden_derive_input_name #tg> for #derive_input_name #tg #w {
+          #[inline]
+          fn from(input: #hidden_derive_input_name #tg) -> Self {
+            Self {
+              ident: input.ident,
+              vis: input.vis,
+              ty: input.ty,
+              attrs: input.attrs,
+              __meta__: input.__meta__,
+              #into_outer
+            }
+          }
         }
 
-        fn vis(&self) -> &#path_to_crate::__private::syn::Visibility {
-          &self.vis
+        impl #ig darling::FromField for #derive_input_name #tg #w {
+          fn from_field(
+            field: &#path_to_crate::__private::syn::Field,
+          ) -> darling::Result<Self> {
+            <#hidden_derive_input_name #tg as darling::FromField>::from_field(field)
+              .map(::core::convert::Into::into)
+          }
         }
 
-        fn attrs(&self) -> &[#path_to_crate::__private::syn::Attribute] {
-          &self.attrs
+        impl #ig #derive_input_name #tg #w {
+          #accessors
         }
 
-        fn meta(&self) -> &#path_to_crate::__private::ast::object::FieldMeta {
-          &self.__meta__
+        impl #ig #path_to_crate::__private::ast::object::Field for #derive_input_name #tg #w {
+          #[inline]
+          fn name(&self) -> &#path_to_crate::__private::syn::Ident {
+            self.ident.as_ref().expect("the field of the named struct must have a name")
+          }
+
+          #[inline]
+          fn ty(&self) -> &#path_to_crate::__private::syn::Type {
+            &self.ty
+          }
+
+          #[inline]
+          fn vis(&self) -> &#path_to_crate::__private::syn::Visibility {
+            &self.vis
+          }
+
+          #[inline]
+          fn attrs(&self) -> &[#path_to_crate::__private::syn::Attribute] {
+            &self.attrs
+          }
+
+          #[inline]
+          fn meta(&self) -> &#path_to_crate::__private::ast::object::FieldMeta {
+            &self.__meta__
+          }
         }
-      }
+      };
     });
   }
 }

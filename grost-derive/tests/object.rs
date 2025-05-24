@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 
 use grost::{
-  buffer::Buf, flavors::{network::LengthDelimited, Network}, selection::{Selectable, Selector}, Decode, PartialDecode
+  Decode, PartialDecode,
+  buffer::Buf,
+  flavors::{Network, network::LengthDelimited},
+  selection::{Selectable, Selector},
 };
 use grost_derive::{Object, object};
 
@@ -32,7 +35,7 @@ pub struct User<I> {
     schema(description = "The nick name of the user"),
     wire = "grost::flavors::network::LengthDelimited",
     selector(select = "all"),
-    partial_decoded(copy,),
+    partial_decoded(copy,)
   )]
   name: String,
   #[grost(
@@ -78,7 +81,7 @@ pub struct User<I> {
 //     let mut offset = 0;
 //     let buf_len = bytes.len();
 //     while offset < buf_len {
-      
+
 //     }
 
 //     Ok((offset, Some(this)))

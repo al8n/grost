@@ -66,6 +66,8 @@ pub struct FieldMeta {
   selector: SelectorFieldMeta,
   #[darling(default)]
   copy: bool,
+  #[darling(default)]
+  skip: bool,
   #[darling(flatten)]
   meta: TypeHintMeta,
   #[darling(skip)]
@@ -96,6 +98,11 @@ impl FieldMeta {
   /// Returns whether the field type is copyable
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+
+  /// Returns whether the field should be skipped
+  pub const fn skip(&self) -> bool {
+    self.skip
   }
 
   /// Returns the default selection for the field
