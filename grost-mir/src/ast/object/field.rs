@@ -55,7 +55,8 @@ pub struct FieldMeta {
   schema: SchemaMeta,
   #[darling(default)]
   default: Option<syn::Path>,
-  tag: NonZeroU32,
+  #[darling(default)]
+  tag: Option<NonZeroU32>,
   #[darling(default)]
   wire: Option<Type>,
   #[darling(default)]
@@ -76,7 +77,7 @@ pub struct FieldMeta {
 
 impl FieldMeta {
   /// Returns the tag of the field
-  pub const fn tag(&self) -> NonZeroU32 {
+  pub const fn tag(&self) -> Option<NonZeroU32> {
     self.tag
   }
 

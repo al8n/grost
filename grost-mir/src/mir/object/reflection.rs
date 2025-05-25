@@ -78,6 +78,7 @@ impl Reflection {
     let fields = input
       .fields()
       .iter()
+      .filter(|f| !f.meta().skip())
       .map(|f| {
         let field_name = f.name().clone();
         let object_name = object_name.clone();
@@ -85,7 +86,7 @@ impl Reflection {
           " The reflection to the `{}.{}` field.",
           object_name, field_name
         );
-        let tag = f.meta().tag().get();
+        let tag = f.meta().tag().expect("field tag is required").get();
         let vis = f.vis().clone();
         let generics = input.generics().clone();
         let path_to_grost = path_to_grost.clone();
@@ -149,7 +150,7 @@ where
     let mut field_reflections = vec![];
     let field_reflection_fns = self
       .reflection
-      .fields
+      .fields()
       .iter()
       .map(|f| {
         (f)(&fgty).map(|field| {
@@ -203,8 +204,8 @@ where
       .collect::<Result<Vec<_>, _>>()?;
 
     let name_str = name.to_string();
-    let schema_name = self.reflection.schema.name().unwrap_or(name_str.as_str());
-    let schema_description = self.reflection.schema.description().unwrap_or_default();
+    let schema_name = self.reflection().schema.name().unwrap_or(name_str.as_str());
+    let schema_description = self.reflection().schema.description().unwrap_or_default();
     Ok(quote! {
       const _: () = {
         #(#field_reflectable_impl)*

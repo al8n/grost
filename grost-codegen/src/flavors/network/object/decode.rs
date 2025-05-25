@@ -12,12 +12,11 @@ impl Network {
     let ubp = partial_decoded.unknown_buffer_param();
     let ubi = &ubp.ident;
     let ltg = partial_decoded.lifetime();
-    let ty = partial_decoded.type_with(None, Some(&self.ty), None)?;
-    let mut remove_generics_without_flavor_generic =
-      partial_decoded.remove_generics(None, Some(&self.ty), None)?;
+    let partial_decode_ty = partial_decoded.type_with(None, Some(&self.ty), None)?;
+    let mut replaced_generics = partial_decoded.remove_generics(None, Some(&self.ty), None)?;
 
     {
-      let where_clauses = remove_generics_without_flavor_generic.make_where_clause();
+      let where_clauses = replaced_generics.make_where_clause();
       where_clauses.predicates.push(syn::parse2(quote! {
         Self: #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited>
       })?);
@@ -41,8 +40,8 @@ impl Network {
     let mut decode_branches = vec![];
     let mut partial_decode_branches = vec![];
 
-    let mut decode_generics = remove_generics_without_flavor_generic.clone();
-    let mut partial_decode_generics = remove_generics_without_flavor_generic.clone();
+    let mut decode_generics = replaced_generics.clone();
+    let mut partial_decode_generics = replaced_generics.clone();
     partial_decoded.fields_with(
       None,
       Some(&self.ty),
@@ -155,12 +154,55 @@ impl Network {
       })?);
 
     let (decode_ig, _, decode_where_clause) = decode_generics.split_for_impl();
+
     let (partial_decode_ig, _, partial_decode_where_clause) =
       partial_decode_generics.split_for_impl();
+
+    let partial_object = object.partial();
+    let partial_object_name = partial_object.name();
+    let partial_object_decoded_state_generics = {
+      let mut generics = replaced_generics.clone();
+      if let Some(ref g) = partial_object.generics().where_clause {
+        generics
+          .make_where_clause()
+          .predicates
+          .extend(g.predicates.clone());
+      }
+      generics
+    };
+    let (_, partial_object_tg, _) = partial_object.generics().split_for_impl();
+    let (_, _, partial_object_decoded_state_where_clause) =
+      partial_object_decoded_state_generics.split_for_impl();
+
+    let object_name = object.name();
+    let (_, object_tg, _) = object.generics().split_for_impl();
+    let (replaced_ig, _, replaced_where_clause) = replaced_generics.split_for_impl();
+
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #decode_ig #path_to_grost::__private::Decode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #ty #decode_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
+        type Input = & #ltg [::core::primitive::u8];
+        type Output = #partial_decode_ty;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_decoded_state_where_clause {
+        type Input = & #ltg [::core::primitive::u8];
+        type Output = #partial_decode_ty;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
+        type Input = & #ltg [::core::primitive::u8];
+        type Output = Self;
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types)]
+      impl #decode_ig #path_to_grost::__private::Decode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #partial_decode_ty #decode_where_clause {
         fn decode<__GROST_BUF__>(
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: __GROST_BUF__,
@@ -219,7 +261,7 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #partial_decode_ig #path_to_grost::__private::PartialDecode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #ty #partial_decode_where_clause {
+      impl #partial_decode_ig #path_to_grost::__private::PartialDecode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #partial_decode_ty #partial_decode_where_clause {
         fn partial_decode<__GROST_BUF__>(
           ctx: &#path_to_grost::__private::flavors::network::Context,
           buf: __GROST_BUF__,

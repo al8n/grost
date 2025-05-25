@@ -134,12 +134,13 @@ macro_rules! list {
   };
   (@decoded_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<'a, T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W>> for $ty
+      #[allow(non_camel_case_types)]
+      impl<'a, T, W, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W, __GROST_UNKNOWN_BUFFER__>> for $ty
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
         type Input = &'a [u8];
-        type Output = $crate::__private::flavors::network::PackedDecoder<'a, $ty, (), W>;
+        type Output = $crate::__private::flavors::network::PackedDecoder<'a, $ty, __GROST_UNKNOWN_BUFFER__, W>;
       }
     )*
   };

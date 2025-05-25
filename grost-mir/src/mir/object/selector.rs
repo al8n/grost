@@ -212,6 +212,7 @@ pub struct Selector {
   generics: SelectorGenerics,
   attrs: Vec<syn::Attribute>,
   fields: Vec<SelectorField>,
+  skipped_fields: Vec<syn::Field>,
 }
 
 impl Selector {
@@ -331,40 +332,50 @@ impl Selector {
       input.generics(),
       &mut generics,
       path_to_grost,
-      input.fields().iter().copied(),
+      input.fields().iter().filter(|f| !f.meta().skip()).copied(),
       &fgp,
     )?;
 
-    let fields = input
-      .fields()
-      .iter()
-      .map(|f| {
-        let ty = f.ty();
-        let tag = f.meta().tag();
-        let wfr = wire_format_reflection_ty(
-          path_to_grost,
-          input.name(),
-          &input.generics().split_for_impl().1,
-          tag.get(),
-          &fgp.ident,
-        );
-        let wf = wire_format_ty(path_to_grost, input.name(), input.generics(), &wfr);
+    let mut fields = vec![];
+    let mut skipped_fields = vec![];
 
-        let attrs = f.meta().selector().attrs();
-        let vis = f.vis();
-        let name = f.name();
-        let fgi = &fgp.ident;
+    input.fields().iter().try_for_each(|f| {
+      if f.meta().skip() {
+        let field_name = format_ident!("__{}__", f.name());
+        let field_ty = f.ty();
         let field = syn::Field::parse_named.parse2(quote! {
-          #(#attrs)*
-          #vis #name: <#ty as #path_to_grost::__private::selection::Selectable<#fgi, #wf>>::Selector
+          #[allow(dead_code)]
+          #field_name: ::core::marker::PhantomData<#field_ty>
         })?;
+        skipped_fields.push(field);
+        return darling::Result::Ok(());
+      }
+      let ty = f.ty();
+      let tag = f.meta().tag().expect("field tag is required");
+      let wfr = wire_format_reflection_ty(
+        path_to_grost,
+        input.name(),
+        &input.generics().split_for_impl().1,
+        tag.get(),
+        &fgp.ident,
+      );
+      let wf = wire_format_ty(path_to_grost, input.name(), input.generics(), &wfr);
 
-        Ok(SelectorField {
-          field,
-          default: f.meta().selector().select().clone(),
-        })
-      })
-      .collect::<Result<Vec<_>, darling::Error>>()?;
+      let attrs = f.meta().selector().attrs();
+      let vis = f.vis();
+      let name = f.name();
+      let fgi = &fgp.ident;
+      let field = syn::Field::parse_named.parse2(quote! {
+        #(#attrs)*
+        #vis #name: <#ty as #path_to_grost::__private::selection::Selectable<#fgi, #wf>>::Selector
+      })?;
+
+      fields.push(SelectorField {
+        field,
+        default: f.meta().selector().select().clone(),
+      });
+      Ok(())
+    })?;
 
     let attrs = input.meta().selector().attrs().to_vec();
     Ok(Self {
@@ -374,6 +385,7 @@ impl Selector {
       attrs,
       generics: SelectorGenerics::new(fgp, generics),
       fields,
+      skipped_fields,
     })
   }
 
@@ -462,7 +474,11 @@ impl Selector {
       None
     };
 
-    let fields = self.fields().iter().map(SelectorField::field);
+    let fields = self
+      .fields()
+      .iter()
+      .map(SelectorField::field)
+      .chain(self.skipped_fields.iter());
 
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
@@ -529,32 +545,62 @@ where
     let fg = &fgp.ident;
     let (ig, tg, selector_where_clauses) = selector.generics().split_for_impl();
 
-    let empty = self.selector.fields().iter().map(|f| {
-      let ty = f.ty();
-      let field_name = f.name();
+    let empty = self
+      .selector
+      .fields()
+      .iter()
+      .map(|f| {
+        let ty = f.ty();
+        let field_name = f.name();
 
-      quote! {
-        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::NONE
-      }
-    });
+        quote! {
+          #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::NONE
+        }
+      })
+      .chain(self.selector.skipped_fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::marker::PhantomData
+        }
+      }));
 
-    let all = self.selector.fields().iter().map(|f| {
-      let ty = f.ty();
-      let field_name = f.name();
+    let all = self
+      .selector
+      .fields()
+      .iter()
+      .map(|f| {
+        let ty = f.ty();
+        let field_name = f.name();
 
-      quote! {
-        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::ALL
-      }
-    });
+        quote! {
+          #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::ALL
+        }
+      })
+      .chain(self.selector.skipped_fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::marker::PhantomData
+        }
+      }));
 
-    let default = self.selector.fields().iter().map(|f| {
-      let ty = f.ty();
-      let field_name = f.name();
+    let default = self
+      .selector
+      .fields()
+      .iter()
+      .map(|f| {
+        let ty = f.ty();
+        let field_name = f.name();
 
-      quote! {
-        #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::DEFAULT
-      }
-    });
+        quote! {
+          #field_name: <#ty as #path_to_grost::__private::selection::Selector<#fg>>::DEFAULT
+        }
+      })
+      .chain(self.selector.skipped_fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::marker::PhantomData
+        }
+      }));
 
     let is_empty = self.selector.fields().iter().map(|f| {
       let ty = f.ty();
@@ -604,12 +650,22 @@ where
       }
     });
 
-    let clone = self.selector.fields().iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        #field_name: ::core::clone::Clone::clone(&self.#field_name)
-      }
-    });
+    let clone = self
+      .selector
+      .fields()
+      .iter()
+      .map(|f| {
+        let field_name = f.name();
+        quote! {
+          #field_name: ::core::clone::Clone::clone(&self.#field_name)
+        }
+      })
+      .chain(self.selector.skipped_fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::marker::PhantomData
+        }
+      }));
 
     let debug = self.selector.fields().iter().map(|f| {
       let field_name = f.name();
@@ -927,13 +983,16 @@ where
 
     let partial_object_selectable = {
       let name = self.partial.name();
-      let mut generics = self.selector.generics().clone();
+      let mut generics = self.partial().generics().clone();
       generics
         .params
         .push(GenericParam::Type(wire_format_param.clone()));
+      generics
+        .params
+        .push(GenericParam::Type(self.selector().flavor_param().clone()));
 
       self
-        .partial()
+        .selector()
         .generics()
         .where_clause
         .as_ref()
@@ -1183,7 +1242,7 @@ where
       path_to_grost,
       object_name,
       &object_generics.split_for_impl().1,
-      f.meta().tag().get(),
+      f.meta().tag().expect("field tag is required").get(),
       &fg.ident,
     );
     let wf = wire_format_ty(path_to_grost, object_name, object_generics, &wfr);

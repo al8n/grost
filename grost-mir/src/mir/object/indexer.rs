@@ -74,6 +74,7 @@ impl Indexer {
     let variants = input
       .fields()
       .iter()
+      .filter(|f| !f.meta().skip())
       .enumerate()
       .map(|(idx, f)| {
         let variant = format_ident!("{}", f.name().to_string().to_upper_camel_case());
@@ -86,7 +87,7 @@ impl Indexer {
             #variant = #idx
           })
           .map(|variant| IndexerVariant {
-            tag: f.meta().tag(),
+            tag: f.meta().tag().expect("field must have a tag"),
             variant,
             field_name: f.name().clone(),
           })

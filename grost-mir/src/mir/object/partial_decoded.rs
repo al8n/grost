@@ -142,6 +142,7 @@ pub struct PartialDecodedObject {
   object_generics: Generics,
   generics: PartialDecodedObjectGenerics,
   fields: Vec<PartialDecodedField>,
+  skipped_fields: Vec<syn::Field>,
   attrs: Vec<Attribute>,
   unknown_buffer_field_name: Ident,
   copy: bool,
@@ -405,7 +406,7 @@ impl PartialDecodedObject {
   }
 
   #[inline]
-  pub const fn path_to_grost(&self) -> &syn::Path {
+  pub const fn path(&self) -> &syn::Path {
     &self.path_to_grost
   }
 
@@ -420,9 +421,16 @@ impl PartialDecodedObject {
     &self.generics.generics
   }
 
+  /// Returns the fields of the partial decoded object.
   #[inline]
-  pub fn fields(&self) -> &[PartialDecodedField] {
+  pub const fn fields(&self) -> &[PartialDecodedField] {
     self.fields.as_slice()
+  }
+
+  /// Returns the skipped fields of the partial decoded object.
+  #[inline]
+  pub const fn skipped_fields(&self) -> &[syn::Field] {
+    self.skipped_fields.as_slice()
   }
 
   #[inline]
@@ -529,7 +537,7 @@ impl PartialDecodedObject {
       input.generics(),
       &mut generics,
       path_to_grost,
-      fields.iter().copied(),
+      fields.iter().filter(|f| !f.meta().skip()).copied(),
       &flavor_param,
       &lt,
       &unknown_buffer_param,
@@ -540,60 +548,73 @@ impl PartialDecodedObject {
       PartialDecodedObjectGenerics::new(lt, flavor_param, unknown_buffer_param, generics);
 
     let (_, object_tg, _) = input.generics().split_for_impl();
-
-    let fields = fields
-      .iter()
-      .map(|f| {
-        let ty = f.ty();
-        let meta = f.meta();
-        let tag = meta.tag();
-        let wf = wire_format_reflection_ty(
-          path_to_grost,
-          input.name(),
-          &object_tg,
-          tag.get(),
-          &generics.flavor_param().ident,
-        );
-        let decoded_state = decoded_state_ty(
-          path_to_grost,
-          input.name(),
-          &object_tg,
-          &wf,
-          &generics.flavor_param().ident,
-          generics.lifetime(),
-          &generics.unknown_buffer_param().ident,
-        );
+    let mut partial_decoded_fields = vec![];
+    let mut skipped_fields = vec![];
+    fields.iter().try_for_each(|f| {
+      let ty = f.ty();
+      let meta = f.meta();
+      if meta.skip() {
+        let field_name = f.name();
+        let field_ty = f.ty();
         let vis = f.vis();
-        let name = f.name();
         let attrs = f.meta().partial_decoded().attrs();
-        let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
-          #vis #name: ::core::option::Option<#output_type>
+          #vis #field_name: ::core::option::Option<#field_ty>
         })?;
+        skipped_fields.push(field);
+        return syn::Result::Ok(());
+      }
 
-        let constraints = constraints(
-          path_to_grost,
-          input.name(),
-          &object_tg,
-          ty,
-          &wf,
-          &decoded_state,
-          &generics.flavor_param().ident,
-          f.meta().partial_decoded().copy() || copyable,
-        )?
-        .collect();
-        Ok(PartialDecodedField {
-          field,
-          tag,
-          object_type: ty.clone(),
-          output_type,
-          constraints,
-          wire: wf,
-          copy: meta.partial_decoded().copy() | copyable,
-        })
-      })
-      .collect::<Result<Vec<_>, darling::Error>>()?;
+      let tag = meta.tag().expect("field must have a tag");
+      let wf = wire_format_reflection_ty(
+        path_to_grost,
+        input.name(),
+        &object_tg,
+        tag.get(),
+        &generics.flavor_param().ident,
+      );
+      let decoded_state = decoded_state_ty(
+        path_to_grost,
+        input.name(),
+        &object_tg,
+        &wf,
+        &generics.flavor_param().ident,
+        generics.lifetime(),
+        &generics.unknown_buffer_param().ident,
+      );
+      let vis = f.vis();
+      let name = f.name();
+      let attrs = f.meta().partial_decoded().attrs();
+      let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
+      let field = syn::Field::parse_named.parse2(quote! {
+        #(#attrs)*
+        #vis #name: ::core::option::Option<#output_type>
+      })?;
+
+      let constraints = constraints(
+        path_to_grost,
+        input.name(),
+        &object_tg,
+        ty,
+        &wf,
+        &decoded_state,
+        &generics.flavor_param().ident,
+        f.meta().partial_decoded().copy() || copyable,
+      )?
+      .collect();
+
+      partial_decoded_fields.push(PartialDecodedField {
+        field,
+        tag,
+        object_type: ty.clone(),
+        output_type,
+        constraints,
+        wire: wf,
+        copy: meta.partial_decoded().copy() | copyable,
+      });
+      Ok(())
+    })?;
 
     let name = input.partial_decoded_name();
     let (_, tg, _) = generics.split_for_impl();
@@ -608,7 +629,8 @@ impl PartialDecodedObject {
       vis: input.vis().clone(),
       object_generics: input.generics().clone(),
       generics,
-      fields,
+      fields: partial_decoded_fields,
+      skipped_fields,
       attrs: meta.partial_decoded().attrs().to_vec(),
       copy: copyable,
     })
@@ -617,7 +639,11 @@ impl PartialDecodedObject {
   pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let name = self.name();
     let vis = self.vis();
-    let fields = self.fields().iter().map(PartialDecodedField::field);
+    let fields = self
+      .fields()
+      .iter()
+      .map(PartialDecodedField::field)
+      .chain(self.skipped_fields().iter());
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
     let attrs = self.attrs();
@@ -656,20 +682,29 @@ where
   pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
     let partial_decoded_object = self.partial_decoded();
     let name = partial_decoded_object.name();
-    let fields_init = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        #field_name: ::core::option::Option::None,
-      }
-    });
+    let fields_init = partial_decoded_object
+      .fields()
+      .iter()
+      .map(|f| {
+        let field_name = f.name();
+        quote! {
+          #field_name: ::core::option::Option::None,
+        }
+      })
+      .chain(partial_decoded_object.skipped_fields().iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::option::Option::None,
+        }
+      }));
 
-    let fields_accessors = partial_decoded_object.fields.iter().map(|f| {
+    let fields_accessors = partial_decoded_object.fields().iter().map(|f| {
       let field_name = f.name();
       let ty = &f.output_type;
       super::optional_accessors(field_name, ty, f.copy())
     });
 
-    let is_empty = partial_decoded_object.fields.iter().map(|f| {
+    let is_empty = partial_decoded_object.fields().iter().map(|f| {
       let field_name = f.name();
       quote! {
         self.#field_name.is_none()
@@ -722,13 +757,13 @@ where
           self.#ubfn.as_ref()
         }
 
-        /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
-        #[inline]
-        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
-          self.#ubfn.as_mut()
-        }
-
         // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        // /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
+        // #[inline]
+        // pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        //  self.#ubfn.as_mut()
+        // }
+
         // /// Takes the unknown buffer out if the unknown buffer is not `None`.
         // #[inline]
         // pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
@@ -846,7 +881,7 @@ where
       path_to_grost,
       object_name,
       &tg,
-      meta.tag().get(),
+      meta.tag().expect("field tag is required").get(),
       &flavor_param.ident,
     );
     let decoded_state = decoded_state_ty(

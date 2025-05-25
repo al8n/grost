@@ -14,19 +14,15 @@ use grost_derive::{Object, object};
 //   }
 // }
 
-// struct Generic<T: ?Sized, W: ?Sized> {
-//   _w: PhantomData<W>,
-//   t: T,
-// }
-
 // #[object(output(path = "grost-derive/tests/user.rs", format))]
 // #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct User<I> {
+// pub struct User<I>
+// {
 //   #[grost(
 //     tag = 1,
 //     schema(description = "The id of the user"),
-//     wire = "grost::flavors::network::LengthDelimited",
 //     selector(select = "all"),
+//     wire = "grost::flavors::network::LengthDelimited",
 //     partial_decoded(copy,)
 //   )]
 //   id: I,
@@ -52,6 +48,9 @@ use grost_derive::{Object, object};
 //   //   optional(repeated)
 //   // )]
 //   // emails: Option<Vec<String>>,
+
+//   #[grost(skip)]
+//   _w: core::marker::PhantomData<*const ()>,
 // }
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {

@@ -15,6 +15,7 @@ description = "The Mid-level Intermediate Representation (MIR) for Grost schema 
 grost-darling.workspace = true
 derive_more = { workspace = true, features = ["try_unwrap", "unwrap", "is_variant"] }
 
+itertools = { version = "0.14" }
 heck.workspace = true
 syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true

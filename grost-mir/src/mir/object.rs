@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 
 use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
+use syn::{Attribute, Generics, Ident, Path, Type, Visibility, parse::Parser};
 
 pub use indexer::Indexer;
 pub use partial::{PartialField, PartialObject};
@@ -106,18 +106,90 @@ impl<M> Field<M> {
     M: crate::ast::object::Field,
   {
     let meta = input.meta();
-
+    let tag = match meta.tag() {
+      Some(tag) => tag,
+      None => {
+        let name = input.name();
+        return Err(
+          darling::Error::custom(format!(
+            "{name} field is missing tag attribute, please add e.g. `tag = 1`"
+          ))
+          .with_span(&proc_macro2::Span::call_site()),
+        );
+      }
+    };
     Ok(Self {
       name: input.name().clone(),
       ty: input.ty().clone(),
       vis: input.vis().clone(),
-      tag: meta.tag(),
+      tag,
       specification: meta.type_specification().cloned(),
       attrs: input.attrs().to_vec(),
       copy,
       schema: meta.schema().clone(),
       default: meta.default().cloned(),
       wire: meta.wire().cloned(),
+      meta: input,
+    })
+  }
+}
+
+pub struct SkippedField<M> {
+  name: Ident,
+  ty: Type,
+  vis: Visibility,
+  default: Option<Path>,
+  attrs: Vec<Attribute>,
+  meta: M,
+}
+
+impl<M> SkippedField<M> {
+  /// Returns the field name.
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the field type.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the field visibility.
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the fn that returns the default value of the field.
+  #[inline]
+  pub const fn default(&self) -> Option<&Path> {
+    self.default.as_ref()
+  }
+  /// Returns the field attributes.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the meta information of the field.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  fn from_input(input: M) -> darling::Result<Self>
+  where
+    M: crate::ast::object::Field,
+  {
+    let meta = input.meta();
+    Ok(Self {
+      name: input.name().clone(),
+      ty: input.ty().clone(),
+      vis: input.vis().clone(),
+      attrs: input.attrs().to_vec(),
+      default: meta.default().cloned(),
       meta: input,
     })
   }
@@ -133,6 +205,7 @@ where
   vis: Visibility,
   generics: Generics,
   fields: Vec<Field<M::Field>>,
+  skipped_fields: Vec<SkippedField<M::Field>>,
   partial: PartialObject,
   partial_decoded: PartialDecodedObject,
   reflection: Reflection,
@@ -172,12 +245,19 @@ where
     &self.generics
   }
 
+  /// Returns the fields of the object, excluding the skipped fields.
   #[inline]
   pub const fn fields(&self) -> &[Field<M::Field>]
   where
     M: crate::ast::object::Object,
   {
     self.fields.as_slice()
+  }
+
+  /// Returns the fields that are skipped.
+  #[inline]
+  pub const fn skipped_fields(&self) -> &[SkippedField<M::Field>] {
+    self.skipped_fields.as_slice()
   }
 
   #[inline]
@@ -234,6 +314,18 @@ where
 
   pub fn from_object(input: M) -> darling::Result<Self> {
     let path_to_grost = input.path();
+    let mut fields = vec![];
+    let mut skipped_fields = vec![];
+
+    for f in input.fields() {
+      if f.meta().skip() {
+        skipped_fields.push(SkippedField::from_input(f.clone())?);
+      } else {
+        let copy = input.meta().copy() | f.meta().copy();
+        fields.push(Field::from_input(f.clone(), copy)?);
+      }
+    }
+
     let partial_object = PartialObject::from_input(path_to_grost, &input)?;
     let partial_decoded_object = PartialDecodedObject::from_input(path_to_grost, &input)?;
     let selector = Selector::from_input(path_to_grost, &input)?;
@@ -247,20 +339,13 @@ where
 
     Ok(Self {
       name: input.name().clone(),
+      skipped_fields,
       attrs: input.attrs().to_vec(),
       path_to_grost: path_to_grost.clone(),
       schema: input.meta().schema().clone(),
       vis: input.vis().clone(),
       generics: input.generics().clone(),
-      fields: input
-        .fields()
-        .into_iter()
-        .cloned()
-        .map(|f| {
-          let copy = input.meta().copy() | f.meta().copy();
-          Field::from_input(f, copy)
-        })
-        .collect::<Result<Vec<_>, darling::Error>>()?,
+      fields,
       partial: partial_object,
       partial_decoded: partial_decoded_object,
       reflection,
@@ -273,7 +358,6 @@ where
 
   /// Derives the object.
   pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
-    // let this = self.derive_struct();
     let partial_object = self.partial().to_token_stream();
     let partial_decoded_object = self.partial_decoded().to_token_stream();
     let selector = self.selector().to_token_stream();
@@ -293,8 +377,6 @@ where
     let default = self.derive_default();
 
     Ok(quote! {
-      // #this
-
       #partial_object
 
       #partial_decoded_object
@@ -351,17 +433,31 @@ where
 
     let (_, _, w) = generics.split_for_impl();
     let (ig, tg, _) = original_generics.split_for_impl();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let default = match f.default() {
-        Some(p) => quote! { #p() },
-        None => quote! { ::core::default::Default::default() },
-      };
+    let fields = self
+      .fields
+      .iter()
+      .map(|f| {
+        let field_name = f.name();
+        let default = match f.default() {
+          Some(p) => quote! { #p() },
+          None => quote! { ::core::default::Default::default() },
+        };
 
-      quote! {
-        #field_name: #default
-      }
-    });
+        quote! {
+          #field_name: #default
+        }
+      })
+      .chain(self.skipped_fields.iter().map(|f| {
+        let field_name = f.name();
+        let default = match f.default() {
+          Some(p) => quote! { #p() },
+          None => quote! { ::core::default::Default::default() },
+        };
+
+        quote! {
+          #field_name: #default
+        }
+      }));
 
     quote! {
       #[automatically_derived]
@@ -415,16 +511,29 @@ where
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
     let attrs = self.attrs();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      let field_ty = f.ty();
-      let field_vis = f.vis();
-      let field_attrs = f.attrs();
-      quote! {
-        #(#field_attrs)*
-        #field_vis #field_name: #field_ty
-      }
-    });
+    let fields = self
+      .fields
+      .iter()
+      .map(|f| {
+        let field_name = f.name();
+        let field_ty = f.ty();
+        let field_vis = f.vis();
+        let field_attrs = f.attrs();
+        quote! {
+          #(#field_attrs)*
+          #field_vis #field_name: #field_ty
+        }
+      })
+      .chain(self.skipped_fields.iter().map(|f| {
+        let field_name = f.name();
+        let field_ty = f.ty();
+        let field_vis = f.vis();
+        let field_attrs = f.attrs();
+        quote! {
+          #(#field_attrs)*
+          #field_vis #field_name: #field_ty
+        }
+      }));
 
     tokens.extend(quote! {
       #(#attrs)*
@@ -505,6 +614,13 @@ fn optional_accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2:
   let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
   let ref_mut_fn = format_ident!("{}_mut", field_name);
   let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+  let unwrap_ref_fn = format_ident!("unwrap_{}_ref", field_name);
+  let unwrap_ref_fn_doc = format!(" Returns a reference to the `{field_name}` if it is not `None`");
+  let unwrap_mut_fn = format_ident!("unwrap_{}_mut", field_name);
+  let unwrap_mut_fn_doc =
+    format!(" Returns a mutable reference to the `{field_name}` if it is not `None`");
+  let panic_msg = format!("`{field_name}` is `None`");
+  let panic_msg_doc = format!(" - Panics if the `{field_name}` is `None`");
   let set_fn = format_ident!("set_{}", field_name);
   let set_fn_doc = format!(" Set the `{field_name}` to the given value");
   let update_fn = format_ident!("update_{}", field_name);
@@ -530,6 +646,32 @@ fn optional_accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2:
     #[inline]
     pub const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
       self.#field_name.as_mut()
+    }
+
+    #[doc = #unwrap_ref_fn_doc]
+    ///
+    /// ## Panics
+    ///
+    #[doc = #panic_msg_doc]
+    #[inline]
+    pub const fn #unwrap_ref_fn(&self) -> &#ty {
+      match self.#field_name.as_ref() {
+        ::core::option::Option::Some(value) => value,
+        ::core::option::Option::None => panic!(#panic_msg),
+      }
+    }
+
+    #[doc = #unwrap_mut_fn_doc]
+    ///
+    /// ## Panics
+    ///
+    #[doc = #panic_msg_doc]
+    #[inline]
+    pub const fn #unwrap_mut_fn(&mut self) -> &mut #ty {
+      match self.#field_name.as_mut() {
+        ::core::option::Option::Some(value) => value,
+        ::core::option::Option::None => panic!(#panic_msg),
+      }
     }
 
     #[doc = #take_fn_doc]

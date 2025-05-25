@@ -1,8 +1,8 @@
 // mod map_selector;
-pub use decoder::PackedDecoder;
+pub use packed_decoder::PackedDecoder;
 
-mod decoder;
 mod list;
+mod packed_decoder;
 mod repeated;
 mod scalar;
 mod tuple;

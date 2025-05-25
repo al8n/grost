@@ -1,11 +1,45 @@
 use std::num::NonZeroU32;
 
-use quote::quote;
-use syn::{Attribute, Generics, Ident, Type, Visibility, parse::Parser};
+use quote::{format_ident, quote};
+use syn::{Attribute, Generics, Ident, Type, TypeParam, Visibility, parse::Parser};
 
-use crate::ast::object::{ObjectExt as _, TypeSpecification};
+use crate::ast::{
+  grost_unknown_buffer_param,
+  object::{Field, ObjectExt as _, TypeSpecification},
+};
 
 use super::Object;
+
+/// The generic parameters of the [`PartialDecodedObject`].
+#[derive(Debug, Clone)]
+struct PartialObjectGenerics {
+  generics: Generics,
+  unknown_buffer_generic: TypeParam,
+}
+
+impl core::ops::Deref for PartialObjectGenerics {
+  type Target = Generics;
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    &self.generics
+  }
+}
+
+impl PartialObjectGenerics {
+  const fn new(unknown_buffer_generic: TypeParam, generics: Generics) -> Self {
+    Self {
+      generics,
+      unknown_buffer_generic,
+    }
+  }
+
+  /// Returns the unknown buffer generic parameter of the partial object.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    &self.unknown_buffer_generic
+  }
+}
 
 #[derive(Debug, Clone)]
 pub struct PartialField {
@@ -97,7 +131,7 @@ impl PartialField {
 
     Ok(Self {
       field,
-      tag: meta.tag(),
+      tag: meta.tag().expect("field tag is required"),
       specification: meta.type_specification().cloned(),
       copy: meta.copy() | copy,
       object_type: ty.clone(),
@@ -111,9 +145,11 @@ pub struct PartialObject {
   path_to_grost: syn::Path,
   name: Ident,
   vis: Visibility,
-  generics: Generics,
+  generics: PartialObjectGenerics,
   fields: Vec<PartialField>,
+  skipped_fields: Vec<syn::Field>,
   attrs: Vec<Attribute>,
+  unknown_buffer_field_name: Ident,
   copy: bool,
 }
 
@@ -139,13 +175,31 @@ impl PartialObject {
   /// Returns the generics of the partial object.
   #[inline]
   pub const fn generics(&self) -> &Generics {
-    &self.generics
+    &self.generics.generics
+  }
+
+  /// Returns unknown buffer generic parameter of the partial object.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    self.generics.unknown_buffer_param()
+  }
+
+  /// Returns the field name of the unknown buffer.
+  #[inline]
+  pub const fn unknown_buffer_field_name(&self) -> &Ident {
+    &self.unknown_buffer_field_name
   }
 
   /// Returns the fields of the partial object.
   #[inline]
-  pub fn fields(&self) -> &[PartialField] {
+  pub const fn fields(&self) -> &[PartialField] {
     self.fields.as_slice()
+  }
+
+  /// Returns the skipped fields of the partial object.
+  #[inline]
+  pub const fn skipped_fields(&self) -> &[syn::Field] {
+    self.skipped_fields.as_slice()
   }
 
   /// Returns the attributes of the partial object.
@@ -165,11 +219,26 @@ impl PartialObject {
     O: crate::ast::object::Object,
   {
     let meta = input.meta();
-    let fields = input
-      .fields()
-      .into_iter()
-      .map(|f| PartialField::from_input(f, path_to_grost, meta.copy()))
-      .collect::<Result<Vec<_>, darling::Error>>()?;
+    let mut fields = vec![];
+    let mut skipped_fields = vec![];
+    input.fields().into_iter().try_for_each(|f| {
+      if f.meta().skip() {
+        let field_name = f.name();
+        let vis = f.vis();
+        let ty = f.ty();
+        let attrs = f.attrs();
+        let field = syn::Field::parse_named.parse2(quote! {
+          #(#attrs)*
+          #vis #field_name: ::core::option::Option<#ty>
+        })?;
+
+        skipped_fields.push(field);
+        syn::Result::Ok(())
+      } else {
+        fields.push(PartialField::from_input(f, path_to_grost, meta.copy())?);
+        Ok(())
+      }
+    })?;
 
     let mut generics = input.generics().clone();
     generics.type_params().map(|p| p.ident.clone()).collect::<Vec<_>>().into_iter().try_for_each(|ident| {
@@ -185,14 +254,20 @@ impl PartialObject {
           where_clause.predicates.push(c);
         })
     })?;
+    let unknown_buffer_param = grost_unknown_buffer_param();
+    generics
+      .params
+      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
 
     Ok(Self {
       path_to_grost: path_to_grost.clone(),
       name: input.partial_name(),
       vis: input.vis().clone(),
-      generics,
+      generics: PartialObjectGenerics::new(unknown_buffer_param, generics),
       fields,
+      skipped_fields,
       attrs: meta.partial().attrs().to_vec(),
+      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
       copy: meta.copy(),
     })
   }
@@ -200,15 +275,21 @@ impl PartialObject {
   pub(super) fn to_token_stream(&self) -> proc_macro2::TokenStream {
     let name = self.name();
     let visibility = &self.vis();
-    let fields = self.fields().iter().map(PartialField::field);
+    let fields = self
+      .fields
+      .iter()
+      .map(PartialField::field)
+      .chain(self.skipped_fields.iter());
     let attrs = self.attrs();
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
-
+    let unknown_buffer_field_name = self.unknown_buffer_field_name();
+    let unknown_buffer_param = &self.unknown_buffer_param().ident;
     quote! {
       #(#attrs)*
       #[allow(non_camel_case_types, clippy::type_complexity)]
       #visibility struct #name #generics #where_clause {
+        #unknown_buffer_field_name: ::core::option::Option<#unknown_buffer_param>,
         #(#fields),*
       }
     }
@@ -223,12 +304,22 @@ where
   pub fn derive_partial_object(&self) -> proc_macro2::TokenStream {
     let partial = self.partial();
     let name = partial.name();
-    let fields = self.fields.iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        #field_name: ::core::option::Option::None,
-      }
-    });
+    let fields = self
+      .partial()
+      .fields()
+      .iter()
+      .map(|f| {
+        let field_name = f.name();
+        quote! {
+          #field_name: ::core::option::Option::None,
+        }
+      })
+      .chain(self.partial().skipped_fields().iter().map(|f| {
+        let field_name = f.ident.as_ref().unwrap();
+        quote! {
+          #field_name: ::core::option::Option::None,
+        }
+      }));
 
     let fields_accessors = self.partial().fields().iter().map(|f| {
       let field_name = f.name();
@@ -249,6 +340,8 @@ where
         self.#field_name.is_none()
       }
     });
+    let ubfn = self.partial().unknown_buffer_field_name();
+    let ubg = &self.partial().unknown_buffer_param().ident;
 
     quote! {
       #[automatically_derived]
@@ -268,6 +361,7 @@ where
         #[inline]
         pub const fn new() -> Self {
           Self {
+            #ubfn: ::core::option::Option::None,
             #(#fields)*
           }
         }
@@ -277,6 +371,18 @@ where
         pub const fn is_empty(&self) -> bool {
           #(#is_empty)&&*
         }
+
+        /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+          self.#ubfn.as_ref()
+        }
+
+        // /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
+        // #[inline]
+        // pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        //   self.#ubfn.as_mut()
+        // }
 
         #(#fields_accessors)*
       }
