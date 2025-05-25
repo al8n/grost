@@ -1,7 +1,7 @@
 pub use context::Context;
 pub use error::{Error, ParseTagError};
 pub use identifier::Identifier;
-pub use impls::RepeatedDecoder;
+pub use impls::PackedDecoder;
 pub use tag::Tag;
 pub use unknown::Unknown;
 pub use wire_type::*;
@@ -132,10 +132,7 @@ impl Flavor for Network {
       WireType::Fixed32 => consume_fixed!(4, offset, buf_len),
       WireType::Fixed64 => consume_fixed!(8, offset, buf_len),
       WireType::Fixed128 => consume_fixed!(16, offset, buf_len),
-      WireType::Zst => Ok((
-        offset,
-        Unknown::new(tag, wire_type, offset, slice!(offset, buf_len, buf)),
-      )),
+      WireType::Fixed256 => consume_fixed!(32, offset, buf_len),
     }
   }
 
@@ -148,7 +145,6 @@ impl Flavor for Network {
     B: Buf<'de>,
   {
     Ok(match wire_type {
-      WireType::Zst => 0,
       WireType::Varint => varing::consume_varint(buf.as_bytes())?,
       WireType::LengthDelimited => {
         let (size_len, size) = varing::decode_u32_varint(buf.as_bytes())?;
@@ -163,6 +159,7 @@ impl Flavor for Network {
       WireType::Fixed32 => 4,
       WireType::Fixed64 => 8,
       WireType::Fixed128 => 16,
+      WireType::Fixed256 => 32,
     })
   }
 }

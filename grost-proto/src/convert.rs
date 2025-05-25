@@ -9,12 +9,13 @@ pub trait State<S: ?Sized> {
 }
 
 /// A state which shows the type in encoded state.
-pub struct Decoded<'a, F: ?Sized, W: ?Sized> {
+pub struct Decoded<'a, F: ?Sized, W: ?Sized, UB = ()> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
+  _unknown_buffer: core::marker::PhantomData<UB>,
 }
 
-impl<'a, F, W, T> State<Decoded<'a, F, W>> for &'a T
+impl<'a, F, W, T, UB> State<Decoded<'a, F, W, UB>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,

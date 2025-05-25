@@ -11,101 +11,52 @@ use crate::{
 macro_rules! encode {
   (@encode_methods($ty:ty)) => {
     fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-      match W::WIRE_TYPE {
-        WireType::Zst => Ok(0),
-        WireType::LengthDelimited => {
-          let mut offset = 0;
-          let buf_len = buf.len();
-          for value in self.iter() {
-            if offset >= buf_len {
-              return Err(Error::insufficient_buffer(
-                <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
-                buf_len,
-              ));
-            }
-
-            offset += value
-              .encode_length_delimited(context, &mut buf[offset..])
-              .map_err(|e| e.update(<Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context), buf_len))?;
-          }
-          Ok(offset)
+      let mut offset = 0;
+      let buf_len = buf.len();
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(
+            <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
+            buf_len,
+          ));
         }
-        _ => {
-          let mut offset = 0;
-          let buf_len = buf.len();
-          for value in self.iter() {
-            if offset >= buf_len {
-              return Err(Error::insufficient_buffer(
-                <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
-                buf_len,
-              ));
-            }
 
-            offset += value
-              .encode(context, &mut buf[offset..])
-              .map_err(|e| e.update(<Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context), buf_len))?;
-          }
-          Ok(offset)
-        }
+        offset += value.encode(context, &mut buf[offset..]).map_err(|e| {
+          e.update(
+            <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
+            buf_len,
+          )
+        })?;
       }
+      Ok(offset)
     }
 
     fn encoded_len(&self, context: &Context) -> usize {
       match W::WIRE_TYPE {
-        WireType::Zst => 0,
-        WireType::Varint => self.iter().map(|v| v.encoded_len(context)).sum(),
-        WireType::LengthDelimited => self
-          .iter()
-          .map(|v| v.encoded_length_delimited_len(context))
-          .sum(),
+        WireType::Varint | WireType::LengthDelimited => {
+          self.iter().map(|v| v.encoded_len(context)).sum()
+        }
         WireType::Fixed8 => self.len(),
         WireType::Fixed16 => self.len() * 2,
         WireType::Fixed32 => self.len() * 4,
         WireType::Fixed64 => self.len() * 8,
         WireType::Fixed128 => self.len() * 16,
+        WireType::Fixed256 => self.len() * 32,
       }
     }
 
-    fn encoded_length_delimited_len(&self, context: &$crate::__private::flavors::network::Context) -> usize {
-      let encoded_len = <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context);
+    fn encoded_length_delimited_len(
+      &self,
+      context: &$crate::__private::flavors::network::Context,
+    ) -> usize {
+      let encoded_len =
+        <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context);
       if encoded_len == 0 {
         return 0;
       }
 
       let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
       len_size + encoded_len
-    }
-
-    fn encode_length_delimited(
-      &self,
-      context: &$crate::__private::flavors::network::Context,
-      buf: &mut [u8],
-    ) -> Result<usize, Error> {
-      let encoded_len = <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context);
-      let buf_len = buf.len();
-      let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
-        Error::from_varint_encode_error(e).update(<Self as $crate::__private::Encode<Network, $ty>>::encoded_length_delimited_len(self, context), buf_len)
-      })?;
-
-      let required = encoded_len + offset;
-      if offset + encoded_len > buf_len {
-        return Err(Error::insufficient_buffer(required, buf_len));
-      }
-
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      <Self as $crate::__private::Encode<Network, $ty>>::encode(self, context, &mut buf[offset..])
-        .map(|v| {
-          #[cfg(debug_assertions)]
-          {
-            crate::debug_assert_write_eq::<Self>(v, encoded_len);
-          }
-
-          required
-        })
-        .map_err(|e| e.update(<Self as $crate::__private::Encode<Network, $ty>>::encoded_length_delimited_len(self, context), buf_len))
     }
   };
   (@partial_encode_methods($ty:ty)) => {
@@ -115,48 +66,30 @@ macro_rules! encode {
       buf: &mut [u8],
       selector: &Self::Selector,
     ) -> Result<usize, <Network as crate::flavors::Flavor>::Error> {
-      // If the selector is empty, we can return 0 immediately.
-      if selector.is_empty() {
-        return Ok(0);
-      }
-
-      match W::WIRE_TYPE {
-        WireType::Zst => Ok(0),
-        WireType::LengthDelimited => {
-          let mut offset = 0;
-          let buf_len = buf.len();
-          for value in self.iter() {
-            if offset >= buf_len {
-              return Err(Error::insufficient_buffer(
-                <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector),
-                buf_len,
-              ));
-            }
-
-            offset += value
-              .partial_encode_length_delimited(context, &mut buf[offset..], selector)
-              .map_err(|e| e.update(<Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector), buf_len))?;
-          }
-          Ok(offset)
+      let mut offset = 0;
+      let buf_len = buf.len();
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(
+            <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(
+              self, context, selector,
+            ),
+            buf_len,
+          ));
         }
-        _ => {
-          let mut offset = 0;
-          let buf_len = buf.len();
-          for value in self.iter() {
-            if offset >= buf_len {
-              return Err(Error::insufficient_buffer(
-                <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector),
-                buf_len,
-              ));
-            }
 
-            offset += value
-              .partial_encode(context, &mut buf[offset..], selector)
-              .map_err(|e| e.update(<Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector), buf_len))?;
-          }
-          Ok(offset)
-        }
+        offset += value
+          .partial_encode(context, &mut buf[offset..], selector)
+          .map_err(|e| {
+            e.update(
+              <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(
+                self, context, selector,
+              ),
+              buf_len,
+            )
+          })?;
       }
+      Ok(offset)
     }
 
     fn partial_encoded_len(
@@ -164,93 +97,18 @@ macro_rules! encode {
       context: &<Network as crate::flavors::Flavor>::Context,
       selector: &Self::Selector,
     ) -> usize {
-      if selector.is_empty() {
-        return 0;
-      }
-
       match W::WIRE_TYPE {
-        WireType::Zst => 0,
-        WireType::Varint => self
+        WireType::Varint | WireType::LengthDelimited => self
           .iter()
           .map(|v| v.partial_encoded_len(context, selector))
-          .sum(),
-        WireType::LengthDelimited => self
-          .iter()
-          .map(|v| v.partial_encoded_length_delimited_len(context, selector))
           .sum(),
         WireType::Fixed8 => self.len(),
         WireType::Fixed16 => self.len() * 2,
         WireType::Fixed32 => self.len() * 4,
         WireType::Fixed64 => self.len() * 8,
         WireType::Fixed128 => self.len() * 16,
+        WireType::Fixed256 => self.len() * 32,
       }
-    }
-
-    fn partial_encoded_length_delimited_len(
-      &self,
-      context: &<Network as crate::flavors::Flavor>::Context,
-      selector: &Self::Selector,
-    ) -> usize {
-      if selector.is_empty() {
-        return 0;
-      }
-
-      let encoded_len = <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector);
-      if encoded_len == 0 {
-        return 0;
-      }
-
-      let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
-      len_size + encoded_len
-    }
-
-    fn partial_encode_length_delimited(
-      &self,
-      context: &<Network as crate::flavors::Flavor>::Context,
-      buf: &mut [u8],
-      selector: &Self::Selector,
-    ) -> Result<usize, <Network as crate::flavors::Flavor>::Error> {
-      if selector.is_empty() {
-        return Ok(0);
-      }
-
-      let encoded_len = <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(self, context, selector);
-      if encoded_len == 0 {
-        return Ok(0);
-      }
-
-      let buf_len = buf.len();
-      let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {
-        Error::from_varint_encode_error(e).update(
-          <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_length_delimited_len(self, context, selector),
-          buf_len,
-        )
-      })?;
-
-      let required = encoded_len + offset;
-      if offset + encoded_len > buf_len {
-        return Err(Error::insufficient_buffer(required, buf_len));
-      }
-
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encode(self, context, &mut buf[offset..], selector)
-        .map(|v| {
-          #[cfg(debug_assertions)]
-          {
-            crate::debug_assert_write_eq::<Self>(v, encoded_len);
-          }
-
-          required
-        })
-        .map_err(|e| {
-          e.update(
-            <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_length_delimited_len(self, context, selector),
-            buf_len,
-          )
-        })
     }
   };
 }
@@ -281,7 +139,7 @@ macro_rules! list {
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
         type Input = &'a [u8];
-        type Output = $crate::__private::flavors::network::RepeatedDecoder<'a, $ty, (), W>;
+        type Output = $crate::__private::flavors::network::PackedDecoder<'a, $ty, (), W>;
       }
     )*
   };
@@ -338,18 +196,6 @@ macro_rules! list {
         fn encoded_len(&self, context: &$crate::__private::flavors::network::Context) -> usize {
           <[T] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::encoded_len(self.as_ref(), context)
         }
-
-        fn encoded_length_delimited_len(&self, context: &$crate::__private::flavors::network::Context) -> usize {
-          <[T] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::encoded_length_delimited_len(self.as_ref(), context)
-        }
-
-        fn encode_length_delimited(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          buf: &mut [u8],
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::network::Error> {
-          <[T] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::encode_length_delimited(self.as_ref(), context, buf)
-        }
       }
 
       impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>> for $ty
@@ -373,23 +219,6 @@ macro_rules! list {
         ) -> usize {
           <[T] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::partial_encoded_len(self.as_ref(), context, selector)
         }
-
-        fn partial_encoded_length_delimited_len(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          selector: &Self::Selector,
-        ) -> usize {
-          <[T] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::partial_encoded_length_delimited_len(self.as_ref(), context, selector)
-        }
-
-        fn partial_encode_length_delimited(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          buf: &mut [u8],
-          selector: &Self::Selector,
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::network::Error> {
-          <[T] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>>>::partial_encode_length_delimited(self.as_ref(), context, buf, selector)
-        }
       }
     )*
   };
@@ -403,18 +232,6 @@ macro_rules! list {
 
         fn encoded_len(&self, context: &$crate::__private::flavors::network::Context) -> usize {
           <[u8] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::encoded_len(self.as_ref(), context)
-        }
-
-        fn encoded_length_delimited_len(&self, context: &$crate::__private::flavors::network::Context) -> usize {
-          <[u8] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::encoded_length_delimited_len(self.as_ref(), context)
-        }
-
-        fn encode_length_delimited(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          buf: &mut [u8],
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::network::Error> {
-          <[u8] as $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::encode_length_delimited(self.as_ref(), context, buf)
         }
       }
 
@@ -435,23 +252,6 @@ macro_rules! list {
           selector: &Self::Selector,
         ) -> usize {
           <[u8] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::partial_encoded_len(self.as_ref(), context, selector)
-        }
-
-        fn partial_encoded_length_delimited_len(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          selector: &Self::Selector,
-        ) -> usize {
-          <[u8] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::partial_encoded_length_delimited_len(self.as_ref(), context, selector)
-        }
-
-        fn partial_encode_length_delimited(
-          &self,
-          context: &$crate::__private::flavors::network::Context,
-          buf: &mut [u8],
-          selector: &Self::Selector,
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::network::Error> {
-          <[u8] as $crate::__private::PartialEncode<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited>>::partial_encode_length_delimited(self.as_ref(), context, buf, selector)
         }
       }
     )*
@@ -512,39 +312,27 @@ impl Encode<Network, LengthDelimited> for [u8] {
       ));
     }
 
-    buf[..this_len].copy_from_slice(self);
-    Ok(this_len)
+    let len_size = varing::encode_u32_varint_to(this_len as u32, buf).map_err(|e| {
+      Error::from_varint_encode_error(e).update(
+        <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context),
+        buf_len,
+      )
+    })?;
+
+    let total = len_size + this_len;
+    if total > buf_len {
+      return Err(Error::insufficient_buffer(total, buf_len));
+    }
+
+    buf[len_size..total].copy_from_slice(self);
+    Ok(total)
   }
 
   #[inline]
   fn encoded_len(&self, _: &Context) -> usize {
-    self.len()
-  }
-
-  #[inline]
-  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
-    let len_size = varing::encoded_u32_varint_len(self.len() as u32);
-    len_size + self.len()
-  }
-
-  #[inline]
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_len = <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context);
-    let buf_len = buf.len();
-    let offset = varing::encode_u32_varint_to(self.len() as u32, buf)
-      .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
-
-    if offset + self.len() > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    if offset >= buf_len {
-      return Err(Error::insufficient_buffer(self.len(), buf_len));
-    }
-
-    <Self as Encode<Network, LengthDelimited>>::encode(self, context, &mut buf[offset..])
-      .map(|write| write + offset)
-      .map_err(|e| e.update(encoded_len, buf_len))
+    let len = self.len();
+    let len_size = varing::encoded_u32_varint_len(len as u32);
+    len_size + len
   }
 }
 
@@ -554,49 +342,14 @@ impl PartialEncode<Network, LengthDelimited> for [u8] {
     &self,
     context: &Context,
     buf: &mut [u8],
-    selector: &Self::Selector,
+    _: &Self::Selector,
   ) -> Result<usize, Error> {
-    if <bool as Selector<Network>>::is_empty(selector) {
-      return Ok(0);
-    }
-
     <Self as Encode<Network, LengthDelimited>>::encode(self, context, buf)
   }
 
   #[inline]
-  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    if <bool as Selector<Network>>::is_empty(selector) {
-      return 0;
-    }
-
+  fn partial_encoded_len(&self, context: &Context, _: &Self::Selector) -> usize {
     <Self as Encode<Network, LengthDelimited>>::encoded_len(self, context)
-  }
-
-  #[inline]
-  fn partial_encoded_length_delimited_len(
-    &self,
-    context: &Context,
-    selector: &Self::Selector,
-  ) -> usize {
-    if <bool as Selector<Network>>::is_empty(selector) {
-      return 0;
-    }
-
-    <Self as Encode<Network, LengthDelimited>>::encoded_length_delimited_len(self, context)
-  }
-
-  #[inline]
-  fn partial_encode_length_delimited(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-    selector: &Self::Selector,
-  ) -> Result<usize, Error> {
-    if <bool as Selector<Network>>::is_empty(selector) {
-      return Ok(0);
-    }
-
-    <Self as Encode<Network, LengthDelimited>>::encode_length_delimited(self, context, buf)
   }
 }
 

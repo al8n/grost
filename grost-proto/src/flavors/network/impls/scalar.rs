@@ -26,6 +26,3 @@ mod u32;
 mod u64;
 mod u8;
 mod uuid;
-
-crate::network_zst!(());
-crate::network_phantom!(core::marker::PhantomData<T>);

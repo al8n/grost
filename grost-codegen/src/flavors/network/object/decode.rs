@@ -1,3 +1,5 @@
+use quote::format_ident;
+
 use super::{Network, Object, quote};
 
 impl Network {
@@ -48,6 +50,8 @@ impl Network {
     )?.into_iter().try_for_each(|f| {
       let field_name = f.name();
       let field_name_str = field_name.to_string();
+      let field_selector_ref = format_ident!("{field_name}_ref");
+      let field_is_selected = format_ident!("is_{field_name}_selected");
       let tag = f.tag().get();
       let output_type = f.output_type();
       let object_ty = f.object_type();
@@ -81,7 +85,7 @@ impl Network {
         .push(syn::parse2(quote! {
           #object_ty: #field_partial_decode_trait_with_types
         })?);
-  
+
       decode_branches.push(quote! {
         <
           #path_to_grost::__private::reflection::IdentifierReflection<
@@ -101,20 +105,14 @@ impl Network {
             ));
           }
 
-          match identifier.wire_type() {
-            #path_to_grost::__private::flavors::network::WireType::Zst => {
-            }
-            _ => {
-              if offset >= buf_len {
-                return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
-              }
-
-              let (read, val) = <#object_ty as #field_decode_trait_with_types>::decode::<__GROST_BUF__>(ctx, buf.slice(offset..))?;
-              offset += read;
-              this.#field_name = ::core::option::Option::Some(val);
-            }
+          if offset >= buf_len {
+            return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
           }
-        },
+
+          let (read, val) = <#object_ty as #field_decode_trait_with_types>::decode::<__GROST_BUF__>(ctx, buf.slice(offset..))?;
+          offset += read;
+          this.#field_name = ::core::option::Option::Some(val);
+        }
       });
 
       partial_decode_branches.push(quote! {
@@ -124,31 +122,41 @@ impl Network {
               #object_name #object_tg,
               #path_to_grost::__private::flavors::network::Identifier,
               #path_to_grost::__private::flavors::Network,
+              #tag,
             >
           > as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>
         >::REFLECTION => {
-          match identifier.wire_type() {
-            #path_to_grost::__private::flavors::network::WireType::Zst => {
+          if offset >= buf_len {
+            return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
+          }
 
-            }
-            _ => {
-              if offset >= buf_len {
-                return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
-              }
-
-              // let (read, val) = <#object_ty as #path_to_grost::__private::Decode<'_, #path_to_grost::__private::flavors::Network, <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection, #output_type, #ubi>>::decode::<__GROST_BUF__>(ctx, buf.slice(offset..))?;
-              // offset += read;
-              // this.#field_name = ::core::option::Option::Some(val);
-            }
+          if selector.#field_is_selected() {
+            let (read, val) = <#object_ty as #path_to_grost::__private::PartialDecode<'_, #path_to_grost::__private::flavors::Network, <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection, #output_type, #ubi>>::partial_decode::<__GROST_BUF__>(ctx, buf.slice(offset..), selector.#field_selector_ref())?;
+            offset += read;
+            this.#field_name = val;
+          } else {
+            offset += <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
           }
         },
       });
 
       syn::Result::Ok(())
     })?;
+    let selector = object.selector().type_with(Some(&self.ty))?;
+    partial_decode_generics
+      .make_where_clause()
+      .predicates
+      .push(syn::parse2(quote! {
+        Self: #path_to_grost::__private::selection::Selectable<
+          #path_to_grost::__private::flavors::Network,
+          #path_to_grost::__private::flavors::network::LengthDelimited,
+          Selector = #selector,
+        >
+      })?);
 
     let (decode_ig, _, decode_where_clause) = decode_generics.split_for_impl();
-    let (partial_decode_ig, _, partial_decode_where_clause) = partial_decode_generics.split_for_impl();
+    let (partial_decode_ig, _, partial_decode_where_clause) =
+      partial_decode_generics.split_for_impl();
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
@@ -175,6 +183,13 @@ impl Network {
             match &identifier {
               #(#decode_branches)*
               _ => {
+                if ctx.err_on_unknown() {
+                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::unknown_identifier(
+                    #object_name_str,
+                    identifier,
+                  ));
+                }
+
                 if ctx.skip_unknown() {
                   if offset >= buf_len {
                     return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
@@ -198,7 +213,7 @@ impl Network {
             }
           }
 
-          ::core::todo!()
+          ::core::result::Result::Ok((offset, this))
         }
       }
 
@@ -215,8 +230,6 @@ impl Network {
           __GROST_BUF__: #path_to_grost::__private::Buf<#ltg>,
           #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::network::Unknown<__GROST_BUF__>>,
         {
-          use #path_to_grost::__private::{selection::Selector, Buf};
-
           let bytes = buf.as_bytes();
           let mut this = Self::new();
           let mut offset = 0;
@@ -227,7 +240,15 @@ impl Network {
             offset += encoded_identifier_len;
 
             match &identifier {
+              #(#partial_decode_branches)*
               _ => {
+                if ctx.err_on_unknown() {
+                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::unknown_identifier(
+                    #object_name_str,
+                    identifier,
+                  ));
+                }
+
                 if ctx.skip_unknown() {
                   if offset >= buf_len {
                     return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
@@ -251,7 +272,11 @@ impl Network {
             }
           }
 
-          ::core::todo!()
+          if this.is_empty() {
+            return ::core::result::Result::Ok((offset, ::core::option::Option::None));
+          }
+
+          ::core::result::Result::Ok((offset, ::core::option::Option::Some(this)))
         }
       }
     })

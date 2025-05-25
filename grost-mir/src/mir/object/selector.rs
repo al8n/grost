@@ -246,6 +246,38 @@ impl Selector {
     &self.vis
   }
 
+  /// Returns a type which replace the corresponding generic parameters with the given lifetime or concrete types.
+  ///
+  /// e.g. if the [`name`](Selector::name) returns `UserSelector`,
+  /// and the given flavor type is `grost::flavors::Network`,
+  /// the output type will be `UserSelector<grost::flavors::Network>`.
+  pub fn type_with(&self, flavor: Option<&Type>) -> syn::Result<Type> {
+    let iter = self.generics.params.iter().map(|param| match param {
+      GenericParam::Lifetime(lt) => {
+        let lt = &lt.lifetime;
+        quote! { #lt }
+      }
+      GenericParam::Type(tp)
+        if tp.ident == self.generics.flavor_param().ident && flavor.is_some() =>
+      {
+        quote! { #flavor }
+      }
+      GenericParam::Type(tp) => {
+        let ident = &tp.ident;
+        quote! { #ident }
+      }
+      GenericParam::Const(cp) => {
+        let ident = &cp.ident;
+        quote! { #ident }
+      }
+    });
+
+    let name = self.name();
+    syn::parse2(quote! {
+      #name <#(#iter),*>
+    })
+  }
+
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
     O: crate::ast::object::Object,

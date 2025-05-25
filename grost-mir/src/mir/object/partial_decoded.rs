@@ -215,8 +215,8 @@ impl PartialDecodedObject {
   pub fn remove_generics(
     &self,
     lifetime: Option<&syn::Lifetime>,
-    flavor: Option<&syn::Type>,
-    unknown_buffer: Option<&syn::Type>,
+    flavor: Option<&Type>,
+    unknown_buffer: Option<&Type>,
   ) -> syn::Result<Generics> {
     let mut generics = Generics::default();
     self.generics.params.iter().for_each(|param| match param {
@@ -263,7 +263,7 @@ impl PartialDecodedObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
-    for p in self.constraints_with(lifetime, flavor)? {
+    for p in self.constraints_with(lifetime, flavor, unknown_buffer)? {
       generics.make_where_clause().predicates.push(p);
     }
 
@@ -279,58 +279,68 @@ impl PartialDecodedObject {
     unknown_buffer: Option<&Type>,
   ) -> syn::Result<Vec<PartialDecodedField>> {
     let path_to_grost = &self.path_to_grost;
-    self.fields().iter().map(|f| {
-      let ty = f.object_type();
-      let tag = f.tag();
-      let flavor = flavor.map(|t| quote!(#t)).unwrap_or_else(|| {
+    self
+      .fields()
+      .iter()
+      .map(|f| {
+        let ty = f.object_type();
+        let tag = f.tag();
+        let flavor = flavor.map(|t| quote!(#t)).unwrap_or_else(|| {
           let flavor_param = self.flavor_param();
           let ident = &flavor_param.ident;
           quote!(#ident)
         });
-      let wf = wire_format_reflection_ty(
-        path_to_grost,
-        &self.parent_name,
-        &self.object_generics.split_for_impl().1,
-        tag.get(),
-        &flavor,
-      );
-      let decoded_state = decoded_state_ty(
-        path_to_grost,
-        &self.parent_name,
-        &self.object_generics.split_for_impl().1,
-        &wf,
-        &flavor,
-        lifetime.unwrap_or_else(|| self.lifetime()),
-      );
-      let vis = &f.field.vis;
-      let name = f.name();
-      let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
-      let field = syn::Field::parse_named.parse2(quote! {
-        #vis #name: ::core::option::Option<#output_type>
-      })?;
+        let unknown_buffer = unknown_buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
+          let unknown_buffer_param = self.unknown_buffer_param();
+          let ident = &unknown_buffer_param.ident;
+          quote!(#ident)
+        });
+        let wf = wire_format_reflection_ty(
+          path_to_grost,
+          &self.parent_name,
+          &self.object_generics.split_for_impl().1,
+          tag.get(),
+          &flavor,
+        );
+        let decoded_state = decoded_state_ty(
+          path_to_grost,
+          &self.parent_name,
+          &self.object_generics.split_for_impl().1,
+          &wf,
+          &flavor,
+          lifetime.unwrap_or_else(|| self.lifetime()),
+          &unknown_buffer,
+        );
+        let vis = &f.field.vis;
+        let name = f.name();
+        let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
+        let field = syn::Field::parse_named.parse2(quote! {
+          #vis #name: ::core::option::Option<#output_type>
+        })?;
 
-      let constraints = constraints(
-        path_to_grost,
-        &self.parent_name,
-        &self.object_generics.split_for_impl().1,
-        ty,
-        &wf,
-        &decoded_state,
-        &flavor,
-        f.copy(),
-      )?
-      .collect();
+        let constraints = constraints(
+          path_to_grost,
+          &self.parent_name,
+          &self.object_generics.split_for_impl().1,
+          ty,
+          &wf,
+          &decoded_state,
+          &flavor,
+          f.copy(),
+        )?
+        .collect();
 
-      Ok(PartialDecodedField {
-        field,
-        tag,
-        object_type: ty.clone(),
-        output_type,
-        constraints,
-        wire: wf,
-        copy: f.copy(),
+        Ok(PartialDecodedField {
+          field,
+          tag,
+          object_type: ty.clone(),
+          output_type,
+          constraints,
+          wire: wf,
+          copy: f.copy(),
+        })
       })
-    }).collect()
+      .collect()
   }
 
   /// Returns the constraints which replaces the generic parameters with the given lifetime or concrete types.
@@ -339,6 +349,7 @@ impl PartialDecodedObject {
     &self,
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
+    unknown_buffer: Option<&Type>,
   ) -> syn::Result<Punctuated<WherePredicate, Comma>> {
     let object_name = &self.parent_name;
     let object_type_generics = self.object_generics.split_for_impl().1;
@@ -346,6 +357,11 @@ impl PartialDecodedObject {
     let flavor = flavor.map(|t| quote!(#t)).unwrap_or_else(|| {
       let flavor_param = self.flavor_param();
       let ident = &flavor_param.ident;
+      quote!(#ident)
+    });
+    let unknown_buffer = unknown_buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
+      let unknown_buffer_param = self.unknown_buffer_param();
+      let ident = &unknown_buffer_param.ident;
       quote!(#ident)
     });
     let path_to_grost = &self.path_to_grost;
@@ -367,6 +383,7 @@ impl PartialDecodedObject {
         &wf,
         &flavor,
         lt,
+        &unknown_buffer,
       );
 
       for p in constraints(
@@ -480,14 +497,12 @@ impl PartialDecodedObject {
         .cloned(),
     );
 
-    generics
-      .params
-      .push(syn::GenericParam::Type({
-        let ident = &flavor_param.ident;
-        syn::parse2(quote! {
-          #ident: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor
-        })?
-      }));
+    generics.params.push(syn::GenericParam::Type({
+      let ident = &flavor_param.ident;
+      syn::parse2(quote! {
+        #ident: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor
+      })?
+    }));
 
     generics
       .params
@@ -517,6 +532,7 @@ impl PartialDecodedObject {
       fields.iter().copied(),
       &flavor_param,
       &lt,
+      &unknown_buffer_param,
       copyable,
     )?;
 
@@ -545,6 +561,7 @@ impl PartialDecodedObject {
           &wf,
           &generics.flavor_param().ident,
           generics.lifetime(),
+          &generics.unknown_buffer_param().ident,
         );
         let vis = f.vis();
         let name = f.name();
@@ -652,6 +669,13 @@ where
       super::optional_accessors(field_name, ty, f.copy())
     });
 
+    let is_empty = partial_decoded_object.fields.iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name.is_none()
+      }
+    });
+
     let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
     let ubfn = &partial_decoded_object.unknown_buffer_field_name;
     let ubg = &partial_decoded_object.unknown_buffer_param().ident;
@@ -684,6 +708,12 @@ where
             #(#fields_init)*
             #ubfn: ::core::option::Option::None,
           }
+        }
+
+        /// Returns `true` if the partial struct is empty, which means all fields are `None`.
+        #[inline]
+        pub const fn is_empty(&self) -> bool {
+          self.#ubfn.is_none() && #(#is_empty)&&*
         }
 
         /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
@@ -746,6 +776,7 @@ fn decoded_state_ty(
   wf: &syn::Type,
   flavor: impl ToTokens,
   lifetime: &syn::Lifetime,
+  unknown_buffer: impl ToTokens,
 ) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::convert::State<
@@ -753,6 +784,7 @@ fn decoded_state_ty(
         #lifetime,
         #flavor,
         <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>>::Reflection,
+        #unknown_buffer,
       >
     >
   }
@@ -800,6 +832,7 @@ fn add_partial_decoded_constraints<'a, I>(
   mut fields: impl Iterator<Item = &'a I>,
   flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
+  unknown_buffer: &syn::TypeParam,
   copy: bool,
 ) -> darling::Result<()>
 where
@@ -823,6 +856,7 @@ where
       &wf,
       &flavor_param.ident,
       lifetime,
+      &unknown_buffer.ident,
     );
 
     generics.make_where_clause().predicates.extend(constraints(

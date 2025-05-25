@@ -243,6 +243,13 @@ where
       self.partial().name(),
     );
 
+    let is_empty = self.partial().fields().iter().map(|f| {
+      let field_name = f.name();
+      quote! {
+        self.#field_name.is_none()
+      }
+    });
+
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
@@ -263,6 +270,12 @@ where
           Self {
             #(#fields)*
           }
+        }
+
+        /// Returns `true` if the partial object is empty.
+        #[inline]
+        pub const fn is_empty(&self) -> bool {
+          #(#is_empty)&&*
         }
 
         #(#fields_accessors)*

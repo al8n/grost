@@ -82,8 +82,14 @@ where
   where
     B: Buf<'a>,
   {
-    if self.wire_type == WireType::Zst {
+    let bytes = self.data.as_bytes();
+    let len = bytes.len();
+    if len < self.data_offset {
       return &[];
+    }
+
+    if self.data_offset == 0 {
+      return bytes;
     }
 
     &self.data.as_bytes()[self.data_offset..]

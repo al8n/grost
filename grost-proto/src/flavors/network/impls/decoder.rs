@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flavors::{
     Network, WireFormat,
-    network::{Context, Error, LengthDelimited, Unknown, WireType},
+    network::{Context, Error, LengthDelimited, Unknown},
   },
   reflection::{Reflectable, Type, TypeReflection},
 };
@@ -15,7 +15,7 @@ use crate::{
 /// A lazy decoder for repeated types (e.g. `Vec<T>`, `[T]`, `HashSet<T>`, `HashMap<K, V>` and etc.) of data that
 /// iterates through the underlying buffer and decode elements on demand.
 ///
-/// `RepeatedDecoder` provides functionality to decode list-like structures from binary data.
+/// `PackedDecoder` provides functionality to decode list-like structures from binary data.
 /// It operates lazily, decoding elements only when requested through iteration.
 ///
 /// # Special Case
@@ -26,7 +26,7 @@ use crate::{
 ///
 /// For other types, the decoder will yield decoded elements one by one through iteration
 /// until it reaches the end of the source data.
-pub struct RepeatedDecoder<'a, L: ?Sized, UB: ?Sized, W: ?Sized> {
+pub struct PackedDecoder<'a, L: ?Sized, UB: ?Sized, W: ?Sized> {
   repr: Repr<'a>,
   ctx: &'a Context,
   _t: PhantomData<L>,
@@ -34,7 +34,7 @@ pub struct RepeatedDecoder<'a, L: ?Sized, UB: ?Sized, W: ?Sized> {
   _ub: PhantomData<UB>,
 }
 
-impl<'a, L, UB> RepeatedDecoder<'a, L, UB, LengthDelimited>
+impl<'a, L, UB> PackedDecoder<'a, L, UB, LengthDelimited>
 where
   L: core::ops::Deref<Target = [u8]>,
   UB: ?Sized,
@@ -66,7 +66,7 @@ where
   }
 }
 
-impl<'a, L, UB> core::ops::Deref for RepeatedDecoder<'a, L, UB, LengthDelimited>
+impl<'a, L, UB> core::ops::Deref for PackedDecoder<'a, L, UB, LengthDelimited>
 where
   L: core::ops::Deref<Target = [u8]>,
   UB: ?Sized,
@@ -79,7 +79,7 @@ where
   }
 }
 
-impl<'a, L, UB> AsRef<[u8]> for RepeatedDecoder<'a, L, UB, LengthDelimited>
+impl<'a, L, UB> AsRef<[u8]> for PackedDecoder<'a, L, UB, LengthDelimited>
 where
   L: core::ops::Deref<Target = [u8]>,
   UB: ?Sized,
@@ -90,7 +90,7 @@ where
   }
 }
 
-impl<'a, L, UB, W> RepeatedDecoder<'a, L, UB, W>
+impl<'a, L, UB, W> PackedDecoder<'a, L, UB, W>
 where
   L: ?Sized,
   UB: ?Sized,
@@ -116,7 +116,7 @@ where
   }
 }
 
-impl<'a, L, UB, W, T> Iterator for RepeatedDecoder<'a, L, UB, W>
+impl<'a, L, UB, W, T> Iterator for PackedDecoder<'a, L, UB, W>
 where
   L: core::ops::Deref<Target = [T]>,
   W: sealed::Sealed + 'a,
@@ -129,15 +129,11 @@ where
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    match W::WIRE_TYPE {
-      WireType::Zst => None,
-      WireType::LengthDelimited => self.repr.decode_length_delimited::<T, W, UB>(self.ctx),
-      _ => self.repr.decode::<T, W, UB>(self.ctx),
-    }
+    self.repr.decode::<T, W, UB>(self.ctx)
   }
 }
 
-impl<'a, L, UB, W> Encode<Network, W> for RepeatedDecoder<'a, L, UB, W>
+impl<'a, L, UB, W> Encode<Network, W> for PackedDecoder<'a, L, UB, W>
 where
   L: ?Sized,
   W: sealed::Sealed,
@@ -306,11 +302,9 @@ impl<'a> Repr<'a> {
           return None;
         }
 
-        Some(
-          T::decode_length_delimited(ctx, &src[*offset..]).inspect(|(read, _)| {
-            *offset += read;
-          }),
-        )
+        Some(T::decode(ctx, &src[*offset..]).inspect(|(read, _)| {
+          *offset += read;
+        }))
       }
     }
   }

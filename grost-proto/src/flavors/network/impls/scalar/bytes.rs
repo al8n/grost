@@ -1,36 +1,17 @@
 #[allow(unused_macros)]
-macro_rules! impl_selectable_for_bytes {
-  ($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl $(<$(const $g: usize),* >)? $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-      type Selector = bool;
-    }
-  };
-}
-
-#[allow(unused_macros)]
 macro_rules! bytes_bridge {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? {
-    from_slice: $from_bytes: expr;
-    as_slice: $to_bytes: expr;
-  }), +$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?), +$(,)?) => {
     $(
-      $crate::encode_bridge!(
-        $flavor: [::core::primitive::u8] {
-          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited {
-            convert: $to_bytes;
-          },
-        },
-      );
-
-      $crate::decode_bridge!(
-        $flavor: &'de [::core::primitive::u8] {
-          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited {
-            convert: $from_bytes;
-          },
-        },
-      );
-
-      impl_selectable_for_bytes!($ty $([ $(const $g: usize),* ])?);
+      impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB> for $ty {
+        fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a [u8]), $crate::__private::flavors::network::Error>
+        where
+          &'a [u8]: Sized + 'a,
+          B: $crate::buffer::Buf<'a>,
+          UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
+        {
+          <[u8] as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::decode(context, src)
+        }
+      }
     )*
   };
 }
@@ -144,6 +125,17 @@ macro_rules! array_bytes {
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a [::core::primitive::u8]
     );
+
+    impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB> for $ty {
+      fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a [u8]), $crate::__private::flavors::network::Error>
+      where
+        &'a [u8]: Sized + 'a,
+        B: $crate::buffer::Buf<'a>,
+        UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
+      {
+        <[u8] as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::decode(context, src)
+      }
+    }
     $crate::flatten_state!($ty [const N: usize]);
   };
 }

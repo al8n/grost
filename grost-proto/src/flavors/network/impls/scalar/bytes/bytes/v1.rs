@@ -7,7 +7,7 @@ use bytes_1::{Bytes, BytesMut};
 
 default_wire_format!(Network: Bytes as LengthDelimited; BytesMut as LengthDelimited);
 
-selectable!(@scalar Network:Bytes, BytesMut);
+selectable!(@scalar Network: Bytes, BytesMut);
 
 encode_bridge!(
   Network: [u8] {
@@ -39,3 +39,6 @@ decoded_state!(
     BytesMut as LengthDelimited => &'a [u8],
 );
 flatten_state!(Bytes, BytesMut);
+bytes_bridge!(
+  Network: Bytes, BytesMut,
+);

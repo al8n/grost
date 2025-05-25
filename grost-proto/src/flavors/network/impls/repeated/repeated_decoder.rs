@@ -1,21 +1,21 @@
 use core::marker::PhantomData;
 
 /// Decoder for repeated fields.
-pub struct RepeatedDecoder<'a, V: ?Sized> {
+pub struct PackedDecoder<'a, V: ?Sized> {
   src: &'a [u8],
   offset: usize,
   _m: PhantomData<V>,
 }
 
-impl<V: ?Sized> Clone for RepeatedDecoder<'_, V> {
+impl<V: ?Sized> Clone for PackedDecoder<'_, V> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<V: ?Sized> Copy for RepeatedDecoder<'_, V> {}
+impl<V: ?Sized> Copy for PackedDecoder<'_, V> {}
 
-impl<'a, V: ?Sized> RepeatedDecoder<'a, V> {
+impl<'a, V: ?Sized> PackedDecoder<'a, V> {
   /// Creates a new decoder for repeated fields.
   #[inline]
   pub fn new(src: &'a [u8], offset: usize) -> Self {

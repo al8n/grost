@@ -11,12 +11,21 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, &'de [u8], UB> for [u8] {
     B: Buf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    let src_len = src.len();
-    if src_len == 0 {
+    let bytes = src.as_bytes();
+    let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
+
+    let len = len as usize;
+    let total = len_size + len;
+
+    if len_size >= bytes.len() {
       return Err(Error::buffer_underflow());
     }
 
-    Ok((src_len, src.as_bytes()))
+    if total > bytes.len() {
+      return Err(Error::buffer_underflow());
+    }
+
+    Ok((total, &bytes[len_size..total]))
   }
 }
 

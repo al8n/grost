@@ -31,10 +31,6 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
   /// This is used to determine the buffer size required for encoding.
   fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
     let encoded_len = self.encoded_len(context);
-    if encoded_len == 0 {
-      return 0;
-    }
-
     let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
     len_size + encoded_len
   }
@@ -144,17 +140,11 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
   /// then it will return `WireTypeNotSupported` err will be returned.
   ///
   /// This is used to determine the buffer size required for encoding.
-  ///
-  /// See also [ trait level documentation ](Encode) for more details about the arguments.
   fn partial_encoded_length_delimited_len(
     &self,
     context: &F::Context,
     selector: &Self::Selector,
   ) -> usize {
-    if selector.is_empty() {
-      return 0;
-    }
-
     let encoded_len = self.partial_encoded_len(context, selector);
     let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
     len_size + encoded_len
@@ -169,10 +159,6 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> 
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, F::Error> {
-    if selector.is_empty() {
-      return Ok(0);
-    }
-
     let encoded_len = self.partial_encoded_len(context, selector);
     let buf_len = buf.len();
     let offset = varing::encode_u32_varint_to(encoded_len as u32, buf).map_err(|e| {

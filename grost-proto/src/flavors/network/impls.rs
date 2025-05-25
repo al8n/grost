@@ -1,5 +1,5 @@
 // mod map_selector;
-pub use decoder::RepeatedDecoder;
+pub use decoder::PackedDecoder;
 
 mod decoder;
 mod list;

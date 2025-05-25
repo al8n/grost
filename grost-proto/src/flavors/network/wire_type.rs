@@ -6,22 +6,22 @@ use super::Network;
 
 wire_type!(
   enum WireType<Network> {
-    /// The zero-sized type wire format, this wire format requires no information included.
-    "zst" = 0,
     /// The varint encoding/decoding wire format
-    "varint" = 1,
+    "varint" = 0,
     /// The length-delimited encoding/decoding wire format
-    "length-delimited" = 2,
+    "length-delimited" = 1,
     /// The fixed 8-bit length encoding/decoding wire format
-    "fixed8" = 3,
+    "fixed8" = 2,
     /// The fixed 16-bit length encoding/decoding wire format
-    "fixed16" = 4,
+    "fixed16" = 3,
     /// The fixed 32-bit length encoding/decoding wire format
-    "fixed32" = 5,
+    "fixed32" = 4,
     /// The fixed 64-bit length encoding/decoding wire format
-    "fixed64" = 6,
+    "fixed64" = 5,
     /// The fixed 128-bit length encoding/decoding wire format
-    "fixed128" = 7,
+    "fixed128" = 6,
+    /// The fixed 256-bit length encoding/decoding wire format
+    "fixed256" = 7,
   }
 );
 

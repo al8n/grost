@@ -21,6 +21,17 @@ macro_rules! str_bridge {
         },
       );
       $crate::default_wire_format!(Network: $ty as $crate::__private::flavors::network::LengthDelimited);
+
+      impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, UB> for $ty {
+        fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a str), $crate::__private::flavors::network::Error>
+        where
+          &'a str: Sized + 'a,
+          B: $crate::buffer::Buf<'a>,
+          UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
+        {
+          <str as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, UB>>::decode(context, src)
+        }
+      }
     )*
   };
 }

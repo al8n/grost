@@ -33,7 +33,6 @@ use grost_derive::{Object, object};
 //   #[grost(
 //     tag = 2,
 //     schema(description = "The nick name of the user"),
-//     wire = "grost::flavors::network::LengthDelimited",
 //     selector(select = "all"),
 //     partial_decoded(copy,)
 //   )]
@@ -41,7 +40,6 @@ use grost_derive::{Object, object};
 //   #[grost(
 //     tag = 3,
 //     schema(description = "The age of the user"),
-//     wire = "grost::flavors::network::Varint",
 //     copy,
 //     partial_decoded(copy)
 //   )]
