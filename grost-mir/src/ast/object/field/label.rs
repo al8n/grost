@@ -5,25 +5,25 @@ use syn::Meta;
 
 /// The specification of the type of a field.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, derive_more::IsVariant)]
-pub enum TypeSpecification {
+pub enum Label {
   /// Specifies the field is optional
-  Optional(Option<Arc<TypeSpecification>>),
+  Optional(Option<Arc<Label>>),
   /// Specifies the field is repeated, e.g. `Vec<T>`, `[T]`, etc.
-  Repeated(Option<Arc<TypeSpecification>>),
+  Repeated(Option<Arc<Label>>),
   /// Specifies the field is a map
   Map {
-    key: Option<Arc<TypeSpecification>>,
-    value: Option<Arc<TypeSpecification>>,
+    key: Option<Arc<Label>>,
+    value: Option<Arc<Label>>,
   },
 }
 
-impl TypeSpecification {
-  fn from_hint(type_hint: &TypeHint) -> Option<Self> {
+impl Label {
+  fn from_hint(type_hint: &FieldLabel) -> Option<Self> {
     match type_hint {
-      TypeHint::Required => None,
-      TypeHint::Optional(inner) => Some(Self::Optional(Self::from_hint(inner).map(Arc::new))),
-      TypeHint::Repeated(inner) => Some(Self::Repeated(Self::from_hint(inner).map(Arc::new))),
-      TypeHint::Map { key, value } => Some(Self::Map {
+      FieldLabel::Required => None,
+      FieldLabel::Optional(inner) => Some(Self::Optional(Self::from_hint(inner).map(Arc::new))),
+      FieldLabel::Repeated(inner) => Some(Self::Repeated(Self::from_hint(inner).map(Arc::new))),
+      FieldLabel::Map { key, value } => Some(Self::Map {
         key: key.as_ref().and_then(|k| Self::from_hint(k).map(Arc::new)),
         value: value
           .as_ref()
@@ -34,17 +34,17 @@ impl TypeSpecification {
 }
 
 #[derive(Debug, Clone)]
-pub(super) enum TypeHint {
+pub(super) enum FieldLabel {
   Required,
-  Optional(Box<TypeHint>),
-  Repeated(Box<TypeHint>),
+  Optional(Box<FieldLabel>),
+  Repeated(Box<FieldLabel>),
   Map {
-    key: Option<Box<TypeHint>>,
-    value: Option<Box<TypeHint>>,
+    key: Option<Box<FieldLabel>>,
+    value: Option<Box<FieldLabel>>,
   },
 }
 
-impl FromMeta for TypeHint {
+impl FromMeta for FieldLabel {
   fn from_meta(meta: &Meta) -> darling::Result<Self> {
     match meta {
       Meta::NameValue(_) => Err(darling::Error::unsupported_format("name value")),
@@ -107,7 +107,7 @@ impl FromMeta for TypeHint {
   }
 }
 
-impl TypeHint {
+impl FieldLabel {
   fn parse_single_inner(items: &[NestedMeta]) -> darling::Result<Self> {
     if items.is_empty() {
       // No inner type specified, default to Required
@@ -174,24 +174,24 @@ impl TypeHint {
 }
 
 #[derive(Debug, Clone)]
-struct OptionalTypeHint(TypeHint);
+struct OptionalFieldLabel(FieldLabel);
 
-impl core::ops::Deref for OptionalTypeHint {
-  type Target = TypeHint;
+impl core::ops::Deref for OptionalFieldLabel {
+  type Target = FieldLabel;
 
   fn deref(&self) -> &Self::Target {
     &self.0
   }
 }
 
-impl FromMeta for OptionalTypeHint {
+impl FromMeta for OptionalFieldLabel {
   fn from_word() -> darling::Result<Self> {
-    Ok(Self(TypeHint::Optional(Box::new(TypeHint::Required))))
+    Ok(Self(FieldLabel::Optional(Box::new(FieldLabel::Required))))
   }
 
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     if items.is_empty() {
-      return Ok(Self(TypeHint::Optional(Box::new(TypeHint::Required))));
+      return Ok(Self(FieldLabel::Optional(Box::new(FieldLabel::Required))));
     }
 
     if items.len() > 1 {
@@ -201,30 +201,30 @@ impl FromMeta for OptionalTypeHint {
     }
 
     let item = &items[0];
-    let inner = TypeHint::from_nested_meta(item)?;
+    let inner = FieldLabel::from_nested_meta(item)?;
     Ok(Self(inner))
   }
 }
 
 #[derive(Debug, Clone)]
-struct RepeatedTypeHint(TypeHint);
+struct RepeatedFieldLabel(FieldLabel);
 
-impl core::ops::Deref for RepeatedTypeHint {
-  type Target = TypeHint;
+impl core::ops::Deref for RepeatedFieldLabel {
+  type Target = FieldLabel;
 
   fn deref(&self) -> &Self::Target {
     &self.0
   }
 }
 
-impl FromMeta for RepeatedTypeHint {
+impl FromMeta for RepeatedFieldLabel {
   fn from_word() -> darling::Result<Self> {
-    Ok(Self(TypeHint::Repeated(Box::new(TypeHint::Required))))
+    Ok(Self(FieldLabel::Repeated(Box::new(FieldLabel::Required))))
   }
 
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     if items.is_empty() {
-      return Ok(Self(TypeHint::Repeated(Box::new(TypeHint::Required))));
+      return Ok(Self(FieldLabel::Repeated(Box::new(FieldLabel::Required))));
     }
 
     if items.len() > 1 {
@@ -234,25 +234,25 @@ impl FromMeta for RepeatedTypeHint {
     }
 
     let item = &items[0];
-    let inner = TypeHint::from_nested_meta(item)?;
+    let inner = FieldLabel::from_nested_meta(item)?;
     Ok(Self(inner))
   }
 }
 
 #[derive(Debug, Clone)]
-struct MapTypeHint(TypeHint);
+struct MapFieldLabel(FieldLabel);
 
-impl core::ops::Deref for MapTypeHint {
-  type Target = TypeHint;
+impl core::ops::Deref for MapFieldLabel {
+  type Target = FieldLabel;
 
   fn deref(&self) -> &Self::Target {
     &self.0
   }
 }
 
-impl FromMeta for MapTypeHint {
+impl FromMeta for MapFieldLabel {
   fn from_word() -> darling::Result<Self> {
-    Ok(Self(TypeHint::Map {
+    Ok(Self(FieldLabel::Map {
       key: None,
       value: None,
     }))
@@ -260,41 +260,37 @@ impl FromMeta for MapTypeHint {
 
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     if items.is_empty() {
-      return Ok(Self(TypeHint::Map {
+      return Ok(Self(FieldLabel::Map {
         key: None,
         value: None,
       }));
     }
-    let inner = TypeHint::parse_map(items)?;
+    let inner = FieldLabel::parse_map(items)?;
     Ok(Self(inner))
   }
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
 #[darling(and_then = "Self::validate")]
-pub(super) struct TypeHintMeta {
+pub(super) struct FieldLabelMeta {
   #[darling(default)]
-  optional: Option<SpannedValue<OptionalTypeHint>>,
+  optional: Option<SpannedValue<OptionalFieldLabel>>,
   #[darling(default)]
-  repeated: Option<SpannedValue<RepeatedTypeHint>>,
+  repeated: Option<SpannedValue<RepeatedFieldLabel>>,
   #[darling(default)]
-  map: Option<SpannedValue<MapTypeHint>>,
+  map: Option<SpannedValue<MapFieldLabel>>,
 }
 
-impl TypeHintMeta {
-  pub(super) fn into_specification(self) -> Option<TypeSpecification> {
+impl FieldLabelMeta {
+  pub(super) fn into_label(self) -> Option<Label> {
     if let Some(optional) = self.optional {
-      return Some(TypeSpecification::Optional(
-        TypeSpecification::from_hint(&optional.0).map(Arc::new),
-      ));
+      return Some(Label::Optional(Label::from_hint(&optional.0).map(Arc::new)));
     }
     if let Some(repeated) = self.repeated {
-      return Some(TypeSpecification::Repeated(
-        TypeSpecification::from_hint(&repeated.0).map(Arc::new),
-      ));
+      return Some(Label::Repeated(Label::from_hint(&repeated.0).map(Arc::new)));
     }
     if let Some(map) = self.map {
-      return TypeSpecification::from_hint(&map.0);
+      return Label::from_hint(&map.0);
     }
 
     None

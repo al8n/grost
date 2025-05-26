@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use grost::{
   Decode, PartialDecode,
   buffer::Buf,
-  flavors::{Network, network::LengthDelimited},
+  flavors::{DefaultWireFormat, Network, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
 use grost_derive::{Object, object};
@@ -14,10 +14,14 @@ use grost_derive::{Object, object};
 //   }
 // }
 
-// #[object(output(path = "grost-derive/tests/user.rs", format))]
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct User<I>
-// {
+// #[object(
+//   output(path = "grost-derive/tests/user.rs", format),
+//   flavor = "Network",
+//   partial(skip),
+//   partial_decoded(lifetime = "'de", unknown_buffer = "UB", flavor = "F", owned),
+// )]
+// // #[derive(Debug, Clone, PartialEq, Eq, Object)]
+// pub struct User<I> {
 //   #[grost(
 //     tag = 1,
 //     schema(description = "The id of the user"),
@@ -35,20 +39,41 @@ use grost_derive::{Object, object};
 //   name: String,
 //   #[grost(
 //     tag = 3,
+//     type(scalar),
 //     schema(description = "The age of the user"),
 //     copy,
-//     partial_decoded(copy)
+//     partial(type = "u8"),
+//     partial_decoded(copy, owned)
 //   )]
 //   age: u8,
-//   // #[grost(
-//   //   tag = 4,
-//   //   schema(description = "The email of the user"),
-//   //   wire = "grost::flavors::network::LengthDelimited",
-//   //   partial_decoded(copy),
-//   //   optional(repeated)
-//   // )]
-//   // emails: Option<Vec<String>>,
-
+// #[grost(
+//   tag = 4,
+//   schema(description = "The email of the user"),
+//   partial_decoded(copy, type = "&'t str"),
+//   type(
+//     string,
+//     wire(
+//       flavor = "grost::flavors::Network",
+//       format = "some format",
+//       identifier(
+//         new = "",
+//         encode = "",
+//         encoded_len = "",
+//       ),
+//     ),
+//     wire(
+//       flavor = "grost::flavors::OtherFlavor",
+//       format = "other format",
+//       identifier(
+//         new = "",
+//         encode = "",
+//         encoded_len = "",
+//       ),
+//     ),
+//     optional(repeated),
+//   ),
+// )]
+// emails: Option<Vec<String>>,
 //   #[grost(skip)]
 //   _w: core::marker::PhantomData<*const ()>,
 // }

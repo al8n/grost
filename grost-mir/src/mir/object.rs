@@ -11,7 +11,7 @@ pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
   SchemaMeta,
-  object::{Field as _, ObjectExt as _, TypeSpecification},
+  object::{Field as _, Label, ObjectExt as _},
 };
 
 mod indexer;
@@ -28,7 +28,7 @@ pub struct Field<M> {
   default: Option<Path>,
   tag: NonZeroU32,
   wire: Option<Type>,
-  specification: Option<TypeSpecification>,
+  specification: Option<Label>,
   attrs: Vec<Attribute>,
   copy: bool,
   meta: M,
@@ -67,7 +67,7 @@ impl<M> Field<M> {
 
   /// Returns the field type specification.
   #[inline]
-  pub const fn type_specification(&self) -> Option<&TypeSpecification> {
+  pub const fn type_specification(&self) -> Option<&Label> {
     self.specification.as_ref()
   }
 

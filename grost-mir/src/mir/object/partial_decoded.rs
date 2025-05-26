@@ -20,6 +20,7 @@ pub struct PartialDecodedField {
   wire: Type,
   object_type: Type,
   output_type: Type,
+  #[debug(skip)]
   constraints: Punctuated<WherePredicate, Comma>,
   copy: bool,
 }

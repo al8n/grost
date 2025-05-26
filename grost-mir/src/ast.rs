@@ -4,8 +4,14 @@ use darling::FromMeta;
 use quote::quote;
 use syn::{Attribute, parse::Parser};
 
+pub use flavor::*;
+pub use ty::Ty;
+
 /// The meta for the object
 pub mod object;
+
+mod flavor;
+mod ty;
 
 #[derive(Debug, Default, Clone)]
 struct Attributes(Vec<Attribute>);

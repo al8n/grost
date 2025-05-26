@@ -5,7 +5,7 @@ use syn::{Attribute, Generics, Ident, Type, TypeParam, Visibility, parse::Parser
 
 use crate::ast::{
   grost_unknown_buffer_param,
-  object::{Field, ObjectExt as _, TypeSpecification},
+  object::{Field, Label, ObjectExt as _},
 };
 
 use super::Object;
@@ -45,7 +45,7 @@ impl PartialObjectGenerics {
 pub struct PartialField {
   field: syn::Field,
   tag: NonZeroU32,
-  specification: Option<TypeSpecification>,
+  specification: Option<Label>,
   copy: bool,
   object_type: Type,
   output_type: Type,
@@ -90,7 +90,7 @@ impl PartialField {
 
   /// Returns the type specification.
   #[inline]
-  pub const fn specification(&self) -> Option<&TypeSpecification> {
+  pub const fn specification(&self) -> Option<&Label> {
     self.specification.as_ref()
   }
 

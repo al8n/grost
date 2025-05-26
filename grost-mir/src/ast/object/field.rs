@@ -2,16 +2,17 @@ use core::num::NonZeroU32;
 use std::sync::{Arc, OnceLock};
 
 use darling::FromMeta;
+use label::FieldLabelMeta;
 use syn::{Attribute, Ident, Type};
-use type_spec::TypeHintMeta;
 
 use super::{Attributes, SchemaMeta};
 
+pub use label::Label;
 pub use select::{Selection, SelectorFieldMeta};
-pub use type_spec::TypeSpecification;
 
+mod label;
 mod select;
-mod type_spec;
+mod wire;
 
 /// The meta of the partial reference object field
 #[derive(Debug, Default, Clone, FromMeta)]
@@ -20,6 +21,10 @@ pub struct PartialDecodedFieldMeta {
   copy: bool,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
+  #[darling(rename = "type", default)]
+  ty: Option<Type>,
+  #[darling(default)]
+  owned: bool,
 }
 
 impl PartialDecodedFieldMeta {
@@ -31,6 +36,16 @@ impl PartialDecodedFieldMeta {
   /// Returns whether the partial reference object field is copyable
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+
+  /// Returns the type of the partial decoded object field
+  pub const fn ty(&self) -> Option<&Type> {
+    self.ty.as_ref()
+  }
+
+  /// Returns `true` if the partial decoded object field is owned
+  pub const fn owned(&self) -> bool {
+    self.owned
   }
 }
 
@@ -70,9 +85,9 @@ pub struct FieldMeta {
   #[darling(default)]
   skip: bool,
   #[darling(flatten)]
-  meta: TypeHintMeta,
+  meta: FieldLabelMeta,
   #[darling(skip)]
-  specification: Arc<OnceLock<Option<TypeSpecification>>>,
+  specification: Arc<OnceLock<Option<Label>>>,
 }
 
 impl FieldMeta {
@@ -112,10 +127,10 @@ impl FieldMeta {
   }
 
   /// Returns the type specification of the field
-  pub fn type_specification(&self) -> Option<&TypeSpecification> {
+  pub fn type_specification(&self) -> Option<&Label> {
     self
       .specification
-      .get_or_init(|| self.meta.clone().into_specification())
+      .get_or_init(|| self.meta.clone().into_label())
       .as_ref()
   }
 
