@@ -54,14 +54,14 @@ impl FromMeta for Attributes {
 
 /// The meta for the schema
 #[derive(Default, Debug, Clone, FromMeta)]
-pub struct SchemaMeta {
+pub struct SchemaFromMeta {
   #[darling(default)]
   name: Option<String>,
   #[darling(default)]
   description: Option<String>,
 }
 
-impl SchemaMeta {
+impl SchemaFromMeta {
   /// Returns the name of the schema
   pub const fn name(&self) -> Option<&str> {
     match self.name.as_ref() {

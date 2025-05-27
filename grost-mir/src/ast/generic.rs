@@ -8,7 +8,7 @@ fn string_to_lifetime(s: String) -> darling::Result<syn::LifetimeParam> {
 
 /// Generic params will be used in the generated code.
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
-pub struct GenericParams {
+pub struct GenericAttribute {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
   lifetime: syn::LifetimeParam,
   #[darling(default = grost_flavor_param)]
@@ -19,7 +19,7 @@ pub struct GenericParams {
   wire_format: syn::TypeParam,
 }
 
-impl Default for GenericParams {
+impl Default for GenericAttribute {
   fn default() -> Self {
     Self {
       lifetime: grost_lifetime(),
@@ -30,7 +30,7 @@ impl Default for GenericParams {
   }
 }
 
-impl GenericParams {
+impl GenericAttribute {
   /// Returns the lifetime generic param
   #[inline]
   pub const fn lifetime(&self) -> &syn::LifetimeParam {
@@ -58,13 +58,13 @@ impl GenericParams {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 #[allow(clippy::large_enum_variant)]
-pub(super) enum GenericRepr {
+pub(super) enum GenericFromMeta {
   #[default]
   Deny,
-  Allow(GenericParams),
+  Allow(GenericAttribute),
 }
 
-impl FromMeta for GenericRepr {
+impl FromMeta for GenericFromMeta {
   fn from_word() -> darling::Result<Self> {
     Ok(Self::default())
   }
@@ -78,13 +78,13 @@ impl FromMeta for GenericRepr {
   }
 
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    let parser = GenericParams::from_list(items)?; 
+    let parser = GenericAttribute::from_list(items)?; 
     Ok(Self::Allow(parser))
   }
 }
 
-impl GenericRepr {
-  pub(super) fn into_option(self) -> Option<GenericParams> {
+impl GenericFromMeta {
+  pub(super) fn into_option(self) -> Option<GenericAttribute> {
     match self {
       Self::Deny => None,
       Self::Allow(attr) => Some(attr),

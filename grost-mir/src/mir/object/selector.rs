@@ -5,7 +5,7 @@ use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
   grost_flavor_param, grost_lifetime, grost_wire_format_param,
-  object::{Field, ObjectExt as _, Selection, SelectorIterMeta},
+  object::{Field, ObjectExt as _, Selection, SelectorIterFromMeta},
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
@@ -393,7 +393,7 @@ impl Selector {
     &self,
     name: Ident,
     indexer: Ident,
-    iter_meta: &SelectorIterMeta,
+    iter_meta: &SelectorIterFromMeta,
   ) -> darling::Result<SelectorIter> {
     let mut generics = Generics::default();
     let original_generics = self.generics.clone();

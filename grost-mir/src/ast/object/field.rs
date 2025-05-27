@@ -5,7 +5,7 @@ use darling::FromMeta;
 use label::FieldLabelMeta;
 use syn::{Attribute, Ident, Type};
 
-use super::{Attributes, SchemaMeta};
+use super::{Attributes, SchemaFromMeta};
 
 pub use label::Label;
 pub use select::{Selection, SelectorFieldMeta};
@@ -67,7 +67,7 @@ impl PartialFieldMeta {
 #[derive(Debug, Clone, FromMeta)]
 pub struct FieldMeta {
   #[darling(default)]
-  schema: SchemaMeta,
+  schema: SchemaFromMeta,
   #[darling(default)]
   default: Option<syn::Path>,
   #[darling(default)]
@@ -135,7 +135,7 @@ impl FieldMeta {
   }
 
   /// Returns the schema information of the field
-  pub const fn schema(&self) -> &SchemaMeta {
+  pub const fn schema(&self) -> &SchemaFromMeta {
     &self.schema
   }
 

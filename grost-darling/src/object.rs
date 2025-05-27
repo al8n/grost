@@ -217,7 +217,7 @@ pub struct ObjectDeriveInput {
   #[darling(default, map = "Attributes::into_inner")]
   meta: Vec<syn::Attribute>,
   #[darling(default = "super::default_grost_path")]
-  path: syn::Path,
+  grost: syn::Path,
 }
 
 impl ToTokens for ObjectDeriveInput {
@@ -256,7 +256,7 @@ impl ToTokens for ObjectDeriveInput {
     let attribute = self.attribute.as_ref();
     let meta = &self.meta;
     let expect_msg = format!("{} only supports named structs", derive_input_name);
-    let path = &self.path.to_token_stream().to_string();
+    let path = &self.grost.to_token_stream().to_string();
     let name = &self.ident;
 
     let (meta_field, meta_field_without_darling, convert) = match self.data.as_ref() {
@@ -325,7 +325,7 @@ impl ToTokens for ObjectDeriveInput {
         #[doc(hidden)]
         __path_to_crate__: #path_to_crate::__private::syn::Path,
         #[doc(hidden)]
-        __meta__: #path_to_crate::__private::ast::object::ObjectMeta,
+        __meta__: #path_to_crate::__private::ast::object::ObjectFromMeta,
       }
 
       #(#meta)*
@@ -357,7 +357,7 @@ impl ToTokens for ObjectDeriveInput {
           __path_to_crate__: #path_to_crate::__private::syn::Path,
           #[darling(flatten)]
           #[doc(hidden)]
-          __meta__: #path_to_crate::__private::ast::object::ObjectMeta,
+          __meta__: #path_to_crate::__private::ast::object::ObjectFromMeta,
         }
 
         #[allow(warnings)]
@@ -374,7 +374,7 @@ impl ToTokens for ObjectDeriveInput {
           __path_to_crate__: #path_to_crate::__private::syn::Path,
           #[darling(flatten)]
           #[doc(hidden)]
-          __meta__: #path_to_crate::__private::ast::object::ObjectMeta,
+          __meta__: #path_to_crate::__private::ast::object::ObjectFromMeta,
         }
 
         #[allow(warnings)]
@@ -507,7 +507,7 @@ impl ToTokens for ObjectDeriveInput {
             self.data.as_ref().take_struct().expect(#expect_msg).fields
           }
 
-          fn meta(&self) -> &#path_to_crate::__private::ast::object::ObjectMeta {
+          fn meta(&self) -> &#path_to_crate::__private::ast::object::ObjectFromMeta {
             &self.__args__.__meta__
           }
         }

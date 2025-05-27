@@ -6,7 +6,7 @@ use super::{DecodeAttribute, EncodeAttribute, IdentifierAttribute};
 
 
 #[derive(Debug, Clone, FromMeta)]
-struct DefaultFlavorValue {
+struct BuiltinFlavorValue {
   #[darling(default)]
   encode: EncodeAttribute,
   #[darling(default)]

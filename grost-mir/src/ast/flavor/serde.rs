@@ -214,7 +214,7 @@ impl From<DecodeAttribute> for DecodeSerdeHelper {
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
-pub(super) enum DefaultFlavorValueSerdeHelper {
+pub(super) enum BuiltinFlavorValueSerdeHelper {
   File(String),
   Config {
     encode: EncodeAttribute,
@@ -223,33 +223,33 @@ pub(super) enum DefaultFlavorValueSerdeHelper {
   Bool(bool),
 }
 
-impl TryFrom<DefaultFlavorValueSerdeHelper> for DefaultFlavorRepr {
+impl TryFrom<BuiltinFlavorValueSerdeHelper> for BuiltinFlavorRepr {
   type Error = darling::Error;
 
-  fn try_from(value: DefaultFlavorValueSerdeHelper) -> Result<Self, Self::Error> {
+  fn try_from(value: BuiltinFlavorValueSerdeHelper) -> Result<Self, Self::Error> {
     match value {
-      DefaultFlavorValueSerdeHelper::File(path_buf) => {
-        DefaultFlavorValueParser::try_from(path_buf.as_str()).map(DefaultFlavorRepr::Nested)
+      BuiltinFlavorValueSerdeHelper::File(path_buf) => {
+        BuiltinFlavorValueParser::try_from(path_buf.as_str()).map(BuiltinFlavorRepr::Nested)
       }
-      DefaultFlavorValueSerdeHelper::Config { encode, decode } => Ok(DefaultFlavorRepr::Nested(
-        DefaultFlavorValueParser {
+      BuiltinFlavorValueSerdeHelper::Config { encode, decode } => Ok(BuiltinFlavorRepr::Nested(
+        BuiltinFlavorValueParser {
           encode,
           decode,
         },
       )),
-      DefaultFlavorValueSerdeHelper::Bool(b) => Ok(DefaultFlavorRepr::Bool(b)),
+      BuiltinFlavorValueSerdeHelper::Bool(b) => Ok(BuiltinFlavorRepr::Bool(b)),
     }
   }
 }
 
-impl From<DefaultFlavorRepr> for DefaultFlavorValueSerdeHelper {
-  fn from(value: DefaultFlavorRepr) -> Self {
+impl From<BuiltinFlavorRepr> for BuiltinFlavorValueSerdeHelper {
+  fn from(value: BuiltinFlavorRepr) -> Self {
     match value {
-      DefaultFlavorRepr::Nested(parser) => Self::Config {
+      BuiltinFlavorRepr::Nested(parser) => Self::Config {
         encode: parser.encode,
         decode: parser.decode,
       },
-      DefaultFlavorRepr::Bool(b) => Self::Bool(b),
+      BuiltinFlavorRepr::Bool(b) => Self::Bool(b),
     }
   }
 }

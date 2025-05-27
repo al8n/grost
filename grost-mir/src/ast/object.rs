@@ -2,21 +2,21 @@ use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident};
 
-use super::{Attributes, SchemaMeta};
+use super::{Attributes, FlavorAttribute, FlavorFromMeta, GenericAttribute, GenericFromMeta, SchemaFromMeta};
 
 pub use field::*;
 
 mod field;
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialObjectMeta {
+pub struct PartialObjectFromMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl PartialObjectMeta {
+impl PartialObjectFromMeta {
   /// Returns the name of the partial object
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -29,7 +29,7 @@ impl PartialObjectMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialDecodedObjectMeta {
+pub struct PartialDecodedObjectFromMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
@@ -38,7 +38,7 @@ pub struct PartialDecodedObjectMeta {
   copy: bool,
 }
 
-impl PartialDecodedObjectMeta {
+impl PartialDecodedObjectFromMeta {
   /// Returns the name of the partial reference object
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -56,14 +56,14 @@ impl PartialDecodedObjectMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct SelectorIterMeta {
+pub struct SelectorIterFromMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl SelectorIterMeta {
+impl SelectorIterFromMeta {
   /// Returns the name of the selector iterator
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -76,14 +76,14 @@ impl SelectorIterMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct SelectorMeta {
+pub struct SelectorFromMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl SelectorMeta {
+impl SelectorFromMeta {
   /// Returns the name of the selector
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -96,27 +96,14 @@ impl SelectorMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct ReflectionMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-}
-
-impl ReflectionMeta {
-  /// Returns the name of the reflection
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct IndexerMeta {
+pub struct IndexerFromMeta {
   #[darling(default, rename = "rename")]
   name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl IndexerMeta {
+impl IndexerFromMeta {
   /// Returns the name of the indexer
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -129,65 +116,62 @@ impl IndexerMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct ObjectMeta {
+pub struct ObjectFromMeta {
   #[darling(default)]
   default: Option<syn::Path>,
   #[darling(default)]
-  schema: SchemaMeta,
+  generic: GenericFromMeta,
   #[darling(default)]
-  partial: PartialObjectMeta,
+  schema: SchemaFromMeta,
   #[darling(default)]
-  partial_decoded: PartialDecodedObjectMeta,
+  partial: PartialObjectFromMeta,
   #[darling(default)]
-  selector: SelectorMeta,
+  partial_decoded: PartialDecodedObjectFromMeta,
   #[darling(default)]
-  reflection: ReflectionMeta,
+  selector: SelectorFromMeta,
   #[darling(default)]
-  selector_iter: SelectorIterMeta,
+  selector_iter: SelectorIterFromMeta,
   #[darling(default)]
-  indexer: IndexerMeta,
+  indexer: IndexerFromMeta,
+  #[darling(default)]
+  flavor: FlavorFromMeta,
   #[darling(default)]
   copy: bool,
 }
 
-impl ObjectMeta {
+impl ObjectFromMeta {
   /// Returns the path to the fn that returns the default value of the object
   pub const fn default(&self) -> Option<&syn::Path> {
     self.default.as_ref()
   }
 
   /// Returns the schema information
-  pub const fn schema(&self) -> &SchemaMeta {
+  pub const fn schema(&self) -> &SchemaFromMeta {
     &self.schema
   }
 
   /// Returns the partial object information
-  pub const fn partial(&self) -> &PartialObjectMeta {
+  pub const fn partial(&self) -> &PartialObjectFromMeta {
     &self.partial
   }
 
-  /// Returns the partial reference object information
-  pub const fn partial_decoded(&self) -> &PartialDecodedObjectMeta {
+  /// Returns the partial decoded object information
+  pub const fn partial_decoded(&self) -> &PartialDecodedObjectFromMeta {
     &self.partial_decoded
   }
 
   /// Returns the selector information
-  pub const fn selector(&self) -> &SelectorMeta {
+  pub const fn selector(&self) -> &SelectorFromMeta {
     &self.selector
   }
 
   /// Returns the selector iterator information
-  pub const fn selector_iter(&self) -> &SelectorIterMeta {
+  pub const fn selector_iter(&self) -> &SelectorIterFromMeta {
     &self.selector_iter
   }
 
-  /// Returns the reflection information
-  pub const fn reflection(&self) -> &ReflectionMeta {
-    &self.reflection
-  }
-
   /// Returns the indexer information
-  pub const fn indexer(&self) -> &IndexerMeta {
+  pub const fn indexer(&self) -> &IndexerFromMeta {
     &self.indexer
   }
 
@@ -195,6 +179,19 @@ impl ObjectMeta {
   pub const fn copy(&self) -> bool {
     self.copy
   }
+}
+
+pub struct ObjectAttribute {
+  generic: Option<GenericAttribute>,
+  flavors: Vec<FlavorAttribute>,
+  default: Option<syn::Path>,
+  schema: SchemaFromMeta,
+  partial: PartialObjectFromMeta,
+  partial_decoded: PartialDecodedObjectFromMeta,
+  selector: SelectorFromMeta,
+  selector_iter: SelectorIterFromMeta,
+  indexer: IndexerFromMeta,
+  copy: bool,
 }
 
 /// The trait for the object derive input
@@ -221,21 +218,11 @@ pub trait Object: Clone {
   fn fields(&self) -> Vec<&Self::Field>;
 
   /// Returns the meta of the object
-  fn meta(&self) -> &ObjectMeta;
+  fn meta(&self) -> &ObjectFromMeta;
 }
 
 /// The extension trait for the object
 pub trait ObjectExt: Object {
-  #[inline]
-  fn reflection_name(&self) -> Ident {
-    self
-      .meta()
-      .reflection()
-      .name()
-      .cloned()
-      .unwrap_or_else(|| format_ident!("{}Reflection", self.name()))
-  }
-
   #[inline]
   fn partial_decoded_name(&self) -> Ident {
     self

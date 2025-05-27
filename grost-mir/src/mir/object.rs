@@ -10,7 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  SchemaMeta,
+  SchemaFromMeta,
   object::{Field as _, Label, ObjectExt as _},
 };
 
@@ -24,7 +24,7 @@ pub struct Field<M> {
   name: Ident,
   ty: Type,
   vis: Visibility,
-  schema: SchemaMeta,
+  schema: SchemaFromMeta,
   default: Option<Path>,
   tag: NonZeroU32,
   wire: Option<Type>,
@@ -91,7 +91,7 @@ impl<M> Field<M> {
 
   /// Returns the schema information of the field.
   #[inline]
-  pub const fn schema(&self) -> &SchemaMeta {
+  pub const fn schema(&self) -> &SchemaFromMeta {
     &self.schema
   }
 
@@ -201,7 +201,7 @@ where
 {
   name: Ident,
   path_to_grost: Path,
-  schema: SchemaMeta,
+  schema: SchemaFromMeta,
   vis: Visibility,
   generics: Generics,
   fields: Vec<Field<M::Field>>,
@@ -261,7 +261,7 @@ where
   }
 
   #[inline]
-  pub const fn shema(&self) -> &SchemaMeta {
+  pub const fn shema(&self) -> &SchemaFromMeta {
     &self.schema
   }
 

@@ -8,7 +8,7 @@ use quote::format_ident;
 use registration::*;
 use syn::{parse_quote, spanned::Spanned, Ident, Meta};
 
-use super::{GenericParams, GenericRepr};
+use super::{GenericAttribute, GenericFromMeta};
 
 mod decode;
 mod encode;
@@ -18,20 +18,34 @@ mod registration;
 #[cfg(feature = "serde")]
 mod serde;
 
+pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
+  ("network", "the `network` flavor is the same as the default flavor and cannot be used as a custom flavor, or use `default` to configure it"),
+  ("storage", "the `storage` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("proto2", "the `proto2` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("proto3", "the `proto3` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("zerocopy", "the `zerocopy` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("json", "the `json` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("graphql", "the `graphql` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("postgres", "the `postgres` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("mysql", "the `mysql` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("sqlite", "the `sqlite` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+  ("mongodb", "the `mongodb` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name"),
+];
+
 fn default_flavor_attribute() -> bool {
   true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-struct DefaultFlavorValueParser {
+struct BuiltinFlavorValueParser {
   #[darling(default)]
   encode: EncodeAttribute,
   #[darling(default)]
   decode: DecodeAttribute,
 }
 
-impl TryFrom<&str> for DefaultFlavorValueParser {
+impl TryFrom<&str> for BuiltinFlavorValueParser {
   type Error = darling::Error;
 
   fn try_from(_value: &str) -> Result<Self, Self::Error> {
@@ -58,34 +72,34 @@ impl TryFrom<&str> for DefaultFlavorValueParser {
 #[cfg_attr(
   feature = "serde",
   serde(
-    try_from = "serde::DefaultFlavorValueSerdeHelper",
-    into = "serde::DefaultFlavorValueSerdeHelper"
+    try_from = "serde::BuiltinFlavorValueSerdeHelper",
+    into = "serde::BuiltinFlavorValueSerdeHelper"
   )
 )]
-enum DefaultFlavorRepr {
-  Nested(DefaultFlavorValueParser),
+enum BuiltinFlavorRepr {
+  Nested(BuiltinFlavorValueParser),
   Bool(bool),
 }
 
-impl Default for DefaultFlavorRepr {
+impl Default for BuiltinFlavorRepr {
   fn default() -> Self {
     Self::Bool(true)
   }
 }
 
-impl FromMeta for DefaultFlavorRepr {
+impl FromMeta for BuiltinFlavorRepr {
   fn from_bool(value: bool) -> darling::Result<Self> {
     Ok(Self::Bool(value))
   }
 
   fn from_string(value: &str) -> darling::Result<Self> {
-    DefaultFlavorValueParser::try_from(value)
+    BuiltinFlavorValueParser::try_from(value)
       .map(Self::Nested)
       .map_err(Into::into)
   }
 
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    DefaultFlavorValueParser::from_list(items)
+    BuiltinFlavorValueParser::from_list(items)
       .map(Self::Nested)
       .map_err(Into::into)
   }
@@ -171,12 +185,13 @@ impl FromMeta for FlavorValue {
   }
 }
 
-pub(super) struct FlavorParser {
-  default: DefaultFlavorRepr,
+#[derive(Debug, Clone, Default)]
+pub(super) struct FlavorFromMeta {
+  default: BuiltinFlavorRepr,
   flavors: IndexMap<Ident, FlavorValue>,
 }
 
-impl FromMeta for FlavorParser {
+impl FromMeta for FlavorFromMeta {
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     let mut flavors = IndexMap::new();
     let mut default = None;
@@ -200,11 +215,19 @@ impl FromMeta for FlavorParser {
                 ));
               }
 
-              let value = DefaultFlavorRepr::from_list(&NestedMeta::parse_meta_list(meta_list.tokens.clone())?[..])?;
+              let value = BuiltinFlavorRepr::from_list(&NestedMeta::parse_meta_list(meta_list.tokens.clone())?[..])?;
               default = Some(value);
               continue;
             }
-            
+
+            if let Some(reason) = RESERVED_FLAVOR_NAMES.iter().find_map(|(name, reason)| if ident.eq(name) {
+              Some(*reason)
+            } else {
+              None
+            }) {
+              return Err(darling::Error::custom(reason));
+            }
+
             if flavors.contains_key(ident) {
               return Err(darling::Error::custom(
                 format!("duplicate flavor, `{ident}` flavor is already defined"),
@@ -230,9 +253,17 @@ impl FromMeta for FlavorParser {
                 ));
               }
 
-              let value = DefaultFlavorRepr::from_expr(&meta_name_value.value)?;
+              let value = BuiltinFlavorRepr::from_expr(&meta_name_value.value)?;
               default = Some(value);
               continue;
+            }
+
+            if let Some(reason) = RESERVED_FLAVOR_NAMES.iter().find_map(|(name, reason)| if ident.eq(name) {
+              Some(*reason)
+            } else {
+              None
+            }) {
+              return Err(darling::Error::custom(reason));
             }
 
             if flavors.contains_key(ident) {
@@ -252,12 +283,12 @@ impl FromMeta for FlavorParser {
   }
 }
 
-impl FlavorParser {
+impl FlavorFromMeta {
   pub(crate) fn into_object_flavors(self, path_to_grost: &syn::Path) -> syn::Result<Vec<FlavorAttribute>> {
     let mut flavors = Vec::new();
 
     match self.default {
-      DefaultFlavorRepr::Nested(default_flavor_value_parser) => {
+      BuiltinFlavorRepr::Nested(default_flavor_value_parser) => {
         flavors.push(FlavorAttribute {
           name: format_ident!("default"),
           ty: parse_quote!(#path_to_grost::__private::flavors::Network),
@@ -267,7 +298,7 @@ impl FlavorParser {
           decode: default_flavor_value_parser.decode,
         })
       },
-      DefaultFlavorRepr::Bool(val) => {
+      BuiltinFlavorRepr::Bool(val) => {
         if val {
           flavors.push(FlavorAttribute::network_object(path_to_grost)?);
         }

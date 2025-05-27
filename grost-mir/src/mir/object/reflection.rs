@@ -2,7 +2,7 @@ use quote::{format_ident, quote};
 use syn::{Ident, parse::Parser};
 
 use crate::ast::{
-  SchemaMeta, grost_flavor_param,
+  SchemaFromMeta, grost_flavor_param,
   object::{Field, ObjectExt},
 };
 
@@ -12,7 +12,7 @@ pub struct ReflectionField {
   field: syn::Field,
   tag: u32,
   object_ty: syn::Type,
-  schema: SchemaMeta,
+  schema: SchemaFromMeta,
 }
 
 impl ReflectionField {
@@ -28,26 +28,21 @@ impl ReflectionField {
     &self.object_ty
   }
 
-  pub const fn schema(&self) -> &SchemaMeta {
+  pub const fn schema(&self) -> &SchemaFromMeta {
     &self.schema
   }
 }
 
 pub struct Reflection {
   parent_name: Ident,
-  name: Ident,
   vis: syn::Visibility,
   generics: syn::Generics,
-  schema: SchemaMeta,
+  schema: SchemaFromMeta,
   #[allow(clippy::type_complexity)]
   fields: Vec<Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>>,
 }
 
 impl Reflection {
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
   pub const fn vis(&self) -> &syn::Visibility {
     &self.vis
   }
@@ -63,7 +58,6 @@ impl Reflection {
   where
     O: crate::ast::object::Object,
   {
-    let name = input.reflection_name();
     let parent_name = input.name().clone();
     let vis = input.vis().clone();
     let path_to_grost = input.path();
@@ -125,7 +119,6 @@ impl Reflection {
     Ok(Self {
       parent_name,
       schema: input.meta().schema().clone(),
-      name,
       fields,
       generics: reflection_generics,
       vis,
