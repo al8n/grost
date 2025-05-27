@@ -2,7 +2,16 @@ use darling::{FromMeta, ast::NestedMeta};
 use indexmap::IndexMap;
 use syn::{Ident, Meta};
 
-use super::{EncodeAttribute, IdentifierAttribute};
+use super::{DecodeAttribute, EncodeAttribute, IdentifierAttribute};
+
+
+#[derive(Debug, Clone, FromMeta)]
+struct DefaultFlavorValue {
+  #[darling(default)]
+  encode: EncodeAttribute,
+  #[darling(default)]
+  decode: DecodeAttribute,
+}
 
 #[derive(Debug, Clone, FromMeta)]
 struct RegistrationValueParser {

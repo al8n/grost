@@ -60,7 +60,7 @@ impl SelectorField {
 
 #[derive(Debug, Clone)]
 struct SelectorIterGenerics {
-  lifetime: syn::Lifetime,
+  lifetime: syn::LifetimeParam,
   selected_param: syn::ConstParam,
   generics: Generics,
 }
@@ -76,7 +76,7 @@ impl core::ops::Deref for SelectorIterGenerics {
 
 impl SelectorIterGenerics {
   const fn new(
-    lifetime: syn::Lifetime,
+    lifetime: syn::LifetimeParam,
     selected_param: syn::ConstParam,
     generics: Generics,
   ) -> Self {
@@ -87,7 +87,7 @@ impl SelectorIterGenerics {
     }
   }
 
-  pub const fn lifetime(&self) -> &syn::Lifetime {
+  pub const fn lifetime(&self) -> &syn::LifetimeParam {
     &self.lifetime
   }
 
@@ -130,7 +130,7 @@ impl SelectorIter {
   }
 
   /// Returns the lifetime generic parameter.
-  pub const fn lifetime(&self) -> &syn::Lifetime {
+  pub const fn lifetime(&self) -> &syn::LifetimeParam {
     self.generics.lifetime()
   }
 
@@ -412,9 +412,7 @@ impl Selector {
     // Push our lifetime generic parameter in the front
     generics
       .params
-      .push(syn::GenericParam::Lifetime(syn::LifetimeParam::new(
-        lt.clone(),
-      )));
+      .push(syn::GenericParam::Lifetime(lt.clone()));
 
     // push the original type generic parameters
     generics.params.extend(

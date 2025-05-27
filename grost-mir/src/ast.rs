@@ -5,12 +5,14 @@ use quote::quote;
 use syn::{Attribute, parse::Parser};
 
 pub use flavor::*;
+pub use generic::*;
 pub use ty::Ty;
 
 /// The meta for the object
 pub mod object;
 
 mod flavor;
+mod generic;
 mod ty;
 
 #[derive(Debug, Default, Clone)]
@@ -142,18 +144,18 @@ impl FromMeta for Output {
 /// Returns a `'__grost_lifetime__` lifetime, which is the lifetime name used
 /// in the generated code. This is used to avoid conflicts with other
 /// lifetimes in the code.
-pub fn grost_lifetime() -> syn::Lifetime {
+pub fn grost_lifetime() -> syn::LifetimeParam {
   syn::parse_quote!('__grost_lifetime__)
 }
 
-/// Returns a generic parameter `__GROST_FLAVOR__`, which is used to represent
+/// Returns a generic parameter `__GROST_FLAVOR__: ?::core::marker::Sized`, which is used to represent
 /// the a flavor generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
 pub fn grost_flavor_param() -> syn::TypeParam {
   syn::parse_quote!(__GROST_FLAVOR__: ?::core::marker::Sized)
 }
 
-/// Returns a generic parameter `__GROST_WIRE_FORMAT__`, which is used to represent
+/// Returns a generic parameter `__GROST_WIRE_FORMAT__: ?::core::marker::Sized`, which is used to represent
 /// the a wire format generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
 pub fn grost_wire_format_param() -> syn::TypeParam {

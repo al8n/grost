@@ -50,6 +50,16 @@ pub struct IdentifierAttribute {
 }
 
 impl IdentifierAttribute {
+  pub(super) fn network(path_to_grost: &syn::Path) -> Self {
+    let constructor = syn::parse2(quote! { #path_to_grost::__private::flavors::network::Identifier::new }).unwrap();
+    let encode = syn::parse2(quote! { #path_to_grost::__private::flavors::network::Identifier::encode }).unwrap();
+
+    Self {
+      constructor,
+      encode,
+    }
+  }
+
   /// Returns the path to the constructor fn
   #[inline]
   pub const fn constructor(&self) -> &syn::Path {

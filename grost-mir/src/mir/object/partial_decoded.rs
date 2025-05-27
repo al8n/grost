@@ -493,9 +493,7 @@ impl PartialDecodedObject {
 
     generics
       .params
-      .push(syn::GenericParam::Lifetime(syn::LifetimeParam::new(
-        lt.clone(),
-      )));
+      .push(syn::GenericParam::Lifetime(lt.clone()));
 
     // push the original type generic parameters
     generics.params.extend(
@@ -540,13 +538,13 @@ impl PartialDecodedObject {
       path_to_grost,
       fields.iter().filter(|f| !f.meta().skip()).copied(),
       &flavor_param,
-      &lt,
+      &lt.lifetime,
       &unknown_buffer_param,
       copyable,
     )?;
 
     let generics =
-      PartialDecodedObjectGenerics::new(lt, flavor_param, unknown_buffer_param, generics);
+      PartialDecodedObjectGenerics::new(lt.lifetime, flavor_param, unknown_buffer_param, generics);
 
     let (_, object_tg, _) = input.generics().split_for_impl();
     let mut partial_decoded_fields = vec![];
