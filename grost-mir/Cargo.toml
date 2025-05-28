@@ -16,6 +16,7 @@ default = []
 serde = ["dep:serde", "indexmap/serde", "config"]
 
 [dependencies]
+either = "1"
 grost-darling.workspace = true
 derive_more = { workspace = true, features = ["try_unwrap", "unwrap", "is_variant", "debug"] }
 indexmap = "2"

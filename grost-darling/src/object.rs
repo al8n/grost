@@ -119,11 +119,11 @@ impl ToTokens for FieldDeriveInput {
 
         #custom_meta_field_without_darling
 
-        __meta__: #path_to_crate::__private::ast::object::FieldMeta,
+        __meta__: #path_to_crate::__private::ast::object::FieldAttribute,
       }
 
       const _: () = {
-        use #path_to_crate::__private::darling;
+        use #path_to_crate::__private::{darling, syn};
 
         #[derive(::core::fmt::Debug, ::core::clone::Clone, darling::FromField)]
         #[darling(attributes(#(#attributes),*), forward_attrs)]
@@ -136,23 +136,25 @@ impl ToTokens for FieldDeriveInput {
           #custom_meta_field
 
           #[darling(flatten)]
-          __meta__: #path_to_crate::__private::ast::object::FieldMeta,
+          __meta__: #path_to_crate::__private::ast::object::FieldFromMeta,
         }
 
         darling::uses_type_params!(#derive_input_name #tg, ty);
         darling::uses_lifetimes!(#derive_input_name #tg, ty);
 
-        impl #ig ::core::convert::From<#hidden_derive_input_name #tg> for #derive_input_name #tg #w {
+        impl #ig ::core::convert::TryFrom<#hidden_derive_input_name #tg> for #derive_input_name #tg #w {
+          type Error = syn::Error;
+
           #[inline]
-          fn from(input: #hidden_derive_input_name #tg) -> Self {
-            Self {
+          fn try_from(input: #hidden_derive_input_name #tg) -> ::core::result::Result<Self, Self::Error> {
+            Ok(Self {
               ident: input.ident,
               vis: input.vis,
               ty: input.ty,
               attrs: input.attrs,
-              __meta__: input.__meta__,
+              __meta__: input.__meta__.finalize()?,
               #into_outer
-            }
+            })
           }
         }
 
@@ -161,7 +163,7 @@ impl ToTokens for FieldDeriveInput {
             field: &#path_to_crate::__private::syn::Field,
           ) -> darling::Result<Self> {
             <#hidden_derive_input_name #tg as darling::FromField>::from_field(field)
-              .map(::core::convert::Into::into)
+              .and_then(|field| ::core::convert::TryInto::try_into(field).map_err(darling::Error::from))
           }
         }
 
@@ -190,9 +192,44 @@ impl ToTokens for FieldDeriveInput {
             &self.attrs
           }
 
-          #[inline]
-          fn meta(&self) -> &#path_to_crate::__private::ast::object::FieldMeta {
-            &self.__meta__
+          fn tag(&self) -> ::core::option::Option<::core::num::NonZeroU32> {
+            self.__meta__.tag()
+          }
+
+          fn wire(&self) -> ::core::option::Option<&syn::Type> {
+            self.__meta__.wire()
+          }
+
+          fn partial(&self) -> &#path_to_crate::__private::ast::object::PartialFieldAttribute {
+            self.__meta__.partial()
+          }
+
+          fn partial_decoded(&self) -> &#path_to_crate::__private::ast::object::PartialDecodedFieldAttribute {
+            self.__meta__.partial_decoded()
+          }
+
+          fn copy(&self) -> ::core::primitive::bool {
+            self.__meta__.copy()
+          }
+
+          fn skip(&self) -> ::core::primitive::bool {
+            self.__meta__.skip()
+          }
+
+          fn selector(&self) -> &#path_to_crate::__private::ast::object::SelectorFieldAttribute {
+            &self.__meta__.selector()
+          }
+
+          fn label(&self) -> ::core::option::Option<&#path_to_crate::__private::ast::object::Label> {
+            self.__meta__.label()
+          }
+
+          fn schema(&self) -> &#path_to_crate::__private::ast::SchemaAttribute {
+            &self.__meta__.schema()
+          }
+
+          fn default(&self) -> ::core::option::Option<&syn::Path> {
+            self.__meta__.default()
           }
         }
       };
@@ -323,9 +360,7 @@ impl ToTokens for ObjectDeriveInput {
         #meta_field_without_darling
 
         #[doc(hidden)]
-        __path_to_crate__: #path_to_crate::__private::syn::Path,
-        #[doc(hidden)]
-        __meta__: #path_to_crate::__private::ast::object::ObjectFromMeta,
+        __meta__: #path_to_crate::__private::ast::object::ObjectAttribute,
       }
 
       #(#meta)*
@@ -344,7 +379,7 @@ impl ToTokens for ObjectDeriveInput {
       }
 
       const _: () = {
-        use #path_to_crate::__private::darling;
+        use #path_to_crate::__private::{darling, syn};
 
         #[allow(warnings)]
         #[doc(hidden)]
@@ -426,8 +461,7 @@ impl ToTokens for ObjectDeriveInput {
               output: ::core::option::Option::None,
               derived: true,
               __args__: #meta_name {
-                __path_to_crate__: args.__path_to_crate__,
-                __meta__: args.__meta__,
+                __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
                 #convert
               },
             })
@@ -456,8 +490,7 @@ impl ToTokens for ObjectDeriveInput {
               output: args.__output__,
               derived: false,
               __args__: #meta_name {
-                __path_to_crate__: args.__path_to_crate__,
-                __meta__: args.__meta__,
+                __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
                 #convert
               },
             })
@@ -483,10 +516,6 @@ impl ToTokens for ObjectDeriveInput {
         impl #ig #path_to_crate::__private::ast::object::Object for #input_name #tg #w {
           type Field = #field;
 
-          fn path(&self) -> &#path_to_crate::__private::syn::Path {
-            &self.__args__.__path_to_crate__
-          }
-
           fn name(&self) -> &#path_to_crate::__private::syn::Ident {
             &self.ident
           }
@@ -507,8 +536,40 @@ impl ToTokens for ObjectDeriveInput {
             self.data.as_ref().take_struct().expect(#expect_msg).fields
           }
 
-          fn meta(&self) -> &#path_to_crate::__private::ast::object::ObjectFromMeta {
-            &self.__args__.__meta__
+          fn path_to_grost(&self) -> &syn::Path {
+            self.__args__.__meta__.path_to_grost()
+          }
+
+          fn default(&self) -> ::core::option::Option<&syn::Path> {
+            self.__args__.__meta__.default()
+          }
+
+          fn schema(&self) -> &#path_to_crate::__private::ast::SchemaAttribute {
+            self.__args__.__meta__.schema()
+          }
+
+          fn partial(&self) -> &#path_to_crate::__private::ast::object::PartialObjectAttribute {
+            self.__args__.__meta__.partial()
+          }
+
+          fn partial_decoded(&self) -> &#path_to_crate::__private::ast::object::PartialDecodedObjectAttribute {
+            self.__args__.__meta__.partial_decoded()
+          }
+
+          fn selector(&self) -> &#path_to_crate::__private::ast::object::SelectorAttribute {
+            self.__args__.__meta__.selector()
+          }
+
+          fn selector_iter(&self) -> &#path_to_crate::__private::ast::object::SelectorIterAttribute {
+            self.__args__.__meta__.selector_iter()
+          }
+
+          fn indexer(&self) -> &#path_to_crate::__private::ast::object::IndexerAttribute {
+            self.__args__.__meta__.indexer()
+          }
+
+          fn copy(&self) -> ::core::primitive::bool {
+            self.__args__.__meta__.copy()
           }
         }
       };

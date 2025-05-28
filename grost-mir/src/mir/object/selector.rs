@@ -5,7 +5,7 @@ use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
   grost_flavor_param, grost_lifetime, grost_wire_format_param,
-  object::{Field, ObjectExt as _, Selection, SelectorIterFromMeta},
+  object::{Field, ObjectExt as _, Selection, SelectorIterAttribute},
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
@@ -332,7 +332,7 @@ impl Selector {
       input.generics(),
       &mut generics,
       path_to_grost,
-      input.fields().iter().filter(|f| !f.meta().skip()).copied(),
+      input.fields().iter().filter(|f| !f.skip()).copied(),
       &fgp,
     )?;
 
@@ -340,7 +340,7 @@ impl Selector {
     let mut skipped_fields = vec![];
 
     input.fields().iter().try_for_each(|f| {
-      if f.meta().skip() {
+      if f.skip() {
         let field_name = format_ident!("__{}__", f.name());
         let field_ty = f.ty();
         let field = syn::Field::parse_named.parse2(quote! {
@@ -351,7 +351,7 @@ impl Selector {
         return darling::Result::Ok(());
       }
       let ty = f.ty();
-      let tag = f.meta().tag().expect("field tag is required");
+      let tag = f.tag().expect("field tag is required");
       let wfr = wire_format_reflection_ty(
         path_to_grost,
         input.name(),
@@ -361,7 +361,7 @@ impl Selector {
       );
       let wf = wire_format_ty(path_to_grost, input.name(), input.generics(), &wfr);
 
-      let attrs = f.meta().selector().attrs();
+      let attrs = f.selector().attrs();
       let vis = f.vis();
       let name = f.name();
       let fgi = &fgp.ident;
@@ -372,12 +372,12 @@ impl Selector {
 
       fields.push(SelectorField {
         field,
-        default: f.meta().selector().select().clone(),
+        default: f.selector().select().clone(),
       });
       Ok(())
     })?;
 
-    let attrs = input.meta().selector().attrs().to_vec();
+    let attrs = input.selector().attrs().to_vec();
     Ok(Self {
       parent_name: input.name().clone(),
       name,
@@ -393,7 +393,7 @@ impl Selector {
     &self,
     name: Ident,
     indexer: Ident,
-    iter_meta: &SelectorIterFromMeta,
+    iter_meta: &SelectorIterAttribute,
   ) -> darling::Result<SelectorIter> {
     let mut generics = Generics::default();
     let original_generics = self.generics.clone();
@@ -1240,7 +1240,7 @@ where
       path_to_grost,
       object_name,
       &object_generics.split_for_impl().1,
-      f.meta().tag().expect("field tag is required").get(),
+      f.tag().expect("field tag is required").get(),
       &fg.ident,
     );
     let wf = wire_format_ty(path_to_grost, object_name, object_generics, &wfr);

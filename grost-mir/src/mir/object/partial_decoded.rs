@@ -473,9 +473,9 @@ impl PartialDecodedObject {
     O: crate::ast::object::Object,
   {
     let fields = input.fields();
-    let meta = input.meta();
+    let meta = input;
     let copyable =
-      meta.partial_decoded().copy() | fields.iter().all(|f| f.meta().partial_decoded().copy());
+      meta.partial_decoded().copy() | fields.iter().all(|f| f.partial_decoded().copy());
     let mut generics = Generics::default();
     let lt = grost_lifetime();
     let flavor_param = grost_flavor_param();
@@ -536,7 +536,7 @@ impl PartialDecodedObject {
       input.generics(),
       &mut generics,
       path_to_grost,
-      fields.iter().filter(|f| !f.meta().skip()).copied(),
+      fields.iter().filter(|f| !f.skip()).copied(),
       &flavor_param,
       &lt.lifetime,
       &unknown_buffer_param,
@@ -551,12 +551,12 @@ impl PartialDecodedObject {
     let mut skipped_fields = vec![];
     fields.iter().try_for_each(|f| {
       let ty = f.ty();
-      let meta = f.meta();
+      let meta = f;
       if meta.skip() {
         let field_name = f.name();
         let field_ty = f.ty();
         let vis = f.vis();
-        let attrs = f.meta().partial_decoded().attrs();
+        let attrs = f.partial_decoded().attrs();
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
           #vis #field_name: ::core::option::Option<#field_ty>
@@ -584,7 +584,7 @@ impl PartialDecodedObject {
       );
       let vis = f.vis();
       let name = f.name();
-      let attrs = f.meta().partial_decoded().attrs();
+      let attrs = f.partial_decoded().attrs();
       let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
       let field = syn::Field::parse_named.parse2(quote! {
         #(#attrs)*
@@ -599,7 +599,7 @@ impl PartialDecodedObject {
         &wf,
         &decoded_state,
         &generics.flavor_param().ident,
-        f.meta().partial_decoded().copy() || copyable,
+        f.partial_decoded().copy() || copyable,
       )?
       .collect();
 
@@ -875,12 +875,11 @@ where
   let (_, tg, _) = object_generics.split_for_impl();
   fields.try_for_each(move |f| {
     let ty = f.ty();
-    let meta = f.meta();
     let wf = wire_format_reflection_ty(
       path_to_grost,
       object_name,
       &tg,
-      meta.tag().expect("field tag is required").get(),
+      f.tag().expect("field tag is required").get(),
       &flavor_param.ident,
     );
     let decoded_state = decoded_state_ty(
@@ -901,7 +900,7 @@ where
       &wf,
       &decoded_state,
       &flavor_param.ident,
-      f.meta().partial_decoded().copy() || copy,
+      f.partial_decoded().copy() || copy,
     )?);
 
     Ok(())

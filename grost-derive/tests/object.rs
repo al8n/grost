@@ -14,69 +14,83 @@ use grost_derive::{Object, object};
 //   }
 // }
 
-// #[object(
-//   output(path = "grost-derive/tests/user.rs", format),
-//   flavor = "Network",
-//   partial(skip),
-//   partial_decoded(lifetime = "'de", unknown_buffer = "UB", flavor = "F", owned),
-// )]
-// // #[derive(Debug, Clone, PartialEq, Eq, Object)]
-// pub struct User<I> {
-//   #[grost(
-//     tag = 1,
-//     schema(description = "The id of the user"),
-//     selector(select = "all"),
-//     wire = "grost::flavors::network::LengthDelimited",
-//     partial_decoded(copy,)
-//   )]
-//   id: I,
-//   #[grost(
-//     tag = 2,
-//     schema(description = "The nick name of the user"),
-//     selector(select = "all"),
-//     partial_decoded(copy,)
-//   )]
-//   name: String,
-//   #[grost(
-//     tag = 3,
-//     type(scalar),
-//     schema(description = "The age of the user"),
-//     copy,
-//     partial(type = "u8"),
-//     partial_decoded(copy, owned)
-//   )]
-//   age: u8,
-// #[grost(
-//   tag = 4,
-//   schema(description = "The email of the user"),
-//   partial_decoded(copy, type = "&'t str"),
-//   type(
-//     string,
-//     wire(
-//       flavor = "grost::flavors::Network",
-//       format = "some format",
-//       identifier(
-//         new = "",
-//         encode = "",
-//         encoded_len = "",
-//       ),
-//     ),
-//     wire(
-//       flavor = "grost::flavors::OtherFlavor",
-//       format = "other format",
-//       identifier(
-//         new = "",
-//         encode = "",
-//         encoded_len = "",
-//       ),
-//     ),
-//     optional(repeated),
-//   ),
-// )]
-// emails: Option<Vec<String>>,
-//   #[grost(skip)]
-//   _w: core::marker::PhantomData<*const ()>,
-// }
+#[derive(Debug, Clone, PartialEq, Eq, Object)]
+#[grost(
+  // output(path = "grost-derive/tests/user.rs", format),
+  flavor(
+    default(
+      encode(
+        skip_default,
+        enum = "grost::flavors::network::encoding::enumeration",
+      )
+    ),
+    mystorage(
+      format = "grost::flavors::network::LengthDelimited",
+      identifier(
+        constructor = "grost::flavors::network::Identifier::new",
+        encode = "grost::flavors::network::Identifier::encode",
+      ),
+      type = "grost::flavors::network::Net",
+    ),
+  ),
+  generic(lifetime = "'de", unknown_buffer = "UB", flavor = "F"),
+)]
+pub struct User<I> {
+  #[grost(
+    tag = 1,
+    schema(description = "The id of the user"),
+    selector(select = "all"),
+    wire = "grost::flavors::network::LengthDelimited",
+    partial_decoded(copy,)
+  )]
+  id: I,
+  #[grost(
+    tag = 2,
+    schema(description = "The nick name of the user"),
+    selector(select = "all"),
+    partial_decoded(copy,)
+  )]
+  name: String,
+  #[grost(
+    tag = 3,
+    // type(scalar),
+    schema(description = "The age of the user"),
+    copy,
+    // partial(type = "u8"),
+    partial_decoded(copy, owned)
+  )]
+  age: u8,
+  // #[grost(
+  //   tag = 4,
+  //   schema(description = "The email of the user"),
+  //   partial_decoded(copy, type = "&'t str"),
+  //   type(
+  //     string,
+  //     wire(
+  //       flavor = "grost::flavors::Network",
+  //       format = "some format",
+  //       identifier(
+  //         new = "",
+  //         encode = "",
+  //         encoded_len = "",
+  //       ),
+  //     ),
+  //     wire(
+  //       flavor = "grost::flavors::OtherFlavor",
+  //       format = "other format",
+  //       identifier(
+  //         new = "",
+  //         encode = "",
+  //         encoded_len = "",
+  //       ),
+  //     ),
+  //     optional(repeated),
+  //   ),
+  // )]
+  // emails: Option<Vec<String>>,
+  #[grost(skip)]
+  _w: core::marker::PhantomData<*const ()>,
+}
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;

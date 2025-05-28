@@ -272,7 +272,7 @@ impl FromMeta for MapFieldLabel {
 
 #[derive(Debug, Default, Clone, FromMeta)]
 #[darling(and_then = "Self::validate")]
-pub(super) struct FieldLabelMeta {
+pub(super) struct FieldLabelFromMeta {
   #[darling(default)]
   optional: Option<SpannedValue<OptionalFieldLabel>>,
   #[darling(default)]
@@ -281,7 +281,7 @@ pub(super) struct FieldLabelMeta {
   map: Option<SpannedValue<MapFieldLabel>>,
 }
 
-impl FieldLabelMeta {
+impl FieldLabelFromMeta {
   pub(super) fn into_label(self) -> Option<Label> {
     if let Some(optional) = self.optional {
       return Some(Label::Optional(Label::from_hint(&optional.0).map(Arc::new)));

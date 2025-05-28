@@ -1,14 +1,17 @@
 use core::num::NonZeroU32;
-use std::sync::{Arc, OnceLock};
 
 use darling::FromMeta;
-use label::FieldLabelMeta;
+use either::Either;
+use label::FieldLabelFromMeta;
 use syn::{Attribute, Ident, Type};
 
+use crate::ast::SchemaAttribute;
+
 use super::{Attributes, SchemaFromMeta};
+use select::SelectorFieldFromMeta;
 
 pub use label::Label;
-pub use select::{Selection, SelectorFieldMeta};
+pub use select::{Selection, SelectorFieldAttribute};
 
 mod label;
 mod select;
@@ -16,7 +19,7 @@ mod wire;
 
 /// The meta of the partial reference object field
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialDecodedFieldMeta {
+struct PartialDecodedFieldFromMeta {
   #[darling(default)]
   copy: bool,
   #[darling(default, map = "Attributes::into_inner")]
@@ -27,7 +30,27 @@ pub struct PartialDecodedFieldMeta {
   owned: bool,
 }
 
-impl PartialDecodedFieldMeta {
+impl PartialDecodedFieldFromMeta {
+  /// Finalizes the partial decoded field meta and returns the attribute
+  pub fn finalize(self) -> PartialDecodedFieldAttribute {
+    PartialDecodedFieldAttribute {
+      copy: self.copy,
+      attrs: self.attrs,
+      ty: self.ty,
+      owned: self.owned,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct PartialDecodedFieldAttribute {
+  copy: bool,
+  attrs: Vec<Attribute>,
+  ty: Option<Type>,
+  owned: bool,
+}
+
+impl PartialDecodedFieldAttribute {
   /// Returns the attributes of the partial reference object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
@@ -51,12 +74,24 @@ impl PartialDecodedFieldMeta {
 
 /// The meta of the partial object field
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialFieldMeta {
+struct PartialFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
 }
 
-impl PartialFieldMeta {
+impl PartialFieldFromMeta {
+  /// Finalizes the partial field meta and returns the attribute
+  pub fn finalize(self) -> PartialFieldAttribute {
+    PartialFieldAttribute { attrs: self.attrs }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct PartialFieldAttribute {
+  attrs: Vec<Attribute>,
+}
+
+impl PartialFieldAttribute {
   /// Returns the attributes of the partial object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
@@ -65,7 +100,7 @@ impl PartialFieldMeta {
 
 /// The meta of the object field
 #[derive(Debug, Clone, FromMeta)]
-pub struct FieldMeta {
+pub struct FieldFromMeta {
   #[darling(default)]
   schema: SchemaFromMeta,
   #[darling(default)]
@@ -75,22 +110,56 @@ pub struct FieldMeta {
   #[darling(default)]
   wire: Option<Type>,
   #[darling(default)]
-  partial: PartialFieldMeta,
+  partial: PartialFieldFromMeta,
   #[darling(default)]
-  partial_decoded: PartialDecodedFieldMeta,
+  partial_decoded: PartialDecodedFieldFromMeta,
   #[darling(default)]
-  selector: SelectorFieldMeta,
+  selector: SelectorFieldFromMeta,
   #[darling(default)]
   copy: bool,
   #[darling(default)]
   skip: bool,
   #[darling(flatten)]
-  meta: FieldLabelMeta,
-  #[darling(skip)]
-  specification: Arc<OnceLock<Option<Label>>>,
+  label: FieldLabelFromMeta,
 }
 
-impl FieldMeta {
+impl FieldFromMeta {
+  pub fn finalize(self) -> darling::Result<FieldAttribute> {
+    Ok(FieldAttribute {
+      default: self.default,
+      schema: self.schema.into(),
+      tag: self.tag,
+      skip: self.skip,
+      wire: self.wire,
+      partial: self.partial.finalize(),
+      partial_decoded: self.partial_decoded.finalize(),
+      selector: self.selector.finalize(),
+      copy: self.copy,
+      label: self.label.into_label(),
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct SkippedFieldAttribute {}
+
+impl SkippedFieldAttribute {}
+
+#[derive(Debug, Clone)]
+pub struct FieldAttribute {
+  default: Option<syn::Path>,
+  schema: SchemaAttribute,
+  tag: Option<NonZeroU32>,
+  wire: Option<Type>,
+  partial: PartialFieldAttribute,
+  partial_decoded: PartialDecodedFieldAttribute,
+  selector: SelectorFieldAttribute,
+  copy: bool,
+  skip: bool,
+  label: Option<Label>,
+}
+
+impl FieldAttribute {
   /// Returns the tag of the field
   pub const fn tag(&self) -> Option<NonZeroU32> {
     self.tag
@@ -102,12 +171,12 @@ impl FieldMeta {
   }
 
   /// Returns the information about the partial object field
-  pub const fn partial(&self) -> &PartialFieldMeta {
+  pub const fn partial(&self) -> &PartialFieldAttribute {
     &self.partial
   }
 
   /// Returns the information about the partial reference object field
-  pub const fn partial_decoded(&self) -> &PartialDecodedFieldMeta {
+  pub const fn partial_decoded(&self) -> &PartialDecodedFieldAttribute {
     &self.partial_decoded
   }
 
@@ -122,20 +191,17 @@ impl FieldMeta {
   }
 
   /// Returns the default selection for the field
-  pub const fn selector(&self) -> &SelectorFieldMeta {
+  pub const fn selector(&self) -> &SelectorFieldAttribute {
     &self.selector
   }
 
   /// Returns the type specification of the field
-  pub fn type_specification(&self) -> Option<&Label> {
-    self
-      .specification
-      .get_or_init(|| self.meta.clone().into_label())
-      .as_ref()
+  pub fn label(&self) -> Option<&Label> {
+    self.label.as_ref()
   }
 
   /// Returns the schema information of the field
-  pub const fn schema(&self) -> &SchemaFromMeta {
+  pub const fn schema(&self) -> &SchemaAttribute {
     &self.schema
   }
 
@@ -159,6 +225,33 @@ pub trait Field: Clone {
   /// Returns the attributes of the field
   fn attrs(&self) -> &[Attribute];
 
-  /// Returns the field meta information
-  fn meta(&self) -> &FieldMeta;
+  /// Returns the tag of the field
+  fn tag(&self) -> Option<NonZeroU32>;
+
+  /// Returns the wire format will be used for the field
+  fn wire(&self) -> Option<&Type>;
+
+  /// Returns the information about the partial object field
+  fn partial(&self) -> &PartialFieldAttribute;
+
+  /// Returns the information about the partial reference object field
+  fn partial_decoded(&self) -> &PartialDecodedFieldAttribute;
+
+  /// Returns whether the field type is copyable
+  fn copy(&self) -> bool;
+
+  /// Returns whether the field should be skipped
+  fn skip(&self) -> bool;
+
+  /// Returns the default selection for the field
+  fn selector(&self) -> &SelectorFieldAttribute;
+
+  /// Returns the type specification of the field
+  fn label(&self) -> Option<&Label>;
+
+  /// Returns the schema information of the field
+  fn schema(&self) -> &SchemaAttribute;
+
+  /// Returns the fn which will be used to generate the default value for the field
+  fn default(&self) -> Option<&syn::Path>;
 }

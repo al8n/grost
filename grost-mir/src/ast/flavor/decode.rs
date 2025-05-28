@@ -15,17 +15,13 @@ pub(super) struct DecodeValueParser {
 
 impl From<DecodeValueParser> for DecodeValue {
   fn from(DecodeValueParser { or_else_default }: DecodeValueParser) -> Self {
-    Self {
-      or_else_default,
-    }
+    Self { or_else_default }
   }
 }
 
 impl From<DecodeValue> for DecodeValueParser {
   fn from(DecodeValue { or_else_default }: DecodeValue) -> Self {
-    Self {
-      or_else_default,
-    }
+    Self { or_else_default }
   }
 }
 

@@ -231,12 +231,12 @@ impl TryFrom<BuiltinFlavorValueSerdeHelper> for BuiltinFlavorRepr {
       BuiltinFlavorValueSerdeHelper::File(path_buf) => {
         BuiltinFlavorValueParser::try_from(path_buf.as_str()).map(BuiltinFlavorRepr::Nested)
       }
-      BuiltinFlavorValueSerdeHelper::Config { encode, decode } => Ok(BuiltinFlavorRepr::Nested(
-        BuiltinFlavorValueParser {
+      BuiltinFlavorValueSerdeHelper::Config { encode, decode } => {
+        Ok(BuiltinFlavorRepr::Nested(BuiltinFlavorValueParser {
           encode,
           decode,
-        },
-      )),
+        }))
+      }
       BuiltinFlavorValueSerdeHelper::Bool(b) => Ok(BuiltinFlavorRepr::Bool(b)),
     }
   }
@@ -274,7 +274,9 @@ impl TryFrom<FlavorValueSerdeHelper> for FlavorValue {
 
   fn try_from(value: FlavorValueSerdeHelper) -> Result<Self, Self::Error> {
     match value {
-      FlavorValueSerdeHelper::File(path_buf) => FlavorValueParser::from_path(path_buf.as_str()).map(Into::into),
+      FlavorValueSerdeHelper::File(path_buf) => {
+        FlavorValueParser::from_path(path_buf.as_str()).map(Into::into)
+      }
       FlavorValueSerdeHelper::Config {
         ty,
         format,
@@ -301,78 +303,6 @@ impl From<FlavorValue> for FlavorValueSerdeHelper {
       encode: value.encode,
       decode: value.decode,
     }
-  }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
-pub(super) enum RegistrationValueSerdeHelper {
-  File(String),
-  Config {
-    or_else_default: bool,
-    #[cfg_attr(feature = "serde", serde(rename = "type", with = "serde_type"))]
-    ty: syn::Type,
-    identifier: IdentifierAttribute,
-    encode: EncodeAttribute,
-  },
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(transparent)]
-pub(super) struct RegistrationSerdeHelper(IndexMap<String, RegistrationValueSerdeHelper>);
-
-impl From<RegistrationAttribute> for RegistrationSerdeHelper {
-  fn from(value: RegistrationAttribute) -> Self {
-    Self(
-      value
-        .flavors
-        .into_iter()
-        .map(|(k, v)| {
-          (
-            k.to_string(),
-            RegistrationValueSerdeHelper::Config {
-              or_else_default: v.or_else_default,
-              ty: v.ty,
-              identifier: v.identifier,
-              encode: v.encode,
-            },
-          )
-        })
-        .collect(),
-    )
-  }
-}
-
-impl TryFrom<RegistrationSerdeHelper> for RegistrationAttribute {
-  type Error = syn::Error;
-
-  fn try_from(value: RegistrationSerdeHelper) -> Result<Self, Self::Error> {
-    value
-      .0
-      .into_iter()
-      .map(|(k, v)| {
-        let ident = syn::parse_str(k.as_str())?;
-        let value = match v {
-          RegistrationValueSerdeHelper::File(path_buf) => {
-            RegistrationValueAttribute::try_from(path_buf.as_str()).map_err(syn::Error::from)?
-          }
-          RegistrationValueSerdeHelper::Config {
-            or_else_default,
-            ty,
-            identifier,
-            encode,
-          } => RegistrationValueAttribute {
-            or_else_default,
-            ty,
-            identifier,
-            encode,
-          },
-        };
-        Ok((ident, value))
-      })
-      .collect::<Result<IndexMap<Ident, RegistrationValueAttribute>, syn::Error>>()
-      .map(|flavors| Self { flavors })
   }
 }
 

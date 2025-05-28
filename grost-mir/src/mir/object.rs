@@ -10,7 +10,7 @@ pub use reflection::Reflection;
 pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
-  SchemaFromMeta,
+  SchemaAttribute,
   object::{Field as _, Label, ObjectExt as _},
 };
 
@@ -24,7 +24,7 @@ pub struct Field<M> {
   name: Ident,
   ty: Type,
   vis: Visibility,
-  schema: SchemaFromMeta,
+  schema: SchemaAttribute,
   default: Option<Path>,
   tag: NonZeroU32,
   wire: Option<Type>,
@@ -91,7 +91,7 @@ impl<M> Field<M> {
 
   /// Returns the schema information of the field.
   #[inline]
-  pub const fn schema(&self) -> &SchemaFromMeta {
+  pub const fn schema(&self) -> &SchemaAttribute {
     &self.schema
   }
 
@@ -105,8 +105,7 @@ impl<M> Field<M> {
   where
     M: crate::ast::object::Field,
   {
-    let meta = input.meta();
-    let tag = match meta.tag() {
+    let tag = match input.tag() {
       Some(tag) => tag,
       None => {
         let name = input.name();
@@ -123,12 +122,12 @@ impl<M> Field<M> {
       ty: input.ty().clone(),
       vis: input.vis().clone(),
       tag,
-      specification: meta.type_specification().cloned(),
+      specification: input.label().cloned(),
       attrs: input.attrs().to_vec(),
       copy,
-      schema: meta.schema().clone(),
-      default: meta.default().cloned(),
-      wire: meta.wire().cloned(),
+      schema: input.schema().clone(),
+      default: input.default().cloned(),
+      wire: input.wire().cloned(),
       meta: input,
     })
   }
@@ -183,13 +182,12 @@ impl<M> SkippedField<M> {
   where
     M: crate::ast::object::Field,
   {
-    let meta = input.meta();
     Ok(Self {
       name: input.name().clone(),
       ty: input.ty().clone(),
       vis: input.vis().clone(),
       attrs: input.attrs().to_vec(),
-      default: meta.default().cloned(),
+      default: input.default().cloned(),
       meta: input,
     })
   }
@@ -201,7 +199,7 @@ where
 {
   name: Ident,
   path_to_grost: Path,
-  schema: SchemaFromMeta,
+  schema: SchemaAttribute,
   vis: Visibility,
   generics: Generics,
   fields: Vec<Field<M::Field>>,
@@ -261,7 +259,7 @@ where
   }
 
   #[inline]
-  pub const fn shema(&self) -> &SchemaFromMeta {
+  pub const fn shema(&self) -> &SchemaAttribute {
     &self.schema
   }
 
@@ -313,15 +311,15 @@ where
   }
 
   pub fn from_object(input: M) -> darling::Result<Self> {
-    let path_to_grost = input.path();
+    let path_to_grost = input.path_to_grost();
     let mut fields = vec![];
     let mut skipped_fields = vec![];
 
     for f in input.fields() {
-      if f.meta().skip() {
+      if f.skip() {
         skipped_fields.push(SkippedField::from_input(f.clone())?);
       } else {
-        let copy = input.meta().copy() | f.meta().copy();
+        let copy = input.copy() | f.copy();
         fields.push(Field::from_input(f.clone(), copy)?);
       }
     }
@@ -332,7 +330,7 @@ where
     let selector_iter = selector.selector_iter(
       input.selector_iter_name(),
       input.indexer_name(),
-      input.meta().selector_iter(),
+      input.selector_iter(),
     )?;
     let indexer = Indexer::from_input(&input)?;
     let reflection = Reflection::from_input(&input)?;
@@ -342,7 +340,7 @@ where
       skipped_fields,
       attrs: input.attrs().to_vec(),
       path_to_grost: path_to_grost.clone(),
-      schema: input.meta().schema().clone(),
+      schema: input.schema().clone(),
       vis: input.vis().clone(),
       generics: input.generics().clone(),
       fields,

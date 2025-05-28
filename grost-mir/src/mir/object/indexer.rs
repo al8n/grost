@@ -69,12 +69,12 @@ impl Indexer {
     O: crate::ast::object::Object,
   {
     let name = input.indexer_name();
-    let attrs = input.meta().indexer().attrs().to_vec();
+    let attrs = input.indexer().attrs().to_vec();
 
     let variants = input
       .fields()
       .iter()
-      .filter(|f| !f.meta().skip())
+      .filter(|f| !f.skip())
       .enumerate()
       .map(|(idx, f)| {
         let variant = format_ident!("{}", f.name().to_string().to_upper_camel_case());
@@ -87,7 +87,7 @@ impl Indexer {
             #variant = #idx
           })
           .map(|variant| IndexerVariant {
-            tag: f.meta().tag().expect("field must have a tag"),
+            tag: f.tag().expect("field must have a tag"),
             variant,
             field_name: f.name().clone(),
           })

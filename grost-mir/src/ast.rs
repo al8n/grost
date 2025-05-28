@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use darling::FromMeta;
 use quote::quote;
-use syn::{Attribute, parse::Parser};
+use syn::{Attribute, ext::IdentExt, parse::Parser};
 
 pub use flavor::*;
 pub use generic::*;
@@ -54,14 +54,30 @@ impl FromMeta for Attributes {
 
 /// The meta for the schema
 #[derive(Default, Debug, Clone, FromMeta)]
-pub struct SchemaFromMeta {
+struct SchemaFromMeta {
   #[darling(default)]
   name: Option<String>,
   #[darling(default)]
   description: Option<String>,
 }
 
-impl SchemaFromMeta {
+impl From<SchemaFromMeta> for SchemaAttribute {
+  fn from(meta: SchemaFromMeta) -> Self {
+    Self {
+      name: meta.name,
+      description: meta.description,
+    }
+  }
+}
+
+/// The meta for the schema
+#[derive(Default, Debug, Clone)]
+pub struct SchemaAttribute {
+  name: Option<String>,
+  description: Option<String>,
+}
+
+impl SchemaAttribute {
   /// Returns the name of the schema
   pub const fn name(&self) -> Option<&str> {
     match self.name.as_ref() {

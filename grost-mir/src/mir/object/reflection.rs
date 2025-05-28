@@ -2,7 +2,7 @@ use quote::{format_ident, quote};
 use syn::{Ident, parse::Parser};
 
 use crate::ast::{
-  SchemaFromMeta, grost_flavor_param,
+  SchemaAttribute, grost_flavor_param,
   object::{Field, ObjectExt},
 };
 
@@ -12,7 +12,7 @@ pub struct ReflectionField {
   field: syn::Field,
   tag: u32,
   object_ty: syn::Type,
-  schema: SchemaFromMeta,
+  schema: SchemaAttribute,
 }
 
 impl ReflectionField {
@@ -28,7 +28,7 @@ impl ReflectionField {
     &self.object_ty
   }
 
-  pub const fn schema(&self) -> &SchemaFromMeta {
+  pub const fn schema(&self) -> &SchemaAttribute {
     &self.schema
   }
 }
@@ -37,7 +37,7 @@ pub struct Reflection {
   parent_name: Ident,
   vis: syn::Visibility,
   generics: syn::Generics,
-  schema: SchemaFromMeta,
+  schema: SchemaAttribute,
   #[allow(clippy::type_complexity)]
   fields: Vec<Box<dyn Fn(&syn::Type) -> syn::Result<ReflectionField> + 'static>>,
 }
@@ -60,7 +60,7 @@ impl Reflection {
   {
     let parent_name = input.name().clone();
     let vis = input.vis().clone();
-    let path_to_grost = input.path();
+    let path_to_grost = input.path_to_grost();
     let object_name = input.name();
     let flavor_param = grost_flavor_param();
 
@@ -72,7 +72,7 @@ impl Reflection {
     let fields = input
       .fields()
       .iter()
-      .filter(|f| !f.meta().skip())
+      .filter(|f| !f.skip())
       .map(|f| {
         let field_name = f.name().clone();
         let object_name = object_name.clone();
@@ -80,12 +80,12 @@ impl Reflection {
           " The reflection to the `{}.{}` field.",
           object_name, field_name
         );
-        let tag = f.meta().tag().expect("field tag is required").get();
+        let tag = f.tag().expect("field tag is required").get();
         let vis = f.vis().clone();
         let generics = input.generics().clone();
         let path_to_grost = path_to_grost.clone();
         let ty = f.ty().clone();
-        let schema = f.meta().schema().clone();
+        let schema = f.schema().clone();
 
         syn::parse2(quote! {
           #path_to_grost::__private::reflection::TypeReflection<#ty>: #path_to_grost::__private::reflection::Reflectable<#ty, Reflection = #path_to_grost::__private::reflection::Type>
@@ -118,7 +118,7 @@ impl Reflection {
 
     Ok(Self {
       parent_name,
-      schema: input.meta().schema().clone(),
+      schema: input.schema().clone(),
       fields,
       generics: reflection_generics,
       vis,

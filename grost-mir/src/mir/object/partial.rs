@@ -114,7 +114,6 @@ impl PartialField {
   where
     I: crate::ast::object::Field,
   {
-    let meta = input.meta();
     let ty = input.ty();
     let name = input.name();
     let vis = input.vis();
@@ -131,9 +130,9 @@ impl PartialField {
 
     Ok(Self {
       field,
-      tag: meta.tag().expect("field tag is required"),
-      specification: meta.type_specification().cloned(),
-      copy: meta.copy() | copy,
+      tag: input.tag().expect("field tag is required"),
+      specification: input.label().cloned(),
+      copy: input.copy() | copy,
       object_type: ty.clone(),
       output_type,
     })
@@ -218,11 +217,11 @@ impl PartialObject {
   where
     O: crate::ast::object::Object,
   {
-    let meta = input.meta();
+    let meta = input;
     let mut fields = vec![];
     let mut skipped_fields = vec![];
     input.fields().into_iter().try_for_each(|f| {
-      if f.meta().skip() {
+      if f.skip() {
         let field_name = f.name();
         let vis = f.vis();
         let ty = f.ty();
