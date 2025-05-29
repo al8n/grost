@@ -9,7 +9,7 @@ use super::{Attributes, SchemaFromMeta};
 use select::SelectorFieldFromMeta;
 
 pub use convert::ConvertAttribute;
-pub use flavor::{DecodeAttribute, EncodeAttribute, FieldFlavorAttribute};
+pub use flavor::{DecodeAttribute as FieldDecodeAttribute, EncodeAttribute as FieldEncodeAttribute, FieldFlavorAttribute};
 pub use label::Label;
 pub use select::{Selection, SelectorFieldAttribute};
 

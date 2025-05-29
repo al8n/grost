@@ -1,10 +1,9 @@
 use super::{decode::DecodeValue, *};
 
-use indexmap::IndexMap;
 use quote::ToTokens;
 
 use ::serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
-use syn::{Ident, Path};
+use syn::Path;
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
@@ -214,6 +213,7 @@ impl From<DecodeAttribute> for DecodeSerdeHelper {
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
 pub(super) enum BuiltinFlavorValueSerdeHelper {
   File(String),
   Config {
@@ -256,6 +256,7 @@ impl From<BuiltinFlavorRepr> for BuiltinFlavorValueSerdeHelper {
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
 pub(super) enum FlavorValueSerdeHelper {
   File(String),
   Config {

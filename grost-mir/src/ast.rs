@@ -34,15 +34,15 @@ impl MissingOperation {
 /// Specifies the behavior of how to transform from decoded state to base state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransformOperation {
-  From(syn::Path),
-  TryFrom(syn::Path),
+  Into(syn::Path),
+  TryInto(syn::Path),
 }
 
 impl TransformOperation {
   fn name(&self) -> &'static str {
     match self {
-      Self::From(_) => "from_decoded",
-      Self::TryFrom(_) => "try_from_decoded",
+      Self::Into(_) => "transform",
+      Self::TryInto(_) => "try_transform",
     }
   }
 }

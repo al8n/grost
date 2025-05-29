@@ -65,7 +65,6 @@ impl FromMeta for ConvertFromMeta {
 
           if path.is_ident("or_else") {
             Self::check_missing_operation_conflict(missing_operation.as_ref(), "or_else")?;
-
             let nv = meta.require_name_value()?;
             let path = Self::parse_path_from_expr(&nv.value)?;
             missing_operation = Some(MissingOperation::Or(path));
@@ -84,20 +83,19 @@ impl FromMeta for ConvertFromMeta {
             }
           } else if path.is_ident("ok_or_else") {
             Self::check_missing_operation_conflict(missing_operation.as_ref(), "ok_or_else")?;
-
             let nv = meta.require_name_value()?;
             let path = Self::parse_path_from_expr(&nv.value)?;
             missing_operation = Some(MissingOperation::OkOr(path));
           } else if path.is_ident("transform") {
             Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
             let nv = meta.require_name_value()?;
-            transform_operation = Some(TransformOperation::From(Self::parse_path_from_expr(
+            transform_operation = Some(TransformOperation::Into(Self::parse_path_from_expr(
               &nv.value,
             )?));
           } else if path.is_ident("try_transform") {
             Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
             let nv = meta.require_name_value()?;
-            transform_operation = Some(TransformOperation::TryFrom(Self::parse_path_from_expr(
+            transform_operation = Some(TransformOperation::TryInto(Self::parse_path_from_expr(
               &nv.value,
             )?));
           } else {

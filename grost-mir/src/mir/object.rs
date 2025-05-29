@@ -28,7 +28,7 @@ pub struct Field<M> {
   default: Option<Path>,
   tag: NonZeroU32,
   wire: Option<Type>,
-  specification: Label,
+  label: Label,
   attrs: Vec<Attribute>,
   copy: bool,
   meta: M,
@@ -65,10 +65,10 @@ impl<M> Field<M> {
     self.wire.as_ref()
   }
 
-  /// Returns the field type specification.
+  /// Returns the field type label.
   #[inline]
-  pub const fn type_specification(&self) -> &Label {
-    &self.specification
+  pub const fn label(&self) -> &Label {
+    &self.label
   }
 
   /// Returns the fn that returns the default value of the field.
@@ -122,7 +122,7 @@ impl<M> Field<M> {
       ty: input.ty().clone(),
       vis: input.vis().clone(),
       tag,
-      specification: input.label().clone(),
+      label: input.label().clone(),
       attrs: input.attrs().to_vec(),
       copy,
       schema: input.schema().clone(),
