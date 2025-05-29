@@ -1,33 +1,71 @@
 use core::num::NonZeroU32;
 
 use darling::FromMeta;
-use either::Either;
-use label::FieldLabelFromMeta;
-use syn::{Attribute, Ident, Type};
+use syn::{Attribute, Ident, Meta, Type, parse::Parser};
 
-use crate::ast::SchemaAttribute;
+use crate::ast::{NestedMetaWithTypeField, SchemaAttribute};
 
 use super::{Attributes, SchemaFromMeta};
 use select::SelectorFieldFromMeta;
 
+pub use convert::ConvertAttribute;
+pub use flavor::{DecodeAttribute, EncodeAttribute, FieldFlavorAttribute};
 pub use label::Label;
 pub use select::{Selection, SelectorFieldAttribute};
 
+mod convert;
+mod flavor;
 mod label;
 mod select;
-mod wire;
 
 /// The meta of the partial reference object field
-#[derive(Debug, Default, Clone, FromMeta)]
+#[derive(Debug, Default, Clone)]
 struct PartialDecodedFieldFromMeta {
-  #[darling(default)]
   copy: bool,
-  #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
-  #[darling(rename = "type", default)]
   ty: Option<Type>,
-  #[darling(default)]
-  owned: bool,
+}
+
+impl FromMeta for PartialDecodedFieldFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match *item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::List(ref value) => {
+        let punctuated =
+          syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
+            .parse2(value.tokens.clone())?;
+
+        let mut nested_meta = Vec::new();
+        let mut ty = None;
+        for item in punctuated {
+          match item {
+            NestedMetaWithTypeField::Type(t) => {
+              if ty.is_some() {
+                return Err(darling::Error::duplicate_field("type"));
+              }
+              ty = Some(t);
+            }
+            NestedMetaWithTypeField::Nested(value) => {
+              nested_meta.push(value);
+            }
+          }
+        }
+
+        /// The meta of the partial reference object field
+        #[derive(Debug, Default, Clone, FromMeta)]
+        struct Helper {
+          copy: bool,
+          #[darling(default, map = "Attributes::into_inner")]
+          attrs: Vec<Attribute>,
+        }
+
+        let Helper { copy, attrs } = Helper::from_list(&nested_meta)?;
+        Ok(Self { copy, attrs, ty })
+      }
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
+    })
+    .map_err(|e| e.with_span(item))
+  }
 }
 
 impl PartialDecodedFieldFromMeta {
@@ -37,7 +75,6 @@ impl PartialDecodedFieldFromMeta {
       copy: self.copy,
       attrs: self.attrs,
       ty: self.ty,
-      owned: self.owned,
     }
   }
 }
@@ -47,7 +84,6 @@ pub struct PartialDecodedFieldAttribute {
   copy: bool,
   attrs: Vec<Attribute>,
   ty: Option<Type>,
-  owned: bool,
 }
 
 impl PartialDecodedFieldAttribute {
@@ -65,30 +101,70 @@ impl PartialDecodedFieldAttribute {
   pub const fn ty(&self) -> Option<&Type> {
     self.ty.as_ref()
   }
-
-  /// Returns `true` if the partial decoded object field is owned
-  pub const fn owned(&self) -> bool {
-    self.owned
-  }
 }
 
 /// The meta of the partial object field
-#[derive(Debug, Default, Clone, FromMeta)]
+#[derive(Debug, Default, Clone)]
 struct PartialFieldFromMeta {
-  #[darling(default, map = "Attributes::into_inner")]
   attrs: Vec<Attribute>,
+  ty: Option<Type>,
+}
+
+impl FromMeta for PartialFieldFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match *item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::List(ref value) => {
+        let punctuated =
+          syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
+            .parse2(value.tokens.clone())?;
+
+        let mut nested_meta = Vec::new();
+        let mut ty = None;
+        for item in punctuated {
+          match item {
+            NestedMetaWithTypeField::Type(t) => {
+              if ty.is_some() {
+                return Err(darling::Error::duplicate_field("type"));
+              }
+              ty = Some(t);
+            }
+            NestedMetaWithTypeField::Nested(value) => {
+              nested_meta.push(value);
+            }
+          }
+        }
+
+        /// The meta of the partial reference object field
+        #[derive(Debug, Default, Clone, FromMeta)]
+        struct Helper {
+          #[darling(default, map = "Attributes::into_inner")]
+          attrs: Vec<Attribute>,
+        }
+
+        let Helper { attrs } = Helper::from_list(&nested_meta)?;
+        Ok(Self { attrs, ty })
+      }
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
+    })
+    .map_err(|e| e.with_span(item))
+  }
 }
 
 impl PartialFieldFromMeta {
   /// Finalizes the partial field meta and returns the attribute
   pub fn finalize(self) -> PartialFieldAttribute {
-    PartialFieldAttribute { attrs: self.attrs }
+    PartialFieldAttribute {
+      attrs: self.attrs,
+      ty: self.ty,
+    }
   }
 }
 
 #[derive(Debug, Clone)]
 pub struct PartialFieldAttribute {
   attrs: Vec<Attribute>,
+  ty: Option<Type>,
 }
 
 impl PartialFieldAttribute {
@@ -96,11 +172,33 @@ impl PartialFieldAttribute {
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
   }
+
+  /// Returns the type of the partial object field
+  pub const fn ty(&self) -> Option<&Type> {
+    self.ty.as_ref()
+  }
+}
+
+#[allow(clippy::large_enum_variant)]
+enum FieldNestedMeta {
+  Label(Label),
+  Nested(darling::ast::NestedMeta),
+}
+
+impl syn::parse::Parse for FieldNestedMeta {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    if Label::peek(&input)? {
+      let label: Label = input.parse()?;
+      Ok(Self::Label(label))
+    } else {
+      darling::ast::NestedMeta::parse(input).map(Self::Nested)
+    }
+  }
 }
 
 /// The meta of the object field
 #[derive(Debug, Clone, FromMeta)]
-pub struct FieldFromMeta {
+struct FieldFromMetaHelper {
   #[darling(default)]
   schema: SchemaFromMeta,
   #[darling(default)]
@@ -108,7 +206,9 @@ pub struct FieldFromMeta {
   #[darling(default)]
   tag: Option<NonZeroU32>,
   #[darling(default)]
-  wire: Option<Type>,
+  flavor: flavor::FieldFlavorFromMeta,
+  #[darling(default)]
+  convert: convert::ConvertFromMeta,
   #[darling(default)]
   partial: PartialFieldFromMeta,
   #[darling(default)]
@@ -119,8 +219,72 @@ pub struct FieldFromMeta {
   copy: bool,
   #[darling(default)]
   skip: bool,
-  #[darling(flatten)]
-  label: FieldLabelFromMeta,
+}
+
+/// The meta of the object field
+#[derive(Debug, Clone)]
+pub struct FieldFromMeta {
+  label: Label,
+  schema: SchemaFromMeta,
+  default: Option<syn::Path>,
+  tag: Option<NonZeroU32>,
+  flavor: flavor::FieldFlavorFromMeta,
+  convert: convert::ConvertFromMeta,
+  partial: PartialFieldFromMeta,
+  partial_decoded: PartialDecodedFieldFromMeta,
+  selector: SelectorFieldFromMeta,
+  copy: bool,
+  skip: bool,
+}
+
+impl FromMeta for FieldFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(value) => Self::from_expr(&value.value),
+      Meta::List(value) => {
+        let punctuated =
+          syn::punctuated::Punctuated::<FieldNestedMeta, syn::Token![,]>::parse_terminated
+            .parse2(value.tokens.clone())?;
+
+        let mut nested_meta = Vec::new();
+        let mut label: Option<Label> = None;
+        for item in punctuated {
+          match item {
+            FieldNestedMeta::Label(l) => {
+              if let Some(ref label) = label {
+                return Err(darling::Error::custom(
+                  format!(
+                    "Cannot specify both `{label}` and `{l}` at the same time.",
+                  )
+                ));
+              }
+              label = Some(l);
+            }
+            FieldNestedMeta::Nested(value) => {
+              nested_meta.push(value);
+            }
+          }
+        }
+
+        let FieldFromMetaHelper { schema, default, tag, flavor, convert, partial, partial_decoded, selector, copy, skip } = FieldFromMetaHelper::from_list(&nested_meta)?;
+        Ok(Self {
+          label: label.ok_or_else(|| darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?,
+            schema,
+            default,
+            tag,
+            flavor,
+            convert,
+            partial,
+            partial_decoded,
+            selector,
+            copy,
+            skip,
+        })
+      }
+    })
+    .map_err(|e| e.with_span(item))
+  }
 }
 
 impl FieldFromMeta {
@@ -129,34 +293,31 @@ impl FieldFromMeta {
       default: self.default,
       schema: self.schema.into(),
       tag: self.tag,
+      label: self.label,
       skip: self.skip,
-      wire: self.wire,
+      convert: self.convert.finalize()?,
+      flavor: self.flavor.finalize()?,
       partial: self.partial.finalize(),
       partial_decoded: self.partial_decoded.finalize(),
       selector: self.selector.finalize(),
       copy: self.copy,
-      label: self.label.into_label(),
     })
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct SkippedFieldAttribute {}
-
-impl SkippedFieldAttribute {}
-
-#[derive(Debug, Clone)]
 pub struct FieldAttribute {
+  convert: ConvertAttribute,
   default: Option<syn::Path>,
   schema: SchemaAttribute,
   tag: Option<NonZeroU32>,
-  wire: Option<Type>,
+  label: Label,
+  flavor: Vec<FieldFlavorAttribute>,
   partial: PartialFieldAttribute,
   partial_decoded: PartialDecodedFieldAttribute,
   selector: SelectorFieldAttribute,
   copy: bool,
   skip: bool,
-  label: Option<Label>,
 }
 
 impl FieldAttribute {
@@ -165,9 +326,14 @@ impl FieldAttribute {
     self.tag
   }
 
-  /// Returns the wire format will be used for the field
-  pub const fn wire(&self) -> Option<&Type> {
-    self.wire.as_ref()
+  /// Returns the flavor specified settings for the field
+  pub const fn flavor(&self) -> &[FieldFlavorAttribute] {
+    self.flavor.as_slice()
+  }
+
+  /// Returns the convert attribute for the field
+  pub const fn convert(&self) -> &ConvertAttribute {
+    &self.convert
   }
 
   /// Returns the information about the partial object field
@@ -195,9 +361,9 @@ impl FieldAttribute {
     &self.selector
   }
 
-  /// Returns the type specification of the field
-  pub fn label(&self) -> Option<&Label> {
-    self.label.as_ref()
+  /// Returns the type label of the field
+  pub const fn label(&self) -> &Label {
+    &self.label
   }
 
   /// Returns the schema information of the field
@@ -228,8 +394,11 @@ pub trait Field: Clone {
   /// Returns the tag of the field
   fn tag(&self) -> Option<NonZeroU32>;
 
-  /// Returns the wire format will be used for the field
-  fn wire(&self) -> Option<&Type>;
+  /// Returns the flavor specified settings for the field
+  fn flavor(&self) -> &[FieldFlavorAttribute];
+
+  /// Returns the convert attribute for the field
+  fn convert(&self) -> &ConvertAttribute;
 
   /// Returns the information about the partial object field
   fn partial(&self) -> &PartialFieldAttribute;
@@ -246,8 +415,8 @@ pub trait Field: Clone {
   /// Returns the default selection for the field
   fn selector(&self) -> &SelectorFieldAttribute;
 
-  /// Returns the type specification of the field
-  fn label(&self) -> Option<&Label>;
+  /// Returns the type label of the field
+  fn label(&self) -> &Label;
 
   /// Returns the schema information of the field
   fn schema(&self) -> &SchemaAttribute;

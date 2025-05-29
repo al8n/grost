@@ -6,14 +6,64 @@ use syn::{Attribute, ext::IdentExt, parse::Parser};
 
 pub use flavor::*;
 pub use generic::*;
-pub use ty::Ty;
 
 /// The meta for the object
 pub mod object;
 
 mod flavor;
 mod generic;
-mod ty;
+
+/// Specifies the behavior of how to handle the missing field during decoding.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MissingOperation {
+  Or(syn::Path),
+  OrDefault(Option<syn::Path>),
+  OkOr(syn::Path),
+}
+
+impl MissingOperation {
+  fn name(&self) -> &'static str {
+    match self {
+      MissingOperation::Or(_) => "or_else",
+      MissingOperation::OrDefault(_) => "or_else_default",
+      MissingOperation::OkOr(_) => "ok_or_else",
+    }
+  }
+}
+
+/// Specifies the behavior of how to transform from decoded state to base state.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TransformOperation {
+  From(syn::Path),
+  TryFrom(syn::Path),
+}
+
+impl TransformOperation {
+  fn name(&self) -> &'static str {
+    match self {
+      Self::From(_) => "from_decoded",
+      Self::TryFrom(_) => "try_from_decoded",
+    }
+  }
+}
+
+enum NestedMetaWithTypeField {
+  Type(syn::Type),
+  Nested(darling::ast::NestedMeta),
+}
+
+impl syn::parse::Parse for NestedMetaWithTypeField {
+  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+    if input.peek(syn::Token![type]) {
+      let _: syn::Token![type] = input.parse()?;
+      let _: syn::Token![=] = input.parse()?;
+      let ty_str: syn::LitStr = input.parse()?;
+      Ok(Self::Type(syn::parse_str(&ty_str.value())?))
+    } else {
+      darling::ast::NestedMeta::parse(input).map(Self::Nested)
+    }
+  }
+}
 
 #[derive(Debug, Default, Clone)]
 struct Attributes(Vec<Attribute>);
@@ -183,4 +233,18 @@ pub fn grost_wire_format_param() -> syn::TypeParam {
 /// This is used to avoid conflicts with other generic parameters in the code.
 pub fn grost_unknown_buffer_param() -> syn::TypeParam {
   quote::format_ident!("__GROST_UNKNOWN_BUFFER__").into()
+}
+
+struct DisplayPath<'a>(pub &'a syn::Path);
+
+impl<'a> core::fmt::Display for DisplayPath<'a> {
+  fn fmt(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+    for (i, segment) in self.0.segments.iter().enumerate() {
+      if i > 0 || self.0.leading_colon.is_some() {
+        formatter.write_str("::")?;
+      }
+      write!(formatter, "{}", segment.ident)?;
+    }
+    Ok(())
+  }
 }

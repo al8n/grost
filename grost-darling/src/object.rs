@@ -196,8 +196,12 @@ impl ToTokens for FieldDeriveInput {
             self.__meta__.tag()
           }
 
-          fn wire(&self) -> ::core::option::Option<&syn::Type> {
-            self.__meta__.wire()
+          fn convert(&self) -> &#path_to_crate::__private::ast::object::ConvertAttribute {
+            &self.__meta__.convert()
+          }
+
+          fn flavor(&self) -> &[#path_to_crate::__private::ast::object::FieldFlavorAttribute] {
+            self.__meta__.flavor()
           }
 
           fn partial(&self) -> &#path_to_crate::__private::ast::object::PartialFieldAttribute {

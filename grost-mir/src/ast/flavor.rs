@@ -7,9 +7,24 @@ use indexmap::IndexMap;
 use quote::format_ident;
 use syn::{Ident, Meta, MetaList, parse::Parser, parse_quote};
 
+use crate::ast::NestedMetaWithTypeField;
+
 mod decode;
 mod encode;
 mod identifier;
+
+pub(super) fn duplicate_flavor_error(ident: &Ident) -> darling::Error {
+  darling::Error::custom(format!(
+    "Duplicate flavor `{}` found. Each flavor can only be defined once within the same attribute.",
+    ident
+  ))
+}
+
+pub(super) fn complex_flavor_ident_error() -> darling::Error {
+  darling::Error::custom(
+    "Flavor names must be simple identifiers. Complex paths are not supported.",
+  )
+}
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -17,47 +32,47 @@ mod serde;
 pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
   (
     "network",
-    "the `network` flavor is the same as the default flavor and cannot be used as a custom flavor, or use `default` to configure it",
+    "The `network` flavor is reserved and equivalent to the default flavor. Use `default` to configure the default behavior instead.",
   ),
   (
     "storage",
-    "the `storage` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `storage` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "proto2",
-    "the `proto2` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `proto2` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "proto3",
-    "the `proto3` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `proto3` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "zerocopy",
-    "the `zerocopy` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `zerocopy` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "json",
-    "the `json` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `json` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "graphql",
-    "the `graphql` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `graphql` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "postgres",
-    "the `postgres` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `postgres` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "mysql",
-    "the `mysql` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `mysql` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "sqlite",
-    "the `sqlite` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `sqlite` flavor is a reserved flavor name, please use a different name",
   ),
   (
     "mongodb",
-    "the `mongodb` flavor is a reserved flavor name, and cannot be used as a custom flavor, please use a different name",
+    "The `mongodb` flavor is a reserved flavor name, please use a different name",
   ),
 ];
 
@@ -101,6 +116,7 @@ impl TryFrom<&str> for BuiltinFlavorValueParser {
     into = "serde::BuiltinFlavorValueSerdeHelper"
   )
 )]
+#[allow(clippy::large_enum_variant)]
 enum BuiltinFlavorRepr {
   Nested(BuiltinFlavorValueParser),
   Bool(bool),
@@ -208,41 +224,23 @@ impl FromMeta for FlavorValue {
   }
 }
 
-enum FlavorValueNestedMeta {
-  Type(syn::Type),
-  Nested(NestedMeta),
-}
-
-impl syn::parse::Parse for FlavorValueNestedMeta {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    if input.peek(syn::Token![type]) {
-      let _: syn::Token![type] = input.parse()?;
-      let _: syn::Token![=] = input.parse()?;
-      let ty_str: syn::LitStr = input.parse()?;
-      Ok(Self::Type(syn::parse_str(&ty_str.value())?))
-    } else {
-      NestedMeta::parse(input).map(Self::Nested)
-    }
-  }
-}
-
 impl FlavorValue {
   fn parse_meta_list(list: &MetaList) -> darling::Result<Self> {
     let punctuated =
-      syn::punctuated::Punctuated::<FlavorValueNestedMeta, syn::Token![,]>::parse_terminated
+      syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
         .parse2(list.tokens.clone())?;
 
     let mut nested_meta = Vec::new();
     let mut ty = None;
     for item in punctuated {
       match item {
-        FlavorValueNestedMeta::Type(t) => {
+        NestedMetaWithTypeField::Type(t) => {
           if ty.is_some() {
             return Err(darling::Error::duplicate_field("type"));
           }
           ty = Some(t);
         }
-        FlavorValueNestedMeta::Nested(value) => {
+        NestedMetaWithTypeField::Nested(value) => {
           nested_meta.push(value);
         }
       }
@@ -288,14 +286,12 @@ impl FromMeta for FlavorFromMeta {
           Meta::Path(_) => return Err(darling::Error::unsupported_format("word")),
           Meta::List(meta_list) => {
             let Some(ident) = meta_list.path.get_ident() else {
-              return Err(darling::Error::custom("missing the name of the flavor"));
+              return Err(complex_flavor_ident_error());
             };
 
             if ident.eq("default") {
               if default.is_some() {
-                return Err(darling::Error::custom(
-                  "duplicate flavor, default flavor is already defined",
-                ));
+                return Err(duplicate_flavor_error(ident));
               }
 
               let value = BuiltinFlavorRepr::from_list(
@@ -313,9 +309,7 @@ impl FromMeta for FlavorFromMeta {
             }
 
             if flavors.contains_key(ident) {
-              return Err(darling::Error::custom(format!(
-                "duplicate flavor, `{ident}` flavor is already defined"
-              )));
+              return Err(duplicate_flavor_error(ident));
             }
 
             let value = FlavorValue::parse_meta_list(meta_list)?;
@@ -323,14 +317,12 @@ impl FromMeta for FlavorFromMeta {
           }
           Meta::NameValue(meta_name_value) => {
             let Some(ident) = meta.path().get_ident() else {
-              return Err(darling::Error::custom("missing the name of the flavor"));
+              return Err(complex_flavor_ident_error());
             };
 
             if ident.eq("default") {
               if default.is_some() {
-                return Err(darling::Error::custom(
-                  "duplicate flavor, default flavor is already defined",
-                ));
+                return Err(duplicate_flavor_error(ident));
               }
 
               let value = BuiltinFlavorRepr::from_expr(&meta_name_value.value)?;
@@ -346,9 +338,7 @@ impl FromMeta for FlavorFromMeta {
             }
 
             if flavors.contains_key(ident) {
-              return Err(darling::Error::custom(format!(
-                "duplicate flavor, `{ident}` flavor is already defined"
-              )));
+              return Err(duplicate_flavor_error(ident));
             }
 
             let value = FlavorValue::from_expr(&meta_name_value.value)?;
@@ -536,35 +526,32 @@ mod tests {
       struct User {
         #[grost(
           tag = 1,
-          string,
+          partial_decoded(
+            type = "&'a str",
+          ),
+          partial(
+            type = "String",
+          ),
+          convert(
+            transform = "path/to/from_decoded_fn",
+            try_transform = "path/to/try_from_decoded_fn",
 
-          optional,
-          packed,
-          stream,
-
+            or_else_default = "path/to/default_fn",
+            or_else = "path/to/or_else_fn",
+            ok_or_else = "path/to/ok_or_else_fn",
+          ),
           flavor(
             default(
               format = "my_flavor::UserFormat",
-              partial_decoded(
-                type = "&'a str",
-                encode(skip_default, skip_if = "path/to/skip_fn", error_if = "path/to/error_fn"),
-                decode(
-                  or_else_default = "path/to/default_fn",
-                  or_else = "path/to/or_else_fn",
-                  ok_or_else = "path/to/ok_or_else_fn",
-                  error_if = "path/to/error_if_fn",
-                ),
-              ),
-              partial(
-                type = "String",
-              ),
-              convert(
-                from_decoded = "path/to/from_decoded_fn",
-                try_from_decoded = "path/to/try_from_decoded_fn",
-                default_on_missing = "path/to/default_on_missing_fn",
+              encode(skip_default, skip_if = "path/to/skip_fn", error_if = "path/to/error_fn"),
+              decode(
+                or_else_default = "path/to/default_fn",
+                or_else = "path/to/or_else_fn",
+                ok_or_else = "path/to/ok_or_else_fn",
+                error_if = "path/to/error_if_fn",
               ),
             ),
-            storage(
+            mystorage(
 
             ),
           ),

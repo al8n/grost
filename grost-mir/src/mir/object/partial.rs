@@ -45,7 +45,7 @@ impl PartialObjectGenerics {
 pub struct PartialField {
   field: syn::Field,
   tag: NonZeroU32,
-  specification: Option<Label>,
+  specification: Label,
   copy: bool,
   object_type: Type,
   output_type: Type,
@@ -90,8 +90,8 @@ impl PartialField {
 
   /// Returns the type specification.
   #[inline]
-  pub const fn specification(&self) -> Option<&Label> {
-    self.specification.as_ref()
+  pub const fn specification(&self) -> &Label {
+    &self.specification
   }
 
   /// Returns whether the field is copyable.
@@ -131,7 +131,7 @@ impl PartialField {
     Ok(Self {
       field,
       tag: input.tag().expect("field tag is required"),
-      specification: input.label().cloned(),
+      specification: input.label().clone(),
       copy: input.copy() | copy,
       object_type: ty.clone(),
       output_type,

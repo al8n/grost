@@ -1,341 +1,518 @@
 use std::sync::Arc;
+use syn::{ext::IdentExt, parse::ParseStream};
 
-use darling::{FromMeta, ast::NestedMeta, util::SpannedValue};
-use syn::Meta;
-
-/// The specification of the type of a field.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, derive_more::IsVariant)]
+/// A type specification for an object field.
+#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
 pub enum Label {
-  /// Specifies the field is optional
-  Optional(Option<Arc<Label>>),
-  /// Specifies the field is repeated, e.g. `Vec<T>`, `[T]`, etc.
-  Repeated(Option<Arc<Label>>),
-  /// Specifies the field is a map
+  /// A scalar type label, e.g. `i32`, `f64`, etc.
+  #[display("scalar")]
+  Scalar,
+  /// A byte array type label, e.g. `Vec<u8>`, `bytes`, etc.
+  #[display("bytes")]
+  Bytes,
+  /// A string type label, e.g. `String`, `&str`, etc.
+  #[display("string")]
+  String,
+  /// An object type label
+  #[display("object")]
+  Object,
+  /// An enum type label
+  #[display("enum")]
+  Enum,
+  /// A union type label
+  #[display("union")]
+  Union,
+  /// An interface type label
+  #[display("interface")]
+  Interface,
+  /// A map type label
+  #[display("map(key({key}), value({value}))")]
   Map {
-    key: Option<Arc<Label>>,
-    value: Option<Arc<Label>>,
+    /// The key type label of the map
+    key: Arc<Label>,
+    /// The value type label of the map
+    value: Arc<Label>,
   },
+  /// A set type label
+  #[display("set({_0})")]
+  Set(Arc<Label>),
+  /// A list type label
+  #[display("list({_0})")]
+  List(Arc<Label>),
+  /// An optional type label
+  #[display("optional({_0})")]
+  Optional(Arc<Label>),
 }
 
 impl Label {
-  fn from_hint(type_hint: &FieldLabel) -> Option<Self> {
-    match type_hint {
-      FieldLabel::Required => None,
-      FieldLabel::Optional(inner) => Some(Self::Optional(Self::from_hint(inner).map(Arc::new))),
-      FieldLabel::Repeated(inner) => Some(Self::Repeated(Self::from_hint(inner).map(Arc::new))),
-      FieldLabel::Map { key, value } => Some(Self::Map {
-        key: key.as_ref().and_then(|k| Self::from_hint(k).map(Arc::new)),
-        value: value
-          .as_ref()
-          .and_then(|v| Self::from_hint(v).map(Arc::new)),
-      }),
+  pub(super) fn peek(input: &ParseStream) -> syn::Result<bool> {
+    if input.peek(syn::Token![enum]) {
+      return Ok(true);
     }
+
+    if input.peek(syn::Ident::peek_any) {
+      let ident: syn::Ident = input.fork().parse()?;
+      return Ok(match () {
+        () if ident.eq("scalar") => true,
+        () if ident.eq("bytes") => true,
+        () if ident.eq("string") => true,
+        () if ident.eq("object") => true,
+        () if ident.eq("enum") => true,
+        () if ident.eq("union") => true,
+        () if ident.eq("interface") => true,
+        () if ident.eq("map") => true,
+        () if ident.eq("set") => true,
+        () if ident.eq("list") => true,
+        () if ident.eq("optional") => true,
+        _ => false,
+      });
+    }
+
+    Ok(false)
   }
 }
 
-#[derive(Debug, Clone)]
-pub(super) enum FieldLabel {
-  Required,
-  Optional(Box<FieldLabel>),
-  Repeated(Box<FieldLabel>),
-  Map {
-    key: Option<Box<FieldLabel>>,
-    value: Option<Box<FieldLabel>>,
-  },
-}
+impl syn::parse::Parse for Label {
+  fn parse(input: ParseStream) -> syn::Result<Self> {
+    if input.peek(syn::Token![enum]) {
+      let _: syn::Token![enum] = input.parse()?;
+      return Ok(Self::Enum);
+    }
 
-impl FromMeta for FieldLabel {
-  fn from_meta(meta: &Meta) -> darling::Result<Self> {
-    match meta {
-      Meta::NameValue(_) => Err(darling::Error::unsupported_format("name value")),
-      Meta::Path(path) => {
-        // Check if the path is one of the expected types
-        let ident = path.get_ident().ok_or_else(|| {
-          darling::Error::custom("expected one of [optional, repeated, map]").with_span(meta)
-        })?;
-
-        match () {
-          () if ident.eq("optional") => Ok(Self::Optional(Box::new(Self::Required))),
-          () if ident.eq("repeated") => Ok(Self::Repeated(Box::new(Self::Required))),
-          () if ident.eq("map") => Ok(Self::Map {
-            key: None,
-            value: None,
-          }),
-          _ => Err(darling::Error::custom(format!(
-            "unknown type specification: `{ident}`"
-          ))),
+    if input.peek(syn::Ident::peek_any) && !input.peek2(syn::token::Paren) {
+      let ident: syn::Ident = input.parse()?;
+      return Ok(match () {
+        () if ident.eq("scalar") => Self::Scalar,
+        () if ident.eq("bytes") => Self::Bytes,
+        () if ident.eq("string") => Self::String,
+        () if ident.eq("object") => Self::Object,
+        () if ident.eq("union") => Self::Union,
+        () if ident.eq("interface") => Self::Interface,
+        () if ident.eq("map") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`map` requires a key and value, e.g. `map(key(...), value(...))`",
+          ));
         }
-      }
-      Meta::List(meta) => {
-        // Self::from_list(&NestedMeta::parse_meta_list(meta.tokens.clone())?[..])
-        // Check what the list represents based on its path
-        let path = meta
-          .path
-          .get_ident()
-          .ok_or_else(|| darling::Error::custom("expected one of [optional, repeated, map]"))?;
-
-        let nested_items = NestedMeta::parse_meta_list(meta.tokens.clone())?;
-
-        match () {
-          () if path.eq("optional") => {
-            // optional(inner)
-            let inner = Self::parse_single_inner(&nested_items)?;
-            Ok(Self::Optional(Box::new(inner)))
-          }
-          () if path.eq("repeated") => {
-            // repeated(inner)
-            let inner = Self::parse_single_inner(&nested_items)?;
-            Ok(Self::Repeated(Box::new(inner)))
-          }
-          () if path.eq("map") => {
-            // map(key(...), value(...))
-            Self::parse_map(&nested_items)
-          }
-          _ => Err(darling::Error::custom(format!(
-            "unknown type specification: `{path}`"
-          ))),
+        () if ident.eq("set") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`set` requires a type, e.g. `set(...)`",
+          ));
         }
+        () if ident.eq("list") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`list` requires a type, e.g. `list(...)`",
+          ));
+        }
+        () if ident.eq("optional") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`optional` requires a type, e.g. `optional(...)`",
+          ));
+        }
+        _ => {
+          return Err(syn::Error::new(
+            input.span(),
+            "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
+          ));
+        }
+      });
+    }
+
+    if input.peek(syn::Ident::peek_any) && input.peek2(syn::token::Paren) {
+      let ident: syn::Ident = input.parse()?;
+      let content;
+      syn::parenthesized!(content in input);
+
+      if content.is_empty() {
+        return Err(syn::Error::new(
+          input.span(),
+          "Unexpected format `map()`, expected `map(key(...), value(...))`",
+        ));
       }
-    }
-  }
 
-  fn from_nested_meta(nested: &NestedMeta) -> darling::Result<Self> {
-    match nested {
-      NestedMeta::Meta(meta) => Self::from_meta(meta),
-      NestedMeta::Lit(lit) => Err(darling::Error::unexpected_lit_type(lit)),
-    }
-  }
-}
+      return Ok(match () {
+        () if ident.eq("map") => {
+          let mut key_ty = None;
+          let mut value_ty = None;
 
-impl FieldLabel {
-  fn parse_single_inner(items: &[NestedMeta]) -> darling::Result<Self> {
-    if items.is_empty() {
-      // No inner type specified, default to Required
-      Ok(Self::Required)
-    } else if items.len() == 1 {
-      // Single inner type
-      Self::from_nested_meta(&items[0])
-    } else {
-      Err(darling::Error::custom("expected at most one inner type"))
-    }
-  }
+          while !content.is_empty() {
+            let require_comma = key_ty.is_none() && value_ty.is_none();
 
-  fn parse_map(items: &[NestedMeta]) -> darling::Result<Self> {
-    let expected_key_or_value_err =
-      |span| darling::Error::custom("expected 'key' or 'value' in map").with_span(span);
+            let param_name: syn::Ident = content.parse()?;
 
-    let mut key_hint = None;
-    let mut value_hint = None;
-
-    for item in items {
-      match item {
-        NestedMeta::Meta(Meta::List(list)) => {
-          let name = list
-            .path
-            .get_ident()
-            .ok_or_else(|| expected_key_or_value_err(list))?;
-
-          match () {
-            () if name.eq("key") => {
-              if key_hint.is_some() {
-                return Err(darling::Error::custom("duplicate key specification").with_span(list));
-              }
-              let key_items = NestedMeta::parse_meta_list(list.tokens.clone())?;
-              key_hint = Some(Self::parse_single_inner(&key_items)?);
+            if !(param_name.eq("key") || param_name.eq("value")) {
+              return Err(syn::Error::new(
+                param_name.span(),
+                format!("Unknown `{param_name}`, possible attributes in map are: `key` or `value`"),
+              ));
             }
-            () if name.eq("value") => {
-              if value_hint.is_some() {
-                return Err(
-                  darling::Error::custom("duplicate value specification").with_span(list),
-                );
-              }
-              let value_items = NestedMeta::parse_meta_list(list.tokens.clone())?;
-              value_hint = Some(Self::parse_single_inner(&value_items)?);
+
+            if !content.peek(syn::token::Paren) {
+              return Err(syn::Error::new(
+                param_name.span(),
+                format!(
+                  "Unexpected format `map({}{content})`, expected `map(key(...), value(...))`",
+                  param_name
+                ),
+              ));
             }
-            _ => return Err(expected_key_or_value_err(list)),
+
+            let param_content;
+            syn::parenthesized!(param_content in content);
+            match () {
+              () if param_name.eq("key") => {
+                if key_ty.is_some() {
+                  return Err(syn::Error::new(
+                    param_name.span(),
+                    "Duplicate `key` found in `map(...)`",
+                  ));
+                }
+
+                if param_content.peek(syn::Ident::peek_any) {
+                  let next_ident: syn::Ident = param_content.fork().parse()?;
+                  if next_ident.eq("map") {
+                    return Err(syn::Error::new(
+                      param_name.span(),
+                      "`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`",
+                    ));
+                  }
+                }
+
+                key_ty = Some(Arc::new(Label::parse(&param_content)?));
+              }
+              () if param_name.eq("value") => {
+                if value_ty.is_some() {
+                  return Err(syn::Error::new(
+                    param_name.span(),
+                    "Duplicate `value` found in `map(...)`",
+                  ));
+                }
+                value_ty = Some(Arc::new(Label::parse(&param_content)?));
+              }
+              _ => {
+                return Err(syn::Error::new(
+                  param_name.span(),
+                  format!(
+                    "Unexpected `{}` in `map(...)`, expected `key(...)` or `value(...)`",
+                    param_name
+                  ),
+                ));
+              }
+            }
+
+            if require_comma || content.peek(syn::Token![,]) {
+              let _: syn::Token![,] = content.parse()?;
+            }
           }
+
+          // Ensure both key and value were provided
+          let key = key_ty
+            .ok_or_else(|| syn::Error::new(input.span(), "Missing `key(...)` in `map(...)`"))?;
+
+          let value = value_ty
+            .ok_or_else(|| syn::Error::new(input.span(), "Missing `value(...)` in `map(...)`"))?;
+
+          Self::Map { key, value }
         }
-        NestedMeta::Meta(Meta::Path(path)) => {
-          let ident = path
-            .require_ident()
-            .map_err(|e| darling::Error::from(e).with_span(item))?;
-          darling::Error::custom(format!("a single {} cannot be used in map", ident))
-            .with_span(item);
+        () if ident.eq("key") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`key` can only be used in `map(...)`",
+          ));
         }
-        _ => return Err(darling::Error::custom("invalid map argument")),
-      }
-    }
+        () if ident.eq("value") => {
+          return Err(syn::Error::new(
+            input.span(),
+            "`value` can only be used in `map(...)`",
+          ));
+        }
+        () if ident.eq("set") => {
+          let ty = Label::parse(&content)?;
+          if ty.is_set() {
+            return Err(syn::Error::new(
+              input.span(),
+              "`set(set(...))` is not allowed",
+            ));
+          }
 
-    Ok(Self::Map {
-      key: key_hint.map(Box::new),
-      value: value_hint.map(Box::new),
-    })
+          if ty.is_map() {
+            return Err(syn::Error::new(
+              input.span(),
+              "`set(map(...))` is not allowed",
+            ));
+          }
+
+          Self::Set(Arc::new(ty))
+        }
+        () if ident.eq("list") => Self::List(Arc::new(Label::parse(&content)?)),
+        () if ident.eq("optional") => {
+          let ty = Label::parse(&content)?;
+          if ty.is_optional() {
+            return Err(syn::Error::new(
+              input.span(),
+              "`optional(optional(...))` is not allowed",
+            ));
+          }
+          Self::Optional(Arc::new(ty))
+        }
+        _ => {
+          return Err(syn::Error::new(
+            input.span(),
+            "Expected one of [map, set, list, optional]",
+          ));
+        }
+      });
+    }
+    Err(syn::Error::new(
+      input.span(),
+      "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
+    ))
   }
 }
 
-#[derive(Debug, Clone)]
-struct OptionalFieldLabel(FieldLabel);
+#[cfg(test)]
+mod tests {
+  use quote::quote;
 
-impl core::ops::Deref for OptionalFieldLabel {
-  type Target = FieldLabel;
+  use super::*;
 
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
+  #[test]
+  fn test_scalar() {
+    let scalar = quote! {
+      scalar
+    };
 
-impl FromMeta for OptionalFieldLabel {
-  fn from_word() -> darling::Result<Self> {
-    Ok(Self(FieldLabel::Optional(Box::new(FieldLabel::Required))))
-  }
-
-  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-    if items.is_empty() {
-      return Ok(Self(FieldLabel::Optional(Box::new(FieldLabel::Required))));
-    }
-
-    if items.len() > 1 {
-      return Err(darling::Error::custom(
-        "optional(...) can only have one type specification",
-      ));
-    }
-
-    let item = &items[0];
-    let inner = FieldLabel::from_nested_meta(item)?;
-    Ok(Self(inner))
-  }
-}
-
-#[derive(Debug, Clone)]
-struct RepeatedFieldLabel(FieldLabel);
-
-impl core::ops::Deref for RepeatedFieldLabel {
-  type Target = FieldLabel;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
-impl FromMeta for RepeatedFieldLabel {
-  fn from_word() -> darling::Result<Self> {
-    Ok(Self(FieldLabel::Repeated(Box::new(FieldLabel::Required))))
+    let ty = syn::parse2::<Label>(scalar).unwrap();
+    assert_eq!(ty, Label::Scalar);
   }
 
-  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-    if items.is_empty() {
-      return Ok(Self(FieldLabel::Repeated(Box::new(FieldLabel::Required))));
-    }
+  #[test]
+  fn test_bytes() {
+    let bytes = quote! {
+      bytes
+    };
 
-    if items.len() > 1 {
-      return Err(darling::Error::custom(
-        "repeated(...) can only have one type specification",
-      ));
-    }
-
-    let item = &items[0];
-    let inner = FieldLabel::from_nested_meta(item)?;
-    Ok(Self(inner))
-  }
-}
-
-#[derive(Debug, Clone)]
-struct MapFieldLabel(FieldLabel);
-
-impl core::ops::Deref for MapFieldLabel {
-  type Target = FieldLabel;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
-impl FromMeta for MapFieldLabel {
-  fn from_word() -> darling::Result<Self> {
-    Ok(Self(FieldLabel::Map {
-      key: None,
-      value: None,
-    }))
+    let ty = syn::parse2::<Label>(bytes).unwrap();
+    assert_eq!(ty, Label::Bytes);
   }
 
-  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-    if items.is_empty() {
-      return Ok(Self(FieldLabel::Map {
-        key: None,
-        value: None,
-      }));
-    }
-    let inner = FieldLabel::parse_map(items)?;
-    Ok(Self(inner))
-  }
-}
+  #[test]
+  fn test_string() {
+    let string = quote! {
+      string
+    };
 
-#[derive(Debug, Default, Clone, FromMeta)]
-#[darling(and_then = "Self::validate")]
-pub(super) struct FieldLabelFromMeta {
-  #[darling(default)]
-  optional: Option<SpannedValue<OptionalFieldLabel>>,
-  #[darling(default)]
-  repeated: Option<SpannedValue<RepeatedFieldLabel>>,
-  #[darling(default)]
-  map: Option<SpannedValue<MapFieldLabel>>,
-}
-
-impl FieldLabelFromMeta {
-  pub(super) fn into_label(self) -> Option<Label> {
-    if let Some(optional) = self.optional {
-      return Some(Label::Optional(Label::from_hint(&optional.0).map(Arc::new)));
-    }
-    if let Some(repeated) = self.repeated {
-      return Some(Label::Repeated(Label::from_hint(&repeated.0).map(Arc::new)));
-    }
-    if let Some(map) = self.map {
-      return Label::from_hint(&map.0);
-    }
-
-    None
+    let ty = syn::parse2::<Label>(string).unwrap();
+    assert_eq!(ty, Label::String);
   }
 
-  pub(super) fn validate(self) -> darling::Result<Self> {
-    let mut num_specifications = 0;
-    let mut specifications = [None, None, None];
-    if let Some(ref optional) = self.optional {
-      num_specifications += 1;
-      specifications[0] = match optional.span().source_text() {
-        Some(text) => Some(format!("optional({text})")),
-        None => Some("optional".to_string()),
-      };
-    }
+  #[test]
+  fn test_object() {
+    let object = quote! {
+      object
+    };
 
-    if let Some(ref repeated) = self.repeated {
-      num_specifications += 1;
-      specifications[1] = match repeated.span().source_text() {
-        Some(text) => Some(format!("repeated({text})")),
-        None => Some("repeated".to_string()),
-      };
-    }
+    let ty = syn::parse2::<Label>(object).unwrap();
+    assert_eq!(ty, Label::Object);
+  }
 
-    if let Some(ref map) = self.map {
-      num_specifications += 1;
-      specifications[2] = match map.span().source_text() {
-        Some(text) => Some(format!("map({text})")),
-        None => Some("map".to_string()),
-      };
-    }
+  #[test]
+  fn test_enum() {
+    let enum_ty = quote! {
+      enum
+    };
 
-    if num_specifications <= 1 {
-      return Ok(self);
-    }
+    let ty = syn::parse2::<Label>(enum_ty).unwrap();
+    assert_eq!(ty, Label::Enum);
+  }
 
-    let specs = specifications
-      .into_iter()
-      .flatten()
-      .map(|s| format!("`{s}`"))
-      .collect::<Vec<_>>()
-      .join(", ");
+  #[test]
+  fn test_union() {
+    let union = quote! {
+      union
+    };
 
-    Err(darling::Error::custom(format!(
-      "only one type specification is allowed for a field, found: {specs}"
-    )))
+    let ty = syn::parse2::<Label>(union).unwrap();
+    assert_eq!(ty, Label::Union);
+  }
+
+  #[test]
+  fn test_interface() {
+    let interface = quote! {
+      interface
+    };
+
+    let ty = syn::parse2::<Label>(interface).unwrap();
+    assert_eq!(ty, Label::Interface);
+  }
+
+  #[test]
+  fn test_map() {
+    let map = quote! {
+      map(key(scalar), value(string))
+    };
+
+    let ty = syn::parse2::<Label>(map).unwrap();
+    assert!(matches!(ty, Label::Map { key, value } if key.is_scalar() && value.is_string()));
+  }
+
+  #[test]
+  fn test_map_nested_key() {
+    let map = quote! {
+      map(key(list(scalar)), value(string))
+    };
+
+    let ty = syn::parse2::<Label>(map).unwrap();
+    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_string()));
+  }
+
+  #[test]
+  fn test_map_nested_value() {
+    let map = quote! {
+      map(key(list(scalar)), value(map(key(string), value(object))))
+    };
+
+    let ty = syn::parse2::<Label>(map).unwrap();
+    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_map()));
+  }
+
+  #[test]
+  fn test_set() {
+    let set = quote! {
+      set(string)
+    };
+
+    let ty = syn::parse2::<Label>(set).unwrap();
+    assert!(matches!(ty, Label::Set(inner) if inner.is_string()));
+  }
+
+  #[test]
+  fn test_list() {
+    let list = quote! {
+      list(object)
+    };
+
+    let ty = syn::parse2::<Label>(list).unwrap();
+    assert!(matches!(ty, Label::List(inner) if inner.is_object()));
+  }
+
+  #[test]
+  fn test_optional() {
+    let optional = quote! {
+      optional(string)
+    };
+
+    let ty = syn::parse2::<Label>(optional).unwrap();
+    assert!(matches!(ty, Label::Optional(inner) if inner.is_string()));
+  }
+
+  #[test]
+  fn test_invalid_set() {
+    let invalid_set = quote! {
+      set(map(key(scalar), value(string)))
+    };
+
+    let result = syn::parse2::<Label>(invalid_set);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("`set(map(...))` is not allowed")
+    );
+  }
+
+  #[test]
+  fn test_invalid_set2() {
+    let invalid_list = quote! {
+      set(set(string))
+    };
+
+    let result = syn::parse2::<Label>(invalid_list);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("`set(set(...))` is not allowed")
+    );
+  }
+
+  #[test]
+  fn test_invalid_map() {
+    let invalid_map = quote! {
+      map(scalar)
+    };
+
+    let result = syn::parse2::<Label>(invalid_map);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("Unknown `scalar`, possible attributes in map are: `key` or `value`")
+    );
+  }
+
+  #[test]
+  fn test_invalid_map2() {
+    let invalid_map = quote! {
+      map()
+    };
+
+    let result = syn::parse2::<Label>(invalid_map);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("Unexpected format `map()`, expected `map(key(...), value(...))`")
+    );
+  }
+
+  #[test]
+  fn test_invalid_map3() {
+    let invalid_map = quote! {
+      map(key)
+    };
+
+    let result = syn::parse2::<Label>(invalid_map);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("Unexpected format `map(key)`, expected `map(key(...), value(...))`")
+    );
+  }
+
+  #[test]
+  fn test_invalid_map_key() {
+    let invalid_map = quote! {
+      map(key(map(key(scalar))))
+    };
+
+    let result = syn::parse2::<Label>(invalid_map);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().to_string().contains("`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`"));
+  }
+
+  #[test]
+  fn test_invalid_optional() {
+    let invalid_set = quote! {
+      optional(optional(string))
+    };
+
+    let result = syn::parse2::<Label>(invalid_set);
+    assert!(result.is_err());
+    assert!(
+      result
+        .unwrap_err()
+        .to_string()
+        .contains("`optional(optional(...))` is not allowed")
+    );
   }
 }
