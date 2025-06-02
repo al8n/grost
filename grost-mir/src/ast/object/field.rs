@@ -327,7 +327,7 @@ impl FieldAttribute {
   }
 
   /// Returns the flavor specified settings for the field
-  pub const fn flavor(&self) -> &[FieldFlavorAttribute] {
+  pub const fn flavors(&self) -> &[FieldFlavorAttribute] {
     self.flavor.as_slice()
   }
 
@@ -423,4 +423,7 @@ pub trait Field: Clone {
 
   /// Returns the fn which will be used to generate the default value for the field
   fn default(&self) -> Option<&syn::Path>;
+
+  /// Returns the field flavor attribute for the field
+  fn flavors(&self) -> &[FieldFlavorAttribute];
 }

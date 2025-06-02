@@ -365,6 +365,11 @@ impl ObjectAttribute {
   pub const fn copy(&self) -> bool {
     self.copy
   }
+
+  /// Returns the flavors of the object
+  pub const fn flavors(&self) -> &[FlavorAttribute] {
+    self.flavors.as_slice()
+  }
 }
 
 /// The trait for the object derive input
@@ -413,6 +418,9 @@ pub trait Object: Clone {
 
   /// Returns whether the object is copyable
   fn copy(&self) -> bool;
+
+  /// Returns the flavors of the object
+  fn flavors(&self) -> &[FlavorAttribute];
 }
 
 /// The extension trait for the object

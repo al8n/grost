@@ -196,6 +196,10 @@ impl ToTokens for FieldDeriveInput {
             self.__meta__.tag()
           }
 
+          fn flavors(&self) -> &[#path_to_crate::__private::ast::object::FieldFlavorAttribute] {
+            self.__meta__.flavors()
+          }
+
           fn convert(&self) -> &#path_to_crate::__private::ast::object::ConvertAttribute {
             &self.__meta__.convert()
           }
@@ -574,6 +578,10 @@ impl ToTokens for ObjectDeriveInput {
 
           fn copy(&self) -> ::core::primitive::bool {
             self.__args__.__meta__.copy()
+          }
+
+          fn flavors(&self,) -> &[#path_to_crate::__private::ast::object::FlavorAttribute] {
+            self.__args__.__meta__.flavors()
           }
         }
       };
