@@ -360,6 +360,11 @@ impl ToTokens for ObjectDeriveInput {
       }
     };
 
+    let object_name_ident = format_ident!("ident");
+    let object_ty_ident = format_ident!("ty");
+    let object_tg_ident = format_ident!("tg");
+    let path_to_grost_ident = format_ident!("path_to_grost");
+
     tokens.extend(quote! {
       #[allow(warnings)]
       #[doc(hidden)]
@@ -376,6 +381,8 @@ impl ToTokens for ObjectDeriveInput {
       #vis struct #input_name #generics #where_clause {
         ident: #path_to_crate::__private::syn::Ident,
         vis: #path_to_crate::__private::syn::Visibility,
+        ty: #path_to_crate::__private::syn::Type,
+        reflectable: #path_to_crate::__private::syn::Type,
         generics: #path_to_crate::__private::syn::Generics,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
         data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
@@ -387,7 +394,7 @@ impl ToTokens for ObjectDeriveInput {
       }
 
       const _: () = {
-        use #path_to_crate::__private::{darling, syn};
+        use #path_to_crate::__private::{darling, syn, quote::{quote, ToTokens}};
 
         #[allow(warnings)]
         #[doc(hidden)]
@@ -460,8 +467,19 @@ impl ToTokens for ObjectDeriveInput {
             let input: #path_to_crate::__private::syn::DeriveInput = #path_to_crate::__private::syn::parse2(input)?;
             let input = <#derive_input_name #tg as #path_to_crate::__private::darling::FromDeriveInput>::from_derive_input(&input)?;
             let args = input.__args__;
+            let ident = input.ident;
+            let (_, tg, _) = input.generics.split_for_impl();
+            let ty = syn::parse2(quote::quote! {
+              # #object_name_ident # #object_tg_ident
+            })?;
+            let path_to_grost = &args.__path_to_crate__;
+            let reflectable = syn::parse2(quote::quote! {
+              # #path_to_grost_ident::__private::reflection::Reflectable<# #object_ty_ident>
+            })?;
             ::core::result::Result::Ok(Self {
-              ident: input.ident,
+              ident,
+              ty,
+              reflectable,
               vis: input.vis,
               generics: input.generics,
               attrs: input.attrs,
@@ -488,10 +506,21 @@ impl ToTokens for ObjectDeriveInput {
             let input = <#attribute_input_name #tg as #path_to_crate::__private::darling::FromDeriveInput>::from_derive_input(&input)?;
             let args = #path_to_crate::__private::darling::ast::NestedMeta::parse_meta_list(args)?;
             let args = <#darling_attribute_meta_name #tg as #path_to_crate::__private::darling::FromMeta>::from_list(&args)?;
+            let ident = input.ident;
+            let (_, tg, _) = input.generics.split_for_impl();
+            let ty = syn::parse2(quote::quote! {
+              # #object_name_ident # #object_tg_ident
+            })?;
+            let path_to_grost = &args.__path_to_crate__;
+            let reflectable = syn::parse2(quote::quote! {
+              # #path_to_grost_ident::__private::reflection::Reflectable<# #object_ty_ident>
+            })?;
 
             ::core::result::Result::Ok(Self {
-              ident: input.ident,
+              ident,
               vis: input.vis,
+              ty,
+              reflectable,
               generics: input.generics,
               attrs: input.attrs,
               data: input.data,
@@ -526,6 +555,14 @@ impl ToTokens for ObjectDeriveInput {
 
           fn name(&self) -> &#path_to_crate::__private::syn::Ident {
             &self.ident
+          }
+
+          fn ty(&self) -> &#path_to_crate::__private::syn::Type {
+            &self.ty
+          }
+
+          fn reflectable(&self) -> &#path_to_crate::__private::syn::Type {
+            &self.reflectable
           }
 
           fn vis(&self) -> &#path_to_crate::__private::syn::Visibility {
@@ -580,7 +617,7 @@ impl ToTokens for ObjectDeriveInput {
             self.__args__.__meta__.copy()
           }
 
-          fn flavors(&self,) -> &[#path_to_crate::__private::ast::object::FlavorAttribute] {
+          fn flavors(&self,) -> &[#path_to_crate::__private::ast::FlavorAttribute] {
             self.__args__.__meta__.flavors()
           }
         }

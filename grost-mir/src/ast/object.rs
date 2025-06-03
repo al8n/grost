@@ -380,6 +380,16 @@ pub trait Object: Clone {
   /// Returns the name of the object
   fn name(&self) -> &Ident;
 
+  /// Returns the type of the object
+  ///
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
+  fn ty(&self) -> &syn::Type;
+
+  /// Returns the reflectable trait which replaces the generic parameter with the type of the object
+  ///
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
+  fn reflectable(&self) -> &syn::Type;
+
   /// Returns the visibility of the object
   fn vis(&self) -> &syn::Visibility;
 
