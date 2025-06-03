@@ -12,7 +12,6 @@ mod sealed {
   pub struct Object;
 }
 
-
 pub struct Object {
   object: grost_mir::object::Object<sealed::ObjectInput>,
 }

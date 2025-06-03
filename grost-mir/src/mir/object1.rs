@@ -1,30 +1,48 @@
 use std::num::NonZeroU32;
 
 use indexmap::{IndexMap, IndexSet};
-use quote::{format_ident, quote, ToTokens};
-use syn::{punctuated::Punctuated, token::Comma, Attribute, GenericParam, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility, WhereClause, WherePredicate};
+use quote::{ToTokens, format_ident, quote};
+use syn::{
+  punctuated::Punctuated, token::Comma, Attribute, Expr, GenericParam, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility, WhereClause, WherePredicate
+};
 
-use crate::ast::{object::{Field as _, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute, PartialDecodedFieldAttribute, PartialDecodedObjectAttribute, PartialFieldAttribute}, DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, MissingOperation, SchemaAttribute, TransformOperation};
+use crate::ast::{
+  DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, MissingOperation,
+  SchemaAttribute, TransformOperation,
+  object::{
+    Field as _, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute,
+    ObjectExt as _, PartialDecodedFieldAttribute, PartialFieldAttribute,
+  },
+};
 
 use super::wire_format_reflection_ty;
 
 #[derive(Debug, Clone)]
-pub struct ConcretePartialDecodedField {
+pub struct PartialDecodedFieldFlavor {
   wire_format: Type,
+  wire_format_reflection: Type,
   state_type: Type,
   ty: Type,
   optional_type: Type,
   constraints: Punctuated<WherePredicate, Comma>,
 }
 
-impl ConcretePartialDecodedField {
+impl PartialDecodedFieldFlavor {
   /// Returns the type constraints for this field.
   pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
     &self.constraints
   }
 
+  /// Returns the wire format type for this field.
+  #[inline]
   pub const fn wire_format(&self) -> &Type {
     &self.wire_format
+  }
+
+  /// Returns the wire format reflection type for this field.
+  #[inline]
+  pub const fn wire_format_reflection(&self) -> &Type {
+    &self.wire_format_reflection
   }
 
   pub const fn state_type(&self) -> &Type {
@@ -42,6 +60,7 @@ impl ConcretePartialDecodedField {
   fn try_new<O>(
     object: &O,
     object_type: &Type,
+    object_reflectable: &Type,
     flavor_type: impl ToTokens,
     field: &O::Field,
     field_flavor: &FieldFlavorAttribute,
@@ -70,7 +89,7 @@ impl ConcretePartialDecodedField {
         #path_to_grost::__private::convert::Decoded<
           #lifetime,
           #flavor_type,
-          <#wf as #path_to_grost::__private::reflection::Reflectable<#object_type>>::Reflection,
+          <#wf as #object_reflectable>::Reflection,
           #unknown_buffer,
         >
       >
@@ -78,17 +97,13 @@ impl ConcretePartialDecodedField {
 
     let mut constraints = Punctuated::new();
 
-    constraints.push(
-      syn::parse2(quote! {
-        #wf: #path_to_grost::__private::reflection::Reflectable<#object_type>
-      })?,
-    );
-    constraints.push(
-      syn::parse2(quote! {
-        <#wf as #path_to_grost::__private::reflection::Reflectable<#object_type>>::Reflection:
-          #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-      })?,
-    );
+    constraints.push(syn::parse2(quote! {
+      #wf: #object_reflectable
+    })?);
+    constraints.push(syn::parse2(quote! {
+      <#wf as #object_reflectable>::Reflection:
+        #path_to_grost::__private::flavors::WireFormat<#flavor_type>
+    })?);
 
     let ty = if let Some(ty) = field.partial_decoded().ty().cloned() {
       ty
@@ -98,27 +113,22 @@ impl ConcretePartialDecodedField {
       } else {
         None
       };
-      constraints.push(
-        syn::parse2(quote! {
-          <#field_ty as #state_type>::Output: ::core::marker::Sized #copy_constraint
-        })?,
-      );
-      constraints.push(
-        syn::parse2(quote! {
-          #field_ty: #state_type
-        })?,
-      );
+      constraints.push(syn::parse2(quote! {
+        <#field_ty as #state_type>::Output: ::core::marker::Sized #copy_constraint
+      })?);
+      constraints.push(syn::parse2(quote! {
+        #field_ty: #state_type
+      })?);
       syn::parse2(quote! { <#field_ty as #state_type>::Output })?
     };
 
     Ok(Self {
+      wire_format_reflection: wf,
       wire_format: match field_flavor.format().cloned() {
         Some(format) => format,
-        None => {
-          syn::parse2(quote! {
-            <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>>::Format
-          })?
-        },
+        None => syn::parse2(quote! {
+          <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>>::Format
+        })?,
       },
       state_type,
       optional_type: syn::parse2(quote! {
@@ -132,7 +142,7 @@ impl ConcretePartialDecodedField {
 
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
-  partial_decoded: ConcretePartialDecodedField,
+  partial_decoded: PartialDecodedFieldFlavor,
   encode: FieldEncodeAttribute,
   decode: FieldDecodeAttribute,
 }
@@ -141,6 +151,7 @@ impl FieldFlavor {
   fn try_new<O>(
     object: &O,
     object_type: &Type,
+    object_reflectable: &Type,
     field: &O::Field,
     flavor: &Flavor,
     field_flavor_attr: &FieldFlavorAttribute,
@@ -150,9 +161,10 @@ impl FieldFlavor {
   {
     let tag = field.tag().expect("Field must have a tag.").get();
     Ok(Self {
-      partial_decoded: ConcretePartialDecodedField::try_new(
+      partial_decoded: PartialDecodedFieldFlavor::try_new(
         object,
         object_type,
+        object_reflectable,
         flavor.ty(),
         field,
         field_flavor_attr,
@@ -169,16 +181,29 @@ pub struct PartialDecodedField {
   ty: Type,
   optional_type: Type,
   state_type: Type,
-  wire_format: Type,
+  wire_format_reflection: Type,
   constraints: Punctuated<WherePredicate, Comma>,
   attrs: Vec<Attribute>,
   copy: bool,
 }
 
 impl PartialDecodedField {
+  /// Returns the wire format reflection type for this field.
+  #[inline]
+  pub const fn wire_format_reflection(&self) -> &Type {
+    &self.wire_format_reflection
+  }
+
+  /// Returns the constraints for this field.
+  #[inline]
+  pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.constraints
+  }
+
   fn try_new<O>(
     object: &O,
     object_type: &Type,
+    object_reflectable: &Type,
     field: &O::Field,
     flavor_ty: impl ToTokens,
   ) -> darling::Result<Self>
@@ -207,23 +232,19 @@ impl PartialDecodedField {
         #path_to_grost::__private::convert::Decoded<
           #lifetime,
           #flavor_ty,
-          <#wf as #path_to_grost::__private::reflection::Reflectable<#object_type>>::Reflection,
+          <#wf as #object_reflectable>::Reflection,
           #unknown_buffer,
         >
       >
     })?;
 
-    constraints.push(
-      syn::parse2(quote! {
-        #wf: #path_to_grost::__private::reflection::Reflectable<#object_type>
-      })?,
-    );
-    constraints.push(
-      syn::parse2(quote! {
-        <#wf as #path_to_grost::__private::reflection::Reflectable<#object_type>>::Reflection:
-          #path_to_grost::__private::flavors::WireFormat<#flavor_ty>
-      })?,
-    );
+    constraints.push(syn::parse2(quote! {
+      #wf: #object_reflectable
+    })?);
+    constraints.push(syn::parse2(quote! {
+      <#wf as #object_reflectable>::Reflection:
+        #path_to_grost::__private::flavors::WireFormat<#flavor_ty>
+    })?);
 
     let ty = if let Some(ty) = attr.ty().cloned() {
       ty
@@ -234,16 +255,12 @@ impl PartialDecodedField {
         None
       };
 
-      constraints.push(
-        syn::parse2(quote! {
-          <#ty as #state_type>::Output: ::core::marker::Sized #copy_constraint
-        })?,
-      );
-      constraints.push(
-        syn::parse2(quote! {
-          #ty: #state_type
-        })?,
-      );
+      constraints.push(syn::parse2(quote! {
+        <#ty as #state_type>::Output: ::core::marker::Sized #copy_constraint
+      })?);
+      constraints.push(syn::parse2(quote! {
+        #ty: #state_type
+      })?);
       syn::parse2(quote! { <#ty as #state_type>::Output })?
     };
 
@@ -253,7 +270,7 @@ impl PartialDecodedField {
       })?,
       ty,
       state_type,
-      wire_format: wf,
+      wire_format_reflection: wf,
       constraints,
       attrs: field.partial_decoded().attrs().to_vec(),
       copy: field.partial_decoded().copy(),
@@ -276,13 +293,11 @@ impl PartialField {
   ) -> darling::Result<Self> {
     let ty: Type = match attr.ty().cloned() {
       Some(ty) => ty,
-      None => {
-        syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Flatten
-          >>::Output
-        })?
-      }
+      None => syn::parse2(quote! {
+        <#ty as #path_to_grost::__private::convert::State<
+          #path_to_grost::__private::convert::Flatten
+        >>::Output
+      })?,
     };
 
     Ok(Self {
@@ -291,6 +306,85 @@ impl PartialField {
       })?,
       ty,
       attrs: attr.attrs().to_vec(),
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldReflection {
+  ty: Type,
+  value: Expr,
+  constraints: Punctuated<WherePredicate, Comma>,
+}
+
+impl FieldReflection {
+  /// Returns the type of the field reflection.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the value of the field reflection.
+  #[inline]
+  pub const fn value(&self) -> &Expr {
+    &self.value
+  }
+
+  /// Returns the constraints for this field reflection.
+  #[inline]
+  pub const fn constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.constraints
+  }
+
+  fn try_new<O>(
+    object: &O,
+    field: &O::Field,
+    flavor_ty: impl ToTokens,
+    tag: u32,
+  ) -> darling::Result<Self>
+  where
+    O: crate::ast::object::Object,
+  {
+    let path_to_grost = object.path_to_grost();
+    let object_name = object.name();
+    let (_, tg, _) = object.generics().split_for_impl();
+    let mut constraints = Punctuated::new();
+    let field_ty = field.ty();
+    constraints.push(syn::parse2(quote! {
+      #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
+    })?);
+    let ty = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::ObjectFieldReflection<
+        #object_name #tg,
+        #path_to_grost::__private::reflection::ObjectField,
+        #flavor_ty,
+        #tag,
+      >
+    })?;
+
+    let schema_name = field
+      .schema()
+      .name()
+      .map(ToString::to_string)
+      .unwrap_or_else(|| field.name().to_string());
+    let schema_description = field
+      .schema()
+      .description()
+      .map(ToString::to_string)
+      .unwrap_or_default();
+
+    Ok(Self {
+      ty,
+      value: syn::parse2(
+        quote! {
+          #path_to_grost::__private::reflection::ObjectFieldBuilder {
+            name: #schema_name,
+            description: #schema_description,
+            ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
+          }.build()
+        }
+      )?,
+      constraints,
     })
   }
 }
@@ -306,6 +400,7 @@ pub struct TaggedField {
   schema_description: String,
   partial: PartialField,
   partial_decoded: PartialDecodedField,
+  field_reflection: FieldReflection,
   missing_operation: Option<MissingOperation>,
   transform_operation: Option<TransformOperation>,
   default: syn::Path,
@@ -354,9 +449,11 @@ impl TaggedField {
   fn try_new<O>(
     object: &O,
     object_type: &Type,
+    object_reflectable: &Type,
     flavors: &IndexMap<Ident, Flavor>,
-    default_flavor_type: impl ToTokens,
+    flavor_type: impl ToTokens,
     field: &O::Field,
+    tag: u32,
   ) -> darling::Result<Self>
   where
     O: crate::ast::object::Object,
@@ -364,101 +461,82 @@ impl TaggedField {
     let field_ty = field.ty();
     let default = match field.default().cloned() {
       Some(path) => path,
-      None => {
-        syn::parse2(quote! {
-          <#field_ty as ::core::default::Default>::default
-        })?
-      },
+      None => syn::parse2(quote! {
+        <#field_ty as ::core::default::Default>::default
+      })?,
     };
 
     let missing_operation = field.convert().missing_operation().cloned();
     let transform_operation = field.convert().transform_operation().cloned();
+    let schema_name = field
+        .schema()
+        .name()
+        .map(ToString::to_string)
+        .unwrap_or_else(|| field.name().to_string());
+    let schema_description = field
+        .schema()
+        .description()
+        .map(ToString::to_string)
+        .unwrap_or_default();
+    let field_reflection = FieldReflection::try_new(object, field, &flavor_type, tag)?;
+
     Ok(Self {
       attrs: field.attrs().to_vec(),
       vis: field.vis().clone(),
       name: field.name().clone(),
       ty: field_ty.clone(),
-      tag: field.tag().ok_or_else(|| darling::Error::custom(format!(
-        "Field `{}` is missing a tag attribute. Please add `tag = ...` to the field.",
-        field.name()
-      )))?.get(),
-      schema_name: field.schema().name()
-        .map(ToString::to_string)
-        .unwrap_or_else(|| field.name().to_string()),
-      schema_description: field.schema().description()
-        .map(ToString::to_string)
-        .unwrap_or_default(),
+      tag,
+      schema_name,
+      schema_description,
       partial: PartialField::try_new(object.path_to_grost(), field.ty(), field.partial())?,
-      partial_decoded: PartialDecodedField::try_new(object, object_type, field, &default_flavor_type)?,
+      partial_decoded: PartialDecodedField::try_new(
+        object,
+        object_type,
+        object_reflectable,
+        field,
+        &flavor_type,
+      )?,
+      field_reflection,
       missing_operation,
       transform_operation,
       default,
-      flavors: field.flavors().iter().map(|attr| {
-        let ident = attr.name().clone();
-        let flavor = flavors.get(&ident).ok_or_else(|| {
-          darling::Error::custom(format!(
-            "Flavor `{}` is not registered for field `{}`.",
-            ident, field.name()
-          ))
-        })?;
-        FieldFlavor::try_new(
-          object,
-          object_type,
-          field,
-          flavor,
-          attr,
-        ).map(|flavor| (ident, flavor))
-      }).collect::<darling::Result<_>>()?,
+      flavors: field
+        .flavors()
+        .iter()
+        .map(|attr| {
+          let ident = attr.name().clone();
+          let flavor = flavors.get(&ident).ok_or_else(|| {
+            darling::Error::custom(format!(
+              "Flavor `{}` is not registered for field `{}`.",
+              ident,
+              field.name()
+            ))
+          })?;
+          FieldFlavor::try_new(object, object_type, object_reflectable, field, flavor, attr)
+            .map(|flavor| (ident, flavor))
+        })
+        .collect::<darling::Result<_>>()?,
       copy: object.copy() || field.copy(),
     })
-  }
-
-  fn field_reflection_value(
-    &self,
-    object: &Object,
-  ) -> proc_macro2::TokenStream {
-    let path_to_grost = object.path_to_grost();
-    let field = self;
-    let field_ty = &field.ty;
-    let schema_name = field.schema_name();
-    let schema_description = field.schema_description();
-
-    quote! {
-      #path_to_grost::__private::reflection::ObjectFieldBuilder {
-        name: #schema_name,
-        description: #schema_description,
-        ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
-      }.build()
-    }
   }
 
   fn field_reflectable(
     &self,
     object: &Object,
-    flavor_ty: impl ToTokens,
   ) -> proc_macro2::TokenStream {
     let path_to_grost = object.path_to_grost();
-    let object_name = object.name();
+    let object_type = object.ty();
     let field = self;
     let field_ty = &field.ty;
-    let tag = field.tag();
-    let (_, tg, _) = object.generics().split_for_impl();
-    let reflection_ty = quote! {
-      #path_to_grost::__private::reflection::ObjectFieldReflection<
-        #object_name #tg,
-        #path_to_grost::__private::reflection::ObjectField,
-        #flavor_ty,
-        #tag,
-      >
-    };
+    let reflection_ty = self.field_reflection.ty();
     let schema_name = field.schema_name();
     let schema_description = field.schema_description();
-    let (ig_reflection, _, wc_reflection) = object.reflection.generics.split_for_impl();
+    let (ig_reflection, _, wc_reflection) = object.reflection.generics().split_for_impl();
 
     quote! {
       #[automatically_derived]
       #[allow(clippy::type_complexity, non_camel_case_types)]
-      impl #ig_reflection #path_to_grost::__private::reflection::Reflectable<#object_name #tg> for #reflection_ty #wc_reflection {
+      impl #ig_reflection #path_to_grost::__private::reflection::Reflectable<#object_type> for #reflection_ty #wc_reflection {
         type Reflection = #path_to_grost::__private::reflection::ObjectField;
 
         const REFLECTION: &'static Self::Reflection = &{
@@ -483,16 +561,7 @@ impl TaggedField {
     let field = self;
     let field_name = field.name();
     let doc = format!(" Returns the field reflection of the field `{object_name}.{field_name}`.",);
-    let tag = field.tag();
-    let (_, tg, _) = object.generics().split_for_impl();
-    let reflection_ty = quote! {
-      #path_to_grost::__private::reflection::ObjectFieldReflection<
-        #object_name #tg,
-        #path_to_grost::__private::reflection::ObjectField,
-        #flavor_ty,
-        #tag,
-      >
-    };
+    let reflection_ty = self.field_reflection.ty();
     let field_reflection_name = format_ident!("{}_reflection", field_name);
 
     if !generic {
@@ -553,6 +622,27 @@ impl SkippedField {
   pub const fn copy(&self) -> bool {
     self.copy
   }
+
+  fn try_new<O>(object: &O, f: &O::Field) -> darling::Result<Self>
+  where
+    O: crate::ast::object::Object,
+  {
+    let ty = f.ty();
+
+    Ok(SkippedField {
+      attrs: f.attrs().to_vec(),
+      vis: f.vis().clone(),
+      name: f.name().clone(),
+      ty: ty.clone(),
+      default: match f.default().cloned() {
+        Some(path) => path,
+        None => syn::parse2(quote! {
+          <#ty as ::core::default::Default>::default
+        })?,
+      },
+      copy: f.copy() || object.copy(),
+    })
+  }
 }
 
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
@@ -603,7 +693,9 @@ impl Field {
 
 #[derive(Debug, Clone)]
 pub struct ConcretePartialDecodedObject {
+  name: Ident,
   generics: Generics,
+  attrs: Vec<Attribute>,
   ty: Type,
   flavor_type: Type,
   unknown_buffer_param: TypeParam,
@@ -614,52 +706,60 @@ impl ConcretePartialDecodedObject {
   fn try_new<O>(
     object: &O,
     fields: &[Field],
-    partial_decoded_object_name: &Ident,
-    flavor_attr: &FlavorAttribute,
+    flavor_name: &Ident,
+    flavor_type: Type,
   ) -> darling::Result<Self>
   where
     O: crate::ast::object::Object,
   {
-    let flavor_ty = flavor_attr.ty();
     let partial_decoded = object.partial_decoded();
+    let partial_decoded_object_name = object.partial_decoded_name();
     let lifetime_param = partial_decoded.lifetime();
     let unknown_buffer_param = partial_decoded.unknown_buffer();
 
     let generics = object.generics();
     let mut partial_decoded_generics = generics.clone();
 
-    partial_decoded_generics.params.push(
-      GenericParam::Lifetime(lifetime_param.clone())
-    );
-    partial_decoded_generics.params.push(
-      GenericParam::Type(unknown_buffer_param.clone())
-    );
+    partial_decoded_generics
+      .params
+      .push(GenericParam::Lifetime(lifetime_param.clone()));
+    partial_decoded_generics
+      .params
+      .push(GenericParam::Type(unknown_buffer_param.clone()));
 
-    fields.iter().filter_map(
-      |f| {
+    fields
+      .iter()
+      .filter_map(|f| {
         if let Field::Tagged(tagged_field) = f {
           Some(tagged_field)
         } else {
           None
         }
-      }
-    ).for_each(|f| {
-      let field_flavor = f.flavors.get(flavor_attr.name()).unwrap();
+      })
+      .for_each(|f| {
+        let field_flavor = f.flavors.get(flavor_name).unwrap();
 
-      field_flavor
-        .partial_decoded
-        .type_constraints()
-        .iter()
-        .for_each(|constraint| {
-          partial_decoded_generics.make_where_clause().predicates.push(constraint.clone());
-        });
-    });
-
+        field_flavor
+          .partial_decoded
+          .type_constraints()
+          .iter()
+          .for_each(|constraint| {
+            partial_decoded_generics
+              .make_where_clause()
+              .predicates
+              .push(constraint.clone());
+          });
+      });
+    let (_, tg, _) = partial_decoded_generics.split_for_impl();
 
     Ok(Self {
+      ty: syn::parse2(quote! {
+        #partial_decoded_object_name #tg
+      })?,
+      name: partial_decoded_object_name,
+      attrs: partial_decoded.attrs().to_vec(),
       generics: partial_decoded_generics,
-      ty: todo!(),
-      flavor_type: flavor_ty.clone(),
+      flavor_type,
       unknown_buffer_param: unknown_buffer_param.clone(),
       lifetime_param: lifetime_param.clone(),
     })
@@ -667,7 +767,19 @@ impl ConcretePartialDecodedObject {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedObject {
+pub struct GenericPartialDecodedObjectFlavor {}
+
+impl GenericPartialDecodedObjectFlavor {
+  fn try_new<O>(object: &O, fields: &[Field], flavor: &FlavorAttribute) -> darling::Result<Self>
+  where
+    O: crate::ast::object::Object,
+  {
+    todo!()
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct GenericPartialDecodedObject {
   name: Ident,
   ty: Type,
   attrs: Vec<Attribute>,
@@ -676,43 +788,113 @@ pub struct PartialDecodedObject {
   flavor_param: Option<TypeParam>,
   unknown_buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
-  flavors: IndexMap<Ident, ConcretePartialDecodedObject>,
+  flavors: IndexMap<Ident, GenericPartialDecodedObjectFlavor>,
 }
 
-impl PartialDecodedObject {
-  fn try_new<O>(
-    object: &O,
-    fields: &[Field],
-  ) -> darling::Result<Self>
+impl GenericPartialDecodedObject {
+  fn try_new<O>(object: &O, flavor_param: &TypeParam, fields: &[Field]) -> darling::Result<Self>
   where
     O: crate::ast::object::Object,
   {
     let name = object.name();
     let partial_decoded = object.partial_decoded();
-    let partial_decoded_name = partial_decoded.name().cloned().unwrap_or_else(|| format_ident!("PartialDecoded{}", name));
+    let partial_decoded_name = partial_decoded
+      .name()
+      .cloned()
+      .unwrap_or_else(|| format_ident!("PartialDecoded{}", name));
+    let lifetime_param = partial_decoded.lifetime();
+    let unknown_buffer_param = partial_decoded.unknown_buffer();
+
+    let generics = object.generics();
+    let mut partial_decoded_generics = generics.clone();
+
+    partial_decoded_generics
+      .params
+      .push(GenericParam::Lifetime(lifetime_param.clone()));
+    partial_decoded_generics
+      .params
+      .push(GenericParam::Type(unknown_buffer_param.clone()));
+    partial_decoded_generics
+      .params
+      .push(GenericParam::Type(flavor_param.clone()));
+
+    fields
+      .iter()
+      .filter_map(|f| {
+        if let Field::Tagged(tagged_field) = f {
+          Some(tagged_field)
+        } else {
+          None
+        }
+      })
+      .for_each(|f| {
+        f.partial_decoded
+          .type_constraints()
+          .iter()
+          .for_each(|constraint| {
+            partial_decoded_generics
+              .make_where_clause()
+              .predicates
+              .push(constraint.clone());
+          });
+      });
+    let (_, tg, _) = partial_decoded_generics.split_for_impl();
 
     Ok(Self {
+      ty: syn::parse2(quote! {
+        #partial_decoded_name #tg
+      })?,
       name: partial_decoded_name,
-      ty: todo!(),
       attrs: partial_decoded.attrs().to_vec(),
       vis: object.vis().clone(),
-      generics: todo!(),
+      generics: partial_decoded_generics,
       flavor_param: partial_decoded.flavor().cloned(),
       unknown_buffer_param: partial_decoded.unknown_buffer().clone(),
       lifetime_param: partial_decoded.lifetime().clone(),
-      flavors: object.flavors().iter().map(|flavor| {
-        let ident = flavor.name().clone();
-        ConcretePartialDecodedObject::try_new(
-          object,
-          fields,
-          &partial_decoded_name,
-          flavor,
-        ).map(|concrete| (ident, concrete))
-      }).collect::<darling::Result<IndexMap<_, _>>>()?,
+      flavors: object
+        .flavors()
+        .iter()
+        .map(|flavor| {
+          let ident = flavor.name().clone();
+          GenericPartialDecodedObjectFlavor::try_new(object, fields, flavor)
+            .map(|flavor| (ident, flavor))
+        })
+        .collect::<darling::Result<IndexMap<_, _>>>()?,
     })
   }
 }
 
+
+pub enum PartialDecodedObject {
+  Generic(GenericPartialDecodedObject),
+  Concrete(ConcretePartialDecodedObject),
+}
+
+impl PartialDecodedObject {
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    match self {
+      Self::Generic(g) => &g.name,
+      Self::Concrete(c) => &c.name,
+    }
+  }
+
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    match self {
+      Self::Generic(g) => &g.ty,
+      Self::Concrete(c) => &c.ty,
+    }
+  }
+
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    match self {
+      Self::Generic(g) => &g.generics,
+      Self::Concrete(c) => &c.generics,
+    }
+  }
+}
 
 pub struct Flavor {
   ty: Type,
@@ -730,8 +912,309 @@ impl Flavor {
   }
 }
 
-pub struct Reflection {
+pub enum Reflection {
+  Generic(GenericReflection),
+  Concrete(ConcreteReflection),
+}
+
+impl Reflection {
+  /// Returns the generics of the reflection.
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    match self {
+      Reflection::Generic(g) => g.generics(),
+      Reflection::Concrete(c) => c.generics(),
+    }
+  }
+
+  /// Returns the type of the reflection.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    match self {
+      Reflection::Generic(g) => &g.ty,
+      Reflection::Concrete(c) => &c.ty,
+    }
+  }
+
+  fn derive(&self, object: &Object) -> darling::Result<proc_macro2::TokenStream> {
+    match self {
+      Reflection::Generic(g) => g.derive(object),
+      Reflection::Concrete(c) => c.derive(object),
+    }
+  }
+}
+
+pub struct ConcreteReflection {
+  ty: Type,
+  flavor_ty: Type,
   generics: Generics,
+}
+
+impl ConcreteReflection {
+  /// Returns the type of the reflection.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the flavor type of the reflection.
+  #[inline]
+  pub const fn flavor_type(&self) -> &Type {
+    &self.flavor_ty
+  }
+
+  /// Returns the generics of the reflection.
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+
+  fn derive(&self, object: &Object) -> darling::Result<proc_macro2::TokenStream> {
+    let path_to_grost = object.path_to_grost();
+    let name = object.name();
+    let object_type = object.ty();
+    let reflectable = object.reflectable();
+    let type_reflection = object.type_reflection();
+
+    let object_reflection_ty = &self.ty;
+    let (ig, tg, wc) = object.generics().split_for_impl();
+    let (_, _, wc_reflection) = self.generics.split_for_impl();
+
+    let name_str = name.to_string();
+    let schema_name = object.schema.name().unwrap_or(name_str.as_str());
+    let schema_description = object.schema.description().unwrap_or_default();
+
+    let flavor_ty = &self.flavor_ty;
+
+    let mut field_reflectable_impl = vec![];
+    let mut field_reflections = vec![];
+    let field_reflection_fns = object
+      .fields()
+      .iter()
+      .filter_map(|f| match f {
+        Field::Tagged(tagged_field) => Some(tagged_field),
+        Field::Skipped(_) => None,
+      })
+      .map(|field| {
+        field_reflections.push(field.field_reflection.value());
+        field_reflectable_impl.push(field.field_reflectable(object));
+
+        field.field_reflection_fn(object, flavor_ty, false)
+      })
+      .collect::<Vec<_>>();
+    
+
+    Ok(quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #reflectable for #type_reflection #wc_reflection {
+        type Reflection = #path_to_grost::__private::reflection::Type;
+
+        const REFLECTION: &'static Self::Reflection = &{
+          #path_to_grost::__private::reflection::Type::Object(
+            &#path_to_grost::__private::reflection::ObjectBuilder {
+              name: #schema_name,
+              description: #schema_description,
+              fields: &[
+                #(&#field_reflections),*
+              ],
+            }.build()
+          )
+        };
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #wc {
+        #(#field_reflection_fns)*
+
+        /// Returns the reflection of the object.
+        #[inline]
+        pub const fn reflection() -> #object_reflection_ty
+        where
+          #flavor_ty: #path_to_grost::__private::flavors::Flavor,
+        {
+          #path_to_grost::__private::reflection::ObjectReflection::new()
+        }
+      }
+    })
+  }
+
+  fn try_new<O>(object: &O, fields: &[Field], flavor_ty: &Type) -> darling::Result<Self>
+  where
+    O: crate::ast::object::Object,
+  {
+    let path_to_grost = object.path_to_grost();
+    let name = object.name();
+    let generics = object.generics();
+    let (_, tg, _) = generics.split_for_impl();
+    let mut reflection_generics = generics.clone();
+
+    let ty: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::ObjectReflection<
+        #name #tg,
+        #path_to_grost::__private::reflection::Object,
+        #flavor_ty,
+      >
+    })?;
+
+    fields.iter().filter_map(|f| {
+      if let Field::Tagged(tagged_field) = f {
+        Some(tagged_field)
+      } else {
+        None
+      }
+    }).for_each(|f| {
+      reflection_generics
+        .make_where_clause()
+        .predicates
+        .extend(f.field_reflection.constraints().iter().cloned());
+    });
+
+    Ok(Self {
+      ty,
+      generics: reflection_generics,
+      flavor_ty: flavor_ty.clone(),
+    })
+  }
+}
+
+pub struct GenericReflection {
+  ty: Type,
+  flavor_param: TypeParam,
+  generics: Generics,
+}
+
+impl GenericReflection {
+  /// Returns the type of the reflection.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the flavor type of the reflection.
+  #[inline]
+  pub const fn flavor_param(&self) -> &TypeParam {
+    &self.flavor_param
+  }
+
+  /// Returns the generics of the reflection.
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+
+  fn derive(&self, object: &Object) -> darling::Result<proc_macro2::TokenStream> {
+    let path_to_grost = object.path_to_grost();
+    let name = object.name();
+    let reflectable = object.reflectable();
+    let type_reflection = object.type_reflection();
+
+    let object_reflection_ty = &self.ty;
+    let (ig, tg, wc) = object.generics().split_for_impl();
+    let (_, _, wc_reflection) = self.generics.split_for_impl();
+
+    let name_str = name.to_string();
+    let schema_name = object.schema.name().unwrap_or(name_str.as_str());
+    let schema_description = object.schema.description().unwrap_or_default();
+
+    let flavor_ident = &self.flavor_param.ident;
+    let mut field_reflectable_impl = vec![];
+    let mut field_reflections = vec![];
+    let field_reflection_fns = object
+      .fields()
+      .iter()
+      .filter_map(|f| match f {
+        Field::Tagged(tagged_field) => Some(tagged_field),
+        Field::Skipped(_) => None,
+      })
+      .map(|field| {
+        field_reflections.push(field.field_reflection.value());
+        field_reflectable_impl.push(field.field_reflectable(object));
+
+        field.field_reflection_fn(object, flavor_ident, true)
+      })
+      .collect::<Vec<_>>();
+
+    Ok(quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #reflectable for #type_reflection #wc_reflection {
+        type Reflection = #path_to_grost::__private::reflection::Type;
+
+        const REFLECTION: &'static Self::Reflection = &{
+          #path_to_grost::__private::reflection::Type::Object(
+            &#path_to_grost::__private::reflection::ObjectBuilder {
+              name: #schema_name,
+              description: #schema_description,
+              fields: &[
+                #(&#field_reflections),*
+              ],
+            }.build()
+          )
+        };
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #wc {
+        #(#field_reflection_fns)*
+
+        /// Returns the reflection of the object.
+        #[inline]
+        pub const fn reflection<#flavor_ident>() -> #object_reflection_ty
+        where
+          #flavor_ident: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
+        {
+          #path_to_grost::__private::reflection::ObjectReflection::new()
+        }
+      }
+    })
+  }
+
+  fn try_new<O>(
+    object: &O,
+    fields: &[Field],
+    flavor_param: &TypeParam,
+  ) -> darling::Result<Self>
+  where
+    O: crate::ast::object::Object,
+  {
+    let path_to_grost = object.path_to_grost();
+    let name = object.name();
+    let generics = object.generics();
+    let (_, tg, _) = generics.split_for_impl();
+    let mut reflection_generics = generics.clone();
+    reflection_generics.params.push(GenericParam::Type(flavor_param.clone()));
+
+    let flavor_ident = &flavor_param.ident;
+    let ty: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::ObjectReflection<
+        #name #tg,
+        #path_to_grost::__private::reflection::Object,
+        #flavor_ident,
+      >
+    })?;
+
+    fields.iter().filter_map(|f| {
+      if let Field::Tagged(tagged_field) = f {
+        Some(tagged_field)
+      } else {
+        None
+      }
+    }).for_each(|f| {
+      reflection_generics
+        .make_where_clause()
+        .predicates
+        .extend(f.field_reflection.constraints().iter().cloned());
+    });
+
+    Ok(Self {
+      ty,
+      generics: reflection_generics,
+      flavor_param: flavor_param.clone(),
+    })
+  }
 }
 
 pub struct Object {
@@ -739,6 +1222,7 @@ pub struct Object {
   vis: Visibility,
   name: Ident,
   ty: Type,
+  type_reflection: Type,
   path_to_grost: Path,
   schema: SchemaAttribute,
   flavor_param: Option<TypeParam>,
@@ -748,6 +1232,7 @@ pub struct Object {
   default: Option<syn::Path>,
   fields: Vec<Field>,
   reflection: Reflection,
+  reflectable: Type,
 }
 
 impl ToTokens for Object {
@@ -758,31 +1243,29 @@ impl ToTokens for Object {
     let where_clause = &self.generics.where_clause;
     let attrs = &self.attrs;
 
-    let fields = self.fields.iter().map(|f| {
-      match f {
-        Field::Tagged(tagged_field) => {
-          let attrs = &tagged_field.attrs;
-          let vis = &tagged_field.vis;
-          let name = &tagged_field.name;
-          let ty = &tagged_field.ty;
-          quote! {
-            #(#attrs)*
-            #vis #name: #ty
-          }
-        },
-        Field::Skipped(skipped_field) => {
-          let attrs = &skipped_field.attrs;
-          let vis = &skipped_field.vis;
-          let name = &skipped_field.name;
-          let ty = &skipped_field.ty;
-          quote! {
-            #(#attrs)*
-            #vis #name: #ty
-          }
-        },
+    let fields = self.fields.iter().map(|f| match f {
+      Field::Tagged(tagged_field) => {
+        let attrs = &tagged_field.attrs;
+        let vis = &tagged_field.vis;
+        let name = &tagged_field.name;
+        let ty = &tagged_field.ty;
+        quote! {
+          #(#attrs)*
+          #vis #name: #ty
+        }
+      }
+      Field::Skipped(skipped_field) => {
+        let attrs = &skipped_field.attrs;
+        let vis = &skipped_field.vis;
+        let name = &skipped_field.name;
+        let ty = &skipped_field.ty;
+        quote! {
+          #(#attrs)*
+          #vis #name: #ty
+        }
       }
     });
-    
+
     tokens.extend(quote! {
       #(#attrs)*
       #vis struct #name #generics #where_clause {
@@ -797,8 +1280,22 @@ impl Object {
     &self.name
   }
 
-  pub fn ty(&self) -> &Type {
+  /// Returns the object as a type.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the `TypeReflection` type of the object.
+  #[inline]
+  pub const fn type_reflection(&self) -> &Type {
+    &self.type_reflection
+  }
+
+  /// Returns the reflectable trait which applies the object type as the generic of the `Reflectable` trait.
+  #[inline]
+  pub const fn reflectable(&self) -> &Type {
+    &self.reflectable
   }
 
   pub fn generics(&self) -> &syn::Generics {
@@ -832,74 +1329,107 @@ impl Object {
     let flavor_param = input.partial_decoded().flavor().cloned();
     let schema = input.schema().clone();
     let default = input.default().cloned();
-    let reflection = input.reflection().clone();
     let (ig, tg, wc) = generics.split_for_impl();
 
     let object_type: Type = syn::parse2(quote! {
       #name #tg
     })?;
+    let reflectable: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::Reflectable<#object_type>
+    })?;
+    let type_reflection: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::TypeReflection<#object_type>
+    })?;
 
-    let flavors = input.flavors().iter().map(|flavor| {
-      let name = flavor.name().clone();
-      let ty = flavor.ty().clone();
-      let wire_format = flavor.wire_format().clone();
-      let identifier = flavor.identifier().clone();
-      let encode = flavor.encode().clone();
-      let decode = flavor.decode().clone();
+    let flavors = input
+      .flavors()
+      .iter()
+      .map(|flavor| {
+        let name = flavor.name().clone();
+        let ty = flavor.ty().clone();
+        let wire_format = flavor.wire_format().clone();
+        let identifier = flavor.identifier().clone();
+        let encode = flavor.encode().clone();
+        let decode = flavor.decode().clone();
 
-      Ok((name, Flavor {
-        ty,
-        wire_format,
-        identifier,
-        encode,
-        decode,
-      }))
-    }).collect::<syn::Result<IndexMap<Ident, Flavor>>>()?;
+        Ok((
+          name,
+          Flavor {
+            ty,
+            wire_format,
+            identifier,
+            encode,
+            decode,
+          },
+        ))
+      })
+      .collect::<syn::Result<IndexMap<Ident, Flavor>>>()?;
 
     let mut tags_cache = IndexSet::new();
-    let flavor_ty = match flavor_param.as_ref() {
-      Some(tp) => {
-        let ident = &tp.ident;
-        quote! { #ident }
-      },
-      None => {
-        let (_, flavor) = flavors.first().expect("There should be only one flavor registered when not derving generic code.");
-        let ty = &flavor.ty;
-        quote! { #ty }
-      },
+    let mut fields = |flavor_type: proc_macro2::TokenStream| {
+      input
+        .fields()
+        .iter()
+        .map(|f| {
+          if f.skip() {
+            SkippedField::try_new(input, f).map(Field::Skipped)
+          } else if let Some(tag) = f.tag() {
+            let tag = tag.get();
+            if !tags_cache.insert(tag) {
+              return Err(darling::Error::custom(format!(
+                "Multiple fields with the same tag `{tag}` in object `{}`.",
+                input.name()
+              )));
+            }
+
+            TaggedField::try_new(input, &object_type, &reflectable, &flavors, &flavor_type, f, tag).map(Field::Tagged)
+          } else {
+            return Err(darling::Error::missing_field("tag"));
+          }
+        })
+        .collect::<darling::Result<Vec<Field>>>()
     };
 
-    let fields = input.fields().iter().map(|f| {
-      if f.skip() {
-        let ty = f.ty();
-        Ok(Field::Skipped(SkippedField {
-          attrs: f.attrs().to_vec(),
-          vis: f.vis().clone(),
-          name: f.name().clone(),
-          ty: ty.clone(),
-          default: f.default().cloned().unwrap_or_else(|| {
-            syn::parse2(quote! {
-              <#ty as ::core::default::Default>::default
-            }).unwrap()
-          }),
-          copy: f.copy(),
-        }))
-      } else {
-        TaggedField::try_new(input, &object_type, &flavors, &flavor_ty, f)
-          .map(Field::Tagged)
-      }
-    }).collect::<darling::Result<Vec<Field>>>()?;
+    let (partial_decoded, reflection, fields) = if let Some(param) = &flavor_param {
+      let fields = {
+        let ident = &param.ident;
+        fields(quote! { #ident })?
+      };
+      let decoded_object = GenericPartialDecodedObject::try_new(input, param, &fields)?;
+
+      (
+        PartialDecodedObject::Generic(decoded_object),
+        Reflection::Generic(GenericReflection::try_new(input, &fields, param)?),
+        fields,
+      )
+    } else {
+      let (flavor_name, flavor) = flavors
+        .first()
+        .expect("There should be only one flavor registered when not derving generic code.");
+
+      let fields = {
+        let ty = flavor.ty();
+        fields(quote! { #ty })?
+      };
+      let decoded_object =
+        ConcretePartialDecodedObject::try_new(input, &fields, flavor_name, flavor.ty().clone())?;
+      let reflection = ConcreteReflection::try_new(input, &fields, flavor.ty())?;
+
+      (PartialDecodedObject::Concrete(decoded_object), Reflection::Concrete(reflection), fields)
+    };
 
     Ok(Self {
       attrs: input.attrs().to_vec(),
       vis,
       name,
+      reflectable,
+      type_reflection,
       ty: object_type,
       path_to_grost: path_to_grost.clone(),
       schema,
+      partial_decoded,
       flavor_param,
       generics,
-      partial_decoded: PartialDecodedObject::try_new(input)?,
       flavors,
       default,
       fields,
@@ -913,7 +1443,7 @@ impl Object {
     let accessors = self.derive_accessors();
     let default = self.derive_default();
     let reflection = self.derive_reflection()?;
-    
+
     Ok(quote! {
       const _: () = {
         #flatten_state
@@ -950,19 +1480,16 @@ impl Object {
             #default()
           }
         }
-      }
+      };
     }
 
-    let fields = self
-      .fields
-      .iter()
-      .map(|f| {
-        let field_name = f.name();
-        let default = f.default();
-        quote! {
-          #field_name: #default()
-        }
-      });
+    let fields = self.fields.iter().map(|f| {
+      let field_name = f.name();
+      let default = f.default();
+      quote! {
+        #field_name: #default()
+      }
+    });
 
     let (ig, tg, w) = self.generics.split_for_impl();
 
@@ -1006,160 +1533,8 @@ impl Object {
     }
   }
 
-  fn derive_concrete_reflection(&self, flavor_ty: impl ToTokens) -> syn::Result<proc_macro2::TokenStream> {
-    let path_to_grost = &self.path_to_grost;
-    let name = self.name();
-
-    let object_reflection_ty = quote! {
-      #path_to_grost::__private::reflection::ObjectReflection<
-        #name,
-        #path_to_grost::__private::reflection::Object,
-        #flavor_ty,
-      >
-    };
-    let (ig, tg, wc) = self.generics().split_for_impl();
-    let (_, _, wc_reflection) = self.reflection.generics.split_for_impl();
-
-    let name_str = name.to_string();
-    let schema_name = self.schema.name().unwrap_or(name_str.as_str());
-    let schema_description = self.schema.description().unwrap_or_default();
-
-    let mut field_reflectable_impl = vec![];
-    let mut field_reflections = vec![];
-    let field_reflection_fns = self
-      .fields()
-      .iter()
-      .filter_map(|f| match f {
-        Field::Tagged(tagged_field) => Some(tagged_field),
-        Field::Skipped(_) => None,
-      })
-      .map(|field| {
-        field_reflections.push(field.field_reflection_value(self));
-        field_reflectable_impl.push(field.field_reflectable(self, &flavor_ty));
-
-        field.field_reflection_fn(self, &flavor_ty, false)
-      })
-      .collect::<Vec<_>>();
-
-    Ok(quote! {
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::TypeReflection<
-        #name #tg,
-      >
-      #wc_reflection {
-        type Reflection = #path_to_grost::__private::reflection::Type;
-
-        const REFLECTION: &'static Self::Reflection = &{
-          #path_to_grost::__private::reflection::Type::Object(
-            &#path_to_grost::__private::reflection::ObjectBuilder {
-              name: #schema_name,
-              description: #schema_description,
-              fields: &[
-                #(&#field_reflections),*
-              ],
-            }.build()
-          )
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #name #tg #wc {
-        #(#field_reflection_fns)*
-
-        /// Returns the reflection of the object.
-        #[inline]
-        pub const fn reflection() -> #object_reflection_ty
-        where
-          #flavor_ty: #path_to_grost::__private::flavors::Flavor,
-        {
-          #path_to_grost::__private::reflection::ObjectReflection::new()
-        }
-      }
-    })
-  }
-
-  fn derive_generic_reflection(&self, flavor_ty: impl ToTokens) -> syn::Result<proc_macro2::TokenStream> {
-    let path_to_grost = &self.path_to_grost;
-    let name = self.name();
-
-    let object_reflection_ty = quote! {
-      #path_to_grost::__private::reflection::ObjectReflection<
-        #name,
-        #path_to_grost::__private::reflection::Object,
-        #flavor_ty,
-      >
-    };
-    let (ig, tg, wc) = self.generics().split_for_impl();
-    let (_, _, wc_reflection) = self.reflection.generics.split_for_impl();
-
-    let name_str = name.to_string();
-    let schema_name = self.schema.name().unwrap_or(name_str.as_str());
-    let schema_description = self.schema.description().unwrap_or_default();
-
-    let mut field_reflectable_impl = vec![];
-    let mut field_reflections = vec![];
-    let field_reflection_fns = self
-      .fields()
-      .iter()
-      .filter_map(|f| match f {
-        Field::Tagged(tagged_field) => Some(tagged_field),
-        Field::Skipped(_) => None,
-      })
-      .map(|field| {
-        field_reflections.push(field.field_reflection_value(self));
-        field_reflectable_impl.push(field.field_reflectable(self, &flavor_ty));
-
-        field.field_reflection_fn(self, &flavor_ty, true)
-      })
-      .collect::<Vec<_>>();
-
-    Ok(quote! {
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::reflection::Reflectable<#name #tg> for #path_to_grost::__private::reflection::TypeReflection<
-        #name #tg,
-      >
-      #wc_reflection {
-        type Reflection = #path_to_grost::__private::reflection::Type;
-
-        const REFLECTION: &'static Self::Reflection = &{
-          #path_to_grost::__private::reflection::Type::Object(
-            &#path_to_grost::__private::reflection::ObjectBuilder {
-              name: #schema_name,
-              description: #schema_description,
-              fields: &[
-                #(&#field_reflections),*
-              ],
-            }.build()
-          )
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #name #tg #wc {
-        #(#field_reflection_fns)*
-
-        /// Returns the reflection of the object.
-        #[inline]
-        pub const fn reflection<#flavor_ty>() -> #object_reflection_ty
-        where
-          #flavor_ty: ?::core::marker::Sized + #path_to_grost::__private::flavors::Flavor,
-        {
-          #path_to_grost::__private::reflection::ObjectReflection::new()
-        }
-      }
-    })
-  }
-
-  fn derive_reflection(&self) -> syn::Result<proc_macro2::TokenStream> {
-    if let Some(ref fp) = self.flavor_param {
-      self.derive_generic_reflection(&fp.ident)
-    } else {
-      self.derive_concrete_reflection(&self.flavors.first().unwrap().1.ty)
-    }
+  fn derive_reflection(&self) -> darling::Result<proc_macro2::TokenStream> {
+    self.reflection.derive(self)
   }
 }
 
