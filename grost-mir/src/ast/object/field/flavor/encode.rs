@@ -47,4 +47,16 @@ impl EncodeAttribute {
   pub const fn error_if(&self) -> Option<&syn::Path> {
     self.error_if.as_ref()
   }
+
+  pub(crate) fn new(
+    skip_default: Option<bool>,
+    skip_if: Option<syn::Path>,
+    error_if: Option<syn::Path>,
+  ) -> Self {
+    Self {
+      skip_default,
+      skip_if,
+      error_if,
+    }
+  }
 }

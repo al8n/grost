@@ -5,7 +5,7 @@ use syn::{Attribute, Generics, Ident, Type, TypeParam, Visibility, parse::Parser
 
 use crate::ast::{
   grost_unknown_buffer_param,
-  object::{RawField, Label, RawObjectExt as _},
+  object::{Label, RawField, RawObjectExt as _},
 };
 
 use super::Object;

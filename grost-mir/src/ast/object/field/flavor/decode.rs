@@ -120,6 +120,16 @@ impl DecodeAttribute {
   pub const fn error_if(&self) -> Option<&syn::Path> {
     self.error_if.as_ref()
   }
+
+  pub(crate) fn new(
+    missing_operation: Option<MissingOperation>,
+    error_if: Option<syn::Path>,
+  ) -> Self {
+    Self {
+      missing_operation,
+      error_if,
+    }
+  }
 }
 
 #[cfg(test)]

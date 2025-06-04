@@ -3,6 +3,7 @@ use syn::{ext::IdentExt, parse::ParseStream};
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
+#[non_exhaustive]
 pub enum Label {
   /// A scalar type label, e.g. `i32`, `f64`, etc.
   #[display("scalar")]

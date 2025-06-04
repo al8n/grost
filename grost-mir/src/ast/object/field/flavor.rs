@@ -148,7 +148,12 @@ impl FieldFlavorAttribute {
     &self.decode
   }
 
-  pub(crate) fn new(name: Ident) -> Self {
+  pub(crate) fn new(
+    name: Ident,
+    format: Option<syn::Type>,
+    encode: EncodeAttribute,
+    decode: DecodeAttribute,
+  ) -> Self {
     Self {
       name,
       format: None,

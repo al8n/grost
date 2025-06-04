@@ -16,7 +16,9 @@ mod generic;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
-struct BoolOption(#[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))] Option<bool>);
+struct BoolOption(
+  #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))] Option<bool>,
+);
 
 impl From<Option<bool>> for BoolOption {
   fn from(value: Option<bool>) -> Self {

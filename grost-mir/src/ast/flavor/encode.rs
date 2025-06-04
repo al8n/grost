@@ -18,7 +18,10 @@ pub(super) struct EncodeValueParser {
   )]
   path: Option<Path>,
   #[darling(default)]
-  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "BoolOption::is_none"))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(default, skip_serializing_if = "BoolOption::is_none")
+  )]
   skip_default: BoolOption,
 }
 

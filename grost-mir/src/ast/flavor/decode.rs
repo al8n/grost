@@ -6,7 +6,10 @@ use crate::ast::BoolOption;
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub(super) struct DecodeValueParser {
   #[darling(default)]
-  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "BoolOption::is_none"))]
+  #[cfg_attr(
+    feature = "serde",
+    serde(default, skip_serializing_if = "BoolOption::is_none")
+  )]
   or_else_default: BoolOption,
 }
 

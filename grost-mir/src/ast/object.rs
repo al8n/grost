@@ -1,7 +1,9 @@
 use darling::FromMeta;
-use indexmap::IndexMap;
-use quote::{quote, format_ident};
+use indexmap::{IndexMap, IndexSet};
+use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
+
+use crate::ast::MissingOperation;
 
 use super::{
   Attributes, FlavorAttribute, FlavorFromMeta, GenericAttribute, SchemaAttribute, SchemaFromMeta,
@@ -431,7 +433,6 @@ impl SkippedField {
       None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
     };
 
-
     Ok(Self {
       attrs,
       vis,
@@ -489,15 +490,17 @@ impl ConcreteTaggedField {
     self.tag
   }
 
-  fn try_new<F: RawField>(
-    f: &F,
-    flavor: &FlavorAttribute,
-  ) -> darling::Result<Self> {
+  fn try_new<F: RawField>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self> {
     let attrs = f.attrs().to_vec();
     let vis = f.vis().clone();
     let name = f.name().clone();
     let ty = f.ty().clone();
-    let tag = f.tag().ok_or_else(|| darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`")))?.get();
+    let tag = f
+      .tag()
+      .ok_or_else(|| {
+        darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`"))
+      })?
+      .get();
     let mut field_flavor = None;
     for ff in f.flavors() {
       if ff.name() != flavor.name() {
@@ -518,13 +521,36 @@ impl ConcreteTaggedField {
       field_flavor = Some(ff.clone());
     }
 
-    let field_flavor = field_flavor.unwrap_or(|| {
-      FieldFlavorAttribute {
-        name: flavor.name().clone(),
-        format: todo!(),
-        encode: todo!(),
-        decode: todo!(),
+    let field_flavor = field_flavor.unwrap_or_else(|| {
+      macro_rules! bail {
+        ($skip:ident, $or_else:ident) => {{
+          let skip_default = flavor.encode().$skip();
+          let missing_operation = if flavor.decode().$or_else() {
+            Some(MissingOperation::OrDefault(None))
+          } else {
+            None
+          };
+          (skip_default, missing_operation)
+        }};
       }
+
+      let (skip_default, missing_operation) = match f.label() {
+        Label::Scalar => bail!(skip_default_scalar, or_else_default_scalar),
+        Label::Bytes => bail!(skip_default_bytes, or_else_default_bytes),
+        Label::String => bail!(skip_default_string, or_else_default_string),
+        Label::Object => bail!(skip_default_object, or_else_default_object),
+        Label::Enum => bail!(skip_default_enumeration, or_else_default_enumeration),
+        Label::Union => bail!(skip_default_union, or_else_default_union),
+        Label::Interface => bail!(skip_default_interface, or_else_default_interface),
+        _ => (true, None),
+      };
+
+      FieldFlavorAttribute::new(
+        flavor.name().clone(),
+        None,
+        FieldEncodeAttribute::new(Some(skip_default), None, None),
+        FieldDecodeAttribute::new(missing_operation, None),
+      )
     });
 
     Ok(Self {
@@ -596,10 +622,7 @@ impl ConcreteObject {
     &self.generics
   }
 
-  fn try_new<O>(
-    object: &O,
-    flavor: &FlavorAttribute,
-  ) -> darling::Result<Self>
+  fn try_new<O>(object: &O, flavor: &FlavorAttribute) -> darling::Result<Self>
   where
     O: RawObject,
   {
@@ -617,19 +640,34 @@ impl ConcreteObject {
       #path_to_grost::__private::reflection::Reflectable<#ty>
     })?;
 
-    object.fields()
+    let mut tags = IndexSet::new();
+
+    let fields = object
+      .fields()
       .iter()
-      .map(|f| {
+      .map(|&f| {
         if f.skip() {
-          SkippedField::try_new(*f).map(ConcreteField::Skipped)
+          SkippedField::try_new(f).map(ConcreteField::Skipped)
         } else {
-          ConcreteTaggedField::try_new(f, flavor).map(ConcreteField::Tagged)
+          ConcreteTaggedField::try_new(f, flavor).and_then(|f| {
+            if tags.contains(&f.tag()) {
+              Err(darling::Error::custom(format!(
+                "{name} has multiple fields have the same tag {}",
+                f.tag()
+              )))
+            } else {
+              tags.insert(f.tag());
+              Ok(ConcreteField::Tagged(f))
+            }
+          })
         }
       })
       .collect::<darling::Result<Vec<_>>>()
       .and_then(|fields| {
         if fields.is_empty() {
-          Err(darling::Error::custom("Object must have at least one field"))
+          Err(darling::Error::custom(format!(
+            "{name} must have at least one field"
+          )))
         } else {
           Ok(fields)
         }
@@ -644,7 +682,7 @@ impl ConcreteObject {
       reflectable,
       generics,
       flavor: flavor.clone(),
-      fields: Vec::new(),
+      fields,
     })
   }
 }
@@ -723,15 +761,17 @@ pub enum Object {
 }
 
 impl Object {
-  pub fn new<O>(
-    object: &O,
-  ) -> darling::Result<Self>
+  pub fn new<O>(object: &O) -> darling::Result<Self>
   where
     O: RawObject,
   {
     let num_flavors = object.flavors().len();
     if object.partial_decoded().flavor().is_none() && num_flavors == 1 {
-      let flavor = object.flavors().iter().next().expect("There must be a flavor were already checked");
+      let flavor = object
+        .flavors()
+        .iter()
+        .next()
+        .expect("There must be a flavor were already checked");
       ConcreteObject::try_new(object, flavor).map(Object::Concrete)
     } else {
       GenericObject::try_new(object).map(Object::Generic)

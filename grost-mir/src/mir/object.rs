@@ -11,7 +11,7 @@ pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
   SchemaAttribute,
-  object::{RawField as _, Label, RawObjectExt as _},
+  object::{Label, RawField as _, RawObjectExt as _},
 };
 
 mod indexer;
