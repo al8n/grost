@@ -9,7 +9,7 @@ use syn::{
 
 use crate::ast::{
   grost_flavor_param,
-  object::{Field, ObjectExt},
+  object::{RawField, RawObjectExt},
 };
 
 use super::Object;
@@ -66,7 +66,7 @@ impl Indexer {
 
   pub(super) fn from_input<O>(input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let name = input.indexer_name();
     let attrs = input.indexer().attrs().to_vec();
@@ -133,7 +133,7 @@ impl Indexer {
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   pub(super) fn derive_indexer(&self) -> proc_macro2::TokenStream {
     let name = self.indexer.name();

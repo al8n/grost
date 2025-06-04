@@ -5,7 +5,7 @@ use syn::{Attribute, Generics, Ident, Type, TypeParam, Visibility, parse::Parser
 
 use crate::ast::{
   grost_unknown_buffer_param,
-  object::{Field, Label, ObjectExt as _},
+  object::{RawField, Label, RawObjectExt as _},
 };
 
 use super::Object;
@@ -112,7 +112,7 @@ impl PartialField {
     copy: bool,
   ) -> darling::Result<Self>
   where
-    I: crate::ast::object::Field,
+    I: crate::ast::object::RawField,
   {
     let ty = input.ty();
     let name = input.name();
@@ -215,7 +215,7 @@ impl PartialObject {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let meta = input;
     let mut fields = vec![];
@@ -297,7 +297,7 @@ impl PartialObject {
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   /// Generates a partial object of the object
   pub fn derive_partial_object(&self) -> proc_macro2::TokenStream {

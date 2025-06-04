@@ -104,7 +104,7 @@ impl DecodeFromMeta {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct DecodeAttribute {
   missing_operation: Option<MissingOperation>,
   error_if: Option<syn::Path>,

@@ -1,9 +1,11 @@
 use darling::FromMeta;
 
+use crate::ast::BoolOption;
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, FromMeta)]
 pub(super) struct EncodeFromMeta {
   #[darling(default)]
-  skip_default: bool,
+  skip_default: BoolOption,
   #[darling(default)]
   skip_if: Option<syn::Path>,
   #[darling(default)]
@@ -13,16 +15,16 @@ pub(super) struct EncodeFromMeta {
 impl EncodeFromMeta {
   pub fn finalize(self) -> darling::Result<EncodeAttribute> {
     Ok(EncodeAttribute {
-      skip_default: self.skip_default,
+      skip_default: self.skip_default.into(),
       skip_if: self.skip_if,
       error_if: self.error_if,
     })
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EncodeAttribute {
-  skip_default: bool,
+  skip_default: Option<bool>,
   skip_if: Option<syn::Path>,
   error_if: Option<syn::Path>,
 }
@@ -30,7 +32,7 @@ pub struct EncodeAttribute {
 impl EncodeAttribute {
   /// Returns `true` if the field should skip encoding the default value.
   #[inline]
-  pub const fn skip_default(&self) -> bool {
+  pub const fn skip_default(&self) -> Option<bool> {
     self.skip_default
   }
 

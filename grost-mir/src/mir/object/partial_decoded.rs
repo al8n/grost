@@ -8,7 +8,7 @@ use syn::{
 
 use crate::ast::{
   grost_flavor_param, grost_lifetime, grost_unknown_buffer_param,
-  object::{Field as _, ObjectExt as _},
+  object::{RawField as _, RawObjectExt as _},
 };
 
 use super::{super::wire_format_reflection_ty, Object};
@@ -470,7 +470,7 @@ impl PartialDecodedObject {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let fields = input.fields();
     let meta = input;
@@ -676,7 +676,7 @@ impl PartialDecodedObject {
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
     let partial_decoded_object = self.partial_decoded();
@@ -870,7 +870,7 @@ fn add_partial_decoded_constraints<'a, I>(
   copy: bool,
 ) -> darling::Result<()>
 where
-  I: crate::ast::object::Field + 'a,
+  I: crate::ast::object::RawField + 'a,
 {
   let (_, tg, _) = object_generics.split_for_impl();
   fields.try_for_each(move |f| {

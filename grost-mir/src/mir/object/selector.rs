@@ -5,7 +5,7 @@ use super::{super::wire_format_reflection_ty, Object};
 
 use crate::ast::{
   grost_flavor_param, grost_lifetime, grost_wire_format_param,
-  object::{Field, ObjectExt as _, Selection, SelectorIterAttribute},
+  object::{RawField, RawObjectExt as _, Selection, SelectorIterAttribute},
 };
 
 const GROST_SELECTED_CONST: &str = "__GROST_SELECTED__";
@@ -281,7 +281,7 @@ impl Selector {
 
   pub(super) fn from_input<O>(path_to_grost: &syn::Path, input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let name = input.selector_name();
 
@@ -494,7 +494,7 @@ impl Selector {
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   pub(super) fn derive_selector_iter(&self) -> proc_macro2::TokenStream {
     let selector_iter = self.selector_iter();
@@ -1232,7 +1232,7 @@ fn add_selector_constraints<'a, I>(
   fg: &syn::TypeParam,
 ) -> darling::Result<()>
 where
-  I: crate::ast::object::Field + 'a,
+  I: crate::ast::object::RawField + 'a,
 {
   fields.try_for_each(move |f| {
     let ty = f.ty();

@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use quote::{ToTokens, format_ident, quote};
 use syn::{
   Expr, GenericParam, Generics, Type, TypeParam, WherePredicate, punctuated::Punctuated,
@@ -165,7 +166,7 @@ impl ConcreteFieldReflection {
     tag: u32,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let path_to_grost = object.path_to_grost();
     let object_type = object.ty();
@@ -226,6 +227,7 @@ impl ConcreteFieldReflection {
 
 #[derive(Debug, Clone)]
 pub struct FieldReflectionFlavor {
+  flavor_type: Type,
   wire_format_reflection: Type,
   wire_type_reflection: Type,
   identifier_reflection: Type,
@@ -236,11 +238,102 @@ pub struct FieldReflectionFlavor {
   encoded_tag_len_reflection: Type,
 }
 
+impl FieldReflectionFlavor {
+  /// Returns the type of the wire format reflection.
+  #[inline]
+  pub const fn wire_format_reflection(&self) -> &Type {
+    &self.wire_format_reflection
+  }
+
+  /// Returns the type of the wire type reflection.
+  #[inline]
+  pub const fn wire_type_reflection(&self) -> &Type {
+    &self.wire_type_reflection
+  }
+
+  /// Returns the type of the identifier reflection.
+  #[inline]
+  pub const fn identifier_reflection(&self) -> &Type {
+    &self.identifier_reflection
+  }
+
+  /// Returns the type of the encoded identifier reflection.
+  #[inline]
+  pub const fn encoded_identifier_reflection(&self) -> &Type {
+    &self.encoded_identifier_reflection
+  }
+
+  /// Returns the type of the encoded identifier length reflection.
+  #[inline]
+  pub const fn encoded_identifier_len_reflection(&self) -> &Type {
+    &self.encoded_identifier_len_reflection
+  }
+
+  /// Returns the type of the tag reflection.
+  #[inline]
+  pub const fn tag_reflection(&self) -> &Type {
+    &self.tag_reflection
+  }
+
+  /// Returns the type of the encoded tag reflection.
+  #[inline]
+  pub const fn encoded_tag_reflection(&self) -> &Type {
+    &self.encoded_tag_reflection
+  }
+
+  /// Returns the type of the encoded tag length reflection.
+  #[inline]
+  pub const fn encoded_tag_len_reflection(&self) -> &Type {
+    &self.encoded_tag_len_reflection
+  }
+
+  fn try_new<O>(
+    object: &O,
+    flavor_ty: &Type,
+    tag: u32,
+  ) -> darling::Result<Self>
+  where
+    O: crate::ast::object::RawObject,
+  {
+    let path_to_grost = object.path_to_grost();
+    let object_type = object.ty();
+    let field_reflection = field_reflection(path_to_grost, object_type, flavor_ty, tag)?;
+    let wire_format_reflection =
+      wire_format_reflection(path_to_grost, object_type, flavor_ty, tag)?;
+    let wire_type_reflection =
+      wire_type_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let identifier_reflection =
+      identifier_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let encoded_identifier_reflection =
+      encoded_identifier_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let encoded_identifier_len_reflection =
+      encoded_identifier_len_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let tag_reflection = tag_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let encoded_tag_reflection =
+      encoded_tag_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+    let encoded_tag_len_reflection =
+      encoded_tag_len_reflection(path_to_grost, &field_reflection, flavor_ty, tag)?;
+ 
+    Ok(Self {
+      flavor_type: flavor_ty.clone(),
+      wire_format_reflection,
+      wire_type_reflection,
+      identifier_reflection,
+      encoded_identifier_reflection,
+      encoded_identifier_len_reflection,
+      tag_reflection,
+      encoded_tag_reflection,
+      encoded_tag_len_reflection,
+    })
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct GenericFieldReflection {
   field_reflection: Type,
   value: Expr,
   constraints: Punctuated<WherePredicate, Comma>,
+  flavors: Vec<FieldReflectionFlavor>,
 }
 
 impl GenericFieldReflection {
@@ -269,7 +362,7 @@ impl GenericFieldReflection {
     tag: u32,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let path_to_grost = object.path_to_grost();
     let object_type = object.ty();
@@ -291,8 +384,14 @@ impl GenericFieldReflection {
 
     let flavor_ident = &flavor_param.ident;
     let field_reflection = field_reflection(path_to_grost, object_type, flavor_ident, tag)?;
+    let flavors = field
+      .flavors()
+      .iter()
+      .map(|f| FieldReflectionFlavor::try_new(object, f, flavor_ident, tag))
+      .collect::<Result<Vec<_>, _>>()?;
 
     Ok(Self {
+      flavors,
       field_reflection,
       value: syn::parse2(quote! {
         #path_to_grost::__private::reflection::ObjectFieldBuilder {
@@ -339,7 +438,7 @@ impl FieldReflection {
     tag: u32,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let path_to_grost = object.path_to_grost();
     let object_name = object.name();
@@ -513,7 +612,7 @@ impl ConcreteReflection {
 
   pub(super) fn try_new<O>(object: &O, fields: &[Field], flavor_ty: &Type) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let path_to_grost = object.path_to_grost();
     let name = object.name();
@@ -654,7 +753,7 @@ impl GenericReflection {
     flavor_param: &TypeParam,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let path_to_grost = object.path_to_grost();
     let name = object.name();

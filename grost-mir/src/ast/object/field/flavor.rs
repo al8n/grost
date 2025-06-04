@@ -147,4 +147,13 @@ impl FieldFlavorAttribute {
   pub const fn decode(&self) -> &DecodeAttribute {
     &self.decode
   }
+
+  pub(crate) fn new(name: Ident) -> Self {
+    Self {
+      name,
+      format: None,
+      encode: EncodeAttribute::default(),
+      decode: DecodeAttribute::default(),
+    }
+  }
 }

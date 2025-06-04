@@ -2,10 +2,7 @@ use darling::{FromMeta, ast::NestedMeta};
 use quote::quote;
 use syn::{Meta, Path, parse::Parser, parse2};
 
-#[cfg(feature = "serde")]
-fn is_false(value: &bool) -> bool {
-  !*value
-}
+use crate::ast::BoolOption;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, darling::FromMeta)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -21,8 +18,8 @@ pub(super) struct EncodeValueParser {
   )]
   path: Option<Path>,
   #[darling(default)]
-  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "is_false"))]
-  skip_default: bool,
+  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "BoolOption::is_none"))]
+  skip_default: BoolOption,
 }
 
 impl From<EncodeValueParser> for EncodeValue {
@@ -48,7 +45,7 @@ impl From<EncodeValue> for EncodeValueParser {
 )]
 pub(super) struct EncodeValue {
   path: Option<Path>,
-  skip_default: bool,
+  skip_default: BoolOption,
 }
 
 impl TryFrom<&str> for EncodeValue {
@@ -57,7 +54,7 @@ impl TryFrom<&str> for EncodeValue {
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let path = syn::parse_str::<Path>(value)?;
     Ok(Self {
-      skip_default: false,
+      skip_default: BoolOption::default(),
       path: Some(path),
     })
   }
@@ -77,7 +74,7 @@ impl From<Path> for EncodeValue {
   fn from(value: Path) -> Self {
     Self {
       path: Some(value),
-      skip_default: false,
+      skip_default: BoolOption::default(),
     }
   }
 }
@@ -85,7 +82,7 @@ impl From<Path> for EncodeValue {
 #[derive(Debug, FromMeta)]
 struct Helper {
   #[darling(default)]
-  skip_default: bool,
+  skip_default: BoolOption,
   #[darling(default)]
   scalar: EncodeValue,
   #[darling(default)]
@@ -118,7 +115,7 @@ pub(super) struct EncodeParser {
   )
 )]
 pub struct EncodeAttribute {
-  pub(super) skip_default: bool,
+  pub(super) skip_default: BoolOption,
   pub(super) scalar: EncodeValue,
   pub(super) bytes: EncodeValue,
   pub(super) string: EncodeValue,
@@ -179,7 +176,7 @@ impl TryFrom<&syn::Path> for EncodeAttribute {
     let interface = quote! { #module::interface };
 
     Ok(Self {
-      skip_default: false,
+      skip_default: BoolOption::default(),
       scalar: EncodeValue::from(parse2::<Path>(scalar)?),
       bytes: EncodeValue::from(parse2::<Path>(bytes)?),
       string: EncodeValue::from(parse2::<Path>(string)?),
@@ -281,8 +278,8 @@ impl syn::parse::Parse for EncodeNestedMeta {
 impl EncodeAttribute {
   pub(super) fn network(path_to_grost: &Path) -> syn::Result<Self> {
     Self::try_from(path_to_grost).map(|mut s| {
-      s.bytes.skip_default = true;
-      s.string.skip_default = true;
+      s.bytes.skip_default = BoolOption::yes();
+      s.string.skip_default = BoolOption::yes();
       s
     })
   }
@@ -296,10 +293,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values
   #[inline]
   pub const fn skip_default_scalar(&self) -> bool {
-    if self.scalar.skip_default {
+    if self.scalar.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -312,10 +309,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for bytes
   #[inline]
   pub const fn skip_default_bytes(&self) -> bool {
-    if self.bytes.skip_default {
+    if self.bytes.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -328,10 +325,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for strings
   #[inline]
   pub const fn skip_default_string(&self) -> bool {
-    if self.string.skip_default {
+    if self.string.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -344,10 +341,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for objects
   #[inline]
   pub const fn skip_default_object(&self) -> bool {
-    if self.object.skip_default {
+    if self.object.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -360,10 +357,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for enumerations
   #[inline]
   pub const fn skip_default_enumeration(&self) -> bool {
-    if self.enumeration.skip_default {
+    if self.enumeration.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -376,10 +373,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for interfaces
   #[inline]
   pub const fn skip_default_interface(&self) -> bool {
-    if self.interface.skip_default {
+    if self.interface.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 
@@ -392,10 +389,10 @@ impl EncodeAttribute {
   /// Returns `true` if the encoding should skip default values for unions
   #[inline]
   pub const fn skip_default_union(&self) -> bool {
-    if self.union.skip_default {
+    if self.union.skip_default.is_yes() {
       true
     } else {
-      self.skip_default
+      self.skip_default.is_yes()
     }
   }
 }

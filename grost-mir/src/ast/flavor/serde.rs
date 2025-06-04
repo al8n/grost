@@ -1,3 +1,5 @@
+use crate::ast::BoolOption;
+
 use super::{decode::DecodeValue, *};
 
 use quote::ToTokens;
@@ -72,7 +74,7 @@ impl From<EncodeValue> for EncodeValueSerdeHelper {
 #[allow(clippy::large_enum_variant)]
 pub(super) enum EncodeSerdeHelper {
   Config {
-    skip_default: bool,
+    skip_default: BoolOption,
     scalar: EncodeValue,
     bytes: EncodeValue,
     string: EncodeValue,
@@ -156,7 +158,7 @@ impl From<DecodeValue> for DecodeValueSerdeHelper {
 #[allow(clippy::large_enum_variant)]
 pub(super) enum DecodeSerdeHelper {
   Config {
-    or_else_default: bool,
+    or_else_default: BoolOption,
     scalar: DecodeValue,
     bytes: DecodeValue,
     string: DecodeValue,

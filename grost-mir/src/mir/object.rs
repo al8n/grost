@@ -11,7 +11,7 @@ pub use selector::{Selector, SelectorField, SelectorIter};
 
 use crate::ast::{
   SchemaAttribute,
-  object::{Field as _, Label, ObjectExt as _},
+  object::{RawField as _, Label, RawObjectExt as _},
 };
 
 mod indexer;
@@ -103,7 +103,7 @@ impl<M> Field<M> {
 
   fn from_input(input: M, copy: bool) -> darling::Result<Self>
   where
-    M: crate::ast::object::Field,
+    M: crate::ast::object::RawField,
   {
     let tag = match input.tag() {
       Some(tag) => tag,
@@ -180,7 +180,7 @@ impl<M> SkippedField<M> {
 
   fn from_input(input: M) -> darling::Result<Self>
   where
-    M: crate::ast::object::Field,
+    M: crate::ast::object::RawField,
   {
     Ok(Self {
       name: input.name().clone(),
@@ -195,7 +195,7 @@ impl<M> SkippedField<M> {
 
 pub struct Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   name: Ident,
   path_to_grost: Path,
@@ -216,7 +216,7 @@ where
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   #[inline]
   pub const fn meta(&self) -> &M {
@@ -247,7 +247,7 @@ where
   #[inline]
   pub const fn fields(&self) -> &[Field<M::Field>]
   where
-    M: crate::ast::object::Object,
+    M: crate::ast::object::RawObject,
   {
     self.fields.as_slice()
   }
@@ -301,7 +301,7 @@ where
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   pub fn from_derive_input(input: &syn::DeriveInput) -> darling::Result<Self>
   where
@@ -501,7 +501,7 @@ where
 
 impl<M> ToTokens for Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let name = self.name();

@@ -381,7 +381,7 @@ impl FieldAttribute {
 }
 
 /// The trait for the field derive input
-pub trait Field: Clone {
+pub trait RawField: Clone {
   /// Returns the name of the field
   fn name(&self) -> &Ident;
 

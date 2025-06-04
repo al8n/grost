@@ -1,6 +1,7 @@
 use darling::FromMeta;
-use quote::format_ident;
-use syn::{Attribute, Ident};
+use indexmap::IndexMap;
+use quote::{quote, format_ident};
+use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
 use super::{
   Attributes, FlavorAttribute, FlavorFromMeta, GenericAttribute, SchemaAttribute, SchemaFromMeta,
@@ -372,10 +373,416 @@ impl ObjectAttribute {
   }
 }
 
+pub struct Field {
+  attrs: Vec<Attribute>,
+  vis: Visibility,
+  name: Ident,
+  ty: Type,
+  flavors: IndexMap<Ident, FieldFlavorAttribute>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SkippedField {
+  attrs: Vec<Attribute>,
+  vis: Visibility,
+  name: Ident,
+  ty: Type,
+  default: Path,
+}
+
+impl SkippedField {
+  /// Returns the name of the skipped field
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the visibility of the skipped field
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the type of the skipped field
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the attributes of the skipped field
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the path to the default value function for the skipped field
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    &self.default
+  }
+
+  fn try_new<F: RawField>(f: &F) -> darling::Result<Self> {
+    let attrs = f.attrs().to_vec();
+    let vis = f.vis().clone();
+    let name = f.name().clone();
+    let ty = f.ty().clone();
+    let default = match f.default().cloned() {
+      Some(path) => path,
+      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+    };
+
+
+    Ok(Self {
+      attrs,
+      vis,
+      name,
+      ty,
+      default,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct ConcreteTaggedField {
+  attrs: Vec<Attribute>,
+  vis: Visibility,
+  name: Ident,
+  ty: Type,
+  flavor: FieldFlavorAttribute,
+  tag: u32,
+}
+
+impl ConcreteTaggedField {
+  /// Returns the name of the tagged field
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the visibility of the tagged field
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the type of the tagged field
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the attributes of the tagged field
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the flavor of the tagged field
+  #[inline]
+  pub const fn flavor(&self) -> &FieldFlavorAttribute {
+    &self.flavor
+  }
+
+  /// Returns the tag of the tagged field
+  #[inline]
+  pub const fn tag(&self) -> u32 {
+    self.tag
+  }
+
+  fn try_new<F: RawField>(
+    f: &F,
+    flavor: &FlavorAttribute,
+  ) -> darling::Result<Self> {
+    let attrs = f.attrs().to_vec();
+    let vis = f.vis().clone();
+    let name = f.name().clone();
+    let ty = f.ty().clone();
+    let tag = f.tag().ok_or_else(|| darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`")))?.get();
+    let mut field_flavor = None;
+    for ff in f.flavors() {
+      if ff.name() != flavor.name() {
+        return Err(darling::Error::custom(format!(
+          "Field {name} has flavor {}, but the object only supports flavor {}",
+          ff.name(),
+          flavor.name()
+        )));
+      }
+
+      if field_flavor.is_some() {
+        return Err(darling::Error::custom(format!(
+          "Field {name} has duplicate {} flavor specified",
+          ff.name()
+        )));
+      }
+
+      field_flavor = Some(ff.clone());
+    }
+
+    let field_flavor = field_flavor.unwrap_or(|| {
+      FieldFlavorAttribute {
+        name: flavor.name().clone(),
+        format: todo!(),
+        encode: todo!(),
+        decode: todo!(),
+      }
+    });
+
+    Ok(Self {
+      attrs,
+      vis,
+      name,
+      ty,
+      flavor: field_flavor,
+      tag,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConcreteField {
+  Skipped(SkippedField),
+  Tagged(ConcreteTaggedField),
+}
+
+#[derive(Debug, Clone)]
+pub enum GenericField {
+  Skipped(SkippedField),
+  Tagged(),
+}
+
+/// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
+/// over the flavor type.
+#[derive(Debug, Clone)]
+pub struct ConcreteObject {
+  path_to_grost: Path,
+  attrs: Vec<Attribute>,
+  name: Ident,
+  vis: Visibility,
+  ty: Type,
+  reflectable: Type,
+  generics: Generics,
+  flavor: FlavorAttribute,
+  fields: Vec<ConcreteField>,
+}
+
+impl ConcreteObject {
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  #[inline]
+  pub const fn reflectable(&self) -> &Type {
+    &self.reflectable
+  }
+
+  #[inline]
+  pub const fn flavor(&self) -> &FlavorAttribute {
+    &self.flavor
+  }
+
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+
+  fn try_new<O>(
+    object: &O,
+    flavor: &FlavorAttribute,
+  ) -> darling::Result<Self>
+  where
+    O: RawObject,
+  {
+    let path_to_grost = object.path_to_grost().clone();
+    let attrs = object.attrs().to_vec();
+    let name = object.name().clone();
+    let vis = object.vis().clone();
+    let generics = object.generics().clone();
+    let (_, tg, _) = generics.split_for_impl();
+
+    let ty: Type = syn::parse2(quote! {
+      #name #tg
+    })?;
+    let reflectable: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::Reflectable<#ty>
+    })?;
+
+    object.fields()
+      .iter()
+      .map(|f| {
+        if f.skip() {
+          SkippedField::try_new(*f).map(ConcreteField::Skipped)
+        } else {
+          ConcreteTaggedField::try_new(f, flavor).map(ConcreteField::Tagged)
+        }
+      })
+      .collect::<darling::Result<Vec<_>>>()
+      .and_then(|fields| {
+        if fields.is_empty() {
+          Err(darling::Error::custom("Object must have at least one field"))
+        } else {
+          Ok(fields)
+        }
+      })?;
+
+    Ok(Self {
+      path_to_grost,
+      attrs,
+      name,
+      vis,
+      ty,
+      reflectable,
+      generics,
+      flavor: flavor.clone(),
+      fields: Vec::new(),
+    })
+  }
+}
+
+/// The AST for a generic object, a generic object which means there are multiple flavors and the generated code will be generic over the flavor type.
+#[derive(Debug, Clone)]
+pub struct GenericObject {
+  path_to_grost: Path,
+  attrs: Vec<Attribute>,
+  name: Ident,
+  vis: Visibility,
+  ty: Type,
+  reflectable: Type,
+  generics: Generics,
+  flavors: IndexMap<Ident, FlavorAttribute>,
+}
+
+impl GenericObject {
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  #[inline]
+  pub const fn reflectable(&self) -> &Type {
+    &self.reflectable
+  }
+
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
+
+  #[inline]
+  pub const fn flavors(&self) -> &IndexMap<Ident, FlavorAttribute> {
+    &self.flavors
+  }
+
+  fn try_new<O>(object: &O) -> darling::Result<Self>
+  where
+    O: RawObject,
+  {
+    let path_to_grost = object.path_to_grost().clone();
+    let attrs = object.attrs().to_vec();
+    let name = object.name().clone();
+    let vis = object.vis().clone();
+    let generics = object.generics().clone();
+    let (_, tg, _) = generics.split_for_impl();
+
+    let ty: Type = syn::parse2(quote! {
+      #name #tg
+    })?;
+    let reflectable: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::Reflectable<#ty>
+    })?;
+
+    todo!()
+  }
+}
+
+/// The AST for an object, which can be either a concrete or a generic object.
+#[derive(Debug, Clone)]
+pub enum Object {
+  Concrete(ConcreteObject),
+  Generic(GenericObject),
+}
+
+impl Object {
+  pub fn new<O>(
+    object: &O,
+  ) -> darling::Result<Self>
+  where
+    O: RawObject,
+  {
+    let num_flavors = object.flavors().len();
+    if object.partial_decoded().flavor().is_none() && num_flavors == 1 {
+      let flavor = object.flavors().iter().next().expect("There must be a flavor were already checked");
+      ConcreteObject::try_new(object, flavor).map(Object::Concrete)
+    } else {
+      GenericObject::try_new(object).map(Object::Generic)
+    }
+  }
+
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    match self {
+      Self::Concrete(obj) => obj.name(),
+      Self::Generic(obj) => obj.name(),
+    }
+  }
+
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    match self {
+      Self::Concrete(obj) => obj.vis(),
+      Self::Generic(obj) => obj.vis(),
+    }
+  }
+
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    match self {
+      Self::Concrete(obj) => obj.ty(),
+      Self::Generic(obj) => obj.ty(),
+    }
+  }
+
+  #[inline]
+  pub const fn reflectable(&self) -> &Type {
+    match self {
+      Self::Concrete(obj) => obj.reflectable(),
+      Self::Generic(obj) => obj.reflectable(),
+    }
+  }
+
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    match self {
+      Self::Concrete(obj) => obj.generics(),
+      Self::Generic(obj) => obj.generics(),
+    }
+  }
+}
+
 /// The trait for the object derive input
-pub trait Object: Clone {
+pub trait RawObject: Clone {
   /// The type of the field
-  type Field: Field;
+  type Field: RawField;
 
   /// Returns the name of the object
   fn name(&self) -> &Ident;
@@ -434,7 +841,7 @@ pub trait Object: Clone {
 }
 
 /// The extension trait for the object
-pub trait ObjectExt: Object {
+pub trait RawObjectExt: RawObject {
   #[inline]
   fn partial_decoded_name(&self) -> Ident {
     self
@@ -481,4 +888,4 @@ pub trait ObjectExt: Object {
   }
 }
 
-impl<T: Object> ObjectExt for T {}
+impl<T: RawObject> RawObjectExt for T {}

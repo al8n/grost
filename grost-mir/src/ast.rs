@@ -13,6 +13,65 @@ pub mod object;
 mod flavor;
 mod generic;
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
+struct BoolOption(#[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))] Option<bool>);
+
+impl From<Option<bool>> for BoolOption {
+  fn from(value: Option<bool>) -> Self {
+    Self(value)
+  }
+}
+
+impl From<bool> for BoolOption {
+  fn from(value: bool) -> Self {
+    Self(Some(value))
+  }
+}
+
+impl From<BoolOption> for Option<bool> {
+  fn from(value: BoolOption) -> Self {
+    value.0
+  }
+}
+
+impl FromMeta for BoolOption {
+  fn from_word() -> darling::Result<Self> {
+    Ok(Self(Some(true)))
+  }
+
+  fn from_bool(value: bool) -> darling::Result<Self> {
+    if value {
+      Ok(Self(Some(true)))
+    } else {
+      Ok(Self(Some(false)))
+    }
+  }
+}
+
+impl BoolOption {
+  const fn yes() -> Self {
+    Self(Some(true))
+  }
+
+  const fn no() -> Self {
+    Self(Some(false))
+  }
+
+  const fn is_yes(&self) -> bool {
+    matches!(self.0, Some(true))
+  }
+
+  const fn is_no(&self) -> bool {
+    matches!(self.0, Some(false))
+  }
+
+  const fn is_none(&self) -> bool {
+    self.0.is_none()
+  }
+}
+
 /// Specifies the behavior of how to handle the missing field during decoding.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MissingOperation {

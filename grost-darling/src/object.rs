@@ -171,7 +171,7 @@ impl ToTokens for FieldDeriveInput {
           #accessors
         }
 
-        impl #ig #path_to_crate::__private::ast::object::Field for #derive_input_name #tg #w {
+        impl #ig #path_to_crate::__private::ast::object::RawField for #derive_input_name #tg #w {
           #[inline]
           fn name(&self) -> &#path_to_crate::__private::syn::Ident {
             self.ident.as_ref().expect("the field of the named struct must have a name")

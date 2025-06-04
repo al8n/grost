@@ -4,8 +4,8 @@ use syn::parse_quote;
 /// The Mid-level Intermediate Representation for objects in grost schema,
 pub mod object;
 
-/// The Mid-level Intermediate Representation for objects in grost schema.
-pub mod object1;
+// /// The Mid-level Intermediate Representation for objects in grost schema.
+// pub mod object1;
 
 fn wire_format_reflection_ty(
   path_to_grost: &syn::Path,

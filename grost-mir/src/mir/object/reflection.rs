@@ -3,7 +3,7 @@ use syn::{Ident, parse::Parser};
 
 use crate::ast::{
   SchemaAttribute, grost_flavor_param,
-  object::{Field, ObjectExt},
+  object::{RawField, RawObjectExt},
 };
 
 use super::Object;
@@ -56,7 +56,7 @@ impl Reflection {
 
   pub(super) fn from_input<O>(input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let parent_name = input.name().clone();
     let vis = input.vis().clone();
@@ -128,7 +128,7 @@ impl Reflection {
 
 impl<M> Object<M>
 where
-  M: crate::ast::object::Object,
+  M: crate::ast::object::RawObject,
 {
   pub(super) fn derive_reflection(&self) -> syn::Result<proc_macro2::TokenStream> {
     let path_to_grost = &self.path_to_grost;

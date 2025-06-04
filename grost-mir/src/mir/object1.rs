@@ -8,12 +8,9 @@ use syn::{
 };
 
 use crate::ast::{
-  DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, MissingOperation,
-  SchemaAttribute, TransformOperation,
   object::{
-    Field as _, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute,
-    ObjectExt as _, PartialDecodedFieldAttribute, PartialFieldAttribute,
-  },
+    Field as _, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute, Label, ObjectExt as _, PartialDecodedFieldAttribute, PartialFieldAttribute
+  }, DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, MissingOperation, SchemaAttribute, TransformOperation
 };
 
 use super::wire_format_reflection_ty;
@@ -70,7 +67,7 @@ impl PartialDecodedFieldFlavor {
     tag: u32,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let path_to_grost = object.path_to_grost();
     let object_type = object.ty();
@@ -159,9 +156,27 @@ impl FieldFlavor {
     field_flavor_attr: &FieldFlavorAttribute,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: crate::ast::object::RawObject,
   {
     let tag = field.tag().expect("Field must have a tag.").get();
+    match field.label() {
+      Label::Scalar => {
+        if field_flavor_attr.encode().skip_default() {
+        
+        }
+      },
+      Label::Bytes => todo!(),
+      Label::String => todo!(),
+      Label::Object => todo!(),
+      Label::Enum => todo!(),
+      Label::Union => todo!(),
+      Label::Interface => todo!(),
+      Label::Map { key, value } => todo!(),
+      Label::Set(label) => todo!(),
+      Label::List(label) => todo!(),
+      Label::Optional(label) => todo!(),
+    }
+
     Ok(Self {
       partial_decoded: PartialDecodedFieldFlavor::try_new(
         object,
@@ -202,7 +217,7 @@ impl PartialDecodedField {
 
   fn try_new<O>(object: &O, field: &O::Field, flavor_ty: impl ToTokens) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let path_to_grost = object.path_to_grost();
     let ty = field.ty();
@@ -365,14 +380,13 @@ impl TaggedField {
 
   fn try_new<O>(
     object: &O,
-
     flavors: &IndexMap<Ident, Flavor>,
     flavor_type: impl ToTokens,
     field: &O::Field,
     tag: u32,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let field_ty = field.ty();
     let default = match field.default().cloned() {
@@ -395,6 +409,30 @@ impl TaggedField {
       .map(ToString::to_string)
       .unwrap_or_default();
     let field_reflection = FieldReflection::try_new(object, field, &flavor_type, tag)?;
+    let mut field_flavors = field
+        .flavors()
+        .iter()
+        .map(|attr| {
+          let ident = attr.name().clone();
+          let flavor = flavors.get(&ident).ok_or_else(|| {
+            darling::Error::custom(format!(
+              "Flavor `{}` is not registered for field `{}`.",
+              ident,
+              field.name()
+            ))
+          })?;
+          FieldFlavor::try_new(object, field, flavor, attr)
+            .map(|flavor| (ident, flavor))
+        })
+        .collect::<darling::Result<IndexMap<_, _>>>()?;
+
+    for (name, flavor) in flavors.iter() {
+      if field_flavors.contains_key(name) {
+        continue;
+      }
+
+      field_flavors.insert(name.clone(), FieldFlavor::try_new(object, field, flavor, &FieldFlavorAttribute::new(name.clone()))?);
+    }
 
     Ok(Self {
       attrs: field.attrs().to_vec(),
@@ -414,22 +452,7 @@ impl TaggedField {
       missing_operation,
       transform_operation,
       default,
-      flavors: field
-        .flavors()
-        .iter()
-        .map(|attr| {
-          let ident = attr.name().clone();
-          let flavor = flavors.get(&ident).ok_or_else(|| {
-            darling::Error::custom(format!(
-              "Flavor `{}` is not registered for field `{}`.",
-              ident,
-              field.name()
-            ))
-          })?;
-          FieldFlavor::try_new(object, field, flavor, attr)
-            .map(|flavor| (ident, flavor))
-        })
-        .collect::<darling::Result<_>>()?,
+      flavors: field_flavors,
       copy: object.copy() || field.copy(),
     })
   }
@@ -470,7 +493,7 @@ impl SkippedField {
 
   fn try_new<O>(object: &O, f: &O::Field) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let ty = f.ty();
 
@@ -555,7 +578,7 @@ impl ConcretePartialDecodedObject {
     flavor_type: Type,
   ) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let partial_decoded = object.partial_decoded();
     let partial_decoded_object_name = object.partial_decoded_name();
@@ -617,7 +640,7 @@ pub struct GenericPartialDecodedObjectFlavor {}
 impl GenericPartialDecodedObjectFlavor {
   fn try_new<O>(object: &O, fields: &[Field], flavor: &FlavorAttribute) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     todo!()
   }
@@ -639,7 +662,7 @@ pub struct GenericPartialDecodedObject {
 impl GenericPartialDecodedObject {
   fn try_new<O>(object: &O, flavor_param: &TypeParam, fields: &[Field]) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let name = object.name();
     let partial_decoded = object.partial_decoded();
@@ -859,7 +882,7 @@ impl Object {
 impl Object {
   pub fn from_derive_input<O>(input: &O) -> darling::Result<Self>
   where
-    O: crate::ast::object::Object,
+    O: Object,
   {
     let path_to_grost = input.path_to_grost();
     let name = input.name().clone();

@@ -1,16 +1,13 @@
 use darling::FromMeta;
 
-#[cfg(feature = "serde")]
-fn is_false(value: &bool) -> bool {
-  !*value
-}
+use crate::ast::BoolOption;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, darling::FromMeta)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub(super) struct DecodeValueParser {
   #[darling(default)]
-  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "is_false"))]
-  or_else_default: bool,
+  #[cfg_attr(feature = "serde", serde(default, skip_serializing_if = "BoolOption::is_none"))]
+  or_else_default: BoolOption,
 }
 
 impl From<DecodeValueParser> for DecodeValue {
@@ -35,7 +32,7 @@ impl From<DecodeValue> for DecodeValueParser {
   )
 )]
 pub(super) struct DecodeValue {
-  or_else_default: bool,
+  or_else_default: BoolOption,
 }
 
 impl FromMeta for DecodeValue {
@@ -47,7 +44,7 @@ impl FromMeta for DecodeValue {
 #[derive(Debug, FromMeta)]
 pub(super) struct DecodeParser {
   #[darling(default)]
-  or_else_default: bool,
+  or_else_default: BoolOption,
   #[darling(default)]
   scalar: DecodeValue,
   #[darling(default)]
@@ -74,7 +71,7 @@ pub(super) struct DecodeParser {
   )
 )]
 pub struct DecodeAttribute {
-  pub(super) or_else_default: bool,
+  pub(super) or_else_default: BoolOption,
   pub(super) scalar: DecodeValue,
   pub(super) bytes: DecodeValue,
   pub(super) string: DecodeValue,
@@ -119,29 +116,29 @@ impl FromMeta for DecodeAttribute {
 impl DecodeAttribute {
   pub(super) fn network(_: &syn::Path) -> Self {
     let scalar = DecodeValue {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
     };
     let bytes = DecodeValue {
-      or_else_default: true,
+      or_else_default: BoolOption::yes(),
     };
     let string = DecodeValue {
-      or_else_default: true,
+      or_else_default: BoolOption::yes(),
     };
     let object = DecodeValue {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
     };
     let enumeration = DecodeValue {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
     };
     let interface = DecodeValue {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
     };
     let union = DecodeValue {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
     };
 
     Self {
-      or_else_default: false,
+      or_else_default: BoolOption::default(),
       scalar,
       bytes,
       string,
@@ -155,70 +152,70 @@ impl DecodeAttribute {
   /// Returns `true` if the encoding should skip default values
   #[inline]
   pub const fn or_else_default_scalar(&self) -> bool {
-    if self.scalar.or_else_default {
+    if self.scalar.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for bytes
   #[inline]
   pub const fn or_else_default_bytes(&self) -> bool {
-    if self.bytes.or_else_default {
+    if self.bytes.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for strings
   #[inline]
   pub const fn or_else_default_string(&self) -> bool {
-    if self.string.or_else_default {
+    if self.string.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for objects
   #[inline]
   pub const fn or_else_default_object(&self) -> bool {
-    if self.object.or_else_default {
+    if self.object.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for enumerations
   #[inline]
   pub const fn or_else_default_enumeration(&self) -> bool {
-    if self.enumeration.or_else_default {
+    if self.enumeration.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for interfaces
   #[inline]
   pub const fn or_else_default_interface(&self) -> bool {
-    if self.interface.or_else_default {
+    if self.interface.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for unions
   #[inline]
   pub const fn or_else_default_union(&self) -> bool {
-    if self.union.or_else_default {
+    if self.union.or_else_default.is_yes() {
       true
     } else {
-      self.or_else_default
+      self.or_else_default.is_yes()
     }
   }
 }
