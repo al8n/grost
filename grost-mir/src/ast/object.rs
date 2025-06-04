@@ -1,3 +1,5 @@
+use std::default;
+
 use darling::FromMeta;
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
@@ -11,215 +13,14 @@ use super::{
 };
 
 pub use field::*;
+pub use partial_decoded::*;
+pub use partial::*;
+pub use selector::*;
 
 mod field;
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct PartialObjectFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
-
-impl PartialObjectFromMeta {
-  fn finalize(self, unknown_buffer_generic: syn::TypeParam) -> PartialObjectAttribute {
-    PartialObjectAttribute {
-      name: self.name,
-      attrs: self.attrs,
-      unknown_buffer_generic,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialObjectAttribute {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-  unknown_buffer_generic: syn::TypeParam,
-}
-
-impl PartialObjectAttribute {
-  /// Returns the name of the partial object
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the partial object
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &syn::TypeParam {
-    &self.unknown_buffer_generic
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-struct PartialDecodedObjectFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-  #[darling(default)]
-  copy: bool,
-}
-
-impl PartialDecodedObjectFromMeta {
-  fn finalize(
-    self,
-    flavor_param: Option<syn::TypeParam>,
-    unknown_buffer_param: syn::TypeParam,
-    lifetime_param: syn::LifetimeParam,
-  ) -> PartialDecodedObjectAttribute {
-    PartialDecodedObjectAttribute {
-      name: self.name,
-      attrs: self.attrs,
-      copy: self.copy,
-      flavor_param,
-      unknown_buffer_param,
-      lifetime_param,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialDecodedObjectAttribute {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-  copy: bool,
-  flavor_param: Option<syn::TypeParam>,
-  unknown_buffer_param: syn::TypeParam,
-  lifetime_param: syn::LifetimeParam,
-}
-
-impl PartialDecodedObjectAttribute {
-  /// Returns the name of the partial reference object
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the partial reference object
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns whether the partial reference object is copyable
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-
-  /// Returns the flavor generic parameter if it exists
-  pub const fn flavor(&self) -> Option<&syn::TypeParam> {
-    self.flavor_param.as_ref()
-  }
-
-  /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &syn::TypeParam {
-    &self.unknown_buffer_param
-  }
-
-  /// Returns the lifetime generic parameter
-  pub const fn lifetime(&self) -> &syn::LifetimeParam {
-    &self.lifetime_param
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-struct SelectorIterFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
-
-impl SelectorIterFromMeta {
-  fn finalize(self, flavor_param: Option<syn::TypeParam>) -> SelectorIterAttribute {
-    SelectorIterAttribute {
-      name: self.name,
-      attrs: self.attrs,
-      flavor_param,
-    }
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct SelectorIterAttribute {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-  flavor_param: Option<syn::TypeParam>,
-}
-
-impl SelectorIterAttribute {
-  /// Returns the name of the selector iterator
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the selector iterator
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns the flavor generic parameter if it exists
-  pub const fn flavor(&self) -> Option<&syn::TypeParam> {
-    self.flavor_param.as_ref()
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct SelectorFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
-
-impl SelectorFromMeta {
-  fn finalize(
-    self,
-    flavor_param: Option<syn::TypeParam>,
-    wire_format: syn::TypeParam,
-  ) -> SelectorAttribute {
-    SelectorAttribute {
-      name: self.name,
-      attrs: self.attrs,
-      flavor_param,
-      wire_format_param: wire_format,
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct SelectorAttribute {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-  flavor_param: Option<syn::TypeParam>,
-  wire_format_param: syn::TypeParam,
-}
-
-impl SelectorAttribute {
-  /// Returns the name of the selector
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the selector
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns the flavor generic parameter if it exists
-  pub const fn flavor(&self) -> Option<&syn::TypeParam> {
-    self.flavor_param.as_ref()
-  }
-
-  /// Returns the wire format generic parameter
-  pub const fn wire_format(&self) -> &syn::TypeParam {
-    &self.wire_format_param
-  }
-}
+mod partial;
+mod partial_decoded;
+mod selector;
 
 #[derive(Debug, Default, Clone, FromMeta)]
 struct IndexerFromMeta {
@@ -449,45 +250,112 @@ pub struct ConcreteTaggedField {
   vis: Visibility,
   name: Ident,
   ty: Type,
+  schema_name: String,
+  schema_description: String,
   flavor: FieldFlavorAttribute,
+  label: Label,
+  partial_decoded: PartialDecodedFieldAttribute,
+  partial: PartialFieldAttribute,
+  selector: SelectorFieldAttribute,
+  default: Path,
   tag: u32,
 }
 
 impl ConcreteTaggedField {
-  /// Returns the name of the tagged field
+  /// Returns the name of the field
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
   }
 
-  /// Returns the visibility of the tagged field
+  /// Returns the visibility of the field
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     &self.vis
   }
 
-  /// Returns the type of the tagged field
+  /// Returns the type of the field
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
   }
 
-  /// Returns the attributes of the tagged field
+  /// Returns the attributes of the field
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
   }
 
-  /// Returns the flavor of the tagged field
+  /// Returns the flavor of the field
   #[inline]
   pub const fn flavor(&self) -> &FieldFlavorAttribute {
     &self.flavor
   }
 
-  /// Returns the tag of the tagged field
+  /// Returns the tag of the field
   #[inline]
   pub const fn tag(&self) -> u32 {
     self.tag
+  }
+
+  /// Returns the path to the default value function for the field
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    &self.default
+  }
+
+  /// Returns the label of the field
+  #[inline]
+  pub const fn label(&self) -> &Label {
+    &self.label
+  }
+
+  /// Returns the schema name of the field
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
+
+  /// Returns the schema description of the field
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
+  }
+
+  /// Returns the partial field type for this field, if any
+  #[inline]
+  pub const fn partial(&self) -> Option<&Type> {
+    self.partial.ty()
+  }
+
+  /// Returns the attributes of the partial field for the field
+  #[inline]
+  pub const fn partial_attrs(&self) -> &[Attribute] {
+    self.partial.attrs()
+  }
+
+  /// Returns the attributes of the partial decoded field for the field
+  #[inline]
+  pub const fn partial_decoded(&self) -> &[Attribute] {
+    self.partial_decoded.attrs()
+  }
+
+  /// Returns the type of the partial decoded field for the field, if any
+  #[inline]
+  pub const fn partial_decoded_type(&self) -> Option<&Type> {
+    self.partial_decoded.ty()
+  }
+
+  /// Returns the default selection of this field
+  #[inline]
+  pub const fn selection(&self) -> &Selection {
+    self.selector.select()
+  }
+
+  /// Returns the attributes of the selector field for the field
+  #[inline]
+  pub const fn selector_attrs(&self) -> &[Attribute] {
+    self.selector.attrs()
   }
 
   fn try_new<F: RawField>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self> {
@@ -501,6 +369,7 @@ impl ConcreteTaggedField {
         darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`"))
       })?
       .get();
+
     let mut field_flavor = None;
     for ff in f.flavors() {
       if ff.name() != flavor.name() {
@@ -521,6 +390,7 @@ impl ConcreteTaggedField {
       field_flavor = Some(ff.clone());
     }
 
+    let label = f.label().clone();
     let field_flavor = field_flavor.unwrap_or_else(|| {
       macro_rules! bail {
         ($skip:ident, $or_else:ident) => {{
@@ -553,13 +423,36 @@ impl ConcreteTaggedField {
       )
     });
 
+    let default = match f.default().cloned() {
+      Some(path) => path,
+      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+    };
+    let schema_name = f
+      .schema()
+      .name()
+      .map(|s| s.to_string())
+      .unwrap_or_else(|| name.to_string());
+  
+    let schema_description = f
+      .schema()
+      .description()
+      .map(|s| s.to_string())
+      .unwrap_or_default();
+
     Ok(Self {
       attrs,
       vis,
       name,
+      schema_description,
+      schema_name,
       ty,
       flavor: field_flavor,
       tag,
+      default,
+      label,
+      partial_decoded: f.partial_decoded().clone(),
+      partial: f.partial().clone(),
+      selector: f.selector().clone(),
     })
   }
 }
@@ -589,37 +482,99 @@ pub struct ConcreteObject {
   generics: Generics,
   flavor: FlavorAttribute,
   fields: Vec<ConcreteField>,
+  default: Option<Path>,
+  partial: PartialObject,
+  partial_decoded: ConcretePartialDecodedObject,
+  selector: ConcreteSelector,
+  selector_iter: ConcreteSelectorIter,
 }
 
 impl ConcreteObject {
+  /// Returns the path to the `grost` crate
+  #[inline]
+  pub const fn path_to_grost(&self) -> &Path {
+    &self.path_to_grost
+  }
+
+  /// Returns the name of the object
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
   }
 
+  /// Returns the visibility of the object
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     &self.vis
   }
 
+  /// Returns the type of the object
+  /// 
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
   }
 
+  /// Returns the reflectable trait which replaces the generic parameter with the type of the object
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
     &self.reflectable
   }
 
+  /// Returns the flavor
   #[inline]
   pub const fn flavor(&self) -> &FlavorAttribute {
     &self.flavor
   }
 
+  /// Returns the generics in the object definition if any.
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics
+  }
+
+  /// Returns the attributes in the object definition.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the fields of the object
+  #[inline]
+  pub const fn fields(&self) -> &[ConcreteField] {
+    self.fields.as_slice()
+  }
+
+  /// Returns the path to the fn that returns the default value of the object, if any.
+  #[inline]
+  pub const fn default(&self) -> Option<&Path> {
+    self.default.as_ref()
+  }
+
+  /// Returns the partial object information
+  #[inline]
+  pub const fn partial(&self) -> &PartialObject {
+    &self.partial
+  }
+
+  /// Returns the partial decoded object information
+  #[inline]
+  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedObject {
+    &self.partial_decoded
+  }
+
+  /// Returns the selector information
+  #[inline]
+  pub const fn selector(&self) -> &ConcreteSelector {
+    &self.selector
+  }
+
+  /// Returns the selector iterator information
+  #[inline]
+  pub const fn selector_iter(&self) -> &ConcreteSelectorIter {
+    &self.selector_iter
   }
 
   fn try_new<O>(object: &O, flavor: &FlavorAttribute) -> darling::Result<Self>
@@ -672,6 +627,16 @@ impl ConcreteObject {
           Ok(fields)
         }
       })?;
+    
+    let partial = PartialObject::from_attribute(&name, object.partial())?;
+    let partial_decoded = ConcretePartialDecodedObject::from_attribute(
+      &name,
+      flavor.ty().clone(),
+      object.partial_decoded(),
+    )?;
+    let selector = ConcreteSelector::from_attribute(&name, flavor.ty(), object.selector())?;
+    let selector_iter =
+      ConcreteSelectorIter::from_attribute(selector.name(), flavor.ty(), object.selector_iter())?;
 
     Ok(Self {
       path_to_grost,
@@ -683,6 +648,11 @@ impl ConcreteObject {
       generics,
       flavor: flavor.clone(),
       fields,
+      default: object.default().cloned(),
+      partial,
+      partial_decoded,
+      selector,
+      selector_iter,
     })
   }
 }
@@ -692,6 +662,7 @@ impl ConcreteObject {
 pub struct GenericObject {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
+  default: Option<Path>,
   name: Ident,
   vis: Visibility,
   ty: Type,
@@ -701,34 +672,62 @@ pub struct GenericObject {
 }
 
 impl GenericObject {
+  /// Returns the path to the `grost` crate.
+  #[inline]
+  pub const fn path_to_grost(&self) -> &Path {
+    &self.path_to_grost
+  }
+
+  /// Returns the name of the object.
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
   }
 
+  /// Returns the visibility of the object.
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     &self.vis
   }
 
+  /// Returns the type of the object.
+  /// 
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
   }
 
+  /// Returns the reflectable trait which replaces the generic parameter with the type of the object.
+  /// 
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
     &self.reflectable
   }
 
+  /// Returns the generics in the object definition.
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics
   }
 
+  /// Returns the flavor attributes in the object definition.
   #[inline]
   pub const fn flavors(&self) -> &IndexMap<Ident, FlavorAttribute> {
     &self.flavors
+  }
+
+  /// Returns the attributes in the object definition.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the path to the fn that returns the default value of the object, if any.
+  #[inline]
+  pub const fn default(&self) -> Option<&Path> {
+    self.default.as_ref()
   }
 
   fn try_new<O>(object: &O) -> darling::Result<Self>
@@ -754,14 +753,24 @@ impl GenericObject {
 }
 
 /// The AST for an object, which can be either a concrete or a generic object.
-#[derive(Debug, Clone)]
+/// 
+/// The main purpose to having an AST for an object is used to validate the input (from the Rust's derive macro or attribute macro)
+/// from the schema and to generate the necessary Middle Intermediate Representation (MIR) of the object.
+/// 
+/// A Middle Intermediate Representation (MIR) of the object can be
+/// generated from this structure. Once the MIR is generated,
+/// it can be used to generate the final Rust code for the object in a GraphQL Protocol schema.
+#[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
+#[unwrap(ref)]
+#[try_unwrap(ref)]
 pub enum Object {
   Concrete(ConcreteObject),
   Generic(GenericObject),
 }
 
 impl Object {
-  pub fn new<O>(object: &O) -> darling::Result<Self>
+  /// Creates an `Object` from a raw object input.
+  pub fn from_raw<O>(object: &O) -> darling::Result<Self>
   where
     O: RawObject,
   {
@@ -778,6 +787,16 @@ impl Object {
     }
   }
 
+  /// Returns the path to the `grost` crate.
+  #[inline]
+  pub const fn path_to_grost(&self) -> &Path {
+    match self {
+      Self::Concrete(obj) => obj.path_to_grost(),
+      Self::Generic(obj) => obj.path_to_grost(),
+    }
+  }
+
+  /// Returns the name of the object.
   #[inline]
   pub const fn name(&self) -> &Ident {
     match self {
@@ -786,6 +805,7 @@ impl Object {
     }
   }
 
+  /// Returns the visibility of the object.
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     match self {
@@ -794,6 +814,9 @@ impl Object {
     }
   }
 
+  /// Returns the type of the object.
+  /// 
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     match self {
@@ -802,6 +825,9 @@ impl Object {
     }
   }
 
+  /// Returns the reflectable trait which replaces the generic parameter with the type of the object.
+  /// 
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
     match self {
@@ -810,11 +836,30 @@ impl Object {
     }
   }
 
+  /// Returns the generics in the object definition.
   #[inline]
   pub const fn generics(&self) -> &Generics {
     match self {
       Self::Concrete(obj) => obj.generics(),
       Self::Generic(obj) => obj.generics(),
+    }
+  }
+
+  /// Returns the attributes in the object definition.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    match self {
+      Self::Concrete(obj) => obj.attrs(),
+      Self::Generic(obj) => obj.attrs(),
+    }
+  }
+
+  /// Returns the default value function for the object, if any.
+  #[inline]
+  pub const fn default(&self) -> Option<&Path> {
+    match self {
+      Self::Concrete(obj) => obj.default(),
+      Self::Generic(obj) => obj.default(),
     }
   }
 }
