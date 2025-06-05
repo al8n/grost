@@ -8,17 +8,8 @@ fn string_to_lifetime(s: String) -> darling::Result<syn::LifetimeParam> {
   syn::parse_str(&s).map_err(Into::into)
 }
 
-fn default_grost_flavor_param() -> Option<syn::TypeParam> {
-  Some(grost_flavor_param())
-}
-
+#[derive(Debug, Default, Clone)]
 struct GenericFlavorParam(Option<syn::TypeParam>);
-
-impl Default for GenericFlavorParam {
-  fn default() -> Self {
-    Self(None)
-  }
-}
 
 impl FromMeta for GenericFlavorParam {
   fn from_word() -> darling::Result<Self> {

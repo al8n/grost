@@ -280,11 +280,7 @@ impl syn::parse::Parse for EncodeNestedMeta {
 
 impl EncodeAttribute {
   pub(super) fn network(path_to_grost: &Path) -> syn::Result<Self> {
-    Self::try_from(path_to_grost).map(|mut s| {
-      s.bytes.skip_default = BoolOption::yes();
-      s.string.skip_default = BoolOption::yes();
-      s
-    })
+    Self::try_from(path_to_grost)
   }
 
   /// Returns the path to the encoding module of scalar types

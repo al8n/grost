@@ -4,7 +4,6 @@ use syn::{Attribute, Ident, LifetimeParam, Type, TypeParam};
 
 use super::Attributes;
 
-
 #[derive(Debug, Default, Clone, FromMeta)]
 pub(super) struct PartialDecodedObjectFromMeta {
   #[darling(default, rename = "rename")]
@@ -133,6 +132,69 @@ impl ConcretePartialDecodedObject {
   }
 
   /// Returns the lifetime generic parameter of the concrete partial decoded object
+  pub const fn lifetime(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct GenericPartialDecodedObject {
+  name: Ident,
+  attrs: Vec<Attribute>,
+  copy: bool,
+  flavor_param: TypeParam,
+  unknown_buffer_param: TypeParam,
+  lifetime_param: LifetimeParam,
+}
+
+impl GenericPartialDecodedObject {
+  pub(super) fn from_attribute(
+    object_name: &Ident,
+    flavor_param: &TypeParam,
+    attribute: &PartialDecodedObjectAttribute,
+  ) -> darling::Result<Self> {
+    let name = if let Some(name) = attribute.name() {
+      name.clone()
+    } else {
+      format_ident!("PartialDecoded{}", object_name)
+    };
+
+    Ok(Self {
+      name,
+      attrs: attribute.attrs().to_vec(),
+      copy: attribute.copy(),
+      flavor_param: flavor_param.clone(),
+      unknown_buffer_param: attribute.unknown_buffer().clone(),
+      lifetime_param: attribute.lifetime().clone(),
+    })
+  }
+
+  /// Returns the name of the generic partial decoded object
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the attributes of the generic partial decoded object
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns whether the generic partial decoded object is copyable
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the flavor type parameter of the generic partial decoded object
+  pub const fn flavor(&self) -> &TypeParam {
+    &self.flavor_param
+  }
+
+  /// Returns the unknown buffer type parameter of the generic partial decoded object
+  pub const fn unknown_buffer(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
+
+  /// Returns the lifetime parameter of the generic partial decoded object
   pub const fn lifetime(&self) -> &LifetimeParam {
     &self.lifetime_param
   }

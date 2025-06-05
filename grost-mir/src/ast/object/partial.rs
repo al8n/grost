@@ -4,7 +4,6 @@ use syn::{Attribute, Ident, TypeParam};
 
 use super::Attributes;
 
-
 #[derive(Debug, Default, Clone, FromMeta)]
 pub(super) struct PartialObjectFromMeta {
   #[darling(default, rename = "rename")]

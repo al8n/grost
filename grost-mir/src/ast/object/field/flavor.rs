@@ -121,10 +121,10 @@ impl FieldFlavorFromMeta {
 
 #[derive(Debug, Clone)]
 pub struct FieldFlavorAttribute {
-  name: Ident,
-  format: Option<syn::Type>,
-  encode: EncodeAttribute,
-  decode: DecodeAttribute,
+  pub(super) name: Ident,
+  pub(super) format: Option<syn::Type>,
+  pub(super) encode: EncodeAttribute,
+  pub(super) decode: DecodeAttribute,
 }
 
 impl FieldFlavorAttribute {

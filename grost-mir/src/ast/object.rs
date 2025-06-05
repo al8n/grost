@@ -8,13 +8,13 @@ use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 use crate::ast::MissingOperation;
 
 use super::{
-  Attributes, FlavorAttribute, FlavorFromMeta, GenericAttribute, SchemaAttribute, SchemaFromMeta,
-  grost_flavor_param,
+  Attributes, DecodeAttribute, EncodeAttribute, FlavorAttribute, FlavorFromMeta, GenericAttribute,
+  IdentifierAttribute, SchemaAttribute, SchemaFromMeta, grost_flavor_param,
 };
 
 pub use field::*;
-pub use partial_decoded::*;
 pub use partial::*;
+pub use partial_decoded::*;
 pub use selector::*;
 
 mod field;
@@ -176,14 +176,6 @@ impl ObjectAttribute {
   }
 }
 
-pub struct Field {
-  attrs: Vec<Attribute>,
-  vis: Visibility,
-  name: Ident,
-  ty: Type,
-  flavors: IndexMap<Ident, FieldFlavorAttribute>,
-}
-
 #[derive(Debug, Clone)]
 pub struct SkippedField {
   attrs: Vec<Attribute>,
@@ -252,7 +244,7 @@ pub struct ConcreteTaggedField {
   ty: Type,
   schema_name: String,
   schema_description: String,
-  flavor: FieldFlavorAttribute,
+  flavor: FieldFlavor,
   label: Label,
   partial_decoded: PartialDecodedFieldAttribute,
   partial: PartialFieldAttribute,
@@ -288,7 +280,7 @@ impl ConcreteTaggedField {
 
   /// Returns the flavor of the field
   #[inline]
-  pub const fn flavor(&self) -> &FieldFlavorAttribute {
+  pub const fn flavor(&self) -> &FieldFlavor {
     &self.flavor
   }
 
@@ -432,7 +424,7 @@ impl ConcreteTaggedField {
       .name()
       .map(|s| s.to_string())
       .unwrap_or_else(|| name.to_string());
-  
+
     let schema_description = f
       .schema()
       .description()
@@ -446,7 +438,12 @@ impl ConcreteTaggedField {
       schema_description,
       schema_name,
       ty,
-      flavor: field_flavor,
+      flavor: FieldFlavor {
+        format: field_flavor.format().cloned(),
+        flavor_type: flavor.ty().clone(),
+        encode: field_flavor.encode().clone(),
+        decode: field_flavor.decode().clone(),
+      },
       tag,
       default,
       label,
@@ -464,9 +461,259 @@ pub enum ConcreteField {
 }
 
 #[derive(Debug, Clone)]
+pub struct FieldFlavor {
+  format: Option<Type>,
+  flavor_type: Type,
+  encode: FieldEncodeAttribute,
+  decode: FieldDecodeAttribute,
+}
+
+impl FieldFlavor {
+  /// Returns the wire format type for the field of this flavor, if specified
+  #[inline]
+  pub const fn format(&self) -> Option<&Type> {
+    self.format.as_ref()
+  }
+
+  /// Returns the type of the flavor
+  #[inline]
+  pub const fn flavor_type(&self) -> &Type {
+    &self.flavor_type
+  }
+
+  /// Returns the encode attribute for this flavor
+  #[inline]
+  pub const fn encode(&self) -> &FieldEncodeAttribute {
+    &self.encode
+  }
+
+  /// Returns the decode attribute for this flavor
+  #[inline]
+  pub const fn decode(&self) -> &FieldDecodeAttribute {
+    &self.decode
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct GenericTaggedField {
+  attrs: Vec<Attribute>,
+  vis: Visibility,
+  name: Ident,
+  ty: Type,
+  schema_name: String,
+  schema_description: String,
+  flavor_param: TypeParam,
+  label: Label,
+  partial_decoded: PartialDecodedFieldAttribute,
+  partial: PartialFieldAttribute,
+  selector: SelectorFieldAttribute,
+  default: Path,
+  tag: u32,
+  flavors: IndexMap<Ident, FieldFlavor>,
+}
+
+impl GenericTaggedField {
+  /// Returns the name of the field
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the visibility of the field
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the type of the field
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the attributes of the field
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the generic flavor parameter for the field
+  #[inline]
+  pub const fn flavor(&self) -> &TypeParam {
+    &self.flavor_param
+  }
+
+  /// Returns the tag of the field
+  #[inline]
+  pub const fn tag(&self) -> u32 {
+    self.tag
+  }
+
+  /// Returns the path to the default value function for the field
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    &self.default
+  }
+
+  /// Returns the label of the field
+  #[inline]
+  pub const fn label(&self) -> &Label {
+    &self.label
+  }
+
+  /// Returns the schema name of the field
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
+
+  /// Returns the schema description of the field
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
+  }
+
+  /// Returns the partial field type for this field, if any
+  #[inline]
+  pub const fn partial_type(&self) -> Option<&Type> {
+    self.partial.ty()
+  }
+
+  /// Returns the attributes of the partial field for the field
+  #[inline]
+  pub const fn partial_attrs(&self) -> &[Attribute] {
+    self.partial.attrs()
+  }
+
+  /// Returns the attributes of the partial decoded field for the field
+  #[inline]
+  pub const fn partial_decoded_attrs(&self) -> &[Attribute] {
+    self.partial_decoded.attrs()
+  }
+
+  /// Returns the type of the partial decoded field for the field, if any
+  #[inline]
+  pub const fn partial_decoded_type(&self) -> Option<&Type> {
+    self.partial_decoded.ty()
+  }
+
+  /// Returns the default selection of this field
+  #[inline]
+  pub const fn selection(&self) -> &Selection {
+    self.selector.select()
+  }
+
+  /// Returns the attributes of the selector field for the field
+  #[inline]
+  pub const fn selector_attrs(&self) -> &[Attribute] {
+    self.selector.attrs()
+  }
+
+  /// Returns the flavors of the field
+  #[inline]
+  pub const fn flavors(&self) -> &IndexMap<Ident, FieldFlavor> {
+    &self.flavors
+  }
+
+  fn try_new<F: RawField>(
+    f: &F,
+    flavor_param: &TypeParam,
+    flavors: &IndexMap<Ident, ObjectFlavor>,
+  ) -> darling::Result<Self> {
+    let attrs = f.attrs().to_vec();
+    let vis = f.vis().clone();
+    let name = f.name().clone();
+    let ty = f.ty().clone();
+    let tag = f
+      .tag()
+      .ok_or_else(|| {
+        darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`"))
+      })?
+      .get();
+    let default = match f.default().cloned() {
+      Some(path) => path,
+      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+    };
+    let schema_name = f
+      .schema()
+      .name()
+      .map(|s| s.to_string())
+      .unwrap_or_else(|| name.to_string());
+    let schema_description = f
+      .schema()
+      .description()
+      .map(|s| s.to_string())
+      .unwrap_or_default();
+
+    let field_flavors = flavors
+      .iter()
+      .map(|(name, flavor)| {
+        let field_flavor = match f.flavors().iter().find(|ff| ff.name().eq(name)) {
+          Some(ff) => FieldFlavor {
+            format: ff.format().cloned(),
+            flavor_type: flavor.ty().clone(),
+            encode: ff.encode().clone(),
+            decode: ff.decode().clone(),
+          },
+          None => {
+            macro_rules! bail {
+              ($skip:ident, $or_else:ident) => {{
+                let skip_default = flavor.encode().$skip();
+                let missing_operation = if flavor.decode().$or_else() {
+                  Some(MissingOperation::OrDefault(None))
+                } else {
+                  None
+                };
+                (skip_default, missing_operation)
+              }};
+            }
+
+            let (skip_default, missing_operation) = match f.label() {
+              Label::Scalar => bail!(skip_default_scalar, or_else_default_scalar),
+              Label::Bytes => bail!(skip_default_bytes, or_else_default_bytes),
+              Label::String => bail!(skip_default_string, or_else_default_string),
+              Label::Object => bail!(skip_default_object, or_else_default_object),
+              Label::Enum => bail!(skip_default_enumeration, or_else_default_enumeration),
+              Label::Union => bail!(skip_default_union, or_else_default_union),
+              Label::Interface => bail!(skip_default_interface, or_else_default_interface),
+              _ => (true, None),
+            };
+
+            FieldFlavor {
+              format: None,
+              flavor_type: flavor.ty().clone(),
+              encode: FieldEncodeAttribute::new(Some(skip_default), None, None),
+              decode: FieldDecodeAttribute::new(missing_operation, None),
+            }
+          }
+        };
+        Ok((name.clone(), field_flavor))
+      })
+      .collect::<darling::Result<IndexMap<_, _>>>()?;
+
+    Ok(Self {
+      attrs,
+      vis,
+      name,
+      ty,
+      schema_name,
+      schema_description,
+      flavor_param: flavor_param.clone(),
+      label: f.label().clone(),
+      partial_decoded: f.partial_decoded().clone(),
+      partial: f.partial().clone(),
+      selector: f.selector().clone(),
+      default,
+      tag,
+      flavors: field_flavors,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
 pub enum GenericField {
   Skipped(SkippedField),
-  Tagged(),
+  Tagged(GenericTaggedField),
 }
 
 /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
@@ -509,7 +756,7 @@ impl ConcreteObject {
   }
 
   /// Returns the type of the object
-  /// 
+  ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -596,7 +843,6 @@ impl ConcreteObject {
     })?;
 
     let mut tags = IndexSet::new();
-
     let fields = object
       .fields()
       .iter()
@@ -627,7 +873,7 @@ impl ConcreteObject {
           Ok(fields)
         }
       })?;
-    
+
     let partial = PartialObject::from_attribute(&name, object.partial())?;
     let partial_decoded = ConcretePartialDecodedObject::from_attribute(
       &name,
@@ -657,6 +903,57 @@ impl ConcreteObject {
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct ObjectFlavor {
+  ty: Type,
+  format: Type,
+  identifier: IdentifierAttribute,
+  encode: EncodeAttribute,
+  decode: DecodeAttribute,
+}
+
+impl ObjectFlavor {
+  /// Returns the type of the flavor
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the wire format type for the object of this flavor.
+  #[inline]
+  pub const fn format(&self) -> &Type {
+    &self.format
+  }
+
+  /// Returns the identifier attribute for the flavor.
+  #[inline]
+  pub const fn identifier(&self) -> &IdentifierAttribute {
+    &self.identifier
+  }
+
+  /// Returns the encode attribute for this flavor.
+  #[inline]
+  pub const fn encode(&self) -> &EncodeAttribute {
+    &self.encode
+  }
+
+  /// Returns the decode attribute for this flavor.
+  #[inline]
+  pub const fn decode(&self) -> &DecodeAttribute {
+    &self.decode
+  }
+
+  fn from_attribute(attribute: &FlavorAttribute) -> darling::Result<Self> {
+    Ok(Self {
+      ty: attribute.ty().clone(),
+      format: attribute.wire_format().clone(),
+      identifier: attribute.identifier().clone(),
+      encode: attribute.encode().clone(),
+      decode: attribute.decode().clone(),
+    })
+  }
+}
+
 /// The AST for a generic object, a generic object which means there are multiple flavors and the generated code will be generic over the flavor type.
 #[derive(Debug, Clone)]
 pub struct GenericObject {
@@ -667,8 +964,13 @@ pub struct GenericObject {
   vis: Visibility,
   ty: Type,
   reflectable: Type,
+  fields: Vec<GenericField>,
   generics: Generics,
-  flavors: IndexMap<Ident, FlavorAttribute>,
+  partial: PartialObject,
+  partial_decoded: GenericPartialDecodedObject,
+  selector: GenericSelector,
+  selector_iter: GenericSelectorIter,
+  flavors: IndexMap<Ident, ObjectFlavor>,
 }
 
 impl GenericObject {
@@ -691,7 +993,7 @@ impl GenericObject {
   }
 
   /// Returns the type of the object.
-  /// 
+  ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -699,7 +1001,7 @@ impl GenericObject {
   }
 
   /// Returns the reflectable trait which replaces the generic parameter with the type of the object.
-  /// 
+  ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
@@ -712,9 +1014,15 @@ impl GenericObject {
     &self.generics
   }
 
+  /// Returns the fields of the object.
+  #[inline]
+  pub const fn fields(&self) -> &[GenericField] {
+    self.fields.as_slice()
+  }
+
   /// Returns the flavor attributes in the object definition.
   #[inline]
-  pub const fn flavors(&self) -> &IndexMap<Ident, FlavorAttribute> {
+  pub const fn flavors(&self) -> &IndexMap<Ident, ObjectFlavor> {
     &self.flavors
   }
 
@@ -730,7 +1038,31 @@ impl GenericObject {
     self.default.as_ref()
   }
 
-  fn try_new<O>(object: &O) -> darling::Result<Self>
+  /// Returns the partial object information.
+  #[inline]
+  pub const fn partial(&self) -> &PartialObject {
+    &self.partial
+  }
+
+  /// Returns the partial decoded object information.
+  #[inline]
+  pub const fn partial_decoded(&self) -> &GenericPartialDecodedObject {
+    &self.partial_decoded
+  }
+
+  /// Returns the selector information.
+  #[inline]
+  pub const fn selector(&self) -> &GenericSelector {
+    &self.selector
+  }
+
+  /// Returns the selector iterator information.
+  #[inline]
+  pub const fn selector_iter(&self) -> &GenericSelectorIter {
+    &self.selector_iter
+  }
+
+  fn try_new<O>(object: &O, flavor_param: TypeParam) -> darling::Result<Self>
   where
     O: RawObject,
   {
@@ -748,15 +1080,78 @@ impl GenericObject {
       #path_to_grost::__private::reflection::Reflectable<#ty>
     })?;
 
-    todo!()
+    let flavors = object
+      .flavors()
+      .iter()
+      .map(|f| {
+        let name = f.name().clone();
+        ObjectFlavor::from_attribute(f).map(|f| (name, f))
+      })
+      .collect::<darling::Result<IndexMap<_, _>>>()?;
+
+    let mut tags = IndexSet::new();
+    let fields = object
+      .fields()
+      .iter()
+      .map(|&f| {
+        if f.skip() {
+          SkippedField::try_new(f).map(GenericField::Skipped)
+        } else {
+          GenericTaggedField::try_new(f, &flavor_param, &flavors).and_then(|f| {
+            if tags.contains(&f.tag()) {
+              Err(darling::Error::custom(format!(
+                "{name} has multiple fields have the same tag {}",
+                f.tag()
+              )))
+            } else {
+              tags.insert(f.tag());
+              Ok(GenericField::Tagged(f))
+            }
+          })
+        }
+      })
+      .collect::<darling::Result<Vec<_>>>()
+      .and_then(|fields| {
+        if fields.is_empty() {
+          Err(darling::Error::custom(format!(
+            "{name} must have at least one field"
+          )))
+        } else {
+          Ok(fields)
+        }
+      })?;
+
+    let partial = PartialObject::from_attribute(&name, object.partial())?;
+    let partial_decoded =
+      GenericPartialDecodedObject::from_attribute(&name, &flavor_param, object.partial_decoded())?;
+    let selector = GenericSelector::from_attribute(&name, &flavor_param, object.selector())?;
+    let selector_iter =
+      GenericSelectorIter::from_attribute(selector.name(), &flavor_param, object.selector_iter())?;
+
+    Ok(Self {
+      path_to_grost,
+      attrs,
+      default: object.default().cloned(),
+      name,
+      vis,
+      ty,
+      reflectable,
+      generics,
+      flavors,
+      fields,
+      partial,
+      partial_decoded,
+      selector,
+      selector_iter,
+    })
   }
 }
 
 /// The AST for an object, which can be either a concrete or a generic object.
-/// 
+///
 /// The main purpose to having an AST for an object is used to validate the input (from the Rust's derive macro or attribute macro)
 /// from the schema and to generate the necessary Middle Intermediate Representation (MIR) of the object.
-/// 
+///
 /// A Middle Intermediate Representation (MIR) of the object can be
 /// generated from this structure. Once the MIR is generated,
 /// it can be used to generate the final Rust code for the object in a GraphQL Protocol schema.
@@ -783,7 +1178,12 @@ impl Object {
         .expect("There must be a flavor were already checked");
       ConcreteObject::try_new(object, flavor).map(Object::Concrete)
     } else {
-      GenericObject::try_new(object).map(Object::Generic)
+      let flavor_param = object
+        .partial_decoded()
+        .flavor()
+        .cloned()
+        .unwrap_or_else(grost_flavor_param);
+      GenericObject::try_new(object, flavor_param).map(Object::Generic)
     }
   }
 
@@ -815,7 +1215,7 @@ impl Object {
   }
 
   /// Returns the type of the object.
-  /// 
+  ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -826,7 +1226,7 @@ impl Object {
   }
 
   /// Returns the reflectable trait which replaces the generic parameter with the type of the object.
-  /// 
+  ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
