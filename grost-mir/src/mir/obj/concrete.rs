@@ -1,4 +1,4 @@
-use quote::{ToTokens, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use crate::ast::{FlavorAttribute, object::ConcreteObject as ConcreteObjectAst};
@@ -143,10 +143,13 @@ impl ConcreteObject {
   #[inline]
   pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     let default = self.derive_default()?;
+    let accessors = self.derive_accessors()?;
 
     Ok(quote! {
       const _: () = {
         #default
+
+        #accessors
       };
     })
   }
@@ -179,6 +182,25 @@ impl ConcreteObject {
       partial_decoded,
       selector,
       selector_iter,
+    })
+  }
+
+  fn derive_accessors(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let name = self.name();
+    let (ig, tg, wc) = self.generics().split_for_impl();
+
+    let accessors = self.fields().iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()).map(|f| {
+      let field_name = f.name();
+      let ty = f.ty();
+      let copy = f.copy();
+
+      accessors(field_name, ty, copy)
+    });
+
+    Ok(quote! {
+      impl #ig #name #tg #wc {
+        #(#accessors)*
+      }
     })
   }
 
@@ -226,6 +248,45 @@ impl ConcreteObject {
           }
         }
       })
+    }
+  }
+}
+
+fn accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStream {
+  let ref_fn = format_ident!("{}_ref", field_name);
+  let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
+  let ref_mut_fn = format_ident!("{}_mut", field_name);
+  let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+  let set_fn = format_ident!("set_{}", field_name);
+  let set_fn_doc = format!(" Set the `{field_name}` to the given value");
+  let with_fn = format_ident!("with_{}", field_name);
+  let constable = copy.then(|| quote! { const });
+
+  quote! {
+    #[doc = #ref_fn_doc]
+    #[inline]
+    pub const fn #ref_fn(&self) -> &#ty {
+      &self.#field_name
+    }
+
+    #[doc = #ref_mut_fn_doc]
+    #[inline]
+    pub const fn #ref_mut_fn(&mut self) -> &mut #ty {
+      &mut self.#field_name
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+      self.#field_name = value;
+      self
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    pub #constable fn #with_fn(mut self, value: #ty) -> Self {
+      self.#field_name = value;
+      self
     }
   }
 }

@@ -31,6 +31,7 @@ pub struct ConcreteTaggedField {
   partial: ConcretePartialField,
   partial_decoded: ConcretePartialDecodedField,
   selector: ConcreteSelectorField,
+  copy: bool,
 }
 
 impl ConcreteTaggedField {
@@ -62,6 +63,12 @@ impl ConcreteTaggedField {
   #[inline]
   pub const fn default(&self) -> &Path {
     &self.default
+  }
+
+  /// Returns `true` if the field is copyable, `false` otherwise.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
   }
 
   /// Returns the wire format reflection type of the field.
@@ -219,6 +226,7 @@ impl ConcreteTaggedField {
         constraints: selector_constraints,
         default: field.selection().clone(),
       },
+      copy: field.copy(),
     })
   }
 }

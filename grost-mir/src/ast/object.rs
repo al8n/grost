@@ -249,6 +249,7 @@ pub struct ConcreteTaggedField {
   selector: SelectorFieldAttribute,
   default: Path,
   tag: u32,
+  copy: bool,
 }
 
 impl ConcreteTaggedField {
@@ -354,6 +355,12 @@ impl ConcreteTaggedField {
     self.selector.attrs()
   }
 
+  /// Returns `true` if the field is copyable, `false` otherwise
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
   fn try_new<F: RawField>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self> {
     let attrs = f.attrs().to_vec();
     let vis = f.vis().clone();
@@ -457,6 +464,7 @@ impl ConcreteTaggedField {
       partial_decoded: f.partial_decoded().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
+      copy: f.copy(),
     })
   }
 }
