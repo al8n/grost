@@ -1,4 +1,6 @@
-use syn::{Attribute, Ident, Path, Type, WherePredicate, punctuated::Punctuated, token::Comma};
+use syn::{
+  Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated, token::Comma,
+};
 
 use quote::quote;
 
@@ -20,7 +22,9 @@ mod selector;
 #[derive(Debug, Clone)]
 pub struct ConcreteTaggedField {
   name: Ident,
+  vis: Visibility,
   ty: Type,
+  default: Path,
   attrs: Vec<Attribute>,
   wire_format: Type,
   wire_format_reflection: Type,
@@ -36,6 +40,12 @@ impl ConcreteTaggedField {
     &self.name
   }
 
+  /// Returns the visibility of the field.
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
   /// Returns the type of the field.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -46,6 +56,12 @@ impl ConcreteTaggedField {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
+  }
+
+  /// Returns the default value of the field.
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    &self.default
   }
 
   /// Returns the wire format reflection type of the field.
@@ -177,8 +193,10 @@ impl ConcreteTaggedField {
 
     Ok(Self {
       name: field.name().clone(),
+      vis: field.vis().clone(),
       ty: field.ty().clone(),
       attrs: field.attrs().to_vec(),
+      default: field.default().clone(),
       wire_format: wf,
       wire_format_reflection: wfr,
       partial: ConcretePartialField::from_ast(
@@ -214,6 +232,46 @@ pub enum ConcreteField {
 }
 
 impl ConcreteField {
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    match self {
+      Self::Skipped(skipped) => skipped.name(),
+      Self::Tagged(tagged) => tagged.name(),
+    }
+  }
+
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    match self {
+      Self::Skipped(skipped) => skipped.ty(),
+      Self::Tagged(tagged) => tagged.ty(),
+    }
+  }
+
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    match self {
+      Self::Skipped(skipped) => skipped.attrs(),
+      Self::Tagged(tagged) => tagged.attrs(),
+    }
+  }
+
+  #[inline]
+  pub const fn vis(&self) -> &syn::Visibility {
+    match self {
+      Self::Skipped(skipped) => skipped.vis(),
+      Self::Tagged(tagged) => tagged.vis(),
+    }
+  }
+
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    match self {
+      Self::Skipped(skipped) => skipped.default(),
+      Self::Tagged(tagged) => tagged.default(),
+    }
+  }
+
   pub(super) fn from_ast(
     object: &ConcreteObjectAst,
     field: ConcreteFieldAst,
