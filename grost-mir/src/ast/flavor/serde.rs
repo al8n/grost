@@ -83,6 +83,9 @@ pub(super) enum EncodeSerdeHelper {
     enumeration: EncodeValue,
     interface: EncodeValue,
     union: EncodeValue,
+    map: EncodeValue,
+    set: EncodeValue,
+    list: EncodeValue,
   },
   Module(String),
 }
@@ -102,6 +105,9 @@ impl TryFrom<EncodeSerdeHelper> for EncodeAttribute {
         enumeration,
         interface,
         union,
+        map,
+        set,
+        list,
       } => Ok(Self {
         skip_default,
         scalar,
@@ -111,6 +117,9 @@ impl TryFrom<EncodeSerdeHelper> for EncodeAttribute {
         enumeration,
         interface,
         union,
+        map,
+        set,
+        list,
       }),
     }
   }
@@ -127,6 +136,9 @@ impl From<EncodeAttribute> for EncodeSerdeHelper {
       interface: value.interface,
       union: value.union,
       skip_default: value.skip_default,
+      map: value.map,
+      set: value.set,
+      list: value.list,
     }
   }
 }
@@ -167,6 +179,9 @@ pub(super) enum DecodeSerdeHelper {
     enumeration: DecodeValue,
     interface: DecodeValue,
     union: DecodeValue,
+    map: DecodeValue,
+    set: DecodeValue,
+    list: DecodeValue,
   },
 }
 
@@ -184,6 +199,9 @@ impl TryFrom<DecodeSerdeHelper> for DecodeAttribute {
         enumeration,
         interface,
         union,
+        map,
+        set,
+        list,
       } => Ok(Self {
         or_else_default,
         scalar,
@@ -193,6 +211,9 @@ impl TryFrom<DecodeSerdeHelper> for DecodeAttribute {
         enumeration,
         interface,
         union,
+        map,
+        set,
+        list,
       }),
     }
   }
@@ -209,6 +230,9 @@ impl From<DecodeAttribute> for DecodeSerdeHelper {
       interface: value.interface,
       union: value.union,
       or_else_default: value.or_else_default,
+      map: value.map,
+      set: value.set,
+      list: value.list,
     }
   }
 }

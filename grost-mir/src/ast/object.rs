@@ -1,5 +1,3 @@
-use std::default;
-
 use darling::FromMeta;
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
@@ -404,6 +402,9 @@ impl ConcreteTaggedField {
         Label::Enum => bail!(skip_default_enumeration, or_else_default_enumeration),
         Label::Union => bail!(skip_default_union, or_else_default_union),
         Label::Interface => bail!(skip_default_interface, or_else_default_interface),
+        Label::Map { .. } => bail!(skip_default_map, or_else_default_map),
+        Label::List(_) => bail!(skip_default_list, or_else_default_list),
+        Label::Set(_) => bail!(skip_default_set, or_else_default_set),
         _ => (true, None),
       };
 
@@ -676,6 +677,9 @@ impl GenericTaggedField {
               Label::Enum => bail!(skip_default_enumeration, or_else_default_enumeration),
               Label::Union => bail!(skip_default_union, or_else_default_union),
               Label::Interface => bail!(skip_default_interface, or_else_default_interface),
+              Label::Map { .. } => bail!(skip_default_map, or_else_default_map),
+              Label::List(_) => bail!(skip_default_list, or_else_default_list),
+              Label::Set(_) => bail!(skip_default_set, or_else_default_set),
               _ => (true, None),
             };
 

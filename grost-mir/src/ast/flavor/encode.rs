@@ -98,6 +98,12 @@ struct Helper {
   interface: EncodeValue,
   #[darling(default)]
   union: EncodeValue,
+  #[darling(default)]
+  map: EncodeValue,
+  #[darling(default)]
+  set: EncodeValue,
+  #[darling(default)]
+  list: EncodeValue,
 }
 
 #[derive(Debug, FromMeta)]
@@ -126,6 +132,9 @@ pub struct EncodeAttribute {
   pub(super) enumeration: EncodeValue,
   pub(super) interface: EncodeValue,
   pub(super) union: EncodeValue,
+  pub(super) map: EncodeValue,
+  pub(super) set: EncodeValue,
+  pub(super) list: EncodeValue,
 }
 
 impl From<EncodeParser> for EncodeAttribute {
@@ -141,6 +150,9 @@ impl From<EncodeParser> for EncodeAttribute {
           object,
           interface,
           union,
+          map,
+          set,
+          list,
         },
     }: EncodeParser,
   ) -> Self {
@@ -153,6 +165,9 @@ impl From<EncodeParser> for EncodeAttribute {
       enumeration,
       interface,
       union,
+      map,
+      set,
+      list,
     }
   }
 }
@@ -177,6 +192,9 @@ impl TryFrom<&syn::Path> for EncodeAttribute {
     let enum_ = quote! { #module::enumeration };
     let union = quote! { #module::union };
     let interface = quote! { #module::interface };
+    let map = quote! { #module::map };
+    let set = quote! { #module::set };
+    let list = quote! { #module::list };
 
     Ok(Self {
       skip_default: BoolOption::default(),
@@ -187,6 +205,9 @@ impl TryFrom<&syn::Path> for EncodeAttribute {
       enumeration: EncodeValue::from(parse2::<Path>(enum_)?),
       interface: EncodeValue::from(parse2::<Path>(interface)?),
       union: EncodeValue::from(parse2::<Path>(union)?),
+      map: EncodeValue::from(parse2::<Path>(map)?),
+      set: EncodeValue::from(parse2::<Path>(set)?),
+      list: EncodeValue::from(parse2::<Path>(list)?),
     })
   }
 }
@@ -228,6 +249,9 @@ impl FromMeta for EncodeAttribute {
           object,
           interface,
           union,
+          map,
+          set,
+          list,
         } = Helper::from_list(&nested_meta)?;
         Ok(Self {
           skip_default,
@@ -238,6 +262,9 @@ impl FromMeta for EncodeAttribute {
           enumeration: enum_.unwrap_or_default(),
           interface,
           union,
+          map,
+          set,
+          list,
         })
       }
       Meta::NameValue(ref value) => Self::from_expr(&value.value),
@@ -389,6 +416,54 @@ impl EncodeAttribute {
   #[inline]
   pub const fn skip_default_union(&self) -> bool {
     if self.union.skip_default.is_yes() {
+      true
+    } else {
+      self.skip_default.is_yes()
+    }
+  }
+
+  /// Returns the path to the encoding module of map types
+  #[inline]
+  pub const fn map(&self) -> Option<&Path> {
+    self.map.path.as_ref()
+  }
+
+  /// Returns `true` if the encoding should skip default values for maps
+  #[inline]
+  pub const fn skip_default_map(&self) -> bool {
+    if self.map.skip_default.is_yes() {
+      true
+    } else {
+      self.skip_default.is_yes()
+    }
+  }
+
+  /// Returns the path to the encoding module of set types
+  #[inline]
+  pub const fn set(&self) -> Option<&Path> {
+    self.set.path.as_ref()
+  }
+
+  /// Returns `true` if the encoding should skip default values for sets
+  #[inline]
+  pub const fn skip_default_set(&self) -> bool {
+    if self.set.skip_default.is_yes() {
+      true
+    } else {
+      self.skip_default.is_yes()
+    }
+  }
+
+  /// Returns the path to the encoding module of list types
+  #[inline]
+  pub const fn list(&self) -> Option<&Path> {
+    self.list.path.as_ref()
+  }
+
+  /// Returns `true` if the encoding should skip default values for lists
+  #[inline]
+  pub const fn skip_default_list(&self) -> bool {
+    if self.list.skip_default.is_yes() {
       true
     } else {
       self.skip_default.is_yes()

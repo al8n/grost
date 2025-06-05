@@ -62,6 +62,12 @@ pub(super) struct DecodeParser {
   interface: DecodeValue,
   #[darling(default)]
   union: DecodeValue,
+  #[darling(default)]
+  map: DecodeValue,
+  #[darling(default)]
+  set: DecodeValue,
+  #[darling(default)]
+  list: DecodeValue,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -82,6 +88,9 @@ pub struct DecodeAttribute {
   pub(super) enumeration: DecodeValue,
   pub(super) interface: DecodeValue,
   pub(super) union: DecodeValue,
+  pub(super) map: DecodeValue,
+  pub(super) set: DecodeValue,
+  pub(super) list: DecodeValue,
 }
 
 impl From<DecodeParser> for DecodeAttribute {
@@ -95,6 +104,9 @@ impl From<DecodeParser> for DecodeAttribute {
       enumeration,
       interface,
       union,
+      map,
+      set,
+      list,
     }: DecodeParser,
   ) -> Self {
     Self {
@@ -106,6 +118,9 @@ impl From<DecodeParser> for DecodeAttribute {
       enumeration,
       interface,
       union,
+      map,
+      set,
+      list,
     }
   }
 }
@@ -139,6 +154,15 @@ impl DecodeAttribute {
     let union = DecodeValue {
       or_else_default: BoolOption::default(),
     };
+    let map = DecodeValue {
+      or_else_default: BoolOption::default(),
+    };
+    let set = DecodeValue {
+      or_else_default: BoolOption::default(),
+    };
+    let list = DecodeValue {
+      or_else_default: BoolOption::default(),
+    };
 
     Self {
       or_else_default: BoolOption::default(),
@@ -149,6 +173,9 @@ impl DecodeAttribute {
       enumeration,
       interface,
       union,
+      map,
+      set,
+      list,
     }
   }
 
@@ -216,6 +243,36 @@ impl DecodeAttribute {
   #[inline]
   pub const fn or_else_default_union(&self) -> bool {
     if self.union.or_else_default.is_yes() {
+      true
+    } else {
+      self.or_else_default.is_yes()
+    }
+  }
+
+  /// Returns `true` if the encoding should skip default values for maps
+  #[inline]
+  pub const fn or_else_default_map(&self) -> bool {
+    if self.map.or_else_default.is_yes() {
+      true
+    } else {
+      self.or_else_default.is_yes()
+    }
+  }
+
+  /// Returns `true` if the encoding should skip default values for sets
+  #[inline]
+  pub const fn or_else_default_set(&self) -> bool {
+    if self.set.or_else_default.is_yes() {
+      true
+    } else {
+      self.or_else_default.is_yes()
+    }
+  }
+
+  /// Returns `true` if the encoding should skip default values for lists
+  #[inline]
+  pub const fn or_else_default_list(&self) -> bool {
+    if self.list.or_else_default.is_yes() {
       true
     } else {
       self.or_else_default.is_yes()
