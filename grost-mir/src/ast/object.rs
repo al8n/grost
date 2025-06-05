@@ -314,7 +314,7 @@ impl ConcreteTaggedField {
 
   /// Returns the partial field type for this field, if any
   #[inline]
-  pub const fn partial(&self) -> Option<&Type> {
+  pub const fn partial_type(&self) -> Option<&Type> {
     self.partial.ty()
   }
 
@@ -326,7 +326,7 @@ impl ConcreteTaggedField {
 
   /// Returns the attributes of the partial decoded field for the field
   #[inline]
-  pub const fn partial_decoded(&self) -> &[Attribute] {
+  pub const fn partial_decoded_attrs(&self) -> &[Attribute] {
     self.partial_decoded.attrs()
   }
 
@@ -334,6 +334,12 @@ impl ConcreteTaggedField {
   #[inline]
   pub const fn partial_decoded_type(&self) -> Option<&Type> {
     self.partial_decoded.ty()
+  }
+
+  /// Returns `true` if the field is partial decoded field is copyable, `false` otherwise
+  #[inline]
+  pub const fn partial_decoded_copy(&self) -> bool {
+    self.partial_decoded.copy()
   }
 
   /// Returns the default selection of this field
@@ -455,7 +461,9 @@ impl ConcreteTaggedField {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
+#[unwrap(ref)]
+#[try_unwrap(ref)]
 pub enum ConcreteField {
   Skipped(SkippedField),
   Tagged(ConcreteTaggedField),
@@ -738,6 +746,7 @@ pub struct ConcreteObject {
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
+  copy: bool,
 }
 
 impl ConcreteObject {
@@ -790,6 +799,12 @@ impl ConcreteObject {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
+  }
+
+  /// Returns `true` if the object is copyable, `false` otherwise.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
   }
 
   /// Returns the fields of the object
@@ -890,6 +905,7 @@ impl ConcreteObject {
 
     Ok(Self {
       path_to_grost,
+      copy: object.copy(),
       attrs,
       name,
       vis,

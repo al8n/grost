@@ -7,6 +7,8 @@ pub mod object;
 // /// The Mid-level Intermediate Representation for objects in grost schema.
 // pub mod object1;
 
+pub mod obj;
+
 fn wire_format_reflection_ty(
   path_to_grost: &syn::Path,
   object_name: &syn::Ident,
