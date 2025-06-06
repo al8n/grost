@@ -2,6 +2,8 @@ use crate::ast::object::{
   ConcreteObject as ConcreteObjectAst, GenericObject as GenericObjectAst, Object as ObjectAst,
 };
 
+use syn::{ConstParam, parse_quote};
+
 pub use concrete::*;
 pub use generic::*;
 
@@ -29,4 +31,18 @@ impl Object {
       }
     }
   }
+
+  /// Generates the final code for the object.
+  pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
+    match self {
+      Self::Generic(generic) => generic.derive(),
+      Self::Concrete(concrete) => concrete.derive(),
+    }
+  }
+}
+
+fn grost_selected_param() -> ConstParam {
+  parse_quote!(
+    const __GROST_SELECTED__: ::core::primitive::bool = true
+  )
 }

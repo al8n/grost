@@ -1,15 +1,9 @@
 use quote::quote;
-use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type, parse_quote};
+use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
 
-use crate::ast::grost_lifetime;
+use crate::{ast::grost_lifetime, obj::grost_selected_param};
 
 use super::{ConcreteField, ConcreteObjectAst};
-
-fn grost_selected_param() -> ConstParam {
-  parse_quote!(
-    const __GROST_SELECTED__: ::core::primitive::bool = true
-  )
-}
 
 #[derive(Debug, Clone)]
 pub struct ConcreteSelectorIter {
@@ -140,33 +134,52 @@ impl ConcreteSelector {
     let selector_iter = object.selector_iter();
     let selector_iter_name = selector_iter.name();
     let selected = grost_selected_param();
+    let lifetime = grost_lifetime();
 
-    let mut generics = self.generics.clone();
+    let original_generics = object.generics();
+    let mut generics = Generics::default();
+
+    // push the lifetime generic parameter first
+    generics.params.extend(
+      original_generics
+        .lifetimes()
+        .map(|lp| GenericParam::Lifetime(lp.clone())),
+    );
+
     generics
       .params
-      .push(GenericParam::Lifetime(grost_lifetime()));
+      .push(GenericParam::Lifetime(lifetime.clone()));
+
+    // push the original type generic parameters
+    generics.params.extend(
+      original_generics
+        .type_params()
+        .map(|tp| GenericParam::Type(tp.clone())),
+    );
+
+    // push the original const generic parameters last
+    generics.params.extend(
+      original_generics
+        .const_params()
+        .map(|cp| GenericParam::Const(cp.clone())),
+    );
+
+    let selected_generics = generics.clone();
+    let unselected_generics = generics.clone();
+
     generics.params.push(GenericParam::Const(selected.clone()));
+
     let (_, tg, _) = generics.split_for_impl();
     let ty: Type = syn::parse2(quote! {
       #selector_iter_name #tg
     })?;
 
-    let mut selected_generics = self.generics.clone();
-    selected_generics
-      .params
-      .push(GenericParam::Lifetime(grost_lifetime()));
-
-    let mut unselected_generics = self.generics.clone();
-    unselected_generics
-      .params
-      .push(GenericParam::Lifetime(grost_lifetime()));
-
-    let params = self.generics.params.iter();
+    let params = selected_generics.params.iter();
     let selected_type: Type = syn::parse2(quote! {
       #selector_iter_name <#(#params),*, true>
     })?;
 
-    let params = self.generics.params.iter();
+    let params = unselected_generics.params.iter();
     let unselected_type: Type = syn::parse2(quote! {
       #selector_iter_name <#(#params),*, false>
     })?;

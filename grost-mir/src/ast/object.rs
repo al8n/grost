@@ -614,6 +614,12 @@ impl GenericTaggedField {
     self.partial_decoded.ty()
   }
 
+  /// Returns `true` if the field is partial decoded field is copyable, `false` otherwise
+  #[inline]
+  pub const fn partial_decoded_copy(&self) -> bool {
+    self.partial_decoded.copy()
+  }
+
   /// Returns the default selection of this field
   #[inline]
   pub const fn selection(&self) -> &Selection {
@@ -999,6 +1005,7 @@ pub struct GenericObject {
   selector: GenericSelector,
   selector_iter: GenericSelectorIter,
   flavors: IndexMap<Ident, ObjectFlavor>,
+  copy: bool,
 }
 
 impl GenericObject {
@@ -1064,6 +1071,12 @@ impl GenericObject {
   #[inline]
   pub const fn default(&self) -> Option<&Path> {
     self.default.as_ref()
+  }
+
+  /// Returns `true` if the object is copyable, `false` otherwise.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
   }
 
   /// Returns the partial object information.
@@ -1171,6 +1184,7 @@ impl GenericObject {
       partial_decoded,
       selector,
       selector_iter,
+      copy: object.copy(),
     })
   }
 }

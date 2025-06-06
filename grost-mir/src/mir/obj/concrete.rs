@@ -1,4 +1,4 @@
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use crate::ast::{FlavorAttribute, object::ConcreteObject as ConcreteObjectAst};
@@ -189,13 +189,17 @@ impl ConcreteObject {
     let name = self.name();
     let (ig, tg, wc) = self.generics().split_for_impl();
 
-    let accessors = self.fields().iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()).map(|f| {
-      let field_name = f.name();
-      let ty = f.ty();
-      let copy = f.copy();
+    let accessors = self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let field_name = f.name();
+        let ty = f.ty();
+        let copy = f.copy();
 
-      accessors(field_name, ty, copy)
-    });
+        accessors(field_name, ty, copy)
+      });
 
     Ok(quote! {
       impl #ig #name #tg #wc {
