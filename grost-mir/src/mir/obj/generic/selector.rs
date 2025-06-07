@@ -153,11 +153,11 @@ impl SelectorFlavor {
     &self.generics
   }
 
-  fn try_new(
-    object: &GenericObjectAst,
+  fn try_new<M, F>(
+    object: &GenericObjectAst<M, F>,
     flavor_name: &Ident,
     flavor: &ObjectFlavor,
-    fields: &[GenericField],
+    fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let selector = object.selector();
     let selector_name = selector.name();
@@ -247,9 +247,9 @@ impl GenericSelector {
     &self.flavors
   }
 
-  pub(super) fn from_ast(
-    object: &GenericObjectAst,
-    fields: &[GenericField],
+  pub(super) fn from_ast<M, F>(
+    object: &GenericObjectAst<M, F>,
+    fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let selector = object.selector();
     let selector_name = selector.name();
@@ -325,7 +325,10 @@ impl GenericSelector {
     })
   }
 
-  pub fn selector_iter(&self, object: &GenericObjectAst) -> darling::Result<GenericSelectorIter> {
+  pub fn selector_iter<M, F>(
+    &self,
+    object: &GenericObjectAst<M, F>,
+  ) -> darling::Result<GenericSelectorIter> {
     let selector_iter = object.selector_iter();
     let selector_iter_name = selector_iter.name();
     let selected = grost_selected_param();
@@ -407,9 +410,9 @@ impl GenericSelector {
     })
   }
 
-  fn flavor_selector_iter(
+  fn flavor_selector_iter<M, F>(
     &self,
-    object: &GenericObjectAst,
+    object: &GenericObjectAst<M, F>,
     flavor_type: &Type,
   ) -> darling::Result<SelectorIterFlavor> {
     let selector_iter = object.selector_iter();

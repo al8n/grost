@@ -1,9 +1,11 @@
 use indexmap::IndexMap;
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use quote::quote;
+use quote::{ToTokens, quote};
 
 use crate::ast::object::{GenericObject as GenericObjectAst, ObjectFlavor};
+
+use super::accessors;
 
 pub use field::*;
 pub use partial::*;
@@ -16,7 +18,7 @@ mod partial_decoded;
 mod selector;
 
 #[derive(Debug, Clone)]
-pub struct GenericObject {
+pub struct GenericObject<M, F> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   default: Option<Path>,
@@ -24,16 +26,46 @@ pub struct GenericObject {
   vis: Visibility,
   ty: Type,
   reflectable: Type,
-  fields: Vec<GenericField>,
+  fields: Vec<GenericField<F>>,
   generics: Generics,
   partial: GenericPartialObject,
   partial_decoded: GenericPartialDecodedObject,
   selector: GenericSelector,
   selector_iter: GenericSelectorIter,
   flavors: IndexMap<Ident, ObjectFlavor>,
+  meta: M,
 }
 
-impl GenericObject {
+impl<M, F> ToTokens for GenericObject<M, F> {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let vis = self.vis();
+    let generics = self.generics();
+    let wc = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+
+    let fields = self.fields().iter().map(|f| {
+      let name = f.name();
+      let ty = f.ty();
+      let vis = f.vis();
+      let attrs = f.attrs();
+
+      quote! {
+        #(#attrs)*
+        #vis #name: #ty
+      }
+    });
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #vis struct #name #generics #wc {
+        #(#fields),*
+      }
+    });
+  }
+}
+
+impl<M, F> GenericObject<M, F> {
   /// Returns the path to the `grost` crate.
   #[inline]
   pub const fn path_to_grost(&self) -> &Path {
@@ -82,7 +114,7 @@ impl GenericObject {
 
   /// Returns the fields of the object.
   #[inline]
-  pub const fn fields(&self) -> &[GenericField] {
+  pub const fn fields(&self) -> &[GenericField<F>] {
     self.fields.as_slice()
   }
 
@@ -116,14 +148,18 @@ impl GenericObject {
     &self.flavors
   }
 
-  pub(super) fn from_ast(object: GenericObjectAst) -> darling::Result<Self> {
+  pub(super) fn from_ast(object: GenericObjectAst<M, F>) -> darling::Result<Self>
+  where
+    M: Clone,
+    F: Clone,
+  {
     let path_to_grost = object.path_to_grost().clone();
 
     let fields = object
       .fields()
       .iter()
       .cloned()
-      .map(|f| GenericField::from_ast(&object, f))
+      .map(|f| GenericField::<F>::from_ast::<M>(&object, f))
       .collect::<darling::Result<Vec<_>>>()?;
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
@@ -141,6 +177,7 @@ impl GenericObject {
       reflectable: object.reflectable().clone(),
       fields,
       generics: object.generics().clone(),
+      meta: object.meta().clone(),
       partial,
       partial_decoded,
       selector,
@@ -150,6 +187,85 @@ impl GenericObject {
   }
 
   pub(super) fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
-    Ok(quote! {})
+    let default = self.derive_default()?;
+    let accessors = self.derive_accessors()?;
+
+    Ok(quote! {
+      const _: () = {
+        #default
+
+        #accessors
+      };
+    })
+  }
+
+  fn derive_accessors(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let name = self.name();
+    let (ig, tg, wc) = self.generics().split_for_impl();
+
+    let accessors = self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let field_name = f.name();
+        let ty = f.ty();
+        let copy = f.copy();
+
+        accessors(field_name, f.vis(), ty, copy)
+      });
+
+    Ok(quote! {
+      impl #ig #name #tg #wc {
+        #(#accessors)*
+      }
+    })
+  }
+
+  fn derive_default(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let name = self.name();
+    let (ig, tg, wc) = self.generics().split_for_impl();
+
+    if let Some(default) = &self.default {
+      Ok(quote! {
+        impl #ig ::core::default::Default for #name #tg #wc {
+          fn default() -> Self {
+            Self::new()
+          }
+        }
+
+        impl #ig ::core::default::Default for #name #tg #wc {
+          /// Creates a new instance of the object with default values.
+          pub fn new() -> Self {
+            #default()
+          }
+        }
+      })
+    } else {
+      let fields = self.fields().iter().map(|f| {
+        let name = f.name();
+        let default = f.default();
+        quote! {
+          #name: #default()
+        }
+      });
+
+      Ok(quote! {
+        impl #ig ::core::default::Default for #name #tg #wc {
+          fn default() -> Self {
+            Self::new()
+          }
+        }
+
+        impl #ig #name #tg #wc {
+          /// Creates a new instance of the object with default values.
+          pub fn new() -> Self {
+            Self {
+              #(#fields),*
+            }
+          }
+        }
+      })
+    }
   }
 }

@@ -27,11 +27,11 @@ impl PartialDecodedObjectFlavor {
     &self.generics
   }
 
-  fn from_ast(
-    object: &GenericObjectAst,
+  fn from_ast<M, F>(
+    object: &GenericObjectAst<M, F>,
     flavor_name: &Ident,
     flavor: &ObjectFlavor,
-    fields: &[GenericField],
+    fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let partial_decoded_object = object.partial_decoded();
     let partial_decoded_object_name = partial_decoded_object.name();
@@ -165,9 +165,9 @@ impl GenericPartialDecodedObject {
     &self.flavors
   }
 
-  pub(super) fn from_ast(
-    object: &GenericObjectAst,
-    fields: &[GenericField],
+  pub(super) fn from_ast<M, F>(
+    object: &GenericObjectAst<M, F>,
+    fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let path_to_grost = object.path_to_grost();
     let partial_decoded_object = object.partial_decoded();

@@ -20,7 +20,7 @@ mod partial_decoded;
 mod selector;
 
 #[derive(Debug, Clone)]
-pub struct ConcreteTaggedField {
+pub struct ConcreteTaggedField<F = ()> {
   name: Ident,
   vis: Visibility,
   ty: Type,
@@ -32,9 +32,10 @@ pub struct ConcreteTaggedField {
   partial_decoded: ConcretePartialDecodedField,
   selector: ConcreteSelectorField,
   copy: bool,
+  meta: F,
 }
 
-impl ConcreteTaggedField {
+impl<F> ConcreteTaggedField<F> {
   /// Returns the name of the field.
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -101,7 +102,19 @@ impl ConcreteTaggedField {
     &self.selector
   }
 
-  fn from_ast(object: &ConcreteObjectAst, field: ConcreteTaggedFieldAst) -> darling::Result<Self> {
+  /// Returns the custom metadata associated with the field.
+  #[inline]
+  pub const fn meta(&self) -> &F {
+    &self.meta
+  }
+
+  fn from_ast<M>(
+    object: &ConcreteObjectAst<M, F>,
+    field: ConcreteTaggedFieldAst<F>,
+  ) -> darling::Result<Self>
+  where
+    F: Clone,
+  {
     let path_to_grost = object.path_to_grost();
     let field_ty = field.ty();
     let flavor_type = object.flavor().ty();
@@ -227,6 +240,7 @@ impl ConcreteTaggedField {
         default: field.selection().clone(),
       },
       copy: field.copy(),
+      meta: field.meta().clone(),
     })
   }
 }
@@ -234,12 +248,12 @@ impl ConcreteTaggedField {
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
 #[unwrap(ref)]
 #[try_unwrap(ref)]
-pub enum ConcreteField {
-  Skipped(SkippedField),
-  Tagged(ConcreteTaggedField),
+pub enum ConcreteField<F = ()> {
+  Skipped(SkippedField<F>),
+  Tagged(ConcreteTaggedField<F>),
 }
 
-impl ConcreteField {
+impl<F> ConcreteField<F> {
   #[inline]
   pub const fn name(&self) -> &Ident {
     match self {
@@ -280,10 +294,22 @@ impl ConcreteField {
     }
   }
 
-  pub(super) fn from_ast(
-    object: &ConcreteObjectAst,
-    field: ConcreteFieldAst,
-  ) -> darling::Result<Self> {
+  /// Returns the custom metadata associated with the field.
+  #[inline]
+  pub const fn meta(&self) -> &F {
+    match self {
+      Self::Skipped(skipped) => skipped.meta(),
+      Self::Tagged(tagged) => tagged.meta(),
+    }
+  }
+
+  pub(super) fn from_ast<M>(
+    object: &ConcreteObjectAst<M, F>,
+    field: ConcreteFieldAst<F>,
+  ) -> darling::Result<Self>
+  where
+    F: Clone,
+  {
     match field {
       ConcreteFieldAst::Skipped(skipped_field) => Ok(Self::Skipped(skipped_field)),
       ConcreteFieldAst::Tagged(concrete_tagged_field) => {

@@ -1,7 +1,9 @@
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use crate::ast::{FlavorAttribute, object::ConcreteObject as ConcreteObjectAst};
+
+use super::accessors;
 
 pub use field::*;
 pub use partial::*;
@@ -14,7 +16,7 @@ mod partial_decoded;
 mod selector;
 
 #[derive(Debug, Clone)]
-pub struct ConcreteObject {
+pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   name: Ident,
@@ -23,15 +25,16 @@ pub struct ConcreteObject {
   reflectable: Type,
   generics: Generics,
   flavor: FlavorAttribute,
-  fields: Vec<ConcreteField>,
+  fields: Vec<ConcreteField<F>>,
   default: Option<Path>,
   partial: ConcretePartialObject,
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
+  meta: M,
 }
 
-impl ToTokens for ConcreteObject {
+impl<M, F> ToTokens for ConcreteObject<M, F> {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let name = self.name();
     let vis = self.vis();
@@ -60,7 +63,7 @@ impl ToTokens for ConcreteObject {
   }
 }
 
-impl ConcreteObject {
+impl<M, F> ConcreteObject<M, F> {
   /// Returns the path to the grost crate.
   #[inline]
   pub const fn path_to_grost(&self) -> &Path {
@@ -135,7 +138,7 @@ impl ConcreteObject {
 
   /// Returns the fields of the concrete object.
   #[inline]
-  pub const fn fields(&self) -> &[ConcreteField] {
+  pub const fn fields(&self) -> &[ConcreteField<F>] {
     self.fields.as_slice()
   }
 
@@ -154,7 +157,11 @@ impl ConcreteObject {
     })
   }
 
-  pub(super) fn from_ast(object: ConcreteObjectAst) -> darling::Result<Self> {
+  pub(super) fn from_ast(object: ConcreteObjectAst<M, F>) -> darling::Result<Self>
+  where
+    M: Clone,
+    F: Clone,
+  {
     let fields = object
       .fields()
       .iter()
@@ -182,6 +189,7 @@ impl ConcreteObject {
       partial_decoded,
       selector,
       selector_iter,
+      meta: object.meta().clone(),
     })
   }
 
@@ -198,7 +206,7 @@ impl ConcreteObject {
         let ty = f.ty();
         let copy = f.copy();
 
-        accessors(field_name, ty, copy)
+        accessors(field_name, f.vis(), ty, copy)
       });
 
     Ok(quote! {
@@ -252,45 +260,6 @@ impl ConcreteObject {
           }
         }
       })
-    }
-  }
-}
-
-fn accessors(field_name: &Ident, ty: &Type, copy: bool) -> proc_macro2::TokenStream {
-  let ref_fn = format_ident!("{}_ref", field_name);
-  let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
-  let ref_mut_fn = format_ident!("{}_mut", field_name);
-  let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
-  let set_fn = format_ident!("set_{}", field_name);
-  let set_fn_doc = format!(" Set the `{field_name}` to the given value");
-  let with_fn = format_ident!("with_{}", field_name);
-  let constable = copy.then(|| quote! { const });
-
-  quote! {
-    #[doc = #ref_fn_doc]
-    #[inline]
-    pub const fn #ref_fn(&self) -> &#ty {
-      &self.#field_name
-    }
-
-    #[doc = #ref_mut_fn_doc]
-    #[inline]
-    pub const fn #ref_mut_fn(&mut self) -> &mut #ty {
-      &mut self.#field_name
-    }
-
-    #[doc = #set_fn_doc]
-    #[inline]
-    pub #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
-      self.#field_name = value;
-      self
-    }
-
-    #[doc = #set_fn_doc]
-    #[inline]
-    pub #constable fn #with_fn(mut self, value: #ty) -> Self {
-      self.#field_name = value;
-      self
     }
   }
 }

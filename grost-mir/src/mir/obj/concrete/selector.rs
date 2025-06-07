@@ -100,9 +100,9 @@ impl ConcreteSelector {
     &self.flavor_type
   }
 
-  pub(super) fn from_ast(
-    object: &ConcreteObjectAst,
-    fields: &[ConcreteField],
+  pub(super) fn from_ast<M, F>(
+    object: &ConcreteObjectAst<M, F>,
+    fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let selector = object.selector();
 
@@ -127,9 +127,9 @@ impl ConcreteSelector {
     })
   }
 
-  pub(super) fn selector_iter(
+  pub(super) fn selector_iter<M, F>(
     &self,
-    object: &ConcreteObjectAst,
+    object: &ConcreteObjectAst<M, F>,
   ) -> darling::Result<ConcreteSelectorIter> {
     let selector_iter = object.selector_iter();
     let selector_iter_name = selector_iter.name();

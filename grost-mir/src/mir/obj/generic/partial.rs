@@ -54,9 +54,9 @@ impl GenericPartialObject {
     &self.unknown_buffer_param
   }
 
-  pub(super) fn from_ast(
-    object: &GenericObjectAst,
-    fields: &[GenericField],
+  pub(super) fn from_ast<M, F>(
+    object: &GenericObjectAst<M, F>,
+    fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
     let unknown_buffer_param = partial_object.unknown_buffer().clone();

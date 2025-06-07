@@ -113,9 +113,9 @@ impl FieldFlavor {
     &self.selector
   }
 
-  fn try_new(
-    object: &GenericObjectAst,
-    field: &GenericTaggedFieldAst,
+  fn try_new<M, F>(
+    object: &GenericObjectAst<M, F>,
+    field: &GenericTaggedFieldAst<F>,
     flavor_type: &Type,
     ast: &FieldFlavorAst,
   ) -> darling::Result<Self> {
@@ -234,7 +234,7 @@ impl FieldFlavor {
 }
 
 #[derive(Debug, Clone)]
-pub struct GenericTaggedField {
+pub struct GenericTaggedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
   name: Ident,
@@ -248,10 +248,12 @@ pub struct GenericTaggedField {
   selector: GenericSelectorField,
   default: Path,
   tag: u32,
+  copy: bool,
+  meta: M,
   flavors: IndexMap<Ident, FieldFlavor>,
 }
 
-impl GenericTaggedField {
+impl<F> GenericTaggedField<F> {
   /// Returns the attributes of this field.
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
@@ -300,6 +302,18 @@ impl GenericTaggedField {
     self.tag
   }
 
+  /// Returns whether this field is copyable.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the custom meta data associated with this field.
+  #[inline]
+  pub const fn meta(&self) -> &F {
+    &self.meta
+  }
+
   /// Returns the default value of this field.
   #[inline]
   pub const fn default(&self) -> &Path {
@@ -336,7 +350,13 @@ impl GenericTaggedField {
     &self.flavors
   }
 
-  fn from_ast(object: &GenericObjectAst, field: GenericTaggedFieldAst) -> darling::Result<Self> {
+  fn from_ast<M>(
+    object: &GenericObjectAst<M, F>,
+    field: GenericTaggedFieldAst<F>,
+  ) -> darling::Result<Self>
+  where
+    F: Clone,
+  {
     let partial = GenericPartialField::from_ast(
       object.path_to_grost(),
       field.ty(),
@@ -476,6 +496,8 @@ impl GenericTaggedField {
       },
       default: field.default().clone(),
       tag: field.tag(),
+      copy: field.copy(),
+      meta: field.meta().clone(),
       flavors,
     })
   }
@@ -484,16 +506,73 @@ impl GenericTaggedField {
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
 #[unwrap(ref)]
 #[try_unwrap(ref)]
-pub enum GenericField {
-  Skipped(SkippedField),
-  Tagged(GenericTaggedField),
+pub enum GenericField<F = ()> {
+  Skipped(SkippedField<F>),
+  Tagged(GenericTaggedField<F>),
 }
 
-impl GenericField {
-  pub(super) fn from_ast(
-    object: &GenericObjectAst,
-    field: GenericFieldAst,
-  ) -> darling::Result<Self> {
+impl<F> GenericField<F> {
+  /// Returns the name of the field.
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    match self {
+      GenericField::Skipped(f) => f.name(),
+      GenericField::Tagged(f) => f.name(),
+    }
+  }
+
+  /// Returns the type of the field.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    match self {
+      GenericField::Skipped(f) => f.ty(),
+      GenericField::Tagged(f) => f.ty(),
+    }
+  }
+
+  /// Returns the attributes of the field.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    match self {
+      GenericField::Skipped(f) => f.attrs(),
+      GenericField::Tagged(f) => f.attrs(),
+    }
+  }
+
+  /// Returns the visibility of the field.
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    match self {
+      GenericField::Skipped(f) => f.vis(),
+      GenericField::Tagged(f) => f.vis(),
+    }
+  }
+
+  /// Returns the fn returns the default value of the field.
+  #[inline]
+  pub const fn default(&self) -> &Path {
+    match self {
+      GenericField::Skipped(f) => f.default(),
+      GenericField::Tagged(f) => f.default(),
+    }
+  }
+
+  /// Returns the custom meta data associated with the field.
+  #[inline]
+  pub const fn meta(&self) -> &F {
+    match self {
+      GenericField::Skipped(f) => f.meta(),
+      GenericField::Tagged(f) => f.meta(),
+    }
+  }
+
+  pub(super) fn from_ast<M>(
+    object: &GenericObjectAst<M, F>,
+    field: GenericFieldAst<F>,
+  ) -> darling::Result<Self>
+  where
+    F: Clone,
+  {
     match field {
       GenericFieldAst::Skipped(f) => Ok(GenericField::Skipped(f)),
       GenericFieldAst::Tagged(f) => {

@@ -382,6 +382,9 @@ impl FieldAttribute {
 
 /// The trait for the field derive input
 pub trait RawField: Clone {
+  /// The custom metadata type for the field
+  type Meta: Clone;
+
   /// Returns the name of the field
   fn name(&self) -> &Ident;
 
@@ -429,4 +432,7 @@ pub trait RawField: Clone {
 
   /// Returns the field flavor attribute for the field
   fn flavors(&self) -> &[FieldFlavorAttribute];
+
+  /// Returns the custom metadata of the field
+  fn meta(&self) -> &Self::Meta;
 }

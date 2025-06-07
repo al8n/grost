@@ -175,15 +175,16 @@ impl ObjectAttribute {
 }
 
 #[derive(Debug, Clone)]
-pub struct SkippedField {
+pub struct SkippedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
   name: Ident,
   ty: Type,
   default: Path,
+  meta: M,
 }
 
-impl SkippedField {
+impl<M> SkippedField<M> {
   /// Returns the name of the skipped field
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -214,7 +215,16 @@ impl SkippedField {
     &self.default
   }
 
-  fn try_new<F: RawField>(f: &F) -> darling::Result<Self> {
+  /// Returns the metadata associated with the skipped field
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  fn try_new<F: RawField<Meta = M>>(f: &F) -> darling::Result<Self>
+  where
+    M: Clone,
+  {
     let attrs = f.attrs().to_vec();
     let vis = f.vis().clone();
     let name = f.name().clone();
@@ -230,12 +240,13 @@ impl SkippedField {
       name,
       ty,
       default,
+      meta: f.meta().clone(),
     })
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct ConcreteTaggedField {
+pub struct ConcreteTaggedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
   name: Ident,
@@ -250,9 +261,10 @@ pub struct ConcreteTaggedField {
   default: Path,
   tag: u32,
   copy: bool,
+  meta: M,
 }
 
-impl ConcreteTaggedField {
+impl<M> ConcreteTaggedField<M> {
   /// Returns the name of the field
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -361,7 +373,16 @@ impl ConcreteTaggedField {
     self.copy
   }
 
-  fn try_new<F: RawField>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self> {
+  /// Returns the custom metadata associated with the field
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  fn try_new<F: RawField<Meta = M>>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self>
+  where
+    M: Clone,
+  {
     let attrs = f.attrs().to_vec();
     let vis = f.vis().clone();
     let name = f.name().clone();
@@ -465,6 +486,7 @@ impl ConcreteTaggedField {
       partial: f.partial().clone(),
       selector: f.selector().clone(),
       copy: f.copy(),
+      meta: f.meta().clone(),
     })
   }
 }
@@ -472,9 +494,9 @@ impl ConcreteTaggedField {
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
 #[unwrap(ref)]
 #[try_unwrap(ref)]
-pub enum ConcreteField {
-  Skipped(SkippedField),
-  Tagged(ConcreteTaggedField),
+pub enum ConcreteField<M = ()> {
+  Skipped(SkippedField<M>),
+  Tagged(ConcreteTaggedField<M>),
 }
 
 #[derive(Debug, Clone)]
@@ -512,7 +534,7 @@ impl FieldFlavor {
 }
 
 #[derive(Debug, Clone)]
-pub struct GenericTaggedField {
+pub struct GenericTaggedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
   name: Ident,
@@ -527,9 +549,11 @@ pub struct GenericTaggedField {
   default: Path,
   tag: u32,
   flavors: IndexMap<Ident, FieldFlavor>,
+  copy: bool,
+  meta: M,
 }
 
-impl GenericTaggedField {
+impl<M> GenericTaggedField<M> {
   /// Returns the name of the field
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -590,6 +614,18 @@ impl GenericTaggedField {
     self.schema_description.as_str()
   }
 
+  /// Returns `true` if the field is copyable, `false` otherwise
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the metadata associated with the field
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
   /// Returns the partial field type for this field, if any
   #[inline]
   pub const fn partial_type(&self) -> Option<&Type> {
@@ -638,11 +674,15 @@ impl GenericTaggedField {
     &self.flavors
   }
 
-  fn try_new<F: RawField>(
+  fn try_new<F: RawField<Meta = M>>(
     f: &F,
     flavor_param: &TypeParam,
     flavors: &IndexMap<Ident, ObjectFlavor>,
-  ) -> darling::Result<Self> {
+    copy: bool,
+  ) -> darling::Result<Self>
+  where
+    M: Clone,
+  {
     let attrs = f.attrs().to_vec();
     let vis = f.vis().clone();
     let name = f.name().clone();
@@ -729,23 +769,45 @@ impl GenericTaggedField {
       partial_decoded: f.partial_decoded().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
+      meta: f.meta().clone(),
       default,
       tag,
+      copy,
       flavors: field_flavors,
     })
   }
 }
 
 #[derive(Debug, Clone)]
-pub enum GenericField {
-  Skipped(SkippedField),
-  Tagged(GenericTaggedField),
+pub enum GenericField<M = ()> {
+  Skipped(SkippedField<M>),
+  Tagged(GenericTaggedField<M>),
+}
+
+#[derive(Debug, Clone)]
+pub struct Indexer {
+  name: Ident,
+  attrs: Vec<Attribute>,
+}
+
+impl Indexer {
+  /// Returns the name of the indexer
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the attributes of the indexer
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
 }
 
 /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
 /// over the flavor type.
 #[derive(Debug, Clone)]
-pub struct ConcreteObject {
+pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   name: Ident,
@@ -754,16 +816,18 @@ pub struct ConcreteObject {
   reflectable: Type,
   generics: Generics,
   flavor: FlavorAttribute,
-  fields: Vec<ConcreteField>,
+  fields: Vec<ConcreteField<F>>,
   default: Option<Path>,
   partial: PartialObject,
+  indexer: Indexer,
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
   copy: bool,
+  meta: M,
 }
 
-impl ConcreteObject {
+impl<M, F> ConcreteObject<M, F> {
   /// Returns the path to the `grost` crate
   #[inline]
   pub const fn path_to_grost(&self) -> &Path {
@@ -821,9 +885,15 @@ impl ConcreteObject {
     self.copy
   }
 
+  /// Returns the metadata associated with the object
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
   /// Returns the fields of the object
   #[inline]
-  pub const fn fields(&self) -> &[ConcreteField] {
+  pub const fn fields(&self) -> &[ConcreteField<F>] {
     self.fields.as_slice()
   }
 
@@ -857,9 +927,18 @@ impl ConcreteObject {
     &self.selector_iter
   }
 
+  /// Returns the indexer information
+  #[inline]
+  pub const fn indexer(&self) -> &Indexer {
+    &self.indexer
+  }
+
   fn try_new<O>(object: &O, flavor: &FlavorAttribute) -> darling::Result<Self>
   where
-    O: RawObject,
+    O: RawObject<Meta = M>,
+    O::Field: RawField<Meta = F>,
+    F: Clone,
+    M: Clone,
   {
     let path_to_grost = object.path_to_grost().clone();
     let attrs = object.attrs().to_vec();
@@ -921,6 +1000,10 @@ impl ConcreteObject {
       path_to_grost,
       copy: object.copy(),
       attrs,
+      indexer: Indexer {
+        name: format_ident!("{}Indexer", name),
+        attrs: object.indexer().attrs().to_vec(),
+      },
       name,
       vis,
       ty,
@@ -933,6 +1016,7 @@ impl ConcreteObject {
       partial_decoded,
       selector,
       selector_iter,
+      meta: object.meta().clone(),
     })
   }
 }
@@ -990,7 +1074,7 @@ impl ObjectFlavor {
 
 /// The AST for a generic object, a generic object which means there are multiple flavors and the generated code will be generic over the flavor type.
 #[derive(Debug, Clone)]
-pub struct GenericObject {
+pub struct GenericObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   default: Option<Path>,
@@ -998,17 +1082,19 @@ pub struct GenericObject {
   vis: Visibility,
   ty: Type,
   reflectable: Type,
-  fields: Vec<GenericField>,
+  fields: Vec<GenericField<F>>,
   generics: Generics,
   partial: PartialObject,
   partial_decoded: GenericPartialDecodedObject,
   selector: GenericSelector,
   selector_iter: GenericSelectorIter,
+  indexer: Indexer,
   flavors: IndexMap<Ident, ObjectFlavor>,
   copy: bool,
+  meta: M,
 }
 
-impl GenericObject {
+impl<M, F> GenericObject<M, F> {
   /// Returns the path to the `grost` crate.
   #[inline]
   pub const fn path_to_grost(&self) -> &Path {
@@ -1051,7 +1137,7 @@ impl GenericObject {
 
   /// Returns the fields of the object.
   #[inline]
-  pub const fn fields(&self) -> &[GenericField] {
+  pub const fn fields(&self) -> &[GenericField<F>] {
     self.fields.as_slice()
   }
 
@@ -1077,6 +1163,12 @@ impl GenericObject {
   #[inline]
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+
+  /// Returns the custom metadata associated with the object.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
   }
 
   /// Returns the partial object information.
@@ -1105,7 +1197,10 @@ impl GenericObject {
 
   fn try_new<O>(object: &O, flavor_param: TypeParam) -> darling::Result<Self>
   where
-    O: RawObject,
+    O: RawObject<Meta = M>,
+    O::Field: RawField<Meta = F>,
+    F: Clone,
+    M: Clone,
   {
     let path_to_grost = object.path_to_grost().clone();
     let attrs = object.attrs().to_vec();
@@ -1138,17 +1233,18 @@ impl GenericObject {
         if f.skip() {
           SkippedField::try_new(f).map(GenericField::Skipped)
         } else {
-          GenericTaggedField::try_new(f, &flavor_param, &flavors).and_then(|f| {
-            if tags.contains(&f.tag()) {
-              Err(darling::Error::custom(format!(
-                "{name} has multiple fields have the same tag {}",
-                f.tag()
-              )))
-            } else {
-              tags.insert(f.tag());
-              Ok(GenericField::Tagged(f))
-            }
-          })
+          GenericTaggedField::try_new(f, &flavor_param, &flavors, f.copy() || object.copy())
+            .and_then(|f| {
+              if tags.contains(&f.tag()) {
+                Err(darling::Error::custom(format!(
+                  "{name} has multiple fields have the same tag {}",
+                  f.tag()
+                )))
+              } else {
+                tags.insert(f.tag());
+                Ok(GenericField::Tagged(f))
+              }
+            })
         }
       })
       .collect::<darling::Result<Vec<_>>>()
@@ -1173,6 +1269,10 @@ impl GenericObject {
       path_to_grost,
       attrs,
       default: object.default().cloned(),
+      indexer: Indexer {
+        name: format_ident!("{}Indexer", name),
+        attrs: object.indexer().attrs().to_vec(),
+      },
       name,
       vis,
       ty,
@@ -1185,6 +1285,7 @@ impl GenericObject {
       selector,
       selector_iter,
       copy: object.copy(),
+      meta: object.meta().clone(),
     })
   }
 }
@@ -1200,16 +1301,19 @@ impl GenericObject {
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
 #[unwrap(ref)]
 #[try_unwrap(ref)]
-pub enum Object {
-  Concrete(ConcreteObject),
-  Generic(GenericObject),
+pub enum Object<M, F> {
+  Concrete(ConcreteObject<M, F>),
+  Generic(GenericObject<M, F>),
 }
 
-impl Object {
+impl<M, F> Object<M, F> {
   /// Creates an `Object` from a raw object input.
   pub fn from_raw<O>(object: &O) -> darling::Result<Self>
   where
-    O: RawObject,
+    O: RawObject<Meta = M>,
+    O::Field: RawField<Meta = F>,
+    M: Clone,
+    F: Clone,
   {
     let num_flavors = object.flavors().len();
     if object.partial_decoded().flavor().is_none() && num_flavors == 1 {
@@ -1310,6 +1414,8 @@ impl Object {
 pub trait RawObject: Clone {
   /// The type of the field
   type Field: RawField;
+  /// The custom metadata type for the object
+  type Meta: Clone;
 
   /// Returns the name of the object
   fn name(&self) -> &Ident;
@@ -1362,6 +1468,9 @@ pub trait RawObject: Clone {
 
   /// Returns whether the object is copyable
   fn copy(&self) -> bool;
+
+  /// Returns the metadata associated with the object
+  fn meta(&self) -> &Self::Meta;
 
   /// Returns the flavors of the object
   fn flavors(&self) -> &[FlavorAttribute];

@@ -54,9 +54,9 @@ impl ConcretePartialObject {
     self.copy
   }
 
-  pub(super) fn from_ast(
-    object: &ConcreteObjectAst,
-    fields: &[ConcreteField],
+  pub(super) fn from_ast<M, F>(
+    object: &ConcreteObjectAst<M, F>,
+    fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
     let unknown_buffer_param = partial_object.unknown_buffer().clone();
