@@ -1,178 +1,28 @@
-use darling::FromMeta;
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
-use crate::ast::MissingOperation;
+use crate::meta::{
+  MissingOperation, TransformOperation, grost_flavor_param,
+  object::{Label, ObjectFromMeta, Selection},
+};
 
 use super::{
-  Attributes, DecodeAttribute, EncodeAttribute, FlavorAttribute, FlavorFromMeta, GenericAttribute,
-  IdentifierAttribute, SchemaAttribute, SchemaFromMeta, grost_flavor_param,
+  SchemaAttribute,
+  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
 };
 
 pub use field::*;
+pub use indexer::*;
 pub use partial::*;
 pub use partial_decoded::*;
 pub use selector::*;
 
 mod field;
+mod indexer;
 mod partial;
 mod partial_decoded;
 mod selector;
-
-#[derive(Debug, Default, Clone, FromMeta)]
-struct IndexerFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
-
-impl From<IndexerFromMeta> for IndexerAttribute {
-  fn from(meta: IndexerFromMeta) -> Self {
-    Self {
-      name: meta.name,
-      attrs: meta.attrs,
-    }
-  }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct IndexerAttribute {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-}
-
-impl IndexerAttribute {
-  /// Returns the name of the indexer
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the indexer
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct ObjectFromMeta {
-  #[darling(default)]
-  default: Option<syn::Path>,
-  #[darling(default)]
-  generic: GenericAttribute,
-  #[darling(default)]
-  schema: SchemaFromMeta,
-  #[darling(default)]
-  partial: PartialObjectFromMeta,
-  #[darling(default)]
-  partial_decoded: PartialDecodedObjectFromMeta,
-  #[darling(default)]
-  selector: SelectorFromMeta,
-  #[darling(default)]
-  selector_iter: SelectorIterFromMeta,
-  #[darling(default)]
-  indexer: IndexerFromMeta,
-  #[darling(default)]
-  flavor: FlavorFromMeta,
-  #[darling(default)]
-  copy: bool,
-}
-
-impl ObjectFromMeta {
-  pub fn finalize(self, path_to_grost: syn::Path) -> syn::Result<ObjectAttribute> {
-    let flavors = self.flavor.into_object_flavors(&path_to_grost)?;
-    let mut flavor_generic = self.generic.flavor().cloned();
-    if flavors.len() > 1 {
-      flavor_generic.get_or_insert_with(grost_flavor_param);
-    }
-
-    Ok(ObjectAttribute {
-      path_to_grost,
-      flavors,
-      default: self.default,
-      schema: self.schema.into(),
-      partial: self.partial.finalize(self.generic.unknown_buffer().clone()),
-      partial_decoded: self.partial_decoded.finalize(
-        flavor_generic.clone(),
-        self.generic.unknown_buffer().clone(),
-        self.generic.lifetime().clone(),
-      ),
-      selector: self
-        .selector
-        .finalize(flavor_generic.clone(), self.generic.wire_format().clone()),
-      selector_iter: self.selector_iter.finalize(flavor_generic),
-      indexer: self.indexer.into(),
-      copy: self.copy,
-    })
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct ObjectAttribute {
-  path_to_grost: syn::Path,
-  flavors: Vec<FlavorAttribute>,
-  default: Option<syn::Path>,
-  schema: SchemaAttribute,
-  partial: PartialObjectAttribute,
-  partial_decoded: PartialDecodedObjectAttribute,
-  selector: SelectorAttribute,
-  selector_iter: SelectorIterAttribute,
-  indexer: IndexerAttribute,
-  copy: bool,
-}
-
-impl ObjectAttribute {
-  /// Returns the path to the `grost` crate
-  pub const fn path_to_grost(&self) -> &syn::Path {
-    &self.path_to_grost
-  }
-
-  /// Returns the path to the fn that returns the default value of the object
-  pub const fn default(&self) -> Option<&syn::Path> {
-    self.default.as_ref()
-  }
-
-  /// Returns the schema information
-  pub const fn schema(&self) -> &SchemaAttribute {
-    &self.schema
-  }
-
-  /// Returns the partial object information
-  pub const fn partial(&self) -> &PartialObjectAttribute {
-    &self.partial
-  }
-
-  /// Returns the partial decoded object information
-  pub const fn partial_decoded(&self) -> &PartialDecodedObjectAttribute {
-    &self.partial_decoded
-  }
-
-  /// Returns the selector information
-  pub const fn selector(&self) -> &SelectorAttribute {
-    &self.selector
-  }
-
-  /// Returns the selector iterator information
-  pub const fn selector_iter(&self) -> &SelectorIterAttribute {
-    &self.selector_iter
-  }
-
-  /// Returns the indexer information
-  pub const fn indexer(&self) -> &IndexerAttribute {
-    &self.indexer
-  }
-
-  /// Returns whether the object is copyable
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-
-  /// Returns the flavors of the object
-  pub const fn flavors(&self) -> &[FlavorAttribute] {
-    self.flavors.as_slice()
-  }
-}
 
 #[derive(Debug, Clone)]
 pub struct SkippedField<M = ()> {
@@ -1410,6 +1260,101 @@ impl<M, F> Object<M, F> {
   }
 }
 
+impl ObjectFromMeta {
+  pub fn finalize(self, path_to_grost: Path) -> syn::Result<ObjectAttribute> {
+    let flavors = self.flavor.finalize(&path_to_grost)?;
+    let mut flavor_generic = self.generic.flavor().cloned();
+    if flavors.len() > 1 {
+      flavor_generic.get_or_insert_with(grost_flavor_param);
+    }
+
+    Ok(ObjectAttribute {
+      path_to_grost,
+      flavors,
+      default: self.default,
+      schema: self.schema.into(),
+      partial: self.partial.finalize(self.generic.unknown_buffer().clone()),
+      partial_decoded: self.partial_decoded.finalize(
+        flavor_generic.clone(),
+        self.generic.unknown_buffer().clone(),
+        self.generic.lifetime().clone(),
+      ),
+      selector: self
+        .selector
+        .finalize(flavor_generic.clone(), self.generic.wire_format().clone()),
+      selector_iter: self.selector_iter.finalize(flavor_generic),
+      indexer: self.indexer.into(),
+      copy: self.copy,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectAttribute {
+  path_to_grost: Path,
+  flavors: Vec<FlavorAttribute>,
+  default: Option<Path>,
+  schema: SchemaAttribute,
+  partial: PartialObjectAttribute,
+  partial_decoded: PartialDecodedObjectAttribute,
+  selector: SelectorAttribute,
+  selector_iter: SelectorIterAttribute,
+  indexer: IndexerAttribute,
+  copy: bool,
+}
+
+impl ObjectAttribute {
+  /// Returns the path to the `grost` crate
+  pub const fn path_to_grost(&self) -> &Path {
+    &self.path_to_grost
+  }
+
+  /// Returns the path to the fn that returns the default value of the object
+  pub const fn default(&self) -> Option<&Path> {
+    self.default.as_ref()
+  }
+
+  /// Returns the schema information
+  pub const fn schema(&self) -> &SchemaAttribute {
+    &self.schema
+  }
+
+  /// Returns the partial object information
+  pub const fn partial(&self) -> &PartialObjectAttribute {
+    &self.partial
+  }
+
+  /// Returns the partial decoded object information
+  pub const fn partial_decoded(&self) -> &PartialDecodedObjectAttribute {
+    &self.partial_decoded
+  }
+
+  /// Returns the selector information
+  pub const fn selector(&self) -> &SelectorAttribute {
+    &self.selector
+  }
+
+  /// Returns the selector iterator information
+  pub const fn selector_iter(&self) -> &SelectorIterAttribute {
+    &self.selector_iter
+  }
+
+  /// Returns the indexer information
+  pub const fn indexer(&self) -> &IndexerAttribute {
+    &self.indexer
+  }
+
+  /// Returns whether the object is copyable
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+
+  /// Returns the flavors of the object
+  pub const fn flavors(&self) -> &[FlavorAttribute] {
+    self.flavors.as_slice()
+  }
+}
+
 /// The trait for the object derive input
 pub trait RawObject: Clone {
   /// The type of the field
@@ -1423,18 +1368,18 @@ pub trait RawObject: Clone {
   /// Returns the type of the object
   ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
-  fn ty(&self) -> &syn::Type;
+  fn ty(&self) -> &Type;
 
   /// Returns the reflectable trait which replaces the generic parameter with the type of the object
   ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
-  fn reflectable(&self) -> &syn::Type;
+  fn reflectable(&self) -> &Type;
 
   /// Returns the visibility of the object
-  fn vis(&self) -> &syn::Visibility;
+  fn vis(&self) -> &Visibility;
 
   /// Returns the generics in the object defination.
-  fn generics(&self) -> &syn::Generics;
+  fn generics(&self) -> &Generics;
 
   /// Returns the attributes in the object defination.
   fn attrs(&self) -> &[Attribute];
@@ -1443,10 +1388,10 @@ pub trait RawObject: Clone {
   fn fields(&self) -> Vec<&Self::Field>;
 
   /// Returns the path to the `grost` crate
-  fn path_to_grost(&self) -> &syn::Path;
+  fn path_to_grost(&self) -> &Path;
 
   /// Returns the path to the fn that returns the default value of the object
-  fn default(&self) -> Option<&syn::Path>;
+  fn default(&self) -> Option<&Path>;
 
   /// Returns the schema information
   fn schema(&self) -> &SchemaAttribute;

@@ -6,6 +6,7 @@ pub use mir::*;
 /// Utility types for working with the AST.
 pub mod ast;
 
+mod meta;
 /// The Mid-level Intermediate Representation (MIR) for Grost schema types.
 mod mir;
 

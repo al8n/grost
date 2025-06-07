@@ -3,40 +3,12 @@ use quote::quote;
 
 use super::Attributes;
 
-#[derive(Debug, Clone)]
-pub struct SelectorFieldAttribute {
-  attrs: Vec<syn::Attribute>,
-  select: Selection,
-}
-
 #[derive(Debug, Default, Clone, FromMeta)]
-pub(super) struct SelectorFieldFromMeta {
+pub(crate) struct SelectorFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<syn::Attribute>,
+  pub(crate) attrs: Vec<syn::Attribute>,
   #[darling(default)]
-  select: Selection,
-}
-
-impl SelectorFieldFromMeta {
-  /// Finalizes the selector field meta and returns the attribute
-  pub(super) fn finalize(self) -> SelectorFieldAttribute {
-    SelectorFieldAttribute {
-      attrs: self.attrs,
-      select: self.select,
-    }
-  }
-}
-
-impl SelectorFieldAttribute {
-  /// Returns the attributes of the selector field
-  pub const fn attrs(&self) -> &[syn::Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns the selection of the selector field
-  pub const fn select(&self) -> &Selection {
-    &self.select
-  }
+  pub(crate) select: Selection,
 }
 
 #[derive(Default, Debug, Clone)]

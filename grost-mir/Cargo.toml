@@ -24,7 +24,6 @@ indexmap = "2"
 serde = { version = "1", optional = true, features = ["derive"] }
 config = { version = "0.15", optional = true }
 
-itertools = { version = "0.14" }
 heck.workspace = true
 syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true

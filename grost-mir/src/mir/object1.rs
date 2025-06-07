@@ -9,8 +9,8 @@ use syn::{
 
 use crate::ast::{
   object::{
-    Field as _, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute, Label, ObjectExt as _, PartialDecodedFieldAttribute, PartialFieldAttribute
-  }, DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, MissingOperation, SchemaAttribute, TransformOperation
+    Field as _, FieldAttribute, FieldDecodeFromMeta, FieldEncodeFromMeta, FieldFlavorAttribute, Label, ObjectExt as _, PartialDecodedFieldAttribute, PartialFieldAttribute
+  }, DecodeFromMeta, EncodeFromMeta, FlavorAttribute, IdentifierAttribute, MissingOperation, SchemaAttribute, TransformOperation
 };
 
 use super::wire_format_reflection_ty;
@@ -144,8 +144,8 @@ impl PartialDecodedFieldFlavor {
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
   partial_decoded: PartialDecodedFieldFlavor,
-  encode: FieldEncodeAttribute,
-  decode: FieldDecodeAttribute,
+  encode: FieldEncodeFromMeta,
+  decode: FieldDecodeFromMeta,
 }
 
 impl FieldFlavor {
@@ -767,8 +767,8 @@ pub struct Flavor {
   ty: Type,
   wire_format: Type,
   identifier: IdentifierAttribute,
-  encode: EncodeAttribute,
-  decode: DecodeAttribute,
+  encode: EncodeFromMeta,
+  decode: DecodeFromMeta,
 }
 
 impl Flavor {

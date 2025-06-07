@@ -1,18 +1,7 @@
-use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident, LifetimeParam, Type, TypeParam};
 
-use super::Attributes;
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub(super) struct PartialDecodedObjectFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-  #[darling(default)]
-  copy: bool,
-}
+use crate::meta::object::partial_decoded::PartialDecodedObjectFromMeta;
 
 impl PartialDecodedObjectFromMeta {
   pub(super) fn finalize(
@@ -90,7 +79,7 @@ impl ConcretePartialDecodedObject {
     flavor_type: Type,
     attribute: &PartialDecodedObjectAttribute,
   ) -> darling::Result<Self> {
-    let name = if let Some(name) = &attribute.name {
+    let name = if let Some(name) = attribute.name() {
       name.clone()
     } else {
       format_ident!("PartialDecoded{}", object_name)

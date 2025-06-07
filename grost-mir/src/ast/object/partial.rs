@@ -1,16 +1,7 @@
-use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident, TypeParam};
 
-use super::Attributes;
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub(super) struct PartialObjectFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
+use crate::meta::object::partial::PartialObjectFromMeta;
 
 impl PartialObjectFromMeta {
   pub(super) fn finalize(self, unknown_buffer_generic: TypeParam) -> PartialObjectAttribute {

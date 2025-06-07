@@ -1,5 +1,5 @@
 use crate::ast::object::{
-  FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
+  FieldDecodeFromMeta, FieldEncodeFromMeta, FieldFlavor as FieldFlavorAst,
   GenericField as GenericFieldAst, GenericObject as GenericObjectAst,
   GenericTaggedField as GenericTaggedFieldAst, Label, ObjectFlavor, SkippedField,
 };
@@ -76,8 +76,8 @@ impl SelectorFieldFlavor {
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
   wire_format: Type,
-  encode: FieldEncodeAttribute,
-  decode: FieldDecodeAttribute,
+  encode: FieldEncodeFromMeta,
+  decode: FieldDecodeFromMeta,
   partial_decoded: PartialDecodedFieldFlavor,
   selector: SelectorFieldFlavor,
 }
@@ -91,13 +91,13 @@ impl FieldFlavor {
 
   /// Returns the encode attribute of this flavor.
   #[inline]
-  pub const fn encode(&self) -> &FieldEncodeAttribute {
+  pub const fn encode(&self) -> &FieldEncodeFromMeta {
     &self.encode
   }
 
   /// Returns the decode attribute of this flavor.
   #[inline]
-  pub const fn decode(&self) -> &FieldDecodeAttribute {
+  pub const fn decode(&self) -> &FieldDecodeFromMeta {
     &self.decode
   }
 

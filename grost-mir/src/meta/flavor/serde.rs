@@ -1,4 +1,4 @@
-use crate::ast::BoolOption;
+use crate::meta::BoolOption;
 
 use super::{decode::DecodeValue, *};
 
@@ -19,12 +19,12 @@ pub(super) enum IdentifierSerdeHelper {
   },
 }
 
-impl TryFrom<IdentifierSerdeHelper> for IdentifierAttribute {
+impl TryFrom<IdentifierSerdeHelper> for IdentifierFromMeta {
   type Error = syn::Error;
 
   fn try_from(value: IdentifierSerdeHelper) -> Result<Self, Self::Error> {
     match value {
-      IdentifierSerdeHelper::Module(s) => IdentifierAttribute::try_from(s.as_str()),
+      IdentifierSerdeHelper::Module(s) => IdentifierFromMeta::try_from(s.as_str()),
       IdentifierSerdeHelper::Config {
         constructor,
         encode,
@@ -36,8 +36,8 @@ impl TryFrom<IdentifierSerdeHelper> for IdentifierAttribute {
   }
 }
 
-impl From<IdentifierAttribute> for IdentifierSerdeHelper {
-  fn from(value: IdentifierAttribute) -> Self {
+impl From<IdentifierFromMeta> for IdentifierSerdeHelper {
+  fn from(value: IdentifierFromMeta) -> Self {
     IdentifierSerdeHelper::Config {
       constructor: value.constructor,
       encode: value.encode,
@@ -90,12 +90,12 @@ pub(super) enum EncodeSerdeHelper {
   Module(String),
 }
 
-impl TryFrom<EncodeSerdeHelper> for EncodeAttribute {
+impl TryFrom<EncodeSerdeHelper> for EncodeFromMeta {
   type Error = syn::Error;
 
   fn try_from(value: EncodeSerdeHelper) -> Result<Self, Self::Error> {
     match value {
-      EncodeSerdeHelper::Module(s) => EncodeAttribute::try_from(s.as_str()),
+      EncodeSerdeHelper::Module(s) => EncodeFromMeta::try_from(s.as_str()),
       EncodeSerdeHelper::Config {
         skip_default,
         scalar,
@@ -125,8 +125,8 @@ impl TryFrom<EncodeSerdeHelper> for EncodeAttribute {
   }
 }
 
-impl From<EncodeAttribute> for EncodeSerdeHelper {
-  fn from(value: EncodeAttribute) -> Self {
+impl From<EncodeFromMeta> for EncodeSerdeHelper {
+  fn from(value: EncodeFromMeta) -> Self {
     EncodeSerdeHelper::Config {
       scalar: value.scalar,
       bytes: value.bytes,
@@ -185,7 +185,7 @@ pub(super) enum DecodeSerdeHelper {
   },
 }
 
-impl TryFrom<DecodeSerdeHelper> for DecodeAttribute {
+impl TryFrom<DecodeSerdeHelper> for DecodeFromMeta {
   type Error = syn::Error;
 
   fn try_from(value: DecodeSerdeHelper) -> Result<Self, Self::Error> {
@@ -219,8 +219,8 @@ impl TryFrom<DecodeSerdeHelper> for DecodeAttribute {
   }
 }
 
-impl From<DecodeAttribute> for DecodeSerdeHelper {
-  fn from(value: DecodeAttribute) -> Self {
+impl From<DecodeFromMeta> for DecodeSerdeHelper {
+  fn from(value: DecodeFromMeta) -> Self {
     DecodeSerdeHelper::Config {
       scalar: value.scalar,
       bytes: value.bytes,
@@ -243,8 +243,8 @@ impl From<DecodeAttribute> for DecodeSerdeHelper {
 pub(super) enum BuiltinFlavorValueSerdeHelper {
   File(String),
   Config {
-    encode: EncodeAttribute,
-    decode: DecodeAttribute,
+    encode: EncodeFromMeta,
+    decode: DecodeFromMeta,
   },
   Bool(bool),
 }
@@ -290,9 +290,9 @@ pub(super) enum FlavorValueSerdeHelper {
     ty: syn::Type,
     #[serde(with = "serde_type")]
     format: syn::Type,
-    identifier: IdentifierAttribute,
-    encode: EncodeAttribute,
-    decode: DecodeAttribute,
+    identifier: IdentifierFromMeta,
+    encode: EncodeFromMeta,
+    decode: DecodeFromMeta,
   },
 }
 
@@ -412,7 +412,7 @@ mod tests {
   fn test_identifier_serde() {
     #[derive(Serialize, Deserialize)]
     struct T {
-      identifier: IdentifierAttribute,
+      identifier: IdentifierFromMeta,
     }
 
     let module = r###"
@@ -469,7 +469,7 @@ mod tests {
   fn test_encode_serde() {
     #[derive(Serialize, Deserialize)]
     struct T {
-      encode: EncodeAttribute,
+      encode: EncodeFromMeta,
     }
 
     let module = r###"

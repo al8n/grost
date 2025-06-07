@@ -1,16 +1,7 @@
-use darling::FromMeta;
 use quote::format_ident;
 use syn::{Attribute, Ident, Type, TypeParam};
 
-use super::Attributes;
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub(super) struct SelectorIterFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
-}
+use crate::meta::object::selector::{SelectorFromMeta, SelectorIterFromMeta};
 
 impl SelectorIterFromMeta {
   pub(super) fn finalize(self, flavor_param: Option<TypeParam>) -> SelectorIterAttribute {
@@ -44,14 +35,6 @@ impl SelectorIterAttribute {
   pub const fn flavor(&self) -> Option<&TypeParam> {
     self.flavor_param.as_ref()
   }
-}
-
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct SelectorFromMeta {
-  #[darling(default, rename = "rename")]
-  name: Option<Ident>,
-  #[darling(default, map = "Attributes::into_inner")]
-  attrs: Vec<Attribute>,
 }
 
 impl SelectorFromMeta {

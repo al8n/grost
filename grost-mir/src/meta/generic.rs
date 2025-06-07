@@ -1,15 +1,17 @@
 use darling::FromMeta;
 
-use crate::ast::{
+use syn::{LifetimeParam, TypeParam};
+
+use crate::meta::{
   grost_flavor_param, grost_lifetime, grost_unknown_buffer_param, grost_wire_format_param,
 };
 
-fn string_to_lifetime(s: String) -> darling::Result<syn::LifetimeParam> {
+fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
   syn::parse_str(&s).map_err(Into::into)
 }
 
 #[derive(Debug, Default, Clone)]
-struct GenericFlavorParam(Option<syn::TypeParam>);
+struct GenericFlavorParam(Option<TypeParam>);
 
 impl FromMeta for GenericFlavorParam {
   fn from_word() -> darling::Result<Self> {
@@ -30,25 +32,25 @@ impl FromMeta for GenericFlavorParam {
   }
 }
 
-impl From<GenericFlavorParam> for Option<syn::TypeParam> {
+impl From<GenericFlavorParam> for Option<TypeParam> {
   fn from(value: GenericFlavorParam) -> Self {
     value.0
   }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
-pub(crate) struct GenericAttribute {
+pub(crate) struct GenericFromMeta {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
-  lifetime: syn::LifetimeParam,
+  lifetime: LifetimeParam,
   #[darling(default, map = "GenericFlavorParam::into")]
-  flavor: Option<syn::TypeParam>,
+  flavor: Option<TypeParam>,
   #[darling(default = grost_unknown_buffer_param)]
-  unknown_buffer: syn::TypeParam,
+  unknown_buffer: TypeParam,
   #[darling(default = grost_wire_format_param)]
-  wire_format: syn::TypeParam,
+  wire_format: TypeParam,
 }
 
-impl Default for GenericAttribute {
+impl Default for GenericFromMeta {
   fn default() -> Self {
     Self {
       lifetime: grost_lifetime(),
@@ -59,28 +61,28 @@ impl Default for GenericAttribute {
   }
 }
 
-impl GenericAttribute {
+impl GenericFromMeta {
   /// Returns the lifetime generic param
   #[inline]
-  pub const fn lifetime(&self) -> &syn::LifetimeParam {
+  pub const fn lifetime(&self) -> &LifetimeParam {
     &self.lifetime
   }
 
   /// Returns the flavor generic param
   #[inline]
-  pub const fn flavor(&self) -> Option<&syn::TypeParam> {
+  pub const fn flavor(&self) -> Option<&TypeParam> {
     self.flavor.as_ref()
   }
 
   /// Returns the unknown buffer generic param
   #[inline]
-  pub const fn unknown_buffer(&self) -> &syn::TypeParam {
+  pub const fn unknown_buffer(&self) -> &TypeParam {
     &self.unknown_buffer
   }
 
   /// Returns the wire format generic param
   #[inline]
-  pub const fn wire_format(&self) -> &syn::TypeParam {
+  pub const fn wire_format(&self) -> &TypeParam {
     &self.wire_format
   }
 }
