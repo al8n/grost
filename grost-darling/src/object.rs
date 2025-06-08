@@ -22,7 +22,6 @@ pub struct FieldDeriveInput {
   ident: Ident,
   vis: Visibility,
   generics: syn::Generics,
-  attrs: Vec<Attribute>,
   data: Data<Ignored, Field>,
   #[darling(rename = "crate", default = "super::default_path")]
   path_to_crate: syn::Path,
@@ -67,54 +66,48 @@ impl ToTokens for FieldDeriveInput {
           (
             quote!(#name #tg),
             quote!(&self.__custom_meta__),
-            Some(quote! {
-              #[darling(flatten)]
-              #[doc(hidden)]
-              __custom_meta__: #name #tg,
+            Some({
+              let fields = fields.iter().map(|f| {
+                let ty = &f.ty;
+                let vis = &f.vis;
+                let meta = f.darling.as_ref().map(|m| {
+                  quote! {
+                    #[darling(#m)]
+                  }
+                });
+                let name = f
+                  .ident
+                  .as_ref()
+                  .expect("FieldDeriveInput should only work on structs with named fields");
+                quote! {
+                  #meta
+                  #vis #name: #ty,
+                }
+              });
+              quote! {
+                #(#fields)*
+              }
             }),
-            Some(quote! {
-              #[doc(hidden)]
-              __custom_meta__: #name #tg,
+            Some({
+              quote! {
+                #[doc(hidden)]
+                __custom_meta__: #name #tg,
+              }
             }),
-            Some(quote! {
-              __custom_meta__: input.__custom_meta__,
+            Some({
+              let fields = fields.iter().map(|f| {
+                let field_name = f.ident.as_ref().unwrap();
+                quote! { #field_name: input.#field_name, }
+              });
+
+              quote! {
+                __custom_meta__: #name #tg {
+                  #(#fields)*
+                },
+              }
             }),
           )
         }
-      }
-    };
-
-    let fields = self.data.as_ref().take_struct().unwrap();
-    let accessors = if fields.is_unit() || fields.is_empty() {
-      quote! {}
-    } else {
-      let iter = fields.iter().map(|f| {
-        let field_name = f.ident.as_ref().unwrap();
-        let field_ty = &f.ty;
-        let field_vis = &f.vis;
-        let fn_name = format_ident!("{}_ref", field_name);
-        let fn_mut_name = format_ident!("{}_mut", field_name);
-        let doc = format!(" Returns a reference to the field `{}`.", field_name);
-        let doc_mut = format!(
-          " Returns a mutable reference to the field `{}`.",
-          field_name
-        );
-        quote! {
-          #[doc = #doc]
-          #[inline]
-          #field_vis fn #fn_name(&self) -> &#field_ty {
-            &self.__custom_meta__.#field_name
-          }
-
-          #[doc = #doc_mut]
-          #[inline]
-          #field_vis fn #fn_mut_name(&mut self) -> &mut #field_ty {
-            &mut self.__custom_meta__.#field_name
-          }
-        }
-      });
-      quote! {
-        #(#iter)*
       }
     };
 
@@ -157,7 +150,7 @@ impl ToTokens for FieldDeriveInput {
 
           #[inline]
           fn try_from(input: #hidden_derive_input_name #tg) -> ::core::result::Result<Self, Self::Error> {
-            Ok(Self {
+            ::core::result::Result::Ok(Self {
               ident: input.ident,
               vis: input.vis,
               ty: input.ty,
@@ -175,10 +168,6 @@ impl ToTokens for FieldDeriveInput {
             <#hidden_derive_input_name #tg as darling::FromField>::from_field(field)
               .and_then(|field| ::core::convert::TryInto::try_into(field).map_err(darling::Error::from))
           }
-        }
-
-        impl #ig #derive_input_name #tg #w {
-          #accessors
         }
 
         impl #ig #path_to_crate::__private::ast::object::RawField for #derive_input_name #tg #w {
@@ -398,7 +387,6 @@ impl ToTokens for ObjectDeriveInput {
         generics: #path_to_crate::__private::syn::Generics,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
         data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
-        // output: ::core::option::Option<#path_to_crate::__private::meta::Output>,
         derived: ::core::primitive::bool,
 
         #[doc(hidden)]
@@ -427,9 +415,6 @@ impl ToTokens for ObjectDeriveInput {
         #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromMeta)]
         struct #darling_attribute_meta_name #generics #where_clause {
           #meta_field
-
-          // #[darling(rename = "output", default)]
-          // __output__: ::core::option::Option<#path_to_crate::__private::meta::Output>,
 
           #[darling(rename = "crate", default = #path)]
           #[doc(hidden)]
@@ -500,7 +485,6 @@ impl ToTokens for ObjectDeriveInput {
               generics: input.generics,
               attrs: input.attrs,
               data: input.data,
-              // output: ::core::option::Option::None,
               derived: true,
               __args__: #meta_name {
                 __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
@@ -546,7 +530,6 @@ impl ToTokens for ObjectDeriveInput {
               generics: input.generics,
               attrs: input.attrs,
               data: input.data,
-              // output: args.__output__,
               derived: false,
               __args__: #meta_name {
                 __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
@@ -556,22 +539,6 @@ impl ToTokens for ObjectDeriveInput {
 
             #path_to_crate::__private::mir::object::Object::from_raw(this)
           }
-
-          // /// Returns the output configuration of the generated code for the object.
-          // /// 
-          // /// - If the instance is created from [`from_derive_input`], this will always be `None`.
-          // #[inline]
-          // pub const fn output(&self) -> ::core::option::Option<&#path_to_crate::__private::meta::Output> {
-          //   self.output.as_ref()
-          // }
-
-          // /// Returns `true` if the object is created from derive macro.
-          // #[inline]
-          // pub const fn derived(&self) -> ::core::primitive::bool {
-          //   self.derived
-          // }
-
-          // #accessors
         }
 
         impl #ig #path_to_crate::__private::ast::object::RawObject for #input_name #tg #w {
