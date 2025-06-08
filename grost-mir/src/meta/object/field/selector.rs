@@ -8,11 +8,11 @@ pub(crate) struct SelectorFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
   pub(crate) attrs: Vec<syn::Attribute>,
   #[darling(default)]
-  pub(crate) select: Selection,
+  pub(crate) select: FieldSelection,
 }
 
 #[derive(Default, Debug, Clone)]
-pub enum Selection {
+pub enum FieldSelection {
   #[default]
   Default,
   All,
@@ -20,7 +20,7 @@ pub enum Selection {
   Custom(syn::Path),
 }
 
-impl FromMeta for Selection {
+impl FromMeta for FieldSelection {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     const HINTS: &str = "possible formats are [all, none, default, custom = \"path/to/const/fn\"]";
 

@@ -129,9 +129,6 @@ pub trait RawField: Clone {
   /// Returns the tag of the field
   fn tag(&self) -> Option<NonZeroU32>;
 
-  /// Returns the flavor specified settings for the field
-  fn flavor(&self) -> &[FieldFlavorAttribute];
-
   /// Returns the convert attribute for the field
   fn convert(&self) -> &ConvertAttribute;
 

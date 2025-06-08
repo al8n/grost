@@ -1,7 +1,7 @@
 use crate::ast::object::{
-  FieldDecodeFromMeta, FieldEncodeFromMeta, FieldFlavor as FieldFlavorAst,
+  FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
   GenericField as GenericFieldAst, GenericObject as GenericObjectAst,
-  GenericTaggedField as GenericTaggedFieldAst, Label, ObjectFlavor, SkippedField,
+  GenericTaggedField as GenericTaggedFieldAst, Label, SkippedField,
 };
 
 use indexmap::IndexMap;
@@ -76,8 +76,8 @@ impl SelectorFieldFlavor {
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
   wire_format: Type,
-  encode: FieldEncodeFromMeta,
-  decode: FieldDecodeFromMeta,
+  encode: FieldEncodeAttribute,
+  decode: FieldDecodeAttribute,
   partial_decoded: PartialDecodedFieldFlavor,
   selector: SelectorFieldFlavor,
 }
@@ -91,13 +91,13 @@ impl FieldFlavor {
 
   /// Returns the encode attribute of this flavor.
   #[inline]
-  pub const fn encode(&self) -> &FieldEncodeFromMeta {
+  pub const fn encode(&self) -> &FieldEncodeAttribute {
     &self.encode
   }
 
   /// Returns the decode attribute of this flavor.
   #[inline]
-  pub const fn decode(&self) -> &FieldDecodeFromMeta {
+  pub const fn decode(&self) -> &FieldDecodeAttribute {
     &self.decode
   }
 
@@ -507,8 +507,8 @@ impl<F> GenericTaggedField<F> {
 #[unwrap(ref)]
 #[try_unwrap(ref)]
 pub enum GenericField<F = ()> {
-  Skipped(SkippedField<F>),
-  Tagged(GenericTaggedField<F>),
+  Skipped(Box<SkippedField<F>>),
+  Tagged(Box<GenericTaggedField<F>>),
 }
 
 impl<F> GenericField<F> {
@@ -576,7 +576,7 @@ impl<F> GenericField<F> {
     match field {
       GenericFieldAst::Skipped(f) => Ok(GenericField::Skipped(f)),
       GenericFieldAst::Tagged(f) => {
-        GenericTaggedField::from_ast(object, f).map(GenericField::Tagged)
+        GenericTaggedField::from_ast(object, *f).map(|f| GenericField::Tagged(Box::new(f)))
       }
     }
   }

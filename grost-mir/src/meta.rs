@@ -6,7 +6,7 @@ use syn::{Attribute, parse::Parser};
 
 pub(crate) mod flavor;
 pub(crate) mod generic;
-pub(crate) mod object;
+pub mod object;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -198,7 +198,6 @@ impl FromMeta for Output {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let mut path = None;
     let mut format = false;
-    println!("items: {:?}", items);
     for item in items {
       match item {
         darling::ast::NestedMeta::Lit(lit) => {

@@ -58,6 +58,25 @@ pub fn interface(
   quote! {}.into()
 }
 
+#[derive(Debug, Clone)]
+struct Meta(syn::Meta);
+
+fn map_option_meta(meta: Option<Meta>) -> Option<syn::Meta> {
+  meta.map(|m| m.0)
+}
+
+impl From<Meta> for syn::Meta {
+  fn from(meta: Meta) -> Self {
+    meta.0
+  }
+}
+
+impl darling::FromMeta for Meta {
+  fn from_meta(item: &syn::Meta) -> darling::Result<Self> {
+    Ok(Self(item.clone()))
+  }
+}
+
 #[derive(Debug, Default, Clone)]
 struct Attributes(Vec<syn::Attribute>);
 

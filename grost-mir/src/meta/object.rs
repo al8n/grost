@@ -8,7 +8,7 @@ use partial::PartialObjectFromMeta;
 use partial_decoded::PartialDecodedObjectFromMeta;
 use selector::{SelectorFromMeta, SelectorIterFromMeta};
 
-pub use field::{Label, Selection};
+pub use field::*;
 
 pub(crate) mod field;
 pub(crate) mod indexer;

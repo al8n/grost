@@ -1,9 +1,7 @@
-use indexmap::IndexMap;
+use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use quote::{ToTokens, quote};
-
-use crate::ast::object::{GenericObject as GenericObjectAst, ObjectFlavor};
+use crate::ast::{flavor::FlavorAttribute, object::ConcreteObject as ConcreteObjectAst};
 
 use super::accessors;
 
@@ -18,25 +16,25 @@ mod partial_decoded;
 mod selector;
 
 #[derive(Debug, Clone)]
-pub struct GenericObject<M, F> {
+pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
-  default: Option<Path>,
   name: Ident,
   vis: Visibility,
   ty: Type,
   reflectable: Type,
-  fields: Vec<GenericField<F>>,
   generics: Generics,
-  partial: GenericPartialObject,
-  partial_decoded: GenericPartialDecodedObject,
-  selector: GenericSelector,
-  selector_iter: GenericSelectorIter,
-  flavors: IndexMap<Ident, ObjectFlavor>,
+  flavor: FlavorAttribute,
+  fields: Vec<ConcreteField<F>>,
+  default: Option<Path>,
+  partial: ConcretePartialObject,
+  partial_decoded: ConcretePartialDecodedObject,
+  selector: ConcreteSelector,
+  selector_iter: ConcreteSelectorIter,
   meta: M,
 }
 
-impl<M, F> ToTokens for GenericObject<M, F> {
+impl<M, F> ToTokens for ConcreteObject<M, F> {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let name = self.name();
     let vis = self.vis();
@@ -65,128 +63,88 @@ impl<M, F> ToTokens for GenericObject<M, F> {
   }
 }
 
-impl<M, F> GenericObject<M, F> {
-  /// Returns the path to the `grost` crate.
+impl<M, F> ConcreteObject<M, F> {
+  /// Returns the path to the grost crate.
   #[inline]
   pub const fn path_to_grost(&self) -> &Path {
     &self.path_to_grost
   }
 
-  /// Returns the attributes of the object.
+  /// Returns the attributes of the concrete object.
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
   }
 
-  /// Returns the name of the object.
+  /// Returns the name of the concrete object.
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
   }
 
-  /// Returns the visibility of the object.
+  /// Returns the visibility of the concrete object.
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     &self.vis
   }
 
-  /// Returns the type of the object.
-  ///
-  /// e.g. if the name is `UserObject`, this will return `UserObject<T>`.
+  /// Returns the type of the concrete object.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
   }
 
-  /// Returns the reflectable type of the object.
-  ///
-  /// e.g. if the name is `UserObject<T>`, this will return `Reflectable<UserObject<T>>`.
+  /// Returns the reflectable type of the concrete object.
   #[inline]
   pub const fn reflectable(&self) -> &Type {
     &self.reflectable
   }
 
-  /// Returns the generics of the object.
+  /// Returns the generics of the concrete object.
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics
   }
 
-  /// Returns the fields of the object.
+  /// Returns the flavor type of the concrete object.
   #[inline]
-  pub const fn fields(&self) -> &[GenericField<F>] {
-    self.fields.as_slice()
+  pub const fn flavor_type(&self) -> &Type {
+    self.flavor.ty()
   }
 
   /// Returns the partial object information.
   #[inline]
-  pub const fn partial(&self) -> &GenericPartialObject {
+  pub const fn partial(&self) -> &ConcretePartialObject {
     &self.partial
   }
 
   /// Returns the partial decoded object information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &GenericPartialDecodedObject {
+  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedObject {
     &self.partial_decoded
   }
 
-  /// Returns the selector information of the object.
+  /// Returns the selector information of the concrete object.
   #[inline]
-  pub const fn selector(&self) -> &GenericSelector {
+  pub const fn selector(&self) -> &ConcreteSelector {
     &self.selector
   }
 
-  /// Returns the selector iterator information of the object.
+  /// Returns the selector iterator of the concrete object.
   #[inline]
-  pub const fn selector_iter(&self) -> &GenericSelectorIter {
+  pub const fn selector_iter(&self) -> &ConcreteSelectorIter {
     &self.selector_iter
   }
 
-  /// Returns the flavors of the object.
+  /// Returns the fields of the concrete object.
   #[inline]
-  pub const fn flavors(&self) -> &IndexMap<Ident, ObjectFlavor> {
-    &self.flavors
+  pub const fn fields(&self) -> &[ConcreteField<F>] {
+    self.fields.as_slice()
   }
 
-  pub(super) fn from_ast(object: GenericObjectAst<M, F>) -> darling::Result<Self>
-  where
-    M: Clone,
-    F: Clone,
-  {
-    let path_to_grost = object.path_to_grost().clone();
-
-    let fields = object
-      .fields()
-      .iter()
-      .cloned()
-      .map(|f| GenericField::<F>::from_ast::<M>(&object, f))
-      .collect::<darling::Result<Vec<_>>>()?;
-
-    let partial = GenericPartialObject::from_ast(&object, &fields)?;
-    let partial_decoded = GenericPartialDecodedObject::from_ast(&object, &fields)?;
-    let selector = GenericSelector::from_ast(&object, &fields)?;
-    let selector_iter = selector.selector_iter(&object)?;
-
-    Ok(Self {
-      path_to_grost,
-      attrs: object.attrs().to_vec(),
-      default: object.default().cloned(),
-      name: object.name().clone(),
-      vis: object.vis().clone(),
-      ty: object.ty().clone(),
-      reflectable: object.reflectable().clone(),
-      fields,
-      generics: object.generics().clone(),
-      meta: object.meta().clone(),
-      partial,
-      partial_decoded,
-      selector,
-      selector_iter,
-      flavors: object.flavors().clone(),
-    })
-  }
-
-  pub(super) fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
+  /// Returns the default value of the concrete object, if any.
+  #[inline]
+  pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
 
@@ -196,6 +154,48 @@ impl<M, F> GenericObject<M, F> {
 
         #accessors
       };
+    })
+  }
+
+  /// Returns the custom metadata associated with the object.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  pub(super) fn from_ast(object: ConcreteObjectAst<M, F>) -> darling::Result<Self>
+  where
+    M: Clone,
+    F: Clone,
+  {
+    let fields = object
+      .fields()
+      .iter()
+      .cloned()
+      .map(|f| ConcreteField::from_ast(&object, f))
+      .collect::<darling::Result<Vec<_>>>()?;
+
+    let partial = ConcretePartialObject::from_ast(&object, &fields)?;
+    let partial_decoded = ConcretePartialDecodedObject::from_ast(&object, &fields)?;
+    let selector = ConcreteSelector::from_ast(&object, &fields)?;
+    let selector_iter = selector.selector_iter(&object)?;
+
+    Ok(Self {
+      path_to_grost: object.path_to_grost().clone(),
+      attrs: object.attrs().to_vec(),
+      name: object.name().clone(),
+      vis: object.vis().clone(),
+      ty: object.ty().clone(),
+      reflectable: object.reflectable().clone(),
+      generics: object.generics().clone(),
+      flavor: object.flavor().clone(),
+      fields,
+      default: object.default().cloned(),
+      partial,
+      partial_decoded,
+      selector,
+      selector_iter,
+      meta: object.meta().clone(),
     })
   }
 

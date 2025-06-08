@@ -2,7 +2,7 @@ use syn::{Attribute, GenericParam, Generics, Ident, Type, TypeParam};
 
 use quote::{format_ident, quote};
 
-use crate::{ast::object::GenericObject as GenericObjectAst, obj::GenericField};
+use crate::{ast::object::GenericObject as GenericObjectAst, object::GenericField};
 
 #[derive(Debug, Clone)]
 pub struct GenericPartialObject {

@@ -1,13 +1,13 @@
 use quote::ToTokens;
 use syn::parse_quote;
 
-/// The Mid-level Intermediate Representation for objects in grost schema,
-pub mod object;
+// /// The Mid-level Intermediate Representation for objects in grost schema,
+// pub mod object;
 
 // /// The Mid-level Intermediate Representation for objects in grost schema.
 // pub mod object1;
 
-pub mod obj;
+pub mod object;
 
 fn wire_format_reflection_ty(
   path_to_grost: &syn::Path,

@@ -1,17 +1,17 @@
-use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
+use syn::{Attribute, Ident, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
-use crate::ast::object::Selection;
+use crate::ast::object::FieldSelection;
 
 #[derive(Debug, Clone)]
-pub struct GenericSelectorField {
+pub struct ConcreteSelectorField {
   pub(super) ty: Type,
   pub(super) selectable: Type,
   pub(super) attrs: Vec<Attribute>,
-  pub(super) default: Selection,
+  pub(super) default: FieldSelection,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
 }
 
-impl GenericSelectorField {
+impl ConcreteSelectorField {
   /// Returns the attributes of the selector field
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
@@ -32,7 +32,7 @@ impl GenericSelectorField {
 
   /// Returns the default selection for this field
   #[inline]
-  pub const fn selection(&self) -> &Selection {
+  pub const fn selection(&self) -> &FieldSelection {
     &self.default
   }
 

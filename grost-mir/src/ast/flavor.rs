@@ -1,5 +1,5 @@
 use quote::format_ident;
-use syn::{Path, parse_quote};
+use syn::{Ident, Path, Type, parse_quote};
 
 use crate::meta::flavor::{BuiltinFlavorRepr, FlavorFromMeta};
 
@@ -54,16 +54,16 @@ impl FlavorFromMeta {
 
 #[derive(Debug, Clone)]
 pub struct FlavorAttribute {
-  name: syn::Ident,
-  ty: syn::Type,
-  format: syn::Type,
+  name: Ident,
+  ty: Type,
+  format: Type,
   identifier: IdentifierAttribute,
   encode: EncodeAttribute,
   decode: DecodeAttribute,
 }
 
 impl FlavorAttribute {
-  fn network_object(path_to_grost: &syn::Path) -> syn::Result<Self> {
+  fn network_object(path_to_grost: &Path) -> syn::Result<Self> {
     let ty = parse_quote!(#path_to_grost::__private::flavors::Network);
     let format = parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited);
     let identifier = IdentifierAttribute::network(path_to_grost);

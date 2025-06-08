@@ -185,7 +185,7 @@ impl FlavorValueParser {
     into = "serde::FlavorValueSerdeHelper"
   )
 )]
-struct FlavorValue {
+pub(crate) struct FlavorValue {
   pub(crate) ty: Type,
   pub(crate) format: Type,
   pub(crate) identifier: IdentifierFromMeta,

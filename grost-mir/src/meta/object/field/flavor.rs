@@ -11,7 +11,7 @@ mod decode;
 mod encode;
 
 #[derive(Debug, Clone, FromMeta)]
-struct FieldFlavorValueFromMeta {
+pub(crate) struct FieldFlavorValueFromMeta {
   #[darling(default)]
   pub(crate) format: Option<syn::Type>,
   #[darling(default)]

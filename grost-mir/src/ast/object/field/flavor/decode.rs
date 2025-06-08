@@ -33,7 +33,7 @@ impl FieldDecodeAttribute {
 }
 
 impl FieldDecodeFromMeta {
-  /// Finalizes the parsing and returns a `FieldDecodeFromMeta`.
+  /// Finalizes the parsing and returns a `FieldDecodeAttribute`.
   pub fn finalize(self) -> darling::Result<FieldDecodeAttribute> {
     Ok(FieldDecodeAttribute {
       missing_operation: self.missing_operation,

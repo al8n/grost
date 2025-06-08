@@ -1,19 +1,31 @@
-use grost_mir::ast::Output;
+use grost_mir::Output;
 use quote::ToTokens;
 
 #[allow(unused)]
 mod sealed {
+  use grost_mir::Output;
+
   #[derive(grost_mir::Field)]
   #[grost(attributes(grost))]
   pub struct Field;
 
-  #[derive(grost_mir::Object)]
+  #[derive(grost_mir::Object, Clone, Debug)]
   #[grost(attribute = "grost", field = "FieldDeriveInput")]
-  pub struct Object;
+  pub struct Object {
+    output: Option<Output>,
+  }
+
+  impl Object {
+    #[inline]
+    pub const fn output(&self) -> Option<&Output> {
+      self.output.as_ref()
+    }
+  }
 }
 
 pub struct Object {
-  object: grost_mir::object::Object<sealed::ObjectInput>,
+  object: grost_mir::object::Object<sealed::Object>,
+  derived: bool,
 }
 
 impl ToTokens for Object {
@@ -23,7 +35,7 @@ impl ToTokens for Object {
 }
 
 impl core::ops::Deref for Object {
-  type Target = grost_mir::object::Object<sealed::ObjectInput>;
+  type Target = grost_mir::object::Object<sealed::Object>;
 
   fn deref(&self) -> &Self::Target {
     &self.object
@@ -46,25 +58,25 @@ impl core::hash::Hash for Object {
 
 impl Object {
   pub fn from_derive_input(input: proc_macro2::TokenStream) -> darling::Result<Self> {
-    let input = sealed::ObjectInput::from_derive_input(input)?;
-    let object = grost_mir::object::Object::<sealed::ObjectInput>::from_object(input)?;
-
-    Ok(Self { object })
+    sealed::ObjectInput::from_derive_input(input).map(|object| Self {
+      object,
+      derived: true,
+    })
   }
 
   pub fn from_attribute_input(
     args: proc_macro2::TokenStream,
     input: proc_macro2::TokenStream,
   ) -> darling::Result<Self> {
-    let input = sealed::ObjectInput::from_attribute_input(args, input)?;
-    let object = grost_mir::object::Object::<sealed::ObjectInput>::from_object(input)?;
-
-    Ok(Self { object })
+    sealed::ObjectInput::from_attribute_input(args, input).map(|object| Self {
+      object,
+      derived: false,
+    })
   }
 
-  pub fn derive(&self) -> syn::Result<proc_macro2::TokenStream> {
+  pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     self.object.derive().map(|t| {
-      if self.object.meta().derived() {
+      if self.derived {
         t
       } else {
         let obj = &self.object;

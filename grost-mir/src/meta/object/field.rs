@@ -10,7 +10,7 @@ pub(crate) use flavor::{
   DecodeFromMeta as FieldDecodeFromMeta, EncodeFromMeta as FieldEncodeFromMeta, FieldFlavorFromMeta,
 };
 pub use label::Label;
-pub use selector::Selection;
+pub use selector::FieldSelection;
 pub(crate) use selector::SelectorFieldFromMeta;
 
 mod convert;

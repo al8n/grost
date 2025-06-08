@@ -1,7 +1,7 @@
 use quote::quote;
 use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
 
-use crate::{ast::grost_lifetime, obj::grost_selected_param};
+use crate::{meta::grost_lifetime, object::grost_selected_param};
 
 use super::{ConcreteField, ConcreteObjectAst};
 

@@ -3,11 +3,9 @@ use quote::quote;
 use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
 
 use crate::{
-  ast::{
-    grost_lifetime,
-    object::{GenericObject as GenericObjectAst, ObjectFlavor},
-  },
-  obj::{GenericField, grost_selected_param},
+  ast::object::{GenericObject as GenericObjectAst, ObjectFlavor},
+  meta::grost_lifetime,
+  object::{GenericField, grost_selected_param},
 };
 
 #[derive(Debug, Clone)]

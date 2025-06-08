@@ -64,7 +64,7 @@ impl PartialObject {
     name: &Ident,
     attribute: &PartialObjectAttribute,
   ) -> darling::Result<Self> {
-    let name = if let Some(name) = &attribute.name {
+    let name = if let Some(name) = attribute.name() {
       name.clone()
     } else {
       format_ident!("Partial{}", name)

@@ -6,9 +6,9 @@ use crate::meta::object::partial_decoded::PartialDecodedObjectFromMeta;
 impl PartialDecodedObjectFromMeta {
   pub(super) fn finalize(
     self,
-    flavor_param: Option<syn::TypeParam>,
-    unknown_buffer_param: syn::TypeParam,
-    lifetime_param: syn::LifetimeParam,
+    flavor_param: Option<TypeParam>,
+    unknown_buffer_param: TypeParam,
+    lifetime_param: LifetimeParam,
   ) -> PartialDecodedObjectAttribute {
     PartialDecodedObjectAttribute {
       name: self.name,
@@ -26,9 +26,9 @@ pub struct PartialDecodedObjectAttribute {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
   copy: bool,
-  flavor_param: Option<syn::TypeParam>,
-  unknown_buffer_param: syn::TypeParam,
-  lifetime_param: syn::LifetimeParam,
+  flavor_param: Option<TypeParam>,
+  unknown_buffer_param: TypeParam,
+  lifetime_param: LifetimeParam,
 }
 
 impl PartialDecodedObjectAttribute {
@@ -48,17 +48,17 @@ impl PartialDecodedObjectAttribute {
   }
 
   /// Returns the flavor generic parameter if it exists
-  pub const fn flavor(&self) -> Option<&syn::TypeParam> {
+  pub const fn flavor(&self) -> Option<&TypeParam> {
     self.flavor_param.as_ref()
   }
 
   /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &syn::TypeParam {
+  pub const fn unknown_buffer(&self) -> &TypeParam {
     &self.unknown_buffer_param
   }
 
   /// Returns the lifetime generic parameter
-  pub const fn lifetime(&self) -> &syn::LifetimeParam {
+  pub const fn lifetime(&self) -> &LifetimeParam {
     &self.lifetime_param
   }
 }

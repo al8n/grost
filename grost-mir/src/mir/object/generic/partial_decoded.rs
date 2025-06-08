@@ -3,10 +3,7 @@ use quote::format_ident;
 use quote::quote;
 use syn::{Attribute, GenericParam, Generics, Ident, LifetimeParam, Type, TypeParam};
 
-use crate::{
-  ast::object::{GenericObject as GenericObjectAst, ObjectFlavor},
-  obj::GenericField,
-};
+use crate::{ast::object::GenericObject as GenericObjectAst, object::GenericField};
 
 #[derive(Debug, Clone)]
 pub struct PartialDecodedObjectFlavor {
@@ -30,12 +27,10 @@ impl PartialDecodedObjectFlavor {
   fn from_ast<M, F>(
     object: &GenericObjectAst<M, F>,
     flavor_name: &Ident,
-    flavor: &ObjectFlavor,
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let partial_decoded_object = object.partial_decoded();
     let partial_decoded_object_name = partial_decoded_object.name();
-    let flavor_type = flavor.ty();
     let unknown_buffer_param = partial_decoded_object.unknown_buffer();
     let lifetime_param = partial_decoded_object.lifetime();
 
@@ -244,8 +239,8 @@ impl GenericPartialDecodedObject {
     let flavors = object
       .flavors()
       .iter()
-      .map(|(name, flavor)| {
-        PartialDecodedObjectFlavor::from_ast(object, name, flavor, fields)
+      .map(|(name, _)| {
+        PartialDecodedObjectFlavor::from_ast(object, name, fields)
           .map(|flavor| (name.clone(), flavor))
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;

@@ -1,11 +1,11 @@
 use syn::Attribute;
 
-use crate::meta::object::{Selection, field::SelectorFieldFromMeta};
+use crate::meta::object::{FieldSelection, field::SelectorFieldFromMeta};
 
 #[derive(Debug, Clone)]
 pub struct SelectorFieldAttribute {
   attrs: Vec<Attribute>,
-  select: Selection,
+  select: FieldSelection,
 }
 
 impl SelectorFieldAttribute {
@@ -15,14 +15,14 @@ impl SelectorFieldAttribute {
   }
 
   /// Returns the selection of the selector field
-  pub const fn select(&self) -> &Selection {
+  pub const fn select(&self) -> &FieldSelection {
     &self.select
   }
 }
 
 impl SelectorFieldFromMeta {
   /// Finalizes the selector field meta and returns the attribute
-  pub(super) fn finalize(self) -> SelectorFieldAttribute {
+  pub fn finalize(self) -> SelectorFieldAttribute {
     SelectorFieldAttribute {
       attrs: self.attrs,
       select: self.select,

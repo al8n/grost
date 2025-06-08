@@ -1,6 +1,8 @@
 use crate::meta::SchemaFromMeta;
 
-mod flavor;
+pub use flavor::FlavorAttribute;
+
+pub(crate) mod flavor;
 
 /// The meta for the object
 pub mod object;

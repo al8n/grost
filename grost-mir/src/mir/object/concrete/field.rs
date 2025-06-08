@@ -1,15 +1,12 @@
-use syn::{
-  Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated, token::Comma,
-};
+use syn::{Attribute, Ident, Path, Type, Visibility, punctuated::Punctuated};
 
 use quote::quote;
 
 use crate::ast::object::{
-  ConcreteField as ConcreteFieldAst, ConcreteTaggedField as ConcreteTaggedFieldAst, Selection,
-  SkippedField,
+  ConcreteField as ConcreteFieldAst, ConcreteTaggedField as ConcreteTaggedFieldAst, SkippedField,
 };
 
-use super::{ConcreteObject, ConcreteObjectAst};
+use super::ConcreteObjectAst;
 
 pub use partial::*;
 pub use partial_decoded::*;

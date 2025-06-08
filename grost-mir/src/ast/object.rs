@@ -3,14 +3,15 @@ use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::meta::{
-  MissingOperation, TransformOperation, grost_flavor_param,
-  object::{Label, ObjectFromMeta, Selection},
+  MissingOperation, TransformOperation, grost_flavor_param, object::ObjectFromMeta,
 };
 
 use super::{
   SchemaAttribute,
   flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
 };
+
+pub use crate::meta::object::{FieldSelection, Label};
 
 pub use field::*;
 pub use indexer::*;
@@ -207,7 +208,7 @@ impl<M> ConcreteTaggedField<M> {
 
   /// Returns the default selection of this field
   #[inline]
-  pub const fn selection(&self) -> &Selection {
+  pub const fn selection(&self) -> &FieldSelection {
     self.selector.select()
   }
 
@@ -508,7 +509,7 @@ impl<M> GenericTaggedField<M> {
 
   /// Returns the default selection of this field
   #[inline]
-  pub const fn selection(&self) -> &Selection {
+  pub const fn selection(&self) -> &FieldSelection {
     self.selector.select()
   }
 
@@ -628,10 +629,12 @@ impl<M> GenericTaggedField<M> {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
+#[unwrap(ref)]
+#[try_unwrap(ref)]
 pub enum GenericField<M = ()> {
-  Skipped(SkippedField<M>),
-  Tagged(GenericTaggedField<M>),
+  Skipped(Box<SkippedField<M>>),
+  Tagged(Box<GenericTaggedField<M>>),
 }
 
 #[derive(Debug, Clone)]
@@ -668,8 +671,8 @@ pub struct ConcreteObject<M = (), F = ()> {
   flavor: FlavorAttribute,
   fields: Vec<ConcreteField<F>>,
   default: Option<Path>,
-  partial: PartialObject,
   indexer: Indexer,
+  partial: PartialObject,
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
@@ -1021,6 +1024,12 @@ impl<M, F> GenericObject<M, F> {
     &self.meta
   }
 
+  /// Returns the indexer information.
+  #[inline]
+  pub const fn indexer(&self) -> &Indexer {
+    &self.indexer
+  }
+
   /// Returns the partial object information.
   #[inline]
   pub const fn partial(&self) -> &PartialObject {
@@ -1081,7 +1090,7 @@ impl<M, F> GenericObject<M, F> {
       .iter()
       .map(|&f| {
         if f.skip() {
-          SkippedField::try_new(f).map(GenericField::Skipped)
+          SkippedField::try_new(f).map(|f| GenericField::Skipped(Box::new(f)))
         } else {
           GenericTaggedField::try_new(f, &flavor_param, &flavors, f.copy() || object.copy())
             .and_then(|f| {
@@ -1092,7 +1101,7 @@ impl<M, F> GenericObject<M, F> {
                 )))
               } else {
                 tags.insert(f.tag());
-                Ok(GenericField::Tagged(f))
+                Ok(GenericField::Tagged(Box::new(f)))
               }
             })
         }
