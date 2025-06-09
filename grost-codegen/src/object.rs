@@ -1,9 +1,8 @@
-use grost_mir::Output;
+use grost_mir::utils::Output;
 use quote::ToTokens;
 
-#[allow(unused)]
 mod sealed {
-  use grost_mir::Output;
+  use super::Output;
 
   #[derive(grost_mir::Field)]
   #[grost(attributes(grost))]
@@ -23,6 +22,7 @@ mod sealed {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct Object {
   object: grost_mir::object::Object<sealed::Object>,
   derived: bool,
@@ -58,7 +58,7 @@ impl core::hash::Hash for Object {
 
 impl Object {
   pub fn from_derive_input(input: proc_macro2::TokenStream) -> darling::Result<Self> {
-    sealed::ObjectInput::from_derive_input(input).map(|object| Self {
+    sealed::ObjectDeriveInput::from_derive_input(input).map(|object| Self {
       object,
       derived: true,
     })
@@ -68,7 +68,7 @@ impl Object {
     args: proc_macro2::TokenStream,
     input: proc_macro2::TokenStream,
   ) -> darling::Result<Self> {
-    sealed::ObjectInput::from_attribute_input(args, input).map(|object| Self {
+    sealed::ObjectDeriveInput::from_attribute_input(args, input).map(|object| Self {
       object,
       derived: false,
     })

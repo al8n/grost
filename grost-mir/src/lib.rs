@@ -1,16 +1,15 @@
 pub use grost_darling::*;
-pub use meta::{
-  MissingOperation, Output, TransformOperation,
-  object::{FieldSelection, Label},
-};
-pub use mir::*;
 
-/// Utility types for working with the AST.
-pub mod ast;
+pub(crate) mod generic;
 
-mod meta;
-/// The Mid-level Intermediate Representation (MIR) for Grost schema types.
-mod mir;
+/// The flavor of the `grost` schema.
+pub mod flavor;
+
+/// The object of the `grost` schema.
+pub mod object;
+
+/// Utilities types
+pub mod utils;
 
 #[doc(hidden)]
 pub mod __private {
@@ -19,15 +18,7 @@ pub mod __private {
   pub use quote;
   pub use syn;
 
-  pub use super::ast;
-
-  pub mod mir {
-    pub use crate::mir::*;
-  }
-
-  pub mod meta {
-    pub use crate::meta::*;
-  }
+  pub use super::*;
 
   pub fn default_grost_path() -> syn::Path {
     syn::parse_quote!(::grost)

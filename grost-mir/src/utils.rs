@@ -4,14 +4,10 @@ use darling::FromMeta;
 use quote::quote;
 use syn::{Attribute, parse::Parser};
 
-pub(crate) mod flavor;
-pub(crate) mod generic;
-pub mod object;
-
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
-pub(crate) struct BoolOption(
+pub struct BoolOption(
   #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))] Option<bool>,
 );
 
@@ -105,7 +101,7 @@ impl TransformOperation {
   }
 }
 
-enum NestedMetaWithTypeField {
+pub(crate) enum NestedMetaWithTypeField {
   Type(syn::Type),
   Nested(darling::ast::NestedMeta),
 }
@@ -123,8 +119,10 @@ impl syn::parse::Parse for NestedMetaWithTypeField {
   }
 }
 
+/// A wrapper over `Vec<syn::Attribute>`, which implements `FromMeta` to parse
+/// a list of attributes from the meta data.
 #[derive(Debug, Default, Clone)]
-struct Attributes(Vec<Attribute>);
+pub struct Attributes(Vec<Attribute>);
 
 impl From<Attributes> for Vec<Attribute> {
   fn from(attrs: Attributes) -> Self {
@@ -167,6 +165,40 @@ pub(crate) struct SchemaFromMeta {
   pub(crate) name: Option<String>,
   #[darling(default)]
   pub(crate) description: Option<String>,
+}
+
+impl From<SchemaFromMeta> for SchemaAttribute {
+  fn from(meta: SchemaFromMeta) -> Self {
+    Self {
+      name: meta.name,
+      description: meta.description,
+    }
+  }
+}
+
+/// The meta for the schema
+#[derive(Default, Debug, Clone)]
+pub struct SchemaAttribute {
+  name: Option<String>,
+  description: Option<String>,
+}
+
+impl SchemaAttribute {
+  /// Returns the name of the schema
+  pub const fn name(&self) -> Option<&str> {
+    match self.name.as_ref() {
+      Some(name) => Some(name.as_str()),
+      None => None,
+    }
+  }
+
+  /// Returns the description of the schema
+  pub const fn description(&self) -> Option<&str> {
+    match self.description.as_ref() {
+      Some(description) => Some(description.as_str()),
+      None => None,
+    }
+  }
 }
 
 /// Configures the output of the generated code, this is useful when you want to
