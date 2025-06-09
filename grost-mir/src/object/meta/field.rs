@@ -5,11 +5,11 @@ use syn::{Attribute, Meta, Type, parse::Parser};
 
 use crate::utils::{Attributes, NestedMetaWithTypeField, SchemaFromMeta};
 
-pub(in crate::object) use selector::*;
 pub(in crate::object) use convert::*;
 pub(in crate::object) use flavor::{
   DecodeFromMeta as FieldDecodeFromMeta, EncodeFromMeta as FieldEncodeFromMeta, FieldFlavorFromMeta,
 };
+pub(in crate::object) use selector::*;
 
 pub use label::Label;
 pub use selector::FieldSelection;

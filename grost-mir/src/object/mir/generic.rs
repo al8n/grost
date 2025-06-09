@@ -5,8 +5,8 @@ use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 use crate::object::Indexer;
 
 use super::{
-  accessors,
   super::ast::{GenericObject as GenericObjectAst, ObjectFlavor},
+  accessors,
 };
 
 pub use field::*;

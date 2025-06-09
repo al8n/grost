@@ -311,7 +311,8 @@ impl<F> ConcreteField<F> {
     match field {
       ConcreteFieldAst::Skipped(skipped_field) => Ok(Self::Skipped(skipped_field)),
       ConcreteFieldAst::Tagged(concrete_tagged_field) => {
-        ConcreteTaggedField::from_ast(object, *concrete_tagged_field).map(|t| Self::Tagged(Box::new(t)))
+        ConcreteTaggedField::from_ast(object, *concrete_tagged_field)
+          .map(|t| Self::Tagged(Box::new(t)))
       }
     }
   }

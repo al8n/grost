@@ -1,11 +1,11 @@
-
-
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::{
-  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute}, object::{FieldSelection, Label, ObjectFromMeta}, utils::{grost_flavor_param, MissingOperation, SchemaAttribute}
+  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
+  object::{FieldSelection, Label, ObjectFromMeta},
+  utils::{MissingOperation, SchemaAttribute, grost_flavor_param},
 };
 
 pub use field::*;

@@ -1,4 +1,3 @@
-
 use quote::{ToTokens, format_ident, quote};
 use syn::{ConstParam, Ident, Type, Visibility, parse_quote};
 

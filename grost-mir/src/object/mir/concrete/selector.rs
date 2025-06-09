@@ -3,7 +3,7 @@ use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
 
 use crate::utils::grost_lifetime;
 
-use super::{ConcreteField, ConcreteObjectAst, super::grost_selected_param};
+use super::{super::grost_selected_param, ConcreteField, ConcreteObjectAst};
 
 #[derive(Debug, Clone)]
 pub struct ConcreteSelectorIter {

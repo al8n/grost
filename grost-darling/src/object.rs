@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use darling::{FromDeriveInput, FromField, ast::Data, util::Ignored};
+use darling::{FromDeriveInput, FromField, FromMeta, ast::Data, util::Ignored};
 use quote::{ToTokens, format_ident, quote};
 use syn::{Ident, Type, Visibility};
 
@@ -246,13 +246,8 @@ impl ToTokens for FieldDeriveInput {
   }
 }
 
-#[derive(Debug, FromDeriveInput)]
-#[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
-pub struct ObjectDeriveInput {
-  ident: Ident,
-  vis: Visibility,
-  generics: syn::Generics,
-  data: Data<Ignored, Field>,
+#[derive(Debug, FromMeta)]
+pub struct ObjectMeta {
   #[darling(rename = "crate", default = "super::default_path")]
   path_to_crate: syn::Path,
   #[darling(default)]
@@ -266,7 +261,103 @@ pub struct ObjectDeriveInput {
   grost: syn::Path,
 }
 
-impl ToTokens for ObjectDeriveInput {
+#[derive(Debug, FromDeriveInput)]
+#[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
+pub struct ObjectAttributeInput {
+  ident: Ident,
+  vis: Visibility,
+  generics: syn::Generics,
+  data: Data<Ignored, Field>,
+}
+
+// #[derive(Debug, FromDeriveInput)]
+// #[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
+// pub struct ObjectDeriveInput {
+//   ident: Ident,
+//   vis: Visibility,
+//   generics: syn::Generics,
+//   data: Data<Ignored, Field>,
+//   #[darling(flatten)]
+//   meta: ObjectMeta,
+// }
+
+// impl core::ops::Deref for ObjectDeriveInput {
+//   type Target = ObjectMeta;
+
+//   fn deref(&self) -> &Self::Target {
+//     &self.meta
+//   }
+// }
+
+pub(super) struct Object {
+  ident: Ident,
+  vis: Visibility,
+  generics: syn::Generics,
+  data: Data<Ignored, Field>,
+  path_to_crate: syn::Path,
+  attribute: Option<Ident>,
+  rename: Option<Ident>,
+  field: Type,
+  meta: Vec<syn::Attribute>,
+  grost: syn::Path,
+}
+
+impl Object {
+  pub fn from_attribute_input(
+    args: proc_macro2::TokenStream,
+    input: proc_macro2::TokenStream,
+  ) -> darling::Result<Self> {
+    let input: syn::DeriveInput = syn::parse2(input)?;
+    let input = <ObjectAttributeInput as FromDeriveInput>::from_derive_input(&input)?;
+    let args = darling::ast::NestedMeta::parse_meta_list(args)?;
+    let args = <ObjectMeta as FromMeta>::from_list(&args)?;
+
+    Ok(Self {
+      ident: input.ident,
+      vis: input.vis,
+      generics: input.generics,
+      data: input.data,
+      path_to_crate: args.path_to_crate,
+      attribute: args.attribute,
+      rename: args.rename,
+      field: args.field,
+      meta: args.meta,
+      grost: args.grost,
+    })
+  }
+
+  fn derive_custom_meta(&self, fields: &darling::ast::Fields<&Field>) -> proc_macro2::TokenStream {
+    let meta_name = self
+      .rename
+      .clone()
+      .unwrap_or_else(|| format_ident!("{}Meta", self.ident));
+
+    let generics = &self.generics;
+    let (_, _, w) = generics.split_for_impl();
+
+    let vis = &self.vis;
+    let fields = fields.iter().map(|f| {
+      let ty = &f.ty;
+      let vis = &f.vis;
+      let ident = f
+        .ident
+        .as_ref()
+        .expect("Object should only have named fields");
+      quote! {
+        #vis #ident: #ty,
+      }
+    });
+
+    quote! {
+      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+      #vis struct #meta_name #generics #w {
+        #(#fields),*
+      }
+    }
+  }
+}
+
+impl ToTokens for Object {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let derive_input_name = self
       .rename
@@ -292,6 +383,11 @@ impl ToTokens for ObjectDeriveInput {
       .rename
       .clone()
       .unwrap_or_else(|| format_ident!("{}DeriveInput", self.ident));
+    let custom_meta_name = self
+      .rename
+      .clone()
+      .unwrap_or_else(|| format_ident!("{}Meta", self.ident));
+
     let vis = &self.vis;
     let path_to_crate = &self.path_to_crate;
     let generics = &self.generics;
@@ -305,15 +401,22 @@ impl ToTokens for ObjectDeriveInput {
     let path = &self.grost.to_token_stream().to_string();
     let name = &self.ident;
 
-    let (meta_ty, meta_getter, meta_field, meta_field_without_darling, convert) =
+    let turbofish = if !generics.params.is_empty() {
+      quote!(::#tg::)
+    } else {
+      quote!(::)
+    };
+
+    let (custom_meta, meta_ty, meta_getter, meta_field, meta_field_without_darling, convert) =
       match self.data.as_ref() {
-        Data::Enum(_) => unreachable!("ObjectDeriveInput should not be used for enums"),
+        Data::Enum(_) => unreachable!("`object` should not be used for enums"),
         Data::Struct(fields) => {
           if fields.is_unit() || fields.is_empty() {
-            (quote!(()), quote!(&()), None, None, None)
+            (quote!(), quote!(()), quote!(&()), None, None, None)
           } else {
             (
-              quote!(#name #tg),
+              self.derive_custom_meta(&fields),
+              quote!(#custom_meta_name #tg),
               quote!(&self.__args__.__custom_meta__),
               Some({
                 let fields = fields.iter().map(|f| {
@@ -342,7 +445,7 @@ impl ToTokens for ObjectDeriveInput {
               }),
               Some(quote! {
                 #[doc(hidden)]
-                __custom_meta__: #name #tg,
+                __custom_meta__: #custom_meta_name #tg,
               }),
               Some({
                 let fields = fields.iter().map(|f| {
@@ -351,7 +454,7 @@ impl ToTokens for ObjectDeriveInput {
                 });
 
                 quote! {
-                  __custom_meta__: #name #tg {
+                  __custom_meta__: #custom_meta_name #tg {
                     #(#fields)*
                   },
                 }
@@ -362,32 +465,41 @@ impl ToTokens for ObjectDeriveInput {
       };
 
     tokens.extend(quote! {
-      #[allow(warnings)]
-      #[doc(hidden)]
-      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-      struct #meta_name #generics #where_clause {
-        #meta_field_without_darling
+      #custom_meta
 
-        #[doc(hidden)]
-        __meta__: #path_to_crate::__private::object::ObjectAttribute,
-      }
-
-      #(#meta)*
-      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-      #vis struct #input_name #generics #where_clause {
-        ident: #path_to_crate::__private::syn::Ident,
-        vis: #path_to_crate::__private::syn::Visibility,
-        generics: #path_to_crate::__private::syn::Generics,
-        attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
-        data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
+      #vis struct #name #generics #where_clause {
+        object: #path_to_crate::__private::object::Object<
+          #custom_meta_name #tg,
+          <#field as #path_to_crate::__private::object::RawField>::Meta,
+        >,
         derived: ::core::primitive::bool,
-
-        #[doc(hidden)]
-        __args__: #meta_name,
       }
 
       const _: () = {
         use #path_to_crate::__private::{darling, syn, quote::{quote, ToTokens}};
+
+        #(#meta)*
+        #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+        struct #input_name #generics #where_clause {
+          ident: #path_to_crate::__private::syn::Ident,
+          vis: #path_to_crate::__private::syn::Visibility,
+          generics: #path_to_crate::__private::syn::Generics,
+          attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
+          data: #path_to_crate::__private::darling::ast::Data<#path_to_crate::__private::darling::util::Ignored, #field>,
+
+          #[doc(hidden)]
+          __args__: #meta_name,
+        }
+
+        #[allow(warnings)]
+        #[doc(hidden)]
+        #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+        struct #meta_name #generics #where_clause {
+          #meta_field_without_darling
+
+          #[doc(hidden)]
+          __meta__: #path_to_crate::__private::object::ObjectAttribute,
+        }
 
         #[allow(warnings)]
         #[doc(hidden)]
@@ -467,7 +579,6 @@ impl ToTokens for ObjectDeriveInput {
               generics: input.generics,
               attrs: input.attrs,
               data: input.data,
-              derived: true,
               __args__: #meta_name {
                 __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
                 #convert
@@ -501,7 +612,6 @@ impl ToTokens for ObjectDeriveInput {
               generics: input.generics,
               attrs: input.attrs,
               data: input.data,
-              derived: false,
               __args__: #meta_name {
                 __meta__: args.__meta__.finalize(args.__path_to_crate__)?,
                 #convert
@@ -578,6 +688,46 @@ impl ToTokens for ObjectDeriveInput {
 
           fn meta(&self) -> &Self::Meta {
             #meta_getter
+          }
+        }
+      
+        impl #ig #name #tg #w {
+          /// Parse the input from the derive macro.
+          /// 
+          /// **Note:** This function is only used for the derive macro input, and it will not
+          /// work correctly if you use it for the attribute macro. For the attribute macro,
+          /// use [`from_attribute_input`](Self::from_attribute_input) instead.
+          pub fn from_derive_input(
+            input: #path_to_crate::__private::proc_macro2::TokenStream,
+          ) -> #path_to_crate::__private::darling::Result<Self> {
+            #input_name #turbofish from_derive_input(input).map(|object| Self {
+              object,
+              derived: true,
+            })
+          }
+  
+          /// Parse the input from the attribute macro input.
+          /// 
+          /// **Note:** This function is only used for the attribute macro input, and it will not
+          /// work correctly if you use it for the derive macro. For the derive macro,
+          /// use [`from_derive_input`](Self::from_derive_input) instead.
+          pub fn from_attribute_input(
+            args: #path_to_crate::__private::proc_macro2::TokenStream,
+            input: #path_to_crate::__private::proc_macro2::TokenStream,
+          ) -> #path_to_crate::__private::darling::Result<Self> {
+            #input_name #turbofish from_attribute_input(args, input).map(|object| Self {
+              object,
+              derived: false,
+            })
+          }
+
+          /// Returns the MIR representation of the object.
+          #[inline]
+          pub const fn mir(&self) -> &#path_to_crate::__private::object::Object<
+            #custom_meta_name #tg,
+            <<#input_name #tg as #path_to_crate::__private::object::RawObject>::Field as #path_to_crate::__private::object::RawField>::Meta,
+          > {
+            &self.object
           }
         }
       };

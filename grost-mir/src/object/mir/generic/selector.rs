@@ -4,7 +4,10 @@ use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
 
 use crate::utils::grost_lifetime;
 
-use super::{super::{super::ast::GenericObject as GenericObjectAst, grost_selected_param}, GenericField, ObjectFlavor, };
+use super::{
+  super::{super::ast::GenericObject as GenericObjectAst, grost_selected_param},
+  GenericField, ObjectFlavor,
+};
 
 #[derive(Debug, Clone)]
 pub struct SelectorIterFlavor {

@@ -1,7 +1,7 @@
 use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use super::{accessors, super::ast::ConcreteObject as ConcreteObjectAst};
+use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
 use crate::{flavor::FlavorAttribute, object::Indexer};
 
 pub use field::*;
