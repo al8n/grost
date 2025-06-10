@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use darling::{FromDeriveInput, FromField, FromMeta, ast::Data, util::Ignored};
 use quote::{ToTokens, format_ident, quote};
-use syn::{Ident, Type, Visibility};
+use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use super::{Attributes, DarlingAttributes};
 
@@ -11,7 +11,7 @@ use super::{Attributes, DarlingAttributes};
 struct Field {
   ident: Option<Ident>,
   vis: Visibility,
-  ty: syn::Type,
+  ty: Type,
   #[darling(default, map = "super::map_option_meta")]
   darling: Option<syn::Meta>,
 }
@@ -21,16 +21,16 @@ struct Field {
 pub struct FieldDeriveInput {
   ident: Ident,
   vis: Visibility,
-  generics: syn::Generics,
+  generics: Generics,
   data: Data<Ignored, Field>,
   #[darling(rename = "crate", default = "super::default_path")]
-  path_to_crate: syn::Path,
+  path_to_crate: Path,
   #[darling(default, map = "DarlingAttributes::into_inner")]
   attributes: HashSet<Ident>,
   #[darling(default)]
   rename: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
-  meta: Vec<syn::Attribute>,
+  meta: Vec<Attribute>,
 }
 
 impl ToTokens for FieldDeriveInput {
@@ -249,16 +249,16 @@ impl ToTokens for FieldDeriveInput {
 #[derive(Debug, FromMeta)]
 pub struct ObjectMeta {
   #[darling(rename = "crate", default = "super::default_path")]
-  path_to_crate: syn::Path,
+  path_to_crate: Path,
   #[darling(default)]
   attribute: Option<Ident>,
   #[darling(default)]
   rename: Option<Ident>,
   field: Type,
   #[darling(default, map = "Attributes::into_inner")]
-  meta: Vec<syn::Attribute>,
+  meta: Vec<Attribute>,
   #[darling(default = "super::default_grost_path")]
-  grost: syn::Path,
+  grost: Path,
 }
 
 #[derive(Debug, FromDeriveInput)]
@@ -266,40 +266,21 @@ pub struct ObjectMeta {
 pub struct ObjectAttributeInput {
   ident: Ident,
   vis: Visibility,
-  generics: syn::Generics,
+  generics: Generics,
   data: Data<Ignored, Field>,
 }
-
-// #[derive(Debug, FromDeriveInput)]
-// #[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
-// pub struct ObjectDeriveInput {
-//   ident: Ident,
-//   vis: Visibility,
-//   generics: syn::Generics,
-//   data: Data<Ignored, Field>,
-//   #[darling(flatten)]
-//   meta: ObjectMeta,
-// }
-
-// impl core::ops::Deref for ObjectDeriveInput {
-//   type Target = ObjectMeta;
-
-//   fn deref(&self) -> &Self::Target {
-//     &self.meta
-//   }
-// }
 
 pub(super) struct Object {
   ident: Ident,
   vis: Visibility,
-  generics: syn::Generics,
+  generics: Generics,
   data: Data<Ignored, Field>,
-  path_to_crate: syn::Path,
+  path_to_crate: Path,
   attribute: Option<Ident>,
   rename: Option<Ident>,
   field: Type,
-  meta: Vec<syn::Attribute>,
-  grost: syn::Path,
+  meta: Vec<Attribute>,
+  grost: Path,
 }
 
 impl Object {
@@ -327,16 +308,16 @@ impl Object {
   }
 
   fn derive_custom_meta(&self, fields: &darling::ast::Fields<&Field>) -> proc_macro2::TokenStream {
-    let meta_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("{}Meta", self.ident));
+    let meta_name = match self.rename.as_ref() {
+      Some(name) => format_ident!("{}Meta", name),
+      None => format_ident!("{}Meta", self.ident),
+    };
 
     let generics = &self.generics;
-    let (_, _, w) = generics.split_for_impl();
+    let (ig,tg, w) = generics.split_for_impl();
 
     let vis = &self.vis;
-    let fields = fields.iter().map(|f| {
+    let fields_declare = fields.iter().map(|f| {
       let ty = &f.ty;
       let vis = &f.vis;
       let ident = f
@@ -347,12 +328,38 @@ impl Object {
         #vis #ident: #ty,
       }
     });
+    let accessors = fields.iter().map(|f| {
+      let name = f.ident.as_ref().unwrap();
+      let ty = &f.ty;
+      let vis = &f.vis;
+      quote! {
+        #[inline]
+        #vis const fn #name(&self) -> &#ty {
+          &self.#name
+        }
+      }
+    });
 
     quote! {
       #[derive(::core::fmt::Debug, ::core::clone::Clone)]
       #vis struct #meta_name #generics #w {
-        #(#fields),*
+        #(#fields_declare),*
       }
+
+      impl #ig #meta_name #tg #w {
+        #(#accessors)*
+      }
+    }
+  }
+
+  fn name(
+    &self,
+    prefix: &str,
+    suffix: &str,
+  ) -> Ident {
+    match self.rename.as_ref() {
+      Some(rename) => format_ident!("{prefix}{rename}{suffix}",),
+      None => format_ident!("{prefix}{}{suffix}", self.ident),
     }
   }
 }
@@ -360,33 +367,13 @@ impl Object {
 impl ToTokens for Object {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
     let derive_input_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("__{}DeriveInput__", self.ident));
-    let attribute_input_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("__{}AttributeInput__", self.ident));
-    let darling_derive_meta_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("__{}DarlingDeriveMeta__", self.ident));
-    let darling_attribute_meta_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("__{}DarlingAttributeMeta__", self.ident));
-    let meta_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("__{}Meta__", self.ident));
-    let input_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("{}DeriveInput", self.ident));
-    let custom_meta_name = self
-      .rename
-      .clone()
-      .unwrap_or_else(|| format_ident!("{}Meta", self.ident));
+      .name("__", "DeriveInput__");
+    let attribute_input_name = self.name("__", "AttributeInput__");
+    let darling_derive_meta_name = self.name("__", "DarlingDeriveMeta__");
+    let darling_attribute_meta_name = self.name("__", "DarlingAttributeMeta__");
+    let meta_name = self.name("__", "Meta__");
+    let input_name = self.name("__", "Input__");
+    let custom_meta_name = self.name("", "Meta");
 
     let vis = &self.vis;
     let path_to_crate = &self.path_to_crate;
@@ -401,10 +388,10 @@ impl ToTokens for Object {
     let path = &self.grost.to_token_stream().to_string();
     let name = &self.ident;
 
-    let turbofish = if !generics.params.is_empty() {
-      quote!(::#tg::)
+    let input_type_with_turbofish = if !generics.params.is_empty() {
+      quote!(#input_name::#tg::)
     } else {
-      quote!(::)
+      quote!(#input_name::)
     };
 
     let (custom_meta, meta_ty, meta_getter, meta_field, meta_field_without_darling, convert) =
@@ -464,6 +451,9 @@ impl ToTokens for Object {
         }
       };
 
+    let token_stream_ident = format_ident!("token_stream");
+    let obj_ident = format_ident!("obj");
+
     tokens.extend(quote! {
       #custom_meta
 
@@ -476,7 +466,7 @@ impl ToTokens for Object {
       }
 
       const _: () = {
-        use #path_to_crate::__private::{darling, syn, quote::{quote, ToTokens}};
+        use #path_to_crate::__private::{darling, syn, quote::{quote, ToTokens}, proc_macro2};
 
         #(#meta)*
         #[derive(::core::fmt::Debug, ::core::clone::Clone)]
@@ -690,6 +680,26 @@ impl ToTokens for Object {
             #meta_getter
           }
         }
+
+        impl #ig ::core::cmp::PartialEq for #name #tg #w {
+          fn eq(&self, other: &Self) -> bool {
+            self.object.name().eq(other.object.name())
+          }
+        }
+
+        impl #ig ::core::cmp::Eq for #name #tg #w {}
+
+        impl #ig ::core::hash::Hash for #name #tg #w {
+          fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
+            self.object.name().hash(state);
+          }
+        }
+
+        impl #ig ToTokens for #name #tg #w {
+          fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+            self.object.to_tokens(tokens);
+          }
+        }
       
         impl #ig #name #tg #w {
           /// Parse the input from the derive macro.
@@ -700,7 +710,7 @@ impl ToTokens for Object {
           pub fn from_derive_input(
             input: #path_to_crate::__private::proc_macro2::TokenStream,
           ) -> #path_to_crate::__private::darling::Result<Self> {
-            #input_name #turbofish from_derive_input(input).map(|object| Self {
+            #input_type_with_turbofish from_derive_input(input).map(|object| Self {
               object,
               derived: true,
             })
@@ -715,7 +725,7 @@ impl ToTokens for Object {
             args: #path_to_crate::__private::proc_macro2::TokenStream,
             input: #path_to_crate::__private::proc_macro2::TokenStream,
           ) -> #path_to_crate::__private::darling::Result<Self> {
-            #input_name #turbofish from_attribute_input(args, input).map(|object| Self {
+            #input_type_with_turbofish from_attribute_input(args, input).map(|object| Self {
               object,
               derived: false,
             })
@@ -728,6 +738,22 @@ impl ToTokens for Object {
             <<#input_name #tg as #path_to_crate::__private::object::RawObject>::Field as #path_to_crate::__private::object::RawField>::Meta,
           > {
             &self.object
+          }
+
+          /// Derives the generated code of the object.
+          pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
+            self.object.derive().map(|token_stream| {
+              if self.derived {
+                token_stream
+              } else {
+                let obj = &self.object;
+                quote! {
+                  # #obj_ident
+
+                  # #token_stream_ident
+                }
+              }
+            })
           }
         }
       };

@@ -117,7 +117,7 @@ impl SchemaGenerator {
                 #(#stream)*
               };
 
-              if let Some(output) = object.output() {
+              if let Some(output) = object.mir().meta().output() {
                 std::fs::OpenOptions::new()
                   .write(true)
                   .create(true)
