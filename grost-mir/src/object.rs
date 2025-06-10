@@ -1,5 +1,4 @@
-pub use meta::{FieldFromMeta, FieldSelection, Label, ObjectFromMeta};
-pub use mir::*;
+pub use meta::{FieldSelection, Label};
 
 pub use ast::{
   ConvertAttribute, FieldAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor,
@@ -8,7 +7,9 @@ pub use ast::{
   PartialObjectAttribute, RawField, RawObject, RawObjectExt, SelectorAttribute,
   SelectorFieldAttribute, SelectorIterAttribute,
 };
+pub use mir::*;
 
 mod ast;
-mod meta;
+/// The meta for the object and object's fields
+pub mod meta;
 mod mir;

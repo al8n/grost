@@ -4,7 +4,7 @@ use quote::quote;
 use super::Attributes;
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub(in crate::object) struct SelectorFieldFromMeta {
+pub struct SelectorFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<syn::Attribute>,
   #[darling(default)]

@@ -5,10 +5,13 @@ use quote::quote;
 pub fn derive_object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let object = match Object::from_derive_input(input.into()) {
     Ok(input) => input,
-    Err(e) => return e.write_errors().into(),
+    Err(e) => {
+      println!("Object Error: {:?}", e);
+      return e.write_errors().into();
+    }
   };
 
-  let network = Network::new(object.path());
+  let network = Network::new(object.mir().path_to_grost());
   let mut builder = SchemaGeneratorBuilder::new();
   let Ok(_) = builder.add_flavor(network.name(), network) else {
     panic!("failed to add flavor");
@@ -36,7 +39,7 @@ pub fn object(
     Err(e) => return e.write_errors().into(),
   };
 
-  let network = Network::new(object.path());
+  let network = Network::new(object.mir().path_to_grost());
   let mut builder = SchemaGeneratorBuilder::new();
   let Ok(_) = builder.add_flavor(network.name(), network) else {
     panic!("failed to add flavor");

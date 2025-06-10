@@ -4,7 +4,7 @@ use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::{
   flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
-  object::{FieldSelection, Label, ObjectFromMeta},
+  object::{FieldSelection, Label, meta::ObjectFromMeta},
   utils::{MissingOperation, SchemaAttribute, grost_flavor_param},
 };
 

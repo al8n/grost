@@ -160,7 +160,7 @@ impl FromMeta for Attributes {
 
 /// The meta for the schema
 #[derive(Default, Debug, Clone, FromMeta)]
-pub(crate) struct SchemaFromMeta {
+pub struct SchemaFromMeta {
   #[darling(default)]
   pub(crate) name: Option<String>,
   #[darling(default)]

@@ -3,7 +3,7 @@ use darling::{FromMeta, ast::NestedMeta};
 use crate::utils::{MissingOperation, TransformOperation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub(in crate::object) struct ConvertFromMeta {
+pub struct ConvertFromMeta {
   pub(in crate::object) missing_operation: Option<MissingOperation>,
   pub(in crate::object) transform_operation: Option<TransformOperation>,
 }

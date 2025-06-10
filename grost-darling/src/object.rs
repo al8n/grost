@@ -89,7 +89,7 @@ impl Object {
     };
 
     let generics = &self.generics;
-    let (ig,tg, w) = generics.split_for_impl();
+    let (ig, tg, w) = generics.split_for_impl();
 
     let vis = &self.vis;
     let fields_declare = fields.iter().map(|f| {
@@ -127,11 +127,7 @@ impl Object {
     }
   }
 
-  fn name(
-    &self,
-    prefix: &str,
-    suffix: &str,
-  ) -> Ident {
+  fn name(&self, prefix: &str, suffix: &str) -> Ident {
     match self.rename.as_ref() {
       Some(rename) => format_ident!("{prefix}{rename}{suffix}",),
       None => format_ident!("{prefix}{}{suffix}", self.ident),
@@ -141,8 +137,7 @@ impl Object {
 
 impl ToTokens for Object {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let derive_input_name = self
-      .name("__", "DeriveInput__");
+    let derive_input_name = self.name("__", "DeriveInput__");
     let attribute_input_name = self.name("__", "AttributeInput__");
     let darling_derive_meta_name = self.name("__", "DarlingDeriveMeta__");
     let darling_attribute_meta_name = self.name("__", "DarlingAttributeMeta__");
@@ -190,7 +185,10 @@ impl ToTokens for Object {
                       #[#m]
                     }
                   });
-                  let name = f.ident.as_ref().expect("`object` should only have named fields");
+                  let name = f
+                    .ident
+                    .as_ref()
+                    .expect("`object` should only have named fields");
 
                   quote! {
                     #meta
@@ -274,7 +272,7 @@ impl ToTokens for Object {
           __path_to_crate__: #path_to_crate::__private::syn::Path,
           #[darling(flatten)]
           #[doc(hidden)]
-          __meta__: #path_to_crate::__private::object::ObjectFromMeta,
+          __meta__: #path_to_crate::__private::object::meta::ObjectFromMeta,
         }
 
         #[allow(warnings)]
@@ -288,7 +286,7 @@ impl ToTokens for Object {
           __path_to_crate__: #path_to_crate::__private::syn::Path,
           #[darling(flatten)]
           #[doc(hidden)]
-          __meta__: #path_to_crate::__private::object::ObjectFromMeta,
+          __meta__: #path_to_crate::__private::object::meta::ObjectFromMeta,
         }
 
         #[allow(warnings)]
@@ -472,7 +470,7 @@ impl ToTokens for Object {
             self.object.to_tokens(tokens);
           }
         }
-      
+
         impl #ig #name #tg #w {
           /// Parse the input from the derive macro.
           /// 
@@ -487,7 +485,7 @@ impl ToTokens for Object {
               derived: true,
             })
           }
-  
+
           /// Parse the input from the attribute macro input.
           /// 
           /// **Note:** This function is only used for the attribute macro input, and it will not
@@ -507,7 +505,7 @@ impl ToTokens for Object {
           #[inline]
           pub const fn mir(&self) -> &#path_to_crate::__private::object::Object<
             #custom_meta_name #tg,
-            <<#input_name #tg as #path_to_crate::__private::object::RawObject>::Field as #path_to_crate::__private::object::RawField>::Meta,
+            <#field as #path_to_crate::__private::object::RawField>::Meta,
           > {
             &self.object
           }

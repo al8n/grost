@@ -46,7 +46,8 @@ pub enum Label {
 }
 
 impl Label {
-  pub(super) fn peek(input: &ParseStream) -> syn::Result<bool> {
+  /// Check if the parse stream starts with a label that can be parsed as a `Label`.
+  pub fn peek(input: &ParseStream) -> syn::Result<bool> {
     if input.peek(syn::Token![enum]) {
       return Ok(true);
     }
@@ -87,6 +88,7 @@ impl syn::parse::Parse for Label {
         () if ident.eq("bytes") => Self::Bytes,
         () if ident.eq("string") => Self::String,
         () if ident.eq("object") => Self::Object,
+        () if ident.eq("enum") => Self::Enum,
         () if ident.eq("union") => Self::Union,
         () if ident.eq("interface") => Self::Interface,
         () if ident.eq("map") => {

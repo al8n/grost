@@ -11,7 +11,7 @@ mod decode;
 mod encode;
 
 #[derive(Debug, Clone, FromMeta)]
-pub(in crate::object) struct FieldFlavorValueFromMeta {
+pub struct FieldFlavorValueFromMeta {
   #[darling(default)]
   pub(in crate::object) format: Option<syn::Type>,
   #[darling(default)]
@@ -21,7 +21,7 @@ pub(in crate::object) struct FieldFlavorValueFromMeta {
 }
 
 #[derive(Debug, Default, Clone)]
-pub(in crate::object) struct FieldFlavorFromMeta {
+pub struct FieldFlavorFromMeta {
   pub(in crate::object) flavors: IndexMap<Ident, FieldFlavorValueFromMeta>,
 }
 

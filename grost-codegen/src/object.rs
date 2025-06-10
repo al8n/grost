@@ -1,6 +1,7 @@
+use darling::{FromField, FromMeta};
 use grost_mir::utils::Output;
 
-#[grost_mir::field(attributes(grost))]
+#[grost_mir::field(attribute = "grost")]
 pub struct Field;
 
 #[grost_mir::object(attribute = "grost", field = "Field")]

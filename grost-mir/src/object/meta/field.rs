@@ -1,18 +1,18 @@
 use core::num::NonZeroU32;
 
 use darling::FromMeta;
-use syn::{Attribute, Meta, Type, parse::Parser};
+use syn::{Attribute, Meta, Path, Type, parse::Parser};
 
 use crate::utils::{Attributes, NestedMetaWithTypeField, SchemaFromMeta};
 
-pub(in crate::object) use convert::*;
 pub(in crate::object) use flavor::{
-  DecodeFromMeta as FieldDecodeFromMeta, EncodeFromMeta as FieldEncodeFromMeta, FieldFlavorFromMeta,
+  DecodeFromMeta as FieldDecodeFromMeta, EncodeFromMeta as FieldEncodeFromMeta,
 };
-pub(in crate::object) use selector::*;
 
+pub use convert::ConvertFromMeta;
+pub use flavor::FieldFlavorFromMeta;
 pub use label::Label;
-pub use selector::FieldSelection;
+pub use selector::{FieldSelection, SelectorFieldFromMeta};
 
 mod convert;
 mod flavor;
@@ -21,7 +21,7 @@ mod selector;
 
 /// The meta of the partial reference object field
 #[derive(Debug, Default, Clone)]
-pub(in crate::object) struct PartialDecodedFieldFromMeta {
+pub struct PartialDecodedFieldFromMeta {
   pub(in crate::object) copy: bool,
   pub(in crate::object) attrs: Vec<Attribute>,
   pub(in crate::object) ty: Option<Type>,
@@ -71,7 +71,7 @@ impl FromMeta for PartialDecodedFieldFromMeta {
 
 /// The meta of the partial object field
 #[derive(Debug, Default, Clone)]
-pub(in crate::object) struct PartialFieldFromMeta {
+pub struct PartialFieldFromMeta {
   pub(in crate::object) attrs: Vec<Attribute>,
   pub(in crate::object) ty: Option<Type>,
 }
@@ -144,9 +144,9 @@ struct FieldFromMetaHelper {
   #[darling(default)]
   tag: Option<NonZeroU32>,
   #[darling(default)]
-  flavor: flavor::FieldFlavorFromMeta,
+  flavor: FieldFlavorFromMeta,
   #[darling(default)]
-  convert: convert::ConvertFromMeta,
+  convert: ConvertFromMeta,
   #[darling(default)]
   partial: PartialFieldFromMeta,
   #[darling(default)]
@@ -162,17 +162,17 @@ struct FieldFromMetaHelper {
 /// The meta of the object field
 #[derive(Debug, Clone)]
 pub struct FieldFromMeta {
-  pub(in crate::object) label: Label,
-  pub(in crate::object) schema: SchemaFromMeta,
-  pub(in crate::object) default: Option<syn::Path>,
-  pub(in crate::object) tag: Option<NonZeroU32>,
-  pub(in crate::object) flavor: flavor::FieldFlavorFromMeta,
-  pub(in crate::object) convert: convert::ConvertFromMeta,
-  pub(in crate::object) partial: PartialFieldFromMeta,
-  pub(in crate::object) partial_decoded: PartialDecodedFieldFromMeta,
-  pub(in crate::object) selector: SelectorFieldFromMeta,
-  pub(in crate::object) copy: bool,
-  pub(in crate::object) skip: bool,
+  pub label: Label,
+  pub schema: SchemaFromMeta,
+  pub default: Option<Path>,
+  pub tag: Option<NonZeroU32>,
+  pub flavor: FieldFlavorFromMeta,
+  pub convert: ConvertFromMeta,
+  pub partial: PartialFieldFromMeta,
+  pub partial_decoded: PartialDecodedFieldFromMeta,
+  pub selector: SelectorFieldFromMeta,
+  pub copy: bool,
+  pub skip: bool,
 }
 
 impl FromMeta for FieldFromMeta {

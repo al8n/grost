@@ -30,7 +30,10 @@ pub fn object(
 }
 
 #[proc_macro_attribute]
-pub fn field(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn field(
+  args: proc_macro::TokenStream,
+  input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
   let input = match object::ObjectField::from_attribute_input(args.into(), input.into()) {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
