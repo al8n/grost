@@ -1,11 +1,11 @@
 use grost_mir::utils::Output;
 
-#[derive(grost_mir::Field)]
-#[grost(attributes(grost))]
+#[grost_mir::field(attributes(grost))]
 pub struct Field;
 
-#[grost_mir::object(attribute = "grost", field = "FieldDeriveInput")]
+#[grost_mir::object(attribute = "grost", field = "Field")]
 #[derive(Clone, Debug)]
 pub struct Object {
+  #[grost(darling(default))]
   pub output: Option<Output>,
 }

@@ -1,8 +1,7 @@
 use std::collections::HashSet;
 
-use darling::FromDeriveInput;
 use quote::{ToTokens, quote};
-use syn::{DeriveInput, ItemTrait, parse_macro_input, parse_quote};
+use syn::parse_quote;
 
 mod enum_;
 mod interface;
@@ -17,27 +16,11 @@ fn default_grost_path() -> syn::Path {
   parse_quote! { ::grost_mir::__private::default_grost_path }
 }
 
-// #[proc_macro_derive(Object, attributes(grost))]
-// pub fn Object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-//   let input_struct = parse_macro_input!(input as DeriveInput);
-
-//   let input = match object::ObjectDeriveInput::from_derive_input(&input_struct) {
-//     Ok(input) => input,
-//     Err(e) => return e.write_errors().into(),
-//   };
-
-//   input.to_token_stream().into()
-// }
-
 #[proc_macro_attribute]
 pub fn object(
   args: proc_macro::TokenStream,
   input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-  // let input = parse_macro_input!(input as DeriveInput);
-  // let args = darling::ast::NestedMeta::parse_meta_list(args.into())?;
-  // let args = <#darling_attribute_meta_name #tg as #path_to_crate::__private::darling::FromMeta>::from_list(&args)?;
-
   let input = match object::Object::from_attribute_input(args.into(), input.into()) {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
@@ -46,11 +29,9 @@ pub fn object(
   input.to_token_stream().into()
 }
 
-#[proc_macro_derive(Field, attributes(grost))]
-pub fn field(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-  let input_struct = parse_macro_input!(input as DeriveInput);
-
-  let input = match object::FieldDeriveInput::from_derive_input(&input_struct) {
+#[proc_macro_attribute]
+pub fn field(args: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+  let input = match object::ObjectField::from_attribute_input(args.into(), input.into()) {
     Ok(input) => input,
     Err(e) => return e.write_errors().into(),
   };
@@ -64,14 +45,13 @@ pub fn interface(
   input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
   // let args = parse_macro_input!(args as syn::AttributeArgs);
-  let input_struct = parse_macro_input!(input as ItemTrait);
+  // let input_struct = parse_macro_input!(input as ItemTrait);
 
   // let input = match interface::InterfaceDeriveInput::from_derive_input(&input_struct) {
   //   Ok(input) => input,
   //   Err(e) => return e.write_errors().into(),
   // };
 
-  // input.to_token_stream().into()
   quote! {}.into()
 }
 
