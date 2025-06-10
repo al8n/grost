@@ -38,7 +38,9 @@ impl<M, F> Object<M, F> {
     M: Clone,
     F: Clone,
   {
+    println!("start parsing objest ast");
     let object = ObjectAst::from_raw(&object)?;
+    println!("finish parsing objest ast");
     match object {
       ObjectAst::Concrete(concrete_object) => {
         ConcreteObject::from_ast(*concrete_object).map(|object| Self::Concrete(Box::new(object)))

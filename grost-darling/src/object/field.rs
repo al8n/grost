@@ -1,10 +1,8 @@
-use std::collections::HashSet;
-
 use darling::{FromDeriveInput, FromMeta, ast::Data, util::Ignored};
 use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Visibility};
 
-use super::{Attributes, DarlingAttributes, Field};
+use super::{Attributes, Field};
 
 const BUILTIN_NAMES: &[&str] = &[
   "schema",
@@ -133,11 +131,8 @@ impl ToTokens for ObjectField {
     let nested_meta = self.name("__", "NestedMeta__");
 
     let hidden_input_name = self.name("__", "Input__");
-
-    let hidden_meta_name = self.name("__", "Meta__");
     let field_meta_without_label_name = self.name("__", "FieldMetaWithoutLabel__");
     let field_meta_with_label_name = self.name("__", "FieldMeta__");
-    let hidden_custom_meta_name = self.name("__", "CustomMeta__");
     let custom_meta_name = self.name("", "Meta");
     let vis = &self.vis;
     let path_to_crate = &self.path_to_crate;
@@ -267,11 +262,6 @@ impl ToTokens for ObjectField {
         }
 
         #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromMeta)]
-        struct #hidden_custom_meta_name #generics #w {
-          #custom_meta_fields
-        }
-
-        #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromMeta)]
         struct #field_meta_without_label_name #generics #w {
           #[darling(default)]
           schema: #path_to_crate::__private::utils::SchemaFromMeta,
@@ -297,7 +287,7 @@ impl ToTokens for ObjectField {
         }
 
         struct #field_meta_with_label_name #generics #w {
-          label: #path_to_crate::__private::object::Label,
+          label: ::core::option::Option<#path_to_crate::__private::object::Label>,
           schema: #path_to_crate::__private::utils::SchemaFromMeta,
           default: ::core::option::Option<#path_to_crate::__private::syn::Path>,
           tag: ::core::option::Option<::core::num::NonZeroU32>,
@@ -349,9 +339,12 @@ impl ToTokens for ObjectField {
                   #builtin_meta_fields_names
                   #custom_meta_fields_deconstructor
                 } = <#field_meta_without_label_name #tg as #path_to_crate::__private::darling::FromMeta>::from_list(&nested_meta)?;
-
                 ::core::result::Result::Ok(Self {
-                  label: label.ok_or_else(|| #path_to_crate::__private::darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?,
+                  label: if skip {
+                    ::core::option::Option::None
+                  } else {
+                    ::core::option::Option::Some(label.ok_or_else(|| #path_to_crate::__private::darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?)
+                  },
                   #builtin_meta_fields_names
                   #custom_meta_fields_deconstructor
                 })
@@ -533,7 +526,7 @@ impl ToTokens for ObjectField {
             &self.__meta__.selector()
           }
 
-          fn label(&self) -> &#path_to_crate::__private::object::Label {
+          fn label(&self) -> ::core::option::Option<&#path_to_crate::__private::object::Label> {
             self.__meta__.label()
           }
 

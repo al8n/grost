@@ -77,7 +77,7 @@ impl<M> SkippedField<M> {
     let ty = f.ty().clone();
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+      None => syn::parse2(quote! { ::core::default::Default::default })?,
     };
 
     Ok(Self {
@@ -260,7 +260,10 @@ impl<M> ConcreteTaggedField<M> {
       field_flavor = Some(ff.clone());
     }
 
-    let label = f.label().clone();
+    let label = f
+      .label()
+      .clone()
+      .ok_or_else(|| darling::Error::custom(format!("field `{name}` is missing label")))?;
     let field_flavor = field_flavor.unwrap_or_else(|| {
       macro_rules! bail {
         ($skip:ident, $or_else:ident) => {{
@@ -274,7 +277,7 @@ impl<M> ConcreteTaggedField<M> {
         }};
       }
 
-      let (skip_default, missing_operation) = match f.label() {
+      let (skip_default, missing_operation) = match label {
         Label::Scalar => bail!(skip_default_scalar, or_else_default_scalar),
         Label::Bytes => bail!(skip_default_bytes, or_else_default_bytes),
         Label::String => bail!(skip_default_string, or_else_default_string),
@@ -298,7 +301,7 @@ impl<M> ConcreteTaggedField<M> {
 
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+      None => syn::parse2(quote! { ::core::default::Default::default })?,
     };
     let schema_name = f
       .schema()
@@ -327,7 +330,7 @@ impl<M> ConcreteTaggedField<M> {
       },
       tag,
       default,
-      label,
+      label: label.clone(),
       partial_decoded: f.partial_decoded().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
@@ -539,10 +542,12 @@ impl<M> GenericTaggedField<M> {
         darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`"))
       })?
       .get();
+    println!("start parsing default");
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { <#ty as ::core::default::Default>::default })?,
+      None => syn::parse2(quote! { ::core::default::Default::default })?,
     };
+    println!("finish parsing default");
     let schema_name = f
       .schema()
       .name()
@@ -554,6 +559,10 @@ impl<M> GenericTaggedField<M> {
       .map(|s| s.to_string())
       .unwrap_or_default();
 
+    let label = f
+      .label()
+      .ok_or_else(|| darling::Error::custom(format!("field `{name}` is missing label")))?;
+    println!("start parsing flavors for field {name}");
     let field_flavors = flavors
       .iter()
       .map(|(name, flavor)| {
@@ -577,7 +586,7 @@ impl<M> GenericTaggedField<M> {
               }};
             }
 
-            let (skip_default, missing_operation) = match f.label() {
+            let (skip_default, missing_operation) = match label {
               Label::Scalar => bail!(skip_default_scalar, or_else_default_scalar),
               Label::Bytes => bail!(skip_default_bytes, or_else_default_bytes),
               Label::String => bail!(skip_default_string, or_else_default_string),
@@ -602,7 +611,7 @@ impl<M> GenericTaggedField<M> {
         Ok((name.clone(), field_flavor))
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;
-
+    println!("finish parsing flavors for field {name}");
     Ok(Self {
       attrs,
       vis,
@@ -611,7 +620,7 @@ impl<M> GenericTaggedField<M> {
       schema_name,
       schema_description,
       flavor_param: flavor_param.clone(),
-      label: f.label().clone(),
+      label: label.clone(),
       partial_decoded: f.partial_decoded().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
@@ -1080,6 +1089,7 @@ impl<M, F> GenericObject<M, F> {
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 
     let mut tags = IndexSet::new();
+    println!("starting to process fields for {name}");
     let fields = object
       .fields()
       .iter()
@@ -1111,7 +1121,7 @@ impl<M, F> GenericObject<M, F> {
           Ok(fields)
         }
       })?;
-
+    println!("finish to process fields for {name}");
     let partial = PartialObject::from_attribute(&name, object.partial())?;
     let partial_decoded =
       GenericPartialDecodedObject::from_attribute(&name, &flavor_param, object.partial_decoded())?;

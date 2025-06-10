@@ -170,12 +170,14 @@ impl<M, F> GenericObject<M, F> {
   {
     let path_to_grost = object.path_to_grost().clone();
 
+    println!("parsing fields");
     let fields = object
       .fields()
       .iter()
       .cloned()
       .map(|f| GenericField::<F>::from_ast::<M>(&object, f))
       .collect::<darling::Result<Vec<_>>>()?;
+    println!("fields ok");
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
     let partial_decoded = GenericPartialDecodedObject::from_ast(&object, &fields)?;

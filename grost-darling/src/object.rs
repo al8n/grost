@@ -2,7 +2,7 @@ use darling::{FromDeriveInput, FromField, FromMeta, ast::Data, util::Ignored};
 use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use super::{Attributes, DarlingAttributes};
+use super::Attributes;
 
 pub(super) use field::ObjectField;
 

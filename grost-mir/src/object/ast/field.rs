@@ -25,7 +25,7 @@ pub struct FieldAttribute {
   default: Option<Path>,
   schema: SchemaAttribute,
   tag: Option<NonZeroU32>,
-  label: Label,
+  label: Option<Label>,
   flavor: Vec<FieldFlavorAttribute>,
   partial: PartialFieldAttribute,
   partial_decoded: PartialDecodedFieldAttribute,
@@ -76,8 +76,8 @@ impl FieldAttribute {
   }
 
   /// Returns the type label of the field
-  pub const fn label(&self) -> &Label {
-    &self.label
+  pub const fn label(&self) -> Option<&Label> {
+    self.label.as_ref()
   }
 
   /// Returns the schema information of the field
@@ -148,7 +148,7 @@ pub trait RawField: Clone {
   fn selector(&self) -> &SelectorFieldAttribute;
 
   /// Returns the type label of the field
-  fn label(&self) -> &Label;
+  fn label(&self) -> Option<&Label>;
 
   /// Returns the schema information of the field
   fn schema(&self) -> &SchemaAttribute;

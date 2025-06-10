@@ -162,7 +162,7 @@ struct FieldFromMetaHelper {
 /// The meta of the object field
 #[derive(Debug, Clone)]
 pub struct FieldFromMeta {
-  pub label: Label,
+  pub label: Option<Label>,
   pub schema: SchemaFromMeta,
   pub default: Option<Path>,
   pub tag: Option<NonZeroU32>,
@@ -207,17 +207,21 @@ impl FromMeta for FieldFromMeta {
 
         let FieldFromMetaHelper { schema, default, tag, flavor, convert, partial, partial_decoded, selector, copy, skip } = FieldFromMetaHelper::from_list(&nested_meta)?;
         Ok(Self {
-          label: label.ok_or_else(|| darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?,
-            schema,
-            default,
-            tag,
-            flavor,
-            convert,
-            partial,
-            partial_decoded,
-            selector,
-            copy,
-            skip,
+          label: if skip {
+            None
+          } else {
+            Some(label.ok_or_else(|| darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?)
+          },
+          schema,
+          default,
+          tag,
+          flavor,
+          convert,
+          partial,
+          partial_decoded,
+          selector,
+          copy,
+          skip,
         })
       }
     })
