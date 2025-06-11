@@ -2,6 +2,7 @@ use darling::{FromMeta, ast::NestedMeta};
 pub use decode::*;
 pub use encode::*;
 pub use identifier::*;
+pub use tag::*;
 
 use indexmap::IndexMap;
 use syn::{Ident, Meta, MetaList, Type, parse::Parser};
@@ -11,6 +12,7 @@ use crate::utils::NestedMetaWithTypeField;
 mod decode;
 mod encode;
 mod identifier;
+mod tag;
 
 pub(crate) fn duplicate_flavor_error(ident: &Ident) -> darling::Error {
   darling::Error::custom(format!(
@@ -150,6 +152,7 @@ struct FlavorValueParser {
   #[cfg_attr(feature = "serde", serde(with = "serde::serde_type"))]
   format: syn::Type,
   identifier: IdentifierFromMeta,
+  tag: TagFromMeta,
   #[darling(default)]
   encode: EncodeFromMeta,
   #[darling(default)]
@@ -189,6 +192,7 @@ pub(crate) struct FlavorValue {
   pub(crate) ty: Type,
   pub(crate) format: Type,
   pub(crate) identifier: IdentifierFromMeta,
+  pub(crate) tag: TagFromMeta,
   pub(crate) encode: EncodeFromMeta,
   pub(crate) decode: DecodeFromMeta,
 }
@@ -199,6 +203,7 @@ impl From<FlavorValueParser> for FlavorValue {
       ty,
       format,
       identifier,
+      tag,
       encode,
       decode,
     }: FlavorValueParser,
@@ -207,6 +212,7 @@ impl From<FlavorValueParser> for FlavorValue {
       ty,
       format,
       identifier,
+      tag,
       encode,
       decode,
     }
@@ -249,6 +255,7 @@ impl FlavorValue {
     struct Helper {
       format: syn::Type,
       identifier: IdentifierFromMeta,
+      tag: TagFromMeta,
       #[darling(default)]
       encode: EncodeFromMeta,
       #[darling(default)]
@@ -261,6 +268,7 @@ impl FlavorValue {
       ty: ty.ok_or_else(|| darling::Error::missing_field("type"))?,
       format: helper.format,
       identifier: helper.identifier,
+      tag: helper.tag,
       encode: helper.encode,
       decode: helper.decode,
     })

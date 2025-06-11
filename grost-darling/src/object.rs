@@ -406,11 +406,11 @@ impl ToTokens for Object {
             self.data.as_ref().take_struct().expect(#expect_msg).fields
           }
 
-          fn path_to_grost(&self) -> &syn::Path {
+          fn path_to_grost(&self) -> &#path_to_crate::__private::syn::Path {
             self.__args__.__meta__.path_to_grost()
           }
 
-          fn default(&self) -> ::core::option::Option<&syn::Path> {
+          fn default(&self) -> ::core::option::Option<&#path_to_crate::__private::utils::Invokable> {
             self.__args__.__meta__.default()
           }
 

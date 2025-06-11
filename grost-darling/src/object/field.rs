@@ -266,7 +266,7 @@ impl ToTokens for ObjectField {
           #[darling(default)]
           schema: #path_to_crate::__private::utils::SchemaFromMeta,
           #[darling(default)]
-          default: ::core::option::Option<#path_to_crate::__private::syn::Path>,
+          default: ::core::option::Option<#path_to_crate::__private::utils::Invokable>,
           #[darling(default)]
           tag: ::core::option::Option<::core::num::NonZeroU32>,
           #[darling(default)]
@@ -289,7 +289,7 @@ impl ToTokens for ObjectField {
         struct #field_meta_with_label_name #generics #w {
           label: ::core::option::Option<#path_to_crate::__private::object::Label>,
           schema: #path_to_crate::__private::utils::SchemaFromMeta,
-          default: ::core::option::Option<#path_to_crate::__private::syn::Path>,
+          default: ::core::option::Option<#path_to_crate::__private::utils::Invokable>,
           tag: ::core::option::Option<::core::num::NonZeroU32>,
           flavor: #path_to_crate::__private::object::meta::FieldFlavorFromMeta,
           convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
@@ -534,7 +534,7 @@ impl ToTokens for ObjectField {
             &self.__meta__.schema()
           }
 
-          fn default(&self) -> ::core::option::Option<&syn::Path> {
+          fn default(&self) -> ::core::option::Option<&#path_to_crate::__private::utils::Invokable> {
             self.__meta__.default()
           }
 

@@ -4,6 +4,89 @@ use darling::FromMeta;
 use quote::quote;
 use syn::{Attribute, parse::Parser};
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Invokable {
+  expr: syn::Expr,
+}
+
+impl AsRef<syn::Expr> for Invokable {
+  fn as_ref(&self) -> &syn::Expr {
+    &self.expr
+  }
+}
+
+impl From<syn::ExprPath> for Invokable {
+  fn from(value: syn::ExprPath) -> Self {
+    Self {
+      expr: syn::Expr::Path(value),
+    }
+  }
+}
+
+impl From<syn::ExprClosure> for Invokable {
+  fn from(value: syn::ExprClosure) -> Self {
+    Self {
+      expr: syn::Expr::Closure(value),
+    }
+  }
+}
+
+impl From<Invokable> for syn::Expr {
+  fn from(value: Invokable) -> Self {
+    value.expr
+  }
+}
+
+impl From<syn::Path> for Invokable {
+  fn from(path: syn::Path) -> Self {
+    Self::from(syn::ExprPath {
+      attrs: vec![],
+      qself: None,
+      path,
+    })
+  }
+}
+
+impl TryFrom<Invokable> for syn::Path {
+  type Error = darling::Error;
+
+  fn try_from(value: Invokable) -> Result<Self, Self::Error> {
+    match value.expr {
+      syn::Expr::Path(expr_path) => Ok(expr_path.path),
+      syn::Expr::Closure(_) => Err(darling::Error::custom(
+        "Invokable is a closure, cannot be converted to a path",
+      )),
+      _ => unreachable!("Invokable should only contain ExprPath or ExprClosure"),
+    }
+  }
+}
+
+impl FromMeta for Invokable {
+  fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
+    match expr {
+      syn::Expr::Path(_) | syn::Expr::Closure(_) => Ok(Self { expr: expr.clone() }),
+      syn::Expr::Lit(syn::ExprLit {
+        lit: syn::Lit::Str(s),
+        ..
+      }) => syn::parse_str::<syn::Path>(&s.value())
+        .map_err(|e| {
+          darling::Error::custom(format!("expect a path in string literal: {}", e)).with_span(s)
+        })
+        .map(Self::from),
+      _ => Err(darling::Error::unexpected_expr_type(expr)),
+    }
+  }
+}
+
+impl quote::ToTokens for Invokable {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let expr = &self.expr;
+    tokens.extend(quote! {
+      (#expr)()
+    })
+  }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]

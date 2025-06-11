@@ -2,8 +2,8 @@ use darling::{FromMeta, ast::NestedMeta};
 use indexmap::IndexMap;
 use syn::{Ident, Meta};
 
-pub(crate) use decode::*;
-pub(crate) use encode::*;
+pub(in crate::object) use decode::*;
+pub(in crate::object) use encode::*;
 
 use crate::flavor::{complex_flavor_ident_error, duplicate_flavor_error};
 

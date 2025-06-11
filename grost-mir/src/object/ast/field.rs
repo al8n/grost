@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use syn::{Attribute, Ident, Path, Type, Visibility};
+use syn::{Attribute, Ident, Type, Visibility};
 
 pub use convert::ConvertAttribute;
 pub use flavor::{FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute};
@@ -10,7 +10,7 @@ pub use selector::SelectorFieldAttribute;
 
 use crate::{
   object::meta::{FieldFromMeta, Label},
-  utils::SchemaAttribute,
+  utils::{Invokable, SchemaAttribute},
 };
 
 mod convert;
@@ -22,7 +22,7 @@ mod selector;
 #[derive(Debug, Clone)]
 pub struct FieldAttribute {
   convert: ConvertAttribute,
-  default: Option<Path>,
+  default: Option<Invokable>,
   schema: SchemaAttribute,
   tag: Option<NonZeroU32>,
   label: Option<Label>,
@@ -86,7 +86,7 @@ impl FieldAttribute {
   }
 
   /// Returns the fn which will be used to generate the default value for the field
-  pub const fn default(&self) -> Option<&Path> {
+  pub const fn default(&self) -> Option<&Invokable> {
     self.default.as_ref()
   }
 }
@@ -154,7 +154,7 @@ pub trait RawField: Clone {
   fn schema(&self) -> &SchemaAttribute;
 
   /// Returns the fn which will be used to generate the default value for the field
-  fn default(&self) -> Option<&syn::Path>;
+  fn default(&self) -> Option<&Invokable>;
 
   /// Returns the field flavor attribute for the field
   fn flavors(&self) -> &[FieldFlavorAttribute];

@@ -4,7 +4,7 @@ use syn::{Ident, Path, Type, parse_quote};
 use crate::meta::flavor::{BuiltinFlavorRepr, FlavorFromMeta};
 
 pub use super::flavor::{
-  decode::DecodeAttribute, encode::EncodeAttribute, identifier::IdentifierAttribute,
+  decode::DecodeAttribute, encode::EncodeAttribute, identifier::IdentifierAttribute, tag::TagAttribute,
 };
 
 mod decode;

@@ -5,17 +5,17 @@ use syn::Path;
 use crate::utils::Invokable;
 
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
-pub(super) struct IdentifierParser {
+pub(super) struct TagParser {
   constructor: Invokable,
   encode: Invokable,
 }
 
-impl From<IdentifierParser> for IdentifierFromMeta {
+impl From<TagParser> for TagFromMeta {
   fn from(
-    IdentifierParser {
+    TagParser {
       constructor,
       encode,
-    }: IdentifierParser,
+    }: TagParser,
   ) -> Self {
     Self {
       constructor,
@@ -24,12 +24,12 @@ impl From<IdentifierParser> for IdentifierFromMeta {
   }
 }
 
-impl From<IdentifierFromMeta> for IdentifierParser {
+impl From<TagFromMeta> for TagParser {
   fn from(
-    IdentifierFromMeta {
+    TagFromMeta {
       constructor,
       encode,
-    }: IdentifierFromMeta,
+    }: TagFromMeta,
   ) -> Self {
     Self {
       constructor,
@@ -40,16 +40,13 @@ impl From<IdentifierFromMeta> for IdentifierParser {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
-#[cfg_attr(
-  feature = "serde",
-  serde(try_from = "super::serde::IdentifierSerdeHelper",)
-)]
-pub struct IdentifierFromMeta {
+#[cfg_attr(feature = "serde", serde(try_from = "super::serde::TagSerdeHelper",))]
+pub struct TagFromMeta {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,
 }
 
-impl IdentifierFromMeta {
+impl TagFromMeta {
   /// Returns the path to the constructor fn
   #[inline]
   pub const fn constructor(&self) -> &Invokable {
@@ -63,27 +60,27 @@ impl IdentifierFromMeta {
   }
 }
 
-impl TryFrom<&str> for IdentifierFromMeta {
+impl TryFrom<&str> for TagFromMeta {
   type Error = syn::Error;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let module: syn::Path = syn::parse_str(value)?;
-    let constructor = syn::parse2::<Path>(quote! { #module::constructor })?;
-    let encode = syn::parse2::<Path>(quote! { #module::encode })?;
+    let constructor = syn::parse2::<Path>(quote! { #module::constructor }).map(Into::into)?;
+    let encode = syn::parse2::<Path>(quote! { #module::encode }).map(Into::into)?;
 
     Ok(Self {
-      constructor: constructor.into(),
-      encode: encode.into(),
+      constructor,
+      encode,
     })
   }
 }
 
-impl FromMeta for IdentifierFromMeta {
+impl FromMeta for TagFromMeta {
   fn from_string(value: &str) -> darling::Result<Self> {
     Self::try_from(value).map_err(Into::into)
   }
 
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    IdentifierParser::from_list(items).map(Into::into)
+    TagParser::from_list(items).map(Into::into)
   }
 }

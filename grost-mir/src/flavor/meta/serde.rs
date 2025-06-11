@@ -9,6 +9,59 @@ use syn::Path;
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
+pub(super) enum TagSerdeHelper {
+  Module(String),
+  Config {
+    #[cfg_attr(feature = "serde", serde(with = "super::serde::serde_path"))]
+    constructor: syn::Path,
+    #[cfg_attr(feature = "serde", serde(with = "super::serde::serde_path"))]
+    encode: syn::Path,
+  },
+}
+
+impl TryFrom<TagSerdeHelper> for TagFromMeta {
+  type Error = syn::Error;
+
+  fn try_from(value: TagSerdeHelper) -> Result<Self, Self::Error> {
+    match value {
+      TagSerdeHelper::Module(s) => TagFromMeta::try_from(s.as_str()),
+      TagSerdeHelper::Config {
+        constructor,
+        encode,
+      } => Ok(Self {
+        constructor: constructor.into(),
+        encode: encode.into(),
+      }),
+    }
+  }
+}
+
+impl TryFrom<TagFromMeta> for TagSerdeHelper {
+  type Error = darling::Error;
+
+  fn try_from(value: TagFromMeta) -> Result<Self, Self::Error> {
+    Ok(TagSerdeHelper::Config {
+      constructor: value.constructor.try_into()?,
+      encode: value.encode.try_into()?,
+    })
+  }
+}
+
+impl Serialize for TagFromMeta {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let helper: TagSerdeHelper = self
+      .clone()
+      .try_into()
+      .map_err(<S::Error as ::serde::ser::Error>::custom)?;
+    helper.serialize(serializer)
+  }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
 pub(super) enum IdentifierSerdeHelper {
   Module(String),
   Config {
@@ -29,19 +82,34 @@ impl TryFrom<IdentifierSerdeHelper> for IdentifierFromMeta {
         constructor,
         encode,
       } => Ok(Self {
-        constructor,
-        encode,
+        constructor: constructor.into(),
+        encode: encode.into(),
       }),
     }
   }
 }
 
-impl From<IdentifierFromMeta> for IdentifierSerdeHelper {
-  fn from(value: IdentifierFromMeta) -> Self {
-    IdentifierSerdeHelper::Config {
-      constructor: value.constructor,
-      encode: value.encode,
-    }
+impl TryFrom<IdentifierFromMeta> for IdentifierSerdeHelper {
+  type Error = darling::Error;
+
+  fn try_from(value: IdentifierFromMeta) -> Result<Self, Self::Error> {
+    Ok(IdentifierSerdeHelper::Config {
+      constructor: value.constructor.try_into()?,
+      encode: value.encode.try_into()?,
+    })
+  }
+}
+
+impl Serialize for IdentifierFromMeta {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let helper: IdentifierSerdeHelper = self
+      .clone()
+      .try_into()
+      .map_err(<S::Error as ::serde::ser::Error>::custom)?;
+    helper.serialize(serializer)
   }
 }
 
@@ -291,6 +359,7 @@ pub(super) enum FlavorValueSerdeHelper {
     #[serde(with = "serde_type")]
     format: syn::Type,
     identifier: IdentifierFromMeta,
+    tag: TagFromMeta,
     encode: EncodeFromMeta,
     decode: DecodeFromMeta,
   },
@@ -308,12 +377,14 @@ impl TryFrom<FlavorValueSerdeHelper> for FlavorValue {
         ty,
         format,
         identifier,
+        tag,
         encode,
         decode,
       } => Ok(Self {
         ty,
         format,
         identifier,
+        tag,
         encode,
         decode,
       }),
@@ -327,6 +398,7 @@ impl From<FlavorValue> for FlavorValueSerdeHelper {
       ty: value.ty,
       format: value.format,
       identifier: value.identifier,
+      tag: value.tag,
       encode: value.encode,
       decode: value.decode,
     }
@@ -412,7 +484,7 @@ mod tests {
   fn test_identifier_serde() {
     #[derive(Serialize, Deserialize)]
     struct T {
-      identifier: IdentifierFromMeta,
+      identifier: TagFromMeta,
     }
 
     let module = r###"
@@ -441,8 +513,8 @@ mod tests {
     let config = r###"
     {
       "identifier": {
-        "constructor": "grost::flavors::network::Identifier::constructor",
-        "encode": "grost::flavors::network::Identifier::encode"
+        "constructor": "grost::flavors::network::Tag::constructor",
+        "encode": "grost::flavors::network::Tag::encode"
       }
     }
     "###;
@@ -453,7 +525,7 @@ mod tests {
         .to_token_stream()
         .to_string()
         .replace(" ", ""),
-      "grost::flavors::network::Identifier::constructor"
+      "grost::flavors::network::Tag::constructor"
     );
     assert_eq!(
       t.identifier
@@ -461,7 +533,7 @@ mod tests {
         .to_token_stream()
         .to_string()
         .replace(" ", ""),
-      "grost::flavors::network::Identifier::encode"
+      "grost::flavors::network::Tag::encode"
     );
   }
 

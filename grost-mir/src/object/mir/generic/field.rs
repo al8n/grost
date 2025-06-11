@@ -1,4 +1,4 @@
-use crate::object::Label;
+use crate::{object::Label, utils::Invokable};
 
 use super::super::super::ast::{
   FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
@@ -9,7 +9,7 @@ use super::super::super::ast::{
 use indexmap::IndexMap;
 use quote::quote;
 use syn::{
-  Attribute, Ident, Path, Type, TypeParam, Visibility, WherePredicate, punctuated::Punctuated,
+  Attribute, Ident, Type, TypeParam, Visibility, WherePredicate, punctuated::Punctuated,
   token::Comma,
 };
 
@@ -248,7 +248,7 @@ pub struct GenericTaggedField<M = ()> {
   partial_decoded: GenericPartialDecodedField,
   partial: GenericPartialField,
   selector: GenericSelectorField,
-  default: Path,
+  default: Invokable,
   tag: u32,
   copy: bool,
   meta: M,
@@ -318,7 +318,7 @@ impl<F> GenericTaggedField<F> {
 
   /// Returns the default value of this field.
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     &self.default
   }
 
@@ -552,7 +552,7 @@ impl<F> GenericField<F> {
 
   /// Returns the fn returns the default value of the field.
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     match self {
       GenericField::Skipped(f) => f.default(),
       GenericField::Tagged(f) => f.default(),

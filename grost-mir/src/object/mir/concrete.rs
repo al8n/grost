@@ -2,7 +2,7 @@ use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
-use crate::{flavor::FlavorAttribute, object::Indexer};
+use crate::{flavor::FlavorAttribute, object::Indexer, utils::Invokable};
 
 pub use field::*;
 pub use partial::*;
@@ -26,7 +26,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   flavor: FlavorAttribute,
   fields: Vec<ConcreteField<F>>,
   indexer: Indexer,
-  default: Option<Path>,
+  default: Option<Invokable>,
   partial: ConcretePartialObject,
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
@@ -244,7 +244,7 @@ impl<M, F> ConcreteObject<M, F> {
         impl #ig ::core::default::Default for #name #tg #wc {
           /// Creates a new instance of the object with default values.
           pub fn new() -> Self {
-            #default()
+            #default
           }
         }
       })
@@ -253,7 +253,7 @@ impl<M, F> ConcreteObject<M, F> {
         let name = f.name();
         let default = f.default();
         quote! {
-          #name: #default()
+          #name: #default
         }
       });
 

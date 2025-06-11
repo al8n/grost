@@ -2,7 +2,7 @@ use indexmap::IndexMap;
 use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use crate::object::Indexer;
+use crate::{object::Indexer, utils::Invokable};
 
 use super::{
   super::ast::{GenericObject as GenericObjectAst, ObjectFlavor},
@@ -23,7 +23,7 @@ mod selector;
 pub struct GenericObject<M, F> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
-  default: Option<Path>,
+  default: Option<Invokable>,
   name: Ident,
   vis: Visibility,
   ty: Type,
@@ -170,14 +170,12 @@ impl<M, F> GenericObject<M, F> {
   {
     let path_to_grost = object.path_to_grost().clone();
 
-    println!("parsing fields");
     let fields = object
       .fields()
       .iter()
       .cloned()
       .map(|f| GenericField::<F>::from_ast::<M>(&object, f))
       .collect::<darling::Result<Vec<_>>>()?;
-    println!("fields ok");
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
     let partial_decoded = GenericPartialDecodedObject::from_ast(&object, &fields)?;
@@ -255,7 +253,7 @@ impl<M, F> GenericObject<M, F> {
         impl #ig ::core::default::Default for #name #tg #wc {
           /// Creates a new instance of the object with default values.
           pub fn new() -> Self {
-            #default()
+            #default
           }
         }
       })
@@ -264,7 +262,7 @@ impl<M, F> GenericObject<M, F> {
         let name = f.name();
         let default = f.default();
         quote! {
-          #name: #default()
+          #name: #default
         }
       });
 

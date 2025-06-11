@@ -4,6 +4,7 @@ use syn::{Ident, Path, Type, parse_quote};
 pub use decode::DecodeAttribute;
 pub use encode::EncodeAttribute;
 pub use identifier::IdentifierAttribute;
+pub use tag::TagAttribute;
 
 pub(crate) use meta::{
   BuiltinFlavorRepr, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
@@ -13,6 +14,7 @@ mod decode;
 mod encode;
 mod identifier;
 mod meta;
+mod tag;
 
 impl FlavorFromMeta {
   pub(crate) fn finalize(self, path_to_grost: &Path) -> syn::Result<Vec<FlavorAttribute>> {
@@ -24,6 +26,7 @@ impl FlavorFromMeta {
         ty: parse_quote!(#path_to_grost::__private::flavors::Network),
         format: parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited),
         identifier: IdentifierAttribute::network(path_to_grost),
+        tag: TagAttribute::network(path_to_grost),
         encode: default_flavor_value_parser.encode.into(),
         decode: default_flavor_value_parser.decode.into(),
       }),
@@ -38,6 +41,7 @@ impl FlavorFromMeta {
       let ty = value.ty;
       let format = value.format;
       let identifier = value.identifier.into();
+      let tag = value.tag.into();
       let encode = value.encode.into();
       let decode = value.decode.into();
 
@@ -45,6 +49,7 @@ impl FlavorFromMeta {
         name,
         ty,
         format,
+        tag,
         identifier,
         encode,
         decode,
@@ -61,6 +66,7 @@ pub struct FlavorAttribute {
   ty: Type,
   format: Type,
   identifier: IdentifierAttribute,
+  tag: TagAttribute,
   encode: EncodeAttribute,
   decode: DecodeAttribute,
 }
@@ -70,6 +76,7 @@ impl FlavorAttribute {
     let ty = parse_quote!(#path_to_grost::__private::flavors::Network);
     let format = parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited);
     let identifier = IdentifierAttribute::network(path_to_grost);
+    let tag = TagAttribute::network(path_to_grost);
     let encode = EncodeAttribute::network(path_to_grost)?;
     let decode = DecodeAttribute::network(path_to_grost);
 
@@ -78,6 +85,7 @@ impl FlavorAttribute {
       ty,
       format,
       identifier,
+      tag,
       encode,
       decode,
     })
@@ -103,6 +111,11 @@ impl FlavorAttribute {
   /// Returns the identifier attribute of the flavor.
   pub const fn identifier(&self) -> &IdentifierAttribute {
     &self.identifier
+  }
+
+  /// Returns the tag attribute of the flavor.
+  pub const fn tag(&self) -> &TagAttribute {
+    &self.tag
   }
 
   /// Returns the encode attribute of the flavor.

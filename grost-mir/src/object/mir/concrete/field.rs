@@ -1,6 +1,8 @@
-use syn::{Attribute, Ident, Path, Type, Visibility, punctuated::Punctuated};
+use syn::{Attribute, Ident, Type, Visibility, punctuated::Punctuated};
 
 use quote::quote;
+
+use crate::utils::Invokable;
 
 use super::{
   super::super::ast::{
@@ -22,7 +24,7 @@ pub struct ConcreteTaggedField<F = ()> {
   name: Ident,
   vis: Visibility,
   ty: Type,
-  default: Path,
+  default: Invokable,
   attrs: Vec<Attribute>,
   wire_format: Type,
   wire_format_reflection: Type,
@@ -60,7 +62,7 @@ impl<F> ConcreteTaggedField<F> {
 
   /// Returns the default value of the field.
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     &self.default
   }
 
@@ -285,7 +287,7 @@ impl<F> ConcreteField<F> {
   }
 
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     match self {
       Self::Skipped(skipped) => skipped.default(),
       Self::Tagged(tagged) => tagged.default(),

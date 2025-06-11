@@ -3,9 +3,9 @@ use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::{
-  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
+  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, TagAttribute},
   object::{FieldSelection, Label, meta::ObjectFromMeta},
-  utils::{MissingOperation, SchemaAttribute, grost_flavor_param},
+  utils::{Invokable, MissingOperation, SchemaAttribute, grost_flavor_param},
 };
 
 pub use field::*;
@@ -26,7 +26,7 @@ pub struct SkippedField<M = ()> {
   vis: Visibility,
   name: Ident,
   ty: Type,
-  default: Path,
+  default: Invokable,
   meta: M,
 }
 
@@ -57,7 +57,7 @@ impl<M> SkippedField<M> {
 
   /// Returns the path to the default value function for the skipped field
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     &self.default
   }
 
@@ -77,7 +77,9 @@ impl<M> SkippedField<M> {
     let ty = f.ty().clone();
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { ::core::default::Default::default })?,
+      None => {
+        syn::parse2::<syn::Path>(quote! { ::core::default::Default::default }).map(Into::into)?
+      }
     };
 
     Ok(Self {
@@ -104,7 +106,7 @@ pub(super) struct ConcreteTaggedField<M = ()> {
   partial_decoded: PartialDecodedFieldAttribute,
   partial: PartialFieldAttribute,
   selector: SelectorFieldAttribute,
-  default: Path,
+  default: Invokable,
   tag: u32,
   copy: bool,
   meta: M,
@@ -149,7 +151,7 @@ impl<M> ConcreteTaggedField<M> {
 
   /// Returns the path to the default value function for the field
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     &self.default
   }
 
@@ -262,7 +264,6 @@ impl<M> ConcreteTaggedField<M> {
 
     let label = f
       .label()
-      .clone()
       .ok_or_else(|| darling::Error::custom(format!("field `{name}` is missing label")))?;
     let field_flavor = field_flavor.unwrap_or_else(|| {
       macro_rules! bail {
@@ -301,7 +302,7 @@ impl<M> ConcreteTaggedField<M> {
 
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { ::core::default::Default::default })?,
+      None => syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?,
     };
     let schema_name = f
       .schema()
@@ -395,7 +396,7 @@ pub(super) struct GenericTaggedField<M = ()> {
   partial_decoded: PartialDecodedFieldAttribute,
   partial: PartialFieldAttribute,
   selector: SelectorFieldAttribute,
-  default: Path,
+  default: Invokable,
   tag: u32,
   flavors: IndexMap<Ident, FieldFlavor>,
   copy: bool,
@@ -441,7 +442,7 @@ impl<M> GenericTaggedField<M> {
 
   /// Returns the path to the default value function for the field
   #[inline]
-  pub const fn default(&self) -> &Path {
+  pub const fn default(&self) -> &Invokable {
     &self.default
   }
 
@@ -542,12 +543,10 @@ impl<M> GenericTaggedField<M> {
         darling::Error::custom(format!("{name} is missing a tag, please add `tag = ...`"))
       })?
       .get();
-    println!("start parsing default");
     let default = match f.default().cloned() {
       Some(path) => path,
-      None => syn::parse2(quote! { ::core::default::Default::default })?,
+      None => syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?,
     };
-    println!("finish parsing default");
     let schema_name = f
       .schema()
       .name()
@@ -562,7 +561,6 @@ impl<M> GenericTaggedField<M> {
     let label = f
       .label()
       .ok_or_else(|| darling::Error::custom(format!("field `{name}` is missing label")))?;
-    println!("start parsing flavors for field {name}");
     let field_flavors = flavors
       .iter()
       .map(|(name, flavor)| {
@@ -611,7 +609,6 @@ impl<M> GenericTaggedField<M> {
         Ok((name.clone(), field_flavor))
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;
-    println!("finish parsing flavors for field {name}");
     Ok(Self {
       attrs,
       vis,
@@ -674,7 +671,7 @@ pub(super) struct ConcreteObject<M = (), F = ()> {
   generics: Generics,
   flavor: FlavorAttribute,
   fields: Vec<ConcreteField<F>>,
-  default: Option<Path>,
+  default: Option<Invokable>,
   indexer: Indexer,
   partial: PartialObject,
   partial_decoded: ConcretePartialDecodedObject,
@@ -756,7 +753,7 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the path to the fn that returns the default value of the object, if any.
   #[inline]
-  pub const fn default(&self) -> Option<&Path> {
+  pub const fn default(&self) -> Option<&Invokable> {
     self.default.as_ref()
   }
 
@@ -883,6 +880,7 @@ pub struct ObjectFlavor {
   ty: Type,
   format: Type,
   identifier: IdentifierAttribute,
+  tag: TagAttribute,
   encode: EncodeAttribute,
   decode: DecodeAttribute,
 }
@@ -906,6 +904,12 @@ impl ObjectFlavor {
     &self.identifier
   }
 
+  /// Returns the tag attribute for the flavor.
+  #[inline]
+  pub const fn tag(&self) -> &TagAttribute {
+    &self.tag
+  }
+
   /// Returns the encode attribute for this flavor.
   #[inline]
   pub const fn encode(&self) -> &EncodeAttribute {
@@ -923,6 +927,7 @@ impl ObjectFlavor {
       ty: attribute.ty().clone(),
       format: attribute.wire_format().clone(),
       identifier: attribute.identifier().clone(),
+      tag: attribute.tag().clone(),
       encode: attribute.encode().clone(),
       decode: attribute.decode().clone(),
     })
@@ -934,7 +939,7 @@ impl ObjectFlavor {
 pub(super) struct GenericObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
-  default: Option<Path>,
+  default: Option<Invokable>,
   name: Ident,
   vis: Visibility,
   ty: Type,
@@ -1012,7 +1017,7 @@ impl<M, F> GenericObject<M, F> {
 
   /// Returns the path to the fn that returns the default value of the object, if any.
   #[inline]
-  pub const fn default(&self) -> Option<&Path> {
+  pub const fn default(&self) -> Option<&Invokable> {
     self.default.as_ref()
   }
 
@@ -1089,7 +1094,6 @@ impl<M, F> GenericObject<M, F> {
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 
     let mut tags = IndexSet::new();
-    println!("starting to process fields for {name}");
     let fields = object
       .fields()
       .iter()
@@ -1121,7 +1125,6 @@ impl<M, F> GenericObject<M, F> {
           Ok(fields)
         }
       })?;
-    println!("finish to process fields for {name}");
     let partial = PartialObject::from_attribute(&name, object.partial())?;
     let partial_decoded =
       GenericPartialDecodedObject::from_attribute(&name, &flavor_param, object.partial_decoded())?;
@@ -1231,7 +1234,7 @@ impl ObjectFromMeta {
 pub struct ObjectAttribute {
   path_to_grost: Path,
   flavors: Vec<FlavorAttribute>,
-  default: Option<Path>,
+  default: Option<Invokable>,
   schema: SchemaAttribute,
   partial: PartialObjectAttribute,
   partial_decoded: PartialDecodedObjectAttribute,
@@ -1248,7 +1251,7 @@ impl ObjectAttribute {
   }
 
   /// Returns the path to the fn that returns the default value of the object
-  pub const fn default(&self) -> Option<&Path> {
+  pub const fn default(&self) -> Option<&Invokable> {
     self.default.as_ref()
   }
 
@@ -1319,7 +1322,7 @@ pub trait RawObject: Clone {
   fn path_to_grost(&self) -> &Path;
 
   /// Returns the path to the fn that returns the default value of the object
-  fn default(&self) -> Option<&Path>;
+  fn default(&self) -> Option<&Invokable>;
 
   /// Returns the schema information
   fn schema(&self) -> &SchemaAttribute;

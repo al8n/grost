@@ -1,10 +1,12 @@
 use quote::quote;
 use syn::Path;
 
-use crate::meta::flavor::IdentifierFromMeta;
+use crate::utils::Invokable;
 
-impl From<IdentifierFromMeta> for IdentifierAttribute {
-  fn from(meta: IdentifierFromMeta) -> Self {
+use super::meta::TagFromMeta;
+
+impl From<TagFromMeta> for TagAttribute {
+  fn from(meta: TagFromMeta) -> Self {
     Self {
       constructor: meta.constructor,
       encode: meta.encode,
@@ -13,12 +15,12 @@ impl From<IdentifierFromMeta> for IdentifierAttribute {
 }
 
 #[derive(Debug, Clone)]
-pub struct IdentifierAttribute {
+pub struct TagAttribute {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,
 }
 
-impl IdentifierAttribute {
+impl TagAttribute {
   pub const fn constructor(&self) -> &Invokable {
     &self.constructor
   }
@@ -29,14 +31,15 @@ impl IdentifierAttribute {
 
   pub(crate) fn network(path_to_grost: &Path) -> Self {
     let constructor =
-      syn::parse2(quote! { #path_to_grost::__private::flavors::network::Identifier::new }).unwrap();
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::new })
+        .unwrap();
     let encode =
-      syn::parse2(quote! { #path_to_grost::__private::flavors::network::Identifier::encode })
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::encode })
         .unwrap();
 
     Self {
-      constructor,
-      encode,
+      constructor: constructor.into(),
+      encode: encode.into(),
     }
   }
 }

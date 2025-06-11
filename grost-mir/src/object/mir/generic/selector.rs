@@ -324,7 +324,7 @@ impl GenericSelector {
     })
   }
 
-  pub fn selector_iter<M, F>(
+  pub(super) fn selector_iter<M, F>(
     &self,
     object: &GenericObjectAst<M, F>,
   ) -> darling::Result<GenericSelectorIter> {

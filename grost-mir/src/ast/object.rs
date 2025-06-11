@@ -8,7 +8,7 @@ use crate::meta::{
 
 use super::{
   SchemaAttribute,
-  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute},
+  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, TagAttribute},
 };
 
 pub use crate::meta::object::{FieldSelection, Label};
@@ -879,6 +879,7 @@ pub struct ObjectFlavor {
   ty: Type,
   format: Type,
   identifier: IdentifierAttribute,
+  tag: TagAttribute,
   encode: EncodeAttribute,
   decode: DecodeAttribute,
 }
@@ -900,6 +901,12 @@ impl ObjectFlavor {
   #[inline]
   pub const fn identifier(&self) -> &IdentifierAttribute {
     &self.identifier
+  }
+
+  /// Returns the tag attribute for the flavor.
+  #[inline]
+  pub const fn tag(&self) -> &TagAttribute {
+    &self.tag
   }
 
   /// Returns the encode attribute for this flavor.

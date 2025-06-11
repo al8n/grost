@@ -1,7 +1,10 @@
 use darling::FromMeta;
-use syn::Path;
 
-use crate::{flavor::FlavorFromMeta, generic::GenericFromMeta, utils::SchemaFromMeta};
+use crate::{
+  flavor::FlavorFromMeta,
+  generic::GenericFromMeta,
+  utils::{Invokable, SchemaFromMeta},
+};
 
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use partial::PartialObjectFromMeta;
@@ -19,7 +22,7 @@ mod selector;
 #[derive(Debug, Default, Clone, FromMeta)]
 pub struct ObjectFromMeta {
   #[darling(default)]
-  pub(super) default: Option<Path>,
+  pub(super) default: Option<Invokable>,
   #[darling(default)]
   pub(super) generic: GenericFromMeta,
   #[darling(default)]

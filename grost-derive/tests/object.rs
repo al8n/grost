@@ -26,6 +26,10 @@ use grost_derive::{Object, object};
     ),
     mystorage(
       format = "grost::flavors::network::LengthDelimited",
+      tag(
+        constructor = "grost::flavors::network::Tag::new",
+        encode = "grost::flavors::network::Tag::encode",
+      ),
       identifier(
         constructor = "grost::flavors::network::Identifier::new",
         encode = "grost::flavors::network::Identifier::encode",
@@ -53,20 +57,17 @@ pub struct User {
   name: String,
   #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
   age: u8,
-  // #[grost(
-  //   tag = 4,
-  //   schema(description = "The email of the user"),
-  //   partial_decoded(copy, type = "&'t str"),
-  //   string,
-  //   flavor(
-  // .   default = "grost::flavors::network::LengthDelimited",
-  //     mystorage(
-  //       format = "mystorage::LengthDelimited",
-  //     ),
-  //   ),
-  // . optional(packed),
-  // )]
-  // emails: Option<Vec<String>>,
+  #[grost(
+    tag = 4,
+    schema(description = "The email of the user"),
+    partial_decoded(copy, type = "&'de str"),
+    optional(list(string)),
+    flavor(
+      default = "grost::flavors::network::LengthDelimited",
+      mystorage(format = "mystorage::LengthDelimited",),
+    )
+  )]
+  emails: Option<Vec<String>>,
   #[grost(skip)]
   _w: core::marker::PhantomData<*const ()>,
 }
