@@ -11,6 +11,7 @@ mod encode;
 #[derive(Debug, Clone)]
 pub struct FieldFlavorAttribute {
   pub(super) name: Ident,
+  pub(super) ty: Option<Type>,
   pub(super) format: Option<Type>,
   pub(super) encode: FieldEncodeAttribute,
   pub(super) decode: FieldDecodeAttribute,
@@ -27,6 +28,11 @@ impl FieldFlavorAttribute {
     self.format.as_ref()
   }
 
+  /// Returns the type of the partial decoded field for this flavor, if specified.
+  pub const fn ty(&self) -> Option<&syn::Type> {
+    self.format.as_ref()
+  }
+
   /// Returns the encode attribute for this flavor.
   pub const fn encode(&self) -> &FieldEncodeAttribute {
     &self.encode
@@ -39,12 +45,14 @@ impl FieldFlavorAttribute {
 
   pub(crate) fn new(
     name: Ident,
+    ty: Option<syn::Type>,
     format: Option<syn::Type>,
     encode: FieldEncodeAttribute,
     decode: FieldDecodeAttribute,
   ) -> Self {
     Self {
       name,
+      ty,
       format,
       encode,
       decode,
@@ -58,12 +66,14 @@ impl FieldFlavorFromMeta {
       .flavors
       .into_iter()
       .map(|(name, value)| {
+        let ty = value.ty;
         let format = value.format;
         let encode = value.encode.finalize()?;
         let decode = value.decode.finalize()?;
 
         Ok(FieldFlavorAttribute {
           name,
+          ty,
           format,
           encode,
           decode,

@@ -186,7 +186,7 @@ impl FieldFlavor {
       None
     };
 
-    let partial_decoded_ty = match field.partial_decoded_type() {
+    let partial_decoded_ty = match ast.ty().or(field.partial_decoded_type()) {
       Some(ty) => ty.clone(),
       None => {
         let state_type: Type = syn::parse2(quote! {
@@ -429,31 +429,28 @@ impl<F> GenericTaggedField<F> {
       None
     };
 
-    let partial_decoded_ty = match field.partial_decoded_type() {
-      Some(ty) => ty.clone(),
-      None => {
-        let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Decoded<
-              #lifetime,
-              #flavor_ident,
-              <#wfr as #object_reflectable>::Reflection,
-              #unknown_buffer,
-            >
+    let partial_decoded_ty = {
+      let state_type: Type = syn::parse2(quote! {
+        #path_to_grost::__private::convert::State<
+          #path_to_grost::__private::convert::Decoded<
+            #lifetime,
+            #flavor_ident,
+            <#wfr as #object_reflectable>::Reflection,
+            #unknown_buffer,
           >
-        })?;
+        >
+      })?;
 
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          #field_ty: #state_type
-        })?);
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
-        })?);
+      partial_decoded_constraints.push(syn::parse2(quote! {
+        #field_ty: #state_type
+      })?);
+      partial_decoded_constraints.push(syn::parse2(quote! {
+        <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+      })?);
 
-        syn::parse2(quote! {
-          <#field_ty as #state_type>::Output
-        })?
-      }
+      syn::parse2(quote! {
+        <#field_ty as #state_type>::Output
+      })?
     };
 
     let optional_partial_decoded_type = syn::parse2(quote! {

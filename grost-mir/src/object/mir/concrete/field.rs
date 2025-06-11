@@ -180,7 +180,7 @@ impl<F> ConcreteTaggedField<F> {
       None
     };
 
-    let partial_decoded_ty = match field.partial_decoded_type() {
+    let partial_decoded_ty = match field.flavor().ty().or_else(|| field.partial_decoded_type()) {
       Some(ty) => ty.clone(),
       None => {
         let state_type: Type = syn::parse2(quote! {

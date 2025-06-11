@@ -295,6 +295,7 @@ impl<M> ConcreteTaggedField<M> {
       FieldFlavorAttribute::new(
         flavor.name().clone(),
         None,
+        None,
         FieldEncodeAttribute::new(Some(skip_default), None, None),
         FieldDecodeAttribute::new(missing_operation, None),
       )
@@ -324,6 +325,7 @@ impl<M> ConcreteTaggedField<M> {
       schema_name,
       ty,
       flavor: FieldFlavor {
+        ty: field_flavor.ty().cloned(),
         format: field_flavor.format().cloned(),
         flavor_type: flavor.ty().clone(),
         encode: field_flavor.encode().clone(),
@@ -351,6 +353,7 @@ pub(super) enum ConcreteField<M = ()> {
 
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
+  ty: Option<Type>,
   format: Option<Type>,
   flavor_type: Type,
   encode: FieldEncodeAttribute,
@@ -362,6 +365,12 @@ impl FieldFlavor {
   #[inline]
   pub const fn format(&self) -> Option<&Type> {
     self.format.as_ref()
+  }
+
+  /// Returns the type of the partial decoded field for this flavor, if specified
+  #[inline]
+  pub const fn ty(&self) -> Option<&Type> {
+    self.ty.as_ref()
   }
 
   /// Returns the type of the flavor
@@ -566,6 +575,7 @@ impl<M> GenericTaggedField<M> {
       .map(|(name, flavor)| {
         let field_flavor = match f.flavors().iter().find(|ff| ff.name().eq(name)) {
           Some(ff) => FieldFlavor {
+            ty: ff.ty().cloned(),
             format: ff.format().cloned(),
             flavor_type: flavor.ty().clone(),
             encode: ff.encode().clone(),
@@ -599,6 +609,7 @@ impl<M> GenericTaggedField<M> {
             };
 
             FieldFlavor {
+              ty: None,
               format: None,
               flavor_type: flavor.ty().clone(),
               encode: FieldEncodeAttribute::new(Some(skip_default), None, None),
