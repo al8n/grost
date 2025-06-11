@@ -1,5 +1,5 @@
 use quote::{ToTokens, format_ident, quote};
-use syn::{ConstParam, Ident, Type, Visibility, parse_quote};
+use syn::{Attribute, ConstParam, Generics, Ident, Path, Type, Visibility, parse_quote};
 
 use super::{RawField, RawObject, ast::Object as ObjectAst};
 
@@ -86,7 +86,7 @@ impl<M, F> Object<M, F> {
 
   /// Returns the attributes of the object.
   #[inline]
-  pub const fn attrs(&self) -> &[syn::Attribute] {
+  pub const fn attrs(&self) -> &[Attribute] {
     match self {
       Self::Generic(generic) => generic.attrs(),
       Self::Concrete(concrete) => concrete.attrs(),
@@ -95,7 +95,7 @@ impl<M, F> Object<M, F> {
 
   /// Returns the generics of the object.
   #[inline]
-  pub const fn generics(&self) -> &syn::Generics {
+  pub const fn generics(&self) -> &Generics {
     match self {
       Self::Generic(generic) => generic.generics(),
       Self::Concrete(concrete) => concrete.generics(),
@@ -160,4 +160,319 @@ fn accessors(
       self
     }
   }
+}
+
+fn optional_accessors(
+  field_name: &Ident,
+  vis: &Visibility,
+  ty: &Type,
+  copy: bool,
+) -> proc_macro2::TokenStream {
+  let ref_fn = format_ident!("{}_ref", field_name);
+  let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
+  let ref_mut_fn = format_ident!("{}_mut", field_name);
+  let ref_mut_fn_doc = format!(" Returns a mutable reference to the `{field_name}`");
+  let unwrap_ref_fn = format_ident!("unwrap_{}_ref", field_name);
+  let unwrap_ref_fn_doc = format!(" Returns a reference to the `{field_name}` if it is not `None`");
+  let unwrap_mut_fn = format_ident!("unwrap_{}_mut", field_name);
+  let unwrap_mut_fn_doc =
+    format!(" Returns a mutable reference to the `{field_name}` if it is not `None`");
+  let panic_msg = format!("`{field_name}` is `None`");
+  let panic_msg_doc = format!(" - Panics if the `{field_name}` is `None`");
+  let set_fn = format_ident!("set_{}", field_name);
+  let set_fn_doc = format!(" Set the `{field_name}` to the given value");
+  let update_fn = format_ident!("update_{}", field_name);
+  let update_fn_doc =
+    format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
+  let clear_fn = format_ident!("clear_{}", field_name);
+  let clear_fn_doc = format!(" Clear the value of `{field_name}`");
+  let take_fn = format_ident!("take_{}", field_name);
+  let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
+  let with_fn = format_ident!("with_{}", field_name);
+  let without_fn = format_ident!("without_{}", field_name);
+  let maybe_fn = format_ident!("maybe_{}", field_name);
+  let constable = copy.then(|| quote! { const });
+
+  quote! {
+    #[doc = #ref_fn_doc]
+    #[inline]
+    #vis const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
+      self.#field_name.as_ref()
+    }
+
+    #[doc = #ref_mut_fn_doc]
+    #[inline]
+    #vis const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
+      self.#field_name.as_mut()
+    }
+
+    #[doc = #unwrap_ref_fn_doc]
+    ///
+    /// ## Panics
+    ///
+    #[doc = #panic_msg_doc]
+    #[inline]
+    #vis const fn #unwrap_ref_fn(&self) -> &#ty {
+      match self.#field_name.as_ref() {
+        ::core::option::Option::Some(value) => value,
+        ::core::option::Option::None => panic!(#panic_msg),
+      }
+    }
+
+    #[doc = #unwrap_mut_fn_doc]
+    ///
+    /// ## Panics
+    ///
+    #[doc = #panic_msg_doc]
+    #[inline]
+    #vis const fn #unwrap_mut_fn(&mut self) -> &mut #ty {
+      match self.#field_name.as_mut() {
+        ::core::option::Option::Some(value) => value,
+        ::core::option::Option::None => panic!(#panic_msg),
+      }
+    }
+
+    #[doc = #take_fn_doc]
+    #[inline]
+    #vis const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
+      self.#field_name.take()
+    }
+
+    #[doc = #clear_fn_doc]
+    #[inline]
+    #vis #constable fn #clear_fn(&mut self) -> &mut Self {
+      self.#field_name = ::core::option::Option::None;
+      self
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    #vis #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+      self.#field_name = ::core::option::Option::Some(value);
+      self
+    }
+
+    #[doc = #update_fn_doc]
+    #[inline]
+    #vis #constable fn #update_fn(&mut self, value: ::core::option::Option<#ty>) -> &mut Self {
+      self.#field_name = value;
+      self
+    }
+
+    #[doc = #set_fn_doc]
+    #[inline]
+    #vis #constable fn #with_fn(mut self, value: #ty) -> Self {
+      self.#field_name = ::core::option::Option::Some(value);
+      self
+    }
+
+    #[doc = #clear_fn_doc]
+    #[inline]
+    #vis #constable fn #without_fn(mut self) -> Self {
+      self.#field_name = ::core::option::Option::None;
+      self
+    }
+
+    #[doc = #update_fn_doc]
+    #[inline]
+    #vis #constable fn #maybe_fn(mut self, value: ::core::option::Option<#ty>) -> Self {
+      self.#field_name = value;
+      self
+    }
+  }
+}
+
+fn derive_flatten_state(
+  path_to_grost: &Path,
+  generics: &Generics,
+  name: &Ident,
+) -> proc_macro2::TokenStream {
+  let mut all_generics = generics.clone();
+  all_generics.params.push(
+    syn::parse2(quote! {
+      __GROST_FLATTEN_STATE__: ?::core::marker::Sized
+    })
+    .unwrap(),
+  );
+
+  let (ig, _, w) = all_generics.split_for_impl();
+  let (_, tg, _) = generics.split_for_impl();
+
+  quote! {
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
+    impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>> for #name #tg #w {
+      type Output = Self;
+      type Input = Self;
+    }
+  }
+}
+
+fn field_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: impl ToTokens,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::ObjectFieldReflection<
+      #object_type,
+      #path_to_grost::__private::reflection::ObjectField,
+      #flavor_ty,
+      #tag,
+    >
+  })
+}
+
+fn wire_format_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::WireFormatReflection<
+      #object_type,
+      #flavor_ty,
+      #tag,
+    >
+  })
+}
+
+fn wire_type_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::WireTypeReflection<
+      #path_to_grost::__private::reflection::ObjectFieldReflection<
+        #object_type,
+        <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::WireType,
+        #flavor_ty,
+        #tag,
+      >
+    >
+  })
+}
+
+fn identifier_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::IdentifierReflection<
+      #path_to_grost::__private::reflection::ObjectFieldReflection<
+        #object_type,
+        <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier,
+        #flavor_ty,
+        #tag,
+      >
+    >
+  })
+}
+
+fn encoded_identifier_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::EncodeReflection<
+      #path_to_grost::__private::reflection::IdentifierReflection<
+        #path_to_grost::__private::reflection::ObjectFieldReflection<
+          #object_type,
+          <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier,
+          #flavor_ty,
+          #tag,
+        >
+      >
+    >
+  })
+}
+
+fn encoded_identifier_len_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::Len<
+      #path_to_grost::__private::reflection::EncodeReflection<
+        #path_to_grost::__private::reflection::IdentifierReflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
+            #object_type,
+            <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier,
+            #flavor_ty,
+            #tag,
+          >
+        >
+      >
+    >
+  })
+}
+
+fn tag_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::TagReflection<
+      #path_to_grost::__private::reflection::ObjectFieldReflection<
+        #object_type,
+        <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Tag,
+        #flavor_ty,
+        #tag,
+      >
+    >
+  })
+}
+
+fn encoded_tag_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::EncodeReflection<
+      #path_to_grost::__private::reflection::TagReflection<
+        #path_to_grost::__private::reflection::ObjectFieldReflection<
+          #object_type,
+          <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Tag,
+          #flavor_ty,
+          #tag,
+        >
+      >
+    >
+  })
+}
+
+fn encoded_tag_len_reflection(
+  path_to_grost: &Path,
+  object_type: &Type,
+  flavor_ty: &Type,
+  tag: u32,
+) -> syn::Result<Type> {
+  syn::parse2(quote! {
+    #path_to_grost::__private::reflection::Len<
+      #path_to_grost::__private::reflection::EncodeReflection<
+        #path_to_grost::__private::reflection::TagReflection<
+          #path_to_grost::__private::reflection::ObjectFieldReflection<
+            #object_type,
+            <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Tag,
+            #flavor_ty,
+            #tag,
+          >
+        >
+      >
+    >
+  })
 }

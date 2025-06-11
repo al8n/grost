@@ -1,17 +1,20 @@
 use darling::{FromMeta, ast::NestedMeta};
 use indexmap::IndexMap;
-use syn::{parse::Parser, Ident, Meta};
+use syn::{Ident, Meta, parse::Parser};
 
 pub(in crate::object) use decode::*;
 pub(in crate::object) use encode::*;
 
-use crate::{flavor::{complex_flavor_ident_error, duplicate_flavor_error}, utils::NestedMetaWithTypeField};
+use crate::{
+  flavor::{complex_flavor_ident_error, duplicate_flavor_error},
+  utils::NestedMetaWithTypeField,
+};
 
 mod decode;
 mod encode;
 
 #[derive(Debug, Clone)]
-pub struct FieldFlavorValueFromMeta {
+pub(in crate::object) struct FieldFlavorValueFromMeta {
   pub(in crate::object) ty: Option<syn::Type>,
   pub(in crate::object) format: Option<syn::Type>,
   pub(in crate::object) encode: EncodeFromMeta,
@@ -60,7 +63,12 @@ impl FromMeta for FieldFlavorValueFromMeta {
           decode,
         } = Helper::from_list(&nested_meta)?;
 
-        Ok(Self { ty, format, encode, decode })
+        Ok(Self {
+          ty,
+          format,
+          encode,
+          decode,
+        })
       }
 
       Meta::NameValue(ref value) => Self::from_expr(&value.value),
@@ -68,7 +76,6 @@ impl FromMeta for FieldFlavorValueFromMeta {
     .map_err(|e| e.with_span(item))
   }
 }
-
 
 #[derive(Debug, Default, Clone)]
 pub struct FieldFlavorFromMeta {
@@ -125,9 +132,9 @@ impl FromMeta for FieldFlavorFromMeta {
                 }
               }
             }
-            Meta::List(meta_list) => {
-              let nested_meta = NestedMeta::parse_meta_list(meta_list.tokens.clone())?;
-              let value = FieldFlavorValueFromMeta::from_list(&nested_meta)?;
+            Meta::List(_) => {
+              // let nested_meta = NestedMeta::parse_meta_list(meta_list.tokens.clone())?;
+              let value = FieldFlavorValueFromMeta::from_meta(meta)?;
               if flavors.contains_key(ident) {
                 return Err(duplicate_flavor_error(ident));
               }

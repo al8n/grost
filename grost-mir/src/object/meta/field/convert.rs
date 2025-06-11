@@ -1,6 +1,6 @@
 use darling::{FromMeta, ast::NestedMeta};
 
-use crate::utils::{MissingOperation, TransformOperation};
+use crate::utils::{Invokable, MissingOperation, TransformOperation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ConvertFromMeta {
@@ -9,18 +9,6 @@ pub struct ConvertFromMeta {
 }
 
 impl ConvertFromMeta {
-  /// Parse a path from either a syn::Expr::Path or syn::Expr::Lit(syn::Lit::Str)
-  fn parse_path_from_expr(expr: &syn::Expr) -> darling::Result<syn::Path> {
-    match expr {
-      syn::Expr::Path(path) => Ok(path.path.clone()),
-      syn::Expr::Lit(lit) => match &lit.lit {
-        syn::Lit::Str(lit_str) => syn::parse_str(&lit_str.value()).map_err(darling::Error::from),
-        lit => Err(darling::Error::unexpected_lit_type(lit)),
-      },
-      value => Err(darling::Error::unexpected_expr_type(value)),
-    }
-  }
-
   /// Check if an or_else variant is already set and return appropriate error
   fn check_missing_operation_conflict(
     current: Option<&MissingOperation>,
@@ -66,8 +54,8 @@ impl FromMeta for ConvertFromMeta {
           if path.is_ident("or_else") {
             Self::check_missing_operation_conflict(missing_operation.as_ref(), "or_else")?;
             let nv = meta.require_name_value()?;
-            let path = Self::parse_path_from_expr(&nv.value)?;
-            missing_operation = Some(MissingOperation::Or(path));
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::Or(invokable));
           } else if path.is_ident("or_else_default") {
             Self::check_missing_operation_conflict(missing_operation.as_ref(), "or_else_default")?;
 
@@ -77,27 +65,24 @@ impl FromMeta for ConvertFromMeta {
                 missing_operation = Some(MissingOperation::OrDefault(None));
               }
               syn::Meta::NameValue(meta_name_value) => {
-                let path = Self::parse_path_from_expr(&meta_name_value.value)?;
-                missing_operation = Some(MissingOperation::OrDefault(Some(path)));
+                let invokable = Invokable::try_from(&meta_name_value.value)?;
+                missing_operation = Some(MissingOperation::OrDefault(Some(invokable)));
               }
             }
           } else if path.is_ident("ok_or_else") {
             Self::check_missing_operation_conflict(missing_operation.as_ref(), "ok_or_else")?;
             let nv = meta.require_name_value()?;
-            let path = Self::parse_path_from_expr(&nv.value)?;
-            missing_operation = Some(MissingOperation::OkOr(path));
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::OkOr(invokable));
           } else if path.is_ident("transform") {
             Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
             let nv = meta.require_name_value()?;
-            transform_operation = Some(TransformOperation::Into(Self::parse_path_from_expr(
-              &nv.value,
-            )?));
+            transform_operation = Some(TransformOperation::Into(Invokable::try_from(&nv.value)?));
           } else if path.is_ident("try_transform") {
             Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
             let nv = meta.require_name_value()?;
-            transform_operation = Some(TransformOperation::TryInto(Self::parse_path_from_expr(
-              &nv.value,
-            )?));
+            transform_operation =
+              Some(TransformOperation::TryInto(Invokable::try_from(&nv.value)?));
           } else {
             return Err(darling::Error::unknown_field_path(path));
           }

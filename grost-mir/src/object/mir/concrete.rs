@@ -5,13 +5,17 @@ use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
 use crate::{flavor::FlavorAttribute, object::Indexer, utils::Invokable};
 
 pub use field::*;
+pub use indexer::*;
 pub use partial::*;
 pub use partial_decoded::*;
+pub use reflection::*;
 pub use selector::*;
 
 mod field;
+mod indexer;
 mod partial;
 mod partial_decoded;
+mod reflection;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -19,6 +23,8 @@ pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   name: Ident,
+  schema_name: String,
+  schema_description: String,
   vis: Visibility,
   ty: Type,
   reflectable: Type,
@@ -31,6 +37,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   partial_decoded: ConcretePartialDecodedObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
+  reflection: ConcreteObjectReflection,
   meta: M,
 }
 
@@ -80,6 +87,18 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
+  }
+
+  /// Returns the schema name of the concrete object.
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
+
+  /// Returns the schema description of the concrete object.
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
   }
 
   /// Returns the visibility of the concrete object.
@@ -153,12 +172,21 @@ impl<M, F> ConcreteObject<M, F> {
   pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
+    let partial_def = self.partial.derive_defination(self)?;
+    let partial_impl = self.partial.derive(self)?;
+    let reflection_impl = self.reflection.derive(self)?;
 
     Ok(quote! {
+      #partial_def
+
       const _: () = {
         #default
 
         #accessors
+
+        #partial_impl
+
+        #reflection_impl
       };
     })
   }
@@ -185,17 +213,21 @@ impl<M, F> ConcreteObject<M, F> {
     let partial_decoded = ConcretePartialDecodedObject::from_ast(&object, &fields)?;
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
+    let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
       attrs: object.attrs().to_vec(),
       name: object.name().clone(),
+      schema_description: object.schema_description().to_string(),
+      schema_name: object.schema_name().to_string(),
       vis: object.vis().clone(),
       ty: object.ty().clone(),
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
       indexer: object.indexer().clone(),
+      reflection,
       fields,
       default: object.default().cloned(),
       partial,
@@ -244,7 +276,7 @@ impl<M, F> ConcreteObject<M, F> {
         impl #ig ::core::default::Default for #name #tg #wc {
           /// Creates a new instance of the object with default values.
           pub fn new() -> Self {
-            #default
+            (#default)()
           }
         }
       })
@@ -253,7 +285,7 @@ impl<M, F> ConcreteObject<M, F> {
         let name = f.name();
         let default = f.default();
         quote! {
-          #name: #default
+          #name: (#default)()
         }
       });
 

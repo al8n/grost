@@ -676,6 +676,8 @@ pub(super) struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   name: Ident,
+  schema_name: String,
+  schema_description: String,
   vis: Visibility,
   ty: Type,
   reflectable: Type,
@@ -703,6 +705,18 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
+  }
+
+  /// Returns the schema name of the object
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
+
+  /// Returns the schema description of the object
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
   }
 
   /// Returns the visibility of the object
@@ -866,9 +880,18 @@ impl<M, F> ConcreteObject<M, F> {
       copy: object.copy(),
       attrs,
       indexer: Indexer {
-        name: format_ident!("{}Indexer", name),
+        name: object.indexer_name().clone(),
         attrs: object.indexer().attrs().to_vec(),
       },
+      schema_name: object
+        .schema()
+        .name()
+        .map_or_else(|| name.to_string(), |s| s.to_string()),
+      schema_description: object
+        .schema()
+        .description()
+        .unwrap_or_default()
+        .to_string(),
       name,
       vis,
       ty,
@@ -1148,7 +1171,7 @@ impl<M, F> GenericObject<M, F> {
       attrs,
       default: object.default().cloned(),
       indexer: Indexer {
-        name: format_ident!("{}Indexer", name),
+        name: object.indexer_name().clone(),
         attrs: object.indexer().attrs().to_vec(),
       },
       name,

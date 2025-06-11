@@ -31,12 +31,6 @@ impl From<syn::ExprClosure> for Invokable {
   }
 }
 
-impl From<Invokable> for syn::Expr {
-  fn from(value: Invokable) -> Self {
-    value.expr
-  }
-}
-
 impl From<syn::Path> for Invokable {
   fn from(path: syn::Path) -> Self {
     Self::from(syn::ExprPath {
@@ -44,6 +38,12 @@ impl From<syn::Path> for Invokable {
       qself: None,
       path,
     })
+  }
+}
+
+impl From<Invokable> for syn::Expr {
+  fn from(value: Invokable) -> Self {
+    value.expr
   }
 }
 
@@ -61,29 +61,42 @@ impl TryFrom<Invokable> for syn::Path {
   }
 }
 
-impl FromMeta for Invokable {
-  fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
+impl TryFrom<syn::Expr> for Invokable {
+  type Error = darling::Error;
+
+  fn try_from(expr: syn::Expr) -> Result<Self, Self::Error> {
     match expr {
-      syn::Expr::Path(_) | syn::Expr::Closure(_) => Ok(Self { expr: expr.clone() }),
+      syn::Expr::Path(_) | syn::Expr::Closure(_) => Ok(Self { expr }),
       syn::Expr::Lit(syn::ExprLit {
         lit: syn::Lit::Str(s),
         ..
       }) => syn::parse_str::<syn::Path>(&s.value())
         .map_err(|e| {
-          darling::Error::custom(format!("expect a path in string literal: {}", e)).with_span(s)
+          darling::Error::custom(format!("expect a path in string literal: {}", e)).with_span(&s)
         })
         .map(Self::from),
-      _ => Err(darling::Error::unexpected_expr_type(expr)),
+      _ => Err(darling::Error::unexpected_expr_type(&expr)),
     }
+  }
+}
+
+impl TryFrom<&syn::Expr> for Invokable {
+  type Error = darling::Error;
+
+  fn try_from(expr: &syn::Expr) -> Result<Self, Self::Error> {
+    Self::try_from(expr.clone())
+  }
+}
+
+impl FromMeta for Invokable {
+  fn from_expr(expr: &syn::Expr) -> darling::Result<Self> {
+    Self::try_from(expr.clone())
   }
 }
 
 impl quote::ToTokens for Invokable {
   fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let expr = &self.expr;
-    tokens.extend(quote! {
-      (#expr)()
-    })
+    self.expr.to_tokens(tokens);
   }
 }
 
@@ -151,9 +164,9 @@ impl BoolOption {
 /// Specifies the behavior of how to handle the missing field during decoding.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MissingOperation {
-  Or(syn::Path),
-  OrDefault(Option<syn::Path>),
-  OkOr(syn::Path),
+  Or(Invokable),
+  OrDefault(Option<Invokable>),
+  OkOr(Invokable),
 }
 
 impl MissingOperation {
@@ -170,8 +183,8 @@ impl MissingOperation {
 /// Specifies the behavior of how to transform from decoded state to base state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransformOperation {
-  Into(syn::Path),
-  TryInto(syn::Path),
+  Into(Invokable),
+  TryInto(Invokable),
 }
 
 impl TransformOperation {

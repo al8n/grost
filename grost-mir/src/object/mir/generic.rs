@@ -253,7 +253,7 @@ impl<M, F> GenericObject<M, F> {
         impl #ig ::core::default::Default for #name #tg #wc {
           /// Creates a new instance of the object with default values.
           pub fn new() -> Self {
-            #default
+            (#default)()
           }
         }
       })
@@ -262,7 +262,7 @@ impl<M, F> GenericObject<M, F> {
         let name = f.name();
         let default = f.default();
         quote! {
-          #name: #default
+          #name: (#default)()
         }
       });
 

@@ -1,6 +1,6 @@
 use darling::{FromMeta, ast::NestedMeta};
 
-use crate::utils::MissingOperation;
+use crate::utils::{Invokable, MissingOperation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(in crate::object) struct DecodeFromMeta {
@@ -52,8 +52,8 @@ impl FromMeta for DecodeFromMeta {
             Self::check_or_else_conflict(missing_operation.as_ref(), "or_else")?;
 
             let nv = meta.require_name_value()?;
-            let path = Self::parse_path_from_expr(&nv.value)?;
-            missing_operation = Some(MissingOperation::Or(path));
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::Or(invokable));
           } else if path.is_ident("or_else_default") {
             Self::check_or_else_conflict(missing_operation.as_ref(), "or_else_default")?;
 
@@ -63,16 +63,16 @@ impl FromMeta for DecodeFromMeta {
                 missing_operation = Some(MissingOperation::OrDefault(None));
               }
               syn::Meta::NameValue(meta_name_value) => {
-                let path = Self::parse_path_from_expr(&meta_name_value.value)?;
-                missing_operation = Some(MissingOperation::OrDefault(Some(path)));
+                let invokable = Invokable::try_from(&meta_name_value.value)?;
+                missing_operation = Some(MissingOperation::OrDefault(Some(invokable)));
               }
             }
           } else if path.is_ident("ok_or_else") {
             Self::check_or_else_conflict(missing_operation.as_ref(), "ok_or_else")?;
 
             let nv = meta.require_name_value()?;
-            let path = Self::parse_path_from_expr(&nv.value)?;
-            missing_operation = Some(MissingOperation::OkOr(path));
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::OkOr(invokable));
           } else if path.is_ident("error_if") {
             if error_if.is_some() {
               return Err(darling::Error::duplicate_field("error_if"));
@@ -141,6 +141,7 @@ mod tests {
         syn::Path::parse
           .parse2(quote! {my_crate::default_function})
           .unwrap()
+          .into()
       )))
     );
     assert_eq!(
