@@ -182,9 +182,13 @@ impl<M, F> ConcreteObject<M, F> {
     let selector = self.derive_selector_defination();
     let selector_impl = self.derive_selector();
 
+    let selector_iter_def = self.derive_selector_iter_defination();
+    let selector_iter_impl = self.derive_selector_iter();
+
     Ok(quote! {
       #indexer_defination
       #selector
+      #selector_iter_def
       #partial_def
 
       const _: () = {
@@ -199,6 +203,8 @@ impl<M, F> ConcreteObject<M, F> {
         #indexer_impl
 
         #selector_impl
+
+        #selector_iter_impl
       };
     })
   }

@@ -1,5 +1,5 @@
 use quote::{format_ident, quote};
-use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
+use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, LifetimeParam, Type};
 
 use crate::utils::grost_lifetime;
 
@@ -12,6 +12,7 @@ pub struct ConcreteSelectorIter {
   selected_type: Type,
   unselected_type: Type,
   generics: Generics,
+  lifetime_param: LifetimeParam,
   selected_generics: Generics,
   unselected_generics: Generics,
   selected: ConstParam,
@@ -28,6 +29,12 @@ impl ConcreteSelectorIter {
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the lifetime parameter of the selector iterator.
+  #[inline]
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
+    &self.lifetime_param
   }
 
   /// Returns the selected type of the selector iterator.
@@ -70,6 +77,7 @@ impl ConcreteSelectorIter {
 #[derive(Debug, Clone)]
 pub struct ConcreteSelector {
   name: Ident,
+  ty: Type,
   attrs: Vec<Attribute>,
   generics: Generics,
   flavor_type: Type,
@@ -80,6 +88,12 @@ impl ConcreteSelector {
   #[inline]
   pub const fn name(&self) -> &Ident {
     &self.name
+  }
+
+  /// Returns the type of the selector.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
   }
 
   /// Returns the attributes of the selector.
@@ -119,8 +133,15 @@ impl ConcreteSelector {
       }
     }
 
+    let name = selector.name();
+    let tg = generics.split_for_impl().1;
+    let ty = syn::parse2(quote! {
+      #name #tg
+    })?;
+
     Ok(Self {
-      name: selector.name().clone(),
+      name: name.clone(),
+      ty,
       attrs: selector.attrs().to_vec(),
       generics,
       flavor_type: object.flavor().ty().clone(),
@@ -136,7 +157,7 @@ impl ConcreteSelector {
     let selected = grost_selected_param();
     let lifetime = grost_lifetime();
 
-    let original_generics = object.generics();
+    let original_generics = self.generics();
     let mut generics = Generics::default();
 
     // push the lifetime generic parameter first
@@ -168,18 +189,49 @@ impl ConcreteSelector {
     let unselected_generics = generics.clone();
 
     generics.params.push(GenericParam::Const(selected.clone()));
+    generics.where_clause = original_generics.where_clause.clone();
 
     let (_, tg, _) = generics.split_for_impl();
     let ty: Type = syn::parse2(quote! {
       #selector_iter_name #tg
     })?;
 
-    let params = selected_generics.params.iter();
+    let params = selected_generics.params.iter().map(|p| {
+      match p {
+        GenericParam::Lifetime(lifetime_param) => {
+          let lt = &lifetime_param.lifetime;
+          quote! { #lt }
+        },
+        GenericParam::Type(type_param) => {
+          let ident = &type_param.ident;
+          quote! { #ident }
+        },
+        GenericParam::Const(const_param) => {
+          let ident = &const_param.ident;
+          quote! { #ident }
+        },
+      }
+    });
     let selected_type: Type = syn::parse2(quote! {
       #selector_iter_name <#(#params),*, true>
     })?;
 
-    let params = unselected_generics.params.iter();
+    let params = unselected_generics.params.iter().map(|p| {
+      match p {
+        GenericParam::Lifetime(lifetime_param) => {
+          let lt = &lifetime_param.lifetime;
+          quote! { #lt }
+        },
+        GenericParam::Type(type_param) => {
+          let ident = &type_param.ident;
+          quote! { #ident }
+        },
+        GenericParam::Const(const_param) => {
+          let ident = &const_param.ident;
+          quote! { #ident }
+        },
+      }
+    });
     let unselected_type: Type = syn::parse2(quote! {
       #selector_iter_name <#(#params),*, false>
     })?;
@@ -188,6 +240,7 @@ impl ConcreteSelector {
       ty,
       selected_type,
       unselected_type,
+      lifetime_param: lifetime,
       name: selector_iter.name().clone(),
       generics,
       selected_generics,
@@ -469,6 +522,10 @@ impl<M, F> super::ConcreteObject<M, F> {
       });
 
     let fns = selector_field_fns(self);
+    let selector_iter_name = self.selector_iter().name();
+    let selected_iter_ty = self.selector_iter().selected_type();
+    let unselected_iter_ty = self.selector_iter().unselected_type();
+    let lt = &self.selector_iter().lifetime_param().lifetime;
 
     quote! {
       #[automatically_derived]
@@ -607,19 +664,19 @@ impl<M, F> super::ConcreteObject<M, F> {
           num
         }
 
-        // /// Returns an iterator over the selected fields.
-        // #[inline]
-        // pub fn iter_selected #iter_lifetime_params_with_angle (&self) -> #iter_name <'_, #(#selected_iter_generics),*>
-        // {
-        //   #iter_name::new(self, self.selected())
-        // }
+        /// Returns an iterator over the selected fields.
+        #[inline]
+        pub fn iter_selected <#lt> (&#lt self) -> #selected_iter_ty
+        {
+          #selector_iter_name::new(self, self.selected())
+        }
 
-        // /// Returns an iterator over the unselected fields.
-        // #[inline]
-        // pub fn iter_unselected #iter_lifetime_params_with_angle (&self) -> #iter_name <'_, #(#unselected_iter_generics),*>
-        // {
-        //   #iter_name::new(self, self.unselected())
-        // }
+        /// Returns an iterator over the unselected fields.
+        #[inline]
+        pub fn iter_unselected <#lt> (&#lt self) -> #unselected_iter_ty
+        {
+          #selector_iter_name::new(self, self.unselected())
+        }
 
         /// Returns `true` if such field is selected.
         #[inline]
@@ -643,11 +700,74 @@ impl<M, F> super::ConcreteObject<M, F> {
   }
 
   pub(super) fn derive_selector_iter_defination(&self) -> proc_macro2::TokenStream {
-    quote! {}
+    let selector = self.selector();
+    let selector_name = selector.name();
+    let selector_ty = selector.ty();
+    let iter = self.selector_iter();
+    let iter_name = iter.name();
+    let vis = self.vis();
+    let indexer_name = self.indexer().name();
+    let generics = iter.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(" An iterator over the selected fields of the [`{selector_name}`]",);
+      Some(quote! {
+        #[doc = #doc]
+      })
+    } else {
+      None
+    };
+    let gl = &iter.lifetime_param().lifetime;
+    quote! {
+      #(#attrs)*
+      #doc
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      #vis struct #iter_name #generics #where_clause
+      {
+        selector: &#gl #selector_ty,
+        index: ::core::option::Option<#indexer_name>,
+        num: ::core::primitive::usize,
+        yielded: ::core::primitive::usize,
+      }
+    }
   }
 
   pub(super) fn derive_selector_iter(&self) -> proc_macro2::TokenStream {
-    quote! {}
+    let selector_iter = self.selector_iter();
+    let iter_name = selector_iter.name();
+    let indexer_name = self.indexer().name();
+    let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
+    let gl = &selector_iter.lifetime_param().lifetime;
+    let selector_ty = self.selector().ty();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #iter_name #tg #where_clauses
+      {
+        #[inline]
+        const fn new(selector: &#gl #selector_ty, num: ::core::primitive::usize) -> Self {
+          Self {
+            selector,
+            index: ::core::option::Option::Some(#indexer_name::FIRST),
+            num,
+            yielded: 0,
+          }
+        }
+
+        /// Returns the exact remaining length of the iterator.
+        #[inline]
+        pub const fn remaining(&self) -> ::core::primitive::usize {
+          self.num - self.yielded
+        }
+
+        /// Returns `true` if the iterator is empty.
+        #[inline]
+        pub const fn is_empty(&self) -> ::core::primitive::bool {
+          self.remaining() == 0
+        }
+      }
+    }
   }
 }
 
