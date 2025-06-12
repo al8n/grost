@@ -351,6 +351,16 @@ pub(super) enum ConcreteField<M = ()> {
   Tagged(Box<ConcreteTaggedField<M>>),
 }
 
+impl<M> ConcreteField<M> {
+  #[inline]
+  pub const fn tag(&self) -> Option<u32> {
+    match self {
+      ConcreteField::Skipped(_) => None,
+      ConcreteField::Tagged(tagged) => Some(tagged.tag()),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
   ty: Option<Type>,

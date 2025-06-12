@@ -29,6 +29,7 @@ syn = { workspace = true, features = ["full"] }
 proc-macro2.workspace = true
 quote.workspace = true
 darling.workspace = true
+paste.workspace = true
 
 [dev-dependencies]
 serde_json = "1"

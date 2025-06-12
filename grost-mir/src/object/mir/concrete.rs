@@ -2,7 +2,7 @@ use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
-use crate::{flavor::FlavorAttribute, object::Indexer, utils::Invokable};
+use crate::{flavor::FlavorAttribute, utils::Invokable};
 
 pub use field::*;
 pub use indexer::*;
@@ -172,11 +172,19 @@ impl<M, F> ConcreteObject<M, F> {
   pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
+    let indexer_defination = self.derive_indexer_defination();
+    let indexer_impl = self.derive_indexer();
+
     let partial_def = self.partial.derive_defination(self)?;
     let partial_impl = self.partial.derive(self)?;
     let reflection_impl = self.reflection.derive(self)?;
 
+    let selector = self.derive_selector_defination();
+    let selector_impl = self.derive_selector();
+
     Ok(quote! {
+      #indexer_defination
+      #selector
       #partial_def
 
       const _: () = {
@@ -187,6 +195,10 @@ impl<M, F> ConcreteObject<M, F> {
         #partial_impl
 
         #reflection_impl
+
+        #indexer_impl
+
+        #selector_impl
       };
     })
   }
@@ -202,11 +214,14 @@ impl<M, F> ConcreteObject<M, F> {
     M: Clone,
     F: Clone,
   {
-    let fields = object
-      .fields()
+    let mut fields = object.fields().to_vec();
+    fields.sort_by_key(|f| f.tag().unwrap_or(u32::MAX));
+
+    let fields = fields
       .iter()
       .cloned()
-      .map(|f| ConcreteField::from_ast(&object, f))
+      .enumerate()
+      .map(|(idx, f)| ConcreteField::from_ast(&object, idx, f))
       .collect::<darling::Result<Vec<_>>>()?;
 
     let partial = ConcretePartialObject::from_ast(&object, &fields)?;
@@ -214,6 +229,7 @@ impl<M, F> ConcreteObject<M, F> {
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
+    let indexer = Indexer::from_ast(&object)?;
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
@@ -226,7 +242,7 @@ impl<M, F> ConcreteObject<M, F> {
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
-      indexer: object.indexer().clone(),
+      indexer,
       reflection,
       fields,
       default: object.default().cloned(),

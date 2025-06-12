@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use grost::{
   Decode, PartialDecode,
   buffer::Buf,
-  flavors::{DefaultWireFormat, Network, network::LengthDelimited},
+  flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
 use grost_derive::{Object, object};
@@ -27,15 +27,15 @@ use grost_derive::{Object, object};
   ),
   // generic = false,
 )]
-pub struct User {
-  // #[grost(
-  //   tag = 1,
-  //   schema(description = "The id of the user"),
-  //   selector(select = "all"),
-  //   wire = "grost::flavors::network::LengthDelimited",
-  //   partial_decoded(copy,)
-  // )]
-  // id: I,
+pub struct User<I: Default> {
+  #[grost(
+    tag = 1,
+    schema(description = "The id of the user"),
+    selector(select = "all"),
+    flavor(default = "grost::flavors::network::LengthDelimited"),
+    bytes
+  )]
+  id: I,
   #[grost(
     tag = 2,
     schema(description = "The nick name of the user"),
@@ -49,12 +49,9 @@ pub struct User {
     tag = 4,
     schema(description = "The email of the user"),
     partial_decoded(copy, type = "&'de str"),
-    optional(list(string)),
-    flavor(default = "grost::flavors::network::LengthDelimited",)
+    optional(list(string))
   )]
   emails: Option<Vec<String>>,
-  #[grost(skip)]
-  _w: core::marker::PhantomData<*const ()>,
 }
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {

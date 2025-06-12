@@ -2,7 +2,7 @@ use syn::{Attribute, Ident, Type, Visibility, punctuated::Punctuated};
 
 use quote::{format_ident, quote};
 
-use crate::utils::Invokable;
+use crate::{object::Label, utils::Invokable};
 
 use super::{
   super::super::ast::{
@@ -11,11 +11,13 @@ use super::{
   ConcreteObjectAst,
 };
 
+pub use indexer::*;
 pub use partial::*;
 pub use partial_decoded::*;
 pub use reflection::*;
 pub use selector::*;
 
+mod indexer;
 mod partial;
 mod partial_decoded;
 mod reflection;
@@ -26,12 +28,14 @@ pub struct ConcreteTaggedField<F = ()> {
   name: Ident,
   vis: Visibility,
   ty: Type,
+  label: Label,
   default: Invokable,
   attrs: Vec<Attribute>,
   wire_format: Type,
   wire_format_reflection: Type,
   partial: ConcretePartialField,
   partial_decoded: ConcretePartialDecodedField,
+  index: FieldIndex,
   reflection: ConcreteFieldReflection,
   selector: ConcreteSelectorField,
   schema_name: String,
@@ -58,6 +62,12 @@ impl<F> ConcreteTaggedField<F> {
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the index of the field.
+  #[inline]
+  pub const fn index(&self) -> &FieldIndex {
+    &self.index
   }
 
   /// Returns the schema name of the field.
@@ -88,6 +98,12 @@ impl<F> ConcreteTaggedField<F> {
   #[inline]
   pub const fn tag(&self) -> u32 {
     self.tag
+  }
+
+  /// Returns the label of the field.
+  #[inline]
+  pub const fn label(&self) -> &Label {
+    &self.label
   }
 
   /// Returns `true` if the field is copyable, `false` otherwise.
@@ -140,6 +156,7 @@ impl<F> ConcreteTaggedField<F> {
 
   fn from_ast<M>(
     object: &ConcreteObjectAst<M, F>,
+    index: usize,
     field: ConcreteTaggedFieldAst<F>,
   ) -> darling::Result<Self>
   where
@@ -169,12 +186,23 @@ impl<F> ConcreteTaggedField<F> {
       >
     })?;
     let wf = match field.flavor().format() {
-      Some(wf) => wf.clone(),
-      None => syn::parse2(quote! {
-        <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<
-          #flavor_type,
-        >>::Format
-      })?,
+      Some(wf) => {
+        selector_constraints.push(syn::parse2(quote! {
+          #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
+        })?);
+        wf.clone()
+      }
+      None => {
+        selector_constraints.push(syn::parse2(quote! {
+          #field_ty: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+        })?);
+
+        syn::parse2(quote! {
+          <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<
+            #flavor_type,
+          >>::Format
+        })?
+      }
     };
 
     let selectable = syn::parse2(quote! {
@@ -191,12 +219,6 @@ impl<F> ConcreteTaggedField<F> {
       #wfr: #object_reflectable
     })?);
     partial_decoded_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
       #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
     })?);
     selector_constraints.push(syn::parse2(quote! {
@@ -244,11 +266,12 @@ impl<F> ConcreteTaggedField<F> {
     })?;
 
     let reflection = ConcreteFieldReflection::try_new(object, &field, object.flavor().ty(), tag)?;
-
+    let index = FieldIndex::new(index, &field)?;
     Ok(Self {
       name: field.name().clone(),
       vis: field.vis().clone(),
       ty: field.ty().clone(),
+      label: field.label().clone(),
       tag: field.tag(),
       attrs: field.attrs().to_vec(),
       default: field.default().clone(),
@@ -256,6 +279,7 @@ impl<F> ConcreteTaggedField<F> {
       schema_name: field.schema_name().to_string(),
       wire_format: wf,
       wire_format_reflection: wfr,
+      index,
       partial: ConcretePartialField::from_ast(
         object.path_to_grost(),
         field.ty(),
@@ -287,26 +311,12 @@ impl<F> ConcreteTaggedField<F> {
     object: &super::ConcreteObject<M, F>,
   ) -> proc_macro2::TokenStream {
     let path_to_grost = object.path_to_grost();
-    let object_ty = object.ty();
     let object_reflectable = object.reflectable();
     let field_ty = self.ty();
     let flavor_ty = object.flavor_type();
     let wf = self.wire_format();
     let schema_name = self.schema_name();
     let schema_description = self.schema_description();
-    let (ig_reflection, _, wc_reflection) = object.reflection.generics().split_for_impl();
-    let (ig, _, wc) = object.generics().split_for_impl();
-
-    let reflection_type = self.reflection().field_reflection();
-    let wf_reflection = self.reflection().wire_format_reflection();
-    let identifier_reflection = self.reflection().identifier_reflection();
-    let encoded_identifier_reflection = self.reflection().encoded_identifier_reflection();
-    let encoded_identifier_len_reflection = self.reflection().encoded_identifier_len_reflection();
-    let tag_reflection = self.reflection().tag_reflection();
-    let encoded_tag_reflection = self.reflection().encoded_tag_reflection();
-    let encoded_tag_len_reflection = self.reflection().encoded_tag_len_reflection();
-    let wire_type_reflection = self.reflection().wire_type_reflection();
-
     let identifier = object.flavor.identifier();
     let identifier_constructor = identifier.constructor();
     let identifier_encode = identifier.encode();
@@ -314,10 +324,56 @@ impl<F> ConcreteTaggedField<F> {
     let tag_encode = object.flavor.tag().encode();
     let tag = self.tag();
 
+    let (field_reflection_ig, _, field_reflection_wc) = object
+      .reflection
+      .field_reflection_generics()
+      .split_for_impl();
+    let field_reflection_type = self.reflection().field_reflection();
+
+    let (wire_format_reflection_ig, _, wire_format_reflection_wc) = object
+      .reflection
+      .wire_format_reflection_generics()
+      .split_for_impl();
+    let wire_format_reflection_type = self.reflection().wire_format_reflection();
+    let (identifier_reflection_ig, _, identifier_reflection_wc) = object
+      .reflection
+      .identifier_reflection_generics()
+      .split_for_impl();
+    let identifier_reflection_type = self.reflection().identifier_reflection();
+    let (encoded_identifier_reflection_ig, _, encoded_identifier_reflection_wc) = object
+      .reflection
+      .encoded_identifier_reflection_generics()
+      .split_for_impl();
+    let encoded_identifier_reflection_type = self.reflection().encoded_identifier_reflection();
+    let (encoded_identifier_len_reflection_ig, _, encoded_identifier_len_reflection_wc) = object
+      .reflection
+      .encoded_identifier_len_reflection_generics()
+      .split_for_impl();
+    let encoded_identifier_len_reflection_type =
+      self.reflection().encoded_identifier_len_reflection();
+    let (tag_reflection_ig, _, tag_reflection_wc) =
+      object.reflection.tag_reflection_generics().split_for_impl();
+    let tag_reflection_type = self.reflection().tag_reflection();
+    let (encoded_tag_reflection_ig, _, encoded_tag_reflection_wc) = object
+      .reflection
+      .encoded_tag_reflection_generics()
+      .split_for_impl();
+    let encoded_tag_reflection_type = self.reflection().encoded_tag_reflection();
+    let (encoded_tag_len_reflection_ig, _, encoded_tag_len_reflection_wc) = object
+      .reflection
+      .encoded_tag_len_reflection_generics()
+      .split_for_impl();
+    let encoded_tag_len_reflection_type = self.reflection().encoded_tag_len_reflection();
+    let (wire_type_reflection_ig, _, wire_type_reflection_wc) = object
+      .reflection
+      .wire_type_reflection_generics()
+      .split_for_impl();
+    let wire_type_reflection_type = self.reflection().wire_type_reflection();
+
     quote! {
       #[automatically_derived]
       #[allow(clippy::type_complexity, non_camel_case_types)]
-      impl #ig_reflection #object_reflectable for #reflection_type #wc_reflection {
+      impl #field_reflection_ig #object_reflectable for #field_reflection_type #field_reflection_wc {
         type Reflection = #path_to_grost::__private::reflection::ObjectField;
 
         const REFLECTION: &'static Self::Reflection = &{
@@ -331,7 +387,7 @@ impl<F> ConcreteTaggedField<F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #wf_reflection #wc {
+      impl #wire_format_reflection_ig #object_reflectable for #wire_format_reflection_type #wire_format_reflection_wc {
         type Reflection = #wf;
 
         const REFLECTION: &'static Self::Reflection = &{
@@ -341,7 +397,7 @@ impl<F> ConcreteTaggedField<F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #identifier_reflection #wc {
+      impl #identifier_reflection_ig #object_reflectable for #identifier_reflection_type #identifier_reflection_wc {
         type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier;
 
         const REFLECTION: &Self::Reflection = &{
@@ -354,30 +410,30 @@ impl<F> ConcreteTaggedField<F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #encoded_identifier_reflection #wc
+      impl #encoded_identifier_reflection_ig #object_reflectable for #encoded_identifier_reflection_type #encoded_identifier_reflection_wc
       {
         type Reflection = [::core::primitive::u8];
 
         const REFLECTION: &Self::Reflection = {
-          (#identifier_encode)(<#identifier_reflection as #object_reflectable>::REFLECTION)
+          (#identifier_encode)(<#identifier_reflection_type as #object_reflectable>::REFLECTION)
             .as_slice()
         };
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #encoded_identifier_len_reflection #wc
+      impl #encoded_identifier_len_reflection_ig #object_reflectable for #encoded_identifier_len_reflection_type #encoded_identifier_len_reflection_wc
       {
         type Reflection = ::core::primitive::usize;
 
         const REFLECTION: &Self::Reflection = {
-          &<#encoded_identifier_reflection as #object_reflectable>::REFLECTION.len()
+          &<#encoded_identifier_reflection_type as #object_reflectable>::REFLECTION.len()
         };
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #tag_reflection #wc {
+      impl #tag_reflection_ig #object_reflectable for #tag_reflection_type #tag_reflection_wc {
         type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Tag;
 
         const REFLECTION: &Self::Reflection = &{
@@ -387,28 +443,28 @@ impl<F> ConcreteTaggedField<F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #encoded_tag_reflection #wc {
+      impl #encoded_tag_reflection_ig #object_reflectable for #encoded_tag_reflection_type #encoded_tag_reflection_wc {
         type Reflection = [::core::primitive::u8];
 
         const REFLECTION: &Self::Reflection = {
-          (#tag_encode)(<#tag_reflection as #object_reflectable>::REFLECTION)
+          (#tag_encode)(<#tag_reflection_type as #object_reflectable>::REFLECTION)
             .as_slice()
         };
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #encoded_tag_len_reflection #wc {
+      impl #encoded_tag_len_reflection_ig #object_reflectable for #encoded_tag_len_reflection_type #encoded_tag_len_reflection_wc {
         type Reflection = ::core::primitive::usize;
 
         const REFLECTION: &Self::Reflection = {
-          &<#encoded_tag_reflection as #object_reflectable>::REFLECTION.len()
+          &<#encoded_tag_reflection_type as #object_reflectable>::REFLECTION.len()
         };
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #object_reflectable for #wire_type_reflection #wc {
+      impl #wire_type_reflection_ig #object_reflectable for #wire_type_reflection_type #wire_type_reflection_wc {
         type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::WireType;
 
         const REFLECTION: &Self::Reflection = &{
@@ -504,6 +560,7 @@ impl<F> ConcreteField<F> {
 
   pub(super) fn from_ast<M>(
     object: &ConcreteObjectAst<M, F>,
+    index: usize,
     field: ConcreteFieldAst<F>,
   ) -> darling::Result<Self>
   where
@@ -512,7 +569,7 @@ impl<F> ConcreteField<F> {
     match field {
       ConcreteFieldAst::Skipped(skipped_field) => Ok(Self::Skipped(skipped_field)),
       ConcreteFieldAst::Tagged(concrete_tagged_field) => {
-        ConcreteTaggedField::from_ast(object, *concrete_tagged_field)
+        ConcreteTaggedField::from_ast(object, index, *concrete_tagged_field)
           .map(|t| Self::Tagged(Box::new(t)))
       }
     }
