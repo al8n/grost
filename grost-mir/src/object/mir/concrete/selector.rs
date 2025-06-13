@@ -196,40 +196,36 @@ impl ConcreteSelector {
       #selector_iter_name #tg
     })?;
 
-    let params = selected_generics.params.iter().map(|p| {
-      match p {
-        GenericParam::Lifetime(lifetime_param) => {
-          let lt = &lifetime_param.lifetime;
-          quote! { #lt }
-        },
-        GenericParam::Type(type_param) => {
-          let ident = &type_param.ident;
-          quote! { #ident }
-        },
-        GenericParam::Const(const_param) => {
-          let ident = &const_param.ident;
-          quote! { #ident }
-        },
+    let params = selected_generics.params.iter().map(|p| match p {
+      GenericParam::Lifetime(lifetime_param) => {
+        let lt = &lifetime_param.lifetime;
+        quote! { #lt }
+      }
+      GenericParam::Type(type_param) => {
+        let ident = &type_param.ident;
+        quote! { #ident }
+      }
+      GenericParam::Const(const_param) => {
+        let ident = &const_param.ident;
+        quote! { #ident }
       }
     });
     let selected_type: Type = syn::parse2(quote! {
       #selector_iter_name <#(#params),*, true>
     })?;
 
-    let params = unselected_generics.params.iter().map(|p| {
-      match p {
-        GenericParam::Lifetime(lifetime_param) => {
-          let lt = &lifetime_param.lifetime;
-          quote! { #lt }
-        },
-        GenericParam::Type(type_param) => {
-          let ident = &type_param.ident;
-          quote! { #ident }
-        },
-        GenericParam::Const(const_param) => {
-          let ident = &const_param.ident;
-          quote! { #ident }
-        },
+    let params = unselected_generics.params.iter().map(|p| match p {
+      GenericParam::Lifetime(lifetime_param) => {
+        let lt = &lifetime_param.lifetime;
+        quote! { #lt }
+      }
+      GenericParam::Type(type_param) => {
+        let ident = &type_param.ident;
+        quote! { #ident }
+      }
+      GenericParam::Const(const_param) => {
+        let ident = &const_param.ident;
+        quote! { #ident }
       }
     });
     let unselected_type: Type = syn::parse2(quote! {
@@ -526,8 +522,11 @@ impl<M, F> super::ConcreteObject<M, F> {
     let selected_iter_ty = self.selector_iter().selected_type();
     let unselected_iter_ty = self.selector_iter().unselected_type();
     let lt = &self.selector_iter().lifetime_param().lifetime;
+    let selectable_impl = derive_selectable_impl(self);
 
     quote! {
+      #selectable_impl
+
       #[automatically_derived]
       #[allow(non_camel_case_types)]
       impl #ig ::core::fmt::Debug for #name #tg #wc
@@ -768,6 +767,96 @@ impl<M, F> super::ConcreteObject<M, F> {
         }
       }
     }
+  }
+}
+
+fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_macro2::TokenStream {
+  let path_to_grost = object.path_to_grost();
+  let flavor_ty = object.flavor_type();
+  let wf = object.wire_format();
+  let selector = object.selector();
+  let selector_ty = selector.ty();
+  let selector_generics = selector.generics();
+
+  let object_selectable = {
+    let object_ty = object.ty();
+
+    let (ig, _, where_clauses) = selector_generics.split_for_impl();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+      {
+        type Selector = #selector_ty;
+      }
+    }
+  };
+
+  let partial_object_selectable = {
+    let partial_object = object.partial();
+    let partial_object_ty = partial_object.ty();
+    let mut generics = partial_object.generics().clone();
+
+    selector_generics
+      .where_clause
+      .as_ref()
+      .unwrap()
+      .predicates
+      .iter()
+      .for_each(|p| {
+        let wc = generics.make_where_clause();
+        if !wc.predicates.iter().any(|x| x == p) {
+          wc.predicates.push(p.clone());
+        }
+      });
+
+    let (ig, _, where_clauses) = generics.split_for_impl();
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #partial_object_ty #where_clauses
+      {
+        type Selector = #selector_ty;
+      }
+    }
+  };
+
+  let partial_decoded_object_selectable = {
+    let object = object.partial_decoded();
+    let object_ty = object.ty();
+    let mut generics = object.generics().clone();
+
+    selector_generics
+      .where_clause
+      .as_ref()
+      .unwrap()
+      .predicates
+      .iter()
+      .for_each(|p| {
+        let wc = generics.make_where_clause();
+        if !wc.predicates.iter().any(|x| x == p) {
+          wc.predicates.push(p.clone());
+        }
+      });
+
+    let (ig, _, where_clauses) = generics.split_for_impl();
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+      {
+        type Selector = #selector_ty;
+      }
+    }
+  };
+
+  quote! {
+    #object_selectable
+
+    #partial_object_selectable
+
+    #partial_decoded_object_selectable
   }
 }
 

@@ -111,6 +111,14 @@ impl ConcretePartialObject {
     let ubfn = &self.unknown_buffer_field_name;
     let ubg = &self.unknown_buffer().ident;
     let attrs = self.attrs();
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(" Partial struct for the [`{}`]", self.name());
+      quote! {
+        #[doc = #doc]
+      }
+    } else {
+      quote! {}
+    };
 
     let fields = object.fields().iter().map(|f| {
       let field_name = f.name();
@@ -137,6 +145,7 @@ impl ConcretePartialObject {
     });
 
     Ok(quote! {
+      #doc
       #(#attrs)*
       #[allow(non_camel_case_types, clippy::type_complexity)]
       #vis struct #name #generics #where_clause {

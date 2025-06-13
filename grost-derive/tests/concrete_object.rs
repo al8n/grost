@@ -25,7 +25,7 @@ use grost_derive::{Object, object};
       )
     ),
   ),
-  // generic = false,
+  generic(lifetime = "'de"),
 )]
 pub struct User<I: Default> {
   #[grost(
@@ -48,7 +48,7 @@ pub struct User<I: Default> {
   #[grost(
     tag = 4,
     schema(description = "The email of the user"),
-    partial_decoded(copy, type = "&'de str"),
+    partial_decoded(copy),
     optional(list(string))
   )]
   emails: Option<Vec<String>>,

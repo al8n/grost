@@ -131,6 +131,12 @@ impl<M, F> ConcreteObject<M, F> {
     self.flavor.ty()
   }
 
+  /// Returns the wire format of the concrete object.
+  #[inline]
+  pub const fn wire_format(&self) -> &Type {
+    self.flavor.wire_format()
+  }
+
   /// Returns the indexer information of the object.
   #[inline]
   pub const fn indexer(&self) -> &Indexer {
@@ -167,16 +173,27 @@ impl<M, F> ConcreteObject<M, F> {
     self.fields.as_slice()
   }
 
+  /// Returns the custom metadata associated with the object.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
   /// Returns the default value of the concrete object, if any.
   #[inline]
   pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
     let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
+
     let indexer_defination = self.derive_indexer_defination();
     let indexer_impl = self.derive_indexer();
 
     let partial_def = self.partial.derive_defination(self)?;
     let partial_impl = self.partial.derive(self)?;
+
+    let partial_decoded_def = self.derive_partial_decoded_object_defination();
+    let partial_decoded_impl = self.derive_partial_decoded_object();
+
     let reflection_impl = self.reflection.derive(self)?;
 
     let selector = self.derive_selector_defination();
@@ -190,6 +207,7 @@ impl<M, F> ConcreteObject<M, F> {
       #selector
       #selector_iter_def
       #partial_def
+      #partial_decoded_def
 
       const _: () = {
         #default
@@ -197,6 +215,8 @@ impl<M, F> ConcreteObject<M, F> {
         #accessors
 
         #partial_impl
+
+        #partial_decoded_impl
 
         #reflection_impl
 
@@ -207,12 +227,6 @@ impl<M, F> ConcreteObject<M, F> {
         #selector_iter_impl
       };
     })
-  }
-
-  /// Returns the custom metadata associated with the object.
-  #[inline]
-  pub const fn meta(&self) -> &M {
-    &self.meta
   }
 
   pub(super) fn from_ast(object: ConcreteObjectAst<M, F>) -> darling::Result<Self>

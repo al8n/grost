@@ -30,7 +30,7 @@ impl FieldFlavorAttribute {
 
   /// Returns the type of the partial decoded field for this flavor, if specified.
   pub const fn ty(&self) -> Option<&syn::Type> {
-    self.format.as_ref()
+    self.ty.as_ref()
   }
 
   /// Returns the encode attribute for this flavor.
