@@ -158,12 +158,19 @@ impl<M, F> super::ConcreteObject<M, F> {
     };
 
     let vis = self.vis();
-    let fields = self.fields().iter().map(|f| match f {
+    let fields = self.fields().iter().filter_map(|f| match f {
       ConcreteField::Skipped(skipped_field) => {
         let name = skipped_field.name();
         let ty = skipped_field.ty();
-        quote! {
-          #name: ::core::marker::PhantomData<#ty>
+
+        if !skipped_field.lifetime_params_usages().is_empty()
+          || !skipped_field.type_params_usages().is_empty()
+        {
+          Some(quote! {
+            #name: ::core::marker::PhantomData<#ty>
+          })
+        } else {
+          None
         }
       }
       ConcreteField::Tagged(concrete_tagged_field) => {
@@ -171,10 +178,10 @@ impl<M, F> super::ConcreteObject<M, F> {
         let vis = concrete_tagged_field.vis();
         let name = concrete_tagged_field.name();
         let ty = concrete_tagged_field.partial_decoded().optional_type();
-        quote! {
+        Some(quote! {
           #(#attrs)*
           #vis #name: #ty
-        }
+        })
       }
     });
 
@@ -192,40 +199,50 @@ impl<M, F> super::ConcreteObject<M, F> {
     }
   }
 
-  pub(super) fn derive_partial_decoded_object(
-    &self
-  ) -> proc_macro2::TokenStream {
+  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
     let partial_decoded_object = self.partial_decoded();
     let name = partial_decoded_object.name();
-    let fields_init = self
-      .fields()
-      .iter()
-      .map(|f| {
-        let field_name = f.name();
-        if f.is_skipped() {
-          quote! {
-            #field_name: ::core::marker::PhantomData,
-          }
-        } else {
-          quote! {
-            #field_name: ::core::option::Option::None,
+    let fields_init = self.fields().iter().filter_map(|f| {
+      let field_name = f.name();
+      match f {
+        ConcreteField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData,
+            })
+          } else {
+            None
           }
         }
-      });
-
+        ConcreteField::Tagged(_) => Some(quote! {
+          #field_name: ::core::option::Option::None,
+        }),
+      }
+    });
 
     let mut fields_accessors = vec![];
     let mut is_empty = vec![];
 
-    self.fields().iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()).for_each(|f| {
-      let field_name = f.name();
-      let ty = &f.partial_decoded().ty();
-      let vis = f.vis();
-      fields_accessors.push(optional_accessors(field_name, vis, ty, f.partial_decoded().copy()));
-      is_empty.push(quote! {
-        self.#field_name.is_none()
+    self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .for_each(|f| {
+        let field_name = f.name();
+        let ty = &f.partial_decoded().ty();
+        let vis = f.vis();
+        fields_accessors.push(optional_accessors(
+          field_name,
+          vis,
+          ty,
+          f.partial_decoded().copy(),
+        ));
+        is_empty.push(quote! {
+          self.#field_name.is_none()
+        });
       });
-    });
 
     let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
     let ubfn = &partial_decoded_object.unknown_buffer_field_name;

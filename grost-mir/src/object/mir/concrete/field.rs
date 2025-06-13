@@ -1,3 +1,4 @@
+use darling::usage::{IdentSet, LifetimeSet};
 use syn::{Attribute, Ident, Type, Visibility, punctuated::Punctuated};
 
 use quote::{format_ident, quote};
@@ -33,6 +34,8 @@ pub struct ConcreteTaggedField<F = ()> {
   attrs: Vec<Attribute>,
   wire_format: Type,
   wire_format_reflection: Type,
+  type_params_usages: IdentSet,
+  lifetime_params_usages: LifetimeSet,
   partial: ConcretePartialField,
   partial_decoded: ConcretePartialDecodedField,
   index: FieldIndex,
@@ -154,6 +157,18 @@ impl<F> ConcreteTaggedField<F> {
     &self.meta
   }
 
+  /// Returns the usages of type parameters in the field type.
+  #[inline]
+  pub const fn type_params_usages(&self) -> &IdentSet {
+    &self.type_params_usages
+  }
+
+  /// Returns the usages of lifetime parameters in the field type.
+  #[inline]
+  pub const fn lifetime_params_usages(&self) -> &LifetimeSet {
+    &self.lifetime_params_usages
+  }
+
   fn from_ast<M>(
     object: &ConcreteObjectAst<M, F>,
     index: usize,
@@ -267,42 +282,47 @@ impl<F> ConcreteTaggedField<F> {
 
     let reflection = ConcreteFieldReflection::try_new(object, &field, object.flavor().ty(), tag)?;
     let index = FieldIndex::new(index, &field)?;
+    let partial = ConcretePartialField::from_ast(
+      object.path_to_grost(),
+      field.ty(),
+      field.partial_type(),
+      field.partial_attrs(),
+    )?;
+    let partial_decoded = ConcretePartialDecodedField {
+      ty: partial_decoded_ty,
+      optional_type: optional_partial_decoded_type,
+      attrs: field.partial_decoded.attrs,
+      constraints: partial_decoded_constraints,
+      copy: partial_decoded_copyable,
+    };
+    let selector = ConcreteSelectorField {
+      ty: selector_type,
+      selectable,
+      attrs: field.selector.attrs,
+      constraints: selector_constraints,
+      default: field.selector.select,
+    };
     Ok(Self {
-      name: field.name().clone(),
-      vis: field.vis().clone(),
-      ty: field.ty().clone(),
-      label: field.label().clone(),
-      tag: field.tag(),
-      attrs: field.attrs().to_vec(),
-      default: field.default().clone(),
-      schema_description: field.schema_description().to_string(),
-      schema_name: field.schema_name().to_string(),
+      partial,
+      partial_decoded,
+      name: field.name,
+      vis: field.vis,
+      label: field.label,
+      tag: field.tag,
+      ty: field.ty,
+      attrs: field.attrs,
+      default: field.default,
+      schema_description: field.schema_description,
+      schema_name: field.schema_name,
+      type_params_usages: field.type_params_usages,
+      lifetime_params_usages: field.lifetime_params_usages,
+      copy: field.copy,
+      meta: field.meta,
       wire_format: wf,
       wire_format_reflection: wfr,
       index,
-      partial: ConcretePartialField::from_ast(
-        object.path_to_grost(),
-        field.ty(),
-        field.partial_type(),
-        field.partial_attrs(),
-      )?,
-      partial_decoded: ConcretePartialDecodedField {
-        ty: partial_decoded_ty,
-        optional_type: optional_partial_decoded_type,
-        attrs: field.partial_decoded_attrs().to_vec(),
-        constraints: partial_decoded_constraints,
-        copy: partial_decoded_copyable,
-      },
-      selector: ConcreteSelectorField {
-        ty: selector_type,
-        selectable,
-        attrs: field.selector_attrs().to_vec(),
-        constraints: selector_constraints,
-        default: field.selection().clone(),
-      },
+      selector,
       reflection,
-      copy: field.copy(),
-      meta: field.meta().clone(),
     })
   }
 

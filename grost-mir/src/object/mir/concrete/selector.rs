@@ -261,24 +261,31 @@ impl<M, F> super::ConcreteObject<M, F> {
       None
     };
 
-    let fields = self.fields().iter().map(|f| {
+    let fields = self.fields().iter().filter_map(|f| {
       let name = f.name();
       let vis = f.vis();
       match f {
         ConcreteField::Skipped(skipped_field) => {
           let ty = skipped_field.ty();
-          quote! {
-            #vis #name: ::core::marker::PhantomData<#ty>
+
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #vis #name: ::core::marker::PhantomData<#ty>
+            })
+          } else {
+            None
           }
         }
         ConcreteField::Tagged(concrete_tagged_field) => {
           let ty = concrete_tagged_field.selector().ty();
           let attrs = concrete_tagged_field.attrs();
 
-          quote! {
+          Some(quote! {
             #(#attrs)*
             #vis #name: #ty
-          }
+          })
         }
       }
     });
@@ -309,59 +316,75 @@ impl<M, F> super::ConcreteObject<M, F> {
     let default = self
       .fields()
       .iter()
-      .map(|f| {
+      .filter_map(|f| {
         let field_name = f.name();
 
         match f {
-          ConcreteField::Skipped(_) => {
-            quote! {
-              #field_name: ::core::marker::PhantomData
+          ConcreteField::Skipped(skipped_field) => {
+            if !skipped_field.lifetime_params_usages().is_empty() || !skipped_field.type_params_usages().is_empty() {
+              Some(quote! {
+                #field_name: ::core::marker::PhantomData
+              })
+            } else {
+              None
             }
           },
           ConcreteField::Tagged(f) => {
             let ty = f.selector().ty();
 
-            quote! {
+            Some(quote! {
               #field_name: <#ty as #path_to_grost::__private::selection::Selector<#flavor_ty>>::DEFAULT
-            }
+            })
           },
         }
       });
 
-    let empty = self.fields().iter().map(|f| {
+    let empty = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
 
       match f {
-        ConcreteField::Skipped(_) => {
-          quote! {
-            #field_name: ::core::marker::PhantomData
+        ConcreteField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData
+            })
+          } else {
+            None
           }
         }
         ConcreteField::Tagged(f) => {
           let ty = f.selector().ty();
 
-          quote! {
+          Some(quote! {
             #field_name: <#ty as #path_to_grost::__private::selection::Selector<#flavor_ty>>::NONE
-          }
+          })
         }
       }
     });
 
-    let all = self.fields().iter().map(|f| {
+    let all = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
 
       match f {
-        ConcreteField::Skipped(_) => {
-          quote! {
-            #field_name: ::core::marker::PhantomData
+        ConcreteField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData
+            })
+          } else {
+            None
           }
         }
         ConcreteField::Tagged(f) => {
           let ty = f.selector().ty();
 
-          quote! {
+          Some(quote! {
             #field_name: <#ty as #path_to_grost::__private::selection::Selector<#flavor_ty>>::ALL
-          }
+          })
         }
       }
     });
@@ -472,30 +495,38 @@ impl<M, F> super::ConcreteObject<M, F> {
         }
       });
 
-    let clone = self.fields().iter().map(|f| {
+    let clone = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
 
       match f {
-        ConcreteField::Skipped(_) => {
-          quote! {
-            #field_name: ::core::marker::PhantomData
+        ConcreteField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData
+            })
+          } else {
+            None
           }
         }
-        ConcreteField::Tagged(_) => {
-          quote! {
-            #field_name: ::core::clone::Clone::clone(&self.#field_name)
-          }
-        }
+        ConcreteField::Tagged(_) => Some(quote! {
+          #field_name: ::core::clone::Clone::clone(&self.#field_name)
+        }),
       }
     });
 
-    let debug = self.fields().iter().map(|f| {
-      let field_name = f.name();
-      let field_name_str = field_name.to_string();
-      quote! {
-        field(#field_name_str, &self.#field_name)
-      }
-    });
+    let debug = self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let field_name = f.name();
+        let field_name_str = field_name.to_string();
+        quote! {
+          field(#field_name_str, &self.#field_name)
+        }
+      });
 
     let hash = self
       .fields()

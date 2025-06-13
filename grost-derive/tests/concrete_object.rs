@@ -14,6 +14,10 @@ use grost_derive::{Object, object};
 //   }
 // }
 
+fn default_array<const N: usize>() -> [u8; N] {
+  [0; N]
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 #[grost(
   // output(path = "grost-derive/tests/user.rs", format),
@@ -27,7 +31,7 @@ use grost_derive::{Object, object};
   ),
   generic(lifetime = "'de"),
 )]
-pub struct User<I: Default> {
+pub struct User<I: Default, W: Default, const N: usize> {
   #[grost(
     tag = 1,
     schema(description = "The id of the user"),
@@ -52,6 +56,10 @@ pub struct User<I: Default> {
     optional(list(string))
   )]
   emails: Option<Vec<String>>,
+  #[grost(skip)]
+  what: W,
+  #[grost(skip, default = "default_array::<N>")]
+  array: [u8; N],
 }
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {

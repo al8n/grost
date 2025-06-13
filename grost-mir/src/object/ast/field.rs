@@ -1,5 +1,4 @@
 use std::num::NonZeroU32;
-
 use syn::{Attribute, Ident, Type, Visibility};
 
 pub use convert::ConvertAttribute;

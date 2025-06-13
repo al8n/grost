@@ -4,8 +4,8 @@ use crate::object::meta::{FieldSelection, SelectorFieldFromMeta};
 
 #[derive(Debug, Clone)]
 pub struct SelectorFieldAttribute {
-  attrs: Vec<Attribute>,
-  select: FieldSelection,
+  pub(crate) attrs: Vec<Attribute>,
+  pub(crate) select: FieldSelection,
 }
 
 impl SelectorFieldAttribute {

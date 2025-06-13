@@ -1,3 +1,4 @@
+use darling::usage::{GenericsExt, IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
@@ -24,6 +25,8 @@ mod selector;
 pub struct SkippedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
+  type_params_usages: IdentSet,
+  lifetime_params_usages: LifetimeSet,
   name: Ident,
   ty: Type,
   default: Invokable,
@@ -67,7 +70,23 @@ impl<M> SkippedField<M> {
     &self.meta
   }
 
-  fn try_new<F: RawField<Meta = M>>(f: &F) -> darling::Result<Self>
+  /// Returns the type parameters used in the skipped field
+  #[inline]
+  pub const fn type_params_usages(&self) -> &IdentSet {
+    &self.type_params_usages
+  }
+
+  /// Returns the lifetime parameters used in the skipped field
+  #[inline]
+  pub const fn lifetime_params_usages(&self) -> &LifetimeSet {
+    &self.lifetime_params_usages
+  }
+
+  fn try_new<F: RawField<Meta = M>>(
+    f: &F,
+    type_params: &IdentSet,
+    lifetime_params: &LifetimeSet,
+  ) -> darling::Result<Self>
   where
     M: Clone,
   {
@@ -82,10 +101,16 @@ impl<M> SkippedField<M> {
       }
     };
 
+    let purpose: darling::usage::Options = Purpose::Declare.into();
+    let type_params_usages = ty.uses_type_params_cloned(&purpose, type_params);
+    let lifetime_params_usages = ty.uses_lifetimes_cloned(&purpose, lifetime_params);
+
     Ok(Self {
       attrs,
       vis,
       name,
+      type_params_usages,
+      lifetime_params_usages,
       ty,
       default,
       meta: f.meta().clone(),
@@ -95,21 +120,23 @@ impl<M> SkippedField<M> {
 
 #[derive(Debug, Clone)]
 pub(super) struct ConcreteTaggedField<M = ()> {
-  attrs: Vec<Attribute>,
-  vis: Visibility,
-  name: Ident,
-  ty: Type,
-  schema_name: String,
-  schema_description: String,
-  flavor: FieldFlavor,
-  label: Label,
-  partial_decoded: PartialDecodedFieldAttribute,
-  partial: PartialFieldAttribute,
-  selector: SelectorFieldAttribute,
-  default: Invokable,
-  tag: u32,
-  copy: bool,
-  meta: M,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) vis: Visibility,
+  pub(super) name: Ident,
+  pub(super) ty: Type,
+  pub(super) schema_name: String,
+  pub(super) schema_description: String,
+  pub(super) flavor: FieldFlavor,
+  pub(super) label: Label,
+  pub(super) type_params_usages: IdentSet,
+  pub(super) lifetime_params_usages: LifetimeSet,
+  pub(super) partial_decoded: PartialDecodedFieldAttribute,
+  pub(super) partial: PartialFieldAttribute,
+  pub(super) selector: SelectorFieldAttribute,
+  pub(super) default: Invokable,
+  pub(super) tag: u32,
+  pub(super) copy: bool,
+  pub(super) meta: M,
 }
 
 impl<M> ConcreteTaggedField<M> {
@@ -119,22 +146,10 @@ impl<M> ConcreteTaggedField<M> {
     &self.name
   }
 
-  /// Returns the visibility of the field
-  #[inline]
-  pub const fn vis(&self) -> &Visibility {
-    &self.vis
-  }
-
   /// Returns the type of the field
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
-  }
-
-  /// Returns the attributes of the field
-  #[inline]
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
   }
 
   /// Returns the flavor of the field
@@ -147,18 +162,6 @@ impl<M> ConcreteTaggedField<M> {
   #[inline]
   pub const fn tag(&self) -> u32 {
     self.tag
-  }
-
-  /// Returns the path to the default value function for the field
-  #[inline]
-  pub const fn default(&self) -> &Invokable {
-    &self.default
-  }
-
-  /// Returns the label of the field
-  #[inline]
-  pub const fn label(&self) -> &Label {
-    &self.label
   }
 
   /// Returns the schema name of the field
@@ -185,12 +188,6 @@ impl<M> ConcreteTaggedField<M> {
     self.partial.attrs()
   }
 
-  /// Returns the attributes of the partial decoded field for the field
-  #[inline]
-  pub const fn partial_decoded_attrs(&self) -> &[Attribute] {
-    self.partial_decoded.attrs()
-  }
-
   /// Returns the type of the partial decoded field for the field, if any
   #[inline]
   pub const fn partial_decoded_type(&self) -> Option<&Type> {
@@ -203,31 +200,12 @@ impl<M> ConcreteTaggedField<M> {
     self.partial_decoded.copy()
   }
 
-  /// Returns the default selection of this field
-  #[inline]
-  pub const fn selection(&self) -> &FieldSelection {
-    self.selector.select()
-  }
-
-  /// Returns the attributes of the selector field for the field
-  #[inline]
-  pub const fn selector_attrs(&self) -> &[Attribute] {
-    self.selector.attrs()
-  }
-
-  /// Returns `true` if the field is copyable, `false` otherwise
-  #[inline]
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-
-  /// Returns the custom metadata associated with the field
-  #[inline]
-  pub const fn meta(&self) -> &M {
-    &self.meta
-  }
-
-  fn try_new<F: RawField<Meta = M>>(f: &F, flavor: &FlavorAttribute) -> darling::Result<Self>
+  fn try_new<F: RawField<Meta = M>>(
+    f: &F,
+    flavor: &FlavorAttribute,
+    type_params: &IdentSet,
+    lifetime_params: &LifetimeSet,
+  ) -> darling::Result<Self>
   where
     M: Clone,
   {
@@ -323,6 +301,8 @@ impl<M> ConcreteTaggedField<M> {
       name,
       schema_description,
       schema_name,
+      type_params_usages: ty.uses_type_params_cloned(&Purpose::Declare.into(), type_params),
+      lifetime_params_usages: ty.uses_lifetimes_cloned(&Purpose::Declare.into(), lifetime_params),
       ty,
       flavor: FieldFlavor {
         ty: field_flavor.ty().cloned(),
@@ -404,22 +384,24 @@ impl FieldFlavor {
 
 #[derive(Debug, Clone)]
 pub(super) struct GenericTaggedField<M = ()> {
-  attrs: Vec<Attribute>,
-  vis: Visibility,
-  name: Ident,
-  ty: Type,
-  schema_name: String,
-  schema_description: String,
-  flavor_param: TypeParam,
-  label: Label,
-  partial_decoded: PartialDecodedFieldAttribute,
-  partial: PartialFieldAttribute,
-  selector: SelectorFieldAttribute,
-  default: Invokable,
-  tag: u32,
-  flavors: IndexMap<Ident, FieldFlavor>,
-  copy: bool,
-  meta: M,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) vis: Visibility,
+  pub(super) name: Ident,
+  pub(super) ty: Type,
+  pub(super) schema_name: String,
+  pub(super) schema_description: String,
+  pub(super) type_params_usages: IdentSet,
+  pub(super) lifetime_params_usages: LifetimeSet,
+  pub(super) flavor_param: TypeParam,
+  pub(super) label: Label,
+  pub(super) partial_decoded: PartialDecodedFieldAttribute,
+  pub(super) partial: PartialFieldAttribute,
+  pub(super) selector: SelectorFieldAttribute,
+  pub(super) default: Invokable,
+  pub(super) tag: u32,
+  pub(super) flavors: IndexMap<Ident, FieldFlavor>,
+  pub(super) copy: bool,
+  pub(super) meta: M,
 }
 
 impl<M> GenericTaggedField<M> {
@@ -547,6 +529,8 @@ impl<M> GenericTaggedField<M> {
     f: &F,
     flavor_param: &TypeParam,
     flavors: &IndexMap<Ident, ObjectFlavor>,
+    type_params: &IdentSet,
+    lifetime_params: &LifetimeSet,
     copy: bool,
   ) -> darling::Result<Self>
   where
@@ -634,6 +618,8 @@ impl<M> GenericTaggedField<M> {
       attrs,
       vis,
       name,
+      type_params_usages: ty.uses_type_params_cloned(&Purpose::Declare.into(), type_params),
+      lifetime_params_usages: ty.uses_lifetimes_cloned(&Purpose::Declare.into(), lifetime_params),
       ty,
       schema_name,
       schema_description,
@@ -836,6 +822,9 @@ impl<M, F> ConcreteObject<M, F> {
     let generics = object.generics().clone();
     let (_, tg, _) = generics.split_for_impl();
 
+    let type_params = generics.declared_type_params();
+    let lifetimes = generics.declared_lifetimes();
+
     let ty: Type = syn::parse2(quote! {
       #name #tg
     })?;
@@ -849,9 +838,10 @@ impl<M, F> ConcreteObject<M, F> {
       .iter()
       .map(|&f| {
         if f.skip() {
-          SkippedField::try_new(f).map(|f| ConcreteField::Skipped(Box::new(f)))
+          SkippedField::try_new(f, &type_params, &lifetimes)
+            .map(|f| ConcreteField::Skipped(Box::new(f)))
         } else {
-          ConcreteTaggedField::try_new(f, flavor).and_then(|f| {
+          ConcreteTaggedField::try_new(f, flavor, &type_params, &lifetimes).and_then(|f| {
             if tags.contains(&f.tag()) {
               Err(darling::Error::custom(format!(
                 "{name} has multiple fields have the same tag {}",
@@ -1120,6 +1110,8 @@ impl<M, F> GenericObject<M, F> {
     let vis = object.vis().clone();
     let generics = object.generics().clone();
     let (_, tg, _) = generics.split_for_impl();
+    let type_params = generics.declared_type_params();
+    let lifetimes = generics.declared_lifetimes();
 
     let ty: Type = syn::parse2(quote! {
       #name #tg
@@ -1143,20 +1135,28 @@ impl<M, F> GenericObject<M, F> {
       .iter()
       .map(|&f| {
         if f.skip() {
-          SkippedField::try_new(f).map(|f| GenericField::Skipped(Box::new(f)))
+          SkippedField::try_new(f, &type_params, &lifetimes)
+            .map(|f| GenericField::Skipped(Box::new(f)))
         } else {
-          GenericTaggedField::try_new(f, &flavor_param, &flavors, f.copy() || object.copy())
-            .and_then(|f| {
-              if tags.contains(&f.tag()) {
-                Err(darling::Error::custom(format!(
-                  "{name} has multiple fields have the same tag {}",
-                  f.tag()
-                )))
-              } else {
-                tags.insert(f.tag());
-                Ok(GenericField::Tagged(Box::new(f)))
-              }
-            })
+          GenericTaggedField::try_new(
+            f,
+            &flavor_param,
+            &flavors,
+            &type_params,
+            &lifetimes,
+            f.copy() || object.copy(),
+          )
+          .and_then(|f| {
+            if tags.contains(&f.tag()) {
+              Err(darling::Error::custom(format!(
+                "{name} has multiple fields have the same tag {}",
+                f.tag()
+              )))
+            } else {
+              tags.insert(f.tag());
+              Ok(GenericField::Tagged(Box::new(f)))
+            }
+          })
         }
       })
       .collect::<darling::Result<Vec<_>>>()

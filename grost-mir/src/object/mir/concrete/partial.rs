@@ -120,7 +120,7 @@ impl ConcretePartialObject {
       quote! {}
     };
 
-    let fields = object.fields().iter().map(|f| {
+    let fields = object.fields().iter().filter_map(|f| {
       let field_name = f.name();
       let attrs = f.attrs();
       let vis = f.vis();
@@ -128,18 +128,24 @@ impl ConcretePartialObject {
       match f {
         ConcreteField::Skipped(skipped_field) => {
           let ty = skipped_field.ty();
-          quote! {
-            #(#attrs)*
-            #vis #field_name: ::core::option::Option<#ty>
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #(#attrs)*
+              #vis #field_name: ::core::marker::PhantomData<#ty>
+            })
+          } else {
+            None
           }
         }
         ConcreteField::Tagged(concrete_tagged_field) => {
           let vis = concrete_tagged_field.vis();
           let field_ty = concrete_tagged_field.partial().optional_type();
-          quote! {
+          Some(quote! {
             #(#attrs)*
             #vis #field_name: #field_ty
-          }
+          })
         }
       }
     });
@@ -162,10 +168,24 @@ impl ConcretePartialObject {
     let name = self.name();
     let generics = self.generics();
 
-    let fields_init = object.fields().iter().map(|f| {
+    let fields_init = object.fields().iter().filter_map(|f| {
       let field_name = f.name();
-      quote! {
-        #field_name: ::core::option::Option::None,
+
+      match f {
+        ConcreteField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData,
+            })
+          } else {
+            None
+          }
+        }
+        ConcreteField::Tagged(_) => Some(quote! {
+          #field_name: ::core::option::Option::None,
+        }),
       }
     });
 
@@ -184,12 +204,16 @@ impl ConcretePartialObject {
     let (ig, tg, where_clauses) = generics.split_for_impl();
     let flatten_state = derive_flatten_state(object.path_to_grost(), generics, name);
 
-    let is_empty = object.fields().iter().map(|f| {
-      let field_name = f.name();
-      quote! {
-        self.#field_name.is_none()
-      }
-    });
+    let is_empty = object
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let field_name = f.name();
+        quote! {
+          self.#field_name.is_none()
+        }
+      });
     let ubfn = &self.unknown_buffer_field_name;
     let ubg = &self.unknown_buffer().ident;
 

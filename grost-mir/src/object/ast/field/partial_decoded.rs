@@ -15,9 +15,9 @@ impl PartialDecodedFieldFromMeta {
 
 #[derive(Debug, Clone)]
 pub struct PartialDecodedFieldAttribute {
-  copy: bool,
-  attrs: Vec<Attribute>,
-  ty: Option<Type>,
+  pub(crate) copy: bool,
+  pub(crate) attrs: Vec<Attribute>,
+  pub(crate) ty: Option<Type>,
 }
 
 impl PartialDecodedFieldAttribute {
