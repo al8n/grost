@@ -3,7 +3,10 @@ use syn::{Attribute, Ident, Type, Visibility, punctuated::Punctuated};
 
 use quote::{format_ident, quote};
 
-use crate::{object::Label, utils::Invokable};
+use crate::{
+  object::{FieldIndex, Label},
+  utils::Invokable,
+};
 
 use super::{
   super::super::ast::{
@@ -12,13 +15,11 @@ use super::{
   ConcreteObjectAst,
 };
 
-pub use indexer::*;
 pub use partial::*;
 pub use partial_decoded::*;
 pub use reflection::*;
 pub use selector::*;
 
-mod indexer;
 mod partial;
 mod partial_decoded;
 mod reflection;
@@ -281,7 +282,7 @@ impl<F> ConcreteTaggedField<F> {
     })?;
 
     let reflection = ConcreteFieldReflection::try_new(object, &field, object.flavor().ty(), tag)?;
-    let index = FieldIndex::new(index, &field)?;
+    let index = FieldIndex::new(index, field.name(), field.tag())?;
     let partial = ConcretePartialField::from_ast(
       object.path_to_grost(),
       field.ty(),

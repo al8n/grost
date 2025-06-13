@@ -2,10 +2,9 @@ use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
-use crate::{flavor::FlavorAttribute, utils::Invokable};
+use crate::{flavor::FlavorAttribute, object::ast::Indexer, utils::Invokable};
 
 pub use field::*;
-pub use indexer::*;
 pub use partial::*;
 pub use partial_decoded::*;
 pub use reflection::*;
@@ -249,7 +248,6 @@ impl<M, F> ConcreteObject<M, F> {
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
-    let indexer = Indexer::from_ast(&object)?;
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
@@ -262,7 +260,6 @@ impl<M, F> ConcreteObject<M, F> {
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
-      indexer,
       reflection,
       fields,
       default: object.default().cloned(),
@@ -270,7 +267,8 @@ impl<M, F> ConcreteObject<M, F> {
       partial_decoded,
       selector,
       selector_iter,
-      meta: object.meta().clone(),
+      meta: object.meta,
+      indexer: object.indexer,
     })
   }
 

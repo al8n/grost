@@ -1,5 +1,10 @@
+use heck::ToUpperCamelCase;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, ConstParam, Generics, Ident, Path, Type, Visibility, parse_quote};
+use syn::{
+  Attribute, ConstParam, Generics, Ident, Path, Type, Variant, Visibility,
+  parse::{Parse, Parser},
+  parse_quote,
+};
 
 use super::{RawField, RawObject, ast::Object as ObjectAst};
 
@@ -8,6 +13,39 @@ pub use generic::*;
 
 mod concrete;
 mod generic;
+
+#[derive(Debug, Clone)]
+pub struct FieldIndex {
+  variant: Variant,
+  index: usize,
+}
+
+impl FieldIndex {
+  pub(super) fn new(index: usize, field_name: &Ident, tag: u32) -> darling::Result<Self> {
+    let variant = format_ident!("{}", field_name.to_string().to_upper_camel_case());
+    let variant_doc = format!(" The field indexer for the field `{field_name}`");
+
+    Ok(Self {
+      variant: syn::Variant::parse.parse2(quote! {
+        #[doc = #variant_doc]
+        #variant = #tag
+      })?,
+      index,
+    })
+  }
+
+  /// Returns the variant of the field
+  #[inline]
+  pub const fn variant(&self) -> &Variant {
+    &self.variant
+  }
+
+  /// Returns the index of the field, this index is the index of the field in the object.
+  #[inline]
+  pub const fn index(&self) -> usize {
+    self.index
+  }
+}
 
 /// The Mid-level Intermediate Representation for objects in grost schema.
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]

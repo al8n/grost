@@ -2,10 +2,10 @@ use indexmap::IndexMap;
 use quote::{ToTokens, quote};
 use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use crate::{object::Indexer, utils::Invokable};
+use crate::utils::Invokable;
 
 use super::{
-  super::ast::{GenericObject as GenericObjectAst, ObjectFlavor},
+  super::ast::{GenericObject as GenericObjectAst, Indexer, ObjectFlavor},
   accessors,
 };
 
@@ -15,6 +15,7 @@ pub use partial_decoded::*;
 pub use selector::*;
 
 mod field;
+mod indexer;
 mod partial;
 mod partial_decoded;
 mod selector;
@@ -169,12 +170,14 @@ impl<M, F> GenericObject<M, F> {
     F: Clone,
   {
     let path_to_grost = object.path_to_grost().clone();
+    let mut fields = object.fields().to_vec();
+    fields.sort_by_key(|f| f.tag().unwrap_or(u32::MAX));
 
-    let fields = object
-      .fields()
+    let fields = fields
       .iter()
       .cloned()
-      .map(|f| GenericField::<F>::from_ast::<M>(&object, f))
+      .enumerate()
+      .map(|(idx, f)| GenericField::from_ast(&object, idx, f))
       .collect::<darling::Result<Vec<_>>>()?;
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
@@ -206,11 +209,22 @@ impl<M, F> GenericObject<M, F> {
     let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
 
+    let indexer = self.derive_indexer_defination();
+
+    let partial_object = self.derive_partial_object_defination();
+    let partial_object_impl = self.derive_partial_object();
+
     Ok(quote! {
+      #indexer
+
+      #partial_object
+
       const _: () = {
         #default
 
         #accessors
+
+        #partial_object_impl
       };
     })
   }

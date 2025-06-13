@@ -1,33 +1,4 @@
 use quote::quote;
-use syn::{Attribute, Ident};
-
-#[derive(Debug, Clone)]
-pub struct Indexer {
-  name: Ident,
-  attrs: Vec<Attribute>,
-}
-
-impl Indexer {
-  /// Returns the name of the indexer.
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the attributes of the indexer.
-  pub const fn attrs(&self) -> &[syn::Attribute] {
-    self.attrs.as_slice()
-  }
-
-  pub(super) fn from_ast<M, F>(object: &super::ConcreteObjectAst<M, F>) -> darling::Result<Self> {
-    let name = object.indexer().name();
-    let attrs = object.indexer().attrs().to_vec();
-
-    Ok(Self {
-      name: name.clone(),
-      attrs,
-    })
-  }
-}
 
 impl<M, F> super::ConcreteObject<M, F> {
   pub(super) fn derive_indexer_defination(&self) -> proc_macro2::TokenStream {

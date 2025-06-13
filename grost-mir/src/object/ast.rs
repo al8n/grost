@@ -645,10 +645,19 @@ pub(super) enum GenericField<M = ()> {
   Tagged(Box<GenericTaggedField<M>>),
 }
 
+impl<M> GenericField<M> {
+  pub(super) const fn tag(&self) -> Option<u32> {
+    match self {
+      GenericField::Skipped(_) => None,
+      GenericField::Tagged(tagged) => Some(tagged.tag()),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub struct Indexer {
-  name: Ident,
-  attrs: Vec<Attribute>,
+  pub(super) name: Ident,
+  pub(super) attrs: Vec<Attribute>,
 }
 
 impl Indexer {
@@ -669,25 +678,25 @@ impl Indexer {
 /// over the flavor type.
 #[derive(Debug, Clone)]
 pub(super) struct ConcreteObject<M = (), F = ()> {
-  path_to_grost: Path,
-  attrs: Vec<Attribute>,
-  name: Ident,
-  schema_name: String,
-  schema_description: String,
-  vis: Visibility,
-  ty: Type,
-  reflectable: Type,
-  generics: Generics,
-  flavor: FlavorAttribute,
-  fields: Vec<ConcreteField<F>>,
-  default: Option<Invokable>,
-  indexer: Indexer,
-  partial: PartialObject,
-  partial_decoded: ConcretePartialDecodedObject,
-  selector: ConcreteSelector,
-  selector_iter: ConcreteSelectorIter,
-  copy: bool,
-  meta: M,
+  pub(super) path_to_grost: Path,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) name: Ident,
+  pub(super) schema_name: String,
+  pub(super) schema_description: String,
+  pub(super) vis: Visibility,
+  pub(super) ty: Type,
+  pub(super) reflectable: Type,
+  pub(super) generics: Generics,
+  pub(super) flavor: FlavorAttribute,
+  pub(super) fields: Vec<ConcreteField<F>>,
+  pub(super) default: Option<Invokable>,
+  pub(super) indexer: Indexer,
+  pub(super) partial: PartialObject,
+  pub(super) partial_decoded: ConcretePartialDecodedObject,
+  pub(super) selector: ConcreteSelector,
+  pub(super) selector_iter: ConcreteSelectorIter,
+  pub(super) copy: bool,
+  pub(super) meta: M,
 }
 
 impl<M, F> ConcreteObject<M, F> {
@@ -760,12 +769,6 @@ impl<M, F> ConcreteObject<M, F> {
     self.copy
   }
 
-  /// Returns the metadata associated with the object
-  #[inline]
-  pub const fn meta(&self) -> &M {
-    &self.meta
-  }
-
   /// Returns the fields of the object
   #[inline]
   pub const fn fields(&self) -> &[ConcreteField<F>] {
@@ -800,12 +803,6 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn selector_iter(&self) -> &ConcreteSelectorIter {
     &self.selector_iter
-  }
-
-  /// Returns the indexer information
-  #[inline]
-  pub const fn indexer(&self) -> &Indexer {
-    &self.indexer
   }
 
   fn try_new<O>(object: &O, flavor: &FlavorAttribute) -> darling::Result<Self>

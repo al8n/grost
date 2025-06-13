@@ -1,4 +1,7 @@
-use crate::{object::Label, utils::Invokable};
+use crate::{
+  object::{FieldIndex, Label},
+  utils::Invokable,
+};
 
 use super::super::super::ast::{
   FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
@@ -244,6 +247,7 @@ pub struct GenericTaggedField<M = ()> {
   schema_name: String,
   schema_description: String,
   flavor_param: TypeParam,
+  index: FieldIndex,
   label: Label,
   partial_decoded: GenericPartialDecodedField,
   partial: GenericPartialField,
@@ -316,6 +320,12 @@ impl<F> GenericTaggedField<F> {
     &self.meta
   }
 
+  /// Returns the index of this field.
+  #[inline]
+  pub const fn index(&self) -> &FieldIndex {
+    &self.index
+  }
+
   /// Returns the default value of this field.
   #[inline]
   pub const fn default(&self) -> &Invokable {
@@ -354,6 +364,7 @@ impl<F> GenericTaggedField<F> {
 
   fn from_ast<M>(
     object: &GenericObjectAst<M, F>,
+    index: usize,
     field: GenericTaggedFieldAst<F>,
   ) -> darling::Result<Self>
   where
@@ -469,7 +480,10 @@ impl<F> GenericTaggedField<F> {
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 
+    let index = FieldIndex::new(index, field.name(), field.tag())?;
+
     Ok(GenericTaggedField {
+      index,
       attrs: field.attrs().to_vec(),
       vis: field.vis().clone(),
       name: field.name().clone(),
@@ -567,6 +581,7 @@ impl<F> GenericField<F> {
 
   pub(super) fn from_ast<M>(
     object: &GenericObjectAst<M, F>,
+    index: usize,
     field: GenericFieldAst<F>,
   ) -> darling::Result<Self>
   where
@@ -575,7 +590,7 @@ impl<F> GenericField<F> {
     match field {
       GenericFieldAst::Skipped(f) => Ok(GenericField::Skipped(f)),
       GenericFieldAst::Tagged(f) => {
-        GenericTaggedField::from_ast(object, *f).map(|f| GenericField::Tagged(Box::new(f)))
+        GenericTaggedField::from_ast(object, index, *f).map(|f| GenericField::Tagged(Box::new(f)))
       }
     }
   }
