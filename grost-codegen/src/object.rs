@@ -1,4 +1,3 @@
-use darling::{FromField, FromMeta};
 use grost_mir::utils::Output;
 
 #[grost_mir::field(attribute = "grost")]

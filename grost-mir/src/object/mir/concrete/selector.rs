@@ -80,7 +80,6 @@ pub struct ConcreteSelector {
   ty: Type,
   attrs: Vec<Attribute>,
   generics: Generics,
-  flavor_type: Type,
 }
 
 impl ConcreteSelector {
@@ -106,12 +105,6 @@ impl ConcreteSelector {
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics
-  }
-
-  /// Returns the flavor type of the selector.
-  #[inline]
-  pub const fn flavor_type(&self) -> &Type {
-    &self.flavor_type
   }
 
   pub(super) fn from_ast<M, F>(
@@ -144,7 +137,6 @@ impl ConcreteSelector {
       ty,
       attrs: selector.attrs().to_vec(),
       generics,
-      flavor_type: object.flavor().ty().clone(),
     })
   }
 

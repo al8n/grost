@@ -1,4 +1,4 @@
-use syn::{Attribute, GenericParam, Generics, Ident, Type, TypeParam};
+use syn::{Attribute, GenericParam, Generics, Ident, Type};
 
 use quote::{format_ident, quote};
 
@@ -12,7 +12,6 @@ pub struct GenericPartialObject {
   ty: Type,
   generics: Generics,
   attrs: Vec<Attribute>,
-  unknown_buffer_param: TypeParam,
   unknown_buffer_field_name: Ident,
   copy: bool,
 }
@@ -50,18 +49,12 @@ impl GenericPartialObject {
     self.copy
   }
 
-  /// Returns the generic unknown buffer type parameter of the partial object.
-  #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
   pub(super) fn from_ast<M, F>(
     object: &GenericObjectAst<M, F>,
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
-    let unknown_buffer_param = partial_object.unknown_buffer().clone();
+    let unknown_buffer_param = object.unknown_buffer_param();
 
     let mut generics = object.generics().clone();
     generics
@@ -94,7 +87,6 @@ impl GenericPartialObject {
       ty,
       generics,
       attrs: partial_object.attrs().to_vec(),
-      unknown_buffer_param: partial_object.unknown_buffer().clone(),
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
       copy,
     })
@@ -109,7 +101,7 @@ impl<M, F> super::GenericObject<M, F> {
     let generics = partial_object.generics();
     let where_clause = generics.where_clause.as_ref();
     let ubfn = &partial_object.unknown_buffer_field_name;
-    let ubg = &partial_object.unknown_buffer().ident;
+    let ubg = &self.unknown_buffer_param().ident;
     let attrs = partial_object.attrs();
     let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
       let doc = format!(" Partial struct for the [`{}`]", self.name());
@@ -213,7 +205,7 @@ impl<M, F> super::GenericObject<M, F> {
         }
       });
     let ubfn = &partial_object.unknown_buffer_field_name;
-    let ubg = &partial_object.unknown_buffer().ident;
+    let ubg = &self.unknown_buffer_param().ident;
 
     quote! {
       #[automatically_derived]

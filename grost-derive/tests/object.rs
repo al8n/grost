@@ -24,18 +24,18 @@ use grost_derive::{Object, object};
         enum = "grost::flavors::network::encoding::enumeration",
       )
     ),
-    mystorage(
-      format = "grost::flavors::network::LengthDelimited",
-      tag(
-        constructor = "grost::flavors::network::Tag::new",
-        encode = "grost::flavors::network::Tag::encode",
-      ),
-      identifier(
-        constructor = "grost::flavors::network::Identifier::new",
-        encode = "grost::flavors::network::Identifier::encode",
-      ),
-      type = "grost::flavors::network::Network",
-    ),
+    // mystorage(
+    //   format = "grost::flavors::network::LengthDelimited",
+    //   tag(
+    //     constructor = "grost::flavors::network::Tag::new",
+    //     encode = "grost::flavors::network::Tag::encode",
+    //   ),
+    //   identifier(
+    //     constructor = "grost::flavors::network::Identifier::new",
+    //     encode = "grost::flavors::network::Identifier::encode",
+    //   ),
+    //   type = "grost::flavors::network::Network",
+    // ),
   ),
   generic(lifetime = "'de", unknown_buffer = "UB", flavor = "F"),
 )]

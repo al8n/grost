@@ -1,23 +1,27 @@
 use indexmap::IndexMap;
 use quote::{ToTokens, quote};
-use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
+use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::utils::Invokable;
 
 use super::{
-  super::ast::{GenericObject as GenericObjectAst, Indexer, ObjectFlavor},
+  super::ast::{GenericObject as GenericObjectAst, Indexer},
   accessors,
 };
 
 pub use field::*;
+pub use flavor::*;
 pub use partial::*;
 pub use partial_decoded::*;
+pub use reflection::*;
 pub use selector::*;
 
 mod field;
+mod flavor;
 mod indexer;
 mod partial;
 mod partial_decoded;
+mod reflection;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -25,15 +29,22 @@ pub struct GenericObject<M, F> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
   default: Option<Invokable>,
+  schema_name: String,
+  schema_description: String,
   name: Ident,
   vis: Visibility,
   ty: Type,
   reflectable: Type,
   fields: Vec<GenericField<F>>,
   indexer: Indexer,
+  flavor_param: TypeParam,
+  unknown_buffer_param: TypeParam,
+  lifetime_param: syn::LifetimeParam,
+  wire_format_param: TypeParam,
   generics: Generics,
   partial: GenericPartialObject,
   partial_decoded: GenericPartialDecodedObject,
+  reflection: GenericObjectReflection,
   selector: GenericSelector,
   selector_iter: GenericSelectorIter,
   flavors: IndexMap<Ident, ObjectFlavor>,
@@ -94,6 +105,18 @@ impl<M, F> GenericObject<M, F> {
     &self.vis
   }
 
+  /// Returns the schema name of the object.
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
+
+  /// Returns the schema description of the object.
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
+  }
+
   /// Returns the type of the object.
   ///
   /// e.g. if the name is `UserObject`, this will return `UserObject<T>`.
@@ -146,6 +169,30 @@ impl<M, F> GenericObject<M, F> {
     &self.selector_iter
   }
 
+  /// Returns the generic flavor parameter, which will be used in generated structs or impls.
+  #[inline]
+  pub const fn flavor_param(&self) -> &TypeParam {
+    &self.flavor_param
+  }
+
+  /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
+
+  /// Returns the generic lifetime parameter, which will be used in generated structs or impls.
+  #[inline]
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
+
+  /// Returns the generic wire format type parameter, which will be used in generated structs or impls.
+  #[inline]
+  pub const fn wire_format_type_param(&self) -> &TypeParam {
+    &self.wire_format_param
+  }
+
   /// Returns the flavors of the object.
   #[inline]
   pub const fn flavors(&self) -> &IndexMap<Ident, ObjectFlavor> {
@@ -182,26 +229,41 @@ impl<M, F> GenericObject<M, F> {
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
     let partial_decoded = GenericPartialDecodedObject::from_ast(&object, &fields)?;
-    let selector = GenericSelector::from_ast(&object, &fields)?;
+    let flavors = object
+      .flavors
+      .iter()
+      .map(|(name, flavor)| {
+        ObjectFlavor::from_ast(&object, name, flavor, &fields).map(|f| (name.clone(), f))
+      })
+      .collect::<darling::Result<_>>()?;
+    let selector = GenericSelector::from_ast(&object, &flavors, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
+    let reflection = GenericObjectReflection::from_ast(&object, &fields)?;
 
     Ok(Self {
       path_to_grost,
-      attrs: object.attrs().to_vec(),
-      default: object.default().cloned(),
-      name: object.name().clone(),
-      vis: object.vis().clone(),
-      ty: object.ty().clone(),
-      reflectable: object.reflectable().clone(),
-      indexer: object.indexer().clone(),
+      reflection,
+      attrs: object.attrs,
+      default: object.default,
+      name: object.name,
+      schema_description: object.schema_description,
+      schema_name: object.schema_name,
+      flavor_param: object.flavor_param,
+      vis: object.vis,
+      ty: object.ty,
+      reflectable: object.reflectable,
+      indexer: object.indexer,
       fields,
-      generics: object.generics().clone(),
-      meta: object.meta().clone(),
+      generics: object.generics,
+      meta: object.meta,
       partial,
       partial_decoded,
       selector,
       selector_iter,
-      flavors: object.flavors().clone(),
+      flavors,
+      unknown_buffer_param: object.unknown_buffer_param,
+      lifetime_param: object.lifetime_param,
+      wire_format_param: object.wire_format_param,
     })
   }
 
@@ -214,10 +276,23 @@ impl<M, F> GenericObject<M, F> {
     let partial_object = self.derive_partial_object_defination();
     let partial_object_impl = self.derive_partial_object();
 
+    let partial_decoded_object = self.derive_partial_decoded_object_defination();
+
+    let selector = self.derive_selector_defination();
+    let selector_iter = self.derive_selector_iter_defination();
+
+    let reflection_impl = self.derive_reflection();
+
     Ok(quote! {
       #indexer
 
       #partial_object
+
+      #partial_decoded_object
+
+      #selector
+
+      #selector_iter
 
       const _: () = {
         #default
@@ -225,6 +300,8 @@ impl<M, F> GenericObject<M, F> {
         #accessors
 
         #partial_object_impl
+
+        #reflection_impl
       };
     })
   }

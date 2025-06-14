@@ -1,14 +1,13 @@
 use quote::format_ident;
-use syn::{Attribute, Ident, TypeParam};
+use syn::{Attribute, Ident};
 
 use crate::object::meta::PartialObjectFromMeta;
 
 impl PartialObjectFromMeta {
-  pub(super) fn finalize(self, unknown_buffer_generic: TypeParam) -> PartialObjectAttribute {
+  pub(super) fn finalize(self) -> PartialObjectAttribute {
     PartialObjectAttribute {
       name: self.name,
       attrs: self.attrs,
-      unknown_buffer_generic,
     }
   }
 }
@@ -17,7 +16,6 @@ impl PartialObjectFromMeta {
 pub struct PartialObjectAttribute {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
-  unknown_buffer_generic: TypeParam,
 }
 
 impl PartialObjectAttribute {
@@ -30,18 +28,12 @@ impl PartialObjectAttribute {
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
   }
-
-  /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_generic
-  }
 }
 
 #[derive(Debug, Clone)]
 pub struct PartialObject {
   name: Ident,
   attrs: Vec<Attribute>,
-  unknown_buffer_generic: TypeParam,
 }
 
 impl PartialObject {
@@ -53,11 +45,6 @@ impl PartialObject {
   /// Returns the attributes of the partial object
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
-  }
-
-  /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_generic
   }
 
   pub(super) fn from_attribute(
@@ -73,7 +60,6 @@ impl PartialObject {
     Ok(Self {
       name,
       attrs: attribute.attrs().to_vec(),
-      unknown_buffer_generic: attribute.unknown_buffer().clone(),
     })
   }
 }

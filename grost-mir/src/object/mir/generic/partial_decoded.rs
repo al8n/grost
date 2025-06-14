@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use quote::format_ident;
 use quote::quote;
-use syn::{Attribute, GenericParam, Generics, Ident, LifetimeParam, Type, TypeParam};
+use syn::{Attribute, GenericParam, Generics, Ident, Type};
 
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
 
@@ -29,10 +29,10 @@ impl PartialDecodedObjectFlavor {
     flavor_name: &Ident,
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
-    let partial_decoded_object = object.partial_decoded();
+    let partial_decoded_object = &object.partial_decoded;
     let partial_decoded_object_name = partial_decoded_object.name();
-    let unknown_buffer_param = partial_decoded_object.unknown_buffer();
-    let lifetime_param = partial_decoded_object.lifetime();
+    let unknown_buffer_param = &object.unknown_buffer_param;
+    let lifetime_param = &object.lifetime_param;
 
     let original_generics = object.generics();
     let mut generics = Generics::default();
@@ -112,8 +112,6 @@ pub struct GenericPartialDecodedObject {
   generics: Generics,
   copy: bool,
   unknown_buffer_field_name: Ident,
-  unknown_buffer_param: TypeParam,
-  lifetime_param: LifetimeParam,
   flavors: IndexMap<Ident, PartialDecodedObjectFlavor>,
 }
 
@@ -136,18 +134,6 @@ impl GenericPartialDecodedObject {
     &self.generics
   }
 
-  /// Returns the generic unknown buffer type parameter of the partial decoded object.
-  #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
-  /// Returns the lifetime parameter of the partial decoded object.
-  #[inline]
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime_param
-  }
-
   /// Returns `true` if the partial decoded object is copyable, `false` otherwise.
   #[inline]
   pub const fn copy(&self) -> bool {
@@ -164,14 +150,14 @@ impl GenericPartialDecodedObject {
     object: &GenericObjectAst<M, F>,
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
-    let path_to_grost = object.path_to_grost();
-    let partial_decoded_object = object.partial_decoded();
+    let path_to_grost = &object.path_to_grost;
+    let partial_decoded_object = &object.partial_decoded;
     let partial_decoded_object_name = partial_decoded_object.name().clone();
-    let flavor_param = partial_decoded_object.flavor().clone();
-    let unknown_buffer_param = partial_decoded_object.unknown_buffer().clone();
-    let lifetime_param = partial_decoded_object.lifetime().clone();
+    let flavor_param = &object.flavor_param;
+    let unknown_buffer_param = &object.unknown_buffer_param;
+    let lifetime_param = &object.lifetime_param;
     let copy = partial_decoded_object.copy();
-    let original_generics = object.generics();
+    let original_generics = &object.generics;
     let mut generics = Generics::default();
 
     // push the lifetime generic parameter first
@@ -249,11 +235,72 @@ impl GenericPartialDecodedObject {
       name: partial_decoded_object_name,
       attrs: partial_decoded_object.attrs().to_vec(),
       generics,
-      unknown_buffer_param,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-      lifetime_param,
       copy,
       flavors,
     })
+  }
+}
+
+impl<M, F> super::GenericObject<M, F> {
+  pub(super) fn derive_partial_decoded_object_defination(&self) -> proc_macro2::TokenStream {
+    let partial_decoded_object = self.partial_decoded();
+    let name = partial_decoded_object.name();
+    let vis = self.vis();
+    let fields = self.fields().iter().filter_map(|f| {
+      let field_name = f.name();
+      match f {
+        GenericField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            let ty = skipped_field.ty();
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData<#ty>
+            })
+          } else {
+            None
+          }
+        }
+        GenericField::Tagged(generic_tagged_field) => {
+          let ty = generic_tagged_field.partial_decoded().optional_type();
+          let vis = generic_tagged_field.vis();
+          let attrs = generic_tagged_field.partial_decoded().attrs();
+
+          Some(quote! {
+            #(#attrs)*
+            #vis #field_name: #ty
+          })
+        }
+      }
+    });
+    let generics = partial_decoded_object.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = partial_decoded_object.attrs();
+
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(
+        " Partial reference struct for the struct [`{}`]",
+        self.name()
+      );
+      quote! {
+        #[doc = #doc]
+      }
+    } else {
+      quote! {}
+    };
+    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
+    let ubg = &self.unknown_buffer_param().ident;
+
+    quote! {
+      #(#attrs)*
+      #doc
+      #[allow(clippy::type_complexity, non_camel_case_types)]
+      #vis struct #name #generics #where_clause
+      {
+        #ubfn: ::core::option::Option<#ubg>,
+        #(#fields),*
+      }
+    }
   }
 }

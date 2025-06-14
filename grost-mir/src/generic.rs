@@ -41,13 +41,13 @@ impl From<GenericFlavorParam> for Option<TypeParam> {
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
 pub(crate) struct GenericFromMeta {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
-  lifetime: LifetimeParam,
+  pub(crate) lifetime: LifetimeParam,
   #[darling(default, map = "GenericFlavorParam::into")]
-  flavor: Option<TypeParam>,
+  pub(crate) flavor: Option<TypeParam>,
   #[darling(default = grost_unknown_buffer_param)]
-  unknown_buffer: TypeParam,
+  pub(crate) unknown_buffer: TypeParam,
   #[darling(default = grost_wire_format_param)]
-  wire_format: TypeParam,
+  pub(crate) wire_format: TypeParam,
 }
 
 impl Default for GenericFromMeta {
@@ -58,31 +58,5 @@ impl Default for GenericFromMeta {
       unknown_buffer: grost_unknown_buffer_param(),
       wire_format: grost_wire_format_param(),
     }
-  }
-}
-
-impl GenericFromMeta {
-  /// Returns the lifetime generic param
-  #[inline]
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime
-  }
-
-  /// Returns the flavor generic param
-  #[inline]
-  pub const fn flavor(&self) -> Option<&TypeParam> {
-    self.flavor.as_ref()
-  }
-
-  /// Returns the unknown buffer generic param
-  #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer
-  }
-
-  /// Returns the wire format generic param
-  #[inline]
-  pub const fn wire_format(&self) -> &TypeParam {
-    &self.wire_format
   }
 }

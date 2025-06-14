@@ -83,10 +83,9 @@ impl ConcreteObjectReflection {
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let path_to_grost = object.path_to_grost();
-    let name = object.name();
     let flavor_ty = object.flavor().ty();
+    let object_type = object.ty();
     let generics = object.generics();
-    let (_, tg, _) = generics.split_for_impl();
     let mut field_reflection_generics = generics.clone();
     let mut wire_format_reflection_generics = generics.clone();
     let mut wire_type_reflection_generics = generics.clone();
@@ -99,7 +98,7 @@ impl ConcreteObjectReflection {
 
     let ty: Type = syn::parse2(quote! {
       #path_to_grost::__private::reflection::ObjectReflection<
-        #name #tg,
+        #object_type,
         #path_to_grost::__private::reflection::Object,
         #flavor_ty,
       >

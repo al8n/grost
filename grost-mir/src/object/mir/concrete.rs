@@ -1,5 +1,5 @@
 use quote::{ToTokens, quote};
-use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
+use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
 use crate::{flavor::FlavorAttribute, object::ast::Indexer, utils::Invokable};
@@ -29,6 +29,8 @@ pub struct ConcreteObject<M = (), F = ()> {
   reflectable: Type,
   generics: Generics,
   flavor: FlavorAttribute,
+  unknown_buffer_param: TypeParam,
+  lifetime_param: LifetimeParam,
   fields: Vec<ConcreteField<F>>,
   indexer: Indexer,
   default: Option<Invokable>,
@@ -128,6 +130,18 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn flavor_type(&self) -> &Type {
     self.flavor.ty()
+  }
+
+  /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls
+  #[inline]
+  pub const fn unknown_buffer(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
+
+  /// Returns the lifetime generic parameter, which will be used in generated structs or impls
+  #[inline]
+  pub const fn lifetime(&self) -> &LifetimeParam {
+    &self.lifetime_param
   }
 
   /// Returns the wire format of the concrete object.
@@ -260,9 +274,11 @@ impl<M, F> ConcreteObject<M, F> {
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
+      unknown_buffer_param: object.unknown_buffer_param,
+      lifetime_param: object.lifetime_param,
       reflection,
       fields,
-      default: object.default().cloned(),
+      default: object.default,
       partial,
       partial_decoded,
       selector,

@@ -1,5 +1,5 @@
 use quote::{format_ident, quote};
-use syn::{Attribute, GenericParam, Generics, Ident, LifetimeParam, Type, TypeParam};
+use syn::{Attribute, GenericParam, Generics, Ident, Type};
 
 use crate::object::mir::{derive_flatten_state, optional_accessors};
 
@@ -12,10 +12,7 @@ pub struct ConcretePartialDecodedObject {
   attrs: Vec<Attribute>,
   generics: Generics,
   copy: bool,
-  flavor_type: Type,
   unknown_buffer_field_name: Ident,
-  unknown_buffer_param: TypeParam,
-  lifetime_param: LifetimeParam,
 }
 
 impl ConcretePartialDecodedObject {
@@ -43,24 +40,6 @@ impl ConcretePartialDecodedObject {
     &self.generics
   }
 
-  /// Returns the flavor type of the partial decoded object.
-  #[inline]
-  pub const fn flavor_type(&self) -> &Type {
-    &self.flavor_type
-  }
-
-  /// Returns the generic unknown buffer type parameter of the partial decoded object.
-  #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
-  /// Returns the lifetime parameter of the partial decoded object.
-  #[inline]
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime_param
-  }
-
   /// Returns `true` if the partial decoded object is copyable, `false` otherwise.
   #[inline]
   pub const fn copy(&self) -> bool {
@@ -72,8 +51,8 @@ impl ConcretePartialDecodedObject {
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let partial_decoded_object = object.partial_decoded();
-    let unknown_buffer_param = partial_decoded_object.unknown_buffer().clone();
-    let lifetime_param = partial_decoded_object.lifetime().clone();
+    let unknown_buffer_param = object.unknown_buffer();
+    let lifetime_param = object.lifetime();
 
     let object_generics = object.generics();
     let mut generics = Generics::default();
@@ -129,10 +108,7 @@ impl ConcretePartialDecodedObject {
       attrs: partial_decoded_object.attrs().to_vec(),
       copy: partial_decoded_object.copy(),
       generics,
-      flavor_type: object.flavor().ty().clone(),
-      unknown_buffer_param,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-      lifetime_param,
     })
   }
 }
@@ -186,7 +162,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     });
 
     let ubfn = &partial_decoded.unknown_buffer_field_name;
-    let ubt = &partial_decoded.unknown_buffer().ident;
+    let ubt = &self.unknown_buffer().ident;
 
     quote! {
       #doc
@@ -246,7 +222,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
     let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
     let ubfn = &partial_decoded_object.unknown_buffer_field_name;
-    let ubg = &partial_decoded_object.unknown_buffer().ident;
+    let ubg = &self.unknown_buffer().ident;
     let flatten_state = derive_flatten_state(
       &self.path_to_grost,
       partial_decoded_object.generics(),

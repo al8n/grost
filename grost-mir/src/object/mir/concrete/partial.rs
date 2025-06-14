@@ -1,4 +1,4 @@
-use syn::{Attribute, GenericParam, Generics, Ident, Type, TypeParam};
+use syn::{Attribute, GenericParam, Generics, Ident, Type};
 
 use quote::{format_ident, quote};
 
@@ -12,7 +12,6 @@ pub struct ConcretePartialObject {
   ty: Type,
   generics: Generics,
   attrs: Vec<Attribute>,
-  unknown_buffer_param: TypeParam,
   unknown_buffer_field_name: Ident,
   copy: bool,
 }
@@ -38,12 +37,6 @@ impl ConcretePartialObject {
     &self.ty
   }
 
-  /// Returns the generic unknown buffer type parameter of the partial object.
-  #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
   /// Returns the generics of the partial object.
   #[inline]
   pub const fn generics(&self) -> &Generics {
@@ -61,7 +54,7 @@ impl ConcretePartialObject {
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
-    let unknown_buffer_param = partial_object.unknown_buffer().clone();
+    let unknown_buffer_param = object.unknown_buffer();
 
     let mut generics = object.generics().clone();
     generics
@@ -94,7 +87,6 @@ impl ConcretePartialObject {
       ty,
       generics,
       attrs: partial_object.attrs().to_vec(),
-      unknown_buffer_param: partial_object.unknown_buffer().clone(),
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
       copy,
     })
@@ -109,7 +101,7 @@ impl ConcretePartialObject {
     let generics = self.generics();
     let (_, _, where_clause) = generics.split_for_impl();
     let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer().ident;
+    let ubg = &object.unknown_buffer().ident;
     let attrs = self.attrs();
     let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
       let doc = format!(" Partial struct for the [`{}`]", self.name());
@@ -215,7 +207,7 @@ impl ConcretePartialObject {
         }
       });
     let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer().ident;
+    let ubg = &object.unknown_buffer().ident;
 
     Ok(quote! {
       #[automatically_derived]

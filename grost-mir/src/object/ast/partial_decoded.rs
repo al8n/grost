@@ -1,22 +1,14 @@
 use quote::format_ident;
-use syn::{Attribute, Ident, LifetimeParam, Type, TypeParam};
+use syn::{Attribute, Ident};
 
 use crate::object::meta::PartialDecodedObjectFromMeta;
 
 impl PartialDecodedObjectFromMeta {
-  pub(super) fn finalize(
-    self,
-    flavor_param: Option<TypeParam>,
-    unknown_buffer_param: TypeParam,
-    lifetime_param: LifetimeParam,
-  ) -> PartialDecodedObjectAttribute {
+  pub(super) fn finalize(self) -> PartialDecodedObjectAttribute {
     PartialDecodedObjectAttribute {
       name: self.name,
       attrs: self.attrs,
       copy: self.copy,
-      flavor_param,
-      unknown_buffer_param,
-      lifetime_param,
     }
   }
 }
@@ -26,9 +18,6 @@ pub struct PartialDecodedObjectAttribute {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
   copy: bool,
-  flavor_param: Option<TypeParam>,
-  unknown_buffer_param: TypeParam,
-  lifetime_param: LifetimeParam,
 }
 
 impl PartialDecodedObjectAttribute {
@@ -47,20 +36,20 @@ impl PartialDecodedObjectAttribute {
     self.copy
   }
 
-  /// Returns the flavor generic parameter if it exists
-  pub const fn flavor(&self) -> Option<&TypeParam> {
-    self.flavor_param.as_ref()
-  }
+  // /// Returns the flavor generic parameter if it exists
+  // pub const fn flavor(&self) -> Option<&TypeParam> {
+  //   self.flavor_param.as_ref()
+  // }
 
-  /// Returns the unknown buffer generic parameter
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
+  // /// Returns the unknown buffer generic parameter
+  // pub const fn unknown_buffer(&self) -> &TypeParam {
+  //   &self.unknown_buffer_param
+  // }
 
-  /// Returns the lifetime generic parameter
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime_param
-  }
+  // /// Returns the lifetime generic parameter
+  // pub const fn lifetime(&self) -> &LifetimeParam {
+  //   &self.lifetime_param
+  // }
 }
 
 #[derive(Debug, Clone)]
@@ -68,15 +57,11 @@ pub(in crate::object) struct ConcretePartialDecodedObject {
   name: Ident,
   attrs: Vec<Attribute>,
   copy: bool,
-  flavor_type: Type,
-  unknown_buffer_param: TypeParam,
-  lifetime_param: LifetimeParam,
 }
 
 impl ConcretePartialDecodedObject {
   pub(super) fn from_attribute(
     object_name: &Ident,
-    flavor_type: Type,
     attribute: &PartialDecodedObjectAttribute,
   ) -> darling::Result<Self> {
     let name = if let Some(name) = attribute.name() {
@@ -89,9 +74,6 @@ impl ConcretePartialDecodedObject {
       name,
       attrs: attribute.attrs().to_vec(),
       copy: attribute.copy(),
-      flavor_type,
-      unknown_buffer_param: attribute.unknown_buffer().clone(),
-      lifetime_param: attribute.lifetime().clone(),
     })
   }
 
@@ -109,21 +91,6 @@ impl ConcretePartialDecodedObject {
   pub const fn copy(&self) -> bool {
     self.copy
   }
-
-  /// Returns the flavor type of the concrete partial decoded object
-  pub const fn flavor_type(&self) -> &Type {
-    &self.flavor_type
-  }
-
-  /// Returns the unknown buffer type generic parameter of the concrete partial decoded object
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
-  /// Returns the lifetime generic parameter of the concrete partial decoded object
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime_param
-  }
 }
 
 #[derive(Debug, Clone)]
@@ -131,15 +98,11 @@ pub struct GenericPartialDecodedObject {
   name: Ident,
   attrs: Vec<Attribute>,
   copy: bool,
-  flavor_param: TypeParam,
-  unknown_buffer_param: TypeParam,
-  lifetime_param: LifetimeParam,
 }
 
 impl GenericPartialDecodedObject {
   pub(super) fn from_attribute(
     object_name: &Ident,
-    flavor_param: &TypeParam,
     attribute: &PartialDecodedObjectAttribute,
   ) -> darling::Result<Self> {
     let name = if let Some(name) = attribute.name() {
@@ -152,9 +115,6 @@ impl GenericPartialDecodedObject {
       name,
       attrs: attribute.attrs().to_vec(),
       copy: attribute.copy(),
-      flavor_param: flavor_param.clone(),
-      unknown_buffer_param: attribute.unknown_buffer().clone(),
-      lifetime_param: attribute.lifetime().clone(),
     })
   }
 
@@ -171,20 +131,5 @@ impl GenericPartialDecodedObject {
   /// Returns whether the generic partial decoded object is copyable
   pub const fn copy(&self) -> bool {
     self.copy
-  }
-
-  /// Returns the flavor type parameter of the generic partial decoded object
-  pub const fn flavor(&self) -> &TypeParam {
-    &self.flavor_param
-  }
-
-  /// Returns the unknown buffer type parameter of the generic partial decoded object
-  pub const fn unknown_buffer(&self) -> &TypeParam {
-    &self.unknown_buffer_param
-  }
-
-  /// Returns the lifetime parameter of the generic partial decoded object
-  pub const fn lifetime(&self) -> &LifetimeParam {
-    &self.lifetime_param
   }
 }

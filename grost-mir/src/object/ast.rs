@@ -1,7 +1,7 @@
 use darling::usage::{GenericsExt, IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
 use indexmap::{IndexMap, IndexSet};
 use quote::{format_ident, quote};
-use syn::{Attribute, Generics, Ident, Path, Type, TypeParam, Visibility};
+use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::{
   flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, TagAttribute},
@@ -688,6 +688,8 @@ pub(super) struct ConcreteObject<M = (), F = ()> {
   pub(super) reflectable: Type,
   pub(super) generics: Generics,
   pub(super) flavor: FlavorAttribute,
+  pub(super) unknown_buffer_param: TypeParam,
+  pub(super) lifetime_param: LifetimeParam,
   pub(super) fields: Vec<ConcreteField<F>>,
   pub(super) default: Option<Invokable>,
   pub(super) indexer: Indexer,
@@ -751,6 +753,18 @@ impl<M, F> ConcreteObject<M, F> {
     &self.flavor
   }
 
+  /// Returns the generic unknown buffer type parameter.
+  #[inline]
+  pub const fn unknown_buffer(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
+
+  /// Returns the generic lifetime parameter.
+  #[inline]
+  pub const fn lifetime(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
+
   /// Returns the generics in the object definition if any.
   #[inline]
   pub const fn generics(&self) -> &Generics {
@@ -773,12 +787,6 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn fields(&self) -> &[ConcreteField<F>] {
     self.fields.as_slice()
-  }
-
-  /// Returns the path to the fn that returns the default value of the object, if any.
-  #[inline]
-  pub const fn default(&self) -> Option<&Invokable> {
-    self.default.as_ref()
   }
 
   /// Returns the partial object information
@@ -863,14 +871,11 @@ impl<M, F> ConcreteObject<M, F> {
       })?;
 
     let partial = PartialObject::from_attribute(&name, object.partial())?;
-    let partial_decoded = ConcretePartialDecodedObject::from_attribute(
-      &name,
-      flavor.ty().clone(),
-      object.partial_decoded(),
-    )?;
-    let selector = ConcreteSelector::from_attribute(&name, flavor.ty(), object.selector())?;
+    let partial_decoded =
+      ConcretePartialDecodedObject::from_attribute(&name, object.partial_decoded())?;
+    let selector = ConcreteSelector::from_attribute(&name, object.selector())?;
     let selector_iter =
-      ConcreteSelectorIter::from_attribute(selector.name(), flavor.ty(), object.selector_iter())?;
+      ConcreteSelectorIter::from_attribute(selector.name(), object.selector_iter())?;
 
     Ok(Self {
       path_to_grost,
@@ -902,18 +907,20 @@ impl<M, F> ConcreteObject<M, F> {
       selector,
       selector_iter,
       meta: object.meta().clone(),
+      unknown_buffer_param: object.unknown_buffer_type_param().clone(),
+      lifetime_param: object.lifetime_param().clone(),
     })
   }
 }
 
 #[derive(Debug, Clone)]
 pub struct ObjectFlavor {
-  ty: Type,
-  format: Type,
-  identifier: IdentifierAttribute,
-  tag: TagAttribute,
-  encode: EncodeAttribute,
-  decode: DecodeAttribute,
+  pub(super) ty: Type,
+  pub(super) format: Type,
+  pub(super) identifier: IdentifierAttribute,
+  pub(super) tag: TagAttribute,
+  pub(super) encode: EncodeAttribute,
+  pub(super) decode: DecodeAttribute,
 }
 
 impl ObjectFlavor {
@@ -968,23 +975,29 @@ impl ObjectFlavor {
 /// The AST for a generic object, a generic object which means there are multiple flavors and the generated code will be generic over the flavor type.
 #[derive(Debug, Clone)]
 pub(super) struct GenericObject<M = (), F = ()> {
-  path_to_grost: Path,
-  attrs: Vec<Attribute>,
-  default: Option<Invokable>,
-  name: Ident,
-  vis: Visibility,
-  ty: Type,
-  reflectable: Type,
-  fields: Vec<GenericField<F>>,
-  generics: Generics,
-  partial: PartialObject,
-  partial_decoded: GenericPartialDecodedObject,
-  selector: GenericSelector,
-  selector_iter: GenericSelectorIter,
-  indexer: Indexer,
-  flavors: IndexMap<Ident, ObjectFlavor>,
-  copy: bool,
-  meta: M,
+  pub(super) path_to_grost: Path,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) default: Option<Invokable>,
+  pub(super) name: Ident,
+  pub(super) schema_name: String,
+  pub(super) schema_description: String,
+  pub(super) flavor_param: TypeParam,
+  pub(super) unknown_buffer_param: TypeParam,
+  pub(super) lifetime_param: LifetimeParam,
+  pub(super) wire_format_param: TypeParam,
+  pub(super) vis: Visibility,
+  pub(super) ty: Type,
+  pub(super) reflectable: Type,
+  pub(super) fields: Vec<GenericField<F>>,
+  pub(super) generics: Generics,
+  pub(super) partial: PartialObject,
+  pub(super) partial_decoded: GenericPartialDecodedObject,
+  pub(super) selector: GenericSelector,
+  pub(super) selector_iter: GenericSelectorIter,
+  pub(super) indexer: Indexer,
+  pub(super) flavors: IndexMap<Ident, ObjectFlavor>,
+  pub(super) copy: bool,
+  pub(super) meta: M,
 }
 
 impl<M, F> GenericObject<M, F> {
@@ -994,32 +1007,12 @@ impl<M, F> GenericObject<M, F> {
     &self.path_to_grost
   }
 
-  /// Returns the name of the object.
-  #[inline]
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the visibility of the object.
-  #[inline]
-  pub const fn vis(&self) -> &Visibility {
-    &self.vis
-  }
-
   /// Returns the type of the object.
   ///
   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
-  }
-
-  /// Returns the reflectable trait which replaces the generic parameter with the type of the object.
-  ///
-  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
-  #[inline]
-  pub const fn reflectable(&self) -> &Type {
-    &self.reflectable
   }
 
   /// Returns the generics in the object definition.
@@ -1040,34 +1033,20 @@ impl<M, F> GenericObject<M, F> {
     &self.flavors
   }
 
-  /// Returns the attributes in the object definition.
-  #[inline]
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
+  /// Returns the generic flavor type parameter
+  pub const fn flavor_param(&self) -> &TypeParam {
+    &self.flavor_param
   }
 
-  /// Returns the path to the fn that returns the default value of the object, if any.
-  #[inline]
-  pub const fn default(&self) -> Option<&Invokable> {
-    self.default.as_ref()
+  /// Returns the generic unknown buffer type parameter
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    &self.unknown_buffer_param
   }
 
   /// Returns `true` if the object is copyable, `false` otherwise.
   #[inline]
   pub const fn copy(&self) -> bool {
     self.copy
-  }
-
-  /// Returns the custom metadata associated with the object.
-  #[inline]
-  pub const fn meta(&self) -> &M {
-    &self.meta
-  }
-
-  /// Returns the indexer information.
-  #[inline]
-  pub const fn indexer(&self) -> &Indexer {
-    &self.indexer
   }
 
   /// Returns the partial object information.
@@ -1168,10 +1147,10 @@ impl<M, F> GenericObject<M, F> {
       })?;
     let partial = PartialObject::from_attribute(&name, object.partial())?;
     let partial_decoded =
-      GenericPartialDecodedObject::from_attribute(&name, &flavor_param, object.partial_decoded())?;
-    let selector = GenericSelector::from_attribute(&name, &flavor_param, object.selector())?;
+      GenericPartialDecodedObject::from_attribute(&name, object.partial_decoded())?;
+    let selector = GenericSelector::from_attribute(&name, object.selector())?;
     let selector_iter =
-      GenericSelectorIter::from_attribute(selector.name(), &flavor_param, object.selector_iter())?;
+      GenericSelectorIter::from_attribute(selector.name(), object.selector_iter())?;
 
     Ok(Self {
       path_to_grost,
@@ -1181,9 +1160,22 @@ impl<M, F> GenericObject<M, F> {
         name: object.indexer_name().clone(),
         attrs: object.indexer().attrs().to_vec(),
       },
+      schema_name: object
+        .schema()
+        .name()
+        .map_or_else(|| name.to_string(), |s| s.to_string()),
+      schema_description: object
+        .schema()
+        .description()
+        .unwrap_or_default()
+        .to_string(),
       name,
       vis,
       ty,
+      flavor_param,
+      lifetime_param: object.lifetime_param().clone(),
+      unknown_buffer_param: object.unknown_buffer_type_param().clone(),
+      wire_format_param: object.wire_format_type_param().clone(),
       reflectable,
       generics,
       flavors,
@@ -1224,7 +1216,7 @@ impl<M, F> Object<M, F> {
     F: Clone,
   {
     let num_flavors = object.flavors().len();
-    if object.partial_decoded().flavor().is_none() && num_flavors == 1 {
+    if object.flavor_type_param().is_none() && num_flavors == 1 {
       let flavor = object
         .flavors()
         .iter()
@@ -1233,8 +1225,7 @@ impl<M, F> Object<M, F> {
       ConcreteObject::try_new(object, flavor).map(|obj| Object::Concrete(Box::new(obj)))
     } else {
       let flavor_param = object
-        .partial_decoded()
-        .flavor()
+        .flavor_type_param()
         .cloned()
         .unwrap_or_else(grost_flavor_param);
       GenericObject::try_new(object, flavor_param).map(|obj| Object::Generic(Box::new(obj)))
@@ -1245,7 +1236,7 @@ impl<M, F> Object<M, F> {
 impl ObjectFromMeta {
   pub fn finalize(self, path_to_grost: Path) -> syn::Result<ObjectAttribute> {
     let flavors = self.flavor.finalize(&path_to_grost)?;
-    let mut flavor_generic = self.generic.flavor().cloned();
+    let mut flavor_generic = self.generic.flavor;
     if flavors.len() > 1 {
       flavor_generic.get_or_insert_with(grost_flavor_param);
     }
@@ -1255,16 +1246,14 @@ impl ObjectFromMeta {
       flavors,
       default: self.default,
       schema: self.schema.into(),
-      partial: self.partial.finalize(self.generic.unknown_buffer().clone()),
-      partial_decoded: self.partial_decoded.finalize(
-        flavor_generic.clone(),
-        self.generic.unknown_buffer().clone(),
-        self.generic.lifetime().clone(),
-      ),
-      selector: self
-        .selector
-        .finalize(flavor_generic.clone(), self.generic.wire_format().clone()),
-      selector_iter: self.selector_iter.finalize(flavor_generic),
+      partial: self.partial.finalize(),
+      partial_decoded: self.partial_decoded.finalize(),
+      selector: self.selector.finalize(),
+      selector_iter: self.selector_iter.finalize(),
+      flavor_param: flavor_generic,
+      lifetime_param: self.generic.lifetime,
+      unknown_buffer_param: self.generic.unknown_buffer,
+      wire_format_param: self.generic.wire_format,
       indexer: self.indexer.into(),
       copy: self.copy,
     })
@@ -1283,6 +1272,10 @@ pub struct ObjectAttribute {
   selector_iter: SelectorIterAttribute,
   indexer: IndexerAttribute,
   copy: bool,
+  flavor_param: Option<TypeParam>,
+  unknown_buffer_param: TypeParam,
+  lifetime_param: LifetimeParam,
+  wire_format_param: TypeParam,
 }
 
 impl ObjectAttribute {
@@ -1334,6 +1327,26 @@ impl ObjectAttribute {
   /// Returns the flavors of the object
   pub const fn flavors(&self) -> &[FlavorAttribute] {
     self.flavors.as_slice()
+  }
+
+  /// Returns the generic flavor type parameter
+  pub const fn flavor_type_param(&self) -> Option<&TypeParam> {
+    self.flavor_param.as_ref()
+  }
+
+  /// Returns the generic unknown buffer type parameter
+  pub const fn unknown_buffer_type_param(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
+
+  /// Returns the generic lifetime parameter
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
+
+  /// Returns the generic wire format type parameter
+  pub const fn wire_format_type_param(&self) -> &TypeParam {
+    &self.wire_format_param
   }
 }
 
@@ -1391,6 +1404,19 @@ pub trait RawObject: Clone {
 
   /// Returns the flavors of the object
   fn flavors(&self) -> &[FlavorAttribute];
+
+  /// Returns the generic flavor type parameter, if any,
+  /// `None` if we only have one flavor and the code is not generic over the flavor type.
+  fn flavor_type_param(&self) -> Option<&TypeParam>;
+
+  /// Returns the generic unknown buffer type parameter
+  fn unknown_buffer_type_param(&self) -> &TypeParam;
+
+  /// Returns the generic lifetime parameter
+  fn lifetime_param(&self) -> &LifetimeParam;
+
+  /// Returns the generic wire format type parameter
+  fn wire_format_type_param(&self) -> &TypeParam;
 }
 
 /// The extension trait for the object

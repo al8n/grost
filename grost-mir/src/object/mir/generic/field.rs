@@ -1,242 +1,29 @@
 use crate::{
-  object::{FieldIndex, Label},
+  object::{
+    FieldIndex, Label,
+    ast::{
+      GenericField as GenericFieldAst, GenericObject as GenericObjectAst,
+      GenericTaggedField as GenericTaggedFieldAst, SkippedField,
+    },
+    mir::generic::field::reflection::GenericFieldReflection,
+  },
   utils::Invokable,
-};
-
-use super::super::super::ast::{
-  FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
-  GenericField as GenericFieldAst, GenericObject as GenericObjectAst,
-  GenericTaggedField as GenericTaggedFieldAst, SkippedField,
 };
 
 use indexmap::IndexMap;
 use quote::quote;
-use syn::{
-  Attribute, Ident, Type, TypeParam, Visibility, WherePredicate, punctuated::Punctuated,
-  token::Comma,
-};
+use syn::{Attribute, Ident, Type, TypeParam, Visibility, punctuated::Punctuated};
 
+pub use flavor::*;
 pub use partial::*;
 pub use partial_decoded::*;
 pub use selector::*;
 
+mod flavor;
 mod partial;
 mod partial_decoded;
+mod reflection;
 mod selector;
-
-#[derive(Debug, Clone)]
-pub struct PartialDecodedFieldFlavor {
-  ty: Type,
-  optional_type: Type,
-  constraints: Punctuated<WherePredicate, Comma>,
-}
-
-impl PartialDecodedFieldFlavor {
-  /// Returns the type of the partial decoded field for this flavor.
-  #[inline]
-  pub const fn ty(&self) -> &Type {
-    &self.ty
-  }
-
-  /// Returns the optional type of the partial decoded field for this flavor.
-  #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
-  }
-
-  /// Returns the type constraints for the partial decoded field for this flavor.
-  #[inline]
-  pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.constraints
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct SelectorFieldFlavor {
-  ty: Type,
-  selectable: Type,
-  constraints: Punctuated<WherePredicate, Comma>,
-}
-
-impl SelectorFieldFlavor {
-  /// Returns the type of the selector field for this flavor.
-  #[inline]
-  pub const fn ty(&self) -> &Type {
-    &self.ty
-  }
-
-  /// Returns the selectable type for this flavor.
-  #[inline]
-  pub const fn selectable(&self) -> &Type {
-    &self.selectable
-  }
-
-  /// Returns the type constraints for the selector field for this flavor.
-  #[inline]
-  pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.constraints
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct FieldFlavor {
-  wire_format: Type,
-  encode: FieldEncodeAttribute,
-  decode: FieldDecodeAttribute,
-  partial_decoded: PartialDecodedFieldFlavor,
-  selector: SelectorFieldFlavor,
-}
-
-impl FieldFlavor {
-  /// Returns the wire format type of this flavor.
-  #[inline]
-  pub const fn wire_format(&self) -> &Type {
-    &self.wire_format
-  }
-
-  /// Returns the encode attribute of this flavor.
-  #[inline]
-  pub const fn encode(&self) -> &FieldEncodeAttribute {
-    &self.encode
-  }
-
-  /// Returns the decode attribute of this flavor.
-  #[inline]
-  pub const fn decode(&self) -> &FieldDecodeAttribute {
-    &self.decode
-  }
-
-  /// Returns the partial decoded field information of this flavor.
-  #[inline]
-  pub const fn partial_decoded(&self) -> &PartialDecodedFieldFlavor {
-    &self.partial_decoded
-  }
-
-  /// Returns the selector field information of this flavor.
-  #[inline]
-  pub const fn selector(&self) -> &SelectorFieldFlavor {
-    &self.selector
-  }
-
-  fn try_new<M, F>(
-    object: &GenericObjectAst<M, F>,
-    field: &GenericTaggedFieldAst<F>,
-    flavor_type: &Type,
-    ast: &FieldFlavorAst,
-  ) -> darling::Result<Self> {
-    let path_to_grost = object.path_to_grost();
-    let object_ty = object.ty();
-    let object_reflectable = object.reflectable();
-    let lifetime_param = object.partial_decoded().lifetime();
-    let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = object.partial_decoded().unknown_buffer();
-    let unknown_buffer = &unknown_buffer_param.ident;
-    let field_ty = field.ty();
-    let tag = field.tag();
-    let wire_format = match ast.format() {
-      Some(wt) => wt.clone(),
-      None => syn::parse2(quote! {
-        <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>>::Format
-      })?,
-    };
-
-    let mut partial_decoded_constraints = Punctuated::new();
-    let mut selector_constraints = Punctuated::new();
-
-    let wfr: Type = syn::parse2(quote! {
-      #path_to_grost::__private::reflection::WireFormatReflection<
-        #object_ty,
-        #flavor_type,
-        #tag,
-      >
-    })?;
-    let wf: Type = syn::parse2(quote! {
-      <#wfr as #object_reflectable>::Reflection
-    })?;
-
-    let selectable = syn::parse2(quote! {
-      #path_to_grost::__private::selection::Selectable<
-        #flavor_type,
-        #wf,
-      >
-    })?;
-    let selector_type = syn::parse2(quote! {
-      <#field_ty as #selectable>::Selector
-    })?;
-
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #field_ty: #selectable
-    })?);
-
-    let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
-    let partial_decoded_copy_contraint = if partial_decoded_copyable {
-      Some(quote! {
-        + ::core::marker::Copy
-      })
-    } else {
-      None
-    };
-
-    let partial_decoded_ty = match ast.ty().or(field.partial_decoded_type()) {
-      Some(ty) => ty.clone(),
-      None => {
-        let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Decoded<
-              #lifetime,
-              #flavor_type,
-              <#wfr as #object_reflectable>::Reflection,
-              #unknown_buffer,
-            >
-          >
-        })?;
-
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          #field_ty: #state_type
-        })?);
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
-        })?);
-
-        syn::parse2(quote! {
-          <#field_ty as #state_type>::Output
-        })?
-      }
-    };
-
-    let optional_partial_decoded_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_decoded_ty>
-    })?;
-
-    Ok(Self {
-      wire_format,
-      encode: ast.encode().clone(),
-      decode: ast.decode().clone(),
-      partial_decoded: PartialDecodedFieldFlavor {
-        ty: partial_decoded_ty,
-        optional_type: optional_partial_decoded_type,
-        constraints: partial_decoded_constraints,
-      },
-      selector: SelectorFieldFlavor {
-        ty: selector_type,
-        selectable,
-        constraints: selector_constraints,
-      },
-    })
-  }
-}
 
 #[derive(Debug, Clone)]
 pub struct GenericTaggedField<M = ()> {
@@ -252,6 +39,7 @@ pub struct GenericTaggedField<M = ()> {
   partial_decoded: GenericPartialDecodedField,
   partial: GenericPartialField,
   selector: GenericSelectorField,
+  reflection: GenericFieldReflection,
   default: Invokable,
   tag: u32,
   copy: bool,
@@ -356,6 +144,12 @@ impl<F> GenericTaggedField<F> {
     &self.partial_decoded
   }
 
+  /// Returns the reflection information of this field.
+  #[inline]
+  pub const fn reflection(&self) -> &GenericFieldReflection {
+    &self.reflection
+  }
+
   /// Returns the flavors of this field.
   #[inline]
   pub const fn flavors(&self) -> &IndexMap<Ident, FieldFlavor> {
@@ -379,16 +173,15 @@ impl<F> GenericTaggedField<F> {
 
     let path_to_grost = object.path_to_grost();
     let field_ty = field.ty();
-    let flavor_param = object.partial_decoded().flavor();
+    let flavor_param = &object.flavor_param;
     let flavor_ident = &flavor_param.ident;
     let tag = field.tag();
 
-    let partial_decoded_object = object.partial_decoded();
-    let object_ty = object.ty();
-    let object_reflectable = object.reflectable();
-    let lifetime_param = partial_decoded_object.lifetime();
+    let object_ty = &object.ty;
+    let object_reflectable = &object.reflectable;
+    let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = partial_decoded_object.unknown_buffer();
+    let unknown_buffer_param = &object.unknown_buffer_param;
     let unknown_buffer = &unknown_buffer_param.ident;
 
     let mut partial_decoded_constraints = Punctuated::new();
@@ -481,6 +274,7 @@ impl<F> GenericTaggedField<F> {
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 
     let index = FieldIndex::new(index, field.name(), field.tag())?;
+    let reflection = GenericFieldReflection::try_new(object, &field, tag)?;
 
     Ok(GenericTaggedField {
       index,
@@ -488,6 +282,7 @@ impl<F> GenericTaggedField<F> {
       vis: field.vis().clone(),
       name: field.name().clone(),
       ty: field.ty().clone(),
+      reflection,
       schema_name: field.schema_name().to_string(),
       schema_description: field.schema_description().to_string(),
       flavor_param: field.flavor().clone(),

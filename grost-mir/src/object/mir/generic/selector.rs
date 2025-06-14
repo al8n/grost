@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use quote::quote;
-use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, Type};
+use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, LifetimeParam, Type};
 
 use crate::utils::grost_lifetime;
 
@@ -68,6 +68,7 @@ impl SelectorIterFlavor {
 pub struct GenericSelectorIter {
   name: Ident,
   ty: Type,
+  lifetime_param: LifetimeParam,
   selected_type: Type,
   unselected_type: Type,
   generics: Generics,
@@ -126,6 +127,12 @@ impl GenericSelectorIter {
     &self.selected
   }
 
+  /// Returns the lifetime parameter of the selector iterator.
+  #[inline]
+  pub const fn lifetime(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
+
   /// Returns the flavors of the selector iterator.
   #[inline]
   pub const fn flavors(&self) -> &IndexMap<Ident, SelectorIterFlavor> {
@@ -160,7 +167,7 @@ impl SelectorFlavor {
   ) -> darling::Result<Self> {
     let selector = object.selector();
     let selector_name = selector.name();
-    let flavor_type = flavor.ty();
+    let flavor_type = flavor.flavor_type();
 
     let original_generics = object.generics();
     let mut generics = original_generics.clone();
@@ -248,11 +255,13 @@ impl GenericSelector {
 
   pub(super) fn from_ast<M, F>(
     object: &GenericObjectAst<M, F>,
+    flavors: &IndexMap<Ident, ObjectFlavor>,
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
-    let selector = object.selector();
+    let path_to_grost = &object.path_to_grost;
+    let selector = &object.selector;
     let selector_name = selector.name();
-    let flavor_param = selector.flavor();
+    let flavor_param = &object.flavor_param;
 
     let mut generics = Generics::default();
     let original_generics = object.generics();
@@ -283,8 +292,8 @@ impl GenericSelector {
     );
 
     if let Some(where_clause) = original_generics.where_clause.as_ref() {
-      generics
-        .make_where_clause()
+      let where_clauses = generics.make_where_clause();
+      where_clauses
         .predicates
         .extend(where_clause.predicates.iter().cloned());
     }
@@ -302,13 +311,20 @@ impl GenericSelector {
         }
       });
 
+    let fpi = &flavor_param.ident;
+    generics
+      .make_where_clause()
+      .predicates
+      .push(syn::parse2(quote! {
+        #fpi: #path_to_grost::__private::flavors::Flavor
+      })?);
+
     let (_, tg, _) = generics.split_for_impl();
     let ty: Type = syn::parse2(quote! {
       #selector_name #tg
     })?;
 
-    let flavors = object
-      .flavors()
+    let flavors = flavors
       .iter()
       .map(|(name, flavor)| {
         SelectorFlavor::try_new(object, name, flavor, fields).map(|flavor| (name.clone(), flavor))
@@ -318,7 +334,7 @@ impl GenericSelector {
     Ok(Self {
       name: selector_name.clone(),
       ty,
-      attrs: object.attrs().to_vec(),
+      attrs: object.selector().attrs().to_vec(),
       generics,
       flavors,
     })
@@ -332,9 +348,7 @@ impl GenericSelector {
     let selector_iter_name = selector_iter.name();
     let selected = grost_selected_param();
     let lifetime = grost_lifetime();
-
-    let flavor_param = selector_iter.flavor();
-    let original_generics = object.generics();
+    let original_generics = self.generics();
     let mut generics = Generics::default();
 
     // push the lifetime generic parameter first
@@ -355,10 +369,6 @@ impl GenericSelector {
         .map(|tp| GenericParam::Type(tp.clone())),
     );
 
-    generics
-      .params
-      .push(syn::GenericParam::Type(flavor_param.clone()));
-
     // push the original const generic parameters last
     generics.params.extend(
       original_generics
@@ -370,6 +380,7 @@ impl GenericSelector {
     let unselected_generics = generics.clone();
 
     generics.params.push(GenericParam::Const(selected.clone()));
+    generics.where_clause = original_generics.where_clause.clone();
 
     let (_, tg, _) = generics.split_for_impl();
     let ty: Type = syn::parse2(quote! {
@@ -399,6 +410,7 @@ impl GenericSelector {
     Ok(GenericSelectorIter {
       name: selector_iter_name.clone(),
       ty,
+      lifetime_param: lifetime,
       selected_type,
       unselected_type,
       generics,
@@ -504,5 +516,97 @@ impl GenericSelector {
       unselected_generics,
       selected,
     })
+  }
+}
+
+impl<M, F> super::GenericObject<M, F> {
+  pub(super) fn derive_selector_defination(&self) -> proc_macro2::TokenStream {
+    let selector = self.selector();
+    let name = selector.name();
+    let vis = self.vis();
+
+    let attrs = selector.attrs();
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(" The selection type for [`{}`]", self.name());
+      Some(quote! {
+        #[doc = #doc]
+      })
+    } else {
+      None
+    };
+
+    let fields = self.fields().iter().filter_map(|f| {
+      let name = f.name();
+      match f {
+        GenericField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            let name = skipped_field.name();
+            let ty = skipped_field.ty();
+            Some(quote! {
+              #name: ::core::marker::PhantomData<#ty>
+            })
+          } else {
+            None
+          }
+        }
+        GenericField::Tagged(generic_tagged_field) => {
+          let ty = generic_tagged_field.selector().ty();
+          let vis = generic_tagged_field.vis();
+          let attrs = generic_tagged_field.selector().attrs();
+          Some(quote! {
+            #(#attrs)*
+            #vis #name: #ty
+          })
+        }
+      }
+    });
+
+    let generics = selector.generics();
+    let where_clause = generics.where_clause.as_ref();
+    quote! {
+      #(#attrs)*
+      #doc
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      #vis struct #name #generics #where_clause
+      {
+        #(#fields),*
+      }
+    }
+  }
+
+  pub(super) fn derive_selector_iter_defination(&self) -> proc_macro2::TokenStream {
+    let selector = self.selector();
+    let selector_name = selector.name();
+    let selector_ty = selector.ty();
+    let iter = self.selector_iter();
+    let iter_name = iter.name();
+    let vis = self.vis();
+    let indexer_name = self.indexer().name();
+    let generics = iter.generics();
+    let where_clause = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+    let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+      let doc = format!(" An iterator over the selected fields of the [`{selector_name}`]",);
+      Some(quote! {
+        #[doc = #doc]
+      })
+    } else {
+      None
+    };
+    let gl = &iter.lifetime().lifetime;
+    quote! {
+      #(#attrs)*
+      #doc
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      #vis struct #iter_name #generics #where_clause
+      {
+        selector: &#gl #selector_ty,
+        index: ::core::option::Option<#indexer_name>,
+        num: ::core::primitive::usize,
+        yielded: ::core::primitive::usize,
+      }
+    }
   }
 }

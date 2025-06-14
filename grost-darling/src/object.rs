@@ -446,6 +446,22 @@ impl ToTokens for Object {
             self.__args__.__meta__.flavors()
           }
 
+          fn flavor_type_param(&self) -> ::core::option::Option<&#path_to_crate::__private::syn::TypeParam> {
+            self.__args__.__meta__.flavor_type_param()
+          }
+
+          fn unknown_buffer_type_param(&self) -> &#path_to_crate::__private::syn::TypeParam {
+            self.__args__.__meta__.unknown_buffer_type_param()
+          }
+
+          fn lifetime_param(&self) -> &#path_to_crate::__private::syn::LifetimeParam {
+            self.__args__.__meta__.lifetime_param()
+          }
+
+          fn wire_format_type_param(&self) -> &#path_to_crate::__private::syn::TypeParam {
+            self.__args__.__meta__.wire_format_type_param()
+          }
+
           fn meta(&self) -> &Self::Meta {
             #meta_getter
           }
