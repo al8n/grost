@@ -43,6 +43,75 @@ where
   }
 }
 
+impl<O, F, const TAG: u32> core::fmt::Debug
+  for EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = [u8]>,
+  F::Identifier: core::fmt::Debug,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    core::ops::Deref::deref(self).fmt(f)
+  }
+}
+
+impl<O, F, const TAG: u32> core::ops::Deref
+  for EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = [u8]>,
+{
+  type Target = [u8];
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    <Self as Reflectable<O>>::REFLECTION
+  }
+}
+
+impl<O, F, const TAG: u32> core::fmt::Debug
+  for Len<EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = usize>,
+  F::Identifier: core::fmt::Debug,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    core::ops::Deref::deref(self).fmt(f)
+  }
+}
+
+impl<O, F, const TAG: u32> core::fmt::Display
+  for Len<EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = usize>,
+  F::Identifier: core::fmt::Display,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    core::ops::Deref::deref(self).fmt(f)
+  }
+}
+
+impl<O, F, const TAG: u32> core::ops::Deref
+  for Len<EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>
+where
+  O: ?Sized,
+  F: ?Sized + Flavor,
+  Self: Reflectable<O, Reflection = usize>,
+{
+  type Target = usize;
+
+  #[inline]
+  fn deref(&self) -> &Self::Target {
+    <Self as Reflectable<O>>::REFLECTION
+  }
+}
+
 impl<R> IdentifierReflection<R>
 where
   R: ?Sized,

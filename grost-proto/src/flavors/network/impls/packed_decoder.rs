@@ -34,6 +34,14 @@ pub struct PackedDecoder<'a, L: ?Sized, UB: ?Sized, W: ?Sized> {
   _ub: PhantomData<UB>,
 }
 
+impl<'a, L: ?Sized, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a, L, UB, W> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<'a, L: ?Sized, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, L, UB, W> {}
+
 impl<'a, L, UB> PackedDecoder<'a, L, UB, LengthDelimited>
 where
   L: core::ops::Deref<Target = [u8]>,
@@ -221,6 +229,7 @@ where
 /// This enum represents the two possible storage formats for the list:
 /// - `LengthDelimited`: The data is prefixed with its length (common in network protocols)
 /// - `Data`: The data has a known capacity limit (common in fixed-size buffers)
+#[derive(Debug, Clone, Copy)]
 enum Repr<'a> {
   LengthDelimited {
     /// the source buffer

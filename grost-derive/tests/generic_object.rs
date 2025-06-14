@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use grost::{
   Decode, PartialDecode,
   buffer::Buf,
-  flavors::{DefaultWireFormat, Network, network::LengthDelimited},
+  flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
 use grost_derive::{Object, object};
@@ -13,6 +13,10 @@ use grost_derive::{Object, object};
 //     String::from("user")
 //   }
 // }
+
+fn default_array<const N: usize>() -> [u8; N] {
+  [0; N]
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 #[grost(
@@ -24,28 +28,17 @@ use grost_derive::{Object, object};
         enum = "grost::flavors::network::encoding::enumeration",
       )
     ),
-    // mystorage(
-    //   format = "grost::flavors::network::LengthDelimited",
-    //   tag(
-    //     constructor = "grost::flavors::network::Tag::new",
-    //     encode = "grost::flavors::network::Tag::encode",
-    //   ),
-    //   identifier(
-    //     constructor = "grost::flavors::network::Identifier::new",
-    //     encode = "grost::flavors::network::Identifier::encode",
-    //   ),
-    //   type = "grost::flavors::network::Network",
-    // ),
   ),
-  generic(lifetime = "'de", unknown_buffer = "UB", flavor = "F"),
+  generic(flavor = "F"),
+  // generic(lifetime = "'de"),
 )]
 pub struct User {
   // #[grost(
   //   tag = 1,
   //   schema(description = "The id of the user"),
   //   selector(select = "all"),
-  //   wire = "grost::flavors::network::LengthDelimited",
-  //   partial_decoded(copy,)
+  //   flavor(default = "grost::flavors::network::LengthDelimited"),
+  //   bytes
   // )]
   // id: I,
   #[grost(
@@ -60,17 +53,16 @@ pub struct User {
   #[grost(
     tag = 4,
     schema(description = "The email of the user"),
-    partial_decoded(copy, type = "&'de str"),
-    optional(list(string)),
-    flavor(
-      default = "grost::flavors::network::LengthDelimited",
-      mystorage(format = "mystorage::LengthDelimited",),
-    )
+    partial_decoded(copy),
+    optional(list(string))
   )]
   emails: Option<Vec<String>>,
-  #[grost(skip)]
-  _w: core::marker::PhantomData<*const ()>,
+  // #[grost(skip)]
+  // what: W,
+  // #[grost(skip, default = "default_array::<N>")]
+  // array: [u8; N],
 }
+
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
@@ -182,4 +174,18 @@ fn t() {
   //   emails: None,
   // };
   // println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
+
+  let user = PartialDecodedUser::<'_, Network, ()> {
+    __grost_unknown_buffer__: todo!(),
+    name: todo!(),
+    age: todo!(),
+    emails: todo!(),
+  };
+
+  let val =  User::emails_reflection();
+  let wf = val.wire_format();
+  let identifier = val.identifier();
+  let encoded_identifier = val.encoded_identifier();
+  let object_refl = User::reflection::<Network>();
+  println!("{:?}", encoded_identifier);
 }

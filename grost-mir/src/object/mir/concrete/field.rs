@@ -1,5 +1,5 @@
 use darling::usage::{IdentSet, LifetimeSet};
-use syn::{Attribute, Ident, Type, Visibility, punctuated::Punctuated};
+use syn::{punctuated::Punctuated, Attribute, Ident, Type, Visibility, WherePredicate};
 
 use quote::{format_ident, quote};
 
@@ -201,20 +201,25 @@ impl<F> ConcreteTaggedField<F> {
     })?;
     let wf = match field.flavor().format() {
       Some(wf) => {
-        selector_constraints.push(syn::parse2(quote! {
+        let pred: WherePredicate = syn::parse2(quote! {
           #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-        })?);
+        })?;
+        selector_constraints.push(pred.clone());
+        partial_decoded_constraints.push(pred);
         wf.clone()
       }
       None => {
-        selector_constraints.push(syn::parse2(quote! {
-          #field_ty: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
-        })?);
+        let dwf = quote! {
+          #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+        };
+        let pred: WherePredicate = syn::parse2(quote! {
+          #field_ty: #dwf
+        })?;
+        selector_constraints.push(pred.clone());
+        partial_decoded_constraints.push(pred);
 
         syn::parse2(quote! {
-          <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<
-            #flavor_type,
-          >>::Format
+          <#field_ty as #dwf>::Format
         })?
       }
     };
@@ -229,9 +234,9 @@ impl<F> ConcreteTaggedField<F> {
       <#field_ty as #selectable>::Selector
     })?;
 
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
+    // partial_decoded_constraints.push(syn::parse2(quote! {
+    //   #wfr: #object_reflectable
+    // })?);
     partial_decoded_constraints.push(syn::parse2(quote! {
       #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
     })?);
@@ -256,7 +261,7 @@ impl<F> ConcreteTaggedField<F> {
             #path_to_grost::__private::convert::Decoded<
               #lifetime,
               #flavor_type,
-              <#wfr as #object_reflectable>::Reflection,
+              #wf,
               #unknown_buffer,
             >
           >

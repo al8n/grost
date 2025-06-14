@@ -15,6 +15,24 @@ pub struct Decoded<'a, F: ?Sized, W: ?Sized, UB = ()> {
   _unknown_buffer: core::marker::PhantomData<UB>,
 }
 
+impl<'a, F, W, UB> Clone for Decoded<'a, F, W, UB>
+where
+  F: ?Sized,
+  W: ?Sized,
+{
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<'a, F, W, UB> Copy for Decoded<'a, F, W, UB>
+where
+  F: ?Sized,
+  W: ?Sized,
+{
+}
+
+
 impl<'a, F, W, T, UB> State<Decoded<'a, F, W, UB>> for &'a T
 where
   F: ?Sized,

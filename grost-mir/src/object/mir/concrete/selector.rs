@@ -879,7 +879,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
 
     #partial_object_selectable
 
-    #partial_decoded_object_selectable
+    // #partial_decoded_object_selectable
   }
 }
 

@@ -229,7 +229,7 @@ impl<M, F> ConcreteObject<M, F> {
 
         #partial_impl
 
-        #partial_decoded_impl
+        // #partial_decoded_impl
 
         #reflection_impl
 

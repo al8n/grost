@@ -5,6 +5,7 @@ use syn::{GenericParam, Generics, Type};
 pub struct GenericObjectReflection {
   ty: Type,
   field_reflection_generics: Generics,
+  type_reflection_generics: Generics,
   object_reflection_generics: Generics,
 }
 
@@ -23,6 +24,12 @@ impl GenericObjectReflection {
 
   /// Returns the generics of the generic object reflection.
   #[inline]
+  pub const fn type_reflection_generics(&self) -> &Generics {
+    &self.type_reflection_generics
+  }
+
+  /// Returns the generics of the generic object reflection.
+  #[inline]
   pub const fn object_reflection_generics(&self) -> &Generics {
     &self.object_reflection_generics
   }
@@ -36,7 +43,7 @@ impl GenericObjectReflection {
     let flavor_ident = &flavor_param.ident;
     let object_type = object.ty();
     let generics = object.generics();
-    let mut object_reflection_generics = generics.clone();
+    let mut type_reflection_generics = generics.clone();
     let mut field_reflection_generics = generics.clone();
     field_reflection_generics
       .params
@@ -75,7 +82,7 @@ impl GenericObjectReflection {
           field_reflection,
         );
 
-        object_reflection_generics
+        type_reflection_generics
           .make_where_clause()
           .predicates
           .extend(
@@ -88,8 +95,9 @@ impl GenericObjectReflection {
 
     Ok(Self {
       ty,
+      object_reflection_generics: field_reflection_generics.clone(),
       field_reflection_generics,
-      object_reflection_generics,
+      type_reflection_generics,
     })
   }
 }
@@ -109,6 +117,9 @@ impl<M, F> super::GenericObject<M, F> {
       .reflection
       .object_reflection_generics()
       .split_for_impl();
+    let (type_reflection_ig, _, type_reflection_wc) =
+      self.reflection.type_reflection_generics().split_for_impl();
+    let object_reflection_ty = self.reflection.ty();
 
     let mut field_reflectable_impl = vec![];
     let mut field_reflections = vec![];
@@ -129,7 +140,7 @@ impl<M, F> super::GenericObject<M, F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #object_reflection_ig #object_reflectable for #object_type #object_reflection_wc {
+      impl #type_reflection_ig #object_reflectable for #object_type #type_reflection_wc {
         type Reflection = #path_to_grost::__private::reflection::Type;
 
         const REFLECTION: &'static Self::Reflection = &{
@@ -142,6 +153,23 @@ impl<M, F> super::GenericObject<M, F> {
               ],
             }.build()
           )
+        };
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #object_reflection_ig #object_reflectable for #object_reflection_ty #object_reflection_wc
+      {
+        type Reflection = #path_to_grost::__private::reflection::Object;
+
+        const REFLECTION: &'static Self::Reflection = &{
+          #path_to_grost::__private::reflection::ObjectBuilder {
+            name: #schema_name,
+            description: #schema_description,
+            fields: &[
+              #(&#field_reflections),*
+            ],
+          }.build()
         };
       }
 

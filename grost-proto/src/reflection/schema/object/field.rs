@@ -1,8 +1,10 @@
+#![allow(clippy::type_complexity)]
+
 use core::marker::PhantomData;
 
 use crate::{
   flavors::Flavor,
-  reflection::{IdentifierReflection, TagReflection, WireFormatReflection, WireTypeReflection},
+  reflection::{EncodeReflection, IdentifierReflection, Len, TagReflection, WireFormatReflection, WireTypeReflection},
 };
 
 use super::{
@@ -123,6 +125,30 @@ where
     TagReflection::new()
   }
 
+  /// Returns the reflection to the encoded tag of the field.
+  #[inline]
+  pub const fn encoded_tag(
+    &self,
+  ) -> EncodeReflection<TagReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>
+  where
+    EncodeReflection<TagReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>:
+      Reflectable<O, Reflection = [u8]>,
+  {
+    EncodeReflection::new()
+  }
+
+  /// Returns the reflection to the length of encoded tag of the field.
+  #[inline]
+  pub const fn encoded_tag_len(
+    &self,
+  ) -> Len<EncodeReflection<TagReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>
+  where
+    Len<EncodeReflection<TagReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>:
+      Reflectable<O, Reflection = usize>,
+  {
+    Len::new()
+  }
+
   /// Returns the reflection to the wire type of the field.
   #[inline]
   pub const fn wire_type(&self) -> WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
@@ -143,6 +169,30 @@ where
       Reflectable<O, Reflection = F::Identifier>,
   {
     IdentifierReflection::new()
+  }
+
+  /// Returns the reflection to the encoded identifier of the field.
+  #[inline]
+  pub const fn encoded_identifier(
+    &self,
+  ) -> EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>
+  where
+    EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>:
+      Reflectable<O, Reflection = [u8]>,
+  {
+    EncodeReflection::new()
+  }
+
+  /// Returns the reflection to the length of encoded identifier of the field.
+  #[inline]
+  pub const fn encoded_identifier_len(
+    &self,
+  ) -> Len<EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>
+  where
+    Len<EncodeReflection<IdentifierReflection<ObjectFieldReflection<O, F::Identifier, F, TAG>>>>:
+      Reflectable<O, Reflection = usize>,
+  {
+    Len::new()
   }
 }
 

@@ -29,17 +29,16 @@ fn default_array<const N: usize>() -> [u8; N] {
       )
     ),
   ),
-  generic(lifetime = "'de"),
 )]
-pub struct User<I: Default, W: Default, const N: usize> {
-  #[grost(
-    tag = 1,
-    schema(description = "The id of the user"),
-    selector(select = "all"),
-    flavor(default = "grost::flavors::network::LengthDelimited"),
-    bytes
-  )]
-  id: I,
+pub struct User {
+  // #[grost(
+  //   tag = 1,
+  //   schema(description = "The id of the user"),
+  //   selector(select = "all"),
+  //   flavor(default = "grost::flavors::network::LengthDelimited"),
+  //   bytes
+  // )]
+  // id: I,
   #[grost(
     tag = 2,
     schema(description = "The nick name of the user"),
@@ -56,11 +55,12 @@ pub struct User<I: Default, W: Default, const N: usize> {
     optional(list(string))
   )]
   emails: Option<Vec<String>>,
-  #[grost(skip)]
-  what: W,
-  #[grost(skip, default = "default_array::<N>")]
-  array: [u8; N],
+  // #[grost(skip)]
+  // what: W,
+  // #[grost(skip, default = "default_array::<N>")]
+  // array: [u8; N],
 }
+
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
@@ -172,4 +172,18 @@ fn t() {
   //   emails: None,
   // };
   // println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
+
+  // let user = PartialDecodedUser::<'_, ()> {
+  //   __grost_unknown_buffer__: todo!(),
+  //   name: todo!(),
+  //   age: todo!(),
+  //   emails: todo!(),
+  // };
+
+  // let val =  User::emails_reflection();
+  // let wf = val.wire_format();
+  // let identifier = val.identifier();
+  // let encoded_identifier = val.encoded_identifier();
+  // let object_refl = User::reflection::<Network>();
+  // println!("{:?}", encoded_identifier);
 }
