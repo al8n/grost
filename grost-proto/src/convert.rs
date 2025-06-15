@@ -32,7 +32,6 @@ where
 {
 }
 
-
 impl<'a, F, W, T, UB> State<Decoded<'a, F, W, UB>> for &'a T
 where
   F: ?Sized,

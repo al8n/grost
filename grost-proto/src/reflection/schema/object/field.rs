@@ -4,7 +4,10 @@ use core::marker::PhantomData;
 
 use crate::{
   flavors::Flavor,
-  reflection::{EncodeReflection, IdentifierReflection, Len, TagReflection, WireFormatReflection, WireTypeReflection},
+  reflection::{
+    EncodeReflection, IdentifierReflection, Len, TagReflection, WireFormatReflection,
+    WireTypeReflection,
+  },
 };
 
 use super::{

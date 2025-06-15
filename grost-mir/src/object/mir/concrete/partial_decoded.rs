@@ -168,7 +168,7 @@ impl<M, F> super::ConcreteObject<M, F> {
       #doc
       #(#attrs)*
        #[allow(non_camel_case_types, clippy::type_complexity)]
-      #vis struct #name #generics {
+      #vis struct #name #generics #where_clause {
         #ubfn: ::core::option::Option<#ubt>,
         #(#fields),*
       }

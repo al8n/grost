@@ -1,5 +1,10 @@
 use quote::{format_ident, quote};
-use syn::{Attribute, ConstParam, GenericParam, Generics, Ident, LifetimeParam, Type};
+use syn::{
+  Attribute, ConstParam, GenericParam, Generics, Ident, LifetimeParam, Type, WherePredicate,
+  parse::{Parse, Parser},
+  punctuated::Punctuated,
+  token::Comma,
+};
 
 use crate::utils::grost_lifetime;
 
@@ -295,7 +300,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     }
   }
 
-  pub(super) fn derive_selector(&self) -> proc_macro2::TokenStream {
+  pub(super) fn derive_selector(&self) -> darling::Result<proc_macro2::TokenStream> {
     let path_to_grost = self.path_to_grost();
     let selector = self.selector();
     let flavor_ty = self.flavor_type();
@@ -531,14 +536,22 @@ impl<M, F> super::ConcreteObject<M, F> {
         }
       });
 
-    let copy_constraints = self
-      .fields()
-      .iter()
-      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
-      .map(|f| {
-        let ty = f.selector().ty();
-        quote! { #ty: ::core::marker::Copy }
-      });
+    let copy_constraints = {
+      let preds = self
+        .fields()
+        .iter()
+        .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+        .map(|f| {
+          let ty = f.selector().ty();
+          WherePredicate::parse.parse2(quote! { #ty: ::core::marker::Copy })
+        })
+        .collect::<syn::Result<Punctuated<_, Comma>>>()?;
+      let mut generics = generics.clone();
+      generics.make_where_clause().predicates.extend(preds);
+
+      let wc = generics.where_clause.as_ref();
+      quote! { #wc }
+    };
 
     let fns = selector_field_fns(self);
     let selector_iter_name = self.selector_iter().name();
@@ -547,7 +560,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     let lt = &self.selector_iter().lifetime_param().lifetime;
     let selectable_impl = derive_selectable_impl(self);
 
-    quote! {
+    Ok(quote! {
       #selectable_impl
 
       #[automatically_derived]
@@ -597,11 +610,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #ig ::core::marker::Copy for #name
-        #tg
-        #wc,
-        #(#copy_constraints),*
-      {}
+      impl #ig ::core::marker::Copy for #name #tg #copy_constraints {}
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
@@ -718,7 +727,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
         #(#fns)*
       }
-    }
+    })
   }
 
   pub(super) fn derive_selector_iter_defination(&self) -> proc_macro2::TokenStream {
@@ -820,18 +829,14 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     let partial_object_ty = partial_object.ty();
     let mut generics = partial_object.generics().clone();
 
-    selector_generics
-      .where_clause
-      .as_ref()
-      .unwrap()
-      .predicates
-      .iter()
-      .for_each(|p| {
+    if let Some(where_clause) = selector_generics.where_clause.as_ref() {
+      where_clause.predicates.iter().for_each(|p| {
         let wc = generics.make_where_clause();
         if !wc.predicates.iter().any(|x| x == p) {
           wc.predicates.push(p.clone());
         }
       });
+    }
 
     let (ig, _, where_clauses) = generics.split_for_impl();
     quote! {
@@ -849,18 +854,14 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     let object_ty = object.ty();
     let mut generics = object.generics().clone();
 
-    selector_generics
-      .where_clause
-      .as_ref()
-      .unwrap()
-      .predicates
-      .iter()
-      .for_each(|p| {
+    if let Some(where_clause) = selector_generics.where_clause.as_ref() {
+      where_clause.predicates.iter().for_each(|p| {
         let wc = generics.make_where_clause();
         if !wc.predicates.iter().any(|x| x == p) {
           wc.predicates.push(p.clone());
         }
       });
+    }
 
     let (ig, _, where_clauses) = generics.split_for_impl();
 
@@ -879,7 +880,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
 
     #partial_object_selectable
 
-    // #partial_decoded_object_selectable
+    #partial_decoded_object_selectable
   }
 }
 

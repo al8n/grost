@@ -30,15 +30,15 @@ fn default_array<const N: usize>() -> [u8; N] {
     ),
   ),
 )]
-pub struct User {
-  // #[grost(
-  //   tag = 1,
-  //   schema(description = "The id of the user"),
-  //   selector(select = "all"),
-  //   flavor(default = "grost::flavors::network::LengthDelimited"),
-  //   bytes
-  // )]
-  // id: I,
+pub struct User<I: Default> {
+  #[grost(
+    tag = 1,
+    schema(description = "The id of the user"),
+    selector(select = "all"),
+    flavor(default = "grost::flavors::network::LengthDelimited"),
+    bytes
+  )]
+  id: I,
   #[grost(
     tag = 2,
     schema(description = "The nick name of the user"),
@@ -52,15 +52,14 @@ pub struct User {
     tag = 4,
     schema(description = "The email of the user"),
     partial_decoded(copy),
-    optional(list(string))
+    list(string)
   )]
-  emails: Option<Vec<String>>,
+  emails: Vec<String>,
   // #[grost(skip)]
   // what: W,
   // #[grost(skip, default = "default_array::<N>")]
   // array: [u8; N],
 }
-
 
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;

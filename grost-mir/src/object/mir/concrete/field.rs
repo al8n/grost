@@ -1,5 +1,5 @@
 use darling::usage::{IdentSet, LifetimeSet};
-use syn::{punctuated::Punctuated, Attribute, Ident, Type, Visibility, WherePredicate};
+use syn::{Attribute, Ident, Type, Visibility, WherePredicate, punctuated::Punctuated};
 
 use quote::{format_ident, quote};
 
@@ -183,7 +183,6 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_type = object.flavor().ty();
     let tag = field.tag();
     let object_ty = object.ty();
-    let object_reflectable = object.reflectable();
     let lifetime_param = object.lifetime();
     let lifetime = &lifetime_param.lifetime;
     let unknown_buffer_param = object.unknown_buffer();
@@ -192,6 +191,9 @@ impl<F> ConcreteTaggedField<F> {
     let mut partial_decoded_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
+    let use_generics =
+      !field.lifetime_params_usages.is_empty() || !field.type_params_usages.is_empty();
+
     let wfr = syn::parse2(quote! {
       #path_to_grost::__private::reflection::WireFormatReflection<
         #object_ty,
@@ -199,24 +201,20 @@ impl<F> ConcreteTaggedField<F> {
         #tag,
       >
     })?;
-    let wf = match field.flavor().format() {
-      Some(wf) => {
-        let pred: WherePredicate = syn::parse2(quote! {
-          #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-        })?;
-        selector_constraints.push(pred.clone());
-        partial_decoded_constraints.push(pred);
-        wf.clone()
-      }
+    let wf = match field.flavor().format().cloned() {
+      Some(wf) => wf,
       None => {
         let dwf = quote! {
           #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
         };
-        let pred: WherePredicate = syn::parse2(quote! {
-          #field_ty: #dwf
-        })?;
-        selector_constraints.push(pred.clone());
-        partial_decoded_constraints.push(pred);
+
+        if use_generics {
+          let pred: WherePredicate = syn::parse2(quote! {
+            #field_ty: #dwf
+          })?;
+          selector_constraints.push(pred.clone());
+          partial_decoded_constraints.push(pred);
+        }
 
         syn::parse2(quote! {
           <#field_ty as #dwf>::Format
@@ -234,15 +232,11 @@ impl<F> ConcreteTaggedField<F> {
       <#field_ty as #selectable>::Selector
     })?;
 
-    // partial_decoded_constraints.push(syn::parse2(quote! {
-    //   #wfr: #object_reflectable
-    // })?);
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #field_ty: #selectable
-    })?);
+    if use_generics {
+      selector_constraints.push(syn::parse2(quote! {
+        #field_ty: #selectable
+      })?);
+    }
 
     let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
     let partial_decoded_copy_contraint = if partial_decoded_copyable {
@@ -267,12 +261,14 @@ impl<F> ConcreteTaggedField<F> {
           >
         })?;
 
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          #field_ty: #state_type
-        })?);
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
-        })?);
+        if use_generics {
+          partial_decoded_constraints.push(syn::parse2(quote! {
+            #field_ty: #state_type
+          })?);
+          partial_decoded_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+          })?);
+        }
 
         syn::parse2(quote! {
           <#field_ty as #state_type>::Output
@@ -291,6 +287,7 @@ impl<F> ConcreteTaggedField<F> {
       field.ty(),
       field.partial_type(),
       field.partial_attrs(),
+      use_generics,
     )?;
     let partial_decoded = ConcretePartialDecodedField {
       ty: partial_decoded_ty,
@@ -348,48 +345,48 @@ impl<F> ConcreteTaggedField<F> {
     let tag_encode = object.flavor.tag().encode();
     let tag = self.tag();
 
-    let (field_reflection_ig, _, field_reflection_wc) = object
-      .reflection
+    let (field_reflection_ig, _, field_reflection_wc) = self
+      .reflection()
       .field_reflection_generics()
       .split_for_impl();
     let field_reflection_type = self.reflection().field_reflection();
 
-    let (wire_format_reflection_ig, _, wire_format_reflection_wc) = object
-      .reflection
+    let (wire_format_reflection_ig, _, wire_format_reflection_wc) = self
+      .reflection()
       .wire_format_reflection_generics()
       .split_for_impl();
     let wire_format_reflection_type = self.reflection().wire_format_reflection();
-    let (identifier_reflection_ig, _, identifier_reflection_wc) = object
-      .reflection
+    let (identifier_reflection_ig, _, identifier_reflection_wc) = self
+      .reflection()
       .identifier_reflection_generics()
       .split_for_impl();
     let identifier_reflection_type = self.reflection().identifier_reflection();
-    let (encoded_identifier_reflection_ig, _, encoded_identifier_reflection_wc) = object
-      .reflection
+    let (encoded_identifier_reflection_ig, _, encoded_identifier_reflection_wc) = self
+      .reflection()
       .encoded_identifier_reflection_generics()
       .split_for_impl();
     let encoded_identifier_reflection_type = self.reflection().encoded_identifier_reflection();
-    let (encoded_identifier_len_reflection_ig, _, encoded_identifier_len_reflection_wc) = object
-      .reflection
+    let (encoded_identifier_len_reflection_ig, _, encoded_identifier_len_reflection_wc) = self
+      .reflection()
       .encoded_identifier_len_reflection_generics()
       .split_for_impl();
     let encoded_identifier_len_reflection_type =
       self.reflection().encoded_identifier_len_reflection();
     let (tag_reflection_ig, _, tag_reflection_wc) =
-      object.reflection.tag_reflection_generics().split_for_impl();
+      self.reflection().tag_reflection_generics().split_for_impl();
     let tag_reflection_type = self.reflection().tag_reflection();
-    let (encoded_tag_reflection_ig, _, encoded_tag_reflection_wc) = object
-      .reflection
+    let (encoded_tag_reflection_ig, _, encoded_tag_reflection_wc) = self
+      .reflection()
       .encoded_tag_reflection_generics()
       .split_for_impl();
     let encoded_tag_reflection_type = self.reflection().encoded_tag_reflection();
-    let (encoded_tag_len_reflection_ig, _, encoded_tag_len_reflection_wc) = object
-      .reflection
+    let (encoded_tag_len_reflection_ig, _, encoded_tag_len_reflection_wc) = self
+      .reflection()
       .encoded_tag_len_reflection_generics()
       .split_for_impl();
     let encoded_tag_len_reflection_type = self.reflection().encoded_tag_len_reflection();
-    let (wire_type_reflection_ig, _, wire_type_reflection_wc) = object
-      .reflection
+    let (wire_type_reflection_ig, _, wire_type_reflection_wc) = self
+      .reflection()
       .wire_type_reflection_generics()
       .split_for_impl();
     let wire_type_reflection_type = self.reflection().wire_type_reflection();

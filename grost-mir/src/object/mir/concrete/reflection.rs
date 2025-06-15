@@ -6,15 +6,7 @@ use super::ConcreteField;
 #[derive(Debug, Clone)]
 pub struct ConcreteObjectReflection {
   ty: Type,
-  field_reflection_generics: Generics,
-  wire_format_reflection_generics: Generics,
-  wire_type_reflection_generics: Generics,
-  identifier_reflection_generics: Generics,
-  encoded_identifier_reflection_generics: Generics,
-  encoded_identifier_len_reflection_generics: Generics,
-  tag_reflection_generics: Generics,
-  encoded_tag_reflection_generics: Generics,
-  encoded_tag_len_reflection_generics: Generics,
+  generics: Generics,
 }
 
 impl ConcreteObjectReflection {
@@ -24,58 +16,10 @@ impl ConcreteObjectReflection {
     &self.ty
   }
 
-  /// Returns the generics of the concrete object reflection.
+  /// Returns the generics when deriving the `Reflectable` trait for the object.
   #[inline]
-  pub const fn field_reflection_generics(&self) -> &Generics {
-    &self.field_reflection_generics
-  }
-
-  /// Returns the generics for the wire format reflection.
-  #[inline]
-  pub const fn wire_format_reflection_generics(&self) -> &Generics {
-    &self.wire_format_reflection_generics
-  }
-
-  /// Returns the generics for the wire type reflection.
-  #[inline]
-  pub const fn wire_type_reflection_generics(&self) -> &Generics {
-    &self.wire_type_reflection_generics
-  }
-
-  /// Returns the generics for the identifier reflection.
-  #[inline]
-  pub const fn identifier_reflection_generics(&self) -> &Generics {
-    &self.identifier_reflection_generics
-  }
-
-  /// Returns the generics for the encoded identifier reflection.
-  #[inline]
-  pub const fn encoded_identifier_reflection_generics(&self) -> &Generics {
-    &self.encoded_identifier_reflection_generics
-  }
-
-  /// Returns the generics for the encoded identifier length reflection.
-  #[inline]
-  pub const fn encoded_identifier_len_reflection_generics(&self) -> &Generics {
-    &self.encoded_identifier_len_reflection_generics
-  }
-
-  /// Returns the generics for the tag reflection.
-  #[inline]
-  pub const fn tag_reflection_generics(&self) -> &Generics {
-    &self.tag_reflection_generics
-  }
-
-  /// Returns the generics for the encoded tag reflection.
-  #[inline]
-  pub const fn encoded_tag_reflection_generics(&self) -> &Generics {
-    &self.encoded_tag_reflection_generics
-  }
-
-  /// Returns the generics for the encoded tag length reflection.
-  #[inline]
-  pub const fn encoded_tag_len_reflection_generics(&self) -> &Generics {
-    &self.encoded_tag_len_reflection_generics
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
   }
 
   pub(super) fn from_ast<M, F>(
@@ -86,15 +30,7 @@ impl ConcreteObjectReflection {
     let flavor_ty = object.flavor().ty();
     let object_type = object.ty();
     let generics = object.generics();
-    let mut field_reflection_generics = generics.clone();
-    let mut wire_format_reflection_generics = generics.clone();
-    let mut wire_type_reflection_generics = generics.clone();
-    let mut identifier_reflection_generics = generics.clone();
-    let mut encoded_identifier_reflection_generics = generics.clone();
-    let mut encoded_identifier_len_reflection_generics = generics.clone();
-    let mut tag_reflection_generics = generics.clone();
-    let mut encoded_tag_reflection_generics = generics.clone();
-    let mut encoded_tag_len_reflection_generics = generics.clone();
+    let mut object_reflection_generics = generics.clone();
 
     let ty: Type = syn::parse2(quote! {
       #path_to_grost::__private::reflection::ObjectReflection<
@@ -107,42 +43,18 @@ impl ConcreteObjectReflection {
       .iter()
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .for_each(|f| {
-        macro_rules! bail {
-          ($field:ident: $($generics:ident),+$(,)?) => {{
-            paste::paste! {
-              $(
-                [< $generics _generics>].make_where_clause()
-                  .predicates
-                  .extend($field.reflection(). [< $generics _constraints >]().iter().cloned());
-              )*
-            }
-          }};
+        let constraints = f.reflection().field_reflection_constraints();
+        if !constraints.is_empty() {
+          object_reflection_generics
+            .make_where_clause()
+            .predicates
+            .extend(constraints.iter().cloned());
         }
-
-        bail!(f:
-          field_reflection,
-          wire_format_reflection,
-          wire_type_reflection,
-          identifier_reflection,
-          encoded_identifier_reflection,
-          encoded_identifier_len_reflection,
-          tag_reflection,
-          encoded_tag_reflection,
-          encoded_tag_len_reflection
-        );
       });
 
     Ok(Self {
       ty,
-      field_reflection_generics,
-      wire_format_reflection_generics,
-      wire_type_reflection_generics,
-      identifier_reflection_generics,
-      encoded_identifier_reflection_generics,
-      encoded_identifier_len_reflection_generics,
-      tag_reflection_generics,
-      encoded_tag_reflection_generics,
-      encoded_tag_len_reflection_generics,
+      generics: object_reflection_generics,
     })
   }
 
@@ -158,10 +70,8 @@ impl ConcreteObjectReflection {
     let object_reflectable = object.reflectable();
 
     let (ig, tg, wc) = object.generics().split_for_impl();
-    let (field_reflection_ig, field_reflection_tg, field_reflection_wc) = object
-      .reflection
-      .field_reflection_generics()
-      .split_for_impl();
+    let (field_reflection_ig, field_reflection_tg, field_reflection_wc) =
+      self.generics().split_for_impl();
 
     let mut field_reflectable_impl = vec![];
     let mut field_reflections = vec![];

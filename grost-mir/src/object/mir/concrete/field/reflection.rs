@@ -1,5 +1,5 @@
 use quote::quote;
-use syn::{Expr, Type, WherePredicate, punctuated::Punctuated, token::Comma};
+use syn::{Expr, Generics, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
 use crate::object::mir::{
   encoded_identifier_len_reflection, encoded_identifier_reflection, encoded_tag_len_reflection,
@@ -11,22 +11,23 @@ use crate::object::mir::{
 pub struct ConcreteFieldReflection {
   field_reflection: Type,
   field_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  field_reflection_generics: Generics,
   wire_format_reflection: Type,
-  wire_format_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  wire_format_reflection_generics: Generics,
   wire_type_reflection: Type,
-  wire_type_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  wire_type_reflection_generics: Generics,
   identifier_reflection: Type,
-  identifier_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  identifier_reflection_generics: Generics,
   encoded_identifier_reflection: Type,
-  encoded_identifier_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  encoded_identifier_reflection_generics: Generics,
   encoded_identifier_len_reflection: Type,
-  encoded_identifier_len_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  encoded_identifier_len_reflection_generics: Generics,
   tag_reflection: Type,
-  tag_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  tag_reflection_generics: Generics,
   encoded_tag_reflection: Type,
-  encoded_tag_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  encoded_tag_reflection_generics: Generics,
   encoded_tag_len_reflection: Type,
-  encoded_tag_len_reflection_constraints: Punctuated<WherePredicate, Comma>,
+  encoded_tag_len_reflection_generics: Generics,
   value: Expr,
 }
 
@@ -91,62 +92,64 @@ impl ConcreteFieldReflection {
     &self.encoded_tag_len_reflection
   }
 
-  /// Returns the constraints for this field reflection.
+  /// Returns the constraints of the field reflection.
   #[inline]
   pub const fn field_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
     &self.field_reflection_constraints
   }
 
-  /// Returns the constraints for the wire format reflection.
+  /// Returns the generics when deriving `Reflectable` for the field.
   #[inline]
-  pub const fn wire_format_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.wire_format_reflection_constraints
+  pub const fn field_reflection_generics(&self) -> &Generics {
+    &self.field_reflection_generics
   }
 
-  /// Returns the constraints for the wire type reflection.
+  /// Returns the generics when deriving `WireFormatReflection` for the field.
   #[inline]
-  pub const fn wire_type_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.wire_type_reflection_constraints
+  pub const fn wire_format_reflection_generics(&self) -> &Generics {
+    &self.wire_format_reflection_generics
   }
 
-  /// Returns the constraints for the identifier reflection.
+  /// Returns the generics when deriving `WireTypeReflection` for the field.
   #[inline]
-  pub const fn identifier_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.identifier_reflection_constraints
+  pub const fn wire_type_reflection_generics(&self) -> &Generics {
+    &self.wire_type_reflection_generics
   }
 
-  /// Returns the constraints for the encoded identifier reflection.
+  /// Returns the generics when deriving `IdentifierReflection` for the field.
   #[inline]
-  pub const fn encoded_identifier_reflection_constraints(
-    &self,
-  ) -> &Punctuated<WherePredicate, Comma> {
-    &self.encoded_identifier_reflection_constraints
+  pub const fn identifier_reflection_generics(&self) -> &Generics {
+    &self.identifier_reflection_generics
   }
 
-  /// Returns the constraints for the encoded identifier length reflection.
+  /// Returns the generics when deriving `EncodedIdentifierReflection` for the field.
   #[inline]
-  pub const fn encoded_identifier_len_reflection_constraints(
-    &self,
-  ) -> &Punctuated<WherePredicate, Comma> {
-    &self.encoded_identifier_len_reflection_constraints
+  pub const fn encoded_identifier_reflection_generics(&self) -> &Generics {
+    &self.encoded_identifier_reflection_generics
   }
 
-  /// Returns the constraints for the tag reflection.
+  /// Returns the generics when deriving `EncodedIdentifierLenReflection` for the field.
   #[inline]
-  pub const fn tag_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.tag_reflection_constraints
+  pub const fn encoded_identifier_len_reflection_generics(&self) -> &Generics {
+    &self.encoded_identifier_len_reflection_generics
   }
 
-  /// Returns the constraints for the encoded tag reflection.
+  /// Returns the generics when deriving `TagReflection` for the field.
   #[inline]
-  pub const fn encoded_tag_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.encoded_tag_reflection_constraints
+  pub const fn tag_reflection_generics(&self) -> &Generics {
+    &self.tag_reflection_generics
   }
 
-  /// Returns the constraints for the encoded tag length reflection.
+  /// Returns the generics when deriving `EncodedTagReflection` for the field.
   #[inline]
-  pub const fn encoded_tag_len_reflection_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.encoded_tag_len_reflection_constraints
+  pub const fn encoded_tag_reflection_generics(&self) -> &Generics {
+    &self.encoded_tag_reflection_generics
+  }
+
+  /// Returns the generics when deriving `EncodedTagLenReflection` for the field.
+  #[inline]
+  pub const fn encoded_tag_len_reflection_generics(&self) -> &Generics {
+    &self.encoded_tag_len_reflection_generics
   }
 
   pub(super) fn try_new<M, F>(
@@ -161,27 +164,21 @@ impl ConcreteFieldReflection {
     let path_to_grost = object.path_to_grost();
     let object_type = object.ty();
     let field_ty = field.ty();
-    let mut constraints = Punctuated::new();
-    constraints.push(syn::parse2(quote! {
-      #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
-    })?);
+    let generics = object.generics();
+    let mut field_reflection_generics = generics.clone();
+    let wire_format_reflection_generics = generics.clone();
 
-    let mut wire_format_reflection_constraints = Punctuated::new();
-    match field.flavor().format() {
-      Some(fmt) => {
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          #fmt: #path_to_grost::__private::flavors::WireFormat<#flavor_ty>
-        })?);
-      }
-      None => {
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          #field_ty: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_ty>
-        })?);
+    let mut field_reflection_constraints = Punctuated::new();
 
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_ty>>::Format: 'static
-        })?);
-      }
+    if !field.type_params_usages.is_empty() || !field.lifetime_params_usages.is_empty() {
+      let pred: WherePredicate = syn::parse2(quote! {
+        #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
+      })?;
+      field_reflection_constraints.push(pred.clone());
+      field_reflection_generics
+        .make_where_clause()
+        .predicates
+        .push(pred);
     }
 
     let field_reflection = field_reflection(path_to_grost, object_type, flavor_ty, tag)?;
@@ -220,15 +217,16 @@ impl ConcreteFieldReflection {
       tag_reflection,
       encoded_tag_reflection,
       encoded_tag_len_reflection,
-      wire_type_reflection_constraints: wire_format_reflection_constraints.clone(),
-      identifier_reflection_constraints: wire_format_reflection_constraints.clone(),
-      encoded_identifier_reflection_constraints: wire_format_reflection_constraints.clone(),
-      encoded_identifier_len_reflection_constraints: wire_format_reflection_constraints.clone(),
-      tag_reflection_constraints: Punctuated::new(),
-      encoded_tag_reflection_constraints: Punctuated::new(),
-      encoded_tag_len_reflection_constraints: Punctuated::new(),
-      field_reflection_constraints: constraints,
-      wire_format_reflection_constraints,
+      field_reflection_constraints,
+      field_reflection_generics,
+      wire_type_reflection_generics: wire_format_reflection_generics.clone(),
+      identifier_reflection_generics: wire_format_reflection_generics.clone(),
+      encoded_identifier_reflection_generics: wire_format_reflection_generics.clone(),
+      encoded_identifier_len_reflection_generics: wire_format_reflection_generics.clone(),
+      tag_reflection_generics: generics.clone(),
+      encoded_tag_reflection_generics: generics.clone(),
+      encoded_tag_len_reflection_generics: generics.clone(),
+      wire_format_reflection_generics,
     })
   }
 }

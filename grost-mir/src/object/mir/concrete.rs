@@ -210,7 +210,7 @@ impl<M, F> ConcreteObject<M, F> {
     let reflection_impl = self.reflection.derive(self)?;
 
     let selector = self.derive_selector_defination();
-    let selector_impl = self.derive_selector();
+    let selector_impl = self.derive_selector()?;
 
     let selector_iter_def = self.derive_selector_iter_defination();
     let selector_iter_impl = self.derive_selector_iter();
@@ -229,7 +229,7 @@ impl<M, F> ConcreteObject<M, F> {
 
         #partial_impl
 
-        // #partial_decoded_impl
+        #partial_decoded_impl
 
         #reflection_impl
 

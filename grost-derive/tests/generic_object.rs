@@ -63,7 +63,6 @@ pub struct User {
   // array: [u8; N],
 }
 
-
 // impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
 // }
@@ -182,7 +181,7 @@ fn t() {
     emails: todo!(),
   };
 
-  let val =  User::emails_reflection();
+  let val = User::emails_reflection();
   let wf = val.wire_format();
   let identifier = val.identifier();
   let encoded_identifier = val.encoded_identifier();
