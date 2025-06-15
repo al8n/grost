@@ -179,10 +179,10 @@ fn t() {
   //   emails: todo!(),
   // };
 
-  // let val =  User::emails_reflection();
-  // let wf = val.wire_format();
-  // let identifier = val.identifier();
-  // let encoded_identifier = val.encoded_identifier();
-  // let object_refl = User::reflection::<Network>();
-  // println!("{:?}", encoded_identifier);
+  let val =  User::<String>::emails_reflection();
+  let wf = val.wire_format();
+  let identifier = val.identifier();
+  let encoded_identifier = val.encoded_identifier();
+  let object_refl = User::<String>::reflection();
+  println!("{:?}", encoded_identifier);
 }
