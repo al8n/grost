@@ -278,6 +278,7 @@ impl<M, F> GenericObject<M, F> {
     let partial_object_impl = self.derive_partial_object();
 
     let partial_decoded_object = self.derive_partial_decoded_object_defination();
+    let partial_decoded_object_impl = self.derive_partial_decoded_object();
 
     let selector = self.derive_selector_defination();
     let selector_impl = self.derive_selector()?;
@@ -305,6 +306,8 @@ impl<M, F> GenericObject<M, F> {
         #indexer_impl
 
         #partial_object_impl
+
+        #partial_decoded_object_impl
 
         #reflection_impl
 

@@ -2,6 +2,9 @@ use quote::format_ident;
 use quote::quote;
 use syn::{Attribute, GenericParam, Generics, Ident};
 
+use crate::object::mir::derive_flatten_state;
+use crate::object::mir::optional_accessors;
+
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
 
 #[derive(Debug, Clone)]
@@ -179,6 +182,143 @@ impl<M, F> super::GenericObject<M, F> {
       {
         #ubfn: ::core::option::Option<#ubg>,
         #(#fields),*
+      }
+    }
+  }
+
+  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
+    let partial_decoded_object = self.partial_decoded();
+    let name = partial_decoded_object.name();
+    let fields_init = self.fields().iter().filter_map(|f| {
+      let field_name = f.name();
+      match f {
+        GenericField::Skipped(skipped_field) => {
+          if !skipped_field.lifetime_params_usages().is_empty()
+            || !skipped_field.type_params_usages().is_empty()
+          {
+            Some(quote! {
+              #field_name: ::core::marker::PhantomData,
+            })
+          } else {
+            None
+          }
+        }
+        GenericField::Tagged(_) => Some(quote! {
+          #field_name: ::core::option::Option::None,
+        }),
+      }
+    });
+
+    let mut fields_accessors = vec![];
+    let mut is_empty = vec![];
+
+    self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .for_each(|f| {
+        let field_name = f.name();
+        let ty = &f.partial_decoded().ty();
+        let vis = f.vis();
+        fields_accessors.push(optional_accessors(
+          field_name,
+          vis,
+          ty,
+          f.partial_decoded().copy(),
+        ));
+        is_empty.push(quote! {
+          self.#field_name.is_none()
+        });
+      });
+
+    let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
+    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
+    let ubg = &self.unknown_buffer_param().ident;
+    let flatten_state = derive_flatten_state(
+      &self.path_to_grost,
+      partial_decoded_object.generics(),
+      partial_decoded_object.name(),
+    );
+
+    quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::default::Default for #name #tg #where_clauses
+      {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
+      #flatten_state
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #name #tg #where_clauses
+      {
+        /// Creates an empty partial struct.
+        #[inline]
+        pub const fn new() -> Self {
+          Self {
+            #(#fields_init)*
+            #ubfn: ::core::option::Option::None,
+          }
+        }
+
+        /// Returns `true` if the partial struct is empty, which means all fields are `None`.
+        #[inline]
+        pub const fn is_empty(&self) -> bool {
+          self.#ubfn.is_none() && #(#is_empty)&&*
+        }
+
+        /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+          self.#ubfn.as_ref()
+        }
+
+        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+         self.#ubfn.as_mut()
+        }
+
+        /// Takes the unknown buffer out if the unknown buffer is not `None`.
+        #[inline]
+        pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
+          self.#ubfn.take()
+        }
+
+        /// Set the value of unknown buffer
+        #[inline]
+        pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
+          self.#ubfn = ::core::option::Option::Some(buffer);
+          self
+        }
+
+        /// Clears the unknown buffer.
+        #[inline]
+        pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+          self.#ubfn = ::core::option::Option::None;
+          self
+        }
+
+        /// Set the value of unknown buffer
+        #[inline]
+        pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
+          self.#ubfn = ::core::option::Option::Some(buffer);
+          self
+        }
+
+        /// Clears the unknown buffer.
+        #[inline]
+        pub fn without_unknown_buffer(mut self) -> Self {
+          self.#ubfn = ::core::option::Option::None;
+          self
+        }
+
+        #(#fields_accessors)*
       }
     }
   }

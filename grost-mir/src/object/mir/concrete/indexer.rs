@@ -91,19 +91,18 @@ impl<M, F> super::ConcreteObject<M, F> {
       }
     });
 
-    let mut reflections_constraints = vec![];
     let reflections = fields
       .iter()
       .map(|f| {
         let field_variant = &f.index().variant().ident;
         let field_reflection_type = f.reflection().field_reflection();
 
-        reflections_constraints.push(quote! {
-          #field_reflection_type: #path_to_grost::__private::reflection::Reflectable<
-            #object_type,
-            Reflection = #path_to_grost::__private::reflection::ObjectField,
-          >
-        });
+        // reflections_constraints.push(quote! {
+        //   #field_reflection_type: #path_to_grost::__private::reflection::Reflectable<
+        //     #object_type,
+        //     Reflection = #path_to_grost::__private::reflection::ObjectField,
+        //   >
+        // });
 
         quote! {
           Self::#field_variant => {
@@ -112,6 +111,8 @@ impl<M, F> super::ConcreteObject<M, F> {
         }
       })
       .collect::<Vec<_>>();
+    let object_reflection = self.reflection.object_reflection_generics();
+    let (object_ig, _, object_wc) = object_reflection.split_for_impl();
 
     quote! {
       #[automatically_derived]
@@ -126,11 +127,10 @@ impl<M, F> super::ConcreteObject<M, F> {
         /// Returns the field reflection of the corresponding field.
         #[allow(non_camel_case_types, clippy::type_complexity)]
         #[inline]
-        pub const fn reflection #ig (
+        pub const fn reflection #object_ig (
           &self,
         ) -> &'static #path_to_grost::__private::reflection::ObjectField
-        where
-          #(#reflections_constraints),*
+        #object_wc
         {
           match self {
             #(#reflections),*

@@ -771,9 +771,57 @@ impl<M, F> super::ConcreteObject<M, F> {
     let selected_param_ident = &selected_param.ident;
     let iter_name = selector_iter.name();
     let indexer_name = self.indexer().name();
+    let mut selector_iter_iterator_generics = selector_iter.generics().clone();
+
+    let object_reflection_generics = self.reflection.object_reflection_generics();
+    if let Some(ref object_reflection_wc) = object_reflection_generics.where_clause {
+      if let Some(selector_iter_wc) = selector_iter.generics().where_clause.as_ref() {
+        for pred in object_reflection_wc.predicates.iter() {
+          if !selector_iter_wc.predicates.iter().any(|x| x.eq(pred)) {
+            selector_iter_iterator_generics
+              .make_where_clause()
+              .predicates
+              .push(pred.clone());
+          }
+        }
+      } else {
+        selector_iter_iterator_generics
+          .make_where_clause()
+          .predicates
+          .extend(object_reflection_wc.predicates.iter().cloned());
+      }
+    }
+
     let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
     let gl = &selector_iter.lifetime_param().lifetime;
     let selector_ty = self.selector().ty();
+
+    let generics = self.reflection.object_reflection_generics();
+    let object_ig = if !generics.params.is_empty() {
+      let param_idents = generics.params.iter().map(|param| match param {
+        GenericParam::Lifetime(lifetime_param) => {
+          let lt = &lifetime_param.lifetime;
+          quote! { #lt }
+        }
+        GenericParam::Type(type_param) => {
+          let ident = &type_param.ident;
+          quote! { #ident }
+        }
+        GenericParam::Const(const_param) => {
+          let ident = &const_param.ident;
+          quote! { #ident }
+        }
+      });
+      Some(quote! {
+        :: <#(#param_idents),*>
+      })
+    } else {
+      None
+    };
+
+    let (selector_iter_iterator_ig, _, selector_iter_iterator_wc) =
+      selector_iter_iterator_generics.split_for_impl();
+
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -804,7 +852,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig ::core::iter::Iterator for #iter_name #tg #where_clauses {
+      impl #selector_iter_iterator_ig ::core::iter::Iterator for #iter_name #tg #selector_iter_iterator_wc {
         type Item = &'static #path_to_grost::__private::reflection::ObjectField;
 
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
@@ -819,18 +867,30 @@ impl<M, F> super::ConcreteObject<M, F> {
               if self.selector.is_selected(idx) {
                 self.index = idx.next();
                 self.yielded += 1;
-                return ::core::option::Option::Some(idx.reflection());
+                return ::core::option::Option::Some(idx.reflection #object_ig ());
               }
             } else if self.selector.is_unselected(idx) {
               self.index = idx.next();
               self.yielded += 1;
-              return ::core::option::Option::Some(idx.reflection());
+              return ::core::option::Option::Some(idx.reflection #object_ig ());
             }
 
             current_index = idx.next();
           }
 
           ::core::option::Option::None
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #selector_iter_iterator_ig ::core::iter::FusedIterator for #iter_name #tg #selector_iter_iterator_wc {}
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #selector_iter_iterator_ig ::core::iter::ExactSizeIterator for #iter_name #tg #selector_iter_iterator_wc {
+        fn len(&self) -> ::core::primitive::usize {
+          self.remaining()
         }
       }
     }

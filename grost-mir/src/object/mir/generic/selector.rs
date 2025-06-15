@@ -796,8 +796,47 @@ impl<M, F> super::GenericObject<M, F> {
     let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
     let gl = &selector_iter.lifetime_param().lifetime;
     let selector_ty = self.selector().ty();
-    let flavor_param = self.flavor_param();
-    let flavor_ident = &flavor_param.ident;
+
+    let generics = self.generics();
+    let object_ig = if !generics.params.is_empty() {
+      let mut reflection_fn_generics = Generics::default();
+      reflection_fn_generics
+        .params
+        .extend(generics.lifetimes().cloned().map(GenericParam::from));
+      reflection_fn_generics
+        .params
+        .extend(generics.type_params().cloned().map(GenericParam::from));
+      reflection_fn_generics
+        .params
+        .push(GenericParam::Type(self.flavor_param.clone()));
+      reflection_fn_generics
+        .params
+        .extend(generics.const_params().cloned().map(GenericParam::from));
+
+      let idents = reflection_fn_generics.params.iter().map(|p| match p {
+        GenericParam::Lifetime(lp) => {
+          let lt = &lp.lifetime;
+          quote! { #lt }
+        }
+        GenericParam::Type(tp) => {
+          let ident = &tp.ident;
+          quote! { #ident }
+        }
+        GenericParam::Const(cp) => {
+          let ident = &cp.ident;
+          quote! { #ident }
+        }
+      });
+      quote! {
+        :: <#(#idents),*>
+      }
+    } else {
+      let flavor_ident = &self.flavor_param().ident;
+      quote! {
+        :: <#flavor_ident>
+      }
+    };
+
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -843,18 +882,30 @@ impl<M, F> super::GenericObject<M, F> {
               if self.selector.is_selected(idx) {
                 self.index = idx.next();
                 self.yielded += 1;
-                return ::core::option::Option::Some(idx.reflection::<#flavor_ident>());
+                return ::core::option::Option::Some(idx.reflection #object_ig ());
               }
             } else if self.selector.is_unselected(idx) {
               self.index = idx.next();
               self.yielded += 1;
-              return ::core::option::Option::Some(idx.reflection::<#flavor_ident>());
+              return ::core::option::Option::Some(idx.reflection #object_ig ());
             }
 
             current_index = idx.next();
           }
 
           ::core::option::Option::None
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::iter::FusedIterator for #iter_name #tg #where_clauses {}
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::iter::ExactSizeIterator for #iter_name #tg #where_clauses {
+        fn len(&self) -> ::core::primitive::usize {
+          self.remaining()
         }
       }
     }
