@@ -95,7 +95,9 @@ impl<M, F> super::GenericObject<M, F> {
       }
     });
 
-    let mut reflections_constraints = vec![];
+    let mut reflections_constraints = vec![quote! {
+      #flavor_ident: #path_to_grost::__private::flavors::Flavor + ?::core::marker::Sized
+    }];
     let reflections = fields
       .iter()
       .map(|f| {

@@ -787,12 +787,17 @@ impl<M, F> super::GenericObject<M, F> {
   }
 
   pub(super) fn derive_selector_iter(&self) -> proc_macro2::TokenStream {
+    let path_to_grost = self.path_to_grost();
     let selector_iter = self.selector_iter();
+    let selected_param = selector_iter.selected();
+    let selected_param_ident = &selected_param.ident;
     let iter_name = selector_iter.name();
     let indexer_name = self.indexer().name();
     let (ig, tg, where_clauses) = selector_iter.generics().split_for_impl();
     let gl = &selector_iter.lifetime_param().lifetime;
     let selector_ty = self.selector().ty();
+    let flavor_param = self.flavor_param();
+    let flavor_ident = &flavor_param.ident;
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -818,6 +823,38 @@ impl<M, F> super::GenericObject<M, F> {
         #[inline]
         pub const fn is_empty(&self) -> ::core::primitive::bool {
           self.remaining() == 0
+        }
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig ::core::iter::Iterator for #iter_name #tg #where_clauses {
+        type Item = &'static #path_to_grost::__private::reflection::ObjectField;
+
+        fn next(&mut self) -> ::core::option::Option<Self::Item> {
+          if self.yielded >= self.num {
+            return ::core::option::Option::None;
+          }
+
+          // if the current index is `None`, which means we are at the end of the iteration.
+          let mut current_index = self.index;
+          while let ::core::option::Option::Some(idx) = current_index {
+            if #selected_param_ident {
+              if self.selector.is_selected(idx) {
+                self.index = idx.next();
+                self.yielded += 1;
+                return ::core::option::Option::Some(idx.reflection::<#flavor_ident>());
+              }
+            } else if self.selector.is_unselected(idx) {
+              self.index = idx.next();
+              self.yielded += 1;
+              return ::core::option::Option::Some(idx.reflection::<#flavor_ident>());
+            }
+
+            current_index = idx.next();
+          }
+
+          ::core::option::Option::None
         }
       }
     }
