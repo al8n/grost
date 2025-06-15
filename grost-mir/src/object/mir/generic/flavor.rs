@@ -6,6 +6,12 @@ use crate::{
   object::ObjectFlavor as ObjectFlavorAst,
 };
 
+pub use partial_decoded::PartialDecodedObjectFlavor;
+pub use selector::{SelectorFlavor, SelectorIterFlavor};
+
+mod partial_decoded;
+mod selector;
+
 #[derive(Debug, Clone)]
 pub struct ObjectFlavor {
   flavor_type: Type,
@@ -14,6 +20,9 @@ pub struct ObjectFlavor {
   tag: TagAttribute,
   encode: EncodeAttribute,
   decode: DecodeAttribute,
+  selector: SelectorFlavor,
+  selector_iter: SelectorIterFlavor,
+  partial_decoded: PartialDecodedObjectFlavor,
   reflection_type: Type,
   wire_format_reflection_generics: Generics,
   wire_type_reflection_generics: Generics,
@@ -40,7 +49,7 @@ impl ObjectFlavor {
 
   /// Returns the wire format type for the object of this flavor.
   #[inline]
-  pub const fn format(&self) -> &Type {
+  pub const fn wire_format(&self) -> &Type {
     &self.format
   }
 
@@ -116,6 +125,24 @@ impl ObjectFlavor {
     &self.encoded_tag_len_reflection_generics
   }
 
+  /// Returns the selector information for this object flavor.
+  #[inline]
+  pub const fn selector(&self) -> &SelectorFlavor {
+    &self.selector
+  }
+
+  /// Returns the selector iterator information for this object flavor.
+  #[inline]
+  pub const fn selector_iter(&self) -> &SelectorIterFlavor {
+    &self.selector_iter
+  }
+
+  /// Returns the partial decoded object flavor information.
+  #[inline]
+  pub const fn partial_decoded(&self) -> &PartialDecodedObjectFlavor {
+    &self.partial_decoded
+  }
+
   pub(super) fn from_ast<M, F>(
     object: &super::GenericObjectAst<M, F>,
     flavor_name: &Ident,
@@ -182,7 +209,14 @@ impl ObjectFlavor {
         darling::Result::Ok(())
       })?;
 
+    let partial_decoded =
+      PartialDecodedObjectFlavor::from_ast(flavor_name, flavor_ty, object, fields)?;
+    let selector = SelectorFlavor::from_ast(flavor_name, flavor_ty, object, fields)?;
+    let selector_iter = selector.selector_iter(object, flavor_ty)?;
     Ok(Self {
+      partial_decoded,
+      selector,
+      selector_iter,
       flavor_type: flavor_ty.clone(),
       reflection_type,
       format: ast.format().clone(),

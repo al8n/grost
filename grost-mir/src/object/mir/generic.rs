@@ -236,7 +236,7 @@ impl<M, F> GenericObject<M, F> {
         ObjectFlavor::from_ast(&object, name, flavor, &fields).map(|f| (name.clone(), f))
       })
       .collect::<darling::Result<_>>()?;
-    let selector = GenericSelector::from_ast(&object, &flavors, &fields)?;
+    let selector = GenericSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = GenericObjectReflection::from_ast(&object, &fields)?;
 
@@ -272,6 +272,7 @@ impl<M, F> GenericObject<M, F> {
     let accessors = self.derive_accessors()?;
 
     let indexer = self.derive_indexer_defination();
+    let indexer_impl = self.derive_indexer();
 
     let partial_object = self.derive_partial_object_defination();
     let partial_object_impl = self.derive_partial_object();
@@ -279,7 +280,9 @@ impl<M, F> GenericObject<M, F> {
     let partial_decoded_object = self.derive_partial_decoded_object_defination();
 
     let selector = self.derive_selector_defination();
+    let selector_impl = self.derive_selector()?;
     let selector_iter = self.derive_selector_iter_defination();
+    let selector_iter_impl = self.derive_selector_iter();
 
     let reflection_impl = self.derive_reflection();
 
@@ -299,9 +302,15 @@ impl<M, F> GenericObject<M, F> {
 
         #accessors
 
+        #indexer_impl
+
         #partial_object_impl
 
         #reflection_impl
+
+        #selector_impl
+
+        #selector_iter_impl
       };
     })
   }

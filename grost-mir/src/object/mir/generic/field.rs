@@ -164,11 +164,14 @@ impl<F> GenericTaggedField<F> {
   where
     F: Clone,
   {
+    let use_generics =
+      !field.lifetime_params_usages.is_empty() || !field.type_params_usages.is_empty();
     let partial = GenericPartialField::from_ast(
       object.path_to_grost(),
       field.ty(),
       field.partial_type(),
       field.partial_attrs(),
+      use_generics,
     )?;
 
     let path_to_grost = object.path_to_grost();

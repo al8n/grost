@@ -40,19 +40,22 @@ impl GenericPartialField {
     ty: &Type,
     partial_type: Option<&Type>,
     attrs: &[Attribute],
+    use_generics: bool,
   ) -> darling::Result<Self> {
     let mut constraints = Punctuated::new();
     let ty = match partial_type {
       Some(ty) => ty.clone(),
       None => {
-        constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Flatten
-          >
-        })?);
-        constraints.push(syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output: ::core::marker::Sized
-        })?);
+        if use_generics {
+          constraints.push(syn::parse2(quote! {
+            #ty: #path_to_grost::__private::convert::State<
+              #path_to_grost::__private::convert::Flatten
+            >
+          })?);
+          constraints.push(syn::parse2(quote! {
+            <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output: ::core::marker::Sized
+          })?);
+        }
 
         syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<

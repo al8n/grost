@@ -1,109 +1,8 @@
-use indexmap::IndexMap;
 use quote::format_ident;
 use quote::quote;
-use syn::{Attribute, GenericParam, Generics, Ident, Type};
+use syn::{Attribute, GenericParam, Generics, Ident};
 
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
-
-#[derive(Debug, Clone)]
-pub struct PartialDecodedObjectFlavor {
-  ty: Type,
-  generics: Generics,
-}
-
-impl PartialDecodedObjectFlavor {
-  /// Returns the type of the partial decoded object flavor.
-  #[inline]
-  pub const fn ty(&self) -> &Type {
-    &self.ty
-  }
-
-  /// Returns the generics of the partial decoded object flavor.
-  #[inline]
-  pub const fn generics(&self) -> &Generics {
-    &self.generics
-  }
-
-  fn from_ast<M, F>(
-    object: &GenericObjectAst<M, F>,
-    flavor_name: &Ident,
-    fields: &[GenericField<F>],
-  ) -> darling::Result<Self> {
-    let partial_decoded_object = &object.partial_decoded;
-    let partial_decoded_object_name = partial_decoded_object.name();
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let lifetime_param = &object.lifetime_param;
-
-    let original_generics = object.generics();
-    let mut generics = Generics::default();
-
-    // push the lifetime generic parameter first
-    generics.params.extend(
-      original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Lifetime(_)))
-        .cloned(),
-    );
-
-    generics
-      .params
-      .push(syn::GenericParam::Lifetime(lifetime_param.clone()));
-
-    // push the original type generic parameters
-    generics.params.extend(
-      original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Type(_)))
-        .cloned(),
-    );
-
-    generics
-      .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
-
-    // push the original const generic parameters last
-    generics.params.extend(
-      original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Const(_)))
-        .cloned(),
-    );
-
-    if let Some(where_clause) = original_generics.where_clause.as_ref() {
-      generics
-        .make_where_clause()
-        .predicates
-        .extend(where_clause.predicates.iter().cloned());
-    }
-
-    fields
-      .iter()
-      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
-      .for_each(|f| {
-        let ff = f
-          .flavors()
-          .get(flavor_name)
-          .expect("Field flavor already checked when constructing the AST");
-        let type_constraints = ff.partial_decoded().type_constraints();
-        if !type_constraints.is_empty() {
-          generics
-            .make_where_clause()
-            .predicates
-            .extend(type_constraints.iter().cloned());
-        }
-      });
-
-    let (_, tg, _) = generics.split_for_impl();
-    let ty = syn::parse2(quote! {
-      #partial_decoded_object_name #tg
-    })?;
-
-    Ok(Self { ty, generics })
-  }
-}
 
 #[derive(Debug, Clone)]
 pub struct GenericPartialDecodedObject {
@@ -112,7 +11,6 @@ pub struct GenericPartialDecodedObject {
   generics: Generics,
   copy: bool,
   unknown_buffer_field_name: Ident,
-  flavors: IndexMap<Ident, PartialDecodedObjectFlavor>,
 }
 
 impl GenericPartialDecodedObject {
@@ -140,12 +38,6 @@ impl GenericPartialDecodedObject {
     self.copy
   }
 
-  /// Returns the flavors of the partial decoded object.
-  #[inline]
-  pub const fn flavors(&self) -> &IndexMap<Ident, PartialDecodedObjectFlavor> {
-    &self.flavors
-  }
-
   pub(super) fn from_ast<M, F>(
     object: &GenericObjectAst<M, F>,
     fields: &[GenericField<F>],
@@ -163,10 +55,9 @@ impl GenericPartialDecodedObject {
     // push the lifetime generic parameter first
     generics.params.extend(
       original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Lifetime(_)))
-        .cloned(),
+        .lifetimes()
+        .cloned()
+        .map(GenericParam::from),
     );
 
     generics
@@ -176,10 +67,9 @@ impl GenericPartialDecodedObject {
     // push the original type generic parameters
     generics.params.extend(
       original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Type(_)))
-        .cloned(),
+        .type_params()
+        .cloned()
+        .map(GenericParam::from),
     );
 
     generics.params.push(syn::GenericParam::Type({
@@ -196,10 +86,9 @@ impl GenericPartialDecodedObject {
     // push the original const generic parameters last
     generics.params.extend(
       original_generics
-        .params
-        .iter()
-        .filter(|param| matches!(param, GenericParam::Const(_)))
-        .cloned(),
+        .const_params()
+        .cloned()
+        .map(GenericParam::from),
     );
 
     if let Some(where_clause) = original_generics.where_clause.as_ref() {
@@ -222,22 +111,12 @@ impl GenericPartialDecodedObject {
         }
       });
 
-    let flavors = object
-      .flavors()
-      .iter()
-      .map(|(name, _)| {
-        PartialDecodedObjectFlavor::from_ast(object, name, fields)
-          .map(|flavor| (name.clone(), flavor))
-      })
-      .collect::<darling::Result<IndexMap<_, _>>>()?;
-
     Ok(Self {
       name: partial_decoded_object_name,
       attrs: partial_decoded_object.attrs().to_vec(),
       generics,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
       copy,
-      flavors,
     })
   }
 }

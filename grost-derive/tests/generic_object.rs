@@ -54,9 +54,9 @@ pub struct User {
     tag = 4,
     schema(description = "The email of the user"),
     partial_decoded(copy),
-    optional(list(string))
+    list(string)
   )]
-  emails: Option<Vec<String>>,
+  emails: Vec<String>,
   // #[grost(skip)]
   // what: W,
   // #[grost(skip, default = "default_array::<N>")]

@@ -179,7 +179,7 @@ fn t() {
   //   emails: todo!(),
   // };
 
-  let val =  User::<String>::emails_reflection();
+  let val = User::<String>::emails_reflection();
   let wf = val.wire_format();
   let identifier = val.identifier();
   let encoded_identifier = val.encoded_identifier();

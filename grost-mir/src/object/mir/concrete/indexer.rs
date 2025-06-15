@@ -58,12 +58,10 @@ impl<M, F> super::ConcreteObject<M, F> {
     let last_variant = fields.as_slice().last().unwrap().index().variant();
     let last_variant_name = &last_variant.ident;
 
-    let struct_name = self.name();
     let object_type = self.ty();
     let object_reflectable = self.reflectable();
-    let (_, tg, w) = self.generics().split_for_impl();
-    let generics = self.generics().clone();
-    let (ig, _, _) = generics.split_for_impl();
+    let generics = self.generics();
+    let (ig, _, w) = generics.split_for_impl();
 
     let index = fields.iter().map(|f| {
       let fi = f.index();
@@ -118,7 +116,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #ig #path_to_grost::__private::indexer::Indexable<#flavor_ty> for #struct_name #tg #w {
+      impl #ig #path_to_grost::__private::indexer::Indexable<#flavor_ty> for #object_type #w {
         type Indexer = #name;
       }
 

@@ -248,6 +248,8 @@ impl FieldFlavor {
 
     let mut partial_decoded_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
+    let use_generics =
+      !field.lifetime_params_usages.is_empty() || !field.type_params_usages.is_empty();
 
     let wfr: Type = syn::parse2(quote! {
       #path_to_grost::__private::reflection::WireFormatReflection<
@@ -270,21 +272,23 @@ impl FieldFlavor {
       <#field_ty as #selectable>::Selector
     })?;
 
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
-    partial_decoded_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #wfr: #object_reflectable
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-    })?);
-    selector_constraints.push(syn::parse2(quote! {
-      #field_ty: #selectable
-    })?);
+    if use_generics {
+      partial_decoded_constraints.push(syn::parse2(quote! {
+        #wfr: #object_reflectable
+      })?);
+      partial_decoded_constraints.push(syn::parse2(quote! {
+        #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
+      })?);
+      selector_constraints.push(syn::parse2(quote! {
+        #wfr: #object_reflectable
+      })?);
+      selector_constraints.push(syn::parse2(quote! {
+        #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
+      })?);
+      selector_constraints.push(syn::parse2(quote! {
+        #field_ty: #selectable
+      })?);
+    }
 
     let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
     let partial_decoded_copy_contraint = if partial_decoded_copyable {
@@ -309,12 +313,14 @@ impl FieldFlavor {
           >
         })?;
 
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          #field_ty: #state_type
-        })?);
-        partial_decoded_constraints.push(syn::parse2(quote! {
-          <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
-        })?);
+        if use_generics {
+          partial_decoded_constraints.push(syn::parse2(quote! {
+            #field_ty: #state_type
+          })?);
+          partial_decoded_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+          })?);
+        }
 
         syn::parse2(quote! {
           <#field_ty as #state_type>::Output
@@ -327,20 +333,23 @@ impl FieldFlavor {
     })?;
 
     let mut wire_format_reflection_constraints = Punctuated::new();
-    match ast.format() {
-      Some(fmt) => {
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          #fmt: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
-        })?);
-      }
-      None => {
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          #field_ty: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
-        })?);
 
-        wire_format_reflection_constraints.push(syn::parse2(quote! {
-          <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>>::Format: 'static
-        })?);
+    if use_generics {
+      match ast.format() {
+        Some(fmt) => {
+          wire_format_reflection_constraints.push(syn::parse2(quote! {
+            #fmt: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
+          })?);
+        }
+        None => {
+          wire_format_reflection_constraints.push(syn::parse2(quote! {
+            #field_ty: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+          })?);
+
+          wire_format_reflection_constraints.push(syn::parse2(quote! {
+            <#field_ty as #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>>::Format: 'static
+          })?);
+        }
       }
     }
 

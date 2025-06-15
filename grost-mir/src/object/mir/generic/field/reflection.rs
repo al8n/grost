@@ -41,9 +41,13 @@ impl GenericFieldReflection {
     let object_type = object.ty();
     let field_ty = field.ty();
     let mut constraints = Punctuated::new();
-    constraints.push(syn::parse2(quote! {
-      #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
-    })?);
+
+    if !field.type_params_usages.is_empty() || !field.lifetime_params_usages.is_empty() {
+      let pred: WherePredicate = syn::parse2(quote! {
+        #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
+      })?;
+      constraints.push(pred);
+    }
 
     let flavor_ident = &object.flavor_param().ident;
     let field_reflection = field_reflection(path_to_grost, object_type, flavor_ident, tag)?;

@@ -87,7 +87,8 @@ impl ConcreteObjectReflection {
     let (ig, tg, wc) = object.generics().split_for_impl();
     let (object_reflection_ig, _, object_reflection_wc) =
       self.object_reflection_generics().split_for_impl();
-    let (type_reflection_ig, _, type_reflection_wc) = self.type_reflection_generics().split_for_impl();
+    let (type_reflection_ig, _, type_reflection_wc) =
+      self.type_reflection_generics().split_for_impl();
 
     let mut field_reflectable_impl = vec![];
     let mut field_reflections = vec![];
