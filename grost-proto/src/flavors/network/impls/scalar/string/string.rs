@@ -20,7 +20,7 @@ str_bridge!(Network: String {
 //   fn decode<B>(context: &<Network as crate::flavors::Flavor>::Context, src: B) -> Result<(usize, &'a str), <Network as crate::flavors::Flavor>::Error>
 //   where
 //     &'a str: Sized + 'a,
-//     B: crate::buffer::Buf<'a>,
+//     B: crate::buffer::ReadBuf<'a>,
 //     UB: crate::buffer::Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a
 //   {
 //     <&str as crate::decode::Decode<'a, Network, LengthDelimited, &'a str, UB>>::decode(context, src)

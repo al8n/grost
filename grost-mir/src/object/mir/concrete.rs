@@ -10,6 +10,8 @@ pub use partial_decoded::*;
 pub use reflection::*;
 pub use selector::*;
 
+mod decode;
+mod encode;
 mod field;
 mod indexer;
 mod partial;
@@ -31,6 +33,8 @@ pub struct ConcreteObject<M = (), F = ()> {
   flavor: FlavorAttribute,
   unknown_buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
+  read_buffer_param: TypeParam,
+  write_buffer_param: TypeParam,
   fields: Vec<ConcreteField<F>>,
   indexer: Indexer,
   default: Option<Invokable>,
@@ -134,14 +138,26 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls
   #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
     &self.unknown_buffer_param
   }
 
   /// Returns the lifetime generic parameter, which will be used in generated structs or impls
   #[inline]
-  pub const fn lifetime(&self) -> &LifetimeParam {
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
     &self.lifetime_param
+  }
+
+  /// Returns the read buffer generic parameter, which will be used in generated `Decode` and `PartialDecode` impls
+  #[inline]
+  pub const fn read_buffer_param(&self) -> &TypeParam {
+    &self.read_buffer_param
+  }
+
+  /// Returns the write buffer generic parameter, which will be used in generated `Encode` and `PartialDecode` impls
+  #[inline]
+  pub const fn write_buffer_param(&self) -> &TypeParam {
+    &self.write_buffer_param
   }
 
   /// Returns the wire format of the concrete object.
@@ -215,6 +231,8 @@ impl<M, F> ConcreteObject<M, F> {
     let selector_iter_def = self.derive_selector_iter_defination();
     let selector_iter_impl = self.derive_selector_iter();
 
+    let decode_impl = self.derive_decode()?;
+
     Ok(quote! {
       #indexer_defination
       #selector
@@ -238,6 +256,8 @@ impl<M, F> ConcreteObject<M, F> {
         #selector_impl
 
         #selector_iter_impl
+
+        #decode_impl
       };
     })
   }
@@ -276,6 +296,8 @@ impl<M, F> ConcreteObject<M, F> {
       flavor: object.flavor().clone(),
       unknown_buffer_param: object.unknown_buffer_param,
       lifetime_param: object.lifetime_param,
+      read_buffer_param: object.read_buffer_param,
+      write_buffer_param: object.write_buffer_param,
       reflection,
       fields,
       default: object.default,

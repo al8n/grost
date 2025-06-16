@@ -3,7 +3,8 @@ use darling::FromMeta;
 use syn::{LifetimeParam, TypeParam};
 
 use crate::utils::{
-  grost_flavor_param, grost_lifetime, grost_unknown_buffer_param, grost_wire_format_param,
+  grost_flavor_param, grost_lifetime, grost_read_buffer_param, grost_unknown_buffer_param,
+  grost_wire_format_param, grost_write_buffer_param,
 };
 
 fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
@@ -46,6 +47,10 @@ pub(crate) struct GenericFromMeta {
   pub(crate) flavor: Option<TypeParam>,
   #[darling(default = grost_unknown_buffer_param)]
   pub(crate) unknown_buffer: TypeParam,
+  #[darling(default = grost_read_buffer_param)]
+  pub(crate) read_buffer: TypeParam,
+  #[darling(default = grost_write_buffer_param)]
+  pub(crate) write_buffer: TypeParam,
   #[darling(default = grost_wire_format_param)]
   pub(crate) wire_format: TypeParam,
 }
@@ -57,6 +62,8 @@ impl Default for GenericFromMeta {
       flavor: None,
       unknown_buffer: grost_unknown_buffer_param(),
       wire_format: grost_wire_format_param(),
+      read_buffer: grost_read_buffer_param(),
+      write_buffer: grost_write_buffer_param(),
     }
   }
 }

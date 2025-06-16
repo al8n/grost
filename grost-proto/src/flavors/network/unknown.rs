@@ -1,4 +1,4 @@
-use super::{Buf, Tag, WireType};
+use super::{ReadBuf, Tag, WireType};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -80,7 +80,7 @@ where
   #[inline]
   pub fn data<'a>(&'a self) -> &'a [u8]
   where
-    B: Buf<'a>,
+    B: ReadBuf<'a>,
   {
     let bytes = self.data.as_bytes();
     let len = bytes.len();
@@ -102,7 +102,7 @@ where
   #[inline]
   pub fn raw<'a>(&self) -> &'a [u8]
   where
-    B: Buf<'a>,
+    B: ReadBuf<'a>,
   {
     self.data.as_bytes()
   }
@@ -124,7 +124,7 @@ impl<B: ?Sized> Unknown<B> {
   pub fn map<'a, N>(&'a self) -> Unknown<N>
   where
     N: From<&'a [u8]>,
-    B: Buf<'a>,
+    B: ReadBuf<'a>,
   {
     Unknown {
       tag: self.tag,

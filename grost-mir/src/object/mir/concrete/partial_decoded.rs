@@ -1,5 +1,8 @@
 use quote::{format_ident, quote};
-use syn::{Attribute, GenericParam, Generics, Ident, Type};
+use syn::{
+  Attribute, GenericParam, Generics, Ident, Type, WherePredicate, punctuated::Punctuated,
+  token::Comma,
+};
 
 use crate::object::mir::{derive_flatten_state, optional_accessors};
 
@@ -11,6 +14,10 @@ pub struct ConcretePartialDecodedObject {
   ty: Type,
   attrs: Vec<Attribute>,
   generics: Generics,
+  /// Extra constraints when deriving `Decode` trait for the partial decoded object.
+  decode_constraints: Punctuated<WherePredicate, Comma>,
+  /// Extra constraints when deriving `PartialDecode` trait for the partial decoded object.
+  partial_decode_constraints: Punctuated<WherePredicate, Comma>,
   copy: bool,
   unknown_buffer_field_name: Ident,
 }
@@ -46,16 +53,30 @@ impl ConcretePartialDecodedObject {
     self.copy
   }
 
+  /// Returns the extra constraints when deriving `Decode` trait for the partial decoded object.
+  #[inline]
+  pub const fn decode_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.decode_constraints
+  }
+
+  /// Returns the extra constraints when deriving `PartialDecode` trait for the partial decoded object.
+  #[inline]
+  pub const fn partial_decode_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.partial_decode_constraints
+  }
+
   pub(super) fn from_ast<M, F>(
     object: &ConcreteObjectAst<M, F>,
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let partial_decoded_object = object.partial_decoded();
-    let unknown_buffer_param = object.unknown_buffer();
-    let lifetime_param = object.lifetime();
+    let unknown_buffer_param = object.unknown_buffer_param();
+    let lifetime_param = object.lifetime_param();
 
     let object_generics = object.generics();
     let mut generics = Generics::default();
+    let mut decode_constraints = Punctuated::new();
+    let mut partial_decode_constraints = Punctuated::new();
 
     for lt in object_generics.lifetimes() {
       generics.params.push(GenericParam::Lifetime(lt.clone()));
@@ -93,6 +114,22 @@ impl ConcretePartialDecodedObject {
           .make_where_clause()
           .predicates
           .extend(type_constraints.iter().cloned());
+
+        let ty = field.ty();
+        let partial_decoded_ty = field.partial_decoded().ty();
+        let wf = field.wire_format();
+        let flavor_ty = object.flavor().ty();
+        let path_to_grost = object.path_to_grost();
+        let lt = &lifetime_param.lifetime;
+        let ub = &unknown_buffer_param.ident;
+        decode_constraints.push(syn::parse2(quote! {
+          #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_decoded_ty, #ub>
+        })?);
+        partial_decode_constraints
+          .push(syn::parse2(quote! {
+            #ty: #path_to_grost::__private::PartialDecode<#lt, #flavor_ty, #wf, #partial_decoded_ty, #ub>
+          })?);
+        partial_decode_constraints.extend(field.selector().type_constraints().iter().cloned())
       }
     }
 
@@ -109,6 +146,8 @@ impl ConcretePartialDecodedObject {
       copy: partial_decoded_object.copy(),
       generics,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      decode_constraints,
+      partial_decode_constraints,
     })
   }
 }
@@ -162,7 +201,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     });
 
     let ubfn = &partial_decoded.unknown_buffer_field_name;
-    let ubt = &self.unknown_buffer().ident;
+    let ubt = &self.unknown_buffer_param().ident;
 
     quote! {
       #doc
@@ -177,7 +216,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
   pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
     let partial_decoded_object = self.partial_decoded();
-    let name = partial_decoded_object.name();
+    let partial_decoded_object_ty = partial_decoded_object.ty();
     let fields_init = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
       match f {
@@ -220,9 +259,9 @@ impl<M, F> super::ConcreteObject<M, F> {
         });
       });
 
-    let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
+    let (ig, _, where_clauses) = partial_decoded_object.generics().split_for_impl();
     let ubfn = &partial_decoded_object.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer().ident;
+    let ubg = &self.unknown_buffer_param().ident;
     let flatten_state = derive_flatten_state(
       &self.path_to_grost,
       partial_decoded_object.generics(),
@@ -232,7 +271,7 @@ impl<M, F> super::ConcreteObject<M, F> {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig ::core::default::Default for #name #tg #where_clauses
+      impl #ig ::core::default::Default for #partial_decoded_object_ty #where_clauses
       {
         fn default() -> Self {
           Self::new()
@@ -243,7 +282,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #name #tg #where_clauses
+      impl #ig #partial_decoded_object_ty #where_clauses
       {
         /// Creates an empty partial struct.
         #[inline]

@@ -1,5 +1,5 @@
 use super::{
-  buffer::{Buf, Buffer},
+  buffer::{Buffer, ReadBuf},
   error::Error,
   flavors::{Flavor, WireFormat},
   selection::Selectable,
@@ -38,7 +38,7 @@ where
   ) -> Result<(usize, Option<O>), F::Error>
   where
     O: Sized + 'de,
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
     UB: Buffer<F::Unknown<B>> + 'de;
 
   /// Partially decodes a length-delimited message using a selector.
@@ -51,7 +51,7 @@ where
   ) -> Result<(usize, Option<O>), F::Error>
   where
     O: Sized + 'de,
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
     let as_bytes = src.as_bytes();
@@ -94,7 +94,7 @@ where
   fn decode<B>(context: &F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
     UB: Buffer<F::Unknown<B>> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
@@ -103,7 +103,7 @@ where
   fn decode_length_delimited<B>(context: &F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
-    B: Buf<'de> + 'de,
+    B: ReadBuf<'de> + 'de,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
     let as_bytes = src.as_bytes();
@@ -152,7 +152,7 @@ macro_rules! deref_decode_impl {
         fn decode<B>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: Buf<'de>,
+          B: ReadBuf<'de>,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
           T::decode::<B>(context, src)
@@ -164,7 +164,7 @@ macro_rules! deref_decode_impl {
         ) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: Buf<'de>,
+          B: ReadBuf<'de>,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
           T::decode_length_delimited::<B>(context, src)

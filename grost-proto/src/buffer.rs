@@ -122,7 +122,7 @@ const _: () = {
 };
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
-pub trait Buf<'a>: 'a {
+pub trait ReadBuf<'a>: 'a {
   /// Returns the number of bytes remaining in the buffer.
   fn len(&self) -> usize;
 
@@ -136,7 +136,7 @@ pub trait Buf<'a>: 'a {
   fn as_bytes(&self) -> &'a [u8];
 }
 
-impl<'a> Buf<'a> for &'a [u8] {
+impl<'a> ReadBuf<'a> for &'a [u8] {
   #[inline]
   fn len(&self) -> usize {
     <[u8]>::len(self)

@@ -76,12 +76,12 @@ pub fn debug_assert_read_eq<T: ?Sized>(actual: usize, expected: usize) {
 #[doc(hidden)]
 pub mod __private {
   pub use super::{
-    buffer::*,
+    buffer::{self, *},
     convert::{self, *},
     debug_assert_read_eq, debug_assert_write_eq,
-    decode::*,
+    decode::{self, *},
     decoded_state, default_wire_format,
-    encode::*,
+    encode::{self, *},
     flavors::{self, RawTag},
     indexer, network_varint, partial_encode_scalar, reflection, selectable,
     selection::{self, *},

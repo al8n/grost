@@ -183,9 +183,9 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_type = object.flavor().ty();
     let tag = field.tag();
     let object_ty = object.ty();
-    let lifetime_param = object.lifetime();
+    let lifetime_param = object.lifetime_param();
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = object.unknown_buffer();
+    let unknown_buffer_param = object.unknown_buffer_param();
     let unknown_buffer = &unknown_buffer_param.ident;
 
     let mut partial_decoded_constraints = Punctuated::new();

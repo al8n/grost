@@ -377,3 +377,15 @@ pub fn grost_wire_format_param() -> syn::TypeParam {
 pub fn grost_unknown_buffer_param() -> syn::TypeParam {
   quote::format_ident!("__GROST_UNKNOWN_BUFFER__").into()
 }
+
+/// Returns a generic parameter `__GROST_READ_BUFFER__`, which is used to represent
+/// the read buffer generic parameter in the generated code.
+pub fn grost_read_buffer_param() -> syn::TypeParam {
+  quote::format_ident!("__GROST_READ_BUFFER__").into()
+}
+
+/// Returns a generic parameter `__GROST_WRITE_BUFFER__`, which is used to represent
+/// the write buffer generic parameter in the generated code
+pub fn grost_write_buffer_param() -> syn::TypeParam {
+  quote::format_ident!("__GROST_WRITE_BUFFER__").into()
+}

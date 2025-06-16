@@ -1,7 +1,7 @@
 use core::num::NonZeroI32;
 
 use crate::{
-  buffer::{Buf, Buffer},
+  buffer::{Buffer, ReadBuf},
   decode::Decode,
   decoded_state, default_wire_format,
   encode::Encode,
@@ -62,7 +62,7 @@ impl<'de, UB> Decode<'de, Network, Fixed32, Self, UB> for i32 {
   fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
     let as_bytes = src.as_bytes();
@@ -78,7 +78,7 @@ impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i32 {
   fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
     varing::decode_i32_varint(src.as_bytes()).map_err(Into::into)

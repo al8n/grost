@@ -1,7 +1,7 @@
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::{
-  buffer::Buf,
+  buffer::ReadBuf,
   decode::Decode,
   decoded_state, default_wire_format,
   encode::Encode,
@@ -96,7 +96,7 @@ macro_rules! ip_addr {
       ) -> Result<(usize, Self), Error>
       where
         Self: Sized + 'de,
-        B: Buf<'de>,
+        B: ReadBuf<'de>,
         UB: crate::buffer::Buffer<Unknown<B>> + 'de,
       {
         <$convert as Decode<'de, Network, $variant, $convert, UB>>::decode(ctx, src)
@@ -111,7 +111,7 @@ macro_rules! ip_addr {
       ) -> Result<(usize, Self), Error>
       where
         Self: Sized + 'de,
-        B: Buf<'de>,
+        B: ReadBuf<'de>,
         UB: crate::buffer::Buffer<Unknown<B>> + 'de,
       {
         <$convert as Decode<'de, Network, Varint, $convert, UB>>::decode(ctx, src)
@@ -214,7 +214,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
   fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buf<'de> + 'de,
+    B: ReadBuf<'de> + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     let src = src.as_bytes();
@@ -249,7 +249,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
   fn decode_length_delimited<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: Buf<'de> + 'de,
+    B: ReadBuf<'de> + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     let src = src.as_bytes();

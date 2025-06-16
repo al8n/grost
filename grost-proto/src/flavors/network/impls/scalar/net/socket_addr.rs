@@ -81,7 +81,7 @@ macro_rules! socket_addr_impl {
           fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
-            B: crate::buffer::Buf<'de>,
+            B: crate::buffer::ReadBuf<'de>,
             UB: crate::buffer::Buffer<Unknown<B>> + 'de,
           {
             let src = src.as_bytes();
@@ -101,7 +101,7 @@ macro_rules! socket_addr_impl {
           ) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
-            B: crate::buffer::Buf<'de>,
+            B: crate::buffer::ReadBuf<'de>,
             UB: crate::buffer::Buffer<Unknown<B>> + 'de,
           {
             if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
@@ -208,7 +208,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
   fn decode<B>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: crate::buffer::Buf<'de>,
+    B: crate::buffer::ReadBuf<'de>,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     let len = src.len();
@@ -241,7 +241,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
   fn decode_length_delimited<B>(context: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: crate::buffer::Buf<'de>,
+    B: crate::buffer::ReadBuf<'de>,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     macro_rules! decode_addr {

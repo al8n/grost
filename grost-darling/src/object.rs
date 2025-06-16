@@ -462,6 +462,14 @@ impl ToTokens for Object {
             self.__args__.__meta__.wire_format_type_param()
           }
 
+          fn read_buffer_type_param(&self) -> &#path_to_crate::__private::syn::TypeParam {
+            self.__args__.__meta__.read_buffer_type_param()
+          }
+
+          fn write_buffer_type_param(&self) -> &#path_to_crate::__private::syn::TypeParam {
+            self.__args__.__meta__.write_buffer_type_param()
+          }
+
           fn meta(&self) -> &Self::Meta {
             #meta_getter
           }

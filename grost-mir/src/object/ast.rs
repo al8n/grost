@@ -689,6 +689,8 @@ pub(super) struct ConcreteObject<M = (), F = ()> {
   pub(super) generics: Generics,
   pub(super) flavor: FlavorAttribute,
   pub(super) unknown_buffer_param: TypeParam,
+  pub(super) read_buffer_param: TypeParam,
+  pub(super) write_buffer_param: TypeParam,
   pub(super) lifetime_param: LifetimeParam,
   pub(super) fields: Vec<ConcreteField<F>>,
   pub(super) default: Option<Invokable>,
@@ -755,13 +757,13 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter.
   #[inline]
-  pub const fn unknown_buffer(&self) -> &TypeParam {
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
     &self.unknown_buffer_param
   }
 
   /// Returns the generic lifetime parameter.
   #[inline]
-  pub const fn lifetime(&self) -> &LifetimeParam {
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
     &self.lifetime_param
   }
 
@@ -909,6 +911,8 @@ impl<M, F> ConcreteObject<M, F> {
       meta: object.meta().clone(),
       unknown_buffer_param: object.unknown_buffer_type_param().clone(),
       lifetime_param: object.lifetime_param().clone(),
+      read_buffer_param: object.read_buffer_type_param().clone(),
+      write_buffer_param: object.write_buffer_type_param().clone(),
     })
   }
 }
@@ -985,6 +989,8 @@ pub(super) struct GenericObject<M = (), F = ()> {
   pub(super) unknown_buffer_param: TypeParam,
   pub(super) lifetime_param: LifetimeParam,
   pub(super) wire_format_param: TypeParam,
+  pub(super) read_buffer_param: TypeParam,
+  pub(super) write_buffer_param: TypeParam,
   pub(super) vis: Visibility,
   pub(super) ty: Type,
   pub(super) reflectable: Type,
@@ -1176,6 +1182,8 @@ impl<M, F> GenericObject<M, F> {
       lifetime_param: object.lifetime_param().clone(),
       unknown_buffer_param: object.unknown_buffer_type_param().clone(),
       wire_format_param: object.wire_format_type_param().clone(),
+      read_buffer_param: object.read_buffer_type_param().clone(),
+      write_buffer_param: object.write_buffer_type_param().clone(),
       reflectable,
       generics,
       flavors,
@@ -1254,6 +1262,8 @@ impl ObjectFromMeta {
       lifetime_param: self.generic.lifetime,
       unknown_buffer_param: self.generic.unknown_buffer,
       wire_format_param: self.generic.wire_format,
+      read_buffer_type_param: self.generic.read_buffer,
+      write_buffer_type_param: self.generic.write_buffer,
       indexer: self.indexer.into(),
       copy: self.copy,
     })
@@ -1276,6 +1286,8 @@ pub struct ObjectAttribute {
   unknown_buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   wire_format_param: TypeParam,
+  read_buffer_type_param: TypeParam,
+  write_buffer_type_param: TypeParam,
 }
 
 impl ObjectAttribute {
@@ -1348,6 +1360,16 @@ impl ObjectAttribute {
   pub const fn wire_format_type_param(&self) -> &TypeParam {
     &self.wire_format_param
   }
+
+  /// Returns the generic read buffer type parameter
+  pub const fn read_buffer_type_param(&self) -> &TypeParam {
+    &self.read_buffer_type_param
+  }
+
+  /// Returns the generic write buffer type parameter
+  pub const fn write_buffer_type_param(&self) -> &TypeParam {
+    &self.write_buffer_type_param
+  }
 }
 
 /// The trait for the object derive input
@@ -1417,6 +1439,12 @@ pub trait RawObject: Clone {
 
   /// Returns the generic wire format type parameter
   fn wire_format_type_param(&self) -> &TypeParam;
+
+  /// Returns the read buffer type parameter
+  fn read_buffer_type_param(&self) -> &TypeParam;
+
+  /// Returns the write buffer type parameter
+  fn write_buffer_type_param(&self) -> &TypeParam;
 }
 
 /// The extension trait for the object

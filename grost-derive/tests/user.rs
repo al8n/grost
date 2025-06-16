@@ -5243,7 +5243,7 @@ where
   >
   where
     Self: ::core::marker::Sized,
-    __GROST_BUF__: ::grost::__private::Buf<'__grost_lifetime__>,
+    __GROST_BUF__: ::grost::__private::ReadBuf<'__grost_lifetime__>,
     __GROST_UNKNOWN_BUFFER__:
       ::grost::__private::Buffer<::grost::__private::flavors::network::Unknown<__GROST_BUF__>>,
   {
@@ -5644,7 +5644,7 @@ where
   >
   where
     Self: ::core::marker::Sized,
-    __GROST_BUF__: ::grost::__private::Buf<'__grost_lifetime__>,
+    __GROST_BUF__: ::grost::__private::ReadBuf<'__grost_lifetime__>,
     __GROST_UNKNOWN_BUFFER__:
       ::grost::__private::Buffer<::grost::__private::flavors::network::Unknown<__GROST_BUF__>>,
   {

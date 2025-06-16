@@ -1,4 +1,4 @@
-use super::buffer::Buf;
+use super::buffer::ReadBuf;
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -139,7 +139,7 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   /// Decode the identifier from a buffer.
   fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
   where
-    B: Buf<'de> + Sized,
+    B: ReadBuf<'de> + Sized,
     Self: Sized;
 }
 
@@ -267,12 +267,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: Buf<'de>;
+    B: ReadBuf<'de>;
 
   /// Returns the length of the encoded unknown value.
   fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: Buf<'de>;
+    B: ReadBuf<'de>;
 
   /// Decodes an unknown value from a buffer.
   ///
@@ -284,7 +284,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: Buf<'de>;
+    B: ReadBuf<'de>;
 
   /// Skips number of bytes in the buffer according to the wire type.
   fn skip<'de, B>(
@@ -293,7 +293,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<usize, Self::Error>
   where
-    B: Buf<'de>;
+    B: ReadBuf<'de>;
 }
 
 /// A raw tag for a field.

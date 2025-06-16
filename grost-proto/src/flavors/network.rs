@@ -7,7 +7,7 @@ pub use unknown::Unknown;
 pub use wire_type::*;
 
 use super::Flavor;
-use crate::buffer::Buf;
+use crate::buffer::ReadBuf;
 
 mod context;
 mod error;
@@ -41,7 +41,7 @@ impl Flavor for Network {
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: Buf<'a>,
+    B: ReadBuf<'a>,
   {
     let value_bytes = value.raw();
     let value_len = value_bytes.len();
@@ -55,7 +55,7 @@ impl Flavor for Network {
 
   fn encoded_unknown_len<'a, B>(_: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: Buf<'a>,
+    B: ReadBuf<'a>,
   {
     value.raw().len()
   }
@@ -65,7 +65,7 @@ impl Flavor for Network {
     buf: B,
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
   {
     let src = buf.as_bytes();
     let (identifier_len, identifier) = Identifier::decode(src)?;
@@ -142,7 +142,7 @@ impl Flavor for Network {
     buf: B,
   ) -> Result<usize, Self::Error>
   where
-    B: Buf<'de>,
+    B: ReadBuf<'de>,
   {
     Ok(match wire_type {
       WireType::Varint => varing::consume_varint(buf.as_bytes())?,

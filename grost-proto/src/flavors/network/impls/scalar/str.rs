@@ -38,7 +38,7 @@ macro_rules! impl_ {
         ) -> Result<(usize, &'de str), Error>
         where
           &'de str: Sized + 'de,
-          B: crate::buffer::Buf<'de>,
+          B: crate::buffer::ReadBuf<'de>,
           UB: crate::buffer::Buffer<Unknown<B>> + 'de,
         {
           <&'de str as Decode<'de, Network, LengthDelimited, &'de str, UB>>::decode(context, src)

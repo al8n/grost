@@ -6,7 +6,7 @@ macro_rules! bytes_bridge {
         fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a [u8]), $crate::__private::flavors::network::Error>
         where
           &'a [u8]: Sized + 'a,
-          B: $crate::buffer::Buf<'a>,
+          B: $crate::buffer::ReadBuf<'a>,
           UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
         {
           <[u8] as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::decode(context, src)
@@ -130,7 +130,7 @@ macro_rules! array_bytes {
       fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a [u8]), $crate::__private::flavors::network::Error>
       where
         &'a [u8]: Sized + 'a,
-        B: $crate::buffer::Buf<'a>,
+        B: $crate::buffer::ReadBuf<'a>,
         UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
       {
         <[u8] as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::decode(context, src)

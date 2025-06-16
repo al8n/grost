@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 
 use grost::{
   Decode, PartialDecode,
-  buffer::Buf,
   flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
@@ -75,7 +74,7 @@ pub struct User {
 //   ) -> Result<(usize, Option<Self>), <Network as grost::Flavor>::Error>
 //   where
 //     Self: Sized + 'de,
-//     B: Buf<'de>,
+//     B: ReadBuf<'de>,
 //     UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de
 //   {
 //     if selector.is_empty() {
@@ -97,7 +96,7 @@ pub struct User {
 //     fn skip<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<usize, <Network as grost::Flavor>::Error>
 //     where
 //       Self: Sized + 'de,
-//       B: Buf<'de>
+//       B: ReadBuf<'de>
 //     {
 //       todo!()
 //     }
