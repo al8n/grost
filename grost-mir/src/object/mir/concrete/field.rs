@@ -1,7 +1,7 @@
 use darling::usage::{IdentSet, LifetimeSet};
 use syn::{Attribute, Ident, Type, Visibility, WherePredicate, punctuated::Punctuated};
 
-use quote::{format_ident, quote};
+use quote::quote;
 
 use crate::{
   object::{FieldIndex, Label},
@@ -280,13 +280,18 @@ impl<F> ConcreteTaggedField<F> {
       ::core::option::Option<#partial_decoded_ty>
     })?;
 
-    let reflection = ConcreteFieldReflection::try_new(object, &field, object.flavor().ty(), tag)?;
+    let use_generics =
+      !field.lifetime_params_usages.is_empty() || !field.type_params_usages.is_empty();
     let index = FieldIndex::new(index, field.name(), field.tag())?;
+    let schema_name = field.schema_name;
+    let schema_description = field.schema_description;
+    let field_ty = field.ty;
+    let partial = field.partial;
     let partial = ConcretePartialField::from_ast(
       object.path_to_grost(),
-      field.ty(),
-      field.partial_type(),
-      field.partial_attrs(),
+      &field_ty,
+      partial.ty(),
+      partial.attrs(),
       use_generics,
     )?;
     let partial_decoded = ConcretePartialDecodedField {
@@ -303,6 +308,16 @@ impl<F> ConcreteTaggedField<F> {
       constraints: selector_constraints,
       default: field.selector.select,
     };
+    let reflection = ConcreteFieldReflection::try_new(
+      object,
+      object.flavor().ty(),
+      &field_ty,
+      tag,
+      &schema_name,
+      &schema_description,
+      use_generics,
+    )?;
+
     Ok(Self {
       partial,
       partial_decoded,
@@ -310,11 +325,11 @@ impl<F> ConcreteTaggedField<F> {
       vis: field.vis,
       label: field.label,
       tag: field.tag,
-      ty: field.ty,
+      ty: field_ty,
       attrs: field.attrs,
       default: field.default,
-      schema_description: field.schema_description,
-      schema_name: field.schema_name,
+      schema_description,
+      schema_name,
       type_params_usages: field.type_params_usages,
       lifetime_params_usages: field.lifetime_params_usages,
       copy: field.copy,
@@ -325,199 +340,6 @@ impl<F> ConcreteTaggedField<F> {
       selector,
       reflection,
     })
-  }
-
-  pub(super) fn derive_field_reflections<M>(
-    &self,
-    object: &super::ConcreteObject<M, F>,
-  ) -> proc_macro2::TokenStream {
-    let path_to_grost = object.path_to_grost();
-    let object_reflectable = object.reflectable();
-    let field_ty = self.ty();
-    let flavor_ty = object.flavor_type();
-    let wf = self.wire_format();
-    let schema_name = self.schema_name();
-    let schema_description = self.schema_description();
-    let identifier = object.flavor.identifier();
-    let identifier_constructor = identifier.constructor();
-    let identifier_encode = identifier.encode();
-    let tag_constructor = object.flavor.tag().constructor();
-    let tag_encode = object.flavor.tag().encode();
-    let tag = self.tag();
-
-    let (field_reflection_ig, _, field_reflection_wc) = self
-      .reflection()
-      .field_reflection_generics()
-      .split_for_impl();
-    let field_reflection_type = self.reflection().field_reflection();
-
-    let (wire_format_reflection_ig, _, wire_format_reflection_wc) = self
-      .reflection()
-      .wire_format_reflection_generics()
-      .split_for_impl();
-    let wire_format_reflection_type = self.reflection().wire_format_reflection();
-    let (identifier_reflection_ig, _, identifier_reflection_wc) = self
-      .reflection()
-      .identifier_reflection_generics()
-      .split_for_impl();
-    let identifier_reflection_type = self.reflection().identifier_reflection();
-    let (encoded_identifier_reflection_ig, _, encoded_identifier_reflection_wc) = self
-      .reflection()
-      .encoded_identifier_reflection_generics()
-      .split_for_impl();
-    let encoded_identifier_reflection_type = self.reflection().encoded_identifier_reflection();
-    let (encoded_identifier_len_reflection_ig, _, encoded_identifier_len_reflection_wc) = self
-      .reflection()
-      .encoded_identifier_len_reflection_generics()
-      .split_for_impl();
-    let encoded_identifier_len_reflection_type =
-      self.reflection().encoded_identifier_len_reflection();
-    let (tag_reflection_ig, _, tag_reflection_wc) =
-      self.reflection().tag_reflection_generics().split_for_impl();
-    let tag_reflection_type = self.reflection().tag_reflection();
-    let (encoded_tag_reflection_ig, _, encoded_tag_reflection_wc) = self
-      .reflection()
-      .encoded_tag_reflection_generics()
-      .split_for_impl();
-    let encoded_tag_reflection_type = self.reflection().encoded_tag_reflection();
-    let (encoded_tag_len_reflection_ig, _, encoded_tag_len_reflection_wc) = self
-      .reflection()
-      .encoded_tag_len_reflection_generics()
-      .split_for_impl();
-    let encoded_tag_len_reflection_type = self.reflection().encoded_tag_len_reflection();
-    let (wire_type_reflection_ig, _, wire_type_reflection_wc) = self
-      .reflection()
-      .wire_type_reflection_generics()
-      .split_for_impl();
-    let wire_type_reflection_type = self.reflection().wire_type_reflection();
-
-    quote! {
-      #[automatically_derived]
-      #[allow(clippy::type_complexity, non_camel_case_types)]
-      impl #field_reflection_ig #object_reflectable for #field_reflection_type #field_reflection_wc {
-        type Reflection = #path_to_grost::__private::reflection::ObjectField;
-
-        const REFLECTION: &'static Self::Reflection = &{
-          #path_to_grost::__private::reflection::ObjectFieldBuilder {
-            name: #schema_name,
-            description: #schema_description,
-            ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
-          }.build()
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #wire_format_reflection_ig #object_reflectable for #wire_format_reflection_type #wire_format_reflection_wc {
-        type Reflection = #wf;
-
-        const REFLECTION: &'static Self::Reflection = &{
-          <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::SELF
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #identifier_reflection_ig #object_reflectable for #identifier_reflection_type #identifier_reflection_wc {
-        type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier;
-
-        const REFLECTION: &Self::Reflection = &{
-          (#identifier_constructor)(
-            <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::WIRE_TYPE,
-            (#tag_constructor)(#tag),
-          )
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #encoded_identifier_reflection_ig #object_reflectable for #encoded_identifier_reflection_type #encoded_identifier_reflection_wc
-      {
-        type Reflection = [::core::primitive::u8];
-
-        const REFLECTION: &Self::Reflection = {
-          (#identifier_encode)(<#identifier_reflection_type as #object_reflectable>::REFLECTION)
-            .as_slice()
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #encoded_identifier_len_reflection_ig #object_reflectable for #encoded_identifier_len_reflection_type #encoded_identifier_len_reflection_wc
-      {
-        type Reflection = ::core::primitive::usize;
-
-        const REFLECTION: &Self::Reflection = {
-          &<#encoded_identifier_reflection_type as #object_reflectable>::REFLECTION.len()
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #tag_reflection_ig #object_reflectable for #tag_reflection_type #tag_reflection_wc {
-        type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Tag;
-
-        const REFLECTION: &Self::Reflection = &{
-          (#tag_constructor)(#tag)
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #encoded_tag_reflection_ig #object_reflectable for #encoded_tag_reflection_type #encoded_tag_reflection_wc {
-        type Reflection = [::core::primitive::u8];
-
-        const REFLECTION: &Self::Reflection = {
-          (#tag_encode)(<#tag_reflection_type as #object_reflectable>::REFLECTION)
-            .as_slice()
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #encoded_tag_len_reflection_ig #object_reflectable for #encoded_tag_len_reflection_type #encoded_tag_len_reflection_wc {
-        type Reflection = ::core::primitive::usize;
-
-        const REFLECTION: &Self::Reflection = {
-          &<#encoded_tag_reflection_type as #object_reflectable>::REFLECTION.len()
-        };
-      }
-
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #wire_type_reflection_ig #object_reflectable for #wire_type_reflection_type #wire_type_reflection_wc {
-        type Reflection = <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::WireType;
-
-        const REFLECTION: &Self::Reflection = &{
-          <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::WIRE_TYPE
-        };
-      }
-    }
-  }
-
-  pub(super) fn derive_field_reflection_fn<M>(
-    &self,
-    object: &super::ConcreteObject<M, F>,
-  ) -> proc_macro2::TokenStream {
-    let path_to_grost = object.path_to_grost();
-    let object_name = object.name();
-    let field_name = self.name();
-    let vis = self.vis();
-    let doc = format!(" Returns the field reflection of the field `{object_name}.{field_name}`.",);
-    let reflection_type = self.reflection().field_reflection();
-    let field_reflection_name = format_ident!("{}_reflection", field_name);
-    let flavor_ty = object.flavor_type();
-
-    quote! {
-      #[doc = #doc]
-      #[inline]
-      #vis const fn #field_reflection_name() -> #reflection_type
-      where
-        #flavor_ty: #path_to_grost::__private::flavors::Flavor,
-      {
-        #path_to_grost::__private::reflection::ObjectFieldReflection::new()
-      }
-    }
   }
 }
 

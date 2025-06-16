@@ -880,6 +880,11 @@ impl<M, F> super::ConcreteObject<M, F> {
 
           ::core::option::Option::None
         }
+
+        fn size_hint(&self) -> (::core::primitive::usize, ::core::option::Option<::core::primitive::usize>) {
+          let remaining = self.remaining();
+          (remaining, ::core::option::Option::Some(remaining))
+        }
       }
 
       #[automatically_derived]

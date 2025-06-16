@@ -107,23 +107,6 @@ impl ConcreteObjectReflection {
     Ok(quote! {
       #(#field_reflectable_impl)*
 
-      // #[automatically_derived]
-      // #[allow(non_camel_case_types, clippy::type_complexity)]
-      // impl #field_reflection_ig #object_reflectable for #name #field_reflection_tg #field_reflection_wc {
-      //   type Reflection = #path_to_grost::__private::reflection::Type;
-
-      //   const REFLECTION: &'static Self::Reflection = &{
-      //     #path_to_grost::__private::reflection::Type::Object(
-      //       &#path_to_grost::__private::reflection::ObjectBuilder {
-      //         name: #schema_name,
-      //         description: #schema_description,
-      //         fields: &[
-      //           #(&#field_reflections),*
-      //         ],
-      //       }.build()
-      //     )
-      //   };
-      // }
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #type_reflection_ig #object_reflectable for #object_type #type_reflection_wc {
