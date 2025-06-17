@@ -9,7 +9,7 @@ use crate::{
     Network,
     network::{Context, Error, LengthDelimited, Unknown},
   },
-  partial_encode_scalar, selectable,
+  identity_transform, partial_encode_scalar, selectable,
 };
 
 const PORT_SIZE: usize = 2;
@@ -78,7 +78,7 @@ macro_rules! socket_addr_impl {
         }
 
         impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for [< SocketAddrV $variant >] {
-          fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
+          fn decode<B>(_: &'de Context, src: B) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
             B: crate::buffer::ReadBuf<'de>,
@@ -96,7 +96,7 @@ macro_rules! socket_addr_impl {
           }
 
           fn decode_length_delimited<B>(
-            context: &Context,
+            context: &'de Context,
             src: B,
           ) -> Result<(usize, Self), Error>
           where
@@ -146,6 +146,13 @@ default_wire_format!(
 selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
 decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
+identity_transform!(
+  Network {
+    SocketAddrV4 as LengthDelimited,
+    SocketAddrV6 as LengthDelimited,
+    SocketAddr as LengthDelimited,
+  }
+);
 
 impl Encode<Network, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -205,7 +212,7 @@ impl Encode<Network, LengthDelimited> for SocketAddr {
 }
 
 impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
-  fn decode<B>(context: &Context, src: B) -> Result<(usize, Self), Error>
+  fn decode<B>(context: &'de Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: crate::buffer::ReadBuf<'de>,
@@ -238,7 +245,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
     }
   }
 
-  fn decode_length_delimited<B>(context: &Context, src: B) -> Result<(usize, Self), Error>
+  fn decode_length_delimited<B>(context: &'de Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: crate::buffer::ReadBuf<'de>,

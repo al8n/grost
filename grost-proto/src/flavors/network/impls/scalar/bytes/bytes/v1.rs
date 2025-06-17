@@ -1,4 +1,5 @@
 use crate::{
+  decode::Transform,
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{LengthDelimited, Network},
   selectable,
@@ -42,3 +43,21 @@ flatten_state!(Bytes, BytesMut);
 bytes_bridge!(
   Network: Bytes, BytesMut,
 );
+
+impl Transform<Network, LengthDelimited, &[u8]> for Bytes {
+  fn transform(input: &[u8]) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
+  where
+    Self: Sized,
+  {
+    Ok(Bytes::copy_from_slice(input))
+  }
+}
+
+impl Transform<Network, LengthDelimited, &[u8]> for BytesMut {
+  fn transform(input: &[u8]) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
+  where
+    Self: Sized,
+  {
+    Ok(BytesMut::from(input))
+  }
+}

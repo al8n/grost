@@ -1,4 +1,5 @@
 use crate::{
+  decode::Transform,
   decoded_state, flatten_state,
   flavors::{Network, network::LengthDelimited},
   selectable,
@@ -15,6 +16,15 @@ str_bridge!(Network: String {
   from_str: |val: &str| String::from(val);
   as_str: AsRef::as_ref;
 },);
+
+impl Transform<Network, LengthDelimited, &str> for String {
+  fn transform(input: &str) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
+  where
+    Self: Sized,
+  {
+    Ok(String::from(input))
+  }
+}
 
 // impl<'a, UB> crate::decode::Decode<'a, Network, LengthDelimited, &'a str, UB> for String {
 //   fn decode<B>(context: &<Network as crate::flavors::Flavor>::Context, src: B) -> Result<(usize, &'a str), <Network as crate::flavors::Flavor>::Error>

@@ -23,7 +23,7 @@ macro_rules! str_bridge {
       $crate::default_wire_format!(Network: $ty as $crate::__private::flavors::network::LengthDelimited);
 
       impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, UB> for $ty {
-        fn decode<B>(context: &$crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a str), $crate::__private::flavors::network::Error>
+        fn decode<B>(context: &'a $crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a str), $crate::__private::flavors::network::Error>
         where
           &'a str: Sized + 'a,
           B: $crate::buffer::ReadBuf<'a>,
@@ -105,7 +105,7 @@ macro_rules! array_str {
 
     impl<'de, UB, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, Self, UB> for $ty {
       fn decode<B>(
-        context: &$crate::__private::flavors::network::Context,
+        context: &'de $crate::__private::flavors::network::Context,
         src: B,
       ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
       where
@@ -131,6 +131,27 @@ macro_rules! array_str {
     );
 
     $crate::flatten_state!($ty [const N: usize]);
+
+    impl<const $g: ::core::primitive::usize> $crate::__private::Transform<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &str> for $ty {
+      fn transform(input: &str) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as crate::flavors::Flavor>::Error>
+      where
+        Self: Sized,
+      {
+        $from_str(input)
+      }
+    }
+
+    impl<W, const $g: ::core::primitive::usize> $crate::__private::Transform<$crate::__private::flavors::Network, W, Self> for $ty
+    where
+      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+    {
+      fn transform(input: Self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as crate::flavors::Flavor>::Error>
+      where
+        Self: Sized,
+      {
+        ::core::result::Result::Ok(input)
+      }
+    }
   };
 }
 
@@ -155,15 +176,6 @@ pub fn larger_than_str_capacity<const N: usize>() -> crate::flavors::network::Er
 mod string;
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-mod arc;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod rc;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod boxed;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
 mod smol_str;
 
 mod arrayvec;
@@ -171,5 +183,3 @@ mod heapless;
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod regex;
 mod tinystr;
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod triomphe;

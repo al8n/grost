@@ -5,7 +5,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed16, Network, Unknown, Varint},
-  partial_encode_scalar, selectable, try_from_bridge,
+  identity_transform, partial_encode_scalar, selectable, try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -13,6 +13,14 @@ default_wire_format!(Network: i16 as Varint);
 selectable!(@scalar Network: i16, NonZeroI16);
 decoded_state!(@scalar &'a Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
 flatten_state!(i16, NonZeroI16);
+identity_transform!(
+  Network {
+    i16 as Fixed16,
+    i16 as Varint,
+    NonZeroI16 as Fixed16,
+    NonZeroI16 as Varint,
+  }
+);
 
 impl Encode<Network, Fixed16> for i16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {

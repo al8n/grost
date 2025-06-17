@@ -10,7 +10,7 @@ use crate::{
     Network,
     network::{Context, Error, Fixed32, Fixed128, LengthDelimited, Unknown, Varint},
   },
-  partial_encode_scalar, selectable,
+  identity_transform, partial_encode_scalar, selectable,
 };
 
 macro_rules! ip_addr {
@@ -91,7 +91,7 @@ macro_rules! ip_addr {
 
     impl<'de, UB> Decode<'de, Network, $variant, Self, UB> for $addr {
       fn decode<B>(
-        ctx: &Context,
+        ctx: &'de Context,
         src: B,
       ) -> Result<(usize, Self), Error>
       where
@@ -106,7 +106,7 @@ macro_rules! ip_addr {
 
     impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for $addr {
       fn decode<B>(
-        ctx: &Context,
+        ctx: &'de Context,
         src: B,
       ) -> Result<(usize, Self), Error>
       where
@@ -127,6 +127,16 @@ selectable!(@scalar Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 decoded_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
+identity_transform!(
+  Network {
+    Ipv4Addr as Fixed32,
+    Ipv4Addr as Varint,
+    Ipv6Addr as Fixed128,
+    Ipv6Addr as Varint,
+    IpAddr as LengthDelimited,
+  }
+);
+
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
 const IPV4_TAG: u8 = 4;

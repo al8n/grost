@@ -49,6 +49,8 @@ fn derive_decoded_state<M, F>(
     }
     let (ig, _, where_clauses) = g.split_for_impl();
     quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ty #where_clauses {
         type Input = &#lt [::core::primitive::u8];
         type Output = #partial_decoded_object_ty;
@@ -57,6 +59,8 @@ fn derive_decoded_state<M, F>(
   };
 
   Ok(quote! {
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #ty #where_clauses {
       type Input = &#lt [::core::primitive::u8];
       type Output = #partial_decoded_object_ty;
@@ -64,6 +68,8 @@ fn derive_decoded_state<M, F>(
 
     #partial_object_impl
 
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_decoded_object_ty #where_clauses {
       type Input = &#lt [::core::primitive::u8];
       type Output = Self;
@@ -120,7 +126,7 @@ fn derive_partial_object_decode_to_partial_decoded_object<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #decode_ig #decode_trait for #partial_object_ty #decode_where_clauses {
       fn decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
       ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
@@ -136,7 +142,7 @@ fn derive_partial_object_decode_to_partial_decoded_object<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #partial_decode_ig #partial_decode_trait for #partial_object_ty #partial_decode_where_clauses {
       fn partial_decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
         selector: &#selector_ty,
       ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<#partial_decoded_object_ty>), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
@@ -178,7 +184,7 @@ fn derive_partial_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #decode_ig #decode_trait for #partial_object_ty #decode_where_clauses {
       fn decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
@@ -194,7 +200,7 @@ fn derive_partial_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #partial_decode_ig #partial_decode_trait for #partial_object_ty #partial_decode_where_clauses {
       fn partial_decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
         selector: &#selector_ty,
       ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<Self>), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
@@ -240,7 +246,7 @@ fn derive_partial_decoded_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #decode_ig #decode_trait for #partial_decoded_object_ty #decode_where_clauses {
       fn decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
@@ -256,7 +262,7 @@ fn derive_partial_decoded_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #partial_decode_ig #partial_decode_trait for #partial_decoded_object_ty #partial_decode_where_clauses {
       fn partial_decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
         selector: &#selector_ty,
       ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<Self>), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
@@ -273,7 +279,7 @@ fn derive_partial_decoded_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #decode_ig #object_decode_trait for #object_ty #decode_where_clauses {
       fn decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
       ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
@@ -289,7 +295,7 @@ fn derive_partial_decoded_object_decode<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #partial_decode_ig #object_partial_decode_trait for #object_ty #partial_decode_where_clauses {
       fn partial_decode<#read_buffer_ident>(
-        context: &<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
         selector: &#selector_ty,
       ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<#partial_decoded_object_ty>), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>

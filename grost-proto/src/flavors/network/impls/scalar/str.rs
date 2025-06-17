@@ -33,7 +33,7 @@ macro_rules! impl_ {
     $(
       impl<'de, UB> Decode<'de, Network, LengthDelimited, &'de str, UB> for $ty {
         fn decode<B>(
-          context: &Context,
+          context: &'de Context,
           src: B,
         ) -> Result<(usize, &'de str), Error>
         where

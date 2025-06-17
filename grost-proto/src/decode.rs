@@ -32,9 +32,9 @@ where
   /// ## Returns
   /// A tuple containing the number of bytes consumed and the decoded output.
   fn partial_decode<B>(
-    context: &F::Context,
+    context: &'de F::Context,
     src: B,
-    selector: &Self::Selector,
+    selector: &'de Self::Selector,
   ) -> Result<(usize, Option<O>), F::Error>
   where
     O: Sized + 'de,
@@ -45,9 +45,9 @@ where
   ///
   /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
   fn partial_decode_length_delimited<B>(
-    context: &F::Context,
+    context: &'de F::Context,
     src: B,
-    selector: &Self::Selector,
+    selector: &'de Self::Selector,
   ) -> Result<(usize, Option<O>), F::Error>
   where
     O: Sized + 'de,
@@ -91,7 +91,7 @@ where
   /// Decodes an instance from a raw byte slice.
   ///
   /// Returns a tuple with the number of bytes consumed and the decoded output.
-  fn decode<B>(context: &F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     B: ReadBuf<'de>,
@@ -100,7 +100,7 @@ where
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
   /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
-  fn decode_length_delimited<B>(context: &F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode_length_delimited<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     B: ReadBuf<'de> + 'de,
@@ -139,6 +139,41 @@ where
 {
 }
 
+/// A trait for transforming the input type `I` into the current type `Self`.
+pub trait Transform<F, W, I>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  /// Transforms from the input type `I` into the current type `Self`.
+  fn transform(input: I) -> Result<Self, F::Error>
+  where
+    Self: Sized;
+}
+
+/// A trait for transforming the current type into another type `O`.
+pub trait TransformInto<F, W, O>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  /// Transforms the current type into the output type `O`.
+  fn transform_into(self) -> Result<O, F::Error>
+  where
+    Self: Sized;
+}
+
+impl<F, W, I, T> TransformInto<F, W, T> for I
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  T: Transform<F, W, I> + Sized,
+{
+  fn transform_into(self) -> Result<T, F::Error> {
+    T::transform(self)
+  }
+}
+
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_impl {
   ($($ty:ty),+$(,)?) => {
@@ -149,7 +184,7 @@ macro_rules! deref_decode_impl {
         W: WireFormat<F>,
         T: Decode<'de, F, W, O, UB> + ?Sized,
       {
-        fn decode<B>(context: &<F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
+        fn decode<B>(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
           B: ReadBuf<'de>,
@@ -159,7 +194,7 @@ macro_rules! deref_decode_impl {
         }
 
         fn decode_length_delimited<B>(
-          context: &<F as Flavor>::Context,
+          context: &'de <F as Flavor>::Context,
           src: B,
         ) -> Result<(usize, O), <F as Flavor>::Error>
         where
@@ -168,6 +203,17 @@ macro_rules! deref_decode_impl {
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
           T::decode_length_delimited::<B>(context, src)
+        }
+      }
+
+      impl<F, W, I, T> Transform<F, W, I> for $ty
+      where
+        F: Flavor + ?Sized,
+        W: WireFormat<F>,
+        T: Transform<F, W, I> + Sized,
+      {
+        fn transform(input: I) -> Result<$ty, F::Error> {
+          T::transform(input).map(Into::into)
         }
       }
     )*

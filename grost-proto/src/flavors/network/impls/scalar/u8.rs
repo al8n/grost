@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed8, Network, Unknown, Varint},
-  partial_decode_scalar, partial_encode_scalar, selectable, try_from_bridge,
+  identity_transform, partial_decode_scalar, partial_encode_scalar, selectable, try_from_bridge,
 };
 
 default_wire_format!(Network: u8 as Fixed8);
@@ -74,33 +74,12 @@ partial_decode_scalar!(Network:
   },
 );
 
-// impl<B> PartialDecodeOwned<Network, Fixed8, Self, B> for u8 {
-//   fn partial_decode_owned<D>(
-//     _: &Context,
-//     src: D,
-//     selector: &Self::Selector,
-//   ) -> Result<(usize, Option<Self>), Error>
-//   where
-//     Self: Sized,
-//     D: BytesBuffer + 'static,
-//     B: Buffer<Unknown<D>> + 'static,
-//   {
-//     if <bool as Selector<Network>>::is_empty(selector) {
-//       if src.is_empty() {
-//         return Ok((0, None));
-//       }
-
-//       Ok((1, None))
-//     } else {
-//       if src.is_empty() {
-//         return Err(Error::buffer_underflow());
-//       }
-
-//       let value = src.as_bytes()[0];
-//       Ok((1, Some(value)))
-//     }
-//   }
-// }
+identity_transform!(Network {
+  u8 as Fixed8,
+  u8 as Varint,
+  NonZeroU8 as Fixed8,
+  NonZeroU8 as Varint,
+});
 
 impl<'de, UB> Decode<'de, Network, Fixed8, Self, UB> for u8 {
   fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>

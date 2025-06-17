@@ -5,34 +5,17 @@ use crate::{
     Network, WireFormat,
     network::{Borrowed, Context, Error, Flatten, LengthDelimited, Packed, WireType},
   },
-  selection::{Selectable, Selector},
+  selection::Selectable,
 };
+
+mod array;
 
 macro_rules! encode {
   (@encode_methods($ty:ty)) => {
     fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
       let mut offset = 0;
       let buf_len = buf.len();
-      for value in self.iter() {
-        if offset >= buf_len {
-          return Err(Error::insufficient_buffer(
-            <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
-            buf_len,
-          ));
-        }
-
-        offset += value.encode(context, &mut buf[offset..]).map_err(|e| {
-          e.update(
-            <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context),
-            buf_len,
-          )
-        })?;
-      }
-      Ok(offset)
-    }
-
-    fn encoded_len(&self, context: &Context) -> usize {
-      match W::WIRE_TYPE {
+      let body_size = match W::WIRE_TYPE {
         WireType::Varint | WireType::LengthDelimited => {
           self.iter().map(|v| v.encoded_len(context)).sum()
         }
@@ -42,21 +25,42 @@ macro_rules! encode {
         WireType::Fixed64 => self.len() * 8,
         WireType::Fixed128 => self.len() * 16,
         WireType::Fixed256 => self.len() * 32,
+      };
+      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
+      let encoded_len = body_size_len + body_size;
+
+      if buf_len < encoded_len {
+        return Err(Error::insufficient_buffer(encoded_len, buf_len));
       }
+
+      offset += varing::encode_u32_varint_to(body_size as u32, buf)
+        .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
+
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(encoded_len, buf_len));
+        }
+
+        offset += value
+          .encode(context, &mut buf[offset..])
+          .map_err(|e| e.update(encoded_len, buf_len))?;
+      }
+      Ok(offset)
     }
 
-    fn encoded_length_delimited_len(
-      &self,
-      context: &$crate::__private::flavors::network::Context,
-    ) -> usize {
-      let encoded_len =
-        <Self as $crate::__private::Encode<Network, $ty>>::encoded_len(self, context);
-      if encoded_len == 0 {
-        return 0;
-      }
-
-      let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
-      len_size + encoded_len
+    fn encoded_len(&self, context: &Context) -> usize {
+      let len = match W::WIRE_TYPE {
+        WireType::Varint | WireType::LengthDelimited => {
+          self.iter().map(|v| v.encoded_len(context)).sum()
+        }
+        WireType::Fixed8 => self.len(),
+        WireType::Fixed16 => self.len() * 2,
+        WireType::Fixed32 => self.len() * 4,
+        WireType::Fixed64 => self.len() * 8,
+        WireType::Fixed128 => self.len() * 16,
+        WireType::Fixed256 => self.len() * 32,
+      };
+      varing::encoded_u32_varint_len(len as u32) + len
     }
   };
   (@partial_encode_methods($ty:ty)) => {
@@ -68,26 +72,28 @@ macro_rules! encode {
     ) -> Result<usize, <Network as crate::flavors::Flavor>::Error> {
       let mut offset = 0;
       let buf_len = buf.len();
+      let body_size = self
+        .iter()
+        .map(|v| v.partial_encoded_len(context, selector))
+        .sum::<usize>();
+      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
+      let encoded_len = body_size_len + body_size;
+
+      if buf_len < encoded_len {
+        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      }
+
+      offset += varing::encode_u32_varint_to(body_size as u32, buf)
+        .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
+
       for value in self.iter() {
         if offset >= buf_len {
-          return Err(Error::insufficient_buffer(
-            <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(
-              self, context, selector,
-            ),
-            buf_len,
-          ));
+          return Err(Error::insufficient_buffer(encoded_len, buf_len));
         }
 
         offset += value
           .partial_encode(context, &mut buf[offset..], selector)
-          .map_err(|e| {
-            e.update(
-              <Self as $crate::__private::PartialEncode<Network, $ty>>::partial_encoded_len(
-                self, context, selector,
-              ),
-              buf_len,
-            )
-          })?;
+          .map_err(|e| e.update(encoded_len, buf_len))?;
       }
       Ok(offset)
     }
@@ -97,18 +103,11 @@ macro_rules! encode {
       context: &<Network as crate::flavors::Flavor>::Context,
       selector: &Self::Selector,
     ) -> usize {
-      match W::WIRE_TYPE {
-        WireType::Varint | WireType::LengthDelimited => self
-          .iter()
-          .map(|v| v.partial_encoded_len(context, selector))
-          .sum(),
-        WireType::Fixed8 => self.len(),
-        WireType::Fixed16 => self.len() * 2,
-        WireType::Fixed32 => self.len() * 4,
-        WireType::Fixed64 => self.len() * 8,
-        WireType::Fixed128 => self.len() * 16,
-        WireType::Fixed256 => self.len() * 32,
-      }
+      let len = self
+        .iter()
+        .map(|v| v.partial_encoded_len(context, selector))
+        .sum::<usize>();
+      varing::encoded_u32_varint_len(len as u32) + len
     }
   };
 }
@@ -140,7 +139,7 @@ macro_rules! list {
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
         type Input = &'a [u8];
-        type Output = $crate::__private::flavors::network::PackedDecoder<'a, $ty, __GROST_UNKNOWN_BUFFER__, W>;
+        type Output = $crate::__private::flavors::network::PackedDecoder<'a, T, __GROST_UNKNOWN_BUFFER__, W>;
       }
     )*
   };
@@ -151,6 +150,43 @@ macro_rules! list {
         T: $crate::__private::flavors::DefaultWireFormat<$crate::__private::flavors::Network>,
       {
         type Format = $crate::__private::flavors::network::Packed<T::Format>;
+      }
+    )*
+  };
+  (@identity_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Transform<$crate::__private::flavors::Network, W, Self> for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+      {
+        fn transform(input: Self) -> ::core::result::Result<Self, $crate::__private::flavors::network::Error> {
+          ::core::result::Result::Ok(input)
+        }
+      }
+    )*
+  };
+  (@packed_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<'a, T, W, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Transform<$crate::__private::flavors::Network, W, $crate::__private::flavors::network::PackedDecoder<'a, T, UB, W>> for $ty
+      where
+        W: $crate::__private::flavors::network::impls::packed_decoder::sealed::Sealed + 'a,
+        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W, UB>, Input = &'a [u8]>
+          + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, W, T::Output, UB>
+          + $crate::__private::decode::Transform<$crate::__private::flavors::Network, W, T::Output>
+          + 'a,
+        T::Output: Sized,
+        UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<&'a [u8]>> + 'a,
+      {
+        fn transform(input: $crate::__private::flavors::network::PackedDecoder<'a, T, UB, W>) -> Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
+        where
+          Self: Sized
+        {
+          input.into_iter()
+            .map(|res| {
+              res.and_then(|(_, inp)| T::transform(inp))
+            })
+            .collect()
+        }
       }
     )*
   };
@@ -261,6 +297,7 @@ macro_rules! list {
 
 list!(@flatten_state [T; N] [const N: usize], [T]);
 list!(@decoded_state [T; N] [const N: usize], [T]);
+list!(@identity_transform [T; N] [const N: usize]);
 list!(@default_wire_format [T; N] [const N: usize], [T]);
 list!(@selectable(packed) [T; N] [const N: usize], [T]);
 list!(@selectable(borrowed) [&'a T; N] [const N: usize], [&'a T]);
@@ -354,103 +391,105 @@ impl PartialEncode<Network, LengthDelimited> for [u8] {
   }
 }
 
-impl<T, N, W, I> Encode<Network, Flatten<W, I>> for [N]
-where
-  W: WireFormat<Network>,
-  I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Innermost>, Output = T> + Encode<Network, W>,
-  T: Encode<Network, I> + ?Sized,
-{
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let this_len = self.len();
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(
-        <Self as Encode<Network, Flatten<W, I>>>::encoded_len(self, context),
-        buf_len,
-      ));
-    }
+// // TODO: fix encode impl
+// impl<T, N, W, I> Encode<Network, Flatten<W, I>> for [N]
+// where
+//   W: WireFormat<Network>,
+//   I: WireFormat<Network>,
+//   N: State<crate::convert::Flatten<Innermost>, Output = T> + Encode<Network, W>,
+//   T: Encode<Network, I> + ?Sized,
+// {
+//   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+//     let buf_len = buf.len();
+//     let this_len = self.len();
+//     if buf_len < this_len {
+//       return Err(Error::insufficient_buffer(
+//         <Self as Encode<Network, Flatten<W, I>>>::encoded_len(self, context),
+//         buf_len,
+//       ));
+//     }
 
-    let mut offset = 0;
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(
-          <Self as Encode<Network, Flatten<W, I>>>::encoded_len(self, context),
-          buf_len,
-        ));
-      }
+//     let mut offset = 0;
+//     for value in self.iter() {
+//       if offset >= buf_len {
+//         return Err(Error::insufficient_buffer(
+//           <Self as Encode<Network, Flatten<W, I>>>::encoded_len(self, context),
+//           buf_len,
+//         ));
+//       }
 
-      offset += value.encode(context, &mut buf[offset..])?;
-    }
-    Ok(offset)
-  }
+//       offset += value.encode(context, &mut buf[offset..])?;
+//     }
+//     Ok(offset)
+//   }
 
-  fn encoded_len(&self, context: &Context) -> usize {
-    self
-      .iter()
-      .map(|n| <N as Encode<Network, W>>::encoded_len(n, context))
-      .sum()
-  }
-}
+//   fn encoded_len(&self, context: &Context) -> usize {
+//     self
+//       .iter()
+//       .map(|n| <N as Encode<Network, W>>::encoded_len(n, context))
+//       .sum()
+//   }
+// }
 
-impl<T, N, W, I> Selectable<Network, Flatten<W, I>> for [N]
-where
-  W: WireFormat<Network>,
-  I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Innermost>, Output = T>,
-  T: Selectable<Network, I> + ?Sized,
-{
-  type Selector = T::Selector;
-}
+// impl<T, N, W, I> Selectable<Network, Flatten<W, I>> for [N]
+// where
+//   W: WireFormat<Network>,
+//   I: WireFormat<Network>,
+//   N: State<crate::convert::Flatten<Innermost>, Output = T>,
+//   T: Selectable<Network, I> + ?Sized,
+// {
+//   type Selector = T::Selector;
+// }
 
-impl<T, N, W, I> PartialEncode<Network, Flatten<W, I>> for [N]
-where
-  W: WireFormat<Network>,
-  I: WireFormat<Network>,
-  N: State<crate::convert::Flatten<Innermost>, Output = T>
-    + PartialEncode<Network, W, Selector = T::Selector>,
-  T: PartialEncode<Network, I> + ?Sized,
-{
-  fn partial_encode(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-    selector: &Self::Selector,
-  ) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let this_len = self.len();
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(
-        <Self as PartialEncode<Network, Flatten<W, I>>>::partial_encoded_len(
-          self, context, selector,
-        ),
-        buf_len,
-      ));
-    }
+// // TODO: fix encode impl
+// impl<T, N, W, I> PartialEncode<Network, Flatten<W, I>> for [N]
+// where
+//   W: WireFormat<Network>,
+//   I: WireFormat<Network>,
+//   N: State<crate::convert::Flatten<Innermost>, Output = T>
+//     + PartialEncode<Network, W, Selector = T::Selector>,
+//   T: PartialEncode<Network, I> + ?Sized,
+// {
+//   fn partial_encode(
+//     &self,
+//     context: &Context,
+//     buf: &mut [u8],
+//     selector: &Self::Selector,
+//   ) -> Result<usize, Error> {
+//     let buf_len = buf.len();
+//     let this_len = self.len();
+//     if buf_len < this_len {
+//       return Err(Error::insufficient_buffer(
+//         <Self as PartialEncode<Network, Flatten<W, I>>>::partial_encoded_len(
+//           self, context, selector,
+//         ),
+//         buf_len,
+//       ));
+//     }
 
-    let mut offset = 0;
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(
-          <Self as PartialEncode<Network, Flatten<W, I>>>::partial_encoded_len(
-            self, context, selector,
-          ),
-          buf_len,
-        ));
-      }
+//     let mut offset = 0;
+//     for value in self.iter() {
+//       if offset >= buf_len {
+//         return Err(Error::insufficient_buffer(
+//           <Self as PartialEncode<Network, Flatten<W, I>>>::partial_encoded_len(
+//             self, context, selector,
+//           ),
+//           buf_len,
+//         ));
+//       }
 
-      offset += value.partial_encode(context, &mut buf[offset..], selector)?;
-    }
-    Ok(offset)
-  }
+//       offset += value.partial_encode(context, &mut buf[offset..], selector)?;
+//     }
+//     Ok(offset)
+//   }
 
-  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    self
-      .iter()
-      .map(|n| <N as PartialEncode<Network, W>>::partial_encoded_len(n, context, selector))
-      .sum()
-  }
-}
+//   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+//     self
+//       .iter()
+//       .map(|n| <N as PartialEncode<Network, W>>::partial_encoded_len(n, context, selector))
+//       .sum()
+//   }
+// }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
@@ -459,6 +498,8 @@ const _: () = {
   list!(@flatten_state Vec<T>);
   list!(@decoded_state Vec<T>);
   list!(@default_wire_format Vec<T>);
+  list!(@identity_transform Vec<T>);
+  list!(@packed_transform Vec<T>);
   list!(@selectable(packed) Vec<T>);
   list!(@selectable(borrowed) Vec<&'a T>);
   list!(@selectable(bytes) Vec<u8>);
@@ -477,6 +518,8 @@ const _: () = {
   list!(@flatten_state SmallVec<[T; N]> [const N: usize]);
   list!(@decoded_state SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
+  list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
+  list!(@packed_transform SmallVec<[T; N]> [const N: usize]);
   list!(@selectable(packed) SmallVec<[T; N]> [const N: usize]);
   list!(@selectable(borrowed) SmallVec<[&'a T; N]> [const N: usize]);
   list!(@selectable(bytes) SmallVec<[u8; N]> [const N: usize]);
@@ -495,6 +538,8 @@ const _: () = {
   list!(@flatten_state ArrayVec<T, N> [const N: usize]);
   list!(@decoded_state ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
+  list!(@identity_transform ArrayVec<T, N> [const N: usize]);
+  list!(@packed_transform ArrayVec<T, N> [const N: usize]);
   list!(@selectable(packed) ArrayVec<T, N> [const N: usize]);
   list!(@selectable(borrowed) ArrayVec<&'a T, N> [const N: usize]);
   list!(@selectable(bytes) ArrayVec<u8, N> [const N: usize]);
@@ -513,6 +558,8 @@ const _: () = {
   list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable(borrowed):<A: tinyvec_1::Array<Item = &'a T>>: ArrayVec<A>);
   list!(@selectable(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
@@ -530,6 +577,8 @@ const _: () = {
     list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable(borrowed):<A: tinyvec_1::Array<Item = &'a T>>: TinyVec<A>);
     list!(@selectable(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
