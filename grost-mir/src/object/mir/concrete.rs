@@ -28,6 +28,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   schema_description: String,
   vis: Visibility,
   ty: Type,
+  decoded_state_type: Type,
   reflectable: Type,
   generics: Generics,
   flavor: FlavorAttribute,
@@ -116,6 +117,12 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the decoded state type of the concrete object.
+  #[inline]
+  pub const fn decoded_state_type(&self) -> &Type {
+    &self.decoded_state_type
   }
 
   /// Returns the reflectable type of the concrete object.
@@ -282,6 +289,11 @@ impl<M, F> ConcreteObject<M, F> {
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
+    let path_to_grost = object.path_to_grost();
+    let lt = &object.lifetime_param().lifetime;
+    let ub = &object.unknown_buffer_param().ident;
+    let flavor_ty = object.flavor().ty();
+    let wf = object.flavor().wire_format();
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
@@ -291,6 +303,9 @@ impl<M, F> ConcreteObject<M, F> {
       schema_name: object.schema_name().to_string(),
       vis: object.vis().clone(),
       ty: object.ty().clone(),
+      decoded_state_type: syn::parse2(quote! {
+        #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #ub>
+      })?,
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),

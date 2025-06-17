@@ -1,4 +1,7 @@
-use quote::{format_ident, quote};
+use std::sync::Arc;
+
+use proc_macro2::TokenStream;
+use quote::{ToTokens, format_ident, quote};
 use syn::{
   Attribute, GenericParam, Generics, Ident, Type, WherePredicate, punctuated::Punctuated,
   token::Comma,
@@ -8,16 +11,22 @@ use crate::object::mir::{derive_flatten_state, optional_accessors};
 
 use super::{ConcreteField, ConcreteObjectAst};
 
-#[derive(Debug, Clone)]
+#[derive(derive_more::Debug, Clone)]
 pub struct ConcretePartialDecodedObject {
   name: Ident,
   ty: Type,
   attrs: Vec<Attribute>,
   generics: Generics,
   /// Extra constraints when deriving `Decode` trait for the partial decoded object.
-  decode_constraints: Punctuated<WherePredicate, Comma>,
+  decode_generics: Generics,
   /// Extra constraints when deriving `PartialDecode` trait for the partial decoded object.
-  partial_decode_constraints: Punctuated<WherePredicate, Comma>,
+  partial_decode_generics: Generics,
+  /// The trait type which applies the cooresponding generics to the `Decode` trait.
+  #[debug(skip)]
+  applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
+  /// The trait type which applies the cooresponding generics to the `PartialDecode` trait.
+  #[debug(skip)]
+  applied_partial_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   copy: bool,
   unknown_buffer_field_name: Ident,
 }
@@ -53,16 +62,24 @@ impl ConcretePartialDecodedObject {
     self.copy
   }
 
-  /// Returns the extra constraints when deriving `Decode` trait for the partial decoded object.
+  /// Returns the generics when deriving `Decode` trait for the partial decoded object.
   #[inline]
-  pub const fn decode_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.decode_constraints
+  pub const fn decode_generics(&self) -> &Generics {
+    &self.decode_generics
   }
 
-  /// Returns the extra constraints when deriving `PartialDecode` trait for the partial decoded object.
+  /// Returns the generics when deriving `PartialDecode` trait for the partial decoded object.
   #[inline]
-  pub const fn partial_decode_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.partial_decode_constraints
+  pub const fn partial_decode_generics(&self) -> &Generics {
+    &self.partial_decode_generics
+  }
+
+  pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
+    (self.applied_decode_trait)(quote! { #ty })
+  }
+
+  pub(super) fn applied_partial_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
+    (self.applied_partial_decode_trait)(quote! { #ty })
   }
 
   pub(super) fn from_ast<M, F>(
@@ -75,8 +92,8 @@ impl ConcretePartialDecodedObject {
 
     let object_generics = object.generics();
     let mut generics = Generics::default();
-    let mut decode_constraints = Punctuated::new();
-    let mut partial_decode_constraints = Punctuated::new();
+    let mut decode_constraints = Punctuated::<WherePredicate, Comma>::new();
+    let mut partial_decode_constraints = Punctuated::<WherePredicate, Comma>::new();
 
     for lt in object_generics.lifetimes() {
       generics.params.push(GenericParam::Lifetime(lt.clone()));
@@ -107,6 +124,11 @@ impl ConcretePartialDecodedObject {
       }
     }
 
+    let flavor_ty = object.flavor().ty();
+    let path_to_grost = object.path_to_grost();
+    let lt = &lifetime_param.lifetime;
+    let ub = &unknown_buffer_param.ident;
+    let wf = object.flavor().wire_format();
     for field in fields.iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()) {
       let type_constraints = field.partial_decoded().type_constraints();
       if !type_constraints.is_empty() {
@@ -118,10 +140,7 @@ impl ConcretePartialDecodedObject {
         let ty = field.ty();
         let partial_decoded_ty = field.partial_decoded().ty();
         let wf = field.wire_format();
-        let flavor_ty = object.flavor().ty();
-        let path_to_grost = object.path_to_grost();
-        let lt = &lifetime_param.lifetime;
-        let ub = &unknown_buffer_param.ident;
+
         decode_constraints.push(syn::parse2(quote! {
           #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_decoded_ty, #ub>
         })?);
@@ -141,13 +160,51 @@ impl ConcretePartialDecodedObject {
 
     Ok(Self {
       name: name.clone(),
+      applied_decode_trait: {
+        let path_to_grost = path_to_grost.clone();
+        let flavor_ty = flavor_ty.clone();
+        let wf = wf.clone();
+        let lt = lt.clone();
+        let ub = ub.clone();
+        Arc::new(move |ty| {
+          syn::parse2(quote! {
+            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #ub>
+          })
+        })
+      },
+      applied_partial_decode_trait: {
+        let path_to_grost = path_to_grost.clone();
+        let flavor_ty = flavor_ty.clone();
+        let wf = wf.clone();
+        let lt = lt.clone();
+        let ub = ub.clone();
+        Arc::new(move |ty| {
+          syn::parse2(quote! {
+            #path_to_grost::__private::PartialDecode<#lt, #flavor_ty, #wf, #ty, #ub>
+          })
+        })
+      },
       ty,
       attrs: partial_decoded_object.attrs().to_vec(),
       copy: partial_decoded_object.copy(),
+      decode_generics: {
+        let mut output = generics.clone();
+        output
+          .make_where_clause()
+          .predicates
+          .extend(decode_constraints);
+        output
+      },
+      partial_decode_generics: {
+        let mut output = generics.clone();
+        output
+          .make_where_clause()
+          .predicates
+          .extend(partial_decode_constraints);
+        output
+      },
       generics,
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-      decode_constraints,
-      partial_decode_constraints,
     })
   }
 }
