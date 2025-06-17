@@ -1,7 +1,7 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed8, Network, Varint},
-  identity_transform, selectable,
+  identity_partial_transform, identity_transform, selectable,
 };
 
 default_wire_format!(Network: bool as Fixed8);
@@ -15,6 +15,10 @@ identity_transform!(
     bool as Varint,
   }
 );
+identity_partial_transform!(
+  Network { bool as Fixed8, bool as Varint }
+);
+
 bridge!(
   Network: u8 {
     bool as Fixed8 {

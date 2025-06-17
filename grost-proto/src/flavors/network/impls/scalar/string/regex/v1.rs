@@ -42,12 +42,38 @@ macro_rules! try_str_bridge {
 
       $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);
 
+      $crate::identity_partial_transform!(
+        $flavor {
+          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited,
+        }
+      );
+
+      $crate::identity_transform!(
+        $flavor {
+          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited,
+        }
+      );
+
       impl $crate::__private::Transform<Network, LengthDelimited, &str> for $ty {
         fn transform(input: &str) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
         where
           Self: Sized,
         {
           <$ty>::new(input).map_err(|_| Error::custom(ERR_MSG))
+        }
+      }
+
+      impl $crate::__private::PartialTransform<Network, LengthDelimited, &str> for $ty {
+        fn partial_transform(input: &str, selector: &bool) -> Result<Option<Self>, <Network as crate::flavors::Flavor>::Error>
+        where
+          Self: Sized,
+        {
+          if *selector {
+            <Self as $crate::__private::Transform<Network, LengthDelimited, &str>>::transform(input)
+              .map(Some)
+          } else {
+            Ok(None)
+          }
         }
       }
     )*

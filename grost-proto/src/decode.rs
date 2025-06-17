@@ -1,75 +1,10 @@
+use crate::selection::Selectable;
+
 use super::{
   buffer::{Buffer, ReadBuf},
   error::Error,
   flavors::{Flavor, WireFormat},
-  selection::Selectable,
 };
-
-/// A trait for decoding types from a byte slice, partially guided by a selector.
-///
-/// `PartialDecode` is designed for decoding a subset of the fields or structure
-/// of a type based on a selector. This is useful when only a portion of a data
-/// structure is needed, allowing for more efficient parsing.
-///
-/// ## Type Parameters
-/// - `'de`: Lifetime of the input data.
-/// - `F`: The decoding flavor (e.g., [`Network`](crate::flavors::Network) or other implementations) implementing the [`Flavor`] trait.
-/// - `W`: The wire format strategy of the flavor.
-/// - `O`: The output type resulting from decoding.
-/// - `B`: The buffer implementation used to store the unknown data during decoding (defaults to `()`, will ignore the unknown data).
-pub trait PartialDecode<'de, F, W, O, UB = ()>: Selectable<F, W>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Partially decodes an instance of the type from a byte buffer using a selector.
-  ///
-  /// ## Parameters
-  /// - `context`: Contextual data used during decoding.
-  /// - `src`: The input byte buffer to decode.
-  /// - `selector`: A selector to guide the partial decoding process.
-  ///
-  /// ## Returns
-  /// A tuple containing the number of bytes consumed and the decoded output.
-  fn partial_decode<B>(
-    context: &'de F::Context,
-    src: B,
-    selector: &'de Self::Selector,
-  ) -> Result<(usize, Option<O>), F::Error>
-  where
-    O: Sized + 'de,
-    B: ReadBuf<'de>,
-    UB: Buffer<F::Unknown<B>> + 'de;
-
-  /// Partially decodes a length-delimited message using a selector.
-  ///
-  /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
-  fn partial_decode_length_delimited<B>(
-    context: &'de F::Context,
-    src: B,
-    selector: &'de Self::Selector,
-  ) -> Result<(usize, Option<O>), F::Error>
-  where
-    O: Sized + 'de,
-    B: ReadBuf<'de>,
-    UB: Buffer<F::Unknown<B>> + 'de,
-  {
-    let as_bytes = src.as_bytes();
-    let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
-    let src_len = src.len();
-    let len = len as usize;
-    let total = len_size + len;
-    if total > src_len {
-      return Err(Error::buffer_underflow().into());
-    }
-
-    if len_size >= src_len {
-      return Err(Error::buffer_underflow().into());
-    }
-
-    Self::partial_decode(context, src.slice(len_size..total), selector)
-  }
-}
 
 /// A trait for fully decoding types from a borrowed byte slice.
 ///
@@ -151,6 +86,22 @@ where
     Self: Sized;
 }
 
+/// A trait for partially transforming the input type `I` into the current type `Self`.
+pub trait PartialTransform<F, W, I>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  I: Selectable<F, W, Selector = Self::Selector>,
+  Self: Selectable<F, W>,
+{
+  /// Partially transforms from the input type `I` into the current type `Self`.
+  ///
+  /// If there is nothing selected, it returns `Ok(None)`.
+  fn partial_transform(input: I, selector: &I::Selector) -> Result<Option<Self>, F::Error>
+  where
+    Self: Sized;
+}
+
 /// A trait for transforming the current type into another type `O`.
 pub trait TransformInto<F, W, O>
 where
@@ -171,6 +122,37 @@ where
 {
   fn transform_into(self) -> Result<T, F::Error> {
     T::transform(self)
+  }
+}
+
+/// A trait for partially transforming the current type into another type `O`.
+pub trait PartialTransformInto<F, W, O>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  O: Selectable<F, W, Selector = Self::Selector>,
+  Self: Selectable<F, W>,
+{
+  /// Partially transforms the current type into the output type `O`.
+  ///
+  /// If there is nothing selected, it returns `Ok(None)`.
+  fn partial_transform_into(self, selector: &Self::Selector) -> Result<Option<O>, F::Error>
+  where
+    Self: Sized;
+}
+
+impl<F, W, I, T> PartialTransformInto<F, W, T> for I
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  T: PartialTransform<F, W, I> + Sized + Selectable<F, W>,
+  I: Selectable<F, W, Selector = T::Selector>,
+{
+  fn partial_transform_into(self, selector: &T::Selector) -> Result<Option<T>, <F as Flavor>::Error>
+  where
+    Self: Sized + Selectable<F, W, Selector = T::Selector>,
+  {
+    T::partial_transform(self, selector)
   }
 }
 

@@ -132,6 +132,18 @@ macro_rules! array_str {
 
     $crate::flatten_state!($ty [const N: usize]);
 
+    $crate::identity_transform!(
+      $crate::__private::flavors::Network {
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited
+      }
+    );
+
+    $crate::identity_partial_transform!(
+      $crate::__private::flavors::Network {
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited
+      }
+    );
+
     impl<const $g: ::core::primitive::usize> $crate::__private::Transform<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &str> for $ty {
       fn transform(input: &str) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as crate::flavors::Flavor>::Error>
       where
@@ -141,15 +153,17 @@ macro_rules! array_str {
       }
     }
 
-    impl<W, const $g: ::core::primitive::usize> $crate::__private::Transform<$crate::__private::flavors::Network, W, Self> for $ty
-    where
-      W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
-    {
-      fn transform(input: Self) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as crate::flavors::Flavor>::Error>
+    impl<const $g: ::core::primitive::usize> $crate::__private::PartialTransform<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &str> for $ty {
+      fn partial_transform(input: &str, selector: &bool) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Network as crate::flavors::Flavor>::Error>
       where
         Self: Sized,
       {
-        ::core::result::Result::Ok(input)
+        if *selector {
+          <Self as $crate::__private::Transform<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &str>>::transform(input)
+            .map(Some)
+        } else {
+          Ok(None)
+        }
       }
     }
   };

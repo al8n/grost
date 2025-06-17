@@ -1,7 +1,7 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed16, Network, Varint},
-  identity_transform, selectable,
+  identity_partial_transform, identity_transform, selectable,
 };
 use half_2::f16;
 
@@ -15,6 +15,9 @@ identity_transform!(
     f16 as Fixed16,
     f16 as Varint,
   }
+);
+identity_partial_transform!(
+  Network { f16 as Fixed16, f16 as Varint }
 );
 bridge!(
   Network: u16 {

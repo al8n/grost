@@ -1,11 +1,9 @@
 use crate::{
-  Innermost, State,
   encode::{Encode, PartialEncode},
   flavors::{
     Network, WireFormat,
-    network::{Borrowed, Context, Error, Flatten, LengthDelimited, Packed, WireType},
+    network::{Borrowed, Context, Error, LengthDelimited, Packed, WireType},
   },
-  selection::Selectable,
 };
 
 mod array;
@@ -165,19 +163,52 @@ macro_rules! list {
       }
     )*
   };
+  // TODO(al8n): remove the wire format generic from `Selectable`?
+  // (@identity_partial_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  //   $(
+  //     impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialTransform<$crate::__private::flavors::Network, W, Self> for $ty
+  //     where
+  //       W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+  //       T: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W>
+  //         + $crate::__private::PartialTransform<$crate::__private::flavors::Network, W, Self>,
+  //       Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W, Selector = T::Selector>,
+  //     {
+  //       fn partial_transform(input: Self, selector: &T::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::network::Error> {
+  //         if $crate::__private::selection::Selector::is_empty(selector) {
+  //           return ::core::result::Result::Ok(::core::option::Option::None);
+  //         }
+
+  //         input.into_iter()
+  //           .filter_map(|val| {
+  //             match T::partial_transform(val, selector) {
+  //               ::core::result::Result::Ok(val) => val.map(|val| ::core::result::Result::Ok(val)),
+  //               ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
+  //             }
+  //           })
+  //           .collect::<::core::result::Result<$ty, _>>()
+  //           .map(|val| if val.is_empty() {
+  //             ::core::option::Option::None
+  //           } else {
+  //             ::core::option::Option::Some(val)
+  //           })
+  //       }
+  //     }
+  //   )*
+  // };
   (@packed_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<'a, T, W, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Transform<$crate::__private::flavors::Network, W, $crate::__private::flavors::network::PackedDecoder<'a, T, UB, W>> for $ty
+      impl<'a, T, W, TW, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Transform<$crate::__private::flavors::Network, W, $crate::__private::flavors::network::PackedDecoder<'a, T, UB, TW>> for $ty
       where
-        W: $crate::__private::flavors::network::impls::packed_decoder::sealed::Sealed + 'a,
-        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W, UB>, Input = &'a [u8]>
-          + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, W, T::Output, UB>
-          + $crate::__private::decode::Transform<$crate::__private::flavors::Network, W, T::Output>
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
+        TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
+        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, TW, UB>, Input = &'a [u8]>
+          + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, TW, T::Output, UB>
+          + $crate::__private::decode::Transform<$crate::__private::flavors::Network, TW, T::Output>
           + 'a,
         T::Output: Sized,
         UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<&'a [u8]>> + 'a,
       {
-        fn transform(input: $crate::__private::flavors::network::PackedDecoder<'a, T, UB, W>) -> Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
+        fn transform(input: $crate::__private::flavors::network::PackedDecoder<'a, T, UB, TW>) -> ::core::result::Result<Self, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
         where
           Self: Sized
         {
@@ -186,6 +217,46 @@ macro_rules! list {
               res.and_then(|(_, inp)| T::transform(inp))
             })
             .collect()
+        }
+      }
+
+      impl<'a, T, W, TW, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialTransform<$crate::__private::flavors::Network, W, $crate::__private::flavors::network::PackedDecoder<'a, T, UB, TW>> for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
+        TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
+        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, TW, UB>, Input = &'a [u8]>
+          + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, TW, T::Output, UB>
+          + $crate::__private::selection::Selectable<$crate::__private::flavors::Network, TW>
+          + $crate::__private::decode::PartialTransform<$crate::__private::flavors::Network, TW, T::Output>
+          + 'a,
+        T::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Network, TW, Selector = T::Selector>,
+        UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<&'a [u8]>> + 'a,
+        Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W, Selector = T::Selector>,
+      {
+        fn partial_transform(
+          input: $crate::__private::flavors::network::PackedDecoder<'a, T, UB, TW>,
+          selector: &T::Selector,
+        ) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
+        where
+          Self: Sized
+        {
+          if $crate::__private::selection::Selector::is_empty(selector) {
+            return ::core::result::Result::Ok(::core::option::Option::None);
+          }
+
+          input.into_iter()
+            .filter_map(|res| {
+              match res.and_then(|(_, inp)| T::partial_transform(inp, selector)) {
+                ::core::result::Result::Ok(val) => val.map(|val| ::core::result::Result::Ok(val)),
+                ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
+              }
+            })
+            .collect::<::core::result::Result<$ty, _>>()
+            .map(|val| if val.is_empty() {
+              ::core::option::Option::None
+            } else {
+              ::core::option::Option::Some(val)
+            })
         }
       }
     )*

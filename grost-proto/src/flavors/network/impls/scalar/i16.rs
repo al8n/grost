@@ -5,7 +5,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed16, Network, Unknown, Varint},
-  identity_transform, partial_encode_scalar, selectable, try_from_bridge,
+  identity_partial_transform, identity_transform, partial_encode_scalar, selectable,
+  try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -14,6 +15,14 @@ selectable!(@scalar Network: i16, NonZeroI16);
 decoded_state!(@scalar &'a Network: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
 flatten_state!(i16, NonZeroI16);
 identity_transform!(
+  Network {
+    i16 as Fixed16,
+    i16 as Varint,
+    NonZeroI16 as Fixed16,
+    NonZeroI16 as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     i16 as Fixed16,
     i16 as Varint,

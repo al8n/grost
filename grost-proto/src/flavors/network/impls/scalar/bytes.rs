@@ -12,17 +12,6 @@ macro_rules! bytes_bridge {
           <[u8] as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::decode(context, src)
         }
       }
-
-      impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::PartialDecode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB> for $ty {
-        fn partial_decode<B>(context: &'a $crate::__private::flavors::network::Context, src: B, selector: &'a bool) -> Result<(usize, Option<&'a [u8]>), $crate::__private::flavors::network::Error>
-        where
-          &'a [u8]: Sized + 'a,
-          B: $crate::buffer::ReadBuf<'a>,
-          UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
-        {
-          <[u8] as $crate::decode::PartialDecode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB>>::partial_decode(context, src, selector)
-        }
-      }
     )*
   };
 }

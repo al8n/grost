@@ -7,7 +7,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed64, Network, Unknown, Varint},
-  identity_transform, partial_encode_scalar, selectable, try_from_bridge,
+  identity_partial_transform, identity_transform, partial_encode_scalar, selectable,
+  try_from_bridge,
 };
 
 default_wire_format!(Network: i64 as Varint);
@@ -15,6 +16,14 @@ selectable!(@scalar Network: i64, NonZeroI64);
 decoded_state!(@scalar &'a Network: i64 as Fixed64, NonZeroI64 as Fixed64, i64 as Varint, NonZeroI64 as Varint);
 flatten_state!(i64, NonZeroI64);
 identity_transform!(
+  Network {
+    i64 as Fixed64,
+    i64 as Varint,
+    NonZeroI64 as Fixed64,
+    NonZeroI64 as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     i64 as Fixed64,
     i64 as Varint,

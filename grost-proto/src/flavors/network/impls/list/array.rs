@@ -5,23 +5,25 @@ use crate::{
   buffer::Buffer,
   decode::{Decode, Transform},
   flavors::{
-    Network,
-    network::{Error, PackedDecoder, Unknown, impls::packed_decoder::sealed},
+    Network, WireFormat,
+    network::{Error, PackedDecoder, Unknown},
   },
 };
 
-impl<'a, T, W, UB, const N: usize> Transform<Network, W, PackedDecoder<'a, T, UB, W>> for [T; N]
+impl<'a, T, W, TW, UB, const N: usize> Transform<Network, W, PackedDecoder<'a, T, UB, TW>>
+  for [T; N]
 where
-  W: sealed::Sealed + 'a,
-  T: State<Decoded<'a, Network, W, UB>, Input = &'a [u8]>
-    + Decode<'a, Network, W, T::Output, UB>
-    + Transform<Network, W, T::Output>
+  W: WireFormat<Network> + 'a,
+  TW: WireFormat<Network> + 'a,
+  T: State<Decoded<'a, Network, TW, UB>, Input = &'a [u8]>
+    + Decode<'a, Network, TW, T::Output, UB>
+    + Transform<Network, TW, T::Output>
     + 'a,
   T::Output: Sized,
   UB: Buffer<Unknown<&'a [u8]>> + 'a,
 {
   fn transform(
-    input: PackedDecoder<'a, T, UB, W>,
+    input: PackedDecoder<'a, T, UB, TW>,
   ) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
@@ -43,3 +45,40 @@ where
     Ok(unsafe { array.map(|item| item.assume_init()) })
   }
 }
+
+// impl<'a, T, W, TW, UB> PartialTransform<Network, W, PackedDecoder<'a, T, UB, TW>> for Vec<T>
+// where
+//   W: WireFormat<Network> + 'a,
+//   TW: WireFormat<Network> + 'a,
+//   T: State<Decoded<'a, Network, TW, UB>, Input = &'a [u8]>
+//     + Decode<'a, Network, TW, T::Output, UB>
+//     + Selectable<Network, TW>
+//     + PartialTransform<Network, TW, T::Output>
+//     + 'a,
+//   T::Output: Sized + Selectable<Network, TW, Selector = T::Selector>,
+//   UB: Buffer<Unknown<&'a [u8]>> + 'a,
+//   Self: Selectable<Network, W, Selector = T::Selector>,
+// {
+//   fn partial_transform(input: PackedDecoder<'a, T, UB, TW>, selector: &T::Selector) -> Result<Option<Self>, <Network as crate::flavors::Flavor>::Error>
+//   where
+//     Self: Sized
+//   {
+//     if selector.is_empty() {
+//       return Ok(None);
+//     }
+
+//     input.into_iter()
+//       .filter_map(|res| {
+//         match res.and_then(|(_, inp)| T::partial_transform(inp, selector)) {
+//           Ok(val) => val.map(|val| Ok(val)),
+//           Err(e) => Some(Err(e)),
+//         }
+//       })
+//       .collect::<Result<Vec<T>, _>>()
+//       .map(|val| if val.is_empty() {
+//         None
+//       } else {
+//         Some(val)
+//       })
+//   }
+// }

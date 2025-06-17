@@ -1,7 +1,7 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed64, Network, Varint},
-  identity_transform, selectable,
+  identity_partial_transform, identity_transform, selectable,
 };
 
 default_wire_format!(Network: f64 as Fixed64);
@@ -9,6 +9,12 @@ selectable!(@scalar Network:f64);
 decoded_state!(@scalar &'a Network: f64 as Fixed64, f64 as Varint);
 flatten_state!(f64);
 identity_transform!(
+  Network {
+    f64 as Fixed64,
+    f64 as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     f64 as Fixed64,
     f64 as Varint,

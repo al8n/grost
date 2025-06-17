@@ -11,7 +11,7 @@ extern crate std;
 pub use flavors::Flavor;
 pub use grost_proto::{
   buffer, convert,
-  decode::{self, Decode, DecodeOwned, PartialDecode},
+  decode::{self, Decode, DecodeOwned},
   encode::{self, Encode, PartialEncode},
   reflection, selection,
 };

@@ -9,6 +9,7 @@ use crate::{
     Network, WireFormat,
     network::{Context, Error, LengthDelimited, Unknown},
   },
+  selection::Selectable,
 };
 
 /// A lazy decoder for repeated types (e.g. `Vec<T>`, `[T]`, `HashSet<T>`, `HashMap<K, V>` and etc.) of data that
@@ -26,7 +27,12 @@ use crate::{
 /// For other types, the decoder will yield decoded elements one by one through iteration
 /// until it reaches the end of the source data.
 pub struct PackedDecoder<'a, T: ?Sized, UB: ?Sized, W: ?Sized> {
-  repr: Repr<'a>,
+  /// the source buffer
+  src: &'a [u8],
+  /// the length of the length prefix
+  data_offset: usize,
+  /// the current offset
+  offset: usize,
   ctx: &'a Context,
   _t: PhantomData<T>,
   _w: PhantomData<W>,
@@ -52,23 +58,17 @@ where
   /// The decoder can immediately provide the complete decoded byte slice.
   #[inline]
   pub const fn as_slice(&self) -> &'a [u8] {
-    match self.repr {
-      Repr::LengthDelimited {
-        src, data_offset, ..
-      } => {
-        if src.is_empty() {
-          return src;
-        }
-
-        let src_len = src.len();
-        if src_len <= data_offset {
-          return &[];
-        }
-
-        src.split_at(data_offset).1
-      }
-      Repr::Data { src, .. } => src,
+    let src = self.src;
+    if src.is_empty() {
+      return src;
     }
+
+    let src_len = src.len();
+    if src_len <= self.data_offset {
+      return &[];
+    }
+
+    src.split_at(self.data_offset).1
   }
 }
 
@@ -103,16 +103,13 @@ where
   /// Returns the current offset to the source byte slice
   #[inline]
   pub const fn offset(&self) -> usize {
-    match self.repr {
-      Repr::LengthDelimited { offset, .. } => offset,
-      Repr::Data { offset, .. } => offset,
-    }
+    self.offset
   }
 }
 
 impl<'a, UB, W, T> Iterator for PackedDecoder<'a, T, UB, W>
 where
-  W: sealed::Sealed + 'a,
+  W: WireFormat<Network> + 'a,
   T: State<Decoded<'a, Network, W, UB>, Input = &'a [u8]>
     + Decode<'a, Network, W, T::Output, UB>
     + 'a,
@@ -123,96 +120,56 @@ where
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    self.repr.decode_next_elem::<T, W, UB>(self.ctx)
+    let src_len = self.src.len();
+    if self.offset >= src_len {
+      return None;
+    }
+
+    Some(
+      T::decode(self.ctx, &self.src[self.offset..]).inspect(|(read, _)| {
+        self.offset += read;
+      }),
+    )
   }
+}
+
+impl<'a, T, UB, W, SW> Selectable<Network, SW> for PackedDecoder<'a, T, UB, W>
+where
+  T: ?Sized + Selectable<Network, W>,
+  W: WireFormat<Network> + 'a,
+  SW: WireFormat<Network> + 'a,
+  UB: ?Sized,
+{
+  type Selector = T::Selector;
 }
 
 impl<'a, T, UB, W> Encode<Network, W> for PackedDecoder<'a, T, UB, W>
 where
   T: ?Sized,
-  W: sealed::Sealed,
+  W: WireFormat<Network> + 'a,
   UB: ?Sized,
 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    match self.repr {
-      Repr::LengthDelimited {
-        src, data_offset, ..
-      } => {
-        let buf_len = buf.len();
-        let src_len = src.len();
-        let len = src_len.saturating_sub(data_offset);
-        if buf_len < len {
-          return Err(Error::insufficient_buffer(len, buf_len));
-        }
+    let src = self.src;
 
-        if len == 0 {
-          return Ok(0);
-        }
-
-        buf[..len].copy_from_slice(&src[data_offset..]);
-        Ok(len)
-      }
-      Repr::Data { src, .. } => {
-        let buf_len = buf.len();
-        let src_len = src.len();
-        if buf_len < src_len {
-          return Err(Error::insufficient_buffer(src_len, buf_len));
-        }
-
-        buf[..src_len].copy_from_slice(src);
-        Ok(src_len)
-      }
+    let buf_len = buf.len();
+    let src_len = src.len();
+    if buf_len < src_len {
+      return Err(Error::insufficient_buffer(src_len, buf_len));
     }
+
+    buf[..src_len].copy_from_slice(src);
+    Ok(src_len)
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
-    self.repr.encoded_len()
-  }
-
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    match self.repr {
-      Repr::LengthDelimited { src, .. } => {
-        let buf_len = buf.len();
-        let src_len = src.len();
-        if src_len > buf_len {
-          return Err(Error::insufficient_buffer(src_len, buf_len));
-        }
-
-        buf[..src_len].copy_from_slice(src);
-        Ok(src_len)
-      }
-      Repr::Data { src, .. } => {
-        let buf_len = buf.len();
-        let src_len = src.len();
-        let len_size = varing::encode_u32_varint_to(src_len as u32, buf).map_err(|e| {
-          Error::from_varint_encode_error(e)
-            .update(self.encoded_length_delimited_len(context), buf_len)
-        })?;
-        let total = src_len + len_size;
-        if total > buf_len {
-          return Err(Error::insufficient_buffer(src_len + len_size, buf_len));
-        }
-
-        if len_size >= buf_len {
-          return Err(Error::insufficient_buffer(src_len + len_size, buf_len));
-        }
-        buf[len_size..total].copy_from_slice(src);
-        Ok(total)
-      }
-    }
-  }
-
-  fn encoded_length_delimited_len(
-    &self,
-    _: &<Network as crate::flavors::Flavor>::Context,
-  ) -> usize {
-    self.repr.encoded_length_delimited_len()
+    self.src.len()
   }
 }
 
 impl<'a, T, UB, W> Decode<'a, Network, W, Self, UB> for PackedDecoder<'a, T, UB, W>
 where
-  W: sealed::Sealed + 'a,
+  W: WireFormat<Network> + 'a,
 {
   fn decode<B>(
     ctx: &'a <Network as crate::flavors::Flavor>::Context,
@@ -238,11 +195,9 @@ where
     Ok((
       total,
       Self {
-        repr: Repr::LengthDelimited {
-          src,
-          data_offset: len,
-          offset: len,
-        },
+        src,
+        data_offset: len,
+        offset: len,
         ctx,
         _t: PhantomData,
         _w: PhantomData,
@@ -250,82 +205,4 @@ where
       },
     ))
   }
-}
-
-/// Internal representation of list data.
-///
-/// This enum represents the two possible storage formats for the list:
-/// - `LengthDelimited`: The data is prefixed with its length (common in network protocols)
-/// - `Data`: The data has a known capacity limit (common in fixed-size buffers)
-#[derive(Debug, Clone, Copy)]
-enum Repr<'a> {
-  LengthDelimited {
-    /// the source buffer
-    src: &'a [u8],
-    /// the length of the length prefix
-    data_offset: usize,
-    /// the current offset
-    offset: usize,
-  },
-  Data {
-    /// the source buffer
-    src: &'a [u8],
-    /// the current offset
-    offset: usize,
-  },
-}
-
-impl<'a> Repr<'a> {
-  #[inline]
-  const fn encoded_len(&self) -> usize {
-    match self {
-      Repr::LengthDelimited {
-        data_offset, src, ..
-      } => src.len().saturating_sub(*data_offset),
-      Repr::Data { src, .. } => src.len(),
-    }
-  }
-
-  #[inline]
-  const fn encoded_length_delimited_len(&self) -> usize {
-    match self {
-      Repr::LengthDelimited { src, .. } => src.len(),
-      Repr::Data { src, .. } => {
-        let len = src.len();
-        len + varing::encoded_u32_varint_len(len as u32)
-      }
-    }
-  }
-
-  fn decode_next_elem<T, W, UB>(
-    &mut self,
-    ctx: &'a Context,
-  ) -> Option<Result<(usize, T::Output), Error>>
-  where
-    W: WireFormat<Network> + 'a,
-    T: State<Decoded<'a, Network, W, UB>, Input = &'a [u8]>
-      + Decode<'a, Network, W, T::Output, UB>
-      + 'a,
-    T::Output: Sized,
-    UB: Buffer<Unknown<&'a [u8]>> + 'a,
-  {
-    match self {
-      Repr::LengthDelimited { src, offset, .. } | Repr::Data { src, offset } => {
-        let src_len = src.len();
-        if *offset >= src_len {
-          return None;
-        }
-
-        Some(T::decode(ctx, &src[*offset..]).inspect(|(read, _)| {
-          *offset += read;
-        }))
-      }
-    }
-  }
-}
-
-pub(in crate::flavors::network::impls) mod sealed {
-  pub trait Sealed: super::WireFormat<super::Network> {}
-
-  impl Sealed for super::LengthDelimited {}
 }

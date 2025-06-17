@@ -3,7 +3,7 @@ use uuid_1::Uuid;
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Fixed128, Network, Varint},
-  identity_transform, selectable,
+  identity_partial_transform, identity_transform, selectable,
 };
 
 selectable!(@scalar Network:Uuid);
@@ -25,6 +25,12 @@ bridge!(
 
 default_wire_format!(Network: Uuid as Fixed128);
 identity_transform!(
+  Network {
+    Uuid as Fixed128,
+    Uuid as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     Uuid as Fixed128,
     Uuid as Varint,

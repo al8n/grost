@@ -7,7 +7,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed32, Network, Unknown, Varint},
-  identity_transform, partial_decode_scalar, partial_encode_scalar, selectable, try_from_bridge,
+  identity_partial_transform, identity_transform, partial_encode_scalar, selectable,
+  try_from_bridge,
 };
 
 default_wire_format!(Network: u32 as Varint);
@@ -15,6 +16,14 @@ selectable!(@scalar Network: u32, NonZeroU32);
 decoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
 flatten_state!(u32, NonZeroU32);
 identity_transform!(
+  Network {
+    u32 as Fixed32,
+    u32 as Varint,
+    NonZeroU32 as Fixed32,
+    NonZeroU32 as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     u32 as Fixed32,
     u32 as Varint,
@@ -49,22 +58,6 @@ impl Encode<Network, Varint> for u32 {
 }
 
 partial_encode_scalar!(Network: u32 as Fixed32, u32 as Varint);
-partial_decode_scalar!(Network:
-  u32 as Fixed32 => |_, src: &'de [u8]| {
-    if src.is_empty() {
-      return Err(Error::buffer_underflow());
-    }
-
-    Ok((4, None))
-  },
-  u32 as Varint => |_, src: &'de [u8]| {
-    if src.is_empty() {
-      return Err(Error::buffer_underflow());
-    }
-
-    varing::consume_varint(src).map(|val| (val, None)).map_err(Into::into)
-  },
-);
 
 impl<'de, UB> Decode<'de, Network, Fixed32, Self, UB> for u32 {
   fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>

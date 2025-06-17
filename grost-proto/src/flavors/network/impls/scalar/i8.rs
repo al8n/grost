@@ -1,7 +1,7 @@
 use crate::{
   bridge, decoded_state, default_wire_format, flatten_state,
   flavors::network::{Error, Fixed8, Network, Varint},
-  identity_transform, selectable, try_from_bridge,
+  identity_partial_transform, identity_transform, selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
 
@@ -10,6 +10,14 @@ selectable!(@scalar Network:i8, NonZeroI8);
 decoded_state!(@scalar &'a Network: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
 flatten_state!(i8, NonZeroI8);
 identity_transform!(
+  Network {
+    i8 as Fixed8,
+    i8 as Varint,
+    NonZeroI8 as Fixed8,
+    NonZeroI8 as Varint,
+  }
+);
+identity_partial_transform!(
   Network {
     i8 as Fixed8,
     i8 as Varint,

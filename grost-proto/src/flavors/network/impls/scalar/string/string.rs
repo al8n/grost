@@ -1,5 +1,5 @@
 use crate::{
-  decode::Transform,
+  decode::{PartialTransform, Transform},
   decoded_state, flatten_state,
   flavors::{Network, network::LengthDelimited},
   selectable,
@@ -26,13 +26,18 @@ impl Transform<Network, LengthDelimited, &str> for String {
   }
 }
 
-// impl<'a, UB> crate::decode::Decode<'a, Network, LengthDelimited, &'a str, UB> for String {
-//   fn decode<B>(context: &<Network as crate::flavors::Flavor>::Context, src: B) -> Result<(usize, &'a str), <Network as crate::flavors::Flavor>::Error>
-//   where
-//     &'a str: Sized + 'a,
-//     B: crate::buffer::ReadBuf<'a>,
-//     UB: crate::buffer::Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a
-//   {
-//     <&str as crate::decode::Decode<'a, Network, LengthDelimited, &'a str, UB>>::decode(context, src)
-//   }
-// }
+impl PartialTransform<Network, LengthDelimited, &str> for String {
+  fn partial_transform(
+    input: &str,
+    selector: &bool,
+  ) -> Result<Option<Self>, <Network as crate::flavors::Flavor>::Error>
+  where
+    Self: Sized,
+  {
+    if *selector {
+      <Self as Transform<Network, LengthDelimited, &str>>::transform(input).map(Some)
+    } else {
+      Ok(None)
+    }
+  }
+}

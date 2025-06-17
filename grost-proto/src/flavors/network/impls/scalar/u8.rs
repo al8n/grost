@@ -7,7 +7,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::network::{Context, Error, Fixed8, Network, Unknown, Varint},
-  identity_transform, partial_decode_scalar, partial_encode_scalar, selectable, try_from_bridge,
+  identity_partial_transform, identity_transform, partial_encode_scalar, selectable,
+  try_from_bridge,
 };
 
 default_wire_format!(Network: u8 as Fixed8);
@@ -57,24 +58,14 @@ impl Encode<Network, Varint> for u8 {
 }
 
 partial_encode_scalar!(Network: u8 as Fixed8, u8 as Varint);
-partial_decode_scalar!(Network:
-  u8 as Fixed8 => |_, src: &'de [u8]| {
-    if src.is_empty() {
-      return Err(Error::buffer_underflow());
-    }
-
-    Ok((1, None))
-  },
-  u8 as Varint => |_, src: &'de [u8]| {
-    if src.is_empty() {
-      return Err(Error::buffer_underflow());
-    }
-
-    varing::consume_varint(src).map(|val| (val, None)).map_err(Into::into)
-  },
-);
 
 identity_transform!(Network {
+  u8 as Fixed8,
+  u8 as Varint,
+  NonZeroU8 as Fixed8,
+  NonZeroU8 as Varint,
+});
+identity_partial_transform!(Network {
   u8 as Fixed8,
   u8 as Varint,
   NonZeroU8 as Fixed8,
