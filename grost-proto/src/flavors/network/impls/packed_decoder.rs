@@ -105,6 +105,18 @@ where
   pub const fn offset(&self) -> usize {
     self.offset
   }
+
+  pub(super) fn new(ctx: &'a Context, src: &'a [u8], data_offset: usize) -> Self {
+    Self {
+      src,
+      data_offset,
+      offset: data_offset,
+      ctx,
+      _t: PhantomData,
+      _w: PhantomData,
+      _ub: PhantomData,
+    }
+  }
 }
 
 impl<'a, UB, W, T> Iterator for PackedDecoder<'a, T, UB, W>
@@ -166,9 +178,10 @@ where
   }
 }
 
-impl<'a, T, UB, W> Decode<'a, Network, W, Self, UB> for PackedDecoder<'a, T, UB, W>
+impl<'a, T, UB, W, PW> Decode<'a, Network, PW, Self, UB> for PackedDecoder<'a, T, UB, W>
 where
   W: WireFormat<Network> + 'a,
+  PW: WireFormat<Network> + 'a,
 {
   fn decode<B>(
     ctx: &'a <Network as crate::flavors::Flavor>::Context,

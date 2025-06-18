@@ -19,8 +19,6 @@ pub struct ConcretePartialObject {
   generics: Generics,
   /// Extra constraints when deriving `Decode` trait for the partial decoded object.
   decode_generics: Generics,
-  /// Extra constraints when deriving `PartialDecode` trait for the partial decoded object.
-  partial_decode_generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
@@ -68,12 +66,6 @@ impl ConcretePartialObject {
     &self.decode_generics
   }
 
-  /// Returns the generics when deriving `PartialDecode` trait for the partial decoded object.
-  #[inline]
-  pub const fn partial_decode_generics(&self) -> &Generics {
-    &self.partial_decode_generics
-  }
-
   pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
     (self.applied_decode_trait)(quote! { #ty })
   }
@@ -87,7 +79,6 @@ impl ConcretePartialObject {
 
     let mut generics = object.generics().clone();
     let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
-    let mut partial_decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
     generics
       .params
       .push(GenericParam::Type(unknown_buffer_param.clone()));
@@ -115,10 +106,6 @@ impl ConcretePartialObject {
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
             #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ty, #ub>
           })?);
-          partial_decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::PartialDecode<#lt, #flavor_ty, #wf, #partial_ty, #ub>
-          })?);
-          partial_decode_constraints.extend(f.selector().type_constraints().iter().cloned())
         }
 
         darling::Result::Ok(())
@@ -147,13 +134,12 @@ impl ConcretePartialObject {
       },
       ty,
       decode_generics: {
+        let lt = object.lifetime_param().clone();
         let mut output = Generics::default();
         output
           .params
           .extend(generics.lifetimes().cloned().map(GenericParam::from));
-        output
-          .params
-          .push(GenericParam::Lifetime(object.lifetime_param().clone()));
+        output.params.push(GenericParam::Lifetime(lt.clone()));
         output
           .params
           .extend(generics.type_params().cloned().map(GenericParam::from));
@@ -165,33 +151,22 @@ impl ConcretePartialObject {
           .make_where_clause()
           .predicates
           .extend(decode_constraints);
-        output
-      },
-      partial_decode_generics: {
-        let mut output = Generics::default();
-        output
-          .params
-          .extend(generics.lifetimes().cloned().map(GenericParam::from));
-        output
-          .params
-          .push(GenericParam::Lifetime(object.lifetime_param().clone()));
-        output
-          .params
-          .extend(generics.type_params().cloned().map(GenericParam::from));
-        output
-          .params
-          .extend(generics.const_params().cloned().map(GenericParam::from));
-        output.where_clause = generics.where_clause.clone();
-        output
-          .make_where_clause()
-          .predicates
-          .extend(partial_decode_constraints);
+
+        generics
+          .lifetimes()
+          .filter(|lt| lt.lifetime.ident.ne("static"))
+          .try_for_each(|ltp| {
+            let ident = &ltp.lifetime;
+            syn::parse2(quote! {
+              #lt: #ident
+            })
+            .map(|pred| output.make_where_clause().predicates.push(pred))
+          })?;
         output
       },
       generics,
       attrs: partial_object.attrs().to_vec(),
       unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-
       copy,
     })
   }

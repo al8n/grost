@@ -82,9 +82,28 @@ pub mod __private {
     decode::{self, *},
     decoded_state, default_wire_format,
     encode::{self, *},
+    error::{self, *},
     flavors::{self, RawTag},
     indexer, network_varint, partial_encode_scalar, reflection, selectable,
     selection::{self, *},
   };
   pub use varing;
+
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  where
+    F: flavors::Flavor + ?Sized,
+  {
+    Error::custom("cannot decode array with length greater than the capacity")
+  }
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  where
+    F: flavors::Flavor + ?Sized,
+  {
+    Error::custom(std::format!(
+      "cannot decode array with length greater than the capacity {N}"
+    ))
+  }
 }

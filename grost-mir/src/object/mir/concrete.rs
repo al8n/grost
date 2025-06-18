@@ -1,5 +1,11 @@
+use std::sync::Arc;
+
+use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
-use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
+use syn::{
+  Attribute, GenericParam, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility,
+  WherePredicate, punctuated::Punctuated, token::Comma,
+};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
 use crate::{flavor::FlavorAttribute, object::ast::Indexer, utils::Invokable};
@@ -19,7 +25,7 @@ mod partial_decoded;
 mod reflection;
 mod selector;
 
-#[derive(Debug, Clone)]
+#[derive(derive_more::Debug, Clone)]
 pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
@@ -31,6 +37,11 @@ pub struct ConcreteObject<M = (), F = ()> {
   decoded_state_type: Type,
   reflectable: Type,
   generics: Generics,
+  /// Extra constraints when deriving `Decode` trait for the partial decoded object.
+  decode_generics: Generics,
+  /// The trait type which applies the cooresponding generics to the `Decode` trait.
+  #[debug(skip)]
+  applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   flavor: FlavorAttribute,
   unknown_buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
@@ -135,6 +146,12 @@ impl<M, F> ConcreteObject<M, F> {
   #[inline]
   pub const fn generics(&self) -> &Generics {
     &self.generics
+  }
+
+  /// Returns the decode generics of the concrete object.
+  #[inline]
+  pub const fn decode_generics(&self) -> &Generics {
+    &self.decode_generics
   }
 
   /// Returns the flavor type of the concrete object.
@@ -269,6 +286,10 @@ impl<M, F> ConcreteObject<M, F> {
     })
   }
 
+  pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
+    (self.applied_decode_trait)(quote! { #ty })
+  }
+
   pub(super) fn from_ast(object: ConcreteObjectAst<M, F>) -> darling::Result<Self>
   where
     M: Clone,
@@ -277,12 +298,36 @@ impl<M, F> ConcreteObject<M, F> {
     let mut fields = object.fields().to_vec();
     fields.sort_by_key(|f| f.tag().unwrap_or(u32::MAX));
 
+    let path_to_grost = object.path_to_grost();
+    let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
     let fields = fields
       .iter()
       .cloned()
       .enumerate()
       .map(|(idx, f)| ConcreteField::from_ast(&object, idx, f))
       .collect::<darling::Result<Vec<_>>>()?;
+
+    fields.iter().try_for_each(|f| {
+      if let ConcreteField::Tagged(f) = f {
+        if !f.type_params_usages().is_empty() || !f.lifetime_params_usages().is_empty() {
+          let field_ty = f.ty();
+          let lt = &object.lifetime_param().lifetime;
+          let ub = &object.unknown_buffer_param().ident;
+          let flavor_ty = object.flavor().ty();
+          let wf = f.wire_format();
+          decode_constraints.push(syn::parse2(quote! {
+            #field_ty: #path_to_grost::__private::Decode<
+              #lt,
+              #flavor_ty,
+              #wf,
+              #field_ty,
+              #ub
+            >
+          })?);
+        }
+      }
+      darling::Result::Ok(())
+    })?;
 
     let partial = ConcretePartialObject::from_ast(&object, &fields)?;
     let partial_decoded = ConcretePartialDecodedObject::from_ast(&object, &fields)?;
@@ -294,6 +339,7 @@ impl<M, F> ConcreteObject<M, F> {
     let ub = &object.unknown_buffer_param().ident;
     let flavor_ty = object.flavor().ty();
     let wf = object.flavor().wire_format();
+    let generics = object.generics();
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
@@ -303,6 +349,52 @@ impl<M, F> ConcreteObject<M, F> {
       schema_name: object.schema_name().to_string(),
       vis: object.vis().clone(),
       ty: object.ty().clone(),
+      applied_decode_trait: {
+        let path_to_grost = path_to_grost.clone();
+        let flavor_ty = flavor_ty.clone();
+        let wf = wf.clone();
+        let lt = lt.clone();
+        let ub = ub.clone();
+        Arc::new(move |ty| {
+          syn::parse2(quote! {
+            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #ub>
+          })
+        })
+      },
+      decode_generics: {
+        let lt = object.lifetime_param().clone();
+        let mut output = Generics::default();
+        output
+          .params
+          .extend(generics.lifetimes().cloned().map(GenericParam::from));
+        output.params.push(GenericParam::Lifetime(lt.clone()));
+        output
+          .params
+          .extend(generics.type_params().cloned().map(GenericParam::from));
+        output
+          .params
+          .push(GenericParam::Type(object.unknown_buffer_param().clone()));
+        output
+          .params
+          .extend(generics.const_params().cloned().map(GenericParam::from));
+        output.where_clause = generics.where_clause.clone();
+        output
+          .make_where_clause()
+          .predicates
+          .extend(decode_constraints);
+
+        generics
+          .lifetimes()
+          .filter(|lt| lt.lifetime.ident.ne("static"))
+          .try_for_each(|ltp| {
+            let ident = &ltp.lifetime;
+            syn::parse2(quote! {
+              #lt: #ident
+            })
+            .map(|pred| output.make_where_clause().predicates.push(pred))
+          })?;
+        output
+      },
       decoded_state_type: syn::parse2(quote! {
         #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #ub>
       })?,

@@ -85,12 +85,12 @@ pub enum Error {
     identifier: Identifier,
   },
   /// Returned when the buffer contains duplicate fields for the same tag in a message.
-  #[error("duplicate field {field} with identifier{identifier} in {ty}")]
+  #[error("duplicate field {name} with identifier{identifier} in {ty}")]
   DuplicateField {
+    /// The name of the field.
+    name: &'static str,
     /// The type of the message.
     ty: &'static str,
-    /// The name of the field.
-    field: &'static str,
     /// The identifier of the field.
     identifier: Identifier,
   },
@@ -267,13 +267,13 @@ impl Error {
   /// Creates a new duplicate field decoding error.
   #[inline]
   pub const fn duplicate_field(
+    name: &'static str,
     ty: &'static str,
-    field: &'static str,
     identifier: Identifier,
   ) -> Self {
     Self::DuplicateField {
+      name,
       ty,
-      field,
       identifier,
     }
   }
@@ -363,6 +363,11 @@ impl From<BaseError<Network>> for Error {
         available,
         required,
       },
+      BaseError::DuplicatedField {
+        name,
+        ty,
+        identifier,
+      } => Self::duplicate_field(name, ty, identifier),
       BaseError::UnknownIdentifier { ty, identifier } => Self::unknown_identifier(ty, identifier),
       BaseError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
       BaseError::Custom(cow) => Self::Custom(cow),

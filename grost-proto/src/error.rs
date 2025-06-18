@@ -82,6 +82,17 @@ pub enum Error<F: Flavor + ?Sized> {
     identifier: F::Identifier,
   },
 
+  /// Returned when the field is duplicated in the message.
+  #[display("duplicated field {name} with identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = F::NAME)]
+  DuplicatedField {
+    /// The field name.
+    name: &'static str,
+    /// The type of the message.
+    ty: &'static str,
+    /// The identifier of the field.
+    identifier: F::Identifier,
+  },
+
   /// Returned when fail to decode the length-delimited
   #[display("length-delimited overflow the maximum value of u32")]
   LengthDelimitedOverflow,
@@ -137,6 +148,20 @@ impl<F: Flavor + ?Sized> Error<F> {
   #[inline]
   pub const fn identifier_mismatch(expect: F::Identifier, actual: F::Identifier) -> Self {
     Self::IdentifierMismatch { expect, actual }
+  }
+
+  /// Creates a new duplicated field error.
+  #[inline]
+  pub const fn duplicated_field(
+    name: &'static str,
+    ty: &'static str,
+    identifier: F::Identifier,
+  ) -> Self {
+    Self::DuplicatedField {
+      name,
+      ty,
+      identifier,
+    }
   }
 
   /// Creates a new encoding error from a [`varing::EncodeError`].

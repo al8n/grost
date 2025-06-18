@@ -2,7 +2,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Network, WireFormat,
-    network::{Borrowed, Context, Error, LengthDelimited, Packed, WireType},
+    network::{Borrowed, Context, Error, LengthDelimited, Packed, PackedDecoder, WireType},
   },
 };
 
@@ -110,6 +110,34 @@ macro_rules! encode {
   };
 }
 
+macro_rules! decode {
+  () => {
+    fn decode<B>(
+      context: &'de <Network as $crate::flavors::Flavor>::Context,
+      src: B,
+    ) -> Result<(usize, PackedDecoder<'de, T, UB, W>), <Network as $crate::flavors::Flavor>::Error>
+    where
+      PackedDecoder<'de, T, UB, W>: Sized + 'de,
+      B: $crate::buffer::ReadBuf<'de>,
+      UB: $crate::buffer::Buffer<<Network as $crate::flavors::Flavor>::Unknown<B>> + 'de,
+    {
+      let src = src.as_bytes();
+      let buf_len = src.len();
+      if buf_len == 0 {
+        return Err(Error::buffer_underflow());
+      }
+
+      let (len, data_len) = varing::decode_u32_varint(src)?;
+      let total = len + data_len as usize;
+      if total > buf_len {
+        return Err(Error::buffer_underflow());
+      }
+
+      Ok((total, PackedDecoder::new(context, src, len)))
+    }
+  };
+}
+
 macro_rules! list {
   (@flatten_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
@@ -129,10 +157,46 @@ macro_rules! list {
       }
     )*
   };
-  (@decoded_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@decoded_state(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, T, W, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, W, __GROST_UNKNOWN_BUFFER__>> for $ty
+      impl<'a, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, LengthDelimited, __GROST_UNKNOWN_BUFFER__>> for $ty
+      {
+        type Input = &'a [u8];
+        type Output = &'a [u8];
+      }
+    )*
+  };
+  (@decoded_state(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      #[allow(non_camel_case_types)]
+      impl<'a, T, W, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+        $crate::__private::convert::Decoded<
+          'a,
+          $crate::__private::flavors::Network,
+          Packed<W>,
+          __GROST_UNKNOWN_BUFFER__,
+        >
+      > for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+      {
+        type Input = &'a [u8];
+        type Output = $crate::__private::flavors::network::PackedDecoder<'a, T, __GROST_UNKNOWN_BUFFER__, W>;
+      }
+    )*
+  };
+  (@decoded_state(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      #[allow(non_camel_case_types)]
+      impl<'a, T, W, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+        $crate::__private::convert::Decoded<
+          'a,
+          $crate::__private::flavors::Network,
+          Borrowed<'a, Packed<W>>,
+          __GROST_UNKNOWN_BUFFER__,
+        >
+      > for $ty
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
@@ -271,6 +335,85 @@ macro_rules! list {
       }
     )*
   };
+  (@decode_to_packed_decoder $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<'de, T, W, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Packed<W>, PackedDecoder<'de, T, UB, W>, UB> for $ty
+      where
+        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'de, $crate::__private::flavors::Network, W, UB>, Input = &'de [u8]>
+          + $crate::__private::Decode<'de, $crate::__private::flavors::Network, W, T::Output, UB>,
+        T::Output: ::core::marker::Sized,
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'de,
+      {
+        decode!();
+      }
+    )*
+  };
+  (@decode_to_packed_decoder(try_from_bytes) $(
+    $(:< $($tg:ident:$t:path),+$(,)? >:)?
+    $ty:ty
+    $([ $(const $g:ident: usize),+$(,)? ])?
+    { $try_from:expr }
+  ),+$(,)?) => {
+    $(
+      impl<'de, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, Self, UB> for $ty {
+        fn decode<B>(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::network::Error>
+        where
+          Self: ::core::marker::Sized + 'de,
+          B: $crate::__private::buffer::ReadBuf<'de>,
+          UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
+        {
+          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de [::core::primitive::u8], UB>>::decode(context, src)
+            .and_then(|(read, bytes)| {
+              ($try_from)(bytes)
+                .map(|value| (read, value))
+                .map_err(Into::into)
+            })
+        }
+      }
+
+      impl<'de, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, &'de [u8], UB> for $ty {
+        fn decode<B>(context: &'de Context, src: B) -> ::core::result::Result<(usize, &'de [u8]), $crate::__private::flavors::network::Error>
+        where
+          Self: ::core::marker::Sized,
+          B: $crate::__private::buffer::ReadBuf<'de>,
+          UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
+        {
+          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de [::core::primitive::u8], UB>>::decode(context, src)
+        }
+      }
+    )*
+  };
+  (@decode_to_packed_decoder(from_bytes) $(
+    $(:< $($tg:ident:$t:path),+$(,)? >:)?
+    $ty:ty
+    $([ $(const $g:ident: usize),+$(,)? ])?
+    { $from:expr }
+  ),+$(,)?) => {
+    $(
+      impl<'de, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, Self, UB> for $ty {
+        fn decode<B>(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::network::Error>
+        where
+          Self: ::core::marker::Sized + 'de,
+          B: $crate::__private::buffer::ReadBuf<'de>,
+          UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
+        {
+          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de [::core::primitive::u8], UB>>::decode(context, src)
+            .map(|(read, bytes)| (read, ($from)(bytes)))
+        }
+      }
+
+      impl<'de, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, &'de [u8], UB> for $ty {
+        fn decode<B>(context: &'de Context, src: B) -> ::core::result::Result<(usize, &'de [u8]), $crate::__private::flavors::network::Error>
+        where
+          Self: ::core::marker::Sized,
+          B: $crate::__private::buffer::ReadBuf<'de>,
+          UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
+        {
+          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de [::core::primitive::u8], UB>>::decode(context, src)
+        }
+      }
+    )*
+  };
   (@encode_as_slice $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>> for $ty
@@ -348,10 +491,14 @@ macro_rules! list {
 }
 
 list!(@flatten_state [T; N] [const N: usize], [T]);
-list!(@decoded_state [T; N] [const N: usize], [T]);
+list!(@decoded_state(bytes) [u8; N] [const N: usize], [u8]);
+list!(@decoded_state(packed) [T; N] [const N: usize], [T]);
+list!(@decoded_state(borrow) [T; N] [const N: usize], [T]);
 list!(@identity_transform [T; N] [const N: usize]);
 list!(@default_wire_format [T; N] [const N: usize], [T]);
 list!(@selectable [T; N] [const N: usize], [T]);
+list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
+list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Network, N>()) });
 list!(
   @encode_as_slice [T; N] [const N: usize]
 );
@@ -546,11 +693,17 @@ const _: () = {
   use std::vec::Vec;
 
   list!(@flatten_state Vec<T>);
-  list!(@decoded_state Vec<T>);
+  list!(@decoded_state(bytes) Vec<u8>);
+  list!(@decoded_state(packed) Vec<T>);
+  list!(@decoded_state(borrow) Vec<T>);
   list!(@default_wire_format Vec<T>);
   list!(@identity_transform Vec<T>);
   list!(@packed_transform Vec<T>);
   list!(@selectable Vec<T>);
+  list!(@decode_to_packed_decoder Vec<T>);
+  list!(@decode_to_packed_decoder(from_bytes) Vec<u8> {
+    Vec::from
+  });
   list!(
     @encode_as_slice Vec<T>
   );
@@ -564,11 +717,21 @@ const _: () = {
   use smallvec_1::SmallVec;
 
   list!(@flatten_state SmallVec<[T; N]> [const N: usize]);
-  list!(@decoded_state SmallVec<[T; N]> [const N: usize]);
+  list!(@decoded_state(bytes) SmallVec<[u8; N]> [const N: usize]);
+  list!(@decoded_state(packed) SmallVec<[T; N]> [const N: usize]);
+  list!(@decoded_state(borrow) SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
   list!(@packed_transform SmallVec<[T; N]> [const N: usize]);
   list!(@selectable SmallVec<[T; N]> [const N: usize]);
+  list!(
+    @decode_to_packed_decoder SmallVec<[T; N]> [const N: usize]
+  );
+  list!(
+    @decode_to_packed_decoder(from_bytes) SmallVec<[u8; N]> [const N: usize] {
+      SmallVec::from
+    }
+  );
   list!(
     @encode_as_slice SmallVec<[T; N]> [const N: usize]
   );
@@ -582,11 +745,21 @@ const _: () = {
   use arrayvec_0_7::ArrayVec;
 
   list!(@flatten_state ArrayVec<T, N> [const N: usize]);
-  list!(@decoded_state ArrayVec<T, N> [const N: usize]);
+  list!(@decoded_state(bytes) ArrayVec<u8, N> [const N: usize]);
+  list!(@decoded_state(packed) ArrayVec<T, N> [const N: usize]);
+  list!(@decoded_state(borrow) ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
   list!(@packed_transform ArrayVec<T, N> [const N: usize]);
   list!(@selectable ArrayVec<T, N> [const N: usize]);
+  list!(
+    @decode_to_packed_decoder ArrayVec<T, N> [const N: usize]
+  );
+  list!(
+    @decode_to_packed_decoder(try_from_bytes) ArrayVec<u8, N> [const N: usize] {
+      |bytes| ArrayVec::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Network, N>())
+    }
+  );
   list!(
     @encode_as_slice ArrayVec<T, N> [const N: usize]
   );
@@ -599,12 +772,41 @@ const _: () = {
 const _: () = {
   use tinyvec_1::ArrayVec;
 
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  pub fn larger_than_array_capacity<A>() -> Error
+  where
+    A: tinyvec_1::Array<Item = u8>,
+  {
+    Error::custom("cannot decode array with length greater than the capacity")
+  }
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  pub fn larger_than_array_capacity<A>() -> Error
+  where
+    A: tinyvec_1::Array<Item = u8>,
+  {
+    Error::custom(std::format!(
+      "cannot decode array with length greater than the capacity {}",
+      A::CAPACITY
+    ))
+  }
+
   list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@decoded_state(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
+  list!(@decoded_state(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@decoded_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(
+    @decode_to_packed_decoder:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
+  );
+  list!(
+    @decode_to_packed_decoder(try_from_bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A> {
+      |bytes| ArrayVec::try_from(bytes).map_err(|_| larger_than_array_capacity::<A>())
+    }
+  );
   list!(
     @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
   );
@@ -617,11 +819,21 @@ const _: () = {
     use tinyvec_1::TinyVec;
 
     list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@decoded_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@decoded_state(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
+    list!(@decoded_state(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@decoded_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(
+      @decode_to_packed_decoder:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
+    );
+    list!(
+      @decode_to_packed_decoder(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A> {
+        TinyVec::from
+      }
+    );
     list!(
       @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
     );

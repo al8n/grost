@@ -4,6 +4,7 @@ use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma}
 pub struct ConcretePartialDecodedField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
+  pub(super) decode_trait_type: Type,
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
   pub(super) copy: bool,
@@ -20,6 +21,12 @@ impl ConcretePartialDecodedField {
   #[inline]
   pub const fn optional_type(&self) -> &Type {
     &self.optional_type
+  }
+
+  /// Returns the field decode trait type for this partial decoded field.
+  #[inline]
+  pub const fn decode_trait_type(&self) -> &Type {
+    &self.decode_trait_type
   }
 
   /// Returns the constraints of the partial decoded field.

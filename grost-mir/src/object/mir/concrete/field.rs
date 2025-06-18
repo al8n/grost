@@ -5,7 +5,7 @@ use quote::quote;
 
 use crate::{
   object::{FieldIndex, Label},
-  utils::Invokable,
+  utils::{Invokable, grost_decode_trait_lifetime},
 };
 
 use super::{
@@ -275,6 +275,12 @@ impl<F> ConcreteTaggedField<F> {
       }
     };
 
+    let flavor_ty = object.flavor().ty();
+    let decode_lt = grost_decode_trait_lifetime();
+    let decode_trait_type = syn::parse2(quote! {
+      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #unknown_buffer>
+    })?;
+
     let optional_partial_decoded_type = syn::parse2(quote! {
       ::core::option::Option<#partial_decoded_ty>
     })?;
@@ -296,6 +302,7 @@ impl<F> ConcreteTaggedField<F> {
     let partial_decoded = ConcretePartialDecodedField {
       ty: partial_decoded_ty,
       optional_type: optional_partial_decoded_type,
+      decode_trait_type,
       attrs: field.partial_decoded.attrs,
       constraints: partial_decoded_constraints,
       copy: partial_decoded_copyable,
