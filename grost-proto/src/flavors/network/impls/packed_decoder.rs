@@ -133,11 +133,10 @@ where
   }
 }
 
-impl<'a, T, UB, W, SW> Selectable<Network, SW> for PackedDecoder<'a, T, UB, W>
+impl<'a, T, UB, W> Selectable<Network> for PackedDecoder<'a, T, UB, W>
 where
-  T: ?Sized + Selectable<Network, W>,
+  T: ?Sized + Selectable<Network>,
   W: WireFormat<Network> + 'a,
-  SW: WireFormat<Network> + 'a,
   UB: ?Sized,
 {
   type Selector = T::Selector;

@@ -1,8 +1,6 @@
-use crate::{flavors::FlavorError, selection::Selector};
-
 use super::{
   error::Error,
-  flavors::{Flavor, WireFormat},
+  flavors::{Flavor, FlavorError, WireFormat},
   selection::Selectable,
 };
 
@@ -116,7 +114,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 /// or field projections in protocols with optional fields.
 ///
 /// This trait complements [`Encode`] by offering more control over which fields are included.
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F, W> {
+pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -440,18 +438,17 @@ macro_rules! deref_encode_impl {
 macro_rules! deref_partial_encode_impl {
   ($($ty:ty),+$(,)?) => {{
     $(
-      impl<T, F, W> Selectable<F, W> for $ty
+      impl<T, F> Selectable<F> for $ty
       where
-        T: ?Sized + Selectable<F, W>,
+        T: ?Sized + Selectable<F>,
         F: Flavor + ?Sized,
-        W: ?Sized,
       {
         type Selector = T::Selector;
       }
 
       impl<F, W, T> PartialEncode<F, W> for $ty
       where
-        T: PartialEncode<F, W> + Selectable<F, W> + ?Sized,
+        T: PartialEncode<F, W> + Selectable<F> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {

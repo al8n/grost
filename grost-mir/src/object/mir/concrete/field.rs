@@ -225,7 +225,6 @@ impl<F> ConcreteTaggedField<F> {
     let selectable = syn::parse2(quote! {
       #path_to_grost::__private::selection::Selectable<
         #flavor_type,
-        #wf,
       >
     })?;
     let selector_type = syn::parse2(quote! {

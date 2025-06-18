@@ -4,7 +4,7 @@ use std::prelude::rust_2024::*;
 #[macro_use]
 extern crate std;
 use grost::{
-  Decode, PartialDecode,
+  Decode,
   flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
@@ -181,34 +181,22 @@ impl ::core::fmt::Debug for UserIndex {
 #[allow(non_camel_case_types, clippy::type_complexity)]
 pub struct UserSelector<I: Default>
 where
-  I: ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      grost::flavors::network::LengthDelimited,
-    >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
 {
-  id: <I as ::grost::__private::selection::Selectable<
-    ::grost::__private::flavors::Network,
-    grost::flavors::network::LengthDelimited,
-  >>::Selector,
-  name: <String as ::grost::__private::selection::Selectable<
-    ::grost::__private::flavors::Network,
-    <String as ::grost::__private::flavors::DefaultWireFormat<
-      ::grost::__private::flavors::Network,
-    >>::Format,
-  >>::Selector,
-  age:
-    <u8 as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      <u8 as ::grost::__private::flavors::DefaultWireFormat<
+    id: <I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector,
-  emails: <Vec<String> as ::grost::__private::selection::Selectable<
-    ::grost::__private::flavors::Network,
-    <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-      ::grost::__private::flavors::Network,
-    >>::Format,
-  >>::Selector,
+    name: <String as ::grost::__private::selection::Selectable<
+        ::grost::__private::flavors::Network,
+    >>::Selector,
+    age: <u8 as ::grost::__private::selection::Selectable<
+        ::grost::__private::flavors::Network,
+    >>::Selector,
+    emails: <Vec<
+        String,
+    > as ::grost::__private::selection::Selectable<
+        ::grost::__private::flavors::Network,
+    >>::Selector,
 }
 /// An iterator over the selected fields of the [`UserSelector`]
 #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -217,10 +205,7 @@ pub struct UserSelectorIter<
   I: Default,
   const __GROST_SELECTED__: ::core::primitive::bool = true,
 > where
-  I: ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      grost::flavors::network::LengthDelimited,
-    >,
+  I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
 {
   selector: &'__grost_lifetime__ UserSelector<I>,
   index: ::core::option::Option<UserIndex>,
@@ -2605,13 +2590,14 @@ const _: () = {
     type Reflection = <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
       ::grost::__private::flavors::Network,
     >>::Format;
-    const REFLECTION: &'static Self::Reflection = &{
-      <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &'static Self::Reflection =
+      &{
+        <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::SELF
-    };
+      };
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -2790,13 +2776,14 @@ const _: () = {
   {
     type Reflection =
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::WireType;
-    const REFLECTION: &Self::Reflection = &{
-      <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &Self::Reflection =
+      &{
+        <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::WIRE_TYPE
-    };
+      };
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -3126,44 +3113,31 @@ const _: () = {
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
-  impl<I: Default>
-    ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-    > for User<I>
+  impl<I: Default> ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
+    for User<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     type Selector = UserSelector<I>;
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-    > for PartialUser<I, __GROST_UNKNOWN_BUFFER__>
+    ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
+    for PartialUser<I, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<::grost::__private::convert::Flatten>,
     <I as ::grost::__private::convert::State<::grost::__private::convert::Flatten>>::Output:
       ::core::marker::Sized,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     type Selector = UserSelector<I>;
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-    > for PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
+    ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
+    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -3181,10 +3155,7 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
       >,
     >>::Output: ::core::marker::Sized,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     type Selector = UserSelector<I>;
   }
@@ -3192,10 +3163,7 @@ const _: () = {
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::fmt::Debug for UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     fn fmt(
       &self,
@@ -3213,10 +3181,7 @@ const _: () = {
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::cmp::PartialEq for UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     fn eq(&self, other: &Self) -> ::core::primitive::bool {
       self.id == other.id
@@ -3228,20 +3193,14 @@ const _: () = {
   #[automatically_derived]
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::cmp::Eq for UserSelector<I> where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
   {
   }
   #[automatically_derived]
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::hash::Hash for UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
       self.id.hash(state);
@@ -3254,10 +3213,7 @@ const _: () = {
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::clone::Clone for UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     fn clone(&self) -> Self {
       Self {
@@ -3271,44 +3227,31 @@ const _: () = {
   #[automatically_derived]
   #[allow(non_camel_case_types)]
   impl<I: Default> ::core::marker::Copy for UserSelector<I>
-  where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
-    <I as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      grost::flavors::network::LengthDelimited,
-    >>::Selector: ::core::marker::Copy,
-    <String as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      <String as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
-    >>::Selector: ::core::marker::Copy,
-    <u8 as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      <u8 as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
-    >>::Selector: ::core::marker::Copy,
-    <Vec<String> as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
-    >>::Selector: ::core::marker::Copy,
-  {
-  }
+    where
+        I: ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+        >,
+        <I as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+        >>::Selector: ::core::marker::Copy,
+        <String as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+        >>::Selector: ::core::marker::Copy,
+        <u8 as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+        >>::Selector: ::core::marker::Copy,
+        <Vec<
+            String,
+        > as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+        >>::Selector: ::core::marker::Copy,
+    {}
   #[automatically_derived]
   #[allow(non_camel_case_types)]
   impl<I: Default> ::grost::__private::selection::Selector<::grost::__private::flavors::Network>
     for UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     const ALL: Self = Self::all();
     const DEFAULT: Self = Self::new();
@@ -3321,32 +3264,22 @@ const _: () = {
     }
     fn flip(&mut self) -> &mut Self {
       <<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::flip(&mut self.id);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::flip(&mut self.id);
       <<String as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::flip(&mut self.name);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::flip(&mut self.name);
       <<u8 as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::flip(&mut self.age);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::flip(&mut self.age);
       <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::flip(&mut self.emails);
@@ -3354,32 +3287,22 @@ const _: () = {
     }
     fn merge(&mut self, other: Self) -> &mut Self {
       <<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::merge(&mut self.id, other.id);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::merge(&mut self.id, other.id);
       <<String as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::merge(&mut self.name, other.name);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::merge(&mut self.name, other.name);
       <<u8 as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::merge(&mut self.age, other.age);
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::merge(&mut self.age, other.age);
       <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::merge(&mut self.emails, other.emails);
@@ -3389,10 +3312,7 @@ const _: () = {
   #[automatically_derived]
   impl<I: Default> UserSelector<I>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     /// Returns a selector with the default values.
     #[inline]
@@ -3400,31 +3320,21 @@ const _: () = {
       Self {
         id: <<I as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::DEFAULT,
         name: <<String as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <String as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::DEFAULT,
         age: <<u8 as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <u8 as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::DEFAULT,
         emails: <<Vec<String> as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::DEFAULT,
@@ -3436,31 +3346,21 @@ const _: () = {
       Self {
         id: <<I as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::NONE,
         name: <<String as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <String as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::NONE,
         age: <<u8 as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <u8 as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::NONE,
         emails: <<Vec<String> as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::NONE,
@@ -3472,31 +3372,21 @@ const _: () = {
       Self {
         id: <<I as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::ALL,
         name: <<String as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <String as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::ALL,
         age: <<u8 as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <u8 as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::ALL,
         emails: <<Vec<String> as ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
-          <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
         >>::Selector as ::grost::__private::selection::Selector<
           ::grost::__private::flavors::Network,
         >>::ALL,
@@ -3506,69 +3396,53 @@ const _: () = {
     #[inline]
     pub fn is_empty(&self) -> ::core::primitive::bool {
       <<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.id)
-        && <<String as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <String as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_empty(&self.name)
-        && <<u8 as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <u8 as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_empty(&self.age)
-        && <<Vec<String> as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_empty(&self.emails)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.id)
+                && <<String as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_empty(&self.name)
+                && <<u8 as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_empty(&self.age)
+                && <<Vec<
+                    String,
+                > as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_empty(&self.emails)
     }
     /// Returns `true` if the selector selects all.
     #[inline]
     pub fn is_all(&self) -> ::core::primitive::bool {
       <<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_all(&self.id)
-        && <<String as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <String as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_all(&self.name)
-        && <<u8 as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <u8 as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_all(&self.age)
-        && <<Vec<String> as ::grost::__private::selection::Selectable<
-          ::grost::__private::flavors::Network,
-          <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-            ::grost::__private::flavors::Network,
-          >>::Format,
-        >>::Selector as ::grost::__private::selection::Selector<
-          ::grost::__private::flavors::Network,
-        >>::is_all(&self.emails)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_all(&self.id)
+                && <<String as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_all(&self.name)
+                && <<u8 as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_all(&self.age)
+                && <<Vec<
+                    String,
+                > as ::grost::__private::selection::Selectable<
+                    ::grost::__private::flavors::Network,
+                >>::Selector as ::grost::__private::selection::Selector<
+                    ::grost::__private::flavors::Network,
+                >>::is_all(&self.emails)
     }
     /// Returns the number of selected fields.
     #[inline]
@@ -3645,7 +3519,6 @@ const _: () = {
     pub fn select_id(&mut self) -> &mut Self {
       self.id = <<I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3656,7 +3529,6 @@ const _: () = {
     pub fn unselect_id(&mut self) -> &mut Self {
       self.id = <<I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3668,7 +3540,6 @@ const _: () = {
       &mut self,
       value: <I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
       >>::Selector,
     ) -> &mut Self {
       self.id = value;
@@ -3679,31 +3550,28 @@ const _: () = {
     pub fn maybe_id(
       mut self,
       val: <I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector,
+                ::grost::__private::flavors::Network,
+            >>::Selector,
     ) -> Self {
       self.id = val;
       self
     }
     /// Get a reference to the selector of `User.id` field
     #[inline]
-    pub const fn id_ref(
-      &self,
-    ) -> &<I as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      grost::flavors::network::LengthDelimited,
-    >>::Selector {
+        pub const fn id_ref(
+            &self,
+        ) -> &<I as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+    >>::Selector{
       &self.id
     }
     /// Get a mutable reference to the selector of `User.id` field
     #[inline]
-    pub const fn id_mut(
-      &mut self,
-    ) -> &mut <I as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      grost::flavors::network::LengthDelimited,
-    >>::Selector {
+        pub const fn id_mut(
+            &mut self,
+        ) -> &mut <I as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+    >>::Selector{
       &mut self.id
     }
     /// Set the `User.id` field
@@ -3711,7 +3579,6 @@ const _: () = {
     pub fn with_id(mut self) -> Self {
       self.id = <<I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3722,7 +3589,6 @@ const _: () = {
     pub fn without_id(mut self) -> Self {
       self.id = <<I as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3732,30 +3598,25 @@ const _: () = {
     #[inline]
     pub fn is_id_selected(&self) -> ::core::primitive::bool {
       !<<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.id)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.id)
     }
     /// Returns `true` if the `User.id` field is unselected
     #[inline]
     pub fn is_id_unselected(&self) -> ::core::primitive::bool {
       <<I as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.id)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.id)
     }
     /// Select the `User.name` field
     #[inline]
     pub fn select_name(&mut self) -> &mut Self {
       self.name = <<String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3766,9 +3627,6 @@ const _: () = {
     pub fn unselect_name(&mut self) -> &mut Self {
       self.name = <<String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3780,9 +3638,6 @@ const _: () = {
       &mut self,
       value: <String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> &mut Self {
       self.name = value;
@@ -3794,9 +3649,6 @@ const _: () = {
       mut self,
       val: <String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> Self {
       self.name = val;
@@ -3808,9 +3660,6 @@ const _: () = {
       &self,
     ) -> &<String as ::grost::__private::selection::Selectable<
       ::grost::__private::flavors::Network,
-      <String as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector {
       &self.name
     }
@@ -3820,9 +3669,6 @@ const _: () = {
       &mut self,
     ) -> &mut <String as ::grost::__private::selection::Selectable<
       ::grost::__private::flavors::Network,
-      <String as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector {
       &mut self.name
     }
@@ -3831,9 +3677,6 @@ const _: () = {
     pub fn with_name(mut self) -> Self {
       self.name = <<String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3844,9 +3687,6 @@ const _: () = {
     pub fn without_name(mut self) -> Self {
       self.name = <<String as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3856,34 +3696,25 @@ const _: () = {
     #[inline]
     pub fn is_name_selected(&self) -> ::core::primitive::bool {
       !<<String as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.name)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.name)
     }
     /// Returns `true` if the `User.name` field is unselected
     #[inline]
     pub fn is_name_unselected(&self) -> ::core::primitive::bool {
       <<String as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <String as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.name)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.name)
     }
     /// Select the `User.age` field
     #[inline]
     pub fn select_age(&mut self) -> &mut Self {
       self.age = <<u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3894,9 +3725,6 @@ const _: () = {
     pub fn unselect_age(&mut self) -> &mut Self {
       self.age = <<u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3908,9 +3736,6 @@ const _: () = {
       &mut self,
       value: <u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> &mut Self {
       self.age = value;
@@ -3922,9 +3747,6 @@ const _: () = {
       mut self,
       val: <u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> Self {
       self.age = val;
@@ -3932,14 +3754,11 @@ const _: () = {
     }
     /// Get a reference to the selector of `User.age` field
     #[inline]
-    pub const fn age_ref(
-      &self,
-    ) -> &<u8 as ::grost::__private::selection::Selectable<
-      ::grost::__private::flavors::Network,
-      <u8 as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
-    >>::Selector {
+        pub const fn age_ref(
+            &self,
+        ) -> &<u8 as ::grost::__private::selection::Selectable<
+            ::grost::__private::flavors::Network,
+    >>::Selector{
       &self.age
     }
     /// Get a mutable reference to the selector of `User.age` field
@@ -3948,9 +3767,6 @@ const _: () = {
       &mut self,
     ) -> &mut <u8 as ::grost::__private::selection::Selectable<
       ::grost::__private::flavors::Network,
-      <u8 as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector {
       &mut self.age
     }
@@ -3959,9 +3775,6 @@ const _: () = {
     pub fn with_age(mut self) -> Self {
       self.age = <<u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -3972,9 +3785,6 @@ const _: () = {
     pub fn without_age(mut self) -> Self {
       self.age = <<u8 as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -3984,34 +3794,25 @@ const _: () = {
     #[inline]
     pub fn is_age_selected(&self) -> ::core::primitive::bool {
       !<<u8 as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.age)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.age)
     }
     /// Returns `true` if the `User.age` field is unselected
     #[inline]
     pub fn is_age_unselected(&self) -> ::core::primitive::bool {
       <<u8 as ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        <u8 as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
-      >>::Selector as ::grost::__private::selection::Selector<
-        ::grost::__private::flavors::Network,
-      >>::is_empty(&self.age)
+                ::grost::__private::flavors::Network,
+            >>::Selector as ::grost::__private::selection::Selector<
+                ::grost::__private::flavors::Network,
+            >>::is_empty(&self.age)
     }
     /// Select the `User.emails` field
     #[inline]
     pub fn select_emails(&mut self) -> &mut Self {
       self.emails = <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -4022,9 +3823,6 @@ const _: () = {
     pub fn unselect_emails(&mut self) -> &mut Self {
       self.emails = <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -4036,9 +3834,6 @@ const _: () = {
       &mut self,
       value: <Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> &mut Self {
       self.emails = value;
@@ -4050,9 +3845,6 @@ const _: () = {
       mut self,
       val: <Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector,
     ) -> Self {
       self.emails = val;
@@ -4064,9 +3856,6 @@ const _: () = {
       &self,
     ) -> &<Vec<String> as ::grost::__private::selection::Selectable<
       ::grost::__private::flavors::Network,
-      <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector {
       &self.emails
     }
@@ -4076,9 +3865,6 @@ const _: () = {
       &mut self,
     ) -> &mut <Vec<String> as ::grost::__private::selection::Selectable<
       ::grost::__private::flavors::Network,
-      <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-        ::grost::__private::flavors::Network,
-      >>::Format,
     >>::Selector {
       &mut self.emails
     }
@@ -4087,9 +3873,6 @@ const _: () = {
     pub fn with_emails(mut self) -> Self {
       self.emails = <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::DEFAULT;
@@ -4100,9 +3883,6 @@ const _: () = {
     pub fn without_emails(mut self) -> Self {
       self.emails = <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::NONE;
@@ -4113,9 +3893,6 @@ const _: () = {
     pub fn is_emails_selected(&self) -> ::core::primitive::bool {
       !<<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::is_empty(&self.emails)
@@ -4125,9 +3902,6 @@ const _: () = {
     pub fn is_emails_unselected(&self) -> ::core::primitive::bool {
       <<Vec<String> as ::grost::__private::selection::Selectable<
         ::grost::__private::flavors::Network,
-        <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
-          ::grost::__private::flavors::Network,
-        >>::Format,
       >>::Selector as ::grost::__private::selection::Selector<
         ::grost::__private::flavors::Network,
       >>::is_empty(&self.emails)
@@ -4138,10 +3912,7 @@ const _: () = {
   impl<'__grost_lifetime__, I: Default, const __GROST_SELECTED__: ::core::primitive::bool>
     UserSelectorIter<'__grost_lifetime__, I, __GROST_SELECTED__>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
   {
     #[inline]
     const fn new(
@@ -4171,10 +3942,7 @@ const _: () = {
   impl<'__grost_lifetime__, I: Default, const __GROST_SELECTED__: ::core::primitive::bool>
     ::core::iter::Iterator for UserSelectorIter<'__grost_lifetime__, I, __GROST_SELECTED__>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
     ::grost::__private::reflection::TypeReflection<I>: ::grost::__private::reflection::Reflectable<
         I,
         Reflection = ::grost::__private::reflection::Type,
@@ -4217,10 +3985,7 @@ const _: () = {
   impl<'__grost_lifetime__, I: Default, const __GROST_SELECTED__: ::core::primitive::bool>
     ::core::iter::FusedIterator for UserSelectorIter<'__grost_lifetime__, I, __GROST_SELECTED__>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
     ::grost::__private::reflection::TypeReflection<I>: ::grost::__private::reflection::Reflectable<
         I,
         Reflection = ::grost::__private::reflection::Type,
@@ -4232,10 +3997,7 @@ const _: () = {
   impl<'__grost_lifetime__, I: Default, const __GROST_SELECTED__: ::core::primitive::bool>
     ::core::iter::ExactSizeIterator for UserSelectorIter<'__grost_lifetime__, I, __GROST_SELECTED__>
   where
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
+    I: ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>,
     ::grost::__private::reflection::TypeReflection<I>: ::grost::__private::reflection::Reflectable<
         I,
         Reflection = ::grost::__private::reflection::Type,
@@ -4267,56 +4029,10 @@ const _: () = {
       >,
   {
     fn decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
+      context: &'__grost_lifetime__ <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
       src: __GROST_READ_BUFFER__,
     ) -> ::core::result::Result<
       (::core::primitive::usize, Self),
-      <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
-    >
-    where
-      Self: ::core::marker::Sized + '__grost_lifetime__,
-      __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf<'__grost_lifetime__>,
-      __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
-          <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Unknown<
-            __GROST_READ_BUFFER__,
-          >,
-        > + '__grost_lifetime__,
-    {
-      ::core::panicking::panic("not yet implemented")
-    }
-  }
-  #[automatically_derived]
-  #[allow(non_camel_case_types, clippy::type_complexity)]
-  impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::PartialDecode<
-      '__grost_lifetime__,
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-      Self,
-      __GROST_UNKNOWN_BUFFER__,
-    > for PartialUser<I, __GROST_UNKNOWN_BUFFER__>
-  where
-    I: ::grost::__private::convert::State<::grost::__private::convert::Flatten>,
-    <I as ::grost::__private::convert::State<::grost::__private::convert::Flatten>>::Output:
-      ::core::marker::Sized,
-    I: ::grost::__private::PartialDecode<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        <I as ::grost::__private::convert::State<::grost::__private::convert::Flatten>>::Output,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
-  {
-    fn partial_decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-      src: __GROST_READ_BUFFER__,
-      selector: &UserSelector<I>,
-    ) -> ::core::result::Result<
-      (::core::primitive::usize, ::core::option::Option<Self>),
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
     >
     where
@@ -4377,7 +4093,7 @@ const _: () = {
       ::core::marker::Sized,
   {
     fn decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
+      context: &'__grost_lifetime__ <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
       src: __GROST_READ_BUFFER__,
     ) -> ::core::result::Result<
       (
@@ -4406,90 +4122,6 @@ const _: () = {
                 PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
                 __GROST_UNKNOWN_BUFFER__,
             >>::decode(context, src)
-    }
-  }
-  #[automatically_derived]
-  #[allow(non_camel_case_types, clippy::type_complexity)]
-  impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::PartialDecode<
-      '__grost_lifetime__,
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-      __GROST_UNKNOWN_BUFFER__,
-    > for PartialUser<I, __GROST_UNKNOWN_BUFFER__>
-  where
-    I: ::grost::__private::convert::State<
-        ::grost::__private::convert::Decoded<
-          '__grost_lifetime__,
-          ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
-          __GROST_UNKNOWN_BUFFER__,
-        >,
-      >,
-    <I as ::grost::__private::convert::State<
-      ::grost::__private::convert::Decoded<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    >>::Output: ::core::marker::Sized,
-    I: ::grost::__private::PartialDecode<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        <I as ::grost::__private::convert::State<
-          ::grost::__private::convert::Decoded<
-            '__grost_lifetime__,
-            ::grost::__private::flavors::Network,
-            grost::flavors::network::LengthDelimited,
-            __GROST_UNKNOWN_BUFFER__,
-          >,
-        >>::Output,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
-    I: ::grost::__private::convert::State<::grost::__private::convert::Flatten>,
-    <I as ::grost::__private::convert::State<::grost::__private::convert::Flatten>>::Output:
-      ::core::marker::Sized,
-  {
-    fn partial_decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-      src: __GROST_READ_BUFFER__,
-      selector: &UserSelector<I>,
-    ) -> ::core::result::Result<
-      (
-        ::core::primitive::usize,
-        ::core::option::Option<
-          PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-        >,
-      ),
-      <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
-    >
-    where
-      Self: ::core::marker::Sized + '__grost_lifetime__,
-      __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf<'__grost_lifetime__>,
-      __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
-          <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Unknown<
-            __GROST_READ_BUFFER__,
-          >,
-        > + '__grost_lifetime__,
-    {
-      <PartialDecodedUser<
-                '__grost_lifetime__,
-                I,
-                __GROST_UNKNOWN_BUFFER__,
-            > as ::grost::__private::PartialDecode<
-                '__grost_lifetime__,
-                ::grost::__private::flavors::Network,
-                ::grost::__private::flavors::network::LengthDelimited,
-                PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-                __GROST_UNKNOWN_BUFFER__,
-            >>::partial_decode(context, src, selector)
     }
   }
   #[automatically_derived]
@@ -4535,76 +4167,10 @@ const _: () = {
       >,
   {
     fn decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
+      context: &'__grost_lifetime__ <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
       src: __GROST_READ_BUFFER__,
     ) -> ::core::result::Result<
       (::core::primitive::usize, Self),
-      <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
-    >
-    where
-      Self: ::core::marker::Sized + '__grost_lifetime__,
-      __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf<'__grost_lifetime__>,
-      __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
-          <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Unknown<
-            __GROST_READ_BUFFER__,
-          >,
-        > + '__grost_lifetime__,
-    {
-      ::core::panicking::panic("not yet implemented")
-    }
-  }
-  #[automatically_derived]
-  #[allow(non_camel_case_types, clippy::type_complexity)]
-  impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::PartialDecode<
-      '__grost_lifetime__,
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-      Self,
-      __GROST_UNKNOWN_BUFFER__,
-    > for PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
-  where
-    I: ::grost::__private::convert::State<
-        ::grost::__private::convert::Decoded<
-          '__grost_lifetime__,
-          ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
-          __GROST_UNKNOWN_BUFFER__,
-        >,
-      >,
-    <I as ::grost::__private::convert::State<
-      ::grost::__private::convert::Decoded<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    >>::Output: ::core::marker::Sized,
-    I: ::grost::__private::PartialDecode<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        <I as ::grost::__private::convert::State<
-          ::grost::__private::convert::Decoded<
-            '__grost_lifetime__,
-            ::grost::__private::flavors::Network,
-            grost::flavors::network::LengthDelimited,
-            __GROST_UNKNOWN_BUFFER__,
-          >,
-        >>::Output,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
-  {
-    fn partial_decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-      src: __GROST_READ_BUFFER__,
-      selector: &UserSelector<I>,
-    ) -> ::core::result::Result<
-      (::core::primitive::usize, ::core::option::Option<Self>),
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
     >
     where
@@ -4662,7 +4228,7 @@ const _: () = {
       >,
   {
     fn decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
+      context: &'__grost_lifetime__ <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
       src: __GROST_READ_BUFFER__,
     ) -> ::core::result::Result<
       (
@@ -4696,85 +4262,6 @@ const _: () = {
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
-    ::grost::__private::PartialDecode<
-      '__grost_lifetime__,
-      ::grost::__private::flavors::Network,
-      ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-      __GROST_UNKNOWN_BUFFER__,
-    > for User<I>
-  where
-    I: ::grost::__private::convert::State<
-        ::grost::__private::convert::Decoded<
-          '__grost_lifetime__,
-          ::grost::__private::flavors::Network,
-          grost::flavors::network::LengthDelimited,
-          __GROST_UNKNOWN_BUFFER__,
-        >,
-      >,
-    <I as ::grost::__private::convert::State<
-      ::grost::__private::convert::Decoded<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    >>::Output: ::core::marker::Sized,
-    I: ::grost::__private::PartialDecode<
-        '__grost_lifetime__,
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-        <I as ::grost::__private::convert::State<
-          ::grost::__private::convert::Decoded<
-            '__grost_lifetime__,
-            ::grost::__private::flavors::Network,
-            grost::flavors::network::LengthDelimited,
-            __GROST_UNKNOWN_BUFFER__,
-          >,
-        >>::Output,
-        __GROST_UNKNOWN_BUFFER__,
-      >,
-    I: ::grost::__private::selection::Selectable<
-        ::grost::__private::flavors::Network,
-        grost::flavors::network::LengthDelimited,
-      >,
-  {
-    fn partial_decode<__GROST_READ_BUFFER__>(
-      context: &<::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
-      src: __GROST_READ_BUFFER__,
-      selector: &UserSelector<I>,
-    ) -> ::core::result::Result<
-      (
-        ::core::primitive::usize,
-        ::core::option::Option<
-          PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-        >,
-      ),
-      <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
-    >
-    where
-      Self: ::core::marker::Sized + '__grost_lifetime__,
-      __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf<'__grost_lifetime__>,
-      __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
-          <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Unknown<
-            __GROST_READ_BUFFER__,
-          >,
-        > + '__grost_lifetime__,
-    {
-      <PartialDecodedUser<
-                '__grost_lifetime__,
-                I,
-                __GROST_UNKNOWN_BUFFER__,
-            > as ::grost::__private::PartialDecode<
-                '__grost_lifetime__,
-                ::grost::__private::flavors::Network,
-                ::grost::__private::flavors::network::LengthDelimited,
-                PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>,
-                __GROST_UNKNOWN_BUFFER__,
-            >>::partial_decode(context, src, selector)
-    }
-  }
-  impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
     ::grost::__private::convert::State<
       ::grost::__private::convert::Decoded<
         '__grost_lifetime__,
@@ -4804,6 +4291,8 @@ const _: () = {
     type Input = &'__grost_lifetime__ [::core::primitive::u8];
     type Output = PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>;
   }
+  #[automatically_derived]
+  #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
     ::grost::__private::convert::State<
       ::grost::__private::convert::Decoded<
@@ -4837,6 +4326,8 @@ const _: () = {
     type Input = &'__grost_lifetime__ [::core::primitive::u8];
     type Output = PartialDecodedUser<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>;
   }
+  #[automatically_derived]
+  #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_UNKNOWN_BUFFER__>
     ::grost::__private::convert::State<
       ::grost::__private::convert::Decoded<

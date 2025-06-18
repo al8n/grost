@@ -159,7 +159,7 @@ macro_rules! identity_partial_transform {
   }) => {
     $(
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialTransform<$flavor, $wf, Self> for $ty {
-        fn partial_transform(input: Self, selector: &<Self as $crate::__private::selection::Selectable<$flavor, $wf>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        fn partial_transform(input: Self, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
         where
           Self: Sized,
         {
@@ -180,7 +180,7 @@ macro_rules! selectable {
   (@scalar $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)?])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<__GROST_WIRE_FORMAT__: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::selection::Selectable<$flavor, __GROST_WIRE_FORMAT__> for $ty {
+      impl$(< $(const $g: ::core::primitive::usize),* >)? $crate::__private::selection::Selectable<$flavor> for $ty {
         type Selector = ::core::primitive::bool;
       }
     )*
@@ -192,8 +192,8 @@ macro_rules! selectable {
   ),+$(,)?) => {
     $(
       $(
-        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::selection::Selectable<$flavor, $wf> for $ty {
-          type Selector = <$bridge as $crate::__private::selection::Selectable<$flavor, $wf>>::Selector;
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::selection::Selectable<$flavor> for $ty {
+          type Selector = <$bridge as $crate::__private::selection::Selectable<$flavor>>::Selector;
         }
       )*
     )*

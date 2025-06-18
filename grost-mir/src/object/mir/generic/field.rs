@@ -204,7 +204,6 @@ impl<F> GenericTaggedField<F> {
     let selectable = syn::parse2(quote! {
       #path_to_grost::__private::selection::Selectable<
         #flavor_ident,
-        #wf,
       >
     })?;
     let selector_type = syn::parse2(quote! {

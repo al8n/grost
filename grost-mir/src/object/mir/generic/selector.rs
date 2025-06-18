@@ -922,7 +922,6 @@ fn derive_selectable_impl<M, F>(object: &super::GenericObject<M, F>) -> proc_mac
 
   let impls = object.flavors().iter().map(|(_, of)| {
     let flavor_ty = of.flavor_type();
-    let wf = of.wire_format();
     let selector = of.selector();
     let selector_ty = selector.ty();
     let selector_generics = selector.generics();
@@ -934,7 +933,7 @@ fn derive_selectable_impl<M, F>(object: &super::GenericObject<M, F>) -> proc_mac
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
         {
           type Selector = #selector_ty;
         }
@@ -959,7 +958,7 @@ fn derive_selectable_impl<M, F>(object: &super::GenericObject<M, F>) -> proc_mac
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #partial_object_ty #where_clauses
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #partial_object_ty #where_clauses
         {
           type Selector = #selector_ty;
         }
@@ -985,7 +984,7 @@ fn derive_selectable_impl<M, F>(object: &super::GenericObject<M, F>) -> proc_mac
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+        impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
         {
           type Selector = #selector_ty;
         }

@@ -91,8 +91,8 @@ pub trait PartialTransform<F, W, I>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  I: Selectable<F, W, Selector = Self::Selector>,
-  Self: Selectable<F, W>,
+  I: Selectable<F, Selector = Self::Selector>,
+  Self: Selectable<F>,
 {
   /// Partially transforms from the input type `I` into the current type `Self`.
   ///
@@ -130,8 +130,8 @@ pub trait PartialTransformInto<F, W, O>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  O: Selectable<F, W, Selector = Self::Selector>,
-  Self: Selectable<F, W>,
+  O: Selectable<F, Selector = Self::Selector>,
+  Self: Selectable<F>,
 {
   /// Partially transforms the current type into the output type `O`.
   ///
@@ -145,12 +145,15 @@ impl<F, W, I, T> PartialTransformInto<F, W, T> for I
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  T: PartialTransform<F, W, I> + Sized + Selectable<F, W>,
-  I: Selectable<F, W, Selector = T::Selector>,
+  T: PartialTransform<F, W, I> + Sized + Selectable<F>,
+  I: Selectable<F, Selector = <T as Selectable<F>>::Selector>,
 {
-  fn partial_transform_into(self, selector: &T::Selector) -> Result<Option<T>, <F as Flavor>::Error>
+  fn partial_transform_into(
+    self,
+    selector: &<T as Selectable<F>>::Selector,
+  ) -> Result<Option<T>, <F as Flavor>::Error>
   where
-    Self: Sized + Selectable<F, W, Selector = T::Selector>,
+    Self: Sized + Selectable<F, Selector = <T as Selectable<F>>::Selector>,
   {
     T::partial_transform(self, selector)
   }

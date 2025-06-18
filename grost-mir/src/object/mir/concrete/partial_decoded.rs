@@ -24,9 +24,6 @@ pub struct ConcretePartialDecodedObject {
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
-  /// The trait type which applies the cooresponding generics to the `PartialDecode` trait.
-  #[debug(skip)]
-  applied_partial_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   copy: bool,
   unknown_buffer_field_name: Ident,
 }
@@ -76,10 +73,6 @@ impl ConcretePartialDecodedObject {
 
   pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
     (self.applied_decode_trait)(quote! { #ty })
-  }
-
-  pub(super) fn applied_partial_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
-    (self.applied_partial_decode_trait)(quote! { #ty })
   }
 
   pub(super) fn from_ast<M, F>(
@@ -169,18 +162,6 @@ impl ConcretePartialDecodedObject {
         Arc::new(move |ty| {
           syn::parse2(quote! {
             #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #ub>
-          })
-        })
-      },
-      applied_partial_decode_trait: {
-        let path_to_grost = path_to_grost.clone();
-        let flavor_ty = flavor_ty.clone();
-        let wf = wf.clone();
-        let lt = lt.clone();
-        let ub = ub.clone();
-        Arc::new(move |ty| {
-          syn::parse2(quote! {
-            #path_to_grost::__private::PartialDecode<#lt, #flavor_ty, #wf, #ty, #ub>
           })
         })
       },

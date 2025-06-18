@@ -226,12 +226,12 @@ macro_rules! list {
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
         T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, TW, UB>, Input = &'a [u8]>
           + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, TW, T::Output, UB>
-          + $crate::__private::selection::Selectable<$crate::__private::flavors::Network, TW>
+          + $crate::__private::selection::Selectable<$crate::__private::flavors::Network>
           + $crate::__private::decode::PartialTransform<$crate::__private::flavors::Network, TW, T::Output>
           + 'a,
-        T::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Network, TW, Selector = T::Selector>,
+        T::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Network, Selector = T::Selector>,
         UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<&'a [u8]>> + 'a,
-        Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W, Selector = T::Selector>,
+        Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, Selector = T::Selector>,
       {
         fn partial_transform(
           input: $crate::__private::flavors::network::PackedDecoder<'a, T, UB, TW>,
@@ -261,32 +261,13 @@ macro_rules! list {
       }
     )*
   };
-  (@selectable(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@selectable $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::selection::Selectable<$crate::__private::flavors::Network> for $ty
       where
-        T: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W>,
-        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+        T: $crate::__private::selection::Selectable<$crate::__private::flavors::Network>,
       {
         type Selector = T::Selector;
-      }
-    )*
-  };
-  (@selectable(borrowed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
-    $(
-      impl<'a, T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::Borrowed<'a, $crate::__private::flavors::network::Packed<W>>> for $ty
-      where
-        T: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, W> + ?::core::marker::Sized + 'a,
-        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
-      {
-        type Selector = T::Selector;
-      }
-    )*
-  };
-  (@selectable(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
-    $(
-      impl<$($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::selection::Selectable<$crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited> for $ty {
-        type Selector = bool;
       }
     )*
   };
@@ -370,9 +351,7 @@ list!(@flatten_state [T; N] [const N: usize], [T]);
 list!(@decoded_state [T; N] [const N: usize], [T]);
 list!(@identity_transform [T; N] [const N: usize]);
 list!(@default_wire_format [T; N] [const N: usize], [T]);
-list!(@selectable(packed) [T; N] [const N: usize], [T]);
-list!(@selectable(borrowed) [&'a T; N] [const N: usize], [&'a T]);
-list!(@selectable(bytes) [u8; N] [const N: usize], [u8]);
+list!(@selectable [T; N] [const N: usize], [T]);
 list!(
   @encode_as_slice [T; N] [const N: usize]
 );
@@ -571,9 +550,7 @@ const _: () = {
   list!(@default_wire_format Vec<T>);
   list!(@identity_transform Vec<T>);
   list!(@packed_transform Vec<T>);
-  list!(@selectable(packed) Vec<T>);
-  list!(@selectable(borrowed) Vec<&'a T>);
-  list!(@selectable(bytes) Vec<u8>);
+  list!(@selectable Vec<T>);
   list!(
     @encode_as_slice Vec<T>
   );
@@ -591,9 +568,7 @@ const _: () = {
   list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
   list!(@packed_transform SmallVec<[T; N]> [const N: usize]);
-  list!(@selectable(packed) SmallVec<[T; N]> [const N: usize]);
-  list!(@selectable(borrowed) SmallVec<[&'a T; N]> [const N: usize]);
-  list!(@selectable(bytes) SmallVec<[u8; N]> [const N: usize]);
+  list!(@selectable SmallVec<[T; N]> [const N: usize]);
   list!(
     @encode_as_slice SmallVec<[T; N]> [const N: usize]
   );
@@ -611,9 +586,7 @@ const _: () = {
   list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
   list!(@packed_transform ArrayVec<T, N> [const N: usize]);
-  list!(@selectable(packed) ArrayVec<T, N> [const N: usize]);
-  list!(@selectable(borrowed) ArrayVec<&'a T, N> [const N: usize]);
-  list!(@selectable(bytes) ArrayVec<u8, N> [const N: usize]);
+  list!(@selectable ArrayVec<T, N> [const N: usize]);
   list!(
     @encode_as_slice ArrayVec<T, N> [const N: usize]
   );
@@ -631,9 +604,7 @@ const _: () = {
   list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@selectable(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@selectable(borrowed):<A: tinyvec_1::Array<Item = &'a T>>: ArrayVec<A>);
-  list!(@selectable(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
+  list!(@selectable:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(
     @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
   );
@@ -650,9 +621,7 @@ const _: () = {
     list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@selectable(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@selectable(borrowed):<A: tinyvec_1::Array<Item = &'a T>>: TinyVec<A>);
-    list!(@selectable(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
+    list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(
       @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
     );

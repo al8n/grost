@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use grost::{
-  Decode, PartialDecode,
+  Decode,
   flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };

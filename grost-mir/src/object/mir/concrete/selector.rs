@@ -905,7 +905,6 @@ impl<M, F> super::ConcreteObject<M, F> {
 fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_macro2::TokenStream {
   let path_to_grost = object.path_to_grost();
   let flavor_ty = object.flavor_type();
-  let wf = object.wire_format();
   let selector = object.selector();
   let selector_ty = selector.ty();
   let selector_generics = selector.generics();
@@ -917,7 +916,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
       {
         type Selector = #selector_ty;
       }
@@ -942,7 +941,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #partial_object_ty #where_clauses
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #partial_object_ty #where_clauses
       {
         type Selector = #selector_ty;
       }
@@ -968,7 +967,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty, #wf> for #object_ty #where_clauses
+      impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
       {
         type Selector = #selector_ty;
       }
