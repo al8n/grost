@@ -197,6 +197,7 @@ impl<M> ConcreteTaggedField<M> {
             .or(missing_operation),
           then: field_flavor.decode.then.clone(),
         },
+        convert: field_flavor.convert.clone(),
       },
       tag,
       default,

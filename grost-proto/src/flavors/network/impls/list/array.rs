@@ -2,7 +2,7 @@ use core::mem::MaybeUninit;
 
 use crate::{
   Decoded, State,
-  buffer::Buffer,
+  buffer::{Buffer, ReadBuf},
   decode::{Decode, Transform},
   flavors::{
     Network, WireFormat,
@@ -10,20 +10,21 @@ use crate::{
   },
 };
 
-impl<'a, T, W, TW, UB, const N: usize> Transform<Network, W, PackedDecoder<'a, T, UB, TW>>
+impl<'a, T, W, TW, B, UB, const N: usize> Transform<Network, W, PackedDecoder<'a, T, B, UB, TW>>
   for [T; N]
 where
   W: WireFormat<Network> + 'a,
   TW: WireFormat<Network> + 'a,
-  T: State<Decoded<'a, Network, TW, UB>, Input = &'a [u8]>
-    + Decode<'a, Network, TW, T::Output, UB>
+  T: State<Decoded<'a, Network, TW, B, UB>, Input = &'a [u8]>
+    + Decode<'a, Network, TW, T::Output, B, UB>
     + Transform<Network, TW, T::Output>
     + 'a,
   T::Output: Sized,
-  UB: Buffer<Unknown<&'a [u8]>> + 'a,
+  UB: Buffer<Unknown<B>> + 'a,
+  B: ReadBuf<'a>,
 {
   fn transform(
-    input: PackedDecoder<'a, T, UB, TW>,
+    input: PackedDecoder<'a, T, B, UB, TW>,
   ) -> Result<Self, <Network as crate::flavors::Flavor>::Error>
   where
     Self: Sized,

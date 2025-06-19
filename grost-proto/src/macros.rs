@@ -74,12 +74,12 @@ macro_rules! varint {
     }
   };
   (@decode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl<'de, UB, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de, $flavor, $wf, Self, UB> for $ty {
+    impl<'de, B, UB, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::Decode<'de, $flavor, $wf, Self, B, UB> for $ty {
       $crate::varint!(@decode_impl $flavor:$wf);
     }
   };
   (@decode_impl $flavor:ty:$wf:ty) => {
-    fn decode<B>(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
+    fn decode(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: B) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       B: $crate::__private::ReadBuf<'de>,
@@ -206,7 +206,7 @@ macro_rules! decoded_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<$lifetime, $flavor, $wf, __GROST_UNKNOWN_BUFFER__>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<$lifetime, $flavor, $wf, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty {
         type Input = & $lifetime [u8];
         type Output = $target;
       }
@@ -557,14 +557,14 @@ macro_rules! decode_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de, UB, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Decode<'de, $flavor, $format, Self, UB> for $ty {
+        impl<'de, B, UB, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Decode<'de, $flavor, $format, Self, B, UB> for $ty {
           $crate::decode_bridge!(@decode_impl $flavor: $from => $bridge as $format);
         }
       )*
     )*
   };
   (@decode_impl $flavor:ty: $from:expr => $bridge:ty as $format:ty) => {
-    fn decode<B>(
+    fn decode(
       context: &'de <$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
     ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
@@ -573,10 +573,10 @@ macro_rules! decode_bridge {
       B: $crate::__private::ReadBuf<'de>,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
-      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, UB>>::decode::<B>(context, src).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, B, UB>>::decode(context, src).map(|(n, v)| (n, $from(v)))
     }
 
-    fn decode_length_delimited<B>(
+    fn decode_length_delimited(
       context: &'de <$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
     ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
@@ -585,7 +585,7 @@ macro_rules! decode_bridge {
       B: $crate::__private::ReadBuf<'de>,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
-      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, UB>>::decode_length_delimited::<B>(context, src).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, B, UB>>::decode_length_delimited(context, src).map(|(n, v)| (n, $from(v)))
     }
   };
 }
@@ -628,7 +628,7 @@ macro_rules! try_decode_bridge {
     )*
   };
   (@decode_impl $flavor:ty: $from:expr => $bridge:ty as $format:ty) => {
-    fn decode<B>(
+    fn decode(
       context: &'de <$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
     ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
@@ -637,10 +637,10 @@ macro_rules! try_decode_bridge {
       B: $crate::__private::ReadBuf<'de>,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
-      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, UB>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, B, UB>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
 
-    fn decode_length_delimited<B>(
+    fn decode_length_delimited(
       context: &'de <$flavor as $crate::__private::flavors::Flavor>::Context,
       src: B,
     ) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
@@ -649,7 +649,7 @@ macro_rules! try_decode_bridge {
       B: $crate::__private::ReadBuf<'de>,
       UB: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<B>> + 'de,
     {
-      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, UB>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+      <$bridge as $crate::__private::Decode<$flavor, $format, $bridge, B, UB>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
   };
   (@decode $flavor:ty: $(
@@ -661,7 +661,7 @@ macro_rules! try_decode_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de, UB> $crate::__private::Decode<'de, $flavor, $format, Self, UB> for $ty {
+        impl<'de, B, UB> $crate::__private::Decode<'de, $flavor, $format, Self, B, UB> for $ty {
           $crate::try_decode_bridge!(@decode_impl $flavor: $from => $bridge as $format);
         }
       )*

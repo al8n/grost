@@ -13,7 +13,7 @@ impl ConvertFromMeta {
   }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ConvertAttribute {
   missing_operation: Option<MissingOperation>,
   transform_operation: Option<TransformOperation>,

@@ -186,6 +186,8 @@ impl<F> GenericTaggedField<F> {
     let lifetime = &lifetime_param.lifetime;
     let unknown_buffer_param = &object.unknown_buffer_param;
     let unknown_buffer = &unknown_buffer_param.ident;
+    let read_buffer_param = &object.read_buffer_param;
+    let read_buffer = &read_buffer_param.ident;
 
     let mut partial_decoded_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
@@ -242,6 +244,7 @@ impl<F> GenericTaggedField<F> {
             #lifetime,
             #flavor_ident,
             <#wfr as #object_reflectable>::Reflection,
+            #read_buffer,
             #unknown_buffer,
           >
         >

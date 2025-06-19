@@ -1,5 +1,7 @@
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
+use crate::object::ConvertAttribute;
+
 #[derive(Debug, Clone)]
 pub struct ConcretePartialDecodedField {
   pub(super) ty: Type,
@@ -8,6 +10,7 @@ pub struct ConcretePartialDecodedField {
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
   pub(super) copy: bool,
+  pub(super) convert: ConvertAttribute,
 }
 
 impl ConcretePartialDecodedField {
@@ -45,5 +48,11 @@ impl ConcretePartialDecodedField {
   #[inline]
   pub const fn copy(&self) -> bool {
     self.copy
+  }
+
+  /// Returns the convert attribute about how to convert the partial decoded field to the partial field.
+  #[inline]
+  pub const fn convert(&self) -> &ConvertAttribute {
+    &self.convert
   }
 }

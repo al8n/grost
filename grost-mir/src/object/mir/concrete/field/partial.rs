@@ -8,6 +8,7 @@ pub struct ConcretePartialField {
   optional_type: Type,
   attrs: Vec<Attribute>,
   constraints: Punctuated<WherePredicate, Comma>,
+  // convert: ConvertAttribute,
 }
 
 impl ConcretePartialField {

@@ -18,7 +18,7 @@ use super::{
 /// - `W`: The wire format strategy of the flavor.
 /// - `O`: The output type resulting from decoding.
 /// - `B`: The buffer implementation used to store the unknown data during decoding (defaults to `()`, will ignore the unknown data).
-pub trait Decode<'de, F, W, O, UB = ()>
+pub trait Decode<'de, F, W, O, B = &'de [u8], UB = ()>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
@@ -26,7 +26,7 @@ where
   /// Decodes an instance from a raw byte slice.
   ///
   /// Returns a tuple with the number of bytes consumed and the decoded output.
-  fn decode<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     B: ReadBuf<'de>,
@@ -35,7 +35,7 @@ where
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
   /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
-  fn decode_length_delimited<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode_length_delimited(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
     B: ReadBuf<'de> + 'de,
@@ -59,18 +59,18 @@ where
 }
 
 /// A data structure that can be deserialized without borrowing any data from the source buffer.
-pub trait DecodeOwned<F, W, O, UB = ()>: for<'de> Decode<'de, F, W, O, UB>
+pub trait DecodeOwned<F, W, O, B, UB>: for<'de> Decode<'de, F, W, O, B, UB>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
 }
 
-impl<F, W, O, UB, T> DecodeOwned<F, W, O, UB> for T
+impl<F, W, O, B, UB, T> DecodeOwned<F, W, O, B, UB> for T
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  T: for<'de> Decode<'de, F, W, O, UB>,
+  T: for<'de> Decode<'de, F, W, O, B, UB>,
 {
 }
 
@@ -163,22 +163,22 @@ where
 macro_rules! deref_decode_impl {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de, F, W, O, UB, T> Decode<'de, F, W, O, UB> for $ty
+      impl<'de, F, W, O, B, UB, T> Decode<'de, F, W, O, B, UB> for $ty
       where
         F: Flavor + ?Sized,
         W: WireFormat<F>,
-        T: Decode<'de, F, W, O, UB> + ?Sized,
+        T: Decode<'de, F, W, O, B, UB> + ?Sized,
       {
-        fn decode<B>(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
+        fn decode(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
           B: ReadBuf<'de>,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
-          T::decode::<B>(context, src)
+          T::decode(context, src)
         }
 
-        fn decode_length_delimited<B>(
+        fn decode_length_delimited(
           context: &'de <F as Flavor>::Context,
           src: B,
         ) -> Result<(usize, O), <F as Flavor>::Error>
@@ -187,7 +187,7 @@ macro_rules! deref_decode_impl {
           B: ReadBuf<'de>,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
-          T::decode_length_delimited::<B>(context, src)
+          T::decode_length_delimited(context, src)
         }
       }
 

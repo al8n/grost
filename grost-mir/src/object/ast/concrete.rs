@@ -102,6 +102,18 @@ impl<M, F> ConcreteObject<M, F> {
     &self.unknown_buffer_param
   }
 
+  /// Returns the generic read buffer type parameter.
+  #[inline]
+  pub const fn read_buffer_param(&self) -> &TypeParam {
+    &self.read_buffer_param
+  }
+
+  /// Returns the generic write buffer type parameter.
+  #[inline]
+  pub const fn write_buffer_param(&self) -> &TypeParam {
+    &self.write_buffer_param
+  }
+
   /// Returns the generic lifetime parameter.
   #[inline]
   pub const fn lifetime_param(&self) -> &LifetimeParam {

@@ -337,6 +337,7 @@ impl<M, F> ConcreteObject<M, F> {
     let path_to_grost = object.path_to_grost();
     let lt = &object.lifetime_param().lifetime;
     let ub = &object.unknown_buffer_param().ident;
+    let rb = &object.read_buffer_param().ident;
     let flavor_ty = object.flavor().ty();
     let wf = object.flavor().wire_format();
     let generics = object.generics();
@@ -355,9 +356,10 @@ impl<M, F> ConcreteObject<M, F> {
         let wf = wf.clone();
         let lt = lt.clone();
         let ub = ub.clone();
+        let rb = rb.clone();
         Arc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #ub>
+            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
           })
         })
       },
@@ -371,6 +373,9 @@ impl<M, F> ConcreteObject<M, F> {
         output
           .params
           .extend(generics.type_params().cloned().map(GenericParam::from));
+        output
+          .params
+          .push(GenericParam::Type(object.read_buffer_param().clone()));
         output
           .params
           .push(GenericParam::Type(object.unknown_buffer_param().clone()));
@@ -396,7 +401,7 @@ impl<M, F> ConcreteObject<M, F> {
         output
       },
       decoded_state_type: syn::parse2(quote! {
-        #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #ub>
+        #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #rb, #ub>
       })?,
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),

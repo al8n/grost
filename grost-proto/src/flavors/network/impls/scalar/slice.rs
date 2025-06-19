@@ -4,8 +4,8 @@ use crate::{
   flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
 };
 
-impl<'de, UB> Decode<'de, Network, LengthDelimited, &'de [u8], UB> for [u8] {
-  fn decode<B>(_: &'de Context, src: B) -> Result<(usize, &'de [u8]), Error>
+impl<'de, B, UB> Decode<'de, Network, LengthDelimited, &'de [u8], B, UB> for [u8] {
+  fn decode(_: &'de Context, src: B) -> Result<(usize, &'de [u8]), Error>
   where
     &'de [u8]: Sized + 'de,
     B: ReadBuf<'de>,
@@ -29,13 +29,13 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, &'de [u8], UB> for [u8] {
   }
 }
 
-impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for &'de [u8] {
-  fn decode<B>(context: &'de Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for &'de [u8] {
+  fn decode(context: &'de Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: ReadBuf<'de>,
     UB: Buffer<Unknown<B>> + 'de,
   {
-    <[u8] as Decode<'de, Network, LengthDelimited, Self, UB>>::decode(context, src)
+    <[u8] as Decode<'de, Network, LengthDelimited, Self, B, UB>>::decode(context, src)
   }
 }

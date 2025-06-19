@@ -52,12 +52,7 @@ pub struct User<I: Default> {
   name: String,
   #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
   age: u8,
-  #[grost(
-    tag = 4,
-    schema(description = "The email of the user"),
-    partial_decoded(copy),
-    list(string)
-  )]
+  #[grost(tag = 4, schema(description = "The email of the user"), list(string))]
   emails: Vec<String>,
   #[grost(
     tag = 5,
@@ -72,12 +67,12 @@ pub struct User<I: Default> {
   // array: [u8; N],
 }
 
-// impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
+// impl<'de, B, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
 // }
 
-// impl<'de, UB> PartialDecode<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
-//   fn partial_decode<B>(
+// impl<'de, B, UB> PartialDecode<'de, Network, LengthDelimited, Self, B, UB> for PartialDecodedUser<'de, String, Network, UB> {
+//   fn partial_decode(
 //     context: &<Network as grost::Flavor>::Context,
 //     src: B,
 //     selector: &Self::Selector,
@@ -110,7 +105,7 @@ pub struct User<I: Default> {
 //     {
 //       todo!()
 //     }
-//   // fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
+//   // fn decode(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
 //   // where
 //   //   Self: Sized + 'de,
 //   //   B: Buf + 'de,

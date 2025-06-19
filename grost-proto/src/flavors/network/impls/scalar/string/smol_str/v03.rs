@@ -66,8 +66,8 @@ impl PartialTransform<Network, LengthDelimited, &str> for SmolStr {
   }
 }
 
-impl<'a, UB> Decode<'a, Network, LengthDelimited, &'a str, UB> for SmolStr {
-  fn decode<B>(
+impl<'a, B, UB> Decode<'a, Network, LengthDelimited, &'a str, B, UB> for SmolStr {
+  fn decode(
     context: &'a <Network as crate::flavors::Flavor>::Context,
     src: B,
   ) -> Result<(usize, &'a str), <Network as crate::flavors::Flavor>::Error>
@@ -76,6 +76,6 @@ impl<'a, UB> Decode<'a, Network, LengthDelimited, &'a str, UB> for SmolStr {
     B: crate::buffer::ReadBuf<'a>,
     UB: crate::buffer::Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a,
   {
-    <&str as Decode<'a, Network, LengthDelimited, &'a str, UB>>::decode(context, src)
+    <&str as Decode<'a, Network, LengthDelimited, &'a str, B, UB>>::decode(context, src)
   }
 }

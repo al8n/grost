@@ -19,6 +19,13 @@ pub trait Buffer<T> {
   /// Creates a new buffer.
   fn new() -> Self;
 
+  /// Creates a new buffer with the specified capacity.
+  ///
+  /// Returns `None` if the capacity is to large for this buffer type.
+  fn with_capacity(capacity: usize) -> Option<Self>
+  where
+    Self: Sized;
+
   /// Pushes the unknown data type to the buffer, if the buffer is full,
   /// the given value will be returned back.
   fn push(&mut self, value: T) -> Option<T>;
@@ -40,6 +47,10 @@ pub trait Buffer<T> {
 
 impl<T> Buffer<T> for () {
   fn new() -> Self {}
+
+  fn with_capacity(capacity: usize) -> Option<Self> {
+    if capacity > 0 { None } else { Some(()) }
+  }
 
   fn push(&mut self, _: T) -> Option<T> {
     None
@@ -65,6 +76,13 @@ const _: () = {
   impl<T> Buffer<T> for Vec<T> {
     fn new() -> Self {
       Vec::new()
+    }
+
+    fn with_capacity(capacity: usize) -> Option<Self>
+    where
+      Self: Sized,
+    {
+      Some(Vec::with_capacity(capacity))
     }
 
     fn push(&mut self, value: T) -> Option<T> {
@@ -123,6 +141,9 @@ const _: () = {
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
 pub trait ReadBuf<'a>: 'a {
+  /// Returns an empty read buffer.
+  fn empty() -> Self;
+
   /// Returns the number of bytes remaining in the buffer.
   fn len(&self) -> usize;
 
@@ -137,6 +158,11 @@ pub trait ReadBuf<'a>: 'a {
 }
 
 impl<'a> ReadBuf<'a> for &'a [u8] {
+  #[inline]
+  fn empty() -> Self {
+    &[]
+  }
+
   #[inline]
   fn len(&self) -> usize {
     <[u8]>::len(self)

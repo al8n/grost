@@ -4,7 +4,7 @@ pub use decode::FieldDecodeAttribute;
 pub use encode::FieldEncodeAttribute;
 
 use crate::{
-  object::meta::FieldFlavorFromMeta,
+  object::{ConvertAttribute, meta::FieldFlavorFromMeta},
   utils::{Invokable, MissingOperation},
 };
 
@@ -18,6 +18,7 @@ pub struct FieldFlavorAttribute {
   pub(in crate::object) format: Option<Type>,
   pub(in crate::object) encode: FieldEncodeAttribute,
   pub(in crate::object) decode: FieldDecodeAttribute,
+  pub(in crate::object) convert: ConvertAttribute,
 }
 
 impl FieldFlavorAttribute {
@@ -59,6 +60,7 @@ impl FieldFlavorAttribute {
       format,
       encode,
       decode,
+      convert: ConvertAttribute::default(),
     }
   }
 }
@@ -80,6 +82,7 @@ impl FieldFlavorFromMeta {
           format,
           encode,
           decode,
+          convert: value.convert.finalize()?,
         })
       })
       .collect()
@@ -140,6 +143,7 @@ pub struct FieldFlavor {
   pub(in crate::object) flavor_type: Type,
   pub(in crate::object) encode: FieldEncodeFlavor,
   pub(in crate::object) decode: FieldDecodeFlavor,
+  pub(in crate::object) convert: ConvertAttribute,
 }
 
 impl FieldFlavor {

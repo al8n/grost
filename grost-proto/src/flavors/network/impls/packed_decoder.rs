@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::{
   Decoded, State,
-  buffer::Buffer,
+  buffer::{Buffer, ReadBuf},
   decode::Decode,
   encode::Encode,
   flavors::{
@@ -26,9 +26,9 @@ use crate::{
 ///
 /// For other types, the decoder will yield decoded elements one by one through iteration
 /// until it reaches the end of the source data.
-pub struct PackedDecoder<'a, T: ?Sized, UB: ?Sized, W: ?Sized> {
+pub struct PackedDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
   /// the source buffer
-  src: &'a [u8],
+  src: B,
   /// the length of the length prefix
   data_offset: usize,
   /// the current offset
@@ -39,17 +39,31 @@ pub struct PackedDecoder<'a, T: ?Sized, UB: ?Sized, W: ?Sized> {
   _ub: PhantomData<UB>,
 }
 
-impl<'a, T: ?Sized, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a, T, UB, W> {
+impl<'a, T: ?Sized, B: ?Sized + Clone, UB: ?Sized, W: ?Sized> Clone
+  for PackedDecoder<'a, T, B, UB, W>
+{
   fn clone(&self) -> Self {
-    *self
+    Self {
+      src: self.src.clone(),
+      data_offset: self.data_offset,
+      offset: self.offset,
+      ctx: self.ctx,
+      _t: PhantomData,
+      _w: PhantomData,
+      _ub: PhantomData,
+    }
   }
 }
 
-impl<'a, T: ?Sized, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, T, UB, W> {}
+impl<'a, T: ?Sized, B: ?Sized + Copy, UB: ?Sized, W: ?Sized> Copy
+  for PackedDecoder<'a, T, B, UB, W>
+{
+}
 
-impl<'a, UB> PackedDecoder<'a, u8, UB, LengthDelimited>
+impl<'a, B, UB> PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
+  B: ReadBuf<'a>,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
@@ -57,10 +71,10 @@ where
   /// Since the target type is a byte slice, no further decoding is needed for individual elements.
   /// The decoder can immediately provide the complete decoded byte slice.
   #[inline]
-  pub const fn as_slice(&self) -> &'a [u8] {
-    let src = self.src;
+  pub fn as_slice(&self) -> &'a [u8] {
+    let src = &self.src;
     if src.is_empty() {
-      return src;
+      return src.as_bytes();
     }
 
     let src_len = src.len();
@@ -68,13 +82,14 @@ where
       return &[];
     }
 
-    src.split_at(self.data_offset).1
+    src.as_bytes().split_at(self.data_offset).1
   }
 }
 
-impl<'a, UB> core::ops::Deref for PackedDecoder<'a, u8, UB, LengthDelimited>
+impl<'a, B, UB> core::ops::Deref for PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
+  B: ReadBuf<'a>,
 {
   type Target = [u8];
 
@@ -84,9 +99,10 @@ where
   }
 }
 
-impl<'a, UB> AsRef<[u8]> for PackedDecoder<'a, u8, UB, LengthDelimited>
+impl<'a, B, UB> AsRef<[u8]> for PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
+  B: ReadBuf<'a>,
 {
   #[inline]
   fn as_ref(&self) -> &[u8] {
@@ -94,7 +110,7 @@ where
   }
 }
 
-impl<'a, T, UB, W> PackedDecoder<'a, T, UB, W>
+impl<'a, T, B, UB, W> PackedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   UB: ?Sized,
@@ -106,7 +122,7 @@ where
     self.offset
   }
 
-  pub(super) fn new(ctx: &'a Context, src: &'a [u8], data_offset: usize) -> Self {
+  pub(super) fn new(ctx: &'a Context, src: B, data_offset: usize) -> Self {
     Self {
       src,
       data_offset,
@@ -119,14 +135,15 @@ where
   }
 }
 
-impl<'a, UB, W, T> Iterator for PackedDecoder<'a, T, UB, W>
+impl<'a, B, UB, W, T> Iterator for PackedDecoder<'a, T, B, UB, W>
 where
   W: WireFormat<Network> + 'a,
-  T: State<Decoded<'a, Network, W, UB>, Input = &'a [u8]>
-    + Decode<'a, Network, W, T::Output, UB>
+  T: State<Decoded<'a, Network, W, B, UB>, Input = &'a [u8]>
+    + Decode<'a, Network, W, T::Output, B, UB>
     + 'a,
   T::Output: Sized,
-  UB: Buffer<Unknown<&'a [u8]>> + 'a,
+  UB: Buffer<Unknown<B>> + 'a,
+  B: ReadBuf<'a>,
 {
   type Item = Result<(usize, T::Output), Error>;
 
@@ -138,14 +155,14 @@ where
     }
 
     Some(
-      T::decode(self.ctx, &self.src[self.offset..]).inspect(|(read, _)| {
+      T::decode(self.ctx, self.src.slice(self.offset..)).inspect(|(read, _)| {
         self.offset += read;
       }),
     )
   }
 }
 
-impl<'a, T, UB, W> Selectable<Network> for PackedDecoder<'a, T, UB, W>
+impl<'a, T, B, UB, W> Selectable<Network> for PackedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized + Selectable<Network>,
   W: WireFormat<Network> + 'a,
@@ -154,14 +171,15 @@ where
   type Selector = T::Selector;
 }
 
-impl<'a, T, UB, W> Encode<Network, W> for PackedDecoder<'a, T, UB, W>
+impl<'a, T, B, UB, W> Encode<Network, W> for PackedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: WireFormat<Network> + 'a,
   UB: ?Sized,
+  B: ReadBuf<'a>,
 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let src = self.src;
+    let src = &self.src;
 
     let buf_len = buf.len();
     let src_len = src.len();
@@ -169,7 +187,7 @@ where
       return Err(Error::insufficient_buffer(src_len, buf_len));
     }
 
-    buf[..src_len].copy_from_slice(src);
+    buf[..src_len].copy_from_slice(src.as_bytes());
     Ok(src_len)
   }
 
@@ -178,12 +196,13 @@ where
   }
 }
 
-impl<'a, T, UB, W, PW> Decode<'a, Network, PW, Self, UB> for PackedDecoder<'a, T, UB, W>
+impl<'a, T, B, UB, W, PW> Decode<'a, Network, PW, Self, B, UB> for PackedDecoder<'a, T, B, UB, W>
 where
   W: WireFormat<Network> + 'a,
   PW: WireFormat<Network> + 'a,
+  B: ReadBuf<'a>,
 {
-  fn decode<B>(
+  fn decode(
     ctx: &'a <Network as crate::flavors::Flavor>::Context,
     src: B,
   ) -> Result<(usize, Self), Error>
@@ -192,13 +211,13 @@ where
     B: crate::buffer::ReadBuf<'a>,
     UB: Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a,
   {
-    let src = src.as_bytes();
-    let buf_len = src.len();
+    let buf = src.as_bytes();
+    let buf_len = buf.len();
     if buf_len == 0 {
       return Err(Error::buffer_underflow());
     }
 
-    let (len, data_len) = varing::decode_u32_varint(src)?;
+    let (len, data_len) = varing::decode_u32_varint(buf)?;
     let total = len + data_len as usize;
     if total > buf_len {
       return Err(Error::buffer_underflow());

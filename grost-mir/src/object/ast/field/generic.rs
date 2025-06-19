@@ -240,6 +240,7 @@ impl<M> GenericTaggedField<M> {
               missing_operation: ff.decode.missing_operation.clone().or(missing_operation),
               then: ff.decode.then.clone(),
             },
+            convert: ff.convert.clone(),
           },
           None => FieldFlavor {
             ty: None,
@@ -254,6 +255,7 @@ impl<M> GenericTaggedField<M> {
               missing_operation,
               then: None,
             },
+            convert: Default::default(),
           },
         };
         Ok((name.clone(), field_flavor))

@@ -74,8 +74,8 @@ impl Encode<Network, Varint> for i16 {
 
 partial_encode_scalar!(Network: i16 as Fixed16, i16 as Varint);
 
-impl<'de, UB> Decode<'de, Network, Fixed16, Self, UB> for i16 {
-  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, B, UB> Decode<'de, Network, Fixed16, Self, B, UB> for i16 {
+  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: ReadBuf<'de>,
@@ -90,8 +90,8 @@ impl<'de, UB> Decode<'de, Network, Fixed16, Self, UB> for i16 {
   }
 }
 
-impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for i16 {
-  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, B, UB> Decode<'de, Network, Varint, Self, B, UB> for i16 {
+  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: ReadBuf<'de>,

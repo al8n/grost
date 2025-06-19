@@ -5,7 +5,7 @@ use quote::quote;
 
 use crate::{
   object::{
-    FieldIndex, Label,
+    ConvertAttribute, FieldIndex, Label,
     ast::{FieldDecodeFlavor, FieldEncodeFlavor},
   },
   utils::{Invokable, grost_decode_trait_lifetime},
@@ -204,6 +204,8 @@ impl<F> ConcreteTaggedField<F> {
     let lifetime = &lifetime_param.lifetime;
     let unknown_buffer_param = object.unknown_buffer_param();
     let unknown_buffer = &unknown_buffer_param.ident;
+    let read_buffer_param = object.read_buffer_param();
+    let read_buffer = &read_buffer_param.ident;
 
     let mut partial_decoded_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
@@ -272,6 +274,7 @@ impl<F> ConcreteTaggedField<F> {
               #lifetime,
               #flavor_type,
               #wf,
+              #read_buffer,
               #unknown_buffer,
             >
           >
@@ -295,7 +298,7 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_ty = object.flavor().ty();
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #unknown_buffer>
+      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #read_buffer, #unknown_buffer>
     })?;
 
     let optional_partial_decoded_type = syn::parse2(quote! {
@@ -317,6 +320,7 @@ impl<F> ConcreteTaggedField<F> {
       attrs: field.partial_decoded.attrs,
       constraints: partial_decoded_constraints,
       copy: partial_decoded_copyable,
+      convert: field.flavor.convert,
     };
     let selector = ConcreteSelectorField {
       ty: selector_type,

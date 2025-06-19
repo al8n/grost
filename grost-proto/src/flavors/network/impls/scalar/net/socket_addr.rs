@@ -77,8 +77,8 @@ macro_rules! socket_addr_impl {
           }
         }
 
-        impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for [< SocketAddrV $variant >] {
-          fn decode<B>(_: &'de Context, src: B) -> Result<(usize, Self), Error>
+        impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for [< SocketAddrV $variant >] {
+          fn decode(_: &'de Context, src: B) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
             B: crate::buffer::ReadBuf<'de>,
@@ -95,7 +95,7 @@ macro_rules! socket_addr_impl {
             Ok(([< SOCKET_ADDR_V $variant _LEN >], socket_addr))
           }
 
-          fn decode_length_delimited<B>(
+          fn decode_length_delimited(
             context: &'de Context,
             src: B,
           ) -> Result<(usize, Self), Error>
@@ -113,7 +113,7 @@ macro_rules! socket_addr_impl {
               return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
             }
 
-            let (len, socket_addr) = <Self as Decode<'_, Network, LengthDelimited, Self, UB>>::decode(context, src.slice(read..))?;
+            let (len, socket_addr) = <Self as Decode<'_, Network, LengthDelimited, Self, B, UB>>::decode(context, src.slice(read..))?;
 
             #[cfg(debug_assertions)]
             crate::debug_assert_read_eq::<Self>(len + read, [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]);
@@ -211,8 +211,8 @@ impl Encode<Network, LengthDelimited> for SocketAddr {
   }
 }
 
-impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
-  fn decode<B>(context: &'de Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for SocketAddr {
+  fn decode(context: &'de Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: crate::buffer::ReadBuf<'de>,
@@ -229,7 +229,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
     macro_rules! decode_addr {
       ($variant:literal, $src:ident) => {{
         paste::paste! {
-          let (read, addr) = <[<SocketAddrV $variant >] as Decode<'de, Network, LengthDelimited, [<SocketAddrV $variant >], UB>>::decode(context, $src.slice(1..))?;
+          let (read, addr) = <[<SocketAddrV $variant >] as Decode<'de, Network, LengthDelimited, [<SocketAddrV $variant >], B, UB>>::decode(context, $src.slice(1..))?;
           #[cfg(debug_assertions)]
           crate::debug_assert_read_eq::<Self>(read + 1, 1 + [< SOCKET_ADDR_V $variant _LEN >]);
 
@@ -245,7 +245,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
     }
   }
 
-  fn decode_length_delimited<B>(context: &'de Context, src: B) -> Result<(usize, Self), Error>
+  fn decode_length_delimited(context: &'de Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: crate::buffer::ReadBuf<'de>,
@@ -254,7 +254,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for SocketAddr {
     macro_rules! decode_addr {
       ($read:ident, $variant:literal) => {{
         paste::paste! {
-          <[< SocketAddrV $variant >] as Decode<'de, Network, LengthDelimited, [< SocketAddrV $variant >], UB>>::decode(context, src.slice($read..))
+          <[< SocketAddrV $variant >] as Decode<'de, Network, LengthDelimited, [< SocketAddrV $variant >], B, UB>>::decode(context, src.slice($read..))
           .map(|(len, addr)| (len + $read, addr.into()))
         }
       }};

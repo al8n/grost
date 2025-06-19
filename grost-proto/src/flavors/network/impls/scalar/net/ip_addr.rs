@@ -89,8 +89,8 @@ macro_rules! ip_addr {
       }
     }
 
-    impl<'de, UB> Decode<'de, Network, $variant, Self, UB> for $addr {
-      fn decode<B>(
+    impl<'de, B, UB> Decode<'de, Network, $variant, Self, B, UB> for $addr {
+      fn decode(
         ctx: &'de Context,
         src: B,
       ) -> Result<(usize, Self), Error>
@@ -99,13 +99,13 @@ macro_rules! ip_addr {
         B: ReadBuf<'de>,
         UB: crate::buffer::Buffer<Unknown<B>> + 'de,
       {
-        <$convert as Decode<'de, Network, $variant, $convert, UB>>::decode(ctx, src)
+        <$convert as Decode<'de, Network, $variant, $convert, B, UB>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
       }
     }
 
-    impl<'de, UB> Decode<'de, Network, Varint, Self, UB> for $addr {
-      fn decode<B>(
+    impl<'de, B, UB> Decode<'de, Network, Varint, Self, B, UB> for $addr {
+      fn decode(
         ctx: &'de Context,
         src: B,
       ) -> Result<(usize, Self), Error>
@@ -114,7 +114,7 @@ macro_rules! ip_addr {
         B: ReadBuf<'de>,
         UB: crate::buffer::Buffer<Unknown<B>> + 'de,
       {
-        <$convert as Decode<'de, Network, Varint, $convert, UB>>::decode(ctx, src)
+        <$convert as Decode<'de, Network, Varint, $convert, B, UB>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
       }
     }
@@ -220,8 +220,8 @@ impl Encode<Network, LengthDelimited> for IpAddr {
   }
 }
 
-impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
-  fn decode<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for IpAddr {
+  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: ReadBuf<'de> + 'de,
@@ -256,7 +256,7 @@ impl<'de, UB> Decode<'de, Network, LengthDelimited, Self, UB> for IpAddr {
     })
   }
 
-  fn decode_length_delimited<B>(_: &Context, src: B) -> Result<(usize, Self), Error>
+  fn decode_length_delimited(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     B: ReadBuf<'de> + 'de,

@@ -22,14 +22,14 @@ macro_rules! str_bridge {
       );
       $crate::default_wire_format!(Network: $ty as $crate::__private::flavors::network::LengthDelimited);
 
-      impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, UB> for $ty {
-        fn decode<B>(context: &'a $crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a str), $crate::__private::flavors::network::Error>
+      impl<'a, B, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, B, UB> for $ty {
+        fn decode(context: &'a $crate::__private::flavors::network::Context, src: B) -> Result<(usize, &'a str), $crate::__private::flavors::network::Error>
         where
           &'a str: Sized + 'a,
           B: $crate::buffer::ReadBuf<'a>,
           UB: $crate::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'a
         {
-          <str as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, UB>>::decode(context, src)
+          <str as $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a str, B, UB>>::decode(context, src)
         }
       }
     )*
@@ -103,8 +103,8 @@ macro_rules! array_str {
       $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Network as $crate::__private::flavors::network::LengthDelimited);
     }
 
-    impl<'de, UB, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, Self, UB> for $ty {
-      fn decode<B>(
+    impl<'de, B, UB, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, Self, B, UB> for $ty {
+      fn decode(
         context: &'de $crate::__private::flavors::network::Context,
         src: B,
       ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
@@ -113,7 +113,7 @@ macro_rules! array_str {
         B: $crate::__private::ReadBuf<'de>,
         UB: $crate::__private::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
       {
-        <::core::primitive::str as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de str, UB>>::decode(context, src)
+        <::core::primitive::str as $crate::__private::Decode<'de, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'de str, B, UB>>::decode(context, src)
           .and_then(|(len, bytes)| {
             $from_str(bytes).map(|s| (len, s))
           })

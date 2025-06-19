@@ -475,7 +475,7 @@
 // //   S: Decode<'a> + 'a,
 // //   U: From<&'a [u8]>,
 // // {
-// //   fn decode<B>(buf: &'a [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
+// //   fn decode(buf: &'a [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
 // //   where
 // //     B: super::UnknownRefBytesBuffer<'a>,
 // //   {
@@ -520,7 +520,7 @@
 // // where
 // //   S: Decode<'de>,
 // // {
-// //   fn decode<B>(buf: &'de [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
+// //   fn decode(buf: &'de [u8], unknown_buffer: &mut B) -> Result<(usize, Self), DecodeError>
 // //   where
 // //     Self: Sized + 'de,
 // //     B: UnknownRefBytesBuffer<'de>,

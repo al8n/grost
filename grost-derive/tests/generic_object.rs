@@ -62,12 +62,12 @@ pub struct User {
   // array: [u8; N],
 }
 
-// impl<'de, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
+// impl<'de, B, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
 // }
 
-// impl<'de, UB> PartialDecode<'de, Network, LengthDelimited, Self, UB> for PartialDecodedUser<'de, String, Network, UB> {
-//   fn partial_decode<B>(
+// impl<'de, B, UB> PartialDecode<'de, Network, LengthDelimited, Self, B, UB> for PartialDecodedUser<'de, String, Network, UB> {
+//   fn partial_decode(
 //     context: &<Network as grost::Flavor>::Context,
 //     src: B,
 //     selector: &Self::Selector,
@@ -100,7 +100,7 @@ pub struct User {
 //     {
 //       todo!()
 //     }
-//   // fn decode<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
+//   // fn decode(context: &<Network as grost::Flavor>::Context, src: B) -> Result<(usize, Self), <Network as grost::Flavor>::Error>
 //   // where
 //   //   Self: Sized + 'de,
 //   //   B: Buf + 'de,

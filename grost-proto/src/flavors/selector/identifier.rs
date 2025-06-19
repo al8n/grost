@@ -174,7 +174,7 @@ impl crate::flavors::Identifier<super::Select> for SelectorIdentifier {
     1
   }
 
-  fn decode<B>(buf: B) -> Result<(usize, Self), DecodeError>
+  fn decode(buf: B) -> Result<(usize, Self), DecodeError>
   where
     B: crate::buffer::BytesBuffer + Sized,
     Self: Sized,

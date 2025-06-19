@@ -7,6 +7,7 @@ pub(in crate::object) use encode::*;
 
 use crate::{
   flavor::{complex_flavor_ident_error, duplicate_flavor_error},
+  object::meta::ConvertFromMeta,
   utils::NestedMetaWithTypeField,
 };
 
@@ -19,6 +20,7 @@ pub(in crate::object) struct FieldFlavorValueFromMeta {
   pub(in crate::object) format: Option<syn::Type>,
   pub(in crate::object) encode: EncodeFromMeta,
   pub(in crate::object) decode: DecodeFromMeta,
+  pub(in crate::object) convert: ConvertFromMeta,
 }
 
 impl FromMeta for FieldFlavorValueFromMeta {
@@ -55,12 +57,15 @@ impl FromMeta for FieldFlavorValueFromMeta {
           encode: EncodeFromMeta,
           #[darling(default)]
           decode: DecodeFromMeta,
+          #[darling(default)]
+          convert: ConvertFromMeta,
         }
 
         let Helper {
           format,
           encode,
           decode,
+          convert,
         } = Helper::from_list(&nested_meta)?;
 
         Ok(Self {
@@ -68,6 +73,7 @@ impl FromMeta for FieldFlavorValueFromMeta {
           format,
           encode,
           decode,
+          convert,
         })
       }
 
@@ -122,6 +128,7 @@ impl FromMeta for FieldFlavorFromMeta {
                         format: Some(format),
                         encode: EncodeFromMeta::default(),
                         decode: DecodeFromMeta::default(),
+                        convert: ConvertFromMeta::default(),
                       },
                     );
                   }
@@ -146,6 +153,7 @@ impl FromMeta for FieldFlavorFromMeta {
                   format: value.format,
                   encode: value.encode,
                   decode: value.decode,
+                  convert: value.convert,
                 },
               );
             }
