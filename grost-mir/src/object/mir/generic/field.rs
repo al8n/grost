@@ -271,7 +271,7 @@ impl<F> GenericTaggedField<F> {
           .flavors()
           .get(name)
           .expect("Field flavor already checked when constructing the AST");
-        FieldFlavor::try_new(object, &field, flavor.ty(), field_flavor).map(|ff| (name.clone(), ff))
+        FieldFlavor::try_new(object, flavor, &field, field_flavor).map(|ff| (name.clone(), ff))
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 

@@ -4,9 +4,9 @@ use crate::object::meta::FieldEncodeFromMeta;
 
 #[derive(Debug, Clone)]
 pub struct FieldEncodeAttribute {
-  skip_default: Option<bool>,
-  skip_if: Option<Path>,
-  error_if: Option<Path>,
+  pub(in crate::object) skip_default: Option<bool>,
+  pub(in crate::object) skip_if: Option<Path>,
+  pub(in crate::object) error_if: Option<Path>,
 }
 
 impl FieldEncodeAttribute {

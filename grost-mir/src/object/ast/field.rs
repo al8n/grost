@@ -1,8 +1,15 @@
+use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
+use quote::quote;
 use std::num::NonZeroU32;
 use syn::{Attribute, Ident, Type, Visibility};
 
+pub(in crate::object) use concrete::{ConcreteField, ConcreteTaggedField};
 pub use convert::ConvertAttribute;
-pub use flavor::{FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute};
+pub use flavor::{
+  FieldDecodeAttribute, FieldDecodeFlavor, FieldEncodeAttribute, FieldEncodeFlavor, FieldFlavor,
+  FieldFlavorAttribute,
+};
+pub(in crate::object) use generic::{GenericField, GenericTaggedField};
 pub use partial::PartialFieldAttribute;
 pub use partial_decoded::PartialDecodedFieldAttribute;
 pub use selector::SelectorFieldAttribute;
@@ -12,11 +19,110 @@ use crate::{
   utils::{Invokable, SchemaAttribute},
 };
 
+mod concrete;
 mod convert;
 mod flavor;
+mod generic;
 mod partial;
 mod partial_decoded;
 mod selector;
+
+#[derive(Debug, Clone)]
+pub struct SkippedField<M = ()> {
+  attrs: Vec<Attribute>,
+  vis: Visibility,
+  type_params_usages: IdentSet,
+  lifetime_params_usages: LifetimeSet,
+  name: Ident,
+  ty: Type,
+  default: Invokable,
+  meta: M,
+}
+
+impl<M> SkippedField<M> {
+  /// Returns the name of the skipped field
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
+
+  /// Returns the visibility of the skipped field
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
+
+  /// Returns the type of the skipped field
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the attributes of the skipped field
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns the path to the default value function for the skipped field
+  #[inline]
+  pub const fn default(&self) -> &Invokable {
+    &self.default
+  }
+
+  /// Returns the metadata associated with the skipped field
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
+  /// Returns the type parameters used in the skipped field
+  #[inline]
+  pub const fn type_params_usages(&self) -> &IdentSet {
+    &self.type_params_usages
+  }
+
+  /// Returns the lifetime parameters used in the skipped field
+  #[inline]
+  pub const fn lifetime_params_usages(&self) -> &LifetimeSet {
+    &self.lifetime_params_usages
+  }
+
+  pub(in crate::object) fn try_new<F: RawField<Meta = M>>(
+    f: &F,
+    type_params: &IdentSet,
+    lifetime_params: &LifetimeSet,
+  ) -> darling::Result<Self>
+  where
+    M: Clone,
+  {
+    let attrs = f.attrs().to_vec();
+    let vis = f.vis().clone();
+    let name = f.name().clone();
+    let ty = f.ty().clone();
+    let default = match f.default().cloned() {
+      Some(path) => path,
+      None => {
+        syn::parse2::<syn::Path>(quote! { ::core::default::Default::default }).map(Into::into)?
+      }
+    };
+
+    let purpose: darling::usage::Options = Purpose::Declare.into();
+    let type_params_usages = ty.uses_type_params_cloned(&purpose, type_params);
+    let lifetime_params_usages = ty.uses_lifetimes_cloned(&purpose, lifetime_params);
+
+    Ok(Self {
+      attrs,
+      vis,
+      name,
+      type_params_usages,
+      lifetime_params_usages,
+      ty,
+      default,
+      meta: f.meta().clone(),
+    })
+  }
+}
 
 #[derive(Debug, Clone)]
 pub struct FieldAttribute {
@@ -101,7 +207,7 @@ impl FieldFromMeta {
       convert: self.convert.finalize()?,
       flavor: self.flavor.finalize()?,
       partial: self.partial.finalize(),
-      partial_decoded: self.partial_decoded.finalize(),
+      partial_decoded: self.partial_decoded.finalize()?,
       selector: self.selector.finalize(),
       copy: self.copy,
     })

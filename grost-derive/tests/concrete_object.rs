@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use grost::{
-  Decode,
+  Decode, Flavor,
   flavors::{DefaultWireFormat, Network, WireFormat, network::LengthDelimited},
   selection::{Selectable, Selector},
 };
@@ -15,6 +15,10 @@ use grost_derive::{Object, object};
 
 fn default_array<const N: usize>() -> [u8; N] {
   [0; N]
+}
+
+fn error_name<'a>() -> Result<&'a str, <Network as Flavor>::Error> {
+  Ok("name")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
@@ -42,7 +46,8 @@ pub struct User<I: Default> {
     tag = 2,
     schema(description = "The nick name of the user"),
     selector(select = "all"),
-    string
+    string,
+    flavor(default(decode(ok_or_else = "error_name",),))
   )]
   name: String,
   #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
@@ -54,6 +59,13 @@ pub struct User<I: Default> {
     list(string)
   )]
   emails: Vec<String>,
+  #[grost(
+    tag = 5,
+    schema(description = "The linkin link of the user"),
+    partial_decoded(copy),
+    optional(string)
+  )]
+  linkin: Option<String>,
   // #[grost(skip)]
   // what: W,
   // #[grost(skip, default = "default_array::<N>")]

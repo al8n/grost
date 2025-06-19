@@ -25,6 +25,8 @@ pub struct PartialDecodedFieldFromMeta {
   pub(in crate::object) copy: bool,
   pub(in crate::object) attrs: Vec<Attribute>,
   pub(in crate::object) ty: Option<Type>,
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  pub(in crate::object) decode: FieldDecodeFromMeta,
 }
 
 impl FromMeta for PartialDecodedFieldFromMeta {
@@ -58,10 +60,25 @@ impl FromMeta for PartialDecodedFieldFromMeta {
           copy: bool,
           #[darling(default, map = "Attributes::into_inner")]
           attrs: Vec<Attribute>,
+          #[darling(default)]
+          encode: FieldEncodeFromMeta,
+          #[darling(default)]
+          decode: FieldDecodeFromMeta,
         }
 
-        let Helper { copy, attrs } = Helper::from_list(&nested_meta)?;
-        Ok(Self { copy, attrs, ty })
+        let Helper {
+          copy,
+          attrs,
+          encode,
+          decode,
+        } = Helper::from_list(&nested_meta)?;
+        Ok(Self {
+          copy,
+          attrs,
+          ty,
+          encode,
+          decode,
+        })
       }
       Meta::NameValue(ref value) => Self::from_expr(&value.value),
     })

@@ -5,21 +5,22 @@ use crate::utils::{Invokable, MissingOperation};
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(in crate::object) struct DecodeFromMeta {
   pub(in crate::object) missing_operation: Option<MissingOperation>,
-  pub(in crate::object) error_if: Option<syn::Path>,
+  pub(in crate::object) then: Option<Invokable>,
 }
 
 impl DecodeFromMeta {
-  /// Parse a path from either a syn::Expr::Path or syn::Expr::Lit(syn::Lit::Str)
-  fn parse_path_from_expr(expr: &syn::Expr) -> darling::Result<syn::Path> {
-    match expr {
-      syn::Expr::Path(path) => Ok(path.path.clone()),
-      syn::Expr::Lit(lit) => match &lit.lit {
-        syn::Lit::Str(lit_str) => syn::parse_str(&lit_str.value()).map_err(darling::Error::from),
-        lit => Err(darling::Error::unexpected_lit_type(lit)),
-      },
-      value => Err(darling::Error::unexpected_expr_type(value)),
-    }
-  }
+  // /// Parse a path from either a syn::Expr::Path or syn::Expr::Lit(syn::Lit::Str)
+  // fn parse_path_from_expr(expr: &syn::Expr) -> darling::Result<Invokable> {
+  //   Invokable::try_from(expr)
+  //   // match expr {
+  //   //   syn::Expr::Path(path) => Ok(path.path.clone()),
+  //   //   syn::Expr::Lit(lit) => match &lit.lit {
+  //   //     syn::Lit::Str(lit_str) => syn::parse_str(&lit_str.value()).map_err(darling::Error::from),
+  //   //     lit => Err(darling::Error::unexpected_lit_type(lit)),
+  //   //   },
+  //   //   value => Err(darling::Error::unexpected_expr_type(value)),
+  //   // }
+  // }
 
   /// Check if an or_else variant is already set and return appropriate error
   fn check_or_else_conflict(
@@ -40,7 +41,7 @@ impl DecodeFromMeta {
 impl FromMeta for DecodeFromMeta {
   fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     let mut missing_operation: Option<MissingOperation> = None;
-    let mut error_if = None;
+    let mut then = None;
 
     for item in items {
       match item {
@@ -73,13 +74,13 @@ impl FromMeta for DecodeFromMeta {
             let nv = meta.require_name_value()?;
             let invokable = Invokable::try_from(&nv.value)?;
             missing_operation = Some(MissingOperation::OkOr(invokable));
-          } else if path.is_ident("error_if") {
-            if error_if.is_some() {
-              return Err(darling::Error::duplicate_field("error_if"));
+          } else if path.is_ident("then") {
+            if then.is_some() {
+              return Err(darling::Error::duplicate_field("then"));
             }
 
             let nv = meta.require_name_value()?;
-            error_if = Some(Self::parse_path_from_expr(&nv.value)?);
+            then = Some(Invokable::try_from(&nv.value)?);
           } else {
             return Err(darling::Error::unknown_field_path(path));
           }
@@ -89,7 +90,7 @@ impl FromMeta for DecodeFromMeta {
 
     Ok(DecodeFromMeta {
       missing_operation,
-      error_if,
+      then,
     })
   }
 }
@@ -106,7 +107,7 @@ mod tests {
     let meta = syn::parse_quote! {
       decode(
         or_else_default,
-        error_if = "my_crate::error_function"
+        then = "my_crate::error_function"
       )
     };
     let decode: DecodeFromMeta = FromMeta::from_meta(&meta).unwrap();
@@ -116,12 +117,12 @@ mod tests {
       Some(MissingOperation::OrDefault(None))
     );
     assert_eq!(
-      decode.error_if,
-      Some(
+      decode.then,
+      Some(Invokable::from(
         syn::Path::parse
           .parse2(quote! {my_crate::error_function})
           .unwrap()
-      )
+      ))
     );
   }
 
@@ -130,7 +131,7 @@ mod tests {
     let meta = syn::parse_quote! {
       decode(
         or_else_default = "my_crate::default_function",
-        error_if = "my_crate::error_function"
+        then = "my_crate::error_function"
       )
     };
     let decode: DecodeFromMeta = FromMeta::from_meta(&meta).unwrap();
@@ -145,12 +146,12 @@ mod tests {
       )))
     );
     assert_eq!(
-      decode.error_if,
-      Some(
+      decode.then,
+      Some(Invokable::from(
         syn::Path::parse
           .parse2(quote! {my_crate::error_function})
           .unwrap()
-      )
+      ))
     );
   }
 

@@ -1,6 +1,6 @@
 use quote::quote;
 
-use crate::utils::grost_decode_trait_lifetime;
+use crate::utils::{MissingOperation, grost_decode_trait_lifetime};
 
 impl<M, F> super::ConcreteObject<M, F> {
   pub(super) fn derive_decode(&self) -> darling::Result<proc_macro2::TokenStream> {
@@ -156,12 +156,15 @@ fn derive_partial_decoded_object_decode<M, F>(
   let ubg = &object.unknown_buffer_param().ident;
   let read_buffer_ident = &object.read_buffer_param().ident;
   let flavor_ty = object.flavor_type();
-  let decode_trait = partial_decoded_object.applied_decode_trait(quote! { Self })?;
+  let decode_to_self_trait = partial_decoded_object.applied_decode_trait(quote! { Self })?;
+  let decode_to_partial_decoded_trait =
+    partial_decoded_object.applied_decode_trait(quote! { #partial_decoded_object_ty })?;
   let lt = grost_decode_trait_lifetime();
 
   let object_ty = object.ty();
   let object_reflectable = object.reflectable();
   let unknown_buffer_field_name = &partial_decoded_object.unknown_buffer_field_name;
+  let mut on_missing = vec![];
   let field_decode_branches = object
     .fields()
     .iter()
@@ -171,6 +174,33 @@ fn derive_partial_decoded_object_decode<M, F>(
       let field_identifier = f.reflection().identifier_reflection();
       let field_ty = f.ty();
       let field_decode_trait_type = f.partial_decoded().decode_trait_type();
+
+      let value = f.decode().then().map(|f| {
+        quote! {
+          let value = (#f)(value)?;
+        }
+      });
+
+      if let Some(missing_operation) = f.decode().missing_operation() {
+        on_missing.push(match missing_operation {
+          MissingOperation::Or(invokable) => quote! {
+            if this.#field_name.is_none() {
+              this.#field_name = (#invokable)();
+            }
+          },
+          MissingOperation::OrDefault(invokable) => quote! {
+            if this.#field_name.is_none() {
+              this.#field_name = ::core::option::Option::Some((#invokable)());
+            }
+          },
+          MissingOperation::OkOr(invokable) => quote! {
+            if this.#field_name.is_none() {
+              this.#field_name = ::core::option::Option::Some((#invokable)()?);
+            }
+          },
+        });
+      }
+
       quote! {
         <#field_identifier as #object_reflectable>::REFLECTION => {
           if offset >= buf_len {
@@ -190,16 +220,38 @@ fn derive_partial_decoded_object_decode<M, F>(
           }
 
           let (read, value) = <#field_ty as  #field_decode_trait_type>::decode(context, src.slice(offset..))?;
+          #value
           this.#field_name = ::core::option::Option::Some(value);
           offset += read;
         },
       }
     });
 
+  let partial_object_ty = object.partial().ty();
+
+  let decode_partial_generics = {
+    let mut output = partial_decoded_object.decode_generics().clone();
+    if let Some(preds) = object
+      .partial()
+      .generics()
+      .where_clause
+      .as_ref()
+      .map(|wc| &wc.predicates)
+    {
+      output
+        .make_where_clause()
+        .predicates
+        .extend(preds.iter().cloned());
+    }
+    output
+  };
+  let (decode_partial_ig, _, decode_partial_where_clauses) =
+    decode_partial_generics.split_for_impl();
+
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #decode_ig #decode_trait for #partial_decoded_object_ty #decode_where_clauses {
+    impl #decode_ig #decode_to_self_trait for #partial_decoded_object_ty #decode_where_clauses {
       fn decode<#read_buffer_ident>(
         context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
@@ -258,7 +310,41 @@ fn derive_partial_decoded_object_decode<M, F>(
           }
         }
 
+        #(#on_missing)*
+
         ::core::result::Result::Ok((offset, this))
+      }
+    }
+
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
+    impl #decode_ig #decode_to_partial_decoded_trait for #object_ty #decode_where_clauses {
+      fn decode<#read_buffer_ident>(
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        src: #read_buffer_ident,
+      ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
+      where
+        #partial_decoded_object_ty: ::core::marker::Sized + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf<#lt>,
+        #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
+      {
+        <#partial_decoded_object_ty as #decode_to_partial_decoded_trait>::decode(context, src)
+      }
+    }
+
+    #[automatically_derived]
+    #[allow(non_camel_case_types, clippy::type_complexity)]
+    impl #decode_partial_ig #decode_to_partial_decoded_trait for #partial_object_ty #decode_partial_where_clauses {
+      fn decode<#read_buffer_ident>(
+        context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
+        src: #read_buffer_ident,
+      ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
+      where
+        #partial_decoded_object_ty: ::core::marker::Sized + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf<#lt>,
+        #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
+      {
+        <#partial_decoded_object_ty as #decode_to_partial_decoded_trait>::decode(context, src)
       }
     }
   })

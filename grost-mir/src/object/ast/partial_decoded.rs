@@ -35,21 +35,6 @@ impl PartialDecodedObjectAttribute {
   pub const fn copy(&self) -> bool {
     self.copy
   }
-
-  // /// Returns the flavor generic parameter if it exists
-  // pub const fn flavor(&self) -> Option<&TypeParam> {
-  //   self.flavor_param.as_ref()
-  // }
-
-  // /// Returns the unknown buffer generic parameter
-  // pub const fn unknown_buffer(&self) -> &TypeParam {
-  //   &self.unknown_buffer_param
-  // }
-
-  // /// Returns the lifetime generic parameter
-  // pub const fn lifetime(&self) -> &LifetimeParam {
-  //   &self.lifetime_param
-  // }
 }
 
 #[derive(Debug, Clone)]

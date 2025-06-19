@@ -4,7 +4,10 @@ use syn::{Attribute, Ident, Type, Visibility, WherePredicate, punctuated::Punctu
 use quote::quote;
 
 use crate::{
-  object::{FieldIndex, Label},
+  object::{
+    FieldIndex, Label,
+    ast::{FieldDecodeFlavor, FieldEncodeFlavor},
+  },
   utils::{Invokable, grost_decode_trait_lifetime},
 };
 
@@ -44,6 +47,8 @@ pub struct ConcreteTaggedField<F = ()> {
   selector: ConcreteSelectorField,
   schema_name: String,
   schema_description: String,
+  encode: FieldEncodeFlavor,
+  decode: FieldDecodeFlavor,
   tag: u32,
   copy: bool,
   meta: F,
@@ -170,6 +175,18 @@ impl<F> ConcreteTaggedField<F> {
     &self.lifetime_params_usages
   }
 
+  /// Returns the encode flavor of the field.
+  #[inline]
+  pub const fn encode(&self) -> &FieldEncodeFlavor {
+    &self.encode
+  }
+
+  /// Returns the decode flavor of the field.
+  #[inline]
+  pub const fn decode(&self) -> &FieldDecodeFlavor {
+    &self.decode
+  }
+
   fn from_ast<M>(
     object: &ConcreteObjectAst<M, F>,
     index: usize,
@@ -292,13 +309,7 @@ impl<F> ConcreteTaggedField<F> {
     let schema_description = field.schema_description;
     let field_ty = field.ty;
     let partial = field.partial;
-    let partial = ConcretePartialField::from_ast(
-      object.path_to_grost(),
-      &field_ty,
-      partial.ty(),
-      partial.attrs(),
-      use_generics,
-    )?;
+    let partial = ConcretePartialField::from_ast(&field_ty, partial.ty(), partial.attrs())?;
     let partial_decoded = ConcretePartialDecodedField {
       ty: partial_decoded_ty,
       optional_type: optional_partial_decoded_type,
@@ -336,6 +347,8 @@ impl<F> ConcreteTaggedField<F> {
       default: field.default,
       schema_description,
       schema_name,
+      encode: field.flavor.encode,
+      decode: field.flavor.decode,
       type_params_usages: field.type_params_usages,
       lifetime_params_usages: field.lifetime_params_usages,
       copy: field.copy,

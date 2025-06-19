@@ -8,11 +8,15 @@ use syn::{
 
 use super::{RawField, RawObject, ast::Object as ObjectAst};
 
-pub use concrete::*;
-pub use generic::*;
+pub use self::{
+  concrete::{ConcreteField, ConcreteObject},
+  generic::{GenericField, GenericObject},
+};
 
-mod concrete;
-mod generic;
+/// Concrete object MIR
+pub mod concrete;
+/// Generic object MIR
+pub mod generic;
 
 #[derive(Debug, Clone)]
 pub struct FieldIndex {

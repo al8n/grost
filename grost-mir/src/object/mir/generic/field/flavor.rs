@@ -4,12 +4,13 @@ use syn::{Type, WherePredicate, punctuated::Punctuated, token::Comma};
 use crate::object::{
   GenericObject,
   ast::{
-    FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor as FieldFlavorAst,
+    FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor as FieldFlavorAst,
     GenericObject as GenericObjectAst, GenericTaggedField as GenericTaggedFieldAst,
+    ObjectFlavor as ObjectFlavorAst,
   },
   mir::{
-    ObjectFlavor, encoded_identifier_len_reflection, encoded_identifier_reflection,
-    encoded_tag_len_reflection, encoded_tag_reflection, identifier_reflection, tag_reflection,
+    encoded_identifier_len_reflection, encoded_identifier_reflection, encoded_tag_len_reflection,
+    encoded_tag_reflection, generic::ObjectFlavor, identifier_reflection, tag_reflection,
     wire_format_reflection, wire_type_reflection,
   },
 };
@@ -71,8 +72,8 @@ impl SelectorFieldFlavor {
 #[derive(Debug, Clone)]
 pub struct FieldFlavor {
   wire_format: Type,
-  encode: FieldEncodeAttribute,
-  decode: FieldDecodeAttribute,
+  encode: FieldEncodeFlavor,
+  decode: FieldDecodeFlavor,
   partial_decoded: PartialDecodedFieldFlavor,
   selector: SelectorFieldFlavor,
   wire_format_reflection: Type,
@@ -102,13 +103,13 @@ impl FieldFlavor {
 
   /// Returns the encode attribute of this flavor.
   #[inline]
-  pub const fn encode(&self) -> &FieldEncodeAttribute {
+  pub const fn encode(&self) -> &FieldEncodeFlavor {
     &self.encode
   }
 
   /// Returns the decode attribute of this flavor.
   #[inline]
-  pub const fn decode(&self) -> &FieldDecodeAttribute {
+  pub const fn decode(&self) -> &FieldDecodeFlavor {
     &self.decode
   }
 
@@ -226,11 +227,12 @@ impl FieldFlavor {
 
   pub(super) fn try_new<M, F>(
     object: &GenericObjectAst<M, F>,
+    object_flavor: &ObjectFlavorAst,
     field: &GenericTaggedFieldAst<F>,
-    flavor_type: &Type,
     ast: &FieldFlavorAst,
   ) -> darling::Result<Self> {
     let path_to_grost = &object.path_to_grost;
+    let flavor_type = object_flavor.ty();
     let object_ty = &object.ty;
     let object_reflectable = &object.reflectable;
     let lifetime_param = &object.lifetime_param;
