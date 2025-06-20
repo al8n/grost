@@ -237,9 +237,7 @@ where
 }
 /// Partial struct for the [`PartialUser`]
 #[allow(non_camel_case_types, clippy::type_complexity)]
-pub struct PartialUser<I: Default, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
-    __grost_unknown_buffer__: ::core::option::Option<__GROST_UNKNOWN_BUFFER__>,
-    __grost_read_buffer__: ::core::option::Option<__GROST_READ_BUFFER__>,
+pub struct PartialUser<I: Default> {
     id: ::core::option::Option<I>,
     name: ::core::option::Option<String>,
     age: ::core::option::Option<u8>,
@@ -480,12 +478,7 @@ const _: () = {
     }
     #[automatically_derived]
     #[allow(non_camel_case_types)]
-    impl<
-        I: Default,
-        __GROST_READ_BUFFER__,
-        __GROST_UNKNOWN_BUFFER__,
-    > ::core::default::Default
-    for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+    impl<I: Default> ::core::default::Default for PartialUser<I> {
         fn default() -> Self {
             Self::new()
         }
@@ -494,28 +487,20 @@ const _: () = {
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl<
         I: Default,
-        __GROST_READ_BUFFER__,
-        __GROST_UNKNOWN_BUFFER__,
         __GROST_FLATTEN_STATE__: ?::core::marker::Sized,
     > ::grost::__private::convert::State<
         ::grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>,
-    > for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+    > for PartialUser<I> {
         type Output = Self;
         type Input = Self;
     }
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl<
-        I: Default,
-        __GROST_READ_BUFFER__,
-        __GROST_UNKNOWN_BUFFER__,
-    > PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+    impl<I: Default> PartialUser<I> {
         /// Creates an empty partial struct.
         #[inline]
         pub const fn new() -> Self {
             Self {
-                __grost_unknown_buffer__: ::core::option::Option::None,
-                __grost_read_buffer__: ::core::option::Option::None,
                 id: ::core::option::Option::None,
                 name: ::core::option::Option::None,
                 age: ::core::option::Option::None,
@@ -528,32 +513,6 @@ const _: () = {
         pub const fn is_empty(&self) -> bool {
             self.id.is_none() && self.name.is_none() && self.age.is_none()
                 && self.emails.is_none() && self.linkin.is_none()
-        }
-        /// Returns a reference to the original encoded data which
-        /// was used to decode the partial object.
-        #[inline]
-        pub const fn raw(&self) -> ::core::option::Option<&__GROST_READ_BUFFER__> {
-            self.__grost_read_buffer__.as_ref()
-        }
-        /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
-        #[inline]
-        pub const fn unknown_buffer(
-            &self,
-        ) -> ::core::option::Option<&__GROST_UNKNOWN_BUFFER__> {
-            self.__grost_unknown_buffer__.as_ref()
-        }
-        /// Takes ownership of the unknown buffer, which holds the unknown data when decoding.
-        #[inline]
-        pub const fn take_unknown_buffer(
-            &mut self,
-        ) -> ::core::option::Option<__GROST_UNKNOWN_BUFFER__> {
-            self.__grost_unknown_buffer__.take()
-        }
-        /// Clears the unknown buffer.
-        #[inline]
-        pub fn clear_unknown_buffer(&mut self) -> &mut Self {
-            self.__grost_unknown_buffer__ = ::core::option::Option::None;
-            self
         }
         /// Returns a reference to the `id`
         #[inline]
@@ -1103,6 +1062,13 @@ const _: () = {
         ) -> ::core::option::Option<&__GROST_UNKNOWN_BUFFER__> {
             self.__grost_unknown_buffer__.as_ref()
         }
+        /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
+        #[inline]
+        pub const fn unknown_buffer_mut(
+            &mut self,
+        ) -> ::core::option::Option<&mut __GROST_UNKNOWN_BUFFER__> {
+            self.__grost_unknown_buffer__.as_mut()
+        }
         /// Takes the unknown buffer out if the unknown buffer is not `None`.
         #[inline]
         pub const fn take_unknown_buffer(
@@ -1110,9 +1076,30 @@ const _: () = {
         ) -> ::core::option::Option<__GROST_UNKNOWN_BUFFER__> {
             self.__grost_unknown_buffer__.take()
         }
+        /// Set the value of unknown buffer
+        #[inline]
+        pub fn set_unknown_buffer(
+            &mut self,
+            buffer: __GROST_UNKNOWN_BUFFER__,
+        ) -> &mut Self {
+            self.__grost_unknown_buffer__ = ::core::option::Option::Some(buffer);
+            self
+        }
         /// Clears the unknown buffer.
         #[inline]
         pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+            self.__grost_unknown_buffer__ = ::core::option::Option::None;
+            self
+        }
+        /// Set the value of unknown buffer
+        #[inline]
+        pub fn with_unknown_buffer(mut self, buffer: __GROST_UNKNOWN_BUFFER__) -> Self {
+            self.__grost_unknown_buffer__ = ::core::option::Option::Some(buffer);
+            self
+        }
+        /// Clears the unknown buffer.
+        #[inline]
+        pub fn without_unknown_buffer(mut self) -> Self {
             self.__grost_unknown_buffer__ = ::core::option::Option::None;
             self
         }
@@ -3694,10 +3681,8 @@ const _: () = {
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl<
         I: Default,
-        __GROST_READ_BUFFER__,
-        __GROST_UNKNOWN_BUFFER__,
     > ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
-    for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialUser<I>
     where
         I: ::grost::__private::selection::Selectable<
             ::grost::__private::flavors::Network,
@@ -4944,7 +4929,56 @@ const _: () = {
         Self,
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
-    > for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+    > for PartialUser<I>
+    where
+        I: ::grost::__private::convert::State<
+            ::grost::__private::convert::Decoded<
+                '__grost_lifetime__,
+                ::grost::__private::flavors::Network,
+                grost::flavors::network::LengthDelimited,
+                __GROST_READ_BUFFER__,
+                __GROST_UNKNOWN_BUFFER__,
+            >,
+        >,
+        <I as ::grost::__private::convert::State<
+            ::grost::__private::convert::Decoded<
+                '__grost_lifetime__,
+                ::grost::__private::flavors::Network,
+                grost::flavors::network::LengthDelimited,
+                __GROST_READ_BUFFER__,
+                __GROST_UNKNOWN_BUFFER__,
+            >,
+        >>::Output: ::core::marker::Sized,
+        I: ::grost::__private::Decode<
+            '__grost_lifetime__,
+            ::grost::__private::flavors::Network,
+            grost::flavors::network::LengthDelimited,
+            <I as ::grost::__private::convert::State<
+                ::grost::__private::convert::Decoded<
+                    '__grost_lifetime__,
+                    ::grost::__private::flavors::Network,
+                    grost::flavors::network::LengthDelimited,
+                    __GROST_READ_BUFFER__,
+                    __GROST_UNKNOWN_BUFFER__,
+                >,
+            >>::Output,
+            __GROST_READ_BUFFER__,
+            __GROST_UNKNOWN_BUFFER__,
+        >,
+        I: ::grost::__private::Transform<
+            ::grost::__private::flavors::Network,
+            grost::flavors::network::LengthDelimited,
+            <I as ::grost::__private::convert::State<
+                ::grost::__private::convert::Decoded<
+                    '__grost_lifetime__,
+                    ::grost::__private::flavors::Network,
+                    grost::flavors::network::LengthDelimited,
+                    __GROST_READ_BUFFER__,
+                    __GROST_UNKNOWN_BUFFER__,
+                >,
+            >>::Output,
+        >,
+    {
         fn decode(
             context: &'__grost_lifetime__ <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Context,
             src: __GROST_READ_BUFFER__,
@@ -4963,20 +4997,47 @@ const _: () = {
                     >,
                 > + '__grost_lifetime__,
         {
-            ::core::panicking::panic("not yet implemented")
+            <PartialUser<
+                I,
+            > as ::grost::__private::decode::Decode<
+                '__grost_lifetime__,
+                ::grost::__private::flavors::Network,
+                ::grost::__private::flavors::network::LengthDelimited,
+                PartialDecodedUser<
+                    '__grost_lifetime__,
+                    I,
+                    __GROST_READ_BUFFER__,
+                    __GROST_UNKNOWN_BUFFER__,
+                >,
+                __GROST_READ_BUFFER__,
+                __GROST_UNKNOWN_BUFFER__,
+            >>::decode(context, src)
+                .and_then(|(read, input)| {
+                    <PartialUser<
+                        I,
+                    > as ::grost::__private::decode::Transform<
+                        ::grost::__private::flavors::Network,
+                        ::grost::__private::flavors::network::LengthDelimited,
+                        PartialDecodedUser<
+                            '__grost_lifetime__,
+                            I,
+                            __GROST_READ_BUFFER__,
+                            __GROST_UNKNOWN_BUFFER__,
+                        >,
+                    >>::transform(input)
+                        .map(|input| (read, input))
+                })
         }
     }
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl<
         I: Default,
-        __GROST_READ_BUFFER__,
-        __GROST_UNKNOWN_BUFFER__,
     > ::grost::__private::decode::Transform<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
         Self,
-    > for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__> {
+    > for PartialUser<I> {
         fn transform(
             input: Self,
         ) -> ::core::result::Result<
@@ -5621,7 +5682,7 @@ const _: () = {
         >,
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
-    > for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialUser<I>
     where
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
@@ -5717,8 +5778,6 @@ const _: () = {
         I: Default,
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
-        __GROST_PARTIAL_READ_BUFFER__,
-        __GROST_PARTIAL_UNKNOWN_BUFFER__,
     > ::grost::__private::decode::Transform<
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
@@ -5728,7 +5787,7 @@ const _: () = {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         >,
-    > for PartialUser<I, __GROST_PARTIAL_READ_BUFFER__, __GROST_PARTIAL_UNKNOWN_BUFFER__>
+    > for PartialUser<I>
     where
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<
@@ -5964,7 +6023,7 @@ const _: () = {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         >,
-    > for PartialUser<I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialUser<I>
     where
         I: ::grost::__private::convert::State<
             ::grost::__private::convert::Decoded<

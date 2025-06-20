@@ -6,7 +6,7 @@ use syn::{
   token::Comma,
 };
 
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 
 use crate::object::mir::{derive_flatten_state, optional_accessors};
 
@@ -23,8 +23,6 @@ pub struct ConcretePartialObject {
   #[debug(skip)]
   applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   attrs: Vec<Attribute>,
-  unknown_buffer_field_name: Ident,
-  read_buffer_field_name: Ident,
   copy: bool,
 }
 
@@ -81,12 +79,6 @@ impl ConcretePartialObject {
 
     let mut generics = object.generics().clone();
     let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
-    generics
-      .params
-      .push(GenericParam::Type(read_buffer_param.clone()));
-    generics
-      .params
-      .push(GenericParam::Type(unknown_buffer_param.clone()));
 
     let flavor_ty = object.flavor().ty();
     let path_to_grost = object.path_to_grost();
@@ -99,18 +91,22 @@ impl ConcretePartialObject {
       .iter()
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .try_for_each(|f| {
-        if !f.partial().type_constraints().is_empty() {
+        if !f.lifetime_params_usages().is_empty() || !f.type_params_usages().is_empty() {
           generics
             .make_where_clause()
             .predicates
             .extend(f.partial().type_constraints().iter().cloned());
 
           let ty = f.ty();
-          let partial_ty = f.partial().ty();
+          let partial_decoded_ty = f.partial_decoded().ty();
           let wf = f.wire_format();
 
+          decode_constraints.extend(f.partial_decoded().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ty, #rb, #ub>
+            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_decoded_ty, #rb, #ub>
+          })?);
+          decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
+            #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_decoded_ty>
           })?);
         }
 
@@ -152,12 +148,16 @@ impl ConcretePartialObject {
           .extend(generics.type_params().cloned().map(GenericParam::from));
         output
           .params
+          .push(GenericParam::Type(read_buffer_param.clone()));
+        output
+          .params
+          .push(GenericParam::Type(unknown_buffer_param.clone()));
+        output
+          .params
           .extend(generics.const_params().cloned().map(GenericParam::from));
         output.where_clause = generics.where_clause.clone();
-        output
-          .make_where_clause()
-          .predicates
-          .extend(decode_constraints);
+        let wc = output.make_where_clause();
+        wc.predicates.extend(decode_constraints);
 
         generics
           .lifetimes()
@@ -167,14 +167,12 @@ impl ConcretePartialObject {
             syn::parse2(quote! {
               #lt: #ident
             })
-            .map(|pred| output.make_where_clause().predicates.push(pred))
+            .map(|pred| wc.predicates.push(pred))
           })?;
         output
       },
       generics,
       attrs: partial_object.attrs().to_vec(),
-      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
-      read_buffer_field_name: format_ident!("__grost_read_buffer__"),
       copy,
     })
   }
@@ -187,10 +185,6 @@ impl ConcretePartialObject {
     let vis = object.vis();
     let generics = self.generics();
     let (_, _, where_clause) = generics.split_for_impl();
-    let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &object.unknown_buffer_param().ident;
-    let rbfn = &self.read_buffer_field_name;
-    let rbg = &object.read_buffer_param().ident;
     let attrs = self.attrs();
     let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
       let doc = format!(" Partial struct for the [`{}`]", self.name());
@@ -236,8 +230,6 @@ impl ConcretePartialObject {
       #(#attrs)*
       #[allow(non_camel_case_types, clippy::type_complexity)]
       #vis struct #name #generics #where_clause {
-        #ubfn: ::core::option::Option<#ubg>,
-        #rbfn: ::core::option::Option<#rbg>,
         #(#fields),*
       }
     })
@@ -296,10 +288,6 @@ impl ConcretePartialObject {
           self.#field_name.is_none()
         }
       });
-    let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &object.unknown_buffer_param().ident;
-    let rbfn = &self.read_buffer_field_name;
-    let rbg = &object.read_buffer_param().ident;
 
     Ok(quote! {
       #[automatically_derived]
@@ -319,8 +307,6 @@ impl ConcretePartialObject {
         #[inline]
         pub const fn new() -> Self {
           Self {
-            #ubfn: ::core::option::Option::None,
-            #rbfn: ::core::option::Option::None,
             #(#fields_init)*
           }
         }
@@ -329,61 +315,6 @@ impl ConcretePartialObject {
         #[inline]
         pub const fn is_empty(&self) -> bool {
           #(#is_empty)&&*
-        }
-
-        /// Returns a reference to the original encoded data which
-        /// was used to decode the partial object.
-        #[inline]
-        pub const fn raw(&self) -> ::core::option::Option<&#rbg> {
-          self.#rbfn.as_ref()
-        }
-
-        /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
-        #[inline]
-        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
-          self.#ubfn.as_ref()
-        }
-
-        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
-
-        /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
-        #[inline]
-        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
-         self.#ubfn.as_mut()
-        }
-
-        /// Takes the unknown buffer out if the unknown buffer is not `None`.
-        #[inline]
-        pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
-          self.#ubfn.take()
-        }
-
-        /// Set the value of unknown buffer
-        #[inline]
-        pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
-          self.#ubfn = ::core::option::Option::Some(buffer);
-          self
-        }
-
-        /// Clears the unknown buffer.
-        #[inline]
-        pub fn clear_unknown_buffer(&mut self) -> &mut Self {
-          self.#ubfn = ::core::option::Option::None;
-          self
-        }
-
-        /// Set the value of unknown buffer
-        #[inline]
-        pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
-          self.#ubfn = ::core::option::Option::Some(buffer);
-          self
-        }
-
-        /// Clears the unknown buffer.
-        #[inline]
-        pub fn without_unknown_buffer(mut self) -> Self {
-          self.#ubfn = ::core::option::Option::None;
-          self
         }
 
         #(#fields_accessors)*
