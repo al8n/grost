@@ -46,8 +46,7 @@ pub struct User<I: Default> {
     tag = 2,
     schema(description = "The nick name of the user"),
     selector(select = "all"),
-    string,
-    flavor(default(decode(ok_or_else = "error_name",),))
+    string
   )]
   name: String,
   #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
@@ -176,7 +175,7 @@ fn t() {
   //   name: Some("user".to_string()),
   //   emails: None,
   // };
-  // println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
+  // println!("{:?}", <grost::reflection::SchemaSchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
 
   // let user = PartialDecodedUser::<'_, ()> {
   //   __grost_unknown_buffer__: todo!(),
@@ -191,4 +190,21 @@ fn t() {
   let encoded_identifier = val.encoded_identifier();
   let object_refl = User::<String>::reflection();
   println!("{:?}", encoded_identifier);
+
+  // let mut decoder = PartialUserDecoder::new();
+  // decoder.feed(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).unwrap();
+  // loop {
+  //   if let Some((idx, identifier)) = decoder.next_field()? {
+  //     match idx {
+  //       UserIndex::Age => {
+
+  //       },
+  //       UserIndex::Emails => {
+
+  //       }
+  //     }
+  //   } else {
+  //     decoder.feed(&[11, 12, 13, 14, 15]).unwrap();
+  //   }
+  // }
 }

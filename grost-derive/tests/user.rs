@@ -344,20 +344,20 @@ const _: () = {
         1u32,
       >
     where
-      ::grost::__private::reflection::TypeReflection<I>:
+      ::grost::__private::reflection::SchemaTypeReflection<I>:
         ::grost::__private::reflection::Reflectable<
             I,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<String>:
+      ::grost::__private::reflection::SchemaTypeReflection<String>:
         ::grost::__private::reflection::Reflectable<
             String,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<u8>:
+      ::grost::__private::reflection::SchemaTypeReflection<u8>:
         ::grost::__private::reflection::Reflectable<
             u8,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
     {
       type Reflection = ::grost::__private::reflection::ObjectField;
@@ -365,7 +365,7 @@ const _: () = {
         ::grost::__private::reflection::ObjectFieldBuilder {
                     name: "id",
                     description: "The id of the user",
-                    ty: <::grost::__private::reflection::TypeReflection<
+                    ty: <::grost::__private::reflection::SchemaTypeReflection<
                         I,
                     > as ::grost::__private::reflection::Reflectable<I>>::REFLECTION,
                 }
@@ -383,20 +383,20 @@ const _: () = {
         2u32,
       >
     where
-      ::grost::__private::reflection::TypeReflection<I>:
+      ::grost::__private::reflection::SchemaTypeReflection<I>:
         ::grost::__private::reflection::Reflectable<
             I,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<String>:
+      ::grost::__private::reflection::SchemaTypeReflection<String>:
         ::grost::__private::reflection::Reflectable<
             String,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<u8>:
+      ::grost::__private::reflection::SchemaTypeReflection<u8>:
         ::grost::__private::reflection::Reflectable<
             u8,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
     {
       type Reflection = ::grost::__private::reflection::ObjectField;
@@ -404,7 +404,7 @@ const _: () = {
         ::grost::__private::reflection::ObjectFieldBuilder {
                     name: "name",
                     description: "The nick name of the user",
-                    ty: <::grost::__private::reflection::TypeReflection<
+                    ty: <::grost::__private::reflection::SchemaTypeReflection<
                         String,
                     > as ::grost::__private::reflection::Reflectable<String>>::REFLECTION,
                 }
@@ -422,20 +422,20 @@ const _: () = {
         3u32,
       >
     where
-      ::grost::__private::reflection::TypeReflection<I>:
+      ::grost::__private::reflection::SchemaTypeReflection<I>:
         ::grost::__private::reflection::Reflectable<
             I,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<String>:
+      ::grost::__private::reflection::SchemaTypeReflection<String>:
         ::grost::__private::reflection::Reflectable<
             String,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<u8>:
+      ::grost::__private::reflection::SchemaTypeReflection<u8>:
         ::grost::__private::reflection::Reflectable<
             u8,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
     {
       type Reflection = ::grost::__private::reflection::ObjectField;
@@ -443,7 +443,7 @@ const _: () = {
         ::grost::__private::reflection::ObjectFieldBuilder {
                     name: "age",
                     description: "The age of the user",
-                    ty: <::grost::__private::reflection::TypeReflection<
+                    ty: <::grost::__private::reflection::SchemaTypeReflection<
                         u8,
                     > as ::grost::__private::reflection::Reflectable<u8>>::REFLECTION,
                 }
@@ -453,27 +453,27 @@ const _: () = {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl<I> ::grost::__private::reflection::Reflectable<User<I>>
-      for ::grost::__private::reflection::TypeReflection<User<I>>
+      for ::grost::__private::reflection::SchemaTypeReflection<User<I>>
     where
-      ::grost::__private::reflection::TypeReflection<I>:
+      ::grost::__private::reflection::SchemaTypeReflection<I>:
         ::grost::__private::reflection::Reflectable<
             I,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<String>:
+      ::grost::__private::reflection::SchemaTypeReflection<String>:
         ::grost::__private::reflection::Reflectable<
             String,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<u8>:
+      ::grost::__private::reflection::SchemaTypeReflection<u8>:
         ::grost::__private::reflection::Reflectable<
             u8,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
     {
-      type Reflection = ::grost::__private::reflection::Type;
+      type Reflection = ::grost::__private::reflection::SchemaType;
       const REFLECTION: &'static Self::Reflection = &{
-        ::grost::__private::reflection::Type::Object(
+        ::grost::__private::reflection::SchemaType::Object(
                     &::grost::__private::reflection::ObjectBuilder {
                         name: "User",
                         description: "",
@@ -481,7 +481,7 @@ const _: () = {
                             &::grost::__private::reflection::ObjectFieldBuilder {
                                 name: "id",
                                 description: "The id of the user",
-                                ty: <::grost::__private::reflection::TypeReflection<
+                                ty: <::grost::__private::reflection::SchemaTypeReflection<
                                     I,
                                 > as ::grost::__private::reflection::Reflectable<
                                     I,
@@ -491,7 +491,7 @@ const _: () = {
                             &::grost::__private::reflection::ObjectFieldBuilder {
                                 name: "name",
                                 description: "The nick name of the user",
-                                ty: <::grost::__private::reflection::TypeReflection<
+                                ty: <::grost::__private::reflection::SchemaTypeReflection<
                                     String,
                                 > as ::grost::__private::reflection::Reflectable<
                                     String,
@@ -501,7 +501,7 @@ const _: () = {
                             &::grost::__private::reflection::ObjectFieldBuilder {
                                 name: "age",
                                 description: "The age of the user",
-                                ty: <::grost::__private::reflection::TypeReflection<
+                                ty: <::grost::__private::reflection::SchemaTypeReflection<
                                     u8,
                                 > as ::grost::__private::reflection::Reflectable<
                                     u8,
@@ -524,20 +524,20 @@ const _: () = {
         __GROST_FLAVOR__,
       >
     where
-      ::grost::__private::reflection::TypeReflection<I>:
+      ::grost::__private::reflection::SchemaTypeReflection<I>:
         ::grost::__private::reflection::Reflectable<
             I,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<String>:
+      ::grost::__private::reflection::SchemaTypeReflection<String>:
         ::grost::__private::reflection::Reflectable<
             String,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
-      ::grost::__private::reflection::TypeReflection<u8>:
+      ::grost::__private::reflection::SchemaTypeReflection<u8>:
         ::grost::__private::reflection::Reflectable<
             u8,
-            Reflection = ::grost::__private::reflection::Type,
+            Reflection = ::grost::__private::reflection::SchemaType,
           >,
     {
       type Reflection = ::grost::__private::reflection::Object;
@@ -549,7 +549,7 @@ const _: () = {
                         &::grost::__private::reflection::ObjectFieldBuilder {
                             name: "id",
                             description: "The id of the user",
-                            ty: <::grost::__private::reflection::TypeReflection<
+                            ty: <::grost::__private::reflection::SchemaTypeReflection<
                                 I,
                             > as ::grost::__private::reflection::Reflectable<
                                 I,
@@ -559,7 +559,7 @@ const _: () = {
                         &::grost::__private::reflection::ObjectFieldBuilder {
                             name: "name",
                             description: "The nick name of the user",
-                            ty: <::grost::__private::reflection::TypeReflection<
+                            ty: <::grost::__private::reflection::SchemaTypeReflection<
                                 String,
                             > as ::grost::__private::reflection::Reflectable<
                                 String,
@@ -569,7 +569,7 @@ const _: () = {
                         &::grost::__private::reflection::ObjectFieldBuilder {
                             name: "age",
                             description: "The age of the user",
-                            ty: <::grost::__private::reflection::TypeReflection<
+                            ty: <::grost::__private::reflection::SchemaTypeReflection<
                                 u8,
                             > as ::grost::__private::reflection::Reflectable<
                                 u8,
@@ -4511,7 +4511,7 @@ impl<I> ::grost::__private::reflection::Reflectable<User<I>>
 #[automatically_derived]
 #[allow(non_camel_case_types, clippy::type_complexity)]
 impl<I> ::grost::__private::reflection::Reflectable<User<I>>
-  for ::grost::__private::reflection::WireTypeReflection<
+  for ::grost::__private::reflection::WireSchemaTypeReflection<
     ::grost::__private::reflection::ObjectFieldReflection<
       User<I>,
       ::grost::__private::flavors::network::WireType,
@@ -4536,7 +4536,7 @@ impl<I> ::grost::__private::reflection::Reflectable<User<I>>
 #[automatically_derived]
 #[allow(non_camel_case_types, clippy::type_complexity)]
 impl<I> ::grost::__private::reflection::Reflectable<User<I>>
-  for ::grost::__private::reflection::WireTypeReflection<
+  for ::grost::__private::reflection::WireSchemaTypeReflection<
     ::grost::__private::reflection::ObjectFieldReflection<
       User<I>,
       ::grost::__private::flavors::network::WireType,
@@ -4561,7 +4561,7 @@ impl<I> ::grost::__private::reflection::Reflectable<User<I>>
 #[automatically_derived]
 #[allow(non_camel_case_types, clippy::type_complexity)]
 impl<I> ::grost::__private::reflection::Reflectable<User<I>>
-  for ::grost::__private::reflection::WireTypeReflection<
+  for ::grost::__private::reflection::WireSchemaTypeReflection<
     ::grost::__private::reflection::ObjectFieldReflection<
       User<I>,
       ::grost::__private::flavors::network::WireType,

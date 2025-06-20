@@ -70,7 +70,7 @@ phantom!(
   /// Reflection to the tag of a field
   TagReflection,
   /// Reflection to the wire type of a field
-  WireTypeReflection,
+  WireSchemaTypeReflection,
   /// Reflection to length related
   Len,
   /// Reflection to an encode fn.
@@ -78,7 +78,7 @@ phantom!(
   /// Reflection to an partial encode fn.
   PartialEncodeReflection,
   /// Reflection to the schema [`Type`].
-  TypeReflection,
+  SchemaTypeReflection,
 );
 
 /// Reflectable.

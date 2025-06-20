@@ -265,8 +265,12 @@ impl<F> ConcreteTaggedField<F> {
       None
     };
 
-    let partial_decoded_ty = match field.flavor().ty().or_else(|| field.partial_decoded_type()) {
-      Some(ty) => ty.clone(),
+    let (partial_decoded_ty, decoded_state_type) = match field
+      .flavor()
+      .ty()
+      .or_else(|| field.partial_decoded_type())
+    {
+      Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
           #path_to_grost::__private::convert::State<
@@ -289,9 +293,12 @@ impl<F> ConcreteTaggedField<F> {
           })?);
         }
 
-        syn::parse2(quote! {
-          <#field_ty as #state_type>::Output
-        })?
+        (
+          syn::parse2(quote! {
+            <#field_ty as #state_type>::Output
+          })?,
+          Some(state_type),
+        )
       }
     };
 
@@ -316,6 +323,7 @@ impl<F> ConcreteTaggedField<F> {
     let partial_decoded = ConcretePartialDecodedField {
       ty: partial_decoded_ty,
       optional_type: optional_partial_decoded_type,
+      decoded_state_type,
       decode_trait_type,
       attrs: field.partial_decoded.attrs,
       constraints: partial_decoded_constraints,

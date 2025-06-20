@@ -6,10 +6,10 @@ macro_rules! impl_reflectable {
   ),+$(,)?) => {
     $(
       $(
-        impl $crate::reflection::Reflectable<$ty> for $crate::reflection::TypeReflection<$ty> {
-          type Reflection = $crate::reflection::Type;
+        impl $crate::reflection::Reflectable<$ty> for $crate::reflection::SchemaTypeReflection<$ty> {
+          type Reflection = $crate::reflection::SchemaType;
 
-          const REFLECTION: &Self::Reflection = &$crate::reflection::Type::Scalar($crate::reflection::Scalar::$constructor($size));
+          const REFLECTION: &Self::Reflection = &$crate::reflection::SchemaType::Scalar($crate::reflection::Scalar::$constructor($size));
         }
       )*
     )*
@@ -158,7 +158,7 @@ const _: () = {
 const _: () = {
   use bnum_0_13::*;
 
-  use crate::reflection::{Reflectable, Scalar, Type, TypeReflection};
+  use crate::reflection::{Reflectable, Scalar, SchemaType, SchemaTypeReflection};
 
   macro_rules! impl_bnum {
     ($(
@@ -166,10 +166,10 @@ const _: () = {
     ),+$(,)?) => {
       $(
         $(
-          impl<const N: usize> Reflectable<$ty> for TypeReflection<$ty> {
-            type Reflection = Type;
+          impl<const N: usize> Reflectable<$ty> for SchemaTypeReflection<$ty> {
+            type Reflection = SchemaType;
 
-            const REFLECTION: &Self::Reflection = &Type::Scalar(Scalar::$constructor(N * $size));
+            const REFLECTION: &Self::Reflection = &SchemaType::Scalar(Scalar::$constructor(N * $size));
           }
         )*
       )*
@@ -196,13 +196,13 @@ const _: () = {
 const _: () = {
   use ruint_1::*;
 
-  use crate::reflection::{Reflectable, Scalar, Type, TypeReflection};
+  use crate::reflection::{Reflectable, Scalar, SchemaType, SchemaTypeReflection};
 
   impl<const BITS: usize, const LBITS: usize> Reflectable<Uint<BITS, LBITS>>
-    for TypeReflection<Uint<BITS, LBITS>>
+    for SchemaTypeReflection<Uint<BITS, LBITS>>
   {
-    type Reflection = Type;
+    type Reflection = SchemaType;
 
-    const REFLECTION: &Self::Reflection = &Type::Scalar(Scalar::uint(BITS));
+    const REFLECTION: &Self::Reflection = &SchemaType::Scalar(Scalar::uint(BITS));
   }
 };

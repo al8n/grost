@@ -30,6 +30,8 @@ pub struct ConcretePartialDecodedObject {
   decode_generics: Generics,
   /// Extra constraints when deriving `Transform` trait for the partial decoded object.
   transform_generics: Generics,
+  /// Extra constraints when deriving `Transform` trait for the partial decoded object.
+  partial_transform_generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   apply_type_generics: Arc<dyn Fn(TyWith) -> syn::Result<Type> + 'static>,
@@ -84,6 +86,12 @@ impl ConcretePartialDecodedObject {
     &self.transform_generics
   }
 
+  /// Returns the generics when deriving `PartialTransform` trait for the partial decoded object.
+  #[inline]
+  pub const fn partial_transform_generics(&self) -> &Generics {
+    &self.partial_transform_generics
+  }
+
   pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
     (self.applied_decode_trait)(quote! { #ty })
   }
@@ -116,6 +124,7 @@ impl ConcretePartialDecodedObject {
     let mut generics = Generics::default();
     let mut decode_constraints = Punctuated::<WherePredicate, Comma>::new();
     let mut transform_constraints = Punctuated::<WherePredicate, Comma>::new();
+    let mut partial_transform_constraints = Punctuated::<WherePredicate, Comma>::new();
 
     generics
       .params
@@ -159,7 +168,7 @@ impl ConcretePartialDecodedObject {
     let wf = object.flavor().wire_format();
     for field in fields.iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()) {
       let type_constraints = field.partial_decoded().type_constraints();
-      if !type_constraints.is_empty() {
+      if !field.type_params_usages().is_empty() || !field.lifetime_params_usages().is_empty() {
         generics
           .make_where_clause()
           .predicates
@@ -173,8 +182,21 @@ impl ConcretePartialDecodedObject {
           #ty: #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #rb, #ub>
         })?);
         transform_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_decoded_ty>
+          #ty: #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_decoded_ty>
         })?);
+        partial_transform_constraints.push(syn::parse2(quote! {
+          #ty: #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_decoded_ty>
+        })?);
+        partial_transform_constraints.push(syn::parse2(quote! {
+          #partial_decoded_ty: #path_to_grost::__private::selection::Selectable<
+            #flavor_ty,
+            Selector = <#ty as #path_to_grost::__private::selection::Selectable<#flavor_ty>>::Selector,
+          >
+        })?);
+      }
+
+      if !field.selector().type_constraints().is_empty() {
+        partial_transform_constraints.extend(field.selector().type_constraints().iter().cloned());
       }
     }
 
@@ -212,6 +234,25 @@ impl ConcretePartialDecodedObject {
         .make_where_clause()
         .predicates
         .extend(transform_constraints);
+      output.make_where_clause()
+        .predicates
+        .extend([
+          syn::parse2::<WherePredicate>(quote! {
+            #rb: #path_to_grost::__private::buffer::ReadBuf<#lt>
+          })?,
+          syn::parse2::<WherePredicate>(quote! {
+            #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt
+          })?,
+        ]);
+      output
+    };
+    let partial_transform_generics = {
+      let mut output = generics.clone();
+      let lt = &object.lifetime_param().lifetime;
+      output
+        .make_where_clause()
+        .predicates
+        .extend(partial_transform_constraints);
       output.make_where_clause()
         .predicates
         .extend([
@@ -288,6 +329,7 @@ impl ConcretePartialDecodedObject {
       attrs: partial_decoded_object.attrs().to_vec(),
       copy: partial_decoded_object.copy(),
       transform_generics,
+      partial_transform_generics,
       decode_generics,
       generics,
       read_buffer_field_name: format_ident!("__grost_read_buffer__"),

@@ -3,10 +3,10 @@ use core::net::*;
 macro_rules! impl_reflectable {
   ($($ty:ty:$variant:ident),+$(,)?) => {
     $(
-      impl $crate::reflection::Reflectable<$ty> for $crate::reflection::TypeReflection<$ty> {
-        type Reflection = $crate::reflection::Type;
+      impl $crate::reflection::Reflectable<$ty> for $crate::reflection::SchemaTypeReflection<$ty> {
+        type Reflection = $crate::reflection::SchemaType;
 
-        const REFLECTION: &Self::Reflection = &$crate::reflection::Type::Scalar($crate::reflection::Scalar::$variant);
+        const REFLECTION: &Self::Reflection = &$crate::reflection::SchemaType::Scalar($crate::reflection::Scalar::$variant);
       }
     )*
   };

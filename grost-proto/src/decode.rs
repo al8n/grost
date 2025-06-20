@@ -38,7 +38,7 @@ where
   fn decode_length_delimited(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
-    B: ReadBuf<'de> + 'de,
+    B: ReadBuf<'de>,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
     let as_bytes = src.as_bytes();
@@ -97,7 +97,7 @@ where
   /// Partially transforms from the input type `I` into the current type `Self`.
   ///
   /// If there is nothing selected, it returns `Ok(None)`.
-  fn partial_transform(input: I, selector: &I::Selector) -> Result<Option<Self>, F::Error>
+  fn partial_transform(input: I, selector: &Self::Selector) -> Result<Option<Self>, F::Error>
   where
     Self: Sized;
 }

@@ -171,7 +171,7 @@ fn t() {
   //   name: Some("user".to_string()),
   //   emails: None,
   // };
-  // println!("{:?}", <grost::reflection::SchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
+  // println!("{:?}", <grost::reflection::SchemaSchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
 
   let user = PartialDecodedUser::<'_, Network, ()> {
     __grost_unknown_buffer__: todo!(),

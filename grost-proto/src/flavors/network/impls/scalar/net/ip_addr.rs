@@ -224,7 +224,7 @@ impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for IpAddr {
   fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de> + 'de,
+    B: ReadBuf<'de>,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     let src = src.as_bytes();
@@ -259,7 +259,7 @@ impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Self, B, UB> for IpAddr {
   fn decode_length_delimited(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de> + 'de,
+    B: ReadBuf<'de>,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
     let src = src.as_bytes();

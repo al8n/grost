@@ -1,9 +1,9 @@
 use crate::flavors::Flavor;
 
-use super::{EncodeReflection, Len, ObjectFieldReflection, Reflectable, WireTypeReflection};
+use super::{EncodeReflection, Len, ObjectFieldReflection, Reflectable, WireSchemaTypeReflection};
 
 impl<O, F, const TAG: u32> core::fmt::Debug
-  for WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
+  for WireSchemaTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
 where
   O: ?Sized,
   F: ?Sized + Flavor,
@@ -16,7 +16,7 @@ where
 }
 
 impl<O, F, const TAG: u32> core::fmt::Display
-  for WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
+  for WireSchemaTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
 where
   O: ?Sized,
   F: ?Sized + Flavor,
@@ -29,7 +29,7 @@ where
 }
 
 impl<O, F, const TAG: u32> core::ops::Deref
-  for WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
+  for WireSchemaTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
 where
   O: ?Sized,
   F: ?Sized + Flavor,
@@ -43,7 +43,7 @@ where
   }
 }
 
-impl<R> WireTypeReflection<R>
+impl<R> WireSchemaTypeReflection<R>
 where
   R: ?Sized,
 {

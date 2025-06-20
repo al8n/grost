@@ -388,7 +388,7 @@ fn wire_type_reflection(
   tag: u32,
 ) -> syn::Result<Type> {
   syn::parse2(quote! {
-    #path_to_grost::__private::reflection::WireTypeReflection<
+    #path_to_grost::__private::reflection::WireSchemaTypeReflection<
       #path_to_grost::__private::reflection::ObjectFieldReflection<
         #object_type,
         <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::WireType,

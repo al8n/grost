@@ -117,7 +117,7 @@ macro_rules! decode {
       src: B,
     ) -> Result<(usize, PackedDecoder<'de, T, B, UB, W>), <Network as $crate::flavors::Flavor>::Error>
     where
-      PackedDecoder<'de, T, B, UB, W>: Sized + 'de,
+      PackedDecoder<'de, T, B, UB, W>: Sized,
       B: $crate::buffer::ReadBuf<'de>,
       UB: $crate::buffer::Buffer<<Network as $crate::flavors::Flavor>::Unknown<B>> + 'de,
     {
@@ -362,7 +362,7 @@ macro_rules! list {
       impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, Self, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::network::Error>
         where
-          Self: ::core::marker::Sized + 'de,
+          Self: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf<'de>,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
         {
@@ -397,7 +397,7 @@ macro_rules! list {
       impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, LengthDelimited, Self, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::network::Error>
         where
-          Self: ::core::marker::Sized + 'de,
+          Self: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf<'de>,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::network::Unknown<B>> + 'de,
         {

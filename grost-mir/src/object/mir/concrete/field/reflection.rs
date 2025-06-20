@@ -113,7 +113,7 @@ impl ConcreteFieldReflection {
     &self.wire_format_reflection_generics
   }
 
-  /// Returns the generics when deriving `WireTypeReflection` for the field.
+  /// Returns the generics when deriving `WireSchemaTypeReflection` for the field.
   #[inline]
   pub const fn wire_type_reflection_generics(&self) -> &Generics {
     &self.wire_type_reflection_generics
@@ -179,7 +179,7 @@ impl ConcreteFieldReflection {
     if use_generics {
       {
         let pred: WherePredicate = syn::parse2(quote! {
-          #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
+          #path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::SchemaType>
         })?;
         field_reflection_constraints.push(pred.clone());
         field_reflection_generics
@@ -208,7 +208,7 @@ impl ConcreteFieldReflection {
       #path_to_grost::__private::reflection::ObjectFieldBuilder {
         name: #schema_name,
         description: #schema_description,
-        ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
+        ty: <#path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
       }.build()
     })?;
 
@@ -312,7 +312,7 @@ impl<F> super::ConcreteTaggedField<F> {
           #path_to_grost::__private::reflection::ObjectFieldBuilder {
             name: #schema_name,
             description: #schema_description,
-            ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
+            ty: <#path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
           }.build()
         };
       }

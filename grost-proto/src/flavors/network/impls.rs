@@ -3,8 +3,9 @@ pub use packed_decoder::PackedDecoder;
 
 use crate::{
   buffer::{Buffer, ReadBuf},
-  decode::{Decode, Transform},
+  decode::{Decode, PartialTransform, Transform},
   flavors::{Flavor, Network, WireFormat},
+  selection::Selectable,
 };
 
 mod list;
@@ -38,5 +39,23 @@ where
 {
   fn transform(input: I) -> Result<Self, <Network as Flavor>::Error> {
     T::transform(input).map(Some)
+  }
+}
+
+impl<W, I, T> PartialTransform<Network, W, I> for Option<T>
+where
+  W: WireFormat<Network>,
+  T: PartialTransform<Network, W, I> + Sized,
+  I: Selectable<Network>,
+  T: Selectable<Network, Selector = <I as Selectable<Network>>::Selector>,
+{
+  fn partial_transform(
+    input: I,
+    selector: &<I as Selectable<Network>>::Selector,
+  ) -> Result<Option<Self>, <Network as Flavor>::Error>
+  where
+    Self: Sized,
+  {
+    T::partial_transform(input, selector).map(|opt| opt.map(Some))
   }
 }

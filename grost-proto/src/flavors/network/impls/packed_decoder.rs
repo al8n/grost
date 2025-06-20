@@ -143,7 +143,7 @@ where
     + 'a,
   T::Output: Sized,
   UB: Buffer<Unknown<B>> + 'a,
-  B: ReadBuf<'a>,
+  B: ReadBuf<'a> + 'a,
 {
   type Item = Result<(usize, T::Output), Error>;
 
