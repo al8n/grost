@@ -1,5 +1,5 @@
 use crate::{
-  decode::{Decode, BytesSlice, Str},
+  decode::{BytesSlice, Decode, Str},
   decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
   selectable,
@@ -27,13 +27,12 @@ impl<'de, B, UB> Decode<'de, Network, LengthDelimited, Str<B>, B, UB> for str {
     B: crate::buffer::ReadBuf + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
-    <[u8] as Decode<'de, Network, LengthDelimited, BytesSlice<B>, B, UB>>::decode(context, src).and_then(
-      |(read, val)| {
+    <[u8] as Decode<'de, Network, LengthDelimited, BytesSlice<B>, B, UB>>::decode(context, src)
+      .and_then(|(read, val)| {
         Str::try_new(val.into_inner())
           .map_err(|_| Error::custom("invalid UTF-8"))
           .map(|s| (read, s))
-      },
-    )
+      })
   }
 }
 

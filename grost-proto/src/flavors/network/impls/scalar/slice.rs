@@ -1,6 +1,6 @@
 use crate::{
   buffer::{Buffer, ReadBuf},
-  decode::{Decode, BytesSlice},
+  decode::{BytesSlice, Decode},
   flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
 };
 

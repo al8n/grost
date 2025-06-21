@@ -69,7 +69,13 @@ pub struct User<I: Default> {
     // )),
   )]
   name: String,
-  #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
+  #[grost(
+    tag = 3,
+    scalar,
+    schema(description = "The age of the user"),
+    copy,
+    partial_decoded(type = "u8")
+  )]
   age: u8,
   #[grost(tag = 4, schema(description = "The email of the user"), list(string))]
   emails: Vec<String>,

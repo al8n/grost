@@ -1,9 +1,9 @@
 use core::num::NonZeroU32;
 
 use darling::FromMeta;
-use syn::{Attribute, Meta, Type, parse::Parser};
+use syn::{Attribute, Meta, Type};
 
-use crate::utils::{Attributes, Invokable, NestedMetaWithTypeField, SchemaFromMeta};
+use crate::utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta};
 
 pub(in crate::object) use flavor::{
   DecodeFromMeta as FieldDecodeFromMeta, EncodeFromMeta as FieldEncodeFromMeta,
@@ -33,30 +33,12 @@ impl FromMeta for PartialDecodedFieldFromMeta {
   fn from_meta(item: &Meta) -> darling::Result<Self> {
     (match *item {
       Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
       Meta::List(ref value) => {
-        let punctuated =
-          syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
-            .parse2(value.tokens.clone())?;
-
-        let mut nested_meta = Vec::new();
-        let mut ty = None;
-        for item in punctuated {
-          match item {
-            NestedMetaWithTypeField::Type(t) => {
-              if ty.is_some() {
-                return Err(darling::Error::duplicate_field("type"));
-              }
-              ty = Some(t);
-            }
-            NestedMetaWithTypeField::Nested(value) => {
-              nested_meta.push(value);
-            }
-          }
-        }
-
         /// The meta of the partial reference object field
         #[derive(Debug, Default, Clone, FromMeta)]
         struct Helper {
+          #[darling(default)]
           copy: bool,
           #[darling(default, map = "Attributes::into_inner")]
           attrs: Vec<Attribute>,
@@ -64,6 +46,8 @@ impl FromMeta for PartialDecodedFieldFromMeta {
           encode: FieldEncodeFromMeta,
           #[darling(default)]
           decode: FieldDecodeFromMeta,
+          #[darling(rename = "type", default)]
+          ty: Option<Type>,
         }
 
         let Helper {
@@ -71,7 +55,8 @@ impl FromMeta for PartialDecodedFieldFromMeta {
           attrs,
           encode,
           decode,
-        } = Helper::from_list(&nested_meta)?;
+          ty,
+        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
         Ok(Self {
           copy,
           attrs,
@@ -80,7 +65,6 @@ impl FromMeta for PartialDecodedFieldFromMeta {
           decode,
         })
       }
-      Meta::NameValue(ref value) => Self::from_expr(&value.value),
     })
     .map_err(|e| e.with_span(item))
   }
@@ -97,38 +81,21 @@ impl FromMeta for PartialFieldFromMeta {
   fn from_meta(item: &Meta) -> darling::Result<Self> {
     (match *item {
       Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
       Meta::List(ref value) => {
-        let punctuated =
-          syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
-            .parse2(value.tokens.clone())?;
-
-        let mut nested_meta = Vec::new();
-        let mut ty = None;
-        for item in punctuated {
-          match item {
-            NestedMetaWithTypeField::Type(t) => {
-              if ty.is_some() {
-                return Err(darling::Error::duplicate_field("type"));
-              }
-              ty = Some(t);
-            }
-            NestedMetaWithTypeField::Nested(value) => {
-              nested_meta.push(value);
-            }
-          }
-        }
-
         /// The meta of the partial reference object field
         #[derive(Debug, Default, Clone, FromMeta)]
         struct Helper {
+          #[darling(default, rename = "type")]
+          ty: Option<Type>,
           #[darling(default, map = "Attributes::into_inner")]
           attrs: Vec<Attribute>,
         }
 
-        let Helper { attrs } = Helper::from_list(&nested_meta)?;
+        let Helper { attrs, ty } =
+          Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
         Ok(Self { attrs, ty })
       }
-      Meta::NameValue(ref value) => Self::from_expr(&value.value),
     })
     .map_err(|e| e.with_span(item))
   }

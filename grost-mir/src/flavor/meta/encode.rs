@@ -1,8 +1,8 @@
-use darling::{FromMeta, ast::NestedMeta};
+use darling::FromMeta;
 use quote::quote;
-use syn::{Meta, Path, parse::Parser, parse2};
+use syn::{Meta, Path, parse2};
 
-use crate::utils::BoolOption;
+use crate::utils::{BoolOption, NestedMeta};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, darling::FromMeta)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -104,14 +104,8 @@ struct Helper {
   set: EncodeValue,
   #[darling(default)]
   list: EncodeValue,
-}
-
-#[derive(Debug, FromMeta)]
-pub(super) struct EncodeParser {
   #[darling(default, rename = "enum")]
   enumeration: EncodeValue,
-  #[darling(flatten)]
-  helper: Helper,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -299,41 +293,6 @@ impl EncodeFromMeta {
   }
 }
 
-impl From<EncodeParser> for EncodeFromMeta {
-  fn from(
-    EncodeParser {
-      enumeration,
-      helper:
-        Helper {
-          skip_default,
-          scalar,
-          bytes,
-          string,
-          object,
-          interface,
-          union,
-          map,
-          set,
-          list,
-        },
-    }: EncodeParser,
-  ) -> Self {
-    Self {
-      skip_default,
-      scalar,
-      bytes,
-      string,
-      object,
-      enumeration,
-      interface,
-      union,
-      map,
-      set,
-      list,
-    }
-  }
-}
-
 impl TryFrom<&str> for EncodeFromMeta {
   type Error = syn::Error;
 
@@ -383,27 +342,8 @@ impl FromMeta for EncodeFromMeta {
     (match *item {
       Meta::Path(_) => Self::from_word(),
       Meta::List(ref value) => {
-        let punctuated =
-          syn::punctuated::Punctuated::<EncodeNestedMeta, syn::Token![,]>::parse_terminated
-            .parse2(value.tokens.clone())?;
-
-        let mut nested_meta = Vec::new();
-        let mut enum_ = None;
-        for item in punctuated {
-          match item {
-            EncodeNestedMeta::Enum(t) => {
-              if enum_.is_some() {
-                return Err(darling::Error::duplicate_field("enum"));
-              }
-              enum_ = Some(t);
-            }
-            EncodeNestedMeta::Nested(value) => {
-              nested_meta.push(value);
-            }
-          }
-        }
-
         let Helper {
+          enumeration,
           skip_default,
           scalar,
           bytes,
@@ -414,14 +354,14 @@ impl FromMeta for EncodeFromMeta {
           map,
           set,
           list,
-        } = Helper::from_list(&nested_meta)?;
+        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?[..])?;
         Ok(Self {
           skip_default,
           scalar,
           bytes,
           string,
           object,
-          enumeration: enum_.unwrap_or_default(),
+          enumeration,
           interface,
           union,
           map,
@@ -432,38 +372,6 @@ impl FromMeta for EncodeFromMeta {
       Meta::NameValue(ref value) => Self::from_expr(&value.value),
     })
     .map_err(|e| e.with_span(item))
-  }
-}
-
-enum EncodeNestedMeta {
-  Enum(EncodeValue),
-  Nested(NestedMeta),
-}
-
-impl syn::parse::Parse for EncodeNestedMeta {
-  fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-    if input.peek(syn::Token![enum]) {
-      let _: syn::Token![enum] = input.parse()?;
-      if input.peek(syn::Token![=]) {
-        let _: syn::Token![=] = input.parse()?;
-        let value: syn::LitStr = input.parse()?;
-        EncodeValue::try_from(value.value().as_str()).map(Self::Enum)
-      } else if input.peek(syn::token::Paren) {
-        let content;
-        syn::parenthesized!(content in input);
-        let nested_meta = content
-          .parse_terminated(NestedMeta::parse, syn::Token![,])?
-          .into_iter()
-          .collect::<Vec<_>>();
-        EncodeValue::from_list(&nested_meta)
-          .map(Self::Enum)
-          .map_err(Into::into)
-      } else {
-        return Err(darling::Error::unsupported_format("word").into());
-      }
-    } else {
-      input.parse().map(Self::Nested)
-    }
   }
 }
 

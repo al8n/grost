@@ -1,6 +1,6 @@
-use darling::{FromMeta, ast::NestedMeta};
+use darling::FromMeta;
 use indexmap::IndexMap;
-use syn::{Ident, Meta, parse::Parser};
+use syn::{Ident, Meta};
 
 pub(in crate::object) use decode::*;
 pub(in crate::object) use encode::*;
@@ -8,7 +8,7 @@ pub(in crate::object) use encode::*;
 use crate::{
   flavor::{complex_flavor_ident_error, duplicate_flavor_error},
   object::meta::ConvertFromMeta,
-  utils::NestedMetaWithTypeField,
+  utils::NestedMeta,
 };
 
 mod decode;
@@ -28,29 +28,11 @@ impl FromMeta for FieldFlavorValueFromMeta {
     (match *item {
       Meta::Path(_) => Self::from_word(),
       Meta::List(ref value) => {
-        let punctuated =
-          syn::punctuated::Punctuated::<NestedMetaWithTypeField, syn::Token![,]>::parse_terminated
-            .parse2(value.tokens.clone())?;
-
-        let mut nested_meta = Vec::new();
-        let mut ty = None;
-        for item in punctuated {
-          match item {
-            NestedMetaWithTypeField::Type(t) => {
-              if ty.is_some() {
-                return Err(darling::Error::duplicate_field("type"));
-              }
-              ty = Some(t);
-            }
-            NestedMetaWithTypeField::Nested(value) => {
-              nested_meta.push(value);
-            }
-          }
-        }
-
         /// The meta of the partial reference object field
         #[derive(Debug, Default, Clone, FromMeta)]
         struct Helper {
+          #[darling(rename = "type", default)]
+          ty: Option<syn::Type>,
           #[darling(default)]
           format: Option<syn::Type>,
           #[darling(default)]
@@ -66,7 +48,8 @@ impl FromMeta for FieldFlavorValueFromMeta {
           encode,
           decode,
           convert,
-        } = Helper::from_list(&nested_meta)?;
+          ty,
+        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
 
         Ok(Self {
           ty,
@@ -89,13 +72,15 @@ pub struct FieldFlavorFromMeta {
 }
 
 impl FromMeta for FieldFlavorFromMeta {
-  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let mut flavors = IndexMap::new();
 
     for item in items {
       match item {
-        NestedMeta::Lit(_) => return Err(darling::Error::unsupported_format("literal")),
-        NestedMeta::Meta(meta) => {
+        darling::ast::NestedMeta::Lit(_) => {
+          return Err(darling::Error::unsupported_format("literal"));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
           let ident = meta
             .path()
             .get_ident()
