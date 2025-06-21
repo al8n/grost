@@ -21,7 +21,7 @@ where
     + 'a,
   T::Output: Sized,
   UB: Buffer<Unknown<B>> + 'a,
-  B: ReadBuf<'a>,
+  B: ReadBuf + 'a,
 {
   fn transform(
     input: PackedDecoder<'a, T, B, UB, TW>,

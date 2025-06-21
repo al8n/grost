@@ -139,7 +139,7 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   /// Decode the identifier from a buffer.
   fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
   where
-    B: ReadBuf<'de> + Sized,
+    B: ReadBuf + Sized,
     Self: Sized;
 }
 
@@ -267,12 +267,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: ReadBuf<'de>;
+    B: ReadBuf;
 
   /// Returns the length of the encoded unknown value.
   fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: ReadBuf<'de>;
+    B: ReadBuf;
 
   /// Decodes an unknown value from a buffer.
   ///
@@ -284,7 +284,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: ReadBuf<'de>;
+    B: ReadBuf;
 
   /// Skips number of bytes in the buffer according to the wire type.
   fn skip<'de, B>(
@@ -293,7 +293,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<usize, Self::Error>
   where
-    B: ReadBuf<'de>;
+    B: ReadBuf;
 }
 
 /// A raw tag for a field.

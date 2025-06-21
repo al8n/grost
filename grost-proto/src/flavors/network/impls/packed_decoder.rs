@@ -63,7 +63,7 @@ impl<'a, T: ?Sized, B: ?Sized + Copy, UB: ?Sized, W: ?Sized> Copy
 impl<'a, B, UB> PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
-  B: ReadBuf<'a>,
+  B: ReadBuf,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
@@ -71,7 +71,7 @@ where
   /// Since the target type is a byte slice, no further decoding is needed for individual elements.
   /// The decoder can immediately provide the complete decoded byte slice.
   #[inline]
-  pub fn as_slice(&self) -> &'a [u8] {
+  pub fn as_slice(&self) -> &[u8] {
     let src = &self.src;
     if src.is_empty() {
       return src.as_bytes();
@@ -89,7 +89,7 @@ where
 impl<'a, B, UB> core::ops::Deref for PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
-  B: ReadBuf<'a>,
+  B: ReadBuf,
 {
   type Target = [u8];
 
@@ -102,7 +102,7 @@ where
 impl<'a, B, UB> AsRef<[u8]> for PackedDecoder<'a, u8, B, UB, LengthDelimited>
 where
   UB: ?Sized,
-  B: ReadBuf<'a>,
+  B: ReadBuf,
 {
   #[inline]
   fn as_ref(&self) -> &[u8] {
@@ -143,7 +143,7 @@ where
     + 'a,
   T::Output: Sized,
   UB: Buffer<Unknown<B>> + 'a,
-  B: ReadBuf<'a> + 'a,
+  B: ReadBuf + 'a,
 {
   type Item = Result<(usize, T::Output), Error>;
 
@@ -176,7 +176,7 @@ where
   T: ?Sized,
   W: WireFormat<Network> + 'a,
   UB: ?Sized,
-  B: ReadBuf<'a>,
+  B: ReadBuf,
 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     let src = &self.src;
@@ -200,7 +200,7 @@ impl<'a, T, B, UB, W, PW> Decode<'a, Network, PW, Self, B, UB> for PackedDecoder
 where
   W: WireFormat<Network> + 'a,
   PW: WireFormat<Network> + 'a,
-  B: ReadBuf<'a>,
+  B: ReadBuf,
 {
   fn decode(
     ctx: &'a <Network as crate::flavors::Flavor>::Context,
@@ -208,7 +208,7 @@ where
   ) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    B: crate::buffer::ReadBuf<'a>,
+    B: crate::buffer::ReadBuf,
     UB: Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a,
   {
     let buf = src.as_bytes();

@@ -25,7 +25,7 @@ where
   ) -> Result<(usize, O), <Network as Flavor>::Error>
   where
     O: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf + 'de,
     UB: Buffer<<Network as Flavor>::Unknown<B>> + 'de,
   {
     T::decode(context, src)

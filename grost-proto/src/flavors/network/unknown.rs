@@ -80,7 +80,7 @@ where
   #[inline]
   pub fn data<'a>(&'a self) -> &'a [u8]
   where
-    B: ReadBuf<'a>,
+    B: ReadBuf,
   {
     let bytes = self.data.as_bytes();
     let len = bytes.len();
@@ -100,9 +100,9 @@ where
   /// Note: The data includes the wire type and the tag.
   /// If you want to access the actual data, use [`data`] instead.
   #[inline]
-  pub fn raw<'a>(&self) -> &'a [u8]
+  pub fn raw(&self) -> &[u8]
   where
-    B: ReadBuf<'a>,
+    B: ReadBuf,
   {
     self.data.as_bytes()
   }
@@ -124,7 +124,7 @@ impl<B: ?Sized> Unknown<B> {
   pub fn map<'a, N>(&'a self) -> Unknown<N>
   where
     N: From<&'a [u8]>,
-    B: ReadBuf<'a>,
+    B: ReadBuf,
   {
     Unknown {
       tag: self.tag,

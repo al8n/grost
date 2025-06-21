@@ -25,9 +25,9 @@ macro_rules! try_str_bridge {
       );
 
       $crate::try_decode_bridge!(
-        @without_decode_owned $flavor: &'de str {
+        $flavor: &'de str => $crate::__private::decode::Str<B> {
           $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited {
-            convert: $from_str;
+            convert: |s: $crate::__private::decode::Str<B>| $from_str(s.as_ref());
           },
         },
       );
@@ -37,7 +37,7 @@ macro_rules! try_str_bridge {
       );
 
       $crate::decoded_state!(&'a Network:
-        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => &'a str
+        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>
       );
 
       $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);

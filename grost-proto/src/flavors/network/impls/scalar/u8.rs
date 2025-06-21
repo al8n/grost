@@ -76,7 +76,7 @@ impl<'de, B, UB> Decode<'de, Network, Fixed8, Self, B, UB> for u8 {
   fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf,
     UB: Buffer<Unknown<B>> + 'de,
   {
     if src.is_empty() {
@@ -92,7 +92,7 @@ impl<'de, B, UB> Decode<'de, Network, Varint, Self, B, UB> for u8 {
   fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf,
     UB: Buffer<Unknown<B>> + 'de,
   {
     varing::decode_u8_varint(src.as_bytes()).map_err(Into::into)

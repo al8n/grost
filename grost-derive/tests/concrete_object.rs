@@ -46,7 +46,27 @@ pub struct User<I: Default> {
     tag = 2,
     schema(description = "The nick name of the user"),
     selector(select = "all"),
-    string
+    string,
+    // transform(
+    //   default = ,
+    //   from = ,
+    //   try_from = ,
+    // ),
+    // flavor(default(
+    //   partial_transform(
+    //     default = ,
+    //     from = ,
+    //     try_from = ,
+    //     or_default = ,
+    //     or_else = ,
+    //   ),
+    //   decode(
+    //     fn = ,
+    //     then = ,
+    //     or_default = ,
+    //     or_else = ,
+    //   ),
+    // )),
   )]
   name: String,
   #[grost(tag = 3, scalar, schema(description = "The age of the user"), copy)]
@@ -56,7 +76,6 @@ pub struct User<I: Default> {
   #[grost(
     tag = 5,
     schema(description = "The linkin link of the user"),
-    partial_decoded(copy),
     optional(string)
   )]
   linkin: Option<String>,
@@ -78,7 +97,7 @@ pub struct User<I: Default> {
 //   ) -> Result<(usize, Option<Self>), <Network as grost::Flavor>::Error>
 //   where
 //     Self: Sized + 'de,
-//     B: ReadBuf<'de>,
+//     B: ReadBuf,
 //     UB: grost::buffer::Buffer<<Network as grost::Flavor>::Unknown<B>> + 'de
 //   {
 //     if selector.is_empty() {
@@ -100,7 +119,7 @@ pub struct User<I: Default> {
 //     fn skip<B>(context: &<Network as grost::Flavor>::Context, src: B) -> Result<usize, <Network as grost::Flavor>::Error>
 //     where
 //       Self: Sized + 'de,
-//       B: ReadBuf<'de>
+//       B: ReadBuf
 //     {
 //       todo!()
 //     }

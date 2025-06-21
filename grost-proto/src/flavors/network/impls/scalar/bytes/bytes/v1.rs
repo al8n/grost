@@ -1,5 +1,5 @@
 use crate::{
-  decode::Transform,
+  decode::{BytesSlice, Transform},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{LengthDelimited, Network},
   selectable,
@@ -22,13 +22,13 @@ encode_bridge!(
 );
 
 decode_bridge!(
-  Network: &'de [u8] {
+  Network: &'de [u8] => BytesSlice<B> {
     Bytes as LengthDelimited {
-      convert: |src: &[u8]| Bytes::copy_from_slice(src);
+      convert: |src: BytesSlice<B>| Bytes::copy_from_slice(src.as_ref());
     },
     BytesMut as LengthDelimited {
-      convert: |src: &[u8]| {
-        BytesMut::from(src)
+      convert: |src: BytesSlice<B>| {
+        BytesMut::from(src.as_ref())
       };
     },
   },

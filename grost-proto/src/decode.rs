@@ -6,6 +6,12 @@ use super::{
   flavors::{Flavor, WireFormat},
 };
 
+pub use slice::BytesSlice;
+pub use str::Str;
+
+mod slice;
+mod str;
+
 /// A trait for fully decoding types from a borrowed byte slice.
 ///
 /// `Decode` is intended for decoding entire data structures
@@ -29,7 +35,7 @@ where
   fn decode(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf + 'de,
     UB: Buffer<F::Unknown<B>> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
@@ -38,7 +44,7 @@ where
   fn decode_length_delimited(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
   where
     O: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf + 'de,
     UB: Buffer<F::Unknown<B>> + 'de,
   {
     let as_bytes = src.as_bytes();
@@ -172,7 +178,7 @@ macro_rules! deref_decode_impl {
         fn decode(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: ReadBuf<'de>,
+          B: ReadBuf + 'de,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
           T::decode(context, src)
@@ -184,7 +190,7 @@ macro_rules! deref_decode_impl {
         ) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: ReadBuf<'de>,
+          B: ReadBuf + 'de,
           UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
         {
           T::decode_length_delimited(context, src)

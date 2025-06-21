@@ -1,5 +1,5 @@
 use crate::{
-  decode::{Decode, PartialTransform, Transform},
+  decode::{Decode, PartialTransform, Str, Transform},
   decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
   flavors::network::{LengthDelimited, Network},
   identity_partial_transform, identity_transform, selectable,
@@ -19,9 +19,9 @@ encode_bridge!(
 );
 
 decode_bridge!(
-  Network: &'de str {
+  Network: &'de str => Str<B> {
     SmolStr as LengthDelimited {
-      convert: |src: &str| SmolStr::new(src);
+      convert: |src: Str<B>| SmolStr::new(src.as_ref());
     },
   },
 );
@@ -66,16 +66,16 @@ impl PartialTransform<Network, LengthDelimited, &str> for SmolStr {
   }
 }
 
-impl<'a, B, UB> Decode<'a, Network, LengthDelimited, &'a str, B, UB> for SmolStr {
+impl<'a, B, UB> Decode<'a, Network, LengthDelimited, Str<B>, B, UB> for SmolStr {
   fn decode(
     context: &'a <Network as crate::flavors::Flavor>::Context,
     src: B,
-  ) -> Result<(usize, &'a str), <Network as crate::flavors::Flavor>::Error>
+  ) -> Result<(usize, Str<B>), <Network as crate::flavors::Flavor>::Error>
   where
-    &'a str: Sized + 'a,
-    B: crate::buffer::ReadBuf<'a>,
+    Str<B>: Sized + 'a,
+    B: crate::buffer::ReadBuf,
     UB: crate::buffer::Buffer<<Network as crate::flavors::Flavor>::Unknown<B>> + 'a,
   {
-    <&str as Decode<'a, Network, LengthDelimited, &'a str, B, UB>>::decode(context, src)
+    <&str as Decode<'a, Network, LengthDelimited, Str<B>, B, UB>>::decode(context, src)
   }
 }

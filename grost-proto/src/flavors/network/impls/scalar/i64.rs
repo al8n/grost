@@ -79,7 +79,7 @@ impl<'de, B, UB> Decode<'de, Network, Fixed64, Self, B, UB> for i64 {
   fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf,
     UB: Buffer<Unknown<B>> + 'de,
   {
     let src = src.as_bytes();
@@ -95,7 +95,7 @@ impl<'de, B, UB> Decode<'de, Network, Varint, Self, B, UB> for i64 {
   fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf<'de>,
+    B: ReadBuf,
     UB: Buffer<Unknown<B>> + 'de,
   {
     varing::decode_i64_varint(src.as_bytes()).map_err(Into::into)

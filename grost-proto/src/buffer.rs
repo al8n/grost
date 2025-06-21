@@ -140,7 +140,7 @@ const _: () = {
 };
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
-pub trait ReadBuf<'a>: 'a {
+pub trait ReadBuf {
   /// Returns an empty read buffer.
   fn empty() -> Self;
 
@@ -154,10 +154,10 @@ pub trait ReadBuf<'a>: 'a {
   fn slice(&self, range: impl RangeBounds<usize>) -> Self;
 
   /// Returns the bytes of the buffer.
-  fn as_bytes(&self) -> &'a [u8];
+  fn as_bytes(&self) -> &[u8];
 }
 
-impl<'a> ReadBuf<'a> for &'a [u8] {
+impl ReadBuf for &[u8] {
   #[inline]
   fn empty() -> Self {
     &[]
@@ -192,43 +192,40 @@ impl<'a> ReadBuf<'a> for &'a [u8] {
   }
 
   #[inline]
-  fn as_bytes(&self) -> &'a [u8] {
+  fn as_bytes(&self) -> &[u8] {
     self
   }
 }
 
-// #[cfg(feature = "bytes_1")]
-// const _: () = {
-//   impl<'a> Buf<'a> for bytes_1::Bytes {
-//     // fn advance(&mut self, n: usize) {
-//     //   bytes_1::Buf::advance(self, n);
-//     // }
+#[cfg(feature = "bytes_1")]
+const _: () = {
+  use bytes_1::Bytes;
 
-//     fn len(&self) -> usize {
-//       self.len()
-//     }
+  impl ReadBuf for Bytes {
+    #[inline]
+    fn empty() -> Self {
+      Bytes::new()
+    }
 
-//     fn is_empty(&self) -> bool {
-//       self.is_empty()
-//     }
+    #[inline]
+    fn len(&self) -> usize {
+      self.len()
+    }
 
-//     fn slice(&self, range: impl RangeBounds<usize>) -> Self {
-//       self.slice(range)
-//     }
+    #[inline]
+    fn is_empty(&self) -> bool {
+      self.is_empty()
+    }
 
-//     // fn split_to(&mut self, at: usize) -> Self {
-//     //   self.split_to(at)
-//     // }
+    fn slice(&self, range: impl RangeBounds<usize>) -> Self {
+      Bytes::slice(self, range)
+    }
 
-//     // fn split_off(&mut self, at: usize) -> Self {
-//     //   self.split_off(at)
-//     // }
-
-//     fn as_bytes(&self) -> &[u8] {
-//       self.as_ref()
-//     }
-//   }
-// };
+    fn as_bytes(&self) -> &[u8] {
+      self.as_ref()
+    }
+  }
+};
 
 #[cfg(feature = "heapless_0_9")]
 impl<const N: usize, L: heapless_0_9::LenType> BytesBuffer for heapless_0_9::Vec<u8, N, L> {
