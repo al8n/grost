@@ -6,8 +6,8 @@ use crate::object::{
 
 impl PartialDecodedFieldFromMeta {
   /// Finalizes the partial decoded field meta and returns the attribute
-  pub fn finalize(self) -> darling::Result<PartialDecodedFieldAttribute> {
-    Ok(PartialDecodedFieldAttribute {
+  pub fn finalize(self) -> darling::Result<PartialDecodedFieldOptions> {
+    Ok(PartialDecodedFieldOptions {
       copy: self.copy,
       attrs: self.attrs,
       ty: self.ty,
@@ -18,7 +18,7 @@ impl PartialDecodedFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedFieldAttribute {
+pub struct PartialDecodedFieldOptions {
   pub(crate) copy: bool,
   pub(crate) attrs: Vec<Attribute>,
   pub(crate) ty: Option<Type>,
@@ -26,7 +26,7 @@ pub struct PartialDecodedFieldAttribute {
   pub(crate) decode: FieldDecodeAttribute,
 }
 
-impl PartialDecodedFieldAttribute {
+impl PartialDecodedFieldOptions {
   /// Returns the attributes of the partial reference object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()

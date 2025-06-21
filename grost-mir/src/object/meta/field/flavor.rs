@@ -67,11 +67,11 @@ impl FromMeta for FieldFlavorValueFromMeta {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct FieldFlavorFromMeta {
+pub struct GenericFieldFlavorFromMeta {
   pub(in crate::object) flavors: IndexMap<Ident, FieldFlavorValueFromMeta>,
 }
 
-impl FromMeta for FieldFlavorFromMeta {
+impl FromMeta for GenericFieldFlavorFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let mut flavors = IndexMap::new();
 
@@ -147,6 +147,15 @@ impl FromMeta for FieldFlavorFromMeta {
       }
     }
 
-    Ok(FieldFlavorFromMeta { flavors })
+    Ok(GenericFieldFlavorFromMeta { flavors })
   }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct FieldFlavorFromMeta {
+  pub(in crate::object) flavor_type: Option<syn::Type>,
+  pub(in crate::object) format: Option<syn::Type>,
+  pub(in crate::object) encode: EncodeFromMeta,
+  pub(in crate::object) decode: DecodeFromMeta,
+  pub(in crate::object) convert: ConvertFromMeta,
 }

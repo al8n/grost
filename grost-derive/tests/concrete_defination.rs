@@ -2632,14 +2632,13 @@ const _: () = {
     type Reflection = <Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
       ::grost::__private::flavors::Network,
     >>::Format;
-    const REFLECTION: &'static Self::Reflection =
-      &{
-        <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &'static Self::Reflection = &{
+      <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::SELF
-      };
+    };
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -2818,14 +2817,13 @@ const _: () = {
   {
     type Reflection =
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::WireType;
-    const REFLECTION: &Self::Reflection =
-      &{
-        <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &Self::Reflection = &{
+      <<Vec<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::WIRE_TYPE
-      };
+    };
   }
   #[automatically_derived]
   #[allow(clippy::type_complexity, non_camel_case_types)]
@@ -2863,14 +2861,13 @@ const _: () = {
     type Reflection = <Option<String> as ::grost::__private::flavors::DefaultWireFormat<
       ::grost::__private::flavors::Network,
     >>::Format;
-    const REFLECTION: &'static Self::Reflection =
-      &{
-        <<Option<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &'static Self::Reflection = &{
+      <<Option<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::SELF
-      };
+    };
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -3049,14 +3046,13 @@ const _: () = {
   {
     type Reflection =
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::WireType;
-    const REFLECTION: &Self::Reflection =
-      &{
-        <<Option<String> as ::grost::__private::flavors::DefaultWireFormat<
+    const REFLECTION: &Self::Reflection = &{
+      <<Option<String> as ::grost::__private::flavors::DefaultWireFormat<
           ::grost::__private::flavors::Network,
         >>::Format as ::grost::__private::flavors::WireFormat<
           ::grost::__private::flavors::Network,
         >>::WIRE_TYPE
-      };
+    };
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]

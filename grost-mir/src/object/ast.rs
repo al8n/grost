@@ -145,37 +145,13 @@ impl<M, F> Object<M, F> {
   }
 }
 
-impl ObjectFromMeta {
-  pub fn finalize(self, path_to_grost: Path) -> syn::Result<ObjectAttribute> {
-    let flavors = self.flavor.finalize(&path_to_grost)?;
-    let mut flavor_generic = self.generic.flavor;
-    if flavors.len() > 1 {
-      flavor_generic.get_or_insert_with(grost_flavor_param);
-    }
-
-    Ok(ObjectAttribute {
-      path_to_grost,
-      flavors,
-      default: self.default,
-      schema: self.schema.into(),
-      partial: self.partial.finalize(),
-      partial_decoded: self.partial_decoded.finalize(),
-      selector: self.selector.finalize(),
-      selector_iter: self.selector_iter.finalize(),
-      flavor_param: flavor_generic,
-      lifetime_param: self.generic.lifetime,
-      unknown_buffer_param: self.generic.unknown_buffer,
-      wire_format_param: self.generic.wire_format,
-      read_buffer_type_param: self.generic.read_buffer,
-      write_buffer_type_param: self.generic.write_buffer,
-      indexer: self.indexer.into(),
-      copy: self.copy,
-    })
-  }
-}
-
 #[derive(Debug, Clone)]
-pub struct ObjectAttribute {
+pub struct RawObject<T = (), S = (), O = ()> {
+  name: Ident,
+  vis: Visibility,
+  generics: Generics,
+  attrs: Vec<Attribute>,
+  fields: Vec<RawField<T, S>>,
   path_to_grost: Path,
   flavors: Vec<FlavorAttribute>,
   default: Option<Invokable>,
@@ -192,9 +168,46 @@ pub struct ObjectAttribute {
   wire_format_param: TypeParam,
   read_buffer_type_param: TypeParam,
   write_buffer_type_param: TypeParam,
+  extra: O,
 }
 
-impl ObjectAttribute {
+impl<T, S, O> RawObject<T, S, O> {
+  /// Creates a new `RawObject` from the given parameters.
+  pub fn new(
+    path_to_grost: Path,
+    name: Ident,
+    vis: Visibility,
+    generics: Generics,
+    attrs: Vec<Attribute>,
+    fields: Vec<RawField<T, S>>,
+    meta: ObjectFromMeta<O>,
+  ) -> darling::Result<Self> {
+    Ok(Self {
+      name,
+      vis,
+      generics,
+      attrs,
+      fields,
+      path_to_grost,
+      flavors: meta.flavor.finalize(&path_to_grost)?,
+      default: meta.default,
+      schema: meta.schema.into(),
+      partial: meta.partial.finalize(),
+      partial_decoded: meta.partial_decoded.finalize(),
+      selector: meta.selector.finalize(),
+      selector_iter: meta.selector_iter.finalize(),
+      indexer: meta.indexer.into(),
+      copy: meta.copy,
+      flavor_param: meta.generic.flavor,
+      unknown_buffer_param: meta.generic.unknown_buffer,
+      lifetime_param: meta.generic.lifetime,
+      wire_format_param: meta.generic.wire_format,
+      read_buffer_type_param: meta.generic.read_buffer,
+      write_buffer_type_param: meta.generic.write_buffer,
+      extra: meta.extra,
+    })
+  }
+
   /// Returns the path to the `grost` crate
   pub const fn path_to_grost(&self) -> &Path {
     &self.path_to_grost
@@ -274,87 +287,14 @@ impl ObjectAttribute {
   pub const fn write_buffer_type_param(&self) -> &TypeParam {
     &self.write_buffer_type_param
   }
-}
 
-/// The trait for the object derive input
-pub trait RawObject: Clone {
-  /// The type of the field
-  type Field: RawField;
-  /// The custom metadata type for the object
-  type Meta: Clone;
+  /// Returns the extra metadata associated with the object
+  pub const fn extra(&self) -> &O {
+    &self.extra
+  }
 
-  /// Returns the name of the object
-  fn name(&self) -> &Ident;
-
-  /// Returns the visibility of the object
-  fn vis(&self) -> &Visibility;
-
-  /// Returns the generics in the object defination.
-  fn generics(&self) -> &Generics;
-
-  /// Returns the attributes in the object defination.
-  fn attrs(&self) -> &[Attribute];
-
-  /// Returns the fields of the object
-  fn fields(&self) -> Vec<&Self::Field>;
-
-  /// Returns the path to the `grost` crate
-  fn path_to_grost(&self) -> &Path;
-
-  /// Returns the path to the fn that returns the default value of the object
-  fn default(&self) -> Option<&Invokable>;
-
-  /// Returns the schema information
-  fn schema(&self) -> &SchemaAttribute;
-
-  /// Returns the partial object information
-  fn partial(&self) -> &PartialObjectAttribute;
-
-  /// Returns the partial decoded object information
-  fn partial_decoded(&self) -> &PartialDecodedObjectAttribute;
-
-  /// Returns the selector information
-  fn selector(&self) -> &SelectorAttribute;
-
-  /// Returns the selector iterator information
-  fn selector_iter(&self) -> &SelectorIterAttribute;
-
-  /// Returns the indexer information
-  fn indexer(&self) -> &IndexerAttribute;
-
-  /// Returns whether the object is copyable
-  fn copy(&self) -> bool;
-
-  /// Returns the metadata associated with the object
-  fn meta(&self) -> &Self::Meta;
-
-  /// Returns the flavors of the object
-  fn flavors(&self) -> &[FlavorAttribute];
-
-  /// Returns the generic flavor type parameter, if any,
-  /// `None` if we only have one flavor and the code is not generic over the flavor type.
-  fn flavor_type_param(&self) -> Option<&TypeParam>;
-
-  /// Returns the generic unknown buffer type parameter
-  fn unknown_buffer_type_param(&self) -> &TypeParam;
-
-  /// Returns the generic lifetime parameter
-  fn lifetime_param(&self) -> &LifetimeParam;
-
-  /// Returns the generic wire format type parameter
-  fn wire_format_type_param(&self) -> &TypeParam;
-
-  /// Returns the read buffer type parameter
-  fn read_buffer_type_param(&self) -> &TypeParam;
-
-  /// Returns the write buffer type parameter
-  fn write_buffer_type_param(&self) -> &TypeParam;
-}
-
-/// The extension trait for the object
-pub trait RawObjectExt: RawObject {
   #[inline]
-  fn partial_decoded_name(&self) -> Ident {
+  pub fn partial_decoded_name(&self) -> Ident {
     self
       .partial_decoded()
       .name()
@@ -363,7 +303,7 @@ pub trait RawObjectExt: RawObject {
   }
 
   #[inline]
-  fn partial_name(&self) -> Ident {
+  pub fn partial_name(&self) -> Ident {
     self
       .partial()
       .name()
@@ -372,7 +312,7 @@ pub trait RawObjectExt: RawObject {
   }
 
   #[inline]
-  fn selector_name(&self) -> Ident {
+  pub fn selector_name(&self) -> Ident {
     self
       .selector()
       .name()
@@ -381,7 +321,7 @@ pub trait RawObjectExt: RawObject {
   }
 
   #[inline]
-  fn selector_iter_name(&self) -> Ident {
+  pub fn selector_iter_name(&self) -> Ident {
     self
       .selector_iter()
       .name()
@@ -390,7 +330,7 @@ pub trait RawObjectExt: RawObject {
   }
 
   #[inline]
-  fn indexer_name(&self) -> Ident {
+  pub fn indexer_name(&self) -> Ident {
     self
       .indexer()
       .name()
@@ -398,5 +338,3 @@ pub trait RawObjectExt: RawObject {
       .unwrap_or_else(|| format_ident!("{}Index", self.name()))
   }
 }
-
-impl<T: RawObject> RawObjectExt for T {}

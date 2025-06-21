@@ -6,7 +6,7 @@ use crate::{
   flavor::FlavorAttribute,
   object::{
     FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute, Label,
-    PartialDecodedFieldAttribute, PartialFieldAttribute, RawField, SelectorFieldAttribute,
+    PartialDecodedFieldOptions, PartialFieldOptions, RawField, SelectorFieldOptions,
     ast::{
       SkippedField,
       field::flavor::{FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor},
@@ -27,9 +27,9 @@ pub(in crate::object) struct ConcreteTaggedField<M = ()> {
   pub(in crate::object) label: Label,
   pub(in crate::object) type_params_usages: IdentSet,
   pub(in crate::object) lifetime_params_usages: LifetimeSet,
-  pub(in crate::object) partial_decoded: PartialDecodedFieldAttribute,
-  pub(in crate::object) partial: PartialFieldAttribute,
-  pub(in crate::object) selector: SelectorFieldAttribute,
+  pub(in crate::object) partial_decoded: PartialDecodedFieldOptions,
+  pub(in crate::object) partial: PartialFieldOptions,
+  pub(in crate::object) selector: SelectorFieldOptions,
   pub(in crate::object) default: Invokable,
   pub(in crate::object) tag: u32,
   pub(in crate::object) copy: bool,

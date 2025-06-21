@@ -31,7 +31,7 @@ struct FieldMeta {
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(grost), forward_attrs, supports(struct_named, struct_unit))]
-struct FieldAttributeInput {
+struct FieldOptionsInput {
   ident: Ident,
   vis: Visibility,
   generics: Generics,
@@ -55,7 +55,7 @@ impl ObjectField {
     input: proc_macro2::TokenStream,
   ) -> darling::Result<Self> {
     let input: syn::DeriveInput = syn::parse2(input)?;
-    let input = <FieldAttributeInput as FromDeriveInput>::from_derive_input(&input)?;
+    let input = <FieldOptionsInput as FromDeriveInput>::from_derive_input(&input)?;
     let args = darling::ast::NestedMeta::parse_meta_list(args)?;
     let args = <FieldMeta as FromMeta>::from_list(&args)?;
 
@@ -238,7 +238,7 @@ impl ToTokens for ObjectField {
 
         #custom_meta_fields_without_darling
 
-        __meta__: #path_to_crate::__private::object::FieldAttribute,
+        __meta__: #path_to_crate::__private::object::FieldOptions,
       }
 
       const _: () = {
@@ -270,7 +270,7 @@ impl ToTokens for ObjectField {
           #[darling(default)]
           tag: ::core::option::Option<::core::num::NonZeroU32>,
           #[darling(default)]
-          flavor: #path_to_crate::__private::object::meta::FieldFlavorFromMeta,
+          flavor: #path_to_crate::__private::object::meta::GenericFieldFlavorFromMeta,
           #[darling(default)]
           convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
           #[darling(default)]
@@ -291,7 +291,7 @@ impl ToTokens for ObjectField {
           schema: #path_to_crate::__private::utils::SchemaFromMeta,
           default: ::core::option::Option<#path_to_crate::__private::utils::Invokable>,
           tag: ::core::option::Option<::core::num::NonZeroU32>,
-          flavor: #path_to_crate::__private::object::meta::FieldFlavorFromMeta,
+          flavor: #path_to_crate::__private::object::meta::GenericFieldFlavorFromMeta,
           convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
           partial: #path_to_crate::__private::object::meta::PartialFieldFromMeta,
           partial_decoded: #path_to_crate::__private::object::meta::PartialDecodedFieldFromMeta,
@@ -506,11 +506,11 @@ impl ToTokens for ObjectField {
             &self.__meta__.convert()
           }
 
-          fn partial(&self) -> &#path_to_crate::__private::object::PartialFieldAttribute {
+          fn partial(&self) -> &#path_to_crate::__private::object::PartialFieldOptions {
             self.__meta__.partial()
           }
 
-          fn partial_decoded(&self) -> &#path_to_crate::__private::object::PartialDecodedFieldAttribute {
+          fn partial_decoded(&self) -> &#path_to_crate::__private::object::PartialDecodedFieldOptions {
             self.__meta__.partial_decoded()
           }
 
@@ -522,7 +522,7 @@ impl ToTokens for ObjectField {
             self.__meta__.skip()
           }
 
-          fn selector(&self) -> &#path_to_crate::__private::object::SelectorFieldAttribute {
+          fn selector(&self) -> &#path_to_crate::__private::object::SelectorFieldOptions {
             &self.__meta__.selector()
           }
 

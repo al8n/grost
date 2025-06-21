@@ -1,17 +1,11 @@
-use darling::FromMeta;
-
-use crate::{
-  flavor::FlavorFromMeta,
-  generic::GenericFromMeta,
-  utils::{Invokable, SchemaFromMeta},
-};
-
+pub use field::*; 
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use partial::PartialObjectFromMeta;
 pub(super) use partial_decoded::PartialDecodedObjectFromMeta;
 pub(super) use selector::{SelectorFromMeta, SelectorIterFromMeta};
 
-pub use field::*;
+pub use concrete::ObjectFromMeta;
+pub use generic::GenericObjectFromMeta;
 
 mod field;
 mod indexer;
@@ -19,26 +13,7 @@ mod partial;
 mod partial_decoded;
 mod selector;
 
-#[derive(Debug, Default, Clone, FromMeta)]
-pub struct ObjectFromMeta {
-  #[darling(default)]
-  pub(super) default: Option<Invokable>,
-  #[darling(default)]
-  pub(super) generic: GenericFromMeta,
-  #[darling(default)]
-  pub(super) schema: SchemaFromMeta,
-  #[darling(default)]
-  pub(super) partial: PartialObjectFromMeta,
-  #[darling(default)]
-  pub(super) partial_decoded: PartialDecodedObjectFromMeta,
-  #[darling(default)]
-  pub(super) selector: SelectorFromMeta,
-  #[darling(default)]
-  pub(super) selector_iter: SelectorIterFromMeta,
-  #[darling(default)]
-  pub(super) indexer: IndexerFromMeta,
-  #[darling(default)]
-  pub(super) flavor: FlavorFromMeta,
-  #[darling(default)]
-  pub(super) copy: bool,
-}
+/// Concrete object meta, a concrete object means there will only be one flavor and the generated code will not be generic over the flavor type.
+pub mod concrete;
+/// Generic object meta, a generic object means the generated code will be generic over the flavor type.
+pub mod generic;

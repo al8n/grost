@@ -7,7 +7,7 @@ pub use identifier::IdentifierAttribute;
 pub use tag::TagAttribute;
 
 pub(crate) use meta::{
-  BuiltinFlavorRepr, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
+  BuiltinFlavorRepr, GenericFlavorFromMeta, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
 };
 
 mod decode;
@@ -16,7 +16,7 @@ mod identifier;
 mod meta;
 mod tag;
 
-impl FlavorFromMeta {
+impl GenericFlavorFromMeta {
   pub(crate) fn finalize(self, path_to_grost: &Path) -> syn::Result<Vec<FlavorAttribute>> {
     let mut flavors = Vec::new();
 

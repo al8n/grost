@@ -9,19 +9,6 @@ pub(in crate::object) struct DecodeFromMeta {
 }
 
 impl DecodeFromMeta {
-  // /// Parse a path from either a syn::Expr::Path or syn::Expr::Lit(syn::Lit::Str)
-  // fn parse_path_from_expr(expr: &syn::Expr) -> darling::Result<Invokable> {
-  //   Invokable::try_from(expr)
-  //   // match expr {
-  //   //   syn::Expr::Path(path) => Ok(path.path.clone()),
-  //   //   syn::Expr::Lit(lit) => match &lit.lit {
-  //   //     syn::Lit::Str(lit_str) => syn::parse_str(&lit_str.value()).map_err(darling::Error::from),
-  //   //     lit => Err(darling::Error::unexpected_lit_type(lit)),
-  //   //   },
-  //   //   value => Err(darling::Error::unexpected_expr_type(value)),
-  //   // }
-  // }
-
   /// Check if an or_else variant is already set and return appropriate error
   fn check_or_else_conflict(
     current: Option<&MissingOperation>,

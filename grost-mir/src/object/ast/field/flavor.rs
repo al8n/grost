@@ -4,7 +4,7 @@ pub use decode::FieldDecodeAttribute;
 pub use encode::FieldEncodeAttribute;
 
 use crate::{
-  object::{ConvertAttribute, meta::FieldFlavorFromMeta},
+  object::{ConvertAttribute, meta::GenericFieldFlavorFromMeta},
   utils::{Invokable, MissingOperation},
 };
 
@@ -65,7 +65,7 @@ impl FieldFlavorAttribute {
   }
 }
 
-impl FieldFlavorFromMeta {
+impl GenericFieldFlavorFromMeta {
   pub fn finalize(self) -> darling::Result<Vec<FieldFlavorAttribute>> {
     self
       .flavors

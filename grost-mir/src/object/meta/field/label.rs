@@ -1,6 +1,6 @@
-use std::sync::Arc;
-use syn::{ext::IdentExt, parse::ParseStream, Meta};
 use quote::quote;
+use std::sync::Arc;
+use syn::{Meta, ext::IdentExt, parse::ParseStream};
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -46,10 +46,29 @@ pub enum Label {
   Optional(Arc<Label>),
 }
 
+impl Label {
+  /// Returns the possible identifiers for labels.
+  #[inline]
+  pub const fn possible_idents() -> &'static [&'static str] {
+    &[
+      "scalar",
+      "bytes",
+      "string",
+      "object",
+      "enum",
+      "union",
+      "interface",
+      "map",
+      "set",
+      "list",
+      "optional",
+    ]
+  }
+}
+
 impl darling::FromMeta for Label {
   fn from_meta(item: &Meta) -> darling::Result<Self> {
-    (syn::parse2(quote!(#item)))
-    .map_err(|e| darling::Error::from(e).with_span(item))
+    (syn::parse2(quote!(#item))).map_err(|e| darling::Error::from(e).with_span(item))
   }
 
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
@@ -57,8 +76,7 @@ impl darling::FromMeta for Label {
       #(#items)*
     );
 
-    (syn::parse2(ts))
-      .map_err(darling::Error::from) 
+    (syn::parse2(ts)).map_err(darling::Error::from)
   }
 }
 
@@ -542,7 +560,8 @@ mod tests {
     let input = quote! {
       outer(scalar, ty = "i32")
     };
-    let parsed: TestFlattenLabel = super::TestFlattenLabel::from_meta(&syn::parse2(input).unwrap()).unwrap();
+    let parsed: TestFlattenLabel =
+      super::TestFlattenLabel::from_meta(&syn::parse2(input).unwrap()).unwrap();
   }
 }
 

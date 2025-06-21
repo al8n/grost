@@ -4,8 +4,8 @@ use crate::object::meta::PartialFieldFromMeta;
 
 impl PartialFieldFromMeta {
   /// Finalizes the partial field meta and returns the attribute
-  pub fn finalize(self) -> PartialFieldAttribute {
-    PartialFieldAttribute {
+  pub fn finalize(self) -> PartialFieldOptions {
+    PartialFieldOptions {
       attrs: self.attrs,
       ty: self.ty,
     }
@@ -13,12 +13,12 @@ impl PartialFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialFieldAttribute {
+pub struct PartialFieldOptions {
   attrs: Vec<Attribute>,
   ty: Option<Type>,
 }
 
-impl PartialFieldAttribute {
+impl PartialFieldOptions {
   /// Returns the attributes of the partial object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()

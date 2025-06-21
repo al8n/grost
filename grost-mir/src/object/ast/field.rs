@@ -10,9 +10,9 @@ pub use flavor::{
   FieldFlavorAttribute,
 };
 pub(in crate::object) use generic::{GenericField, GenericTaggedField};
-pub use partial::PartialFieldAttribute;
-pub use partial_decoded::PartialDecodedFieldAttribute;
-pub use selector::SelectorFieldAttribute;
+pub use partial::PartialFieldOptions;
+pub use partial_decoded::PartialDecodedFieldOptions;
+pub use selector::SelectorFieldOptions;
 
 use crate::{
   object::meta::{FieldFromMeta, Label},
@@ -36,7 +36,7 @@ pub struct SkippedField<M = ()> {
   default: Invokable,
   type_params_usages: IdentSet,
   lifetime_params_usages: LifetimeSet,
-  meta: M,
+  extra: M,
 }
 
 impl<M> SkippedField<M> {
@@ -70,10 +70,10 @@ impl<M> SkippedField<M> {
     &self.default
   }
 
-  /// Returns the metadata associated with the skipped field
+  /// Returns the extra metadata associated with the skipped field
   #[inline]
-  pub const fn meta(&self) -> &M {
-    &self.meta
+  pub const fn extra(&self) -> &M {
+    &self.extra
   }
 
   /// Returns the type parameters used in the skipped field
@@ -88,18 +88,18 @@ impl<M> SkippedField<M> {
     &self.lifetime_params_usages
   }
 
-  pub(in crate::object) fn try_new<F: RawField<Meta = M>>(
-    f: &F,
+  pub(in crate::object) fn try_new(
+    f: RawSkippedField<M>,
     type_params: &IdentSet,
     lifetime_params: &LifetimeSet,
   ) -> darling::Result<Self>
   where
     M: Clone,
   {
-    let attrs = f.attrs().to_vec();
-    let vis = f.vis().clone();
-    let name = f.name().clone();
-    let ty = f.ty().clone();
+    let attrs = f.attrs;
+    let vis = f.vis;
+    let name = f.name;
+    let ty = f.ty;
     let default = match f.default().cloned() {
       Some(path) => path,
       None => {
@@ -119,151 +119,157 @@ impl<M> SkippedField<M> {
       lifetime_params_usages,
       ty,
       default,
-      meta: f.meta().clone(),
+      extra: f.extra,
     })
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct FieldAttribute {
-  convert: ConvertAttribute,
-  default: Option<Invokable>,
-  schema: SchemaAttribute,
-  tag: Option<NonZeroU32>,
-  label: Option<Label>,
-  flavor: Vec<FieldFlavorAttribute>,
-  partial: PartialFieldAttribute,
-  partial_decoded: PartialDecodedFieldAttribute,
-  selector: SelectorFieldAttribute,
-  copy: bool,
-  skip: bool,
+pub enum FieldOptions<SO, TO> {
+  Skipped {
+    default: Option<Invokable>,
+    extra: SO,
+  },
+  Tagged {
+    label: Label,
+    schema: SchemaAttribute,
+    default: Option<Invokable>,
+    tag: NonZeroU32,
+    flavor: Vec<FieldFlavorAttribute>,
+    convert: ConvertAttribute,
+    partial: PartialFieldOptions,
+    partial_decoded: PartialDecodedFieldOptions,
+    selector: SelectorFieldOptions,
+    copy: bool,
+    extra: TO,
+  },
 }
 
-impl FieldAttribute {
-  /// Returns the tag of the field
-  pub const fn tag(&self) -> Option<NonZeroU32> {
-    self.tag
-  }
-
-  /// Returns the flavor specified settings for the field
-  pub const fn flavors(&self) -> &[FieldFlavorAttribute] {
-    self.flavor.as_slice()
-  }
-
-  /// Returns the convert attribute for the field
-  pub const fn convert(&self) -> &ConvertAttribute {
-    &self.convert
-  }
-
-  /// Returns the information about the partial object field
-  pub const fn partial(&self) -> &PartialFieldAttribute {
-    &self.partial
-  }
-
-  /// Returns the information about the partial reference object field
-  pub const fn partial_decoded(&self) -> &PartialDecodedFieldAttribute {
-    &self.partial_decoded
-  }
-
-  /// Returns whether the field type is copyable
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-
-  /// Returns whether the field should be skipped
-  pub const fn skip(&self) -> bool {
-    self.skip
-  }
-
-  /// Returns the default selection for the field
-  pub const fn selector(&self) -> &SelectorFieldAttribute {
-    &self.selector
-  }
-
-  /// Returns the type label of the field
-  pub const fn label(&self) -> Option<&Label> {
-    self.label.as_ref()
-  }
-
-  /// Returns the schema information of the field
-  pub const fn schema(&self) -> &SchemaAttribute {
-    &self.schema
-  }
-
+impl<SO, TO> FieldOptions<SO, TO> {
   /// Returns the fn which will be used to generate the default value for the field
   pub const fn default(&self) -> Option<&Invokable> {
-    self.default.as_ref()
+    match self {
+      Self::Skipped { default, .. } => default.as_ref(),
+      Self::Tagged { default, .. } => default.as_ref(),
+    }
   }
 }
 
-impl FieldFromMeta {
-  pub fn finalize(self) -> darling::Result<FieldAttribute> {
-    Ok(FieldAttribute {
-      default: self.default,
-      schema: self.schema.into(),
-      tag: self.tag,
-      label: self.label,
-      skip: self.skip,
-      convert: self.convert.finalize()?,
-      flavor: self.flavor.finalize()?,
-      partial: self.partial.finalize(),
-      partial_decoded: self.partial_decoded.finalize()?,
-      selector: self.selector.finalize(),
-      copy: self.copy,
+impl<SO, TO> FieldFromMeta<SO, TO> {
+  pub fn finalize(self) -> darling::Result<FieldOptions<SO, TO>> {
+    Ok(match self {
+      Self::Skipped { default, extra } => FieldOptions::Skipped { default, extra },
+      Self::Tagged {
+        label,
+        schema,
+        default,
+        tag,
+        flavor,
+        convert,
+        partial,
+        partial_decoded,
+        selector,
+        copy,
+        extra,
+      } => FieldOptions::Tagged {
+        label,
+        schema: schema.into(),
+        default,
+        tag,
+        flavor: flavor.finalize()?,
+        convert: convert.finalize()?,
+        partial: partial.finalize(),
+        partial_decoded: partial_decoded.finalize()?,
+        selector: selector.finalize(),
+        copy,
+        extra,
+      },
     })
   }
 }
 
-/// The trait for the field derive input
-pub trait RawField: Clone {
-  /// The custom metadata type for the field
-  type Meta: Clone;
+#[derive(Debug, Clone)]
+pub struct RawSkippedField<E> {
+  pub name: Ident,
+  pub ty: Type,
+  pub vis: Visibility,
+  pub attrs: Vec<Attribute>,
+  pub default: Invokable,
+  pub extra: E,
+}
 
-  /// Returns the name of the field
-  fn name(&self) -> &Ident;
+#[derive(Debug, Clone)]
+pub struct RawTaggedField<E> {
+  pub name: Ident,
+  pub ty: Type,
+  pub vis: Visibility,
+  pub attrs: Vec<Attribute>,
+  pub label: Label,
+  pub schema: SchemaAttribute,
+  pub default: Option<Invokable>,
+  pub tag: NonZeroU32,
+  pub flavor: Vec<FieldFlavorAttribute>,
+  pub convert: ConvertAttribute,
+  pub partial: PartialFieldOptions,
+  pub partial_decoded: PartialDecodedFieldOptions,
+  pub selector: SelectorFieldOptions,
+  pub copy: bool,
+  pub extra: E,
+}
 
-  /// Returns the type of the field
-  fn ty(&self) -> &Type;
+#[derive(Debug, Clone)]
+pub enum RawField<TM = (), SM = ()> {
+  Skipped(RawSkippedField<SM>),
+  Tagged(RawTaggedField<TM>),
+}
 
-  /// Returns the visibility of the field
-  fn vis(&self) -> &Visibility;
-
-  /// Returns the attributes of the field
-  fn attrs(&self) -> &[Attribute];
-
-  /// Returns the tag of the field
-  fn tag(&self) -> Option<NonZeroU32>;
-
-  /// Returns the convert attribute for the field
-  fn convert(&self) -> &ConvertAttribute;
-
-  /// Returns the information about the partial object field
-  fn partial(&self) -> &PartialFieldAttribute;
-
-  /// Returns the information about the partial reference object field
-  fn partial_decoded(&self) -> &PartialDecodedFieldAttribute;
-
-  /// Returns whether the field type is copyable
-  fn copy(&self) -> bool;
-
-  /// Returns whether the field should be skipped
-  fn skip(&self) -> bool;
-
-  /// Returns the default selection for the field
-  fn selector(&self) -> &SelectorFieldAttribute;
-
-  /// Returns the type label of the field
-  fn label(&self) -> Option<&Label>;
-
-  /// Returns the schema information of the field
-  fn schema(&self) -> &SchemaAttribute;
-
-  /// Returns the fn which will be used to generate the default value for the field
-  fn default(&self) -> Option<&Invokable>;
-
-  /// Returns the field flavor attribute for the field
-  fn flavors(&self) -> &[FieldFlavorAttribute];
-
-  /// Returns the custom metadata of the field
-  fn meta(&self) -> &Self::Meta;
+impl<TM, SM> RawField<TM, SM> {
+  /// Creates a new raw field
+  pub fn new(
+    name: Ident,
+    ty: Type,
+    vis: Visibility,
+    attrs: Vec<Attribute>,
+    meta: FieldFromMeta<TM, SM>,
+  ) -> darling::Result<Self> {
+    match meta {
+      FieldFromMeta::Skipped { default, extra } => Ok(Self::Skipped(RawSkippedField {
+        name,
+        ty,
+        vis,
+        attrs,
+        default,
+        extra,
+      })),
+      FieldFromMeta::Tagged {
+        label,
+        schema,
+        default,
+        tag,
+        flavor,
+        convert,
+        partial,
+        partial_decoded,
+        selector,
+        copy,
+        extra,
+      } => Ok(Self::Tagged(RawTaggedField {
+        name,
+        ty,
+        vis,
+        attrs,
+        label,
+        schema: schema.into(),
+        default,
+        tag,
+        flavor: flavor.finalize()?,
+        convert: convert.finalize()?,
+        partial: partial.finalize(),
+        partial_decoded: partial_decoded.finalize()?,
+        selector: selector.finalize(),
+        copy,
+        extra,
+      })),
+    }
+  }
 }

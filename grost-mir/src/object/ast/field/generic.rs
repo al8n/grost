@@ -5,8 +5,8 @@ use syn::{Attribute, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::{
   object::{
-    FieldSelection, Label, ObjectFlavor, PartialDecodedFieldAttribute, PartialFieldAttribute,
-    RawField, SelectorFieldAttribute,
+    FieldSelection, Label, ObjectFlavor, PartialDecodedFieldOptions, PartialFieldOptions, RawField,
+    SelectorFieldOptions,
     ast::{
       SkippedField,
       field::flavor::{FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor},
@@ -27,9 +27,9 @@ pub(in crate::object) struct GenericTaggedField<M = ()> {
   pub(in crate::object) lifetime_params_usages: LifetimeSet,
   pub(in crate::object) flavor_param: TypeParam,
   pub(in crate::object) label: Label,
-  pub(in crate::object) partial_decoded: PartialDecodedFieldAttribute,
-  pub(in crate::object) partial: PartialFieldAttribute,
-  pub(in crate::object) selector: SelectorFieldAttribute,
+  pub(in crate::object) partial_decoded: PartialDecodedFieldOptions,
+  pub(in crate::object) partial: PartialFieldOptions,
+  pub(in crate::object) selector: SelectorFieldOptions,
   pub(in crate::object) default: Invokable,
   pub(in crate::object) tag: u32,
   pub(in crate::object) flavors: IndexMap<Ident, FieldFlavor>,

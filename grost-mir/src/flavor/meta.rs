@@ -245,9 +245,7 @@ impl FlavorValue {
     }
 
     let helper = Helper::from_list(&NestedMeta::parse_meta_list(list.tokens.clone())?)?;
-
     Ok(Self {
-      // ty: ty.ok_or_else(|| darling::Error::missing_field("type"))?,
       ty: helper.ty,
       format: helper.format,
       identifier: helper.identifier,
@@ -259,12 +257,12 @@ impl FlavorValue {
 }
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct FlavorFromMeta {
+pub(crate) struct GenericFlavorFromMeta {
   pub(crate) default: BuiltinFlavorRepr,
   pub(crate) flavors: IndexMap<Ident, FlavorValue>,
 }
 
-impl FromMeta for FlavorFromMeta {
+impl FromMeta for GenericFlavorFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let mut flavors = IndexMap::new();
     let mut default = None;
@@ -342,5 +340,72 @@ impl FromMeta for FlavorFromMeta {
       flavors,
       default: default.unwrap_or_default(),
     })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum FlavorFromMeta {
+  Builtin(BuiltinFlavorRepr),
+  Custom { name: Ident, value: FlavorValue },
+}
+
+impl FromMeta for FlavorFromMeta {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    match items.len() {
+      0 => Ok(Self::Builtin(BuiltinFlavorRepr::default())),
+      2 => Err(darling::Error::custom("Only one flavor can be configured")),
+      1 => {
+        let item = &items[0];
+
+        match item {
+          darling::ast::NestedMeta::Lit(lit) => {
+            return Err(darling::Error::unexpected_lit_type(lit));
+          }
+          darling::ast::NestedMeta::Meta(meta) => match meta {
+            Meta::Path(_) => return Err(darling::Error::unsupported_format("word")),
+            Meta::List(meta_list) => {
+              let Some(ident) = meta_list.path.get_ident() else {
+                return Err(complex_flavor_ident_error());
+              };
+
+              if ident.eq("default") {
+                let value = BuiltinFlavorRepr::from_list(
+                  &NestedMeta::parse_meta_list(meta_list.tokens.clone())?[..],
+                )?;
+                return Ok(Self::Builtin(value));
+              }
+
+              if let Some(reason) = RESERVED_FLAVOR_NAMES
+                .iter()
+                .find_map(|(name, reason)| if ident.eq(name) { Some(*reason) } else { None })
+              {
+                return Err(darling::Error::custom(reason));
+              }
+
+              FlavorValue::parse_meta_list(meta_list).map(|value| Self::Custom { name: ident.clone(), value })
+            }
+            Meta::NameValue(meta_name_value) => {
+              let Some(ident) = meta.path().get_ident() else {
+                return Err(complex_flavor_ident_error());
+              };
+
+              if ident.eq("default") {
+                return BuiltinFlavorRepr::from_expr(&meta_name_value.value).map(Self::Builtin);
+              }
+
+              if let Some(reason) = RESERVED_FLAVOR_NAMES
+                .iter()
+                .find_map(|(name, reason)| if ident.eq(name) { Some(*reason) } else { None })
+              {
+                return Err(darling::Error::custom(reason));
+              }
+
+              FlavorValue::from_expr(&meta_name_value.value)
+                .map(|value| Self::Custom { name: ident.clone(), value })
+            }
+          },
+        }
+      }
+    }
   }
 }
