@@ -1,5 +1,6 @@
 use std::sync::Arc;
-use syn::{ext::IdentExt, parse::ParseStream};
+use syn::{ext::IdentExt, parse::ParseStream, Meta};
+use quote::quote;
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -43,6 +44,22 @@ pub enum Label {
   /// An optional type label
   #[display("optional({_0})")]
   Optional(Arc<Label>),
+}
+
+impl darling::FromMeta for Label {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (syn::parse2(quote!(#item)))
+    .map_err(|e| darling::Error::from(e).with_span(item))
+  }
+
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let ts = quote! (
+      #(#items)*
+    );
+
+    (syn::parse2(ts))
+      .map_err(darling::Error::from) 
+  }
 }
 
 impl Label {
@@ -278,6 +295,7 @@ impl syn::parse::Parse for Label {
 
 #[cfg(test)]
 mod tests {
+  use darling::FromMeta;
   use quote::quote;
 
   use super::*;
@@ -518,4 +536,19 @@ mod tests {
         .contains("`optional(optional(...))` is not allowed")
     );
   }
+
+  #[test]
+  fn test_label_flatten() {
+    let input = quote! {
+      outer(scalar, ty = "i32")
+    };
+    let parsed: TestFlattenLabel = super::TestFlattenLabel::from_meta(&syn::parse2(input).unwrap()).unwrap();
+  }
+}
+
+#[derive(Debug, darling::FromMeta)]
+struct TestFlattenLabel {
+  #[darling(flatten)]
+  label: Option<Label>,
+  ty: syn::Type,
 }

@@ -31,11 +31,11 @@ mod selector;
 pub struct SkippedField<M = ()> {
   attrs: Vec<Attribute>,
   vis: Visibility,
-  type_params_usages: IdentSet,
-  lifetime_params_usages: LifetimeSet,
   name: Ident,
   ty: Type,
   default: Invokable,
+  type_params_usages: IdentSet,
+  lifetime_params_usages: LifetimeSet,
   meta: M,
 }
 
