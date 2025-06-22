@@ -73,13 +73,13 @@ impl Network {
   //   &self,
   //   path_to_grost: &syn::Path,
   //   struct_name: &syn::Ident,
-  //   partial_decoded_struct_name: &syn::Ident,
+  //   partial_ref_struct_name: &syn::Ident,
   // ) -> proc_macro2::TokenStream {
   //   quote! {
   //     #path_to_grost::__private::decoded_state!(
   //       &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #struct_name
   //         as #path_to_grost::__private::flavors::network::LengthDelimited
-  //         => #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+  //         => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
   //     );
   //   }
   // }
@@ -109,16 +109,16 @@ impl FlavorGenerator for Network {
   fn derive_object(&self, object: &Object) -> Result<proc_macro2::TokenStream, syn::Error> {
     Self::derive_object(self, object)
     // let default_format = self.derive_default_format(path_to_grost, struct_.name().name());
-    // let partial_decoded_struct_name = struct_.partial_decoded_name();
+    // let partial_ref_struct_name = struct_.partial_ref_name();
     // let struct_encoded_state = self.derive_encoded_state(
     //   path_to_grost,
     //   struct_.name().name(),
-    //   &partial_decoded_struct_name,
+    //   &partial_ref_struct_name,
     // );
     // let partial_struct_encoded_state = self.derive_encoded_state(
     //   path_to_grost,
     //   &struct_.partial_struct_name(),
-    //   &partial_decoded_struct_name,
+    //   &partial_ref_struct_name,
     // );
     // let selectable = self.derive_selectable_for_object(path_to_grost, struct_);
     // let selector = self.derive_selector_for_object(path_to_grost, struct_);
@@ -134,9 +134,9 @@ impl FlavorGenerator for Network {
     //   // #partial_struct_encoded_state
 
     //   // #path_to_grost::__private::decoded_state!(
-    //   //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+    //   //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
     //   //     as #path_to_grost::__private::flavors::network::LengthDelimited
-    //   //     => #partial_decoded_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+    //   //     => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
     //   // );
 
     //   // #default_format

@@ -948,8 +948,8 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
     }
   };
 
-  let partial_decoded_object_selectable = {
-    let object = object.partial_decoded();
+  let partial_ref_object_selectable = {
+    let object = object.partial_ref();
     let object_ty = object.ty();
     let mut generics = object.generics().clone();
 
@@ -979,7 +979,7 @@ fn derive_selectable_impl<M, F>(object: &super::ConcreteObject<M, F>) -> proc_ma
 
     #partial_object_selectable
 
-    #partial_decoded_object_selectable
+    #partial_ref_object_selectable
   }
 }
 

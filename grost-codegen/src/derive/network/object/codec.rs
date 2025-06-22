@@ -34,9 +34,9 @@ impl Network {
       let encoded_len_fn = self.derive_field_encoded_len_reflection(path_to_grost, struct_, f, &wf);
       let encode_fn = self.derive_field_encode_reflection(path_to_grost, struct_, f, &wf);
       let partial_encoded_len_ref_fn =
-        self.derive_field_partial_decoded_encoded_len_reflection(path_to_grost, struct_, f, &wf);
+        self.derive_field_partial_ref_encoded_len_reflection(path_to_grost, struct_, f, &wf);
       let partial_encode_ref_fn =
-        self.derive_field_partial_decoded_encode_reflection(path_to_grost, struct_, f, &wf);
+        self.derive_field_partial_ref_encode_reflection(path_to_grost, struct_, f, &wf);
       let encoded_len_ref_fn =
         self.derive_field_ref_encoded_len_reflection(path_to_grost, struct_, f, &wf);
       let encode_ref_fn = self.derive_field_ref_encode_reflection(path_to_grost, struct_, f, &wf);
@@ -601,7 +601,7 @@ impl Network {
     }
   }
 
-  fn derive_field_partial_decoded_encode_reflection(
+  fn derive_field_partial_ref_encode_reflection(
     &self,
     path_to_grost: &syn::Path,
     struct_: &Object,
@@ -821,7 +821,7 @@ impl Network {
     }
   }
 
-  fn derive_field_partial_decoded_encoded_len_reflection(
+  fn derive_field_partial_ref_encoded_len_reflection(
     &self,
     path_to_grost: &syn::Path,
     struct_: &Object,

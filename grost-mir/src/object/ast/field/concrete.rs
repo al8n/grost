@@ -6,7 +6,7 @@ use crate::{
   flavor::FlavorAttribute,
   object::{
     FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavorAttribute, Label,
-    PartialDecodedFieldOptions, PartialFieldOptions, RawField, SelectorFieldOptions,
+    PartialRefFieldOptions, PartialFieldOptions, RawField, SelectorFieldOptions,
     ast::{
       SkippedField,
       field::flavor::{FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor},
@@ -27,7 +27,7 @@ pub(in crate::object) struct ConcreteTaggedField<M = ()> {
   pub(in crate::object) label: Label,
   pub(in crate::object) type_params_usages: IdentSet,
   pub(in crate::object) lifetime_params_usages: LifetimeSet,
-  pub(in crate::object) partial_decoded: PartialDecodedFieldOptions,
+  pub(in crate::object) partial_ref: PartialRefFieldOptions,
   pub(in crate::object) partial: PartialFieldOptions,
   pub(in crate::object) selector: SelectorFieldOptions,
   pub(in crate::object) default: Invokable,
@@ -63,14 +63,14 @@ impl<M> ConcreteTaggedField<M> {
 
   /// Returns the type of the partial decoded field for the field, if any
   #[inline]
-  pub const fn partial_decoded_type(&self) -> Option<&Type> {
-    self.partial_decoded.ty()
+  pub const fn partial_ref_type(&self) -> Option<&Type> {
+    self.partial_ref.ty()
   }
 
   /// Returns `true` if the field is partial decoded field is copyable, `false` otherwise
   #[inline]
-  pub const fn partial_decoded_copy(&self) -> bool {
-    self.partial_decoded.copy()
+  pub const fn partial_ref_copy(&self) -> bool {
+    self.partial_ref.copy()
   }
 
   pub(in crate::object) fn try_new<F: RawField<Meta = M>>(
@@ -202,7 +202,7 @@ impl<M> ConcreteTaggedField<M> {
       tag,
       default,
       label: label.clone(),
-      partial_decoded: f.partial_decoded().clone(),
+      partial_ref: f.partial_ref().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
       copy: f.copy(),

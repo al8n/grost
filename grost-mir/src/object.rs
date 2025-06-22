@@ -2,8 +2,8 @@ pub use meta::{FieldSelection, Label};
 
 pub use ast::{
   ConvertAttribute, FieldDecodeAttribute, FieldEncodeAttribute, FieldFlavor, FieldFlavorAttribute,
-  FieldOptions, Indexer, IndexerAttribute, ObjectFlavor, PartialDecodedFieldOptions,
-  PartialDecodedObjectAttribute, PartialFieldOptions, PartialObjectAttribute, RawField, RawObject,
+  FieldOptions, Indexer, IndexerAttribute, ObjectFlavor, PartialRefFieldOptions,
+  PartialRefObjectAttribute, PartialFieldOptions, PartialObjectAttribute, RawField, RawObject,
   SelectorAttribute, SelectorFieldOptions, SelectorIterAttribute,
 };
 // pub use mir::*;

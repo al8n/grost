@@ -11,7 +11,7 @@ const BUILTIN_NAMES: &[&str] = &[
   "flavor",
   "convert",
   "partial",
-  "partial_decoded",
+  "partial_ref",
   "selector",
   "copy",
   "skip",
@@ -276,7 +276,7 @@ impl ToTokens for ObjectField {
           #[darling(default)]
           partial: #path_to_crate::__private::object::meta::PartialFieldFromMeta,
           #[darling(default)]
-          partial_decoded: #path_to_crate::__private::object::meta::PartialDecodedFieldFromMeta,
+          partial_ref: #path_to_crate::__private::object::meta::GenericPartialRefFieldFromMeta,
           #[darling(default)]
           selector: #path_to_crate::__private::object::meta::SelectorFieldFromMeta,
           #[darling(default)]
@@ -294,7 +294,7 @@ impl ToTokens for ObjectField {
           flavor: #path_to_crate::__private::object::meta::GenericFieldFlavorFromMeta,
           convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
           partial: #path_to_crate::__private::object::meta::PartialFieldFromMeta,
-          partial_decoded: #path_to_crate::__private::object::meta::PartialDecodedFieldFromMeta,
+          partial_ref: #path_to_crate::__private::object::meta::GenericPartialRefFieldFromMeta,
           selector: #path_to_crate::__private::object::meta::SelectorFieldFromMeta,
           copy: ::core::primitive::bool,
           skip: ::core::primitive::bool,
@@ -510,8 +510,8 @@ impl ToTokens for ObjectField {
             self.__meta__.partial()
           }
 
-          fn partial_decoded(&self) -> &#path_to_crate::__private::object::PartialDecodedFieldOptions {
-            self.__meta__.partial_decoded()
+          fn partial_ref(&self) -> &#path_to_crate::__private::object::PartialRefFieldOptions {
+            self.__meta__.partial_ref()
           }
 
           fn copy(&self) -> ::core::primitive::bool {

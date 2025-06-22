@@ -16,13 +16,13 @@ use crate::object::{
 };
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedFieldFlavor {
+pub struct PartialRefFieldFlavor {
   ty: Type,
   optional_type: Type,
   constraints: Punctuated<WherePredicate, Comma>,
 }
 
-impl PartialDecodedFieldFlavor {
+impl PartialRefFieldFlavor {
   /// Returns the type of the partial decoded field for this flavor.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -74,7 +74,7 @@ pub struct FieldFlavor {
   wire_format: Type,
   encode: FieldEncodeFlavor,
   decode: FieldDecodeFlavor,
-  partial_decoded: PartialDecodedFieldFlavor,
+  partial_ref: PartialRefFieldFlavor,
   selector: SelectorFieldFlavor,
   wire_format_reflection: Type,
   wire_format_reflection_constraints: Punctuated<WherePredicate, Comma>,
@@ -115,8 +115,8 @@ impl FieldFlavor {
 
   /// Returns the partial decoded field information of this flavor.
   #[inline]
-  pub const fn partial_decoded(&self) -> &PartialDecodedFieldFlavor {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &PartialRefFieldFlavor {
+    &self.partial_ref
   }
 
   /// Returns the selector field information of this flavor.
@@ -248,7 +248,7 @@ impl FieldFlavor {
       })?,
     };
 
-    let mut partial_decoded_constraints = Punctuated::new();
+    let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
     let use_generics =
       !field.lifetime_params_usages.is_empty() || !field.type_params_usages.is_empty();
@@ -275,10 +275,10 @@ impl FieldFlavor {
     })?;
 
     if use_generics {
-      partial_decoded_constraints.push(syn::parse2(quote! {
+      partial_ref_constraints.push(syn::parse2(quote! {
         #wfr: #object_reflectable
       })?);
-      partial_decoded_constraints.push(syn::parse2(quote! {
+      partial_ref_constraints.push(syn::parse2(quote! {
         #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_type>
       })?);
       selector_constraints.push(syn::parse2(quote! {
@@ -292,8 +292,8 @@ impl FieldFlavor {
       })?);
     }
 
-    let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
-    let partial_decoded_copy_contraint = if partial_decoded_copyable {
+    let partial_ref_copyable = object.partial_ref().copy() || field.partial_ref_copy();
+    let partial_ref_copy_contraint = if partial_ref_copyable {
       Some(quote! {
         + ::core::marker::Copy
       })
@@ -301,7 +301,7 @@ impl FieldFlavor {
       None
     };
 
-    let partial_decoded_ty = match ast.ty().or(field.partial_decoded_type()) {
+    let partial_ref_ty = match ast.ty().or(field.partial_ref_type()) {
       Some(ty) => ty.clone(),
       None => {
         let state_type: Type = syn::parse2(quote! {
@@ -316,11 +316,11 @@ impl FieldFlavor {
         })?;
 
         if use_generics {
-          partial_decoded_constraints.push(syn::parse2(quote! {
+          partial_ref_constraints.push(syn::parse2(quote! {
             #field_ty: #state_type
           })?);
-          partial_decoded_constraints.push(syn::parse2(quote! {
-            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+          partial_ref_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_ref_copy_contraint
           })?);
         }
 
@@ -330,8 +330,8 @@ impl FieldFlavor {
       }
     };
 
-    let optional_partial_decoded_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_decoded_ty>
+    let optional_partial_ref_type = syn::parse2(quote! {
+      ::core::option::Option<#partial_ref_ty>
     })?;
 
     let mut wire_format_reflection_constraints = Punctuated::new();
@@ -373,10 +373,10 @@ impl FieldFlavor {
       wire_format,
       encode: ast.encode().clone(),
       decode: ast.decode().clone(),
-      partial_decoded: PartialDecodedFieldFlavor {
-        ty: partial_decoded_ty,
-        optional_type: optional_partial_decoded_type,
-        constraints: partial_decoded_constraints,
+      partial_ref: PartialRefFieldFlavor {
+        ty: partial_ref_ty,
+        optional_type: optional_partial_ref_type,
+        constraints: partial_ref_constraints,
       },
       selector: SelectorFieldFlavor {
         ty: selector_type,

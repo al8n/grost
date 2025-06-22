@@ -5,7 +5,6 @@ use super::{decode::DecodeValue, *};
 use quote::ToTokens;
 
 use ::serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
-use syn::Path;
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
@@ -115,104 +114,6 @@ impl Serialize for IdentifierFromMeta {
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
-pub(super) enum EncodeValueSerdeHelper {
-  Path(String),
-  Config(EncodeValueParser),
-}
-
-impl TryFrom<EncodeValueSerdeHelper> for EncodeValue {
-  type Error = syn::Error;
-
-  fn try_from(value: EncodeValueSerdeHelper) -> Result<Self, Self::Error> {
-    match value {
-      EncodeValueSerdeHelper::Path(s) => syn::parse_str::<Path>(s.as_str()).map(Into::into),
-      EncodeValueSerdeHelper::Config(parser) => Ok(parser.into()),
-    }
-  }
-}
-
-impl From<EncodeValue> for EncodeValueSerdeHelper {
-  fn from(value: EncodeValue) -> Self {
-    Self::Config(value.into())
-  }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
-pub(super) enum EncodeSerdeHelper {
-  Config {
-    skip_default: BoolOption,
-    scalar: EncodeValue,
-    bytes: EncodeValue,
-    string: EncodeValue,
-    object: EncodeValue,
-    #[serde(rename = "enum")]
-    enumeration: EncodeValue,
-    interface: EncodeValue,
-    union: EncodeValue,
-    map: EncodeValue,
-    set: EncodeValue,
-    list: EncodeValue,
-  },
-  Module(String),
-}
-
-impl TryFrom<EncodeSerdeHelper> for EncodeFromMeta {
-  type Error = syn::Error;
-
-  fn try_from(value: EncodeSerdeHelper) -> Result<Self, Self::Error> {
-    match value {
-      EncodeSerdeHelper::Module(s) => EncodeFromMeta::try_from(s.as_str()),
-      EncodeSerdeHelper::Config {
-        skip_default,
-        scalar,
-        bytes,
-        string,
-        object,
-        enumeration,
-        interface,
-        union,
-        map,
-        set,
-        list,
-      } => Ok(Self {
-        skip_default,
-        scalar,
-        bytes,
-        string,
-        object,
-        enumeration,
-        interface,
-        union,
-        map,
-        set,
-        list,
-      }),
-    }
-  }
-}
-
-impl From<EncodeFromMeta> for EncodeSerdeHelper {
-  fn from(value: EncodeFromMeta) -> Self {
-    EncodeSerdeHelper::Config {
-      scalar: value.scalar,
-      bytes: value.bytes,
-      string: value.string,
-      object: value.object,
-      enumeration: value.enumeration,
-      interface: value.interface,
-      union: value.union,
-      skip_default: value.skip_default,
-      map: value.map,
-      set: value.set,
-      list: value.list,
-    }
-  }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
 pub(super) enum DecodeValueSerdeHelper {
   Config(DecodeValueParser),
 }
@@ -238,7 +139,7 @@ impl From<DecodeValue> for DecodeValueSerdeHelper {
 #[allow(clippy::large_enum_variant)]
 pub(super) enum DecodeSerdeHelper {
   Config {
-    or_else_default: BoolOption,
+    or_default: BoolOption,
     scalar: DecodeValue,
     bytes: DecodeValue,
     string: DecodeValue,
@@ -259,7 +160,7 @@ impl TryFrom<DecodeSerdeHelper> for DecodeFromMeta {
   fn try_from(value: DecodeSerdeHelper) -> Result<Self, Self::Error> {
     match value {
       DecodeSerdeHelper::Config {
-        or_else_default,
+        or_default,
         scalar,
         bytes,
         string,
@@ -271,7 +172,7 @@ impl TryFrom<DecodeSerdeHelper> for DecodeFromMeta {
         set,
         list,
       } => Ok(Self {
-        or_else_default,
+        or_default,
         scalar,
         bytes,
         string,
@@ -297,7 +198,7 @@ impl From<DecodeFromMeta> for DecodeSerdeHelper {
       enumeration: value.enumeration,
       interface: value.interface,
       union: value.union,
-      or_else_default: value.or_else_default,
+      or_default: value.or_default,
       map: value.map,
       set: value.set,
       list: value.list,
@@ -311,7 +212,6 @@ impl From<DecodeFromMeta> for DecodeSerdeHelper {
 pub(super) enum BuiltinFlavorValueSerdeHelper {
   File(String),
   Config {
-    encode: EncodeFromMeta,
     decode: DecodeFromMeta,
   },
   Bool(bool),
@@ -325,9 +225,8 @@ impl TryFrom<BuiltinFlavorValueSerdeHelper> for BuiltinFlavorRepr {
       BuiltinFlavorValueSerdeHelper::File(path_buf) => {
         BuiltinFlavorValueParser::try_from(path_buf.as_str()).map(BuiltinFlavorRepr::Nested)
       }
-      BuiltinFlavorValueSerdeHelper::Config { encode, decode } => {
+      BuiltinFlavorValueSerdeHelper::Config { decode } => {
         Ok(BuiltinFlavorRepr::Nested(BuiltinFlavorValueParser {
-          encode,
           decode,
         }))
       }
@@ -340,7 +239,6 @@ impl From<BuiltinFlavorRepr> for BuiltinFlavorValueSerdeHelper {
   fn from(value: BuiltinFlavorRepr) -> Self {
     match value {
       BuiltinFlavorRepr::Nested(parser) => Self::Config {
-        encode: parser.encode,
         decode: parser.decode,
       },
       BuiltinFlavorRepr::Bool(b) => Self::Bool(b),
@@ -360,7 +258,6 @@ pub(super) enum FlavorValueSerdeHelper {
     format: syn::Type,
     identifier: IdentifierFromMeta,
     tag: TagFromMeta,
-    encode: EncodeFromMeta,
     decode: DecodeFromMeta,
   },
 }
@@ -378,14 +275,12 @@ impl TryFrom<FlavorValueSerdeHelper> for FlavorValue {
         format,
         identifier,
         tag,
-        encode,
         decode,
       } => Ok(Self {
         ty,
         format,
         identifier,
         tag,
-        encode,
         decode,
       }),
     }
@@ -399,7 +294,6 @@ impl From<FlavorValue> for FlavorValueSerdeHelper {
       format: value.format,
       identifier: value.identifier,
       tag: value.tag,
-      encode: value.encode,
       decode: value.decode,
     }
   }
@@ -535,88 +429,5 @@ mod tests {
         .replace(" ", ""),
       "grost::flavors::network::Tag::encode"
     );
-  }
-
-  #[test]
-  fn test_encode_serde() {
-    #[derive(Serialize, Deserialize)]
-    struct T {
-      encode: EncodeFromMeta,
-    }
-
-    let module = r###"
-    {
-      "encode": "my_encode"
-    }
-    "###;
-    let t = serde_json::from_str::<'_, T>(module).unwrap();
-    assert_eq!(
-      t.encode
-        .scalar()
-        .unwrap()
-        .to_token_stream()
-        .to_string()
-        .replace(" ", ""),
-      "my_encode::scalar"
-    );
-
-    let config = r###"
-    {
-      "encode": {
-        "scalar": "grost::flavors::network::Encode::scalar",
-        "bytes": "grost::flavors::network::Encode::bytes",
-        "string": "grost::flavors::network::Encode::string",
-        "object": "grost::flavors::network::Encode::object",
-        "enumeration": "grost::flavors::network::Encode::enumeration",
-        "interface": "grost::flavors::network::Encode::interface",
-        "union": "grost::flavors::network::Encode::union"
-      }
-    }
-    "###;
-    let t = serde_json::from_str::<T>(config).unwrap();
-    assert_eq!(
-      t.encode
-        .scalar()
-        .unwrap()
-        .to_token_stream()
-        .to_string()
-        .replace(" ", ""),
-      "grost::flavors::network::Encode::scalar"
-    );
-
-    let config_partial = r###"
-    {
-      "encode": {
-        "scalar": "grost::flavors::network::Encode::scalar",
-        "bytes": "grost::flavors::network::Encode::bytes"
-      }
-    }
-    "###;
-
-    let t = serde_json::from_str::<T>(config_partial).unwrap();
-    assert_eq!(
-      t.encode
-        .scalar()
-        .unwrap()
-        .to_token_stream()
-        .to_string()
-        .replace(" ", ""),
-      "grost::flavors::network::Encode::scalar"
-    );
-
-    assert_eq!(
-      t.encode
-        .bytes()
-        .unwrap()
-        .to_token_stream()
-        .to_string()
-        .replace(" ", ""),
-      "grost::flavors::network::Encode::bytes"
-    );
-    assert!(t.encode.string().is_none());
-    assert!(t.encode.object().is_none());
-    assert!(t.encode.enumeration().is_none());
-    assert!(t.encode.interface().is_none());
-    assert!(t.encode.union().is_none());
   }
 }

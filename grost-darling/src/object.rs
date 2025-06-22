@@ -422,8 +422,8 @@ impl ToTokens for Object {
             self.__args__.__meta__.partial()
           }
 
-          fn partial_decoded(&self) -> &#path_to_crate::__private::object::PartialDecodedObjectAttribute {
-            self.__args__.__meta__.partial_decoded()
+          fn partial_ref(&self) -> &#path_to_crate::__private::object::PartialRefObjectAttribute {
+            self.__args__.__meta__.partial_ref()
           }
 
           fn selector(&self) -> &#path_to_crate::__private::object::SelectorAttribute {

@@ -52,7 +52,7 @@ pub struct User {
   #[grost(
     tag = 4,
     schema(description = "The email of the user"),
-    partial_decoded(copy),
+    partial_ref(copy),
     list(string)
   )]
   emails: Vec<String>,
@@ -62,11 +62,11 @@ pub struct User {
   // array: [u8; N],
 }
 
-// impl<'de, B, UB> Selectable<Network, LengthDelimited> for PartialDecodedUser<'de, Network, UB> {
+// impl<'de, B, UB> Selectable<Network, LengthDelimited> for PartialRefUser<'de, Network, UB> {
 //   type Selector = UserSelector<Network>;
 // }
 
-// impl<'de, B, UB> PartialDecode<'de, Network, LengthDelimited, Self, B, UB> for PartialDecodedUser<'de, String, Network, UB> {
+// impl<'de, B, UB> PartialDecode<'de, Network, LengthDelimited, Self, B, UB> for PartialRefUser<'de, String, Network, UB> {
 //   fn partial_decode(
 //     context: &<Network as grost::Flavor>::Context,
 //     src: B,
@@ -120,7 +120,7 @@ pub struct User {
 
 // #[test]
 // fn t() {
-//   assert_::<_, _, PartialDecodedUser<'static, String, Network, _>>();
+//   assert_::<_, _, PartialRefUser<'static, String, Network, _>>();
 // }
 
 // #[derive(Debug, Clone, PartialEq, Eq, Object)]
@@ -130,21 +130,21 @@ pub struct User {
 //     schema(description = "The id of the comment"),
 //     wire = "grost::flavors::network::LengthDelimited",
 //     selector(select = "all"),
-//     partial_decoded(copy,)
+//     partial_ref(copy,)
 //   )]
 //   id: I,
 //   #[grost(
 //     tag = 2,
 //     schema(description = "The user who made the comment"),
 //     wire = "grost::flavors::network::LengthDelimited",
-//     partial_decoded(copy)
+//     partial_ref(copy)
 //   )]
 //   user: User<I>,
 //   #[grost(
 //     tag = 3,
 //     schema(description = "The replyers who reply the comment"),
 //     wire = "grost::flavors::network::Repeated<grost::flavors::network::LengthDelimited>",
-//     partial_decoded(copy),
+//     partial_ref(copy),
 //     repeated
 //   )]
 //   replyers: Vec<User<I>>,
@@ -152,7 +152,7 @@ pub struct User {
 //     tag = 4,
 //     schema(description = "The content of the comment"),
 //     wire = "grost::flavors::network::LengthDelimited",
-//     partial_decoded(copy)
+//     partial_ref(copy)
 //   )]
 //   content: String,
 // }
@@ -166,14 +166,14 @@ fn t() {
   // println!("{:?}", refl.tag().encoded());
   // println!("{:?}", refl.wire_type());
   // println!("{:?}", refl.wire_format());
-  // let user = PartialDecodedUser {
+  // let user = PartialRefUser {
   //   age: Some(1),
   //   name: Some("user".to_string()),
   //   emails: None,
   // };
   // println!("{:?}", <grost::reflection::SchemaSchemaTypeReflection<Option<Vec<Option<String>>>> as grost::reflection::Reflectable<Network>>::REFLECTION);
 
-  let user = PartialDecodedUser::<'_, Network, ()> {
+  let user = PartialRefUser::<'_, Network, ()> {
     __grost_unknown_buffer__: todo!(),
     name: todo!(),
     age: todo!(),

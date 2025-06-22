@@ -167,14 +167,21 @@ impl BoolOption {
   pub const fn is_none(&self) -> bool {
     self.0.is_none()
   }
+
+  pub const fn is_some(&self) -> bool {
+    self.0.is_some()
+  }
 }
 
 /// Specifies the behavior of how to handle the missing field during decoding.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
 pub enum MissingOperation {
-  Or(Invokable),
-  OrDefault(Option<Invokable>),
-  OkOr(Invokable),
+  #[darling(rename = "or_else")]
+  OrElse(Invokable),
+  #[darling(rename = "or_default")]
+  OrDefault,
+  #[darling(rename = "ok_or_else")]
+  OkOrElse(Invokable),
 }
 
 impl MissingOperation {
@@ -182,26 +189,143 @@ impl MissingOperation {
   pub const fn name(&self) -> &'static str {
     match self {
       MissingOperation::Or(_) => "or_else",
-      MissingOperation::OrDefault(_) => "or_else_default",
+      MissingOperation::OrDefault => "or_default",
       MissingOperation::OkOr(_) => "ok_or_else",
     }
   }
+
+  /// Returns the possible names.
+  #[inline]
+  pub const fn possible_names() -> &'static [&'static str] {
+    &["or_else", "or_default", "ok_or_else"]
+  }
+
+  /// Parsing an optional missing operation from a meta list
+  #[inline]
+  pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
+    fn duplicate_error(
+      old_op: &MissingOperation,
+      new_op: &str,
+    ) -> darling::Error {
+      darling::Error::custom(format!(
+        "Cannot specify both `{}` and `{}` at the same time.",
+        old_op,
+        new_op,
+      ))
+    }
+
+    if items.is_empty() {
+      return Ok(None);
+    }
+
+    let mut missing_operation = None;
+    for item in items {
+      match item {
+        darling::ast::NestedMeta::Lit(_) => {
+          return Err(darling::Error::unexpected_lit_type(item));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
+          if meta.path().is_ident("or_else") {
+            if let Some(ref old_op) = missing_operation {
+              return Err(duplicate_error(old_op, "or_else"));
+            }
+
+            let nv = meta.require_name_value()?;
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::OrElse(invokable));
+          } else if meta.path().is_ident("or_default") {
+            if let Some(ref old_op) = missing_operation {
+              return Err(duplicate_error(old_op, "or_default"));
+            }
+
+            let _ = meta.require_path_only()?;
+            missing_operation = Some(MissingOperation::OrDefault);
+          } else if meta.path().is_ident("ok_or_else") {
+            if let Some(ref old_op) = missing_operation {
+              return Err(duplicate_error(old_op, "ok_or_else"));
+            }
+
+            let nv = meta.require_name_value()?;
+            let invokable = Invokable::try_from(&nv.value)?;
+            missing_operation = Some(MissingOperation::OkOrElse(invokable));
+          }
+        }
+      }
+    }
+
+    Ok(missing_operation)
+  }
 }
 
-/// Specifies the behavior of how to transform from decoded state to base state.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TransformOperation {
-  Into(Invokable),
-  TryInto(Invokable),
+/// Specifies the behavior of how to do the convert operation.
+#[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
+pub enum ConvertOperation {
+  From(Invokable),
+  TryFrom(Invokable),
 }
 
-impl TransformOperation {
+impl ConvertOperation {
   /// Returns the name of the operation, which is used to generate the method name in the code.
   pub const fn name(&self) -> &'static str {
     match self {
-      Self::Into(_) => "transform",
-      Self::TryInto(_) => "try_transform",
+      Self::From(_) => "from",
+      Self::TryFrom(_) => "try_from",
     }
+  }
+
+  /// Returns the possible names.
+  #[inline]
+  pub const fn possible_names() -> &'static [&'static str] {
+    &["from", "try_from"]
+  }
+
+  /// Parses an optional convert operation from a meta list
+  #[inline]
+  pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
+    fn duplicate_error(
+      old_op: &ConvertOperation,
+      new_op: &str,
+    ) -> darling::Error {
+      darling::Error::custom(format!(
+        "Cannot specify both `{}` and `{}` at the same time.",
+        old_op.name(),
+        new_op,
+      ))
+    }
+
+    if items.is_empty() {
+      return Ok(None);
+    }
+
+    let mut convert_operation = None;
+
+    for item in items {
+      match item {
+        darling::ast::NestedMeta::Lit(_) => {
+          return Err(darling::Error::unexpected_lit_type(item));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
+          if meta.path().is_ident("from") {
+            if let Some(ref old_op) = convert_operation {
+              return Err(duplicate_error(old_op, "from"));
+            }
+
+            let nv = meta.require_name_value()?;
+            let invokable = Invokable::try_from(&nv.value)?;
+            convert_operation = Some(ConvertOperation::From(invokable));
+          } else if meta.path().is_ident("try_from") {
+            if let Some(ref old_op) = convert_operation {
+              return Err(duplicate_error(old_op, "try_from"));
+            }
+
+            let nv = meta.require_name_value()?;
+            let invokable = Invokable::try_from(&nv.value)?;
+            convert_operation = Some(ConvertOperation::TryFrom(invokable));
+          }
+        }
+      }
+    }
+    Ok(convert_operation)
   }
 }
 

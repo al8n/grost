@@ -1,7 +1,6 @@
 pub use field::*; 
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use partial::PartialObjectFromMeta;
-pub(super) use partial_decoded::PartialDecodedObjectFromMeta;
 pub(super) use selector::{SelectorFromMeta, SelectorIterFromMeta};
 
 pub use concrete::ObjectFromMeta;
@@ -10,7 +9,6 @@ pub use generic::GenericObjectFromMeta;
 mod field;
 mod indexer;
 mod partial;
-mod partial_decoded;
 mod selector;
 
 /// Concrete object meta, a concrete object means there will only be one flavor and the generated code will not be generic over the flavor type.

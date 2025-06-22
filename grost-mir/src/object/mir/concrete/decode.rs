@@ -3,20 +3,20 @@ use syn::{GenericParam, TypeParam};
 
 use crate::{
   object::{Label, concrete::partial},
-  utils::{MissingOperation, TransformOperation, grost_decode_trait_lifetime},
+  utils::{MissingOperation, ConvertOperation, grost_decode_trait_lifetime},
 };
 
 impl<M, F> super::ConcreteObject<M, F> {
   pub(super) fn derive_decode(&self) -> darling::Result<proc_macro2::TokenStream> {
     let object_impl = derive_object_decode(self)?;
-    let partial_decoded_object_impl = derive_partial_decoded_object_decode(self)?;
+    let partial_ref_object_impl = derive_partial_ref_object_decode(self)?;
     let partial_object_decode_impl = derive_partial_object_decode(self)?;
     let decoded_state_impl = derive_decoded_state(self)?;
 
     Ok(quote! {
       #object_impl
       #partial_object_decode_impl
-      #partial_decoded_object_impl
+      #partial_ref_object_impl
       #decoded_state_impl
     })
   }
@@ -27,11 +27,11 @@ fn derive_decoded_state<M, F>(
 ) -> darling::Result<proc_macro2::TokenStream> {
   let decoded_state_type = object.decoded_state_type();
   let path_to_grost = object.path_to_grost();
-  let generics = object.partial_decoded().generics();
+  let generics = object.partial_ref().generics();
   let (ig, _, where_clauses) = generics.split_for_impl();
   let ty = object.ty();
   let lt = &object.lifetime_param().lifetime;
-  let partial_decoded_object_ty = object.partial_decoded().ty();
+  let partial_ref_object_ty = object.partial_ref().ty();
 
   let partial_object_impl = {
     let mut g = generics.clone();
@@ -55,7 +55,7 @@ fn derive_decoded_state<M, F>(
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ty #where_clauses {
         type Input = &#lt [::core::primitive::u8];
-        type Output = #partial_decoded_object_ty;
+        type Output = #partial_ref_object_ty;
       }
     }
   };
@@ -65,14 +65,14 @@ fn derive_decoded_state<M, F>(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #ty #where_clauses {
       type Input = &#lt [::core::primitive::u8];
-      type Output = #partial_decoded_object_ty;
+      type Output = #partial_ref_object_ty;
     }
 
     #partial_object_impl
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_decoded_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ref_object_ty #where_clauses {
       type Input = &#lt [::core::primitive::u8];
       type Output = Self;
     }
@@ -97,7 +97,7 @@ fn derive_partial_object_decode<M, F>(
   let wf = object.wire_format();
 
   let decode_trait = partial_object.applied_decode_trait(quote! { Self })?;
-  let partial_decoded_object_ty = object.partial_decoded().ty();
+  let partial_ref_object_ty = object.partial_ref().ty();
   let object_ty = object.ty();
 
   let to_object = object
@@ -147,10 +147,10 @@ fn derive_partial_object_decode<M, F>(
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         <#partial_object_ty as
-          #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_decoded_object_ty, #read_buffer_ident, #ubg>
+          #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_object_ty, #read_buffer_ident, #ubg>
         >::decode(context, src)
           .and_then(|(read, input)| {
-            <#partial_object_ty as #path_to_grost::__private::decode::Transform::<#flavor_ty, #wf, #partial_decoded_object_ty>>::transform(input)
+            <#partial_object_ty as #path_to_grost::__private::decode::Transform::<#flavor_ty, #wf, #partial_ref_object_ty>>::transform(input)
               .map(|input| (read, input))
           })
       }
@@ -218,29 +218,29 @@ fn derive_object_decode<M, F>(
   })
 }
 
-fn derive_partial_decoded_object_decode<M, F>(
+fn derive_partial_ref_object_decode<M, F>(
   object: &super::ConcreteObject<M, F>,
 ) -> darling::Result<proc_macro2::TokenStream> {
   let object_ty = object.ty();
   let object_reflectable = object.reflectable();
   let selector_ty = object.selector().ty();
   let partial_object_ty = object.partial().ty();
-  let partial_decoded_object = object.partial_decoded();
-  let partial_decoded_object_ty = partial_decoded_object.ty();
-  let (ig, _, where_clauses) = partial_decoded_object.generics().split_for_impl();
+  let partial_ref_object = object.partial_ref();
+  let partial_ref_object_ty = partial_ref_object.ty();
+  let (ig, _, where_clauses) = partial_ref_object.generics().split_for_impl();
   let (decode_ig, _, decode_where_clauses) =
-    partial_decoded_object.decode_generics().split_for_impl();
+    partial_ref_object.decode_generics().split_for_impl();
 
   let path_to_grost = object.path_to_grost();
   let ubg = &object.unknown_buffer_param().ident;
   let read_buffer_ident = &object.read_buffer_param().ident;
   let flavor_ty = object.flavor_type();
-  let decode_to_self_trait = partial_decoded_object.applied_decode_trait(quote! { Self })?;
-  let decode_to_partial_decoded_trait =
-    partial_decoded_object.applied_decode_trait(quote! { #partial_decoded_object_ty })?;
+  let decode_to_self_trait = partial_ref_object.applied_decode_trait(quote! { Self })?;
+  let decode_to_partial_ref_trait =
+    partial_ref_object.applied_decode_trait(quote! { #partial_ref_object_ty })?;
   let lt = grost_decode_trait_lifetime();
 
-  let unknown_buffer_field_name = &partial_decoded_object.unknown_buffer_field_name;
+  let unknown_buffer_field_name = &partial_ref_object.unknown_buffer_field_name;
   let mut on_missing = vec![];
   let mut pdtp_on_missing = vec![];
   let mut pdtp = vec![];
@@ -256,14 +256,14 @@ fn derive_partial_decoded_object_decode<M, F>(
       let field_name = f.name();
       let field_identifier = f.reflection().identifier_reflection();
       let field_ty = f.ty();
-      let field_decode_trait_type = f.partial_decoded().decode_trait_type();
+      let field_decode_trait_type = f.partial_ref().decode_trait_type();
       let field_wf = f.wire_format();
       let is_field_selected = format_ident!("is_{}_selected", field_name);
       let field_selector = format_ident!("{}_ref", field_name);
-      let partial_decoded_field_ty = f.partial_decoded().ty();
+      let partial_ref_field_ty = f.partial_ref().ty();
 
       {
-        let convert = f.partial_decoded().convert();
+        let convert = f.partial_ref().convert();
         let partial_field_ty = f.partial().ty();
         if let Some(missing_operation) = convert.missing_operation() {
           let on_missing = match missing_operation {
@@ -297,16 +297,16 @@ fn derive_partial_decoded_object_decode<M, F>(
           None => {
             quote! {
               if let ::core::option::Option::Some(value) = input.#field_name {
-                this.#field_name = ::core::option::Option::Some(<#partial_field_ty as #path_to_grost::__private::decode::Transform<#flavor_ty, #field_wf, #partial_decoded_field_ty>>::transform(value)?);
+                this.#field_name = ::core::option::Option::Some(<#partial_field_ty as #path_to_grost::__private::decode::Transform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::transform(value)?);
               }
             }
           }
           Some(transform) => {
             match transform {
-              TransformOperation::Into(invokable) => quote! {
+              ConvertOperation::Into(invokable) => quote! {
                 this.#field_name = (#invokable)(input.#field_name);
               },
-              TransformOperation::TryInto(invokable) => quote! {
+              ConvertOperation::TryInto(invokable) => quote! {
                 this.#field_name = (#invokable)(input.#field_name)?;
               },
             }
@@ -319,17 +319,17 @@ fn derive_partial_decoded_object_decode<M, F>(
             quote! {
               if let ::core::option::Option::Some(value) = input.#field_name {
                 if selector.#is_field_selected() {
-                  this.#field_name = <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_decoded_field_ty>>::partial_transform(value, selector.#field_selector())?;
+                  this.#field_name = <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?;
                 }
               }
             }
           }
           Some(transform) => {
             let transform = match transform {
-              TransformOperation::Into(invokable) => quote! {
+              ConvertOperation::Into(invokable) => quote! {
                 this.#field_name = (#invokable)(input.#field_name);
               },
-              TransformOperation::TryInto(invokable) => quote! {
+              ConvertOperation::TryInto(invokable) => quote! {
                 this.#field_name = (#invokable)(input.#field_name)?;
               },
             };
@@ -395,7 +395,7 @@ fn derive_partial_decoded_object_decode<M, F>(
     });
 
   let decode_partial_generics = {
-    let mut output = partial_decoded_object.decode_generics().clone();
+    let mut output = partial_ref_object.decode_generics().clone();
     if let Some(preds) = object
       .partial()
       .generics()
@@ -413,8 +413,8 @@ fn derive_partial_decoded_object_decode<M, F>(
   let (decode_partial_ig, _, decode_partial_where_clauses) =
     decode_partial_generics.split_for_impl();
 
-  let transform_from_partial_decoded_generics = {
-    let mut output = partial_decoded_object.transform_generics().clone();
+  let transform_from_partial_ref_generics = {
+    let mut output = partial_ref_object.transform_generics().clone();
     if let Some(preds) = object
       .partial()
       .generics()
@@ -429,10 +429,10 @@ fn derive_partial_decoded_object_decode<M, F>(
     }
     output
   };
-  let (transform_from_partial_decoded_ig, _, transform_from_partial_decoded_where_clauses) =
-    transform_from_partial_decoded_generics.split_for_impl();
-  let partial_transform_from_partial_decoded_generics = {
-    let mut output = partial_decoded_object.partial_transform_generics().clone();
+  let (transform_from_partial_ref_ig, _, transform_from_partial_ref_where_clauses) =
+    transform_from_partial_ref_generics.split_for_impl();
+  let partial_transform_from_partial_ref_generics = {
+    let mut output = partial_ref_object.partial_transform_generics().clone();
     if let Some(preds) = object
       .partial()
       .generics()
@@ -449,24 +449,24 @@ fn derive_partial_decoded_object_decode<M, F>(
       .make_where_clause()
       .predicates
       .push(syn::parse2(quote! {
-        #partial_decoded_object_ty: #path_to_grost::__private::selection::Selectable<#flavor_ty, Selector = #selector_ty>
+        #partial_ref_object_ty: #path_to_grost::__private::selection::Selectable<#flavor_ty, Selector = #selector_ty>
       })?);
 
     output
   };
 
   let (
-    partial_transform_from_partial_decoded_ig,
+    partial_transform_from_partial_ref_ig,
     _,
-    partial_transform_from_partial_decoded_where_clauses,
-  ) = partial_transform_from_partial_decoded_generics.split_for_impl();
+    partial_transform_from_partial_ref_where_clauses,
+  ) = partial_transform_from_partial_ref_generics.split_for_impl();
 
   let wf = object.wire_format();
 
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, Self> for #partial_decoded_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, Self> for #partial_ref_object_ty #where_clauses {
       fn transform(input: Self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         ::core::result::Result::Ok(input)
       }
@@ -474,7 +474,7 @@ fn derive_partial_decoded_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #decode_ig #decode_to_self_trait for #partial_decoded_object_ty #decode_where_clauses {
+    impl #decode_ig #decode_to_self_trait for #partial_ref_object_ty #decode_where_clauses {
       fn decode(
         context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
@@ -541,40 +541,40 @@ fn derive_partial_decoded_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #decode_ig #decode_to_partial_decoded_trait for #object_ty #decode_where_clauses {
+    impl #decode_ig #decode_to_partial_ref_trait for #object_ty #decode_where_clauses {
       fn decode(
         context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
-      ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
+      ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
-        #partial_decoded_object_ty: ::core::marker::Sized + #lt,
+        #partial_ref_object_ty: ::core::marker::Sized + #lt,
         #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
-        <#partial_decoded_object_ty as #decode_to_partial_decoded_trait>::decode(context, src)
+        <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)
       }
     }
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #decode_partial_ig #decode_to_partial_decoded_trait for #partial_object_ty #decode_partial_where_clauses {
+    impl #decode_partial_ig #decode_to_partial_ref_trait for #partial_object_ty #decode_partial_where_clauses {
       fn decode(
         context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
-      ) -> ::core::result::Result<(::core::primitive::usize, #partial_decoded_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
+      ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
-        #partial_decoded_object_ty: ::core::marker::Sized + #lt,
+        #partial_ref_object_ty: ::core::marker::Sized + #lt,
         #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
-        <#partial_decoded_object_ty as #decode_to_partial_decoded_trait>::decode(context, src)
+        <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)
       }
     }
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #transform_from_partial_decoded_ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_decoded_object_ty> for #partial_object_ty #transform_from_partial_decoded_where_clauses {
-      fn transform(input: #partial_decoded_object_ty) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
+    impl #transform_from_partial_ref_ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #transform_from_partial_ref_where_clauses {
+      fn transform(input: #partial_ref_object_ty) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         let mut this = Self::new();
 
         #(#pdtp)*
@@ -587,9 +587,9 @@ fn derive_partial_decoded_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #partial_transform_from_partial_decoded_ig #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_decoded_object_ty> for #partial_object_ty #partial_transform_from_partial_decoded_where_clauses {
+    impl #partial_transform_from_partial_ref_ig #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #partial_transform_from_partial_ref_where_clauses {
       fn partial_transform(
-        input: #partial_decoded_object_ty,
+        input: #partial_ref_object_ty,
         selector: &#selector_ty,
       ) -> ::core::result::Result<::core::option::Option<Self>, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         let mut this = Self::new();

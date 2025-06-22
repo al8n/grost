@@ -41,7 +41,7 @@ pub struct User<I: Default> {
     scalar,
     schema(description = "The age of the user"),
     copy,
-    partial_decoded(type = "u8")
+    partial_ref(type = "u8")
   )]
   age: u8,
   #[grost(tag = 4, schema(description = "The email of the user"), list(string))]
@@ -246,7 +246,7 @@ pub struct PartialUser<I: Default> {
 }
 /// Partial reference struct for the struct [`User`]
 #[allow(non_camel_case_types, clippy::type_complexity)]
-pub struct PartialDecodedUser<
+pub struct PartialRefUser<
   '__grost_lifetime__,
   I: Default,
   __GROST_READ_BUFFER__,
@@ -895,7 +895,7 @@ const _: () = {
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
     ::core::default::Default
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -932,7 +932,7 @@ const _: () = {
     ::grost::__private::convert::State<
       ::grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>,
     >
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -959,7 +959,7 @@ const _: () = {
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
-    PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -3448,7 +3448,7 @@ const _: () = {
   #[allow(non_camel_case_types, clippy::type_complexity)]
   impl<'__grost_lifetime__, I: Default, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
     ::grost::__private::selection::Selectable<::grost::__private::flavors::Network>
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -4614,7 +4614,7 @@ const _: () = {
         '__grost_lifetime__,
         ::grost::__private::flavors::Network,
         ::grost::__private::flavors::network::LengthDelimited,
-        PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+        PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
       >>::decode(context, src)
@@ -4622,7 +4622,7 @@ const _: () = {
         <PartialUser<I> as ::grost::__private::decode::Transform<
           ::grost::__private::flavors::Network,
           ::grost::__private::flavors::network::LengthDelimited,
-          PartialDecodedUser<
+          PartialRefUser<
             '__grost_lifetime__,
             I,
             __GROST_READ_BUFFER__,
@@ -4677,7 +4677,7 @@ const _: () = {
       ::grost::__private::flavors::network::LengthDelimited,
       Self,
     >
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -4724,7 +4724,7 @@ const _: () = {
       __GROST_READ_BUFFER__,
       __GROST_UNKNOWN_BUFFER__,
     >
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -5160,7 +5160,7 @@ const _: () = {
       '__grost_decode_lifetime__,
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
       __GROST_READ_BUFFER__,
       __GROST_UNKNOWN_BUFFER__,
     > for User<I>
@@ -5207,12 +5207,12 @@ const _: () = {
     ) -> ::core::result::Result<
       (
         ::core::primitive::usize,
-        PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+        PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
       ),
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
     >
     where
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
         ::core::marker::Sized + '__grost_decode_lifetime__,
       __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf + '__grost_decode_lifetime__,
       __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
@@ -5221,7 +5221,7 @@ const _: () = {
           >,
         > + '__grost_decode_lifetime__,
     {
-      <PartialDecodedUser<
+      <PartialRefUser<
                 '__grost_lifetime__,
                 I,
                 __GROST_READ_BUFFER__,
@@ -5230,7 +5230,7 @@ const _: () = {
                 '__grost_decode_lifetime__,
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
-                PartialDecodedUser<
+                PartialRefUser<
                     '__grost_lifetime__,
                     I,
                     __GROST_READ_BUFFER__,
@@ -5254,7 +5254,7 @@ const _: () = {
       '__grost_decode_lifetime__,
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
       __GROST_READ_BUFFER__,
       __GROST_UNKNOWN_BUFFER__,
     > for PartialUser<I>
@@ -5301,12 +5301,12 @@ const _: () = {
     ) -> ::core::result::Result<
       (
         ::core::primitive::usize,
-        PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+        PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
       ),
       <::grost::__private::flavors::Network as ::grost::__private::flavors::Flavor>::Error,
     >
     where
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
         ::core::marker::Sized + '__grost_decode_lifetime__,
       __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf + '__grost_decode_lifetime__,
       __GROST_UNKNOWN_BUFFER__: ::grost::__private::buffer::Buffer<
@@ -5315,7 +5315,7 @@ const _: () = {
           >,
         > + '__grost_decode_lifetime__,
     {
-      <PartialDecodedUser<
+      <PartialRefUser<
                 '__grost_lifetime__,
                 I,
                 __GROST_READ_BUFFER__,
@@ -5324,7 +5324,7 @@ const _: () = {
                 '__grost_decode_lifetime__,
                 ::grost::__private::flavors::Network,
                 ::grost::__private::flavors::network::LengthDelimited,
-                PartialDecodedUser<
+                PartialRefUser<
                     '__grost_lifetime__,
                     I,
                     __GROST_READ_BUFFER__,
@@ -5341,7 +5341,7 @@ const _: () = {
     ::grost::__private::decode::Transform<
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
     > for PartialUser<I>
   where
     I: ::grost::__private::convert::State<
@@ -5383,7 +5383,7 @@ const _: () = {
       > + '__grost_lifetime__,
   {
     fn transform(
-      input: PartialDecodedUser<
+      input: PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_READ_BUFFER__,
@@ -5488,7 +5488,7 @@ const _: () = {
     ::grost::__private::decode::PartialTransform<
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
     > for PartialUser<I>
   where
     I: ::grost::__private::convert::State<
@@ -5543,14 +5543,14 @@ const _: () = {
           __GROST_READ_BUFFER__,
         >,
       > + '__grost_lifetime__,
-    PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
+    PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>:
       ::grost::__private::selection::Selectable<
           ::grost::__private::flavors::Network,
           Selector = UserSelector<I>,
         >,
   {
     fn partial_transform(
-      input: PartialDecodedUser<
+      input: PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_READ_BUFFER__,
@@ -5690,7 +5690,7 @@ const _: () = {
   {
     type Input = &'__grost_lifetime__ [::core::primitive::u8];
     type Output =
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>;
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>;
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -5726,7 +5726,7 @@ const _: () = {
   {
     type Input = &'__grost_lifetime__ [::core::primitive::u8];
     type Output =
-      PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>;
+      PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>;
   }
   #[automatically_derived]
   #[allow(non_camel_case_types, clippy::type_complexity)]
@@ -5740,7 +5740,7 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
       >,
     >
-    for PartialDecodedUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<

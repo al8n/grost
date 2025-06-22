@@ -2,16 +2,14 @@ use quote::format_ident;
 use syn::{Ident, Path, Type, parse_quote};
 
 pub use decode::DecodeAttribute;
-pub use encode::EncodeAttribute;
 pub use identifier::IdentifierAttribute;
 pub use tag::TagAttribute;
 
 pub(crate) use meta::{
-  BuiltinFlavorRepr, GenericFlavorFromMeta, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
+  BuiltinFlavorRepr, GenericFlavorFromMeta, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error, DecodeFromMeta, IdentifierFromMeta, TagFromMeta,
 };
 
 mod decode;
-mod encode;
 mod identifier;
 mod meta;
 mod tag;
@@ -27,7 +25,6 @@ impl GenericFlavorFromMeta {
         format: parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited),
         identifier: IdentifierAttribute::network(path_to_grost),
         tag: TagAttribute::network(path_to_grost),
-        encode: default_flavor_value_parser.encode.into(),
         decode: default_flavor_value_parser.decode.into(),
       }),
       BuiltinFlavorRepr::Bool(val) => {
@@ -51,7 +48,6 @@ impl GenericFlavorFromMeta {
         format,
         tag,
         identifier,
-        encode,
         decode,
       });
     }
@@ -67,7 +63,6 @@ pub struct FlavorAttribute {
   format: Type,
   identifier: IdentifierAttribute,
   tag: TagAttribute,
-  encode: EncodeAttribute,
   decode: DecodeAttribute,
 }
 
@@ -77,7 +72,6 @@ impl FlavorAttribute {
     let format = parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited);
     let identifier = IdentifierAttribute::network(path_to_grost);
     let tag = TagAttribute::network(path_to_grost);
-    let encode = EncodeAttribute::network(path_to_grost)?;
     let decode = DecodeAttribute::network(path_to_grost);
 
     Ok(Self {
@@ -86,7 +80,6 @@ impl FlavorAttribute {
       format,
       identifier,
       tag,
-      encode,
       decode,
     })
   }
@@ -116,11 +109,6 @@ impl FlavorAttribute {
   /// Returns the tag attribute of the flavor.
   pub const fn tag(&self) -> &TagAttribute {
     &self.tag
-  }
-
-  /// Returns the encode attribute of the flavor.
-  pub const fn encode(&self) -> &EncodeAttribute {
-    &self.encode
   }
 
   /// Returns the decode attribute of the flavor.

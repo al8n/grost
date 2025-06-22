@@ -12,7 +12,7 @@ use crate::{flavor::FlavorAttribute, object::ast::Indexer, utils::Invokable};
 
 pub use field::*;
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
@@ -21,7 +21,7 @@ mod encode;
 mod field;
 mod indexer;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
@@ -51,7 +51,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   indexer: Indexer,
   default: Option<Invokable>,
   partial: ConcretePartialObject,
-  partial_decoded: ConcretePartialDecodedObject,
+  partial_ref: ConcretePartialRefObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
   reflection: ConcreteObjectReflection,
@@ -204,8 +204,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the partial decoded object information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedObject {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &ConcretePartialRefObject {
+    &self.partial_ref
   }
 
   /// Returns the selector information of the concrete object.
@@ -244,8 +244,8 @@ impl<M, F> ConcreteObject<M, F> {
     let partial_def = self.partial.derive_defination(self)?;
     let partial_impl = self.partial.derive(self)?;
 
-    let partial_decoded_def = self.derive_partial_decoded_object_defination();
-    let partial_decoded_impl = self.derive_partial_decoded_object();
+    let partial_ref_def = self.derive_partial_ref_object_defination();
+    let partial_ref_impl = self.derive_partial_ref_object();
 
     let reflection_impl = self.reflection.derive(self)?;
 
@@ -262,7 +262,7 @@ impl<M, F> ConcreteObject<M, F> {
       #selector
       #selector_iter_def
       #partial_def
-      #partial_decoded_def
+      #partial_ref_def
 
       const _: () = {
         #default
@@ -271,7 +271,7 @@ impl<M, F> ConcreteObject<M, F> {
 
         #partial_impl
 
-        #partial_decoded_impl
+        #partial_ref_impl
 
         #reflection_impl
 
@@ -330,7 +330,7 @@ impl<M, F> ConcreteObject<M, F> {
     })?;
 
     let partial = ConcretePartialObject::from_ast(&object, &fields)?;
-    let partial_decoded = ConcretePartialDecodedObject::from_ast(&object, &fields)?;
+    let partial_ref = ConcretePartialRefObject::from_ast(&object, &fields)?;
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
@@ -414,7 +414,7 @@ impl<M, F> ConcreteObject<M, F> {
       fields,
       default: object.default,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       meta: object.meta,

@@ -1,13 +1,12 @@
 use darling::FromMeta;
-use syn::{LifetimeParam, TypeParam};
+use syn::{Attribute, Ident, LifetimeParam, TypeParam};
 
-use crate::{utils::{
-  Invokable, SchemaFromMeta, grost_flavor_param, grost_lifetime, grost_read_buffer_param,
-  grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param,
-}, flavor::GenericFlavorFromMeta};
+use crate::{flavor::GenericFlavorFromMeta, utils::{
+  grost_flavor_param, grost_lifetime, grost_read_buffer_param, grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param, Invokable, SchemaFromMeta, Attributes,
+}};
 
 use super::{
-  IndexerFromMeta, PartialDecodedObjectFromMeta, PartialObjectFromMeta,
+  IndexerFromMeta, PartialObjectFromMeta,
   SelectorFromMeta, SelectorIterFromMeta,
 };
 
@@ -35,6 +34,16 @@ pub(in crate::object) struct Generic {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
+pub(in crate::object) struct GenericPartialRefObjectFromMeta {
+  #[darling(default, rename = "rename")]
+  pub(in crate::object) name: Option<Ident>,
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default)]
+  pub(in crate::object) copy: bool,
+}
+
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct GenericObjectFromMeta<E> {
   #[darling(default)]
   pub(in crate::object) default: Option<Invokable>,
@@ -45,7 +54,7 @@ pub struct GenericObjectFromMeta<E> {
   #[darling(default)]
   pub(in crate::object) partial: PartialObjectFromMeta,
   #[darling(default)]
-  pub(in crate::object) partial_decoded: PartialDecodedObjectFromMeta,
+  pub(in crate::object) partial_ref: GenericPartialRefObjectFromMeta,
   #[darling(default)]
   pub(in crate::object) selector: SelectorFromMeta,
   #[darling(default)]

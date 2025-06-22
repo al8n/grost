@@ -1,98 +1,125 @@
-use darling::{FromMeta, ast::NestedMeta};
+use darling::FromMeta;
+use syn::Meta;
 
-use crate::utils::{Invokable, MissingOperation, TransformOperation};
+use crate::utils::{BoolOption, ConvertOperation, Invokable, MissingOperation, NestedMeta};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct ConvertFromMeta {
+pub struct FieldConvertFromMeta {
   pub(in crate::object) missing_operation: Option<MissingOperation>,
-  pub(in crate::object) transform_operation: Option<TransformOperation>,
+  pub(in crate::object) convert_operation: Option<ConvertOperation>,
 }
 
-impl ConvertFromMeta {
-  /// Check if an or_else variant is already set and return appropriate error
-  fn check_missing_operation_conflict(
-    current: Option<&MissingOperation>,
-    new_variant: &str,
-  ) -> darling::Result<()> {
-    if let Some(existing) = current {
-      return Err(darling::Error::custom(format!(
-        "Cannot specify both `{}` and `{}` at the same time.",
-        existing.name(),
-        new_variant
-      )));
-    }
-    Ok(())
-  }
 
-  /// Check if an or_else variant is already set and return appropriate error
-  fn check_transform_operation_conflict(
-    current: Option<&TransformOperation>,
-    new_variant: &str,
-  ) -> darling::Result<()> {
-    if let Some(existing) = current {
-      return Err(darling::Error::custom(format!(
-        "Cannot specify both `{}` and `{}` at the same time.",
-        existing.name(),
-        new_variant
-      )));
-    }
-    Ok(())
-  }
-}
+impl FromMeta for FieldConvertFromMeta {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let mut missing_operation: Option<MissingOperation> = MissingOperation::parse_from_meta_list(items)?;
+    let mut convert_operation = ConvertOperation::parse_from_meta_list(items)?;
 
-impl FromMeta for ConvertFromMeta {
-  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-    let mut missing_operation: Option<MissingOperation> = None;
-    let mut transform_operation = None;
-
-    for item in items {
-      match item {
-        NestedMeta::Lit(_) => return Err(darling::Error::unsupported_format("literal")),
-        NestedMeta::Meta(meta) => {
-          let path = meta.path();
-
-          if path.is_ident("or_else") {
-            Self::check_missing_operation_conflict(missing_operation.as_ref(), "or_else")?;
-            let nv = meta.require_name_value()?;
-            let invokable = Invokable::try_from(&nv.value)?;
-            missing_operation = Some(MissingOperation::Or(invokable));
-          } else if path.is_ident("or_else_default") {
-            Self::check_missing_operation_conflict(missing_operation.as_ref(), "or_else_default")?;
-
-            match meta {
-              syn::Meta::List(_) => return Err(darling::Error::unsupported_format("list")),
-              syn::Meta::Path(_) => {
-                missing_operation = Some(MissingOperation::OrDefault(None));
-              }
-              syn::Meta::NameValue(meta_name_value) => {
-                let invokable = Invokable::try_from(&meta_name_value.value)?;
-                missing_operation = Some(MissingOperation::OrDefault(Some(invokable)));
-              }
-            }
-          } else if path.is_ident("ok_or_else") {
-            Self::check_missing_operation_conflict(missing_operation.as_ref(), "ok_or_else")?;
-            let nv = meta.require_name_value()?;
-            let invokable = Invokable::try_from(&nv.value)?;
-            missing_operation = Some(MissingOperation::OkOr(invokable));
-          } else if path.is_ident("transform") {
-            Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
-            let nv = meta.require_name_value()?;
-            transform_operation = Some(TransformOperation::Into(Invokable::try_from(&nv.value)?));
-          } else if path.is_ident("try_transform") {
-            Self::check_transform_operation_conflict(transform_operation.as_ref(), "transform")?;
-            let nv = meta.require_name_value()?;
-            transform_operation =
-              Some(TransformOperation::TryInto(Invokable::try_from(&nv.value)?));
-          } else {
-            return Err(darling::Error::unknown_field_path(path));
-          }
-        }
-      }
-    }
-
-    Ok(ConvertFromMeta {
+    Ok(FieldConvertFromMeta {
       missing_operation,
-      transform_operation,
+      convert_operation,
     })
   }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, FromMeta)]
+pub enum FieldSkipEncodeOperation {
+  #[darling(rename = "skip")]
+  Default,
+  #[darling(rename = "skip_if")]
+  If(Option<Invokable>),
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct FieldEncodeFromMeta {
+  pub(in crate::object) skip_operation: Option<FieldSkipEncodeOperation>,
+  pub(in crate::object) error_if: Option<Invokable>,
+}
+
+impl FromMeta for FieldEncodeFromMeta {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    #[derive(Debug, FromMeta)]
+    struct Helper {
+      #[darling(default)]
+      skip: BoolOption,
+      #[darling(default)]
+      skip_if: Option<Invokable>,
+      #[darling(default)]
+      error_if: Option<Invokable>,
+    }
+
+    let Helper {
+      skip,
+      skip_if,
+      error_if,
+    } = Helper::from_list(items)?;
+    if skip.is_some() && skip_if.is_some() {
+      return Err(darling::Error::custom("Cannot specify both `skip` and `skip_if` at the same time."));
+    }
+
+    let skip_operation = if skip.is_some() {
+      Some(FieldSkipEncodeOperation::Default)
+    } else if let Some(skip_if) = skip_if {
+      Some(FieldSkipEncodeOperation::If(skip_if))
+    } else {
+      None
+    };
+
+    Ok(FieldEncodeFromMeta {
+      skip_operation,
+      error_if,
+    })
+  }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct FieldDecodeFromMeta {
+  func: Option<Invokable>,
+  then: Option<Invokable>,
+  missing_operation: Option<MissingOperation>,
+}
+
+impl FromMeta for FieldDecodeFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match *item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
+      Meta::List(ref value) => Self::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?),
+    })
+    .map_err(|e| e.with_span(item))
+  }
+
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let mut remaining_items = vec![];
+    let mut missing_operation_items = vec![];
+
+    items
+      .iter()
+      .cloned()
+      .for_each(|item| match item {
+        darling::ast::NestedMeta::Meta(meta) if meta.path().is_ident("or_else") || meta.path().is_ident("or_else_default") || meta.path().is_ident("ok_or_else") => {
+          missing_operation_items.push(item);
+        }
+        _ => remaining_items.push(item),
+      });
+
+    let mut missing_operation: Option<MissingOperation> = MissingOperation::parse_from_meta_list(&missing_operation_items)?;
+
+    #[derive(Debug, Default, Clone, FromMeta)]
+    struct Helper {
+      #[darling(rename = "fn", default)]
+      func: Option<Invokable>,
+      #[darling(default)]
+      then: Option<Invokable>,
+    }
+
+    let Helper { func, then } = Helper::from_list(&remaining_items)?;
+
+    Ok(Self {
+      missing_operation,
+      func,
+      then,
+    })
+  }
+}
+

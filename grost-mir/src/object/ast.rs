@@ -2,7 +2,7 @@ use quote::format_ident;
 use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::{
-  flavor::{DecodeAttribute, EncodeAttribute, FlavorAttribute, IdentifierAttribute, TagAttribute},
+  flavor::{DecodeAttribute, FlavorAttribute, IdentifierAttribute, TagAttribute},
   object::meta::ObjectFromMeta,
   utils::{Invokable, SchemaAttribute, grost_flavor_param},
 };
@@ -12,7 +12,7 @@ pub use field::*;
 pub(super) use generic::GenericObject;
 pub use indexer::*;
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use selector::*;
 
 mod concrete;
@@ -20,7 +20,7 @@ mod field;
 mod generic;
 mod indexer;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -49,7 +49,6 @@ pub struct ObjectFlavor {
   pub(super) format: Type,
   pub(super) identifier: IdentifierAttribute,
   pub(super) tag: TagAttribute,
-  pub(super) encode: EncodeAttribute,
   pub(super) decode: DecodeAttribute,
 }
 
@@ -78,12 +77,6 @@ impl ObjectFlavor {
     &self.tag
   }
 
-  /// Returns the encode attribute for this flavor.
-  #[inline]
-  pub const fn encode(&self) -> &EncodeAttribute {
-    &self.encode
-  }
-
   /// Returns the decode attribute for this flavor.
   #[inline]
   pub const fn decode(&self) -> &DecodeAttribute {
@@ -96,7 +89,6 @@ impl ObjectFlavor {
       format: attribute.wire_format().clone(),
       identifier: attribute.identifier().clone(),
       tag: attribute.tag().clone(),
-      encode: attribute.encode().clone(),
       decode: attribute.decode().clone(),
     })
   }
@@ -157,7 +149,7 @@ pub struct RawObject<T = (), S = (), O = ()> {
   default: Option<Invokable>,
   schema: SchemaAttribute,
   partial: PartialObjectAttribute,
-  partial_decoded: PartialDecodedObjectAttribute,
+  partial_ref: PartialRefObjectAttribute,
   selector: SelectorAttribute,
   selector_iter: SelectorIterAttribute,
   indexer: IndexerAttribute,
@@ -193,7 +185,7 @@ impl<T, S, O> RawObject<T, S, O> {
       default: meta.default,
       schema: meta.schema.into(),
       partial: meta.partial.finalize(),
-      partial_decoded: meta.partial_decoded.finalize(),
+      partial_ref: meta.partial_ref.finalize(),
       selector: meta.selector.finalize(),
       selector_iter: meta.selector_iter.finalize(),
       indexer: meta.indexer.into(),
@@ -229,8 +221,8 @@ impl<T, S, O> RawObject<T, S, O> {
   }
 
   /// Returns the partial decoded object information
-  pub const fn partial_decoded(&self) -> &PartialDecodedObjectAttribute {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &PartialRefObjectAttribute {
+    &self.partial_ref
   }
 
   /// Returns the selector information
@@ -294,12 +286,12 @@ impl<T, S, O> RawObject<T, S, O> {
   }
 
   #[inline]
-  pub fn partial_decoded_name(&self) -> Ident {
+  pub fn partial_ref_name(&self) -> Ident {
     self
-      .partial_decoded()
+      .partial_ref()
       .name()
       .cloned()
-      .unwrap_or_else(|| format_ident!("PartialDecoded{}", self.name()))
+      .unwrap_or_else(|| format_ident!("PartialRef{}", self.name()))
   }
 
   #[inline]

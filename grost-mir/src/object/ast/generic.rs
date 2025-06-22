@@ -7,7 +7,7 @@ use crate::{
   object::{
     Indexer, ObjectFlavor, RawField, RawObject, RawObjectExt,
     ast::{
-      GenericField, GenericPartialDecodedObject, GenericSelector, GenericSelectorIter,
+      GenericField, GenericPartialRefObject, GenericSelector, GenericSelectorIter,
       GenericTaggedField, PartialObject, SkippedField,
     },
   },
@@ -35,7 +35,7 @@ pub(in crate::object) struct GenericObject<M = (), F = ()> {
   pub(in crate::object) fields: Vec<GenericField<F>>,
   pub(in crate::object) generics: Generics,
   pub(in crate::object) partial: PartialObject,
-  pub(in crate::object) partial_decoded: GenericPartialDecodedObject,
+  pub(in crate::object) partial_ref: GenericPartialRefObject,
   pub(in crate::object) selector: GenericSelector,
   pub(in crate::object) selector_iter: GenericSelectorIter,
   pub(in crate::object) indexer: Indexer,
@@ -101,8 +101,8 @@ impl<M, F> GenericObject<M, F> {
 
   /// Returns the partial decoded object information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &GenericPartialDecodedObject {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &GenericPartialRefObject {
+    &self.partial_ref
   }
 
   /// Returns the selector information.
@@ -190,8 +190,8 @@ impl<M, F> GenericObject<M, F> {
         }
       })?;
     let partial = PartialObject::from_attribute(&name, object.partial())?;
-    let partial_decoded =
-      GenericPartialDecodedObject::from_attribute(&name, object.partial_decoded())?;
+    let partial_ref =
+      GenericPartialRefObject::from_attribute(&name, object.partial_ref())?;
     let selector = GenericSelector::from_attribute(&name, object.selector())?;
     let selector_iter =
       GenericSelectorIter::from_attribute(selector.name(), object.selector_iter())?;
@@ -227,7 +227,7 @@ impl<M, F> GenericObject<M, F> {
       flavors,
       fields,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       copy: object.copy(),

@@ -25,7 +25,7 @@ where
 }
 /// Partial reference struct for the struct [`User`]
 #[allow(clippy::type_complexity, non_camel_case_types)]
-pub struct PartialDecodedUser<
+pub struct PartialRefUser<
     '__grost_lifetime__,
     I,
     __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
@@ -2203,7 +2203,7 @@ const _: () = {
         __GROST_UNKNOWN_BUFFER__,
         __GROST_WIRE_FORMAT__: ?::core::marker::Sized,
     > ::grost::__private::selection::Selectable<__GROST_FLAVOR__, __GROST_WIRE_FORMAT__>
-    for PartialDecodedUser<
+    for PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_FLAVOR__,
@@ -2440,7 +2440,7 @@ const _: () = {
         __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         __GROST_UNKNOWN_BUFFER__,
     > ::core::default::Default
-    for PartialDecodedUser<
+    for PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_FLAVOR__,
@@ -2571,7 +2571,7 @@ const _: () = {
     > ::grost::__private::convert::State<
         ::grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>,
     >
-    for PartialDecodedUser<
+    for PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_FLAVOR__,
@@ -2697,7 +2697,7 @@ const _: () = {
         I,
         __GROST_FLAVOR__: ?::core::marker::Sized + ::grost::__private::flavors::Flavor,
         __GROST_UNKNOWN_BUFFER__,
-    > PartialDecodedUser<
+    > PartialRefUser<
         '__grost_lifetime__,
         I,
         __GROST_FLAVOR__,
@@ -4764,7 +4764,7 @@ where
   I: '__grost_lifetime__,
 {
   type Input = &'__grost_lifetime__ [::core::primitive::u8];
-  type Output = PartialDecodedUser<
+  type Output = PartialRefUser<
     '__grost_lifetime__,
     I,
     ::grost::__private::flavors::Network,
@@ -4899,7 +4899,7 @@ where
     ::core::marker::Sized,
 {
   type Input = &'__grost_lifetime__ [::core::primitive::u8];
-  type Output = PartialDecodedUser<
+  type Output = PartialRefUser<
     '__grost_lifetime__,
     I,
     ::grost::__private::flavors::Network,
@@ -4917,7 +4917,7 @@ impl<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
       __GROST_UNKNOWN_BUFFER__,
     >,
   >
-  for PartialDecodedUser<
+  for PartialRefUser<
     '__grost_lifetime__,
     I,
     ::grost::__private::flavors::Network,
@@ -5049,7 +5049,7 @@ impl<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
     Self,
     __GROST_UNKNOWN_BUFFER__,
   >
-  for PartialDecodedUser<
+  for PartialRefUser<
     '__grost_lifetime__,
     I,
     ::grost::__private::flavors::Network,
@@ -5444,7 +5444,7 @@ impl<'__grost_lifetime__, I, __GROST_UNKNOWN_BUFFER__>
     Self,
     __GROST_UNKNOWN_BUFFER__,
   >
-  for PartialDecodedUser<
+  for PartialRefUser<
     '__grost_lifetime__,
     I,
     ::grost::__private::flavors::Network,

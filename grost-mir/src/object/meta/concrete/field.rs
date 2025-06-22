@@ -1,9 +1,10 @@
 use core::num::NonZeroU32;
 
 use darling::{FromMeta, util::path_to_string};
-use syn::{Meta, Path, Type};
+use syn::{Attribute, Meta, Path, Type};
 
-use crate::{object::{meta::{ConvertFromMeta, GenericFieldFlavorFromMeta, PartialDecodedFieldFromMeta, PartialFieldFromMeta, SelectorFieldFromMeta}, Label}, utils::{Invokable, SchemaFromMeta}};
+use crate::{object::{meta::{FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldFromMeta, SelectorFieldFromMeta}, Label}, utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta}};
+
 
 /// The meta of the object field
 #[derive(Debug, Clone)]
@@ -17,10 +18,10 @@ pub enum FieldFromMeta<TO = (), SO = ()> {
     schema: SchemaFromMeta,
     default: Option<Invokable>,
     tag: NonZeroU32,
-    flavor: GenericFieldFlavorFromMeta,
-    convert: ConvertFromMeta,
+    wire_format: Option<Type>,
+    transform: FieldConvertFromMeta,
     partial: PartialFieldFromMeta,
-    partial_decoded: PartialDecodedFieldFromMeta,
+    partial_ref: PartialRefFieldFromMeta,
     selector: SelectorFieldFromMeta,
     copy: bool,
     extra: TO,
@@ -86,10 +87,10 @@ where
       schema,
       default,
       tag,
-      flavor,
-      convert,
+      transform,
+      wire_format,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       copy,
       extra,
@@ -100,14 +101,76 @@ where
       schema,
       default,
       tag,
-      flavor,
-      convert,
+      transform,
+      wire_format,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       copy,
       extra,
     })
+  }
+}
+
+/// The meta of the partial reference object field
+#[derive(Debug, Default, Clone)]
+pub struct PartialRefFieldFromMeta {
+  pub(in crate::object) copy: bool,
+  pub(in crate::object) attrs: Vec<Attribute>,
+  pub(in crate::object) ty: Option<Type>,
+  pub(in crate::object) encode: FieldEncodeFromMeta, 
+  pub(in crate::object) decode: FieldDecodeFromMeta,
+  pub(in crate::object) transform: FieldConvertFromMeta,
+  pub(in crate::object) partial_transform: FieldConvertFromMeta,
+}
+
+impl FromMeta for PartialRefFieldFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match *item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
+      Meta::List(ref value) => {
+        /// The meta of the partial reference object field
+        #[derive(Debug, Default, Clone, FromMeta)]
+        struct Helper {
+          #[darling(default)]
+          copy: bool,
+          #[darling(default, map = "Attributes::into_inner")]
+          attrs: Vec<Attribute>,
+          #[darling(default)]
+          encode: FieldEncodeFromMeta,
+          #[darling(default)]
+          decode: FieldDecodeFromMeta,
+          #[darling(default)]
+          transform: FieldConvertFromMeta,
+          #[darling(default)]
+          partial_transform: FieldConvertFromMeta,
+          #[darling(rename = "type", default)]
+          ty: Option<Type>,
+        }
+
+        let Helper {
+          copy,
+          attrs,
+          encode,
+          decode,
+          ty,
+          transform,
+          partial_transform,
+        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
+
+        Ok(Self {
+          copy,
+          attrs,
+          ty,
+          encode,
+          decode,
+          transform,
+          partial_transform,
+        })
+      }
+    })
+    .map_err(|e| e.with_span(item))
   }
 }
 
@@ -117,9 +180,9 @@ struct TaggedFieldFromMeta<TO> {
   schema: SchemaFromMeta,
   default: Option<Invokable>,
   tag: NonZeroU32,
-  convert: ConvertFromMeta,
+  transform: FieldConvertFromMeta,
   partial: PartialFieldFromMeta,
-  partial_decoded: PartialDecodedFieldFromMeta,
+  partial_ref: PartialRefFieldFromMeta,
   selector: SelectorFieldFromMeta,
   copy: bool,
   wire_format: Option<Type>,
@@ -161,13 +224,11 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       #[darling(default)]
       tag: NonZeroU32,
       #[darling(default)]
-      flavor: GenericFieldFlavorFromMeta,
-      #[darling(default)]
-      convert: ConvertFromMeta,
+      transform: FieldConvertFromMeta,
       #[darling(default)]
       partial: PartialFieldFromMeta,
       #[darling(default)]
-      partial_decoded: PartialDecodedFieldFromMeta,
+      partial_ref: PartialRefFieldFromMeta,
       #[darling(default)]
       selector: SelectorFieldFromMeta,
       #[darling(default)]
@@ -191,9 +252,9 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       default: helper.default,
       tag: helper.tag,
       wire_format: helper.wire_format,
-      convert: helper.convert,
+      transform: helper.transform,
       partial: helper.partial,
-      partial_decoded: helper.partial_decoded,
+      partial_ref: helper.partial_ref,
       selector: helper.selector,
       copy: helper.copy,
       extra: helper.extra,
@@ -208,7 +269,7 @@ fn is_tagged_field_only_identifiers(path: &Path) -> bool {
     "flavor",
     "convert",
     "partial",
-    "partial_decoded",
+    "partial_ref",
     "selector",
     "copy",
   ];

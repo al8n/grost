@@ -1,6 +1,5 @@
 use darling::FromMeta;
 pub use decode::*;
-pub use encode::*;
 pub use identifier::*;
 pub use tag::*;
 
@@ -10,7 +9,6 @@ use syn::{Ident, Meta, MetaList, Type};
 use crate::utils::NestedMeta;
 
 mod decode;
-mod encode;
 mod identifier;
 mod tag;
 
@@ -80,8 +78,6 @@ pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub(crate) struct BuiltinFlavorValueParser {
-  #[darling(default)]
-  pub(crate) encode: EncodeFromMeta,
   #[darling(default)]
   pub(crate) decode: DecodeFromMeta,
 }
@@ -154,8 +150,6 @@ struct FlavorValueParser {
   identifier: IdentifierFromMeta,
   tag: TagFromMeta,
   #[darling(default)]
-  encode: EncodeFromMeta,
-  #[darling(default)]
   decode: DecodeFromMeta,
 }
 
@@ -193,7 +187,6 @@ pub(crate) struct FlavorValue {
   pub(crate) format: Type,
   pub(crate) identifier: IdentifierFromMeta,
   pub(crate) tag: TagFromMeta,
-  pub(crate) encode: EncodeFromMeta,
   pub(crate) decode: DecodeFromMeta,
 }
 
@@ -204,7 +197,6 @@ impl From<FlavorValueParser> for FlavorValue {
       format,
       identifier,
       tag,
-      encode,
       decode,
     }: FlavorValueParser,
   ) -> Self {
@@ -213,7 +205,6 @@ impl From<FlavorValueParser> for FlavorValue {
       format,
       identifier,
       tag,
-      encode,
       decode,
     }
   }
@@ -239,8 +230,6 @@ impl FlavorValue {
       identifier: IdentifierFromMeta,
       tag: TagFromMeta,
       #[darling(default)]
-      encode: EncodeFromMeta,
-      #[darling(default)]
       decode: DecodeFromMeta,
     }
 
@@ -250,7 +239,6 @@ impl FlavorValue {
       format: helper.format,
       identifier: helper.identifier,
       tag: helper.tag,
-      encode: helper.encode,
       decode: helper.decode,
     })
   }

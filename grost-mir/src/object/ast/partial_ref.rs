@@ -1,11 +1,11 @@
 use quote::format_ident;
 use syn::{Attribute, Ident};
 
-use crate::object::meta::PartialDecodedObjectFromMeta;
+use crate::object::meta::PartialRefObjectFromMeta;
 
-impl PartialDecodedObjectFromMeta {
-  pub(super) fn finalize(self) -> PartialDecodedObjectAttribute {
-    PartialDecodedObjectAttribute {
+impl PartialRefObjectFromMeta {
+  pub(super) fn finalize(self) -> PartialRefObjectAttribute {
+    PartialRefObjectAttribute {
       name: self.name,
       attrs: self.attrs,
       copy: self.copy,
@@ -14,13 +14,13 @@ impl PartialDecodedObjectFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedObjectAttribute {
+pub struct PartialRefObjectAttribute {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
   copy: bool,
 }
 
-impl PartialDecodedObjectAttribute {
+impl PartialRefObjectAttribute {
   /// Returns the name of the partial reference object
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -38,21 +38,21 @@ impl PartialDecodedObjectAttribute {
 }
 
 #[derive(Debug, Clone)]
-pub(in crate::object) struct ConcretePartialDecodedObject {
+pub(in crate::object) struct ConcretePartialRefObject {
   name: Ident,
   attrs: Vec<Attribute>,
   copy: bool,
 }
 
-impl ConcretePartialDecodedObject {
+impl ConcretePartialRefObject {
   pub(super) fn from_attribute(
     object_name: &Ident,
-    attribute: &PartialDecodedObjectAttribute,
+    attribute: &PartialRefObjectAttribute,
   ) -> darling::Result<Self> {
     let name = if let Some(name) = attribute.name() {
       name.clone()
     } else {
-      format_ident!("PartialDecoded{}", object_name)
+      format_ident!("PartialRef{}", object_name)
     };
 
     Ok(Self {
@@ -79,21 +79,21 @@ impl ConcretePartialDecodedObject {
 }
 
 #[derive(Debug, Clone)]
-pub struct GenericPartialDecodedObject {
+pub struct GenericPartialRefObject {
   name: Ident,
   attrs: Vec<Attribute>,
   copy: bool,
 }
 
-impl GenericPartialDecodedObject {
+impl GenericPartialRefObject {
   pub(super) fn from_attribute(
     object_name: &Ident,
-    attribute: &PartialDecodedObjectAttribute,
+    attribute: &PartialRefObjectAttribute,
   ) -> darling::Result<Self> {
     let name = if let Some(name) = attribute.name() {
       name.clone()
     } else {
-      format_ident!("PartialDecoded{}", object_name)
+      format_ident!("PartialRef{}", object_name)
     };
 
     Ok(Self {

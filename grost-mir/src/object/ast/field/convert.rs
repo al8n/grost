@@ -1,6 +1,6 @@
 use crate::{
   object::meta::ConvertFromMeta,
-  utils::{MissingOperation, TransformOperation},
+  utils::{MissingOperation, ConvertOperation},
 };
 
 impl ConvertFromMeta {
@@ -16,7 +16,7 @@ impl ConvertFromMeta {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ConvertAttribute {
   missing_operation: Option<MissingOperation>,
-  transform_operation: Option<TransformOperation>,
+  transform_operation: Option<ConvertOperation>,
 }
 
 impl ConvertAttribute {
@@ -26,7 +26,7 @@ impl ConvertAttribute {
   }
 
   /// Returns the path to a function that determines if an error should be raised during decoding.
-  pub const fn transform_operation(&self) -> Option<&TransformOperation> {
+  pub const fn transform_operation(&self) -> Option<&ConvertOperation> {
     self.transform_operation.as_ref()
   }
 }

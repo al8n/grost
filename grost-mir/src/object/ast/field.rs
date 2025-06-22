@@ -11,7 +11,7 @@ pub use flavor::{
 };
 pub(in crate::object) use generic::{GenericField, GenericTaggedField};
 pub use partial::PartialFieldOptions;
-pub use partial_decoded::PartialDecodedFieldOptions;
+pub use partial_ref::PartialRefFieldOptions;
 pub use selector::SelectorFieldOptions;
 
 use crate::{
@@ -24,7 +24,7 @@ mod convert;
 mod flavor;
 mod generic;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -138,7 +138,7 @@ pub enum FieldOptions<SO, TO> {
     flavor: Vec<FieldFlavorAttribute>,
     convert: ConvertAttribute,
     partial: PartialFieldOptions,
-    partial_decoded: PartialDecodedFieldOptions,
+    partial_ref: PartialRefFieldOptions,
     selector: SelectorFieldOptions,
     copy: bool,
     extra: TO,
@@ -167,7 +167,7 @@ impl<SO, TO> FieldFromMeta<SO, TO> {
         flavor,
         convert,
         partial,
-        partial_decoded,
+        partial_ref,
         selector,
         copy,
         extra,
@@ -179,7 +179,7 @@ impl<SO, TO> FieldFromMeta<SO, TO> {
         flavor: flavor.finalize()?,
         convert: convert.finalize()?,
         partial: partial.finalize(),
-        partial_decoded: partial_decoded.finalize()?,
+        partial_ref: partial_ref.finalize()?,
         selector: selector.finalize(),
         copy,
         extra,
@@ -211,7 +211,7 @@ pub struct RawTaggedField<E> {
   pub flavor: Vec<FieldFlavorAttribute>,
   pub convert: ConvertAttribute,
   pub partial: PartialFieldOptions,
-  pub partial_decoded: PartialDecodedFieldOptions,
+  pub partial_ref: PartialRefFieldOptions,
   pub selector: SelectorFieldOptions,
   pub copy: bool,
   pub extra: E,
@@ -249,7 +249,7 @@ impl<TM, SM> RawField<TM, SM> {
         flavor,
         convert,
         partial,
-        partial_decoded,
+        partial_ref,
         selector,
         copy,
         extra,
@@ -265,7 +265,7 @@ impl<TM, SM> RawField<TM, SM> {
         flavor: flavor.finalize()?,
         convert: convert.finalize()?,
         partial: partial.finalize(),
-        partial_decoded: partial_decoded.finalize()?,
+        partial_ref: partial_ref.finalize()?,
         selector: selector.finalize(),
         copy,
         extra,

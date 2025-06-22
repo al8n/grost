@@ -98,15 +98,15 @@ impl ConcretePartialObject {
             .extend(f.partial().type_constraints().iter().cloned());
 
           let ty = f.ty();
-          let partial_decoded_ty = f.partial_decoded().ty();
+          let partial_ref_ty = f.partial_ref().ty();
           let wf = f.wire_format();
 
-          decode_constraints.extend(f.partial_decoded().type_constraints().iter().cloned());
+          decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_decoded_ty, #rb, #ub>
+            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
           })?);
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_decoded_ty>
+            #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_ref_ty>
           })?);
         }
 

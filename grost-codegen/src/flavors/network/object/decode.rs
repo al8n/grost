@@ -8,12 +8,12 @@ impl Network {
     object: &Object,
   ) -> syn::Result<proc_macro2::TokenStream> {
     let path_to_grost = object.path();
-    let partial_decoded = object.partial_decoded();
-    let ubp = partial_decoded.unknown_buffer_param();
+    let partial_ref = object.partial_ref();
+    let ubp = partial_ref.unknown_buffer_param();
     let ubi = &ubp.ident;
-    let ltg = partial_decoded.lifetime();
-    let partial_decode_ty = partial_decoded.type_with(None, Some(&self.ty), None)?;
-    let mut replaced_generics = partial_decoded.remove_generics(None, Some(&self.ty), None)?;
+    let ltg = partial_ref.lifetime();
+    let partial_decode_ty = partial_ref.type_with(None, Some(&self.ty), None)?;
+    let mut replaced_generics = partial_ref.remove_generics(None, Some(&self.ty), None)?;
 
     {
       let where_clauses = replaced_generics.make_where_clause();
@@ -31,7 +31,7 @@ impl Network {
       }
     }
 
-    let unknown_buffer_field_name = partial_decoded.unknown_buffer_field_name();
+    let unknown_buffer_field_name = partial_ref.unknown_buffer_field_name();
 
     let object_name = object.name();
     let object_name_str = object_name.to_string();
@@ -42,7 +42,7 @@ impl Network {
 
     let mut decode_generics = replaced_generics.clone();
     let mut partial_decode_generics = replaced_generics.clone();
-    partial_decoded.fields_with(
+    partial_ref.fields_with(
       None,
       Some(&self.ty),
       None,

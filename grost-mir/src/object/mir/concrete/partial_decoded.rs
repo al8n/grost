@@ -21,7 +21,7 @@ pub struct TyWith {
 }
 
 #[derive(derive_more::Debug, Clone)]
-pub struct ConcretePartialDecodedObject {
+pub struct ConcretePartialRefObject {
   name: Ident,
   ty: Type,
   attrs: Vec<Attribute>,
@@ -43,7 +43,7 @@ pub struct ConcretePartialDecodedObject {
   pub(super) read_buffer_field_name: Ident,
 }
 
-impl ConcretePartialDecodedObject {
+impl ConcretePartialRefObject {
   /// Returns the name of the partial decoded object.
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -115,7 +115,7 @@ impl ConcretePartialDecodedObject {
     object: &ConcreteObjectAst<M, F>,
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
-    let partial_decoded_object = object.partial_decoded();
+    let partial_ref_object = object.partial_ref();
     let unknown_buffer_param = object.unknown_buffer_param();
     let lifetime_param = object.lifetime_param();
     let read_buf_param = object.read_buffer_param();
@@ -167,7 +167,7 @@ impl ConcretePartialDecodedObject {
     let rb = &read_buf_param.ident;
     let wf = object.flavor().wire_format();
     for field in fields.iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()) {
-      let type_constraints = field.partial_decoded().type_constraints();
+      let type_constraints = field.partial_ref().type_constraints();
       if !field.type_params_usages().is_empty() || !field.lifetime_params_usages().is_empty() {
         generics
           .make_where_clause()
@@ -175,20 +175,20 @@ impl ConcretePartialDecodedObject {
           .extend(type_constraints.iter().cloned());
 
         let ty = field.ty();
-        let partial_decoded_ty = field.partial_decoded().ty();
+        let partial_ref_ty = field.partial_ref().ty();
         let wf = field.wire_format();
 
         decode_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #rb, #ub>
+          #ty: #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
         })?);
         transform_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_decoded_ty>
+          #ty: #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_ref_ty>
         })?);
         partial_transform_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_decoded_ty>
+          #ty: #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_ref_ty>
         })?);
         partial_transform_constraints.push(syn::parse2(quote! {
-          #partial_decoded_ty: #path_to_grost::__private::selection::Selectable<
+          #partial_ref_ty: #path_to_grost::__private::selection::Selectable<
             #flavor_ty,
             Selector = <#ty as #path_to_grost::__private::selection::Selectable<#flavor_ty>>::Selector,
           >
@@ -200,7 +200,7 @@ impl ConcretePartialDecodedObject {
       }
     }
 
-    let name = partial_decoded_object.name();
+    let name = partial_ref_object.name();
     let (_, tg, _) = generics.split_for_impl();
     let ty = syn::parse2(quote! {
       #name #tg
@@ -326,8 +326,8 @@ impl ConcretePartialDecodedObject {
         })
       },
       ty,
-      attrs: partial_decoded_object.attrs().to_vec(),
-      copy: partial_decoded_object.copy(),
+      attrs: partial_ref_object.attrs().to_vec(),
+      copy: partial_ref_object.copy(),
       transform_generics,
       partial_transform_generics,
       decode_generics,
@@ -339,12 +339,12 @@ impl ConcretePartialDecodedObject {
 }
 
 impl<M, F> super::ConcreteObject<M, F> {
-  pub(super) fn derive_partial_decoded_object_defination(&self) -> proc_macro2::TokenStream {
-    let partial_decoded = self.partial_decoded();
-    let name = partial_decoded.name();
-    let generics = partial_decoded.generics();
+  pub(super) fn derive_partial_ref_object_defination(&self) -> proc_macro2::TokenStream {
+    let partial_ref = self.partial_ref();
+    let name = partial_ref.name();
+    let generics = partial_ref.generics();
     let where_clause = generics.where_clause.as_ref();
-    let attrs = partial_decoded.attrs();
+    let attrs = partial_ref.attrs();
 
     let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
       let doc = format!(
@@ -378,7 +378,7 @@ impl<M, F> super::ConcreteObject<M, F> {
         let attrs = concrete_tagged_field.attrs();
         let vis = concrete_tagged_field.vis();
         let name = concrete_tagged_field.name();
-        let ty = concrete_tagged_field.partial_decoded().optional_type();
+        let ty = concrete_tagged_field.partial_ref().optional_type();
         Some(quote! {
           #(#attrs)*
           #vis #name: #ty
@@ -386,9 +386,9 @@ impl<M, F> super::ConcreteObject<M, F> {
       }
     });
 
-    let ubfn = &partial_decoded.unknown_buffer_field_name;
+    let ubfn = &partial_ref.unknown_buffer_field_name;
     let ubt = &self.unknown_buffer_param().ident;
-    let rbfn = &partial_decoded.read_buffer_field_name;
+    let rbfn = &partial_ref.read_buffer_field_name;
     let rbg = &self.read_buffer_param().ident;
 
     quote! {
@@ -403,9 +403,9 @@ impl<M, F> super::ConcreteObject<M, F> {
     }
   }
 
-  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
-    let partial_decoded_object = self.partial_decoded();
-    let partial_decoded_object_ty = partial_decoded_object.ty();
+  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
+    let partial_ref_object = self.partial_ref();
+    let partial_ref_object_ty = partial_ref_object.ty();
     let fields_init = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
       match f {
@@ -435,34 +435,34 @@ impl<M, F> super::ConcreteObject<M, F> {
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .for_each(|f| {
         let field_name = f.name();
-        let ty = &f.partial_decoded().ty();
+        let ty = &f.partial_ref().ty();
         let vis = f.vis();
         fields_accessors.push(optional_accessors(
           field_name,
           vis,
           ty,
-          f.partial_decoded().copy(),
+          f.partial_ref().copy(),
         ));
         is_empty.push(quote! {
           self.#field_name.is_none()
         });
       });
 
-    let (ig, _, where_clauses) = partial_decoded_object.generics().split_for_impl();
-    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
+    let (ig, _, where_clauses) = partial_ref_object.generics().split_for_impl();
+    let ubfn = &partial_ref_object.unknown_buffer_field_name;
     let ubg = &self.unknown_buffer_param().ident;
-    let rbfn = &partial_decoded_object.read_buffer_field_name;
+    let rbfn = &partial_ref_object.read_buffer_field_name;
     let rbg = &self.read_buffer_param().ident;
     let flatten_state = derive_flatten_state(
       &self.path_to_grost,
-      partial_decoded_object.generics(),
-      partial_decoded_object.name(),
+      partial_ref_object.generics(),
+      partial_ref_object.name(),
     );
 
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig ::core::default::Default for #partial_decoded_object_ty #where_clauses
+      impl #ig ::core::default::Default for #partial_ref_object_ty #where_clauses
       {
         fn default() -> Self {
           Self::new()
@@ -473,7 +473,7 @@ impl<M, F> super::ConcreteObject<M, F> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #partial_decoded_object_ty #where_clauses
+      impl #ig #partial_ref_object_ty #where_clauses
       {
         /// Creates an empty partial struct.
         #[inline]

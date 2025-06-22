@@ -19,12 +19,12 @@ use super::{
 };
 
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
@@ -41,7 +41,7 @@ pub struct ConcreteTaggedField<F = ()> {
   type_params_usages: IdentSet,
   lifetime_params_usages: LifetimeSet,
   partial: ConcretePartialField,
-  partial_decoded: ConcretePartialDecodedField,
+  partial_ref: ConcretePartialRefField,
   index: FieldIndex,
   reflection: ConcreteFieldReflection,
   selector: ConcreteSelectorField,
@@ -141,8 +141,8 @@ impl<F> ConcreteTaggedField<F> {
 
   /// Returns the partial decoded field information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedField {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &ConcretePartialRefField {
+    &self.partial_ref
   }
 
   /// Returns the selector field information
@@ -207,7 +207,7 @@ impl<F> ConcreteTaggedField<F> {
     let read_buffer_param = object.read_buffer_param();
     let read_buffer = &read_buffer_param.ident;
 
-    let mut partial_decoded_constraints = Punctuated::new();
+    let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
     let use_generics =
@@ -232,7 +232,7 @@ impl<F> ConcreteTaggedField<F> {
             #field_ty: #dwf
           })?;
           selector_constraints.push(pred.clone());
-          partial_decoded_constraints.push(pred);
+          partial_ref_constraints.push(pred);
         }
 
         syn::parse2(quote! {
@@ -256,8 +256,8 @@ impl<F> ConcreteTaggedField<F> {
       })?);
     }
 
-    let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
-    let partial_decoded_copy_contraint = if partial_decoded_copyable {
+    let partial_ref_copyable = object.partial_ref().copy() || field.partial_ref_copy();
+    let partial_ref_copy_contraint = if partial_ref_copyable {
       Some(quote! {
         + ::core::marker::Copy
       })
@@ -265,10 +265,10 @@ impl<F> ConcreteTaggedField<F> {
       None
     };
 
-    let (partial_decoded_ty, decoded_state_type) = match field
+    let (partial_ref_ty, decoded_state_type) = match field
       .flavor()
       .ty()
-      .or_else(|| field.partial_decoded_type())
+      .or_else(|| field.partial_ref_type())
     {
       Some(ty) => (ty.clone(), None),
       None => {
@@ -285,11 +285,11 @@ impl<F> ConcreteTaggedField<F> {
         })?;
 
         if use_generics {
-          partial_decoded_constraints.push(syn::parse2(quote! {
+          partial_ref_constraints.push(syn::parse2(quote! {
             #field_ty: #state_type
           })?);
-          partial_decoded_constraints.push(syn::parse2(quote! {
-            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+          partial_ref_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_ref_copy_contraint
           })?);
         }
 
@@ -305,11 +305,11 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_ty = object.flavor().ty();
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_decoded_ty, #read_buffer, #unknown_buffer>
+      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #read_buffer, #unknown_buffer>
     })?;
 
-    let optional_partial_decoded_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_decoded_ty>
+    let optional_partial_ref_type = syn::parse2(quote! {
+      ::core::option::Option<#partial_ref_ty>
     })?;
 
     let use_generics =
@@ -320,14 +320,14 @@ impl<F> ConcreteTaggedField<F> {
     let field_ty = field.ty;
     let partial = field.partial;
     let partial = ConcretePartialField::from_ast(&field_ty, partial.ty(), partial.attrs())?;
-    let partial_decoded = ConcretePartialDecodedField {
-      ty: partial_decoded_ty,
-      optional_type: optional_partial_decoded_type,
+    let partial_ref = ConcretePartialRefField {
+      ty: partial_ref_ty,
+      optional_type: optional_partial_ref_type,
       decoded_state_type,
       decode_trait_type,
-      attrs: field.partial_decoded.attrs,
-      constraints: partial_decoded_constraints,
-      copy: partial_decoded_copyable,
+      attrs: field.partial_ref.attrs,
+      constraints: partial_ref_constraints,
+      copy: partial_ref_copyable,
       convert: field.flavor.convert,
     };
     let selector = ConcreteSelectorField {
@@ -349,7 +349,7 @@ impl<F> ConcreteTaggedField<F> {
 
     Ok(Self {
       partial,
-      partial_decoded,
+      partial_ref,
       name: field.name,
       vis: field.vis,
       label: field.label,

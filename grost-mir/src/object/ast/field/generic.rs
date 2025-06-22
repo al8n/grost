@@ -5,7 +5,7 @@ use syn::{Attribute, Ident, Path, Type, TypeParam, Visibility};
 
 use crate::{
   object::{
-    FieldSelection, Label, ObjectFlavor, PartialDecodedFieldOptions, PartialFieldOptions, RawField,
+    FieldSelection, Label, ObjectFlavor, PartialRefFieldOptions, PartialFieldOptions, RawField,
     SelectorFieldOptions,
     ast::{
       SkippedField,
@@ -27,7 +27,7 @@ pub(in crate::object) struct GenericTaggedField<M = ()> {
   pub(in crate::object) lifetime_params_usages: LifetimeSet,
   pub(in crate::object) flavor_param: TypeParam,
   pub(in crate::object) label: Label,
-  pub(in crate::object) partial_decoded: PartialDecodedFieldOptions,
+  pub(in crate::object) partial_ref: PartialRefFieldOptions,
   pub(in crate::object) partial: PartialFieldOptions,
   pub(in crate::object) selector: SelectorFieldOptions,
   pub(in crate::object) default: Invokable,
@@ -124,20 +124,20 @@ impl<M> GenericTaggedField<M> {
 
   /// Returns the attributes of the partial decoded field for the field
   #[inline]
-  pub const fn partial_decoded_attrs(&self) -> &[Attribute] {
-    self.partial_decoded.attrs()
+  pub const fn partial_ref_attrs(&self) -> &[Attribute] {
+    self.partial_ref.attrs()
   }
 
   /// Returns the type of the partial decoded field for the field, if any
   #[inline]
-  pub const fn partial_decoded_type(&self) -> Option<&Type> {
-    self.partial_decoded.ty()
+  pub const fn partial_ref_type(&self) -> Option<&Type> {
+    self.partial_ref.ty()
   }
 
   /// Returns `true` if the field is partial decoded field is copyable, `false` otherwise
   #[inline]
-  pub const fn partial_decoded_copy(&self) -> bool {
-    self.partial_decoded.copy()
+  pub const fn partial_ref_copy(&self) -> bool {
+    self.partial_ref.copy()
   }
 
   /// Returns the default selection of this field
@@ -272,7 +272,7 @@ impl<M> GenericTaggedField<M> {
       schema_description,
       flavor_param: flavor_param.clone(),
       label: label.clone(),
-      partial_decoded: f.partial_decoded().clone(),
+      partial_ref: f.partial_ref().clone(),
       partial: f.partial().clone(),
       selector: f.selector().clone(),
       meta: f.meta().clone(),

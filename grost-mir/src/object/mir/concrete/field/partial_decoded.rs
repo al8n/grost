@@ -3,7 +3,7 @@ use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma}
 use crate::object::ConvertAttribute;
 
 #[derive(Debug, Clone)]
-pub struct ConcretePartialDecodedField {
+pub struct ConcretePartialRefField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
   pub(super) decoded_state_type: Option<Type>,
@@ -14,7 +14,7 @@ pub struct ConcretePartialDecodedField {
   pub(super) convert: ConvertAttribute,
 }
 
-impl ConcretePartialDecodedField {
+impl ConcretePartialRefField {
   /// Returns the type of the partial decoded field.
   #[inline]
   pub const fn ty(&self) -> &Type {

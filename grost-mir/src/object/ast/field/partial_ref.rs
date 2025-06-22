@@ -1,13 +1,13 @@
 use syn::{Attribute, Type};
 
 use crate::object::{
-  FieldDecodeAttribute, FieldEncodeAttribute, meta::PartialDecodedFieldFromMeta,
+  FieldDecodeAttribute, FieldEncodeAttribute, meta::GenericPartialRefFieldFromMeta,
 };
 
-impl PartialDecodedFieldFromMeta {
+impl GenericPartialRefFieldFromMeta {
   /// Finalizes the partial decoded field meta and returns the attribute
-  pub fn finalize(self) -> darling::Result<PartialDecodedFieldOptions> {
-    Ok(PartialDecodedFieldOptions {
+  pub fn finalize(self) -> darling::Result<PartialRefFieldOptions> {
+    Ok(PartialRefFieldOptions {
       copy: self.copy,
       attrs: self.attrs,
       ty: self.ty,
@@ -18,7 +18,7 @@ impl PartialDecodedFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedFieldOptions {
+pub struct PartialRefFieldOptions {
   pub(crate) copy: bool,
   pub(crate) attrs: Vec<Attribute>,
   pub(crate) ty: Option<Type>,
@@ -26,7 +26,7 @@ pub struct PartialDecodedFieldOptions {
   pub(crate) decode: FieldDecodeAttribute,
 }
 
-impl PartialDecodedFieldOptions {
+impl PartialRefFieldOptions {
   /// Returns the attributes of the partial reference object field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()

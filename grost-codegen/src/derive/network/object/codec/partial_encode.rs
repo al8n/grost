@@ -37,7 +37,7 @@ impl Network {
       &self_encoded_length_delimited_len,
     );
 
-    let partial_encode_partial_decoded_object = self.derive_partial_encode_partial_decoded_object(
+    let partial_encode_partial_ref_object = self.derive_partial_encode_partial_ref_object(
       path_to_grost,
       struct_,
       &self_encoded_len,
@@ -49,7 +49,7 @@ impl Network {
 
       #partial_encode_object
 
-      #partial_encode_partial_decoded_object
+      #partial_encode_partial_ref_object
     }
   }
 
@@ -386,14 +386,14 @@ impl Network {
     }
   }
 
-  fn derive_partial_encode_partial_decoded_object(
+  fn derive_partial_encode_partial_ref_object(
     &self,
     path_to_grost: &syn::Path,
     struct_: &Object,
     self_encoded_len: impl ToTokens,
     self_encoded_length_delimited_len: impl ToTokens,
   ) -> proc_macro2::TokenStream {
-    let partial_decoded_name = struct_.partial_decoded_name();
+    let partial_ref_name = struct_.partial_ref_name();
     let struct_name = struct_.name();
     let partial_struct_encoded_len = struct_.fields().iter().map(|f| {
       let field_name = f.name();
@@ -468,7 +468,7 @@ impl Network {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl<'__grost_lifetime__> #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      impl<'__grost_lifetime__> #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited> for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
       {
         fn partial_encode(
           &self,

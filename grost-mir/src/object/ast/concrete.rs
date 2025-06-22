@@ -8,7 +8,7 @@ use crate::{
   object::{
     Indexer, RawField, RawObject, RawObjectExt,
     ast::{
-      ConcreteField, ConcretePartialDecodedObject, ConcreteSelector, ConcreteSelectorIter,
+      ConcreteField, ConcretePartialRefObject, ConcreteSelector, ConcreteSelectorIter,
       ConcreteTaggedField, PartialObject, SkippedField,
     },
   },
@@ -37,7 +37,7 @@ pub(in crate::object) struct ConcreteObject<M = (), F = ()> {
   pub(in crate::object) default: Option<Invokable>,
   pub(in crate::object) indexer: Indexer,
   pub(in crate::object) partial: PartialObject,
-  pub(in crate::object) partial_decoded: ConcretePartialDecodedObject,
+  pub(in crate::object) partial_ref: ConcretePartialRefObject,
   pub(in crate::object) selector: ConcreteSelector,
   pub(in crate::object) selector_iter: ConcreteSelectorIter,
   pub(in crate::object) copy: bool,
@@ -152,8 +152,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the partial decoded object information
   #[inline]
-  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedObject {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &ConcretePartialRefObject {
+    &self.partial_ref
   }
 
   /// Returns the selector information
@@ -226,8 +226,8 @@ impl<M, F> ConcreteObject<M, F> {
       })?;
 
     let partial = PartialObject::from_attribute(&name, object.partial())?;
-    let partial_decoded =
-      ConcretePartialDecodedObject::from_attribute(&name, object.partial_decoded())?;
+    let partial_ref =
+      ConcretePartialRefObject::from_attribute(&name, object.partial_ref())?;
     let selector = ConcreteSelector::from_attribute(&name, object.selector())?;
     let selector_iter =
       ConcreteSelectorIter::from_attribute(selector.name(), object.selector_iter())?;
@@ -258,7 +258,7 @@ impl<M, F> ConcreteObject<M, F> {
       fields,
       default: object.default().cloned(),
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       meta: object.meta().clone(),

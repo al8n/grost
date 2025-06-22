@@ -10,18 +10,18 @@ pub(super) struct DecodeValueParser {
     feature = "serde",
     serde(default, skip_serializing_if = "BoolOption::is_none")
   )]
-  or_else_default: BoolOption,
+  or_default: BoolOption,
 }
 
 impl From<DecodeValueParser> for DecodeValue {
-  fn from(DecodeValueParser { or_else_default }: DecodeValueParser) -> Self {
-    Self { or_else_default }
+  fn from(DecodeValueParser { or_default }: DecodeValueParser) -> Self {
+    Self { or_default }
   }
 }
 
 impl From<DecodeValue> for DecodeValueParser {
-  fn from(DecodeValue { or_else_default }: DecodeValue) -> Self {
-    Self { or_else_default }
+  fn from(DecodeValue { or_default }: DecodeValue) -> Self {
+    Self { or_default }
   }
 }
 
@@ -35,7 +35,7 @@ impl From<DecodeValue> for DecodeValueParser {
   )
 )]
 pub(crate) struct DecodeValue {
-  pub(crate) or_else_default: BoolOption,
+  pub(crate) or_default: BoolOption,
 }
 
 impl FromMeta for DecodeValue {
@@ -47,7 +47,7 @@ impl FromMeta for DecodeValue {
 #[derive(Debug, FromMeta)]
 pub(super) struct DecodeParser {
   #[darling(default)]
-  or_else_default: BoolOption,
+  or_default: BoolOption,
   #[darling(default)]
   scalar: DecodeValue,
   #[darling(default)]
@@ -80,7 +80,7 @@ pub(super) struct DecodeParser {
   )
 )]
 pub struct DecodeFromMeta {
-  pub(crate) or_else_default: BoolOption,
+  pub(crate) or_default: BoolOption,
   pub(crate) scalar: DecodeValue,
   pub(crate) bytes: DecodeValue,
   pub(crate) string: DecodeValue,
@@ -96,7 +96,7 @@ pub struct DecodeFromMeta {
 impl From<DecodeParser> for DecodeFromMeta {
   fn from(
     DecodeParser {
-      or_else_default,
+      or_default,
       scalar,
       bytes,
       string,
@@ -110,7 +110,7 @@ impl From<DecodeParser> for DecodeFromMeta {
     }: DecodeParser,
   ) -> Self {
     Self {
-      or_else_default,
+      or_default,
       scalar,
       bytes,
       string,
@@ -134,101 +134,101 @@ impl FromMeta for DecodeFromMeta {
 impl DecodeFromMeta {
   /// Returns `true` if the encoding should skip default values
   #[inline]
-  pub const fn or_else_default_scalar(&self) -> bool {
-    if self.scalar.or_else_default.is_yes() {
+  pub const fn or_default_scalar(&self) -> bool {
+    if self.scalar.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for bytes
   #[inline]
-  pub const fn or_else_default_bytes(&self) -> bool {
-    if self.bytes.or_else_default.is_yes() {
+  pub const fn or_default_bytes(&self) -> bool {
+    if self.bytes.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for strings
   #[inline]
-  pub const fn or_else_default_string(&self) -> bool {
-    if self.string.or_else_default.is_yes() {
+  pub const fn or_default_string(&self) -> bool {
+    if self.string.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for objects
   #[inline]
-  pub const fn or_else_default_object(&self) -> bool {
-    if self.object.or_else_default.is_yes() {
+  pub const fn or_default_object(&self) -> bool {
+    if self.object.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for enumerations
   #[inline]
-  pub const fn or_else_default_enumeration(&self) -> bool {
-    if self.enumeration.or_else_default.is_yes() {
+  pub const fn or_default_enumeration(&self) -> bool {
+    if self.enumeration.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for interfaces
   #[inline]
-  pub const fn or_else_default_interface(&self) -> bool {
-    if self.interface.or_else_default.is_yes() {
+  pub const fn or_default_interface(&self) -> bool {
+    if self.interface.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for unions
   #[inline]
-  pub const fn or_else_default_union(&self) -> bool {
-    if self.union.or_else_default.is_yes() {
+  pub const fn or_default_union(&self) -> bool {
+    if self.union.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for maps
   #[inline]
-  pub const fn or_else_default_map(&self) -> bool {
-    if self.map.or_else_default.is_yes() {
+  pub const fn or_default_map(&self) -> bool {
+    if self.map.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for sets
   #[inline]
-  pub const fn or_else_default_set(&self) -> bool {
-    if self.set.or_else_default.is_yes() {
+  pub const fn or_default_set(&self) -> bool {
+    if self.set.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 
   /// Returns `true` if the encoding should skip default values for lists
   #[inline]
-  pub const fn or_else_default_list(&self) -> bool {
-    if self.list.or_else_default.is_yes() {
+  pub const fn or_default_list(&self) -> bool {
+    if self.list.or_default.is_yes() {
       true
     } else {
-      self.or_else_default.is_yes()
+      self.or_default.is_yes()
     }
   }
 }
@@ -242,7 +242,7 @@ mod tests {
   fn test_from_meta() {
     let module = quote! {
       decode(
-        or_else_default,
+        or_default,
       )
     };
 
@@ -252,55 +252,55 @@ mod tests {
 
     let nested_all = quote! {
       decode(
-        or_else_default,
+        or_default,
         scalar(
-          or_else_default = false,
+          or_default = false,
         ),
         bytes(
-          or_else_default = false,
+          or_default = false,
         ),
         string(
-          or_else_default = false,
+          or_default = false,
         ),
         object(
-          or_else_default = false,
+          or_default = false,
         ),
         enum(
-          or_else_default = false,
+          or_default = false,
         ),
         interface(
-          or_else_default = false,
+          or_default = false,
         ),
         union(
-          or_else_default = false,
+          or_default = false,
         ),
       )
     };
 
     let decoded: DecodeFromMeta =
       DecodeFromMeta::from_meta(&syn::parse2(nested_all).unwrap()).unwrap();
-    assert!(!decoded.or_else_default_bytes());
-    assert!(!decoded.or_else_default_scalar());
-    assert!(!decoded.or_else_default_string());
-    assert!(!decoded.or_else_default_object());
-    assert!(!decoded.or_else_default_enumeration());
-    assert!(!decoded.or_else_default_interface());
-    assert!(!decoded.or_else_default_union());
+    assert!(!decoded.or_default_bytes());
+    assert!(!decoded.or_default_scalar());
+    assert!(!decoded.or_default_string());
+    assert!(!decoded.or_default_object());
+    assert!(!decoded.or_default_enumeration());
+    assert!(!decoded.or_default_interface());
+    assert!(!decoded.or_default_union());
 
     let nested_partial = quote! {
       decode(
         scalar(
-          or_else_default = true,
+          or_default = true,
         ),
         bytes(
-          or_else_default = true,
+          or_default = true,
         ),
       )
     };
 
     let decoded: DecodeFromMeta =
       DecodeFromMeta::from_meta(&syn::parse2(nested_partial).unwrap()).unwrap();
-    assert!(decoded.or_else_default_scalar());
-    assert!(decoded.or_else_default_bytes());
+    assert!(decoded.or_default_scalar());
+    assert!(decoded.or_default_bytes());
   }
 }

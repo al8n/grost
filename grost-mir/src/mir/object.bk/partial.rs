@@ -10,7 +10,7 @@ use crate::ast::{
 
 use super::Object;
 
-/// The generic parameters of the [`PartialDecodedObject`].
+/// The generic parameters of the [`PartialRefObject`].
 #[derive(Debug, Clone)]
 struct PartialObjectGenerics {
   generics: Generics,

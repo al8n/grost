@@ -6,10 +6,10 @@ use crate::{
   object::ObjectFlavor as ObjectFlavorAst,
 };
 
-pub use partial_decoded::PartialDecodedObjectFlavor;
+pub use partial_ref::PartialRefObjectFlavor;
 pub use selector::{SelectorFlavor, SelectorIterFlavor};
 
-mod partial_decoded;
+mod partial_ref;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -22,7 +22,7 @@ pub struct ObjectFlavor {
   decode: DecodeAttribute,
   selector: SelectorFlavor,
   selector_iter: SelectorIterFlavor,
-  partial_decoded: PartialDecodedObjectFlavor,
+  partial_ref: PartialRefObjectFlavor,
   reflection_type: Type,
   wire_format_reflection_generics: Generics,
   wire_type_reflection_generics: Generics,
@@ -139,8 +139,8 @@ impl ObjectFlavor {
 
   /// Returns the partial decoded object flavor information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &PartialDecodedObjectFlavor {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &PartialRefObjectFlavor {
+    &self.partial_ref
   }
 
   pub(super) fn from_ast<M, F>(
@@ -209,12 +209,12 @@ impl ObjectFlavor {
         darling::Result::Ok(())
       })?;
 
-    let partial_decoded =
-      PartialDecodedObjectFlavor::from_ast(flavor_name, flavor_ty, object, fields)?;
+    let partial_ref =
+      PartialRefObjectFlavor::from_ast(flavor_name, flavor_ty, object, fields)?;
     let selector = SelectorFlavor::from_ast(flavor_name, flavor_ty, object, fields)?;
     let selector_iter = selector.selector_iter(object, flavor_ty)?;
     Ok(Self {
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       flavor_type: flavor_ty.clone(),

@@ -14,7 +14,7 @@ use crate::ast::{
 use super::{super::wire_format_reflection_ty, Object};
 
 #[derive(Clone, derive_more::Debug)]
-pub struct PartialDecodedField {
+pub struct PartialRefField {
   field: syn::Field,
   tag: NonZeroU32,
   wire: Type,
@@ -25,7 +25,7 @@ pub struct PartialDecodedField {
   copy: bool,
 }
 
-impl PartialDecodedField {
+impl PartialRefField {
   /// Returns the name of the field
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -81,16 +81,16 @@ impl PartialDecodedField {
   }
 }
 
-/// The generic parameters of the [`PartialDecodedObject`].
+/// The generic parameters of the [`PartialRefObject`].
 #[derive(Debug, Clone)]
-struct PartialDecodedObjectGenerics {
+struct PartialRefObjectGenerics {
   generics: Generics,
   lifetime: syn::Lifetime,
   unknown_buffer_generic: TypeParam,
   flavor_generic: TypeParam,
 }
 
-impl core::ops::Deref for PartialDecodedObjectGenerics {
+impl core::ops::Deref for PartialRefObjectGenerics {
   type Target = Generics;
 
   #[inline]
@@ -99,7 +99,7 @@ impl core::ops::Deref for PartialDecodedObjectGenerics {
   }
 }
 
-impl PartialDecodedObjectGenerics {
+impl PartialRefObjectGenerics {
   const fn new(
     lifetime: syn::Lifetime,
     flavor_generic: TypeParam,
@@ -134,22 +134,22 @@ impl PartialDecodedObjectGenerics {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedObject {
+pub struct PartialRefObject {
   parent_name: Ident,
   path_to_grost: syn::Path,
   name: Ident,
   ty: Type,
   vis: Visibility,
   object_generics: Generics,
-  generics: PartialDecodedObjectGenerics,
-  fields: Vec<PartialDecodedField>,
+  generics: PartialRefObjectGenerics,
+  fields: Vec<PartialRefField>,
   skipped_fields: Vec<syn::Field>,
   attrs: Vec<Attribute>,
   unknown_buffer_field_name: Ident,
   copy: bool,
 }
 
-impl PartialDecodedObject {
+impl PartialRefObject {
   /// Returns the name of the decoded object.
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -158,7 +158,7 @@ impl PartialDecodedObject {
 
   /// Returns the type of the partial object.
   ///
-  /// e.g. if the [`name`](PartialDecodedObject::name) returns `PartialDecodedUser`, the type will be `PartialDecodedUser<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>`.
+  /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`, the type will be `PartialRefUser<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
@@ -166,9 +166,9 @@ impl PartialDecodedObject {
 
   /// Returns a type which replace the corresponding generic parameters with the given lifetime or concrete types.
   ///
-  /// e.g. if the [`name`](PartialDecodedObject::name) returns `PartialDecodedUser`,
+  /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`,
   /// and the given flavor type is `grost::flavors::Network` and the given unknown buffer type is `()`,
-  /// the output type will be `PartialDecodedUser<'__grost_lifetime__, grost::flavors::Network, ()>`.
+  /// the output type will be `PartialRefUser<'__grost_lifetime__, grost::flavors::Network, ()>`.
   pub fn type_with(
     &self,
     lifetime: Option<&syn::Lifetime>,
@@ -211,7 +211,7 @@ impl PartialDecodedObject {
 
   /// Returns a new generics which replaces the corresponding generic parameters with the given lifetime or concrete types.
   ///
-  /// e.g. if the [`name`](PartialDecodedObject::name) returns `PartialDecodedUser`,
+  /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`,
   /// and the given flavor type is `grost::flavors::Network` and the given unknown buffer type is `()`,
   /// the output generics will remove the flavor and unknown buffer generic parameters in both the params and where clause.
   pub fn remove_generics(
@@ -279,7 +279,7 @@ impl PartialDecodedObject {
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
     unknown_buffer: Option<&Type>,
-  ) -> syn::Result<Vec<PartialDecodedField>> {
+  ) -> syn::Result<Vec<PartialRefField>> {
     let path_to_grost = &self.path_to_grost;
     self
       .fields()
@@ -332,7 +332,7 @@ impl PartialDecodedObject {
         )?
         .collect();
 
-        Ok(PartialDecodedField {
+        Ok(PartialRefField {
           field,
           tag,
           object_type: ty.clone(),
@@ -424,7 +424,7 @@ impl PartialDecodedObject {
 
   /// Returns the fields of the partial decoded object.
   #[inline]
-  pub const fn fields(&self) -> &[PartialDecodedField] {
+  pub const fn fields(&self) -> &[PartialRefField] {
     self.fields.as_slice()
   }
 
@@ -475,7 +475,7 @@ impl PartialDecodedObject {
     let fields = input.fields();
     let meta = input;
     let copyable =
-      meta.partial_decoded().copy() | fields.iter().all(|f| f.partial_decoded().copy());
+      meta.partial_ref().copy() | fields.iter().all(|f| f.partial_ref().copy());
     let mut generics = Generics::default();
     let lt = grost_lifetime();
     let flavor_param = grost_flavor_param();
@@ -531,7 +531,7 @@ impl PartialDecodedObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
-    add_partial_decoded_constraints(
+    add_partial_ref_constraints(
       input.name(),
       input.generics(),
       &mut generics,
@@ -544,10 +544,10 @@ impl PartialDecodedObject {
     )?;
 
     let generics =
-      PartialDecodedObjectGenerics::new(lt.lifetime, flavor_param, unknown_buffer_param, generics);
+      PartialRefObjectGenerics::new(lt.lifetime, flavor_param, unknown_buffer_param, generics);
 
     let (_, object_tg, _) = input.generics().split_for_impl();
-    let mut partial_decoded_fields = vec![];
+    let mut partial_ref_fields = vec![];
     let mut skipped_fields = vec![];
     fields.iter().try_for_each(|f| {
       let ty = f.ty();
@@ -556,7 +556,7 @@ impl PartialDecodedObject {
         let field_name = f.name();
         let field_ty = f.ty();
         let vis = f.vis();
-        let attrs = f.partial_decoded().attrs();
+        let attrs = f.partial_ref().attrs();
         let field = syn::Field::parse_named.parse2(quote! {
           #(#attrs)*
           #vis #field_name: ::core::option::Option<#field_ty>
@@ -584,7 +584,7 @@ impl PartialDecodedObject {
       );
       let vis = f.vis();
       let name = f.name();
-      let attrs = f.partial_decoded().attrs();
+      let attrs = f.partial_ref().attrs();
       let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
       let field = syn::Field::parse_named.parse2(quote! {
         #(#attrs)*
@@ -599,23 +599,23 @@ impl PartialDecodedObject {
         &wf,
         &decoded_state,
         &generics.flavor_param().ident,
-        f.partial_decoded().copy() || copyable,
+        f.partial_ref().copy() || copyable,
       )?
       .collect();
 
-      partial_decoded_fields.push(PartialDecodedField {
+      partial_ref_fields.push(PartialRefField {
         field,
         tag,
         object_type: ty.clone(),
         output_type,
         constraints,
         wire: wf,
-        copy: meta.partial_decoded().copy() | copyable,
+        copy: meta.partial_ref().copy() | copyable,
       });
       Ok(())
     })?;
 
-    let name = input.partial_decoded_name();
+    let name = input.partial_ref_name();
     let (_, tg, _) = generics.split_for_impl();
     Ok(Self {
       parent_name: input.name().clone(),
@@ -628,9 +628,9 @@ impl PartialDecodedObject {
       vis: input.vis().clone(),
       object_generics: input.generics().clone(),
       generics,
-      fields: partial_decoded_fields,
+      fields: partial_ref_fields,
       skipped_fields,
-      attrs: meta.partial_decoded().attrs().to_vec(),
+      attrs: meta.partial_ref().attrs().to_vec(),
       copy: copyable,
     })
   }
@@ -641,7 +641,7 @@ impl PartialDecodedObject {
     let fields = self
       .fields()
       .iter()
-      .map(PartialDecodedField::field)
+      .map(PartialRefField::field)
       .chain(self.skipped_fields().iter());
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
@@ -678,10 +678,10 @@ impl<M> Object<M>
 where
   M: crate::ast::object::RawObject,
 {
-  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
-    let partial_decoded_object = self.partial_decoded();
-    let name = partial_decoded_object.name();
-    let fields_init = partial_decoded_object
+  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
+    let partial_ref_object = self.partial_ref();
+    let name = partial_ref_object.name();
+    let fields_init = partial_ref_object
       .fields()
       .iter()
       .map(|f| {
@@ -690,33 +690,33 @@ where
           #field_name: ::core::option::Option::None,
         }
       })
-      .chain(partial_decoded_object.skipped_fields().iter().map(|f| {
+      .chain(partial_ref_object.skipped_fields().iter().map(|f| {
         let field_name = f.ident.as_ref().unwrap();
         quote! {
           #field_name: ::core::option::Option::None,
         }
       }));
 
-    let fields_accessors = partial_decoded_object.fields().iter().map(|f| {
+    let fields_accessors = partial_ref_object.fields().iter().map(|f| {
       let field_name = f.name();
       let ty = &f.output_type;
       super::optional_accessors(field_name, ty, f.copy())
     });
 
-    let is_empty = partial_decoded_object.fields().iter().map(|f| {
+    let is_empty = partial_ref_object.fields().iter().map(|f| {
       let field_name = f.name();
       quote! {
         self.#field_name.is_none()
       }
     });
 
-    let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
-    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
-    let ubg = &partial_decoded_object.unknown_buffer_param().ident;
+    let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
+    let ubfn = &partial_ref_object.unknown_buffer_field_name;
+    let ubg = &partial_ref_object.unknown_buffer_param().ident;
     let flatten_state = super::derive_flatten_state(
       &self.path_to_grost,
-      partial_decoded_object.generics(),
-      partial_decoded_object.name(),
+      partial_ref_object.generics(),
+      partial_ref_object.name(),
     );
 
     quote! {
@@ -858,7 +858,7 @@ fn constraints(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn add_partial_decoded_constraints<'a, I>(
+fn add_partial_ref_constraints<'a, I>(
   object_name: &syn::Ident,
   object_generics: &Generics,
   generics: &mut Generics,
@@ -900,7 +900,7 @@ where
       &wf,
       &decoded_state,
       &flavor_param.ident,
-      f.partial_decoded().copy() || copy,
+      f.partial_ref().copy() || copy,
     )?);
 
     Ok(())

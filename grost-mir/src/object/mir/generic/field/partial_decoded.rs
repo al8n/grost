@@ -1,7 +1,7 @@
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
 #[derive(Debug, Clone)]
-pub struct GenericPartialDecodedField {
+pub struct GenericPartialRefField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
   pub(super) attrs: Vec<Attribute>,
@@ -9,7 +9,7 @@ pub struct GenericPartialDecodedField {
   pub(super) copy: bool,
 }
 
-impl GenericPartialDecodedField {
+impl GenericPartialRefField {
   /// Returns the type of the partial decoded field.
   #[inline]
   pub const fn ty(&self) -> &Type {
