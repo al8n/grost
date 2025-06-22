@@ -341,7 +341,6 @@ impl FromMeta for FlavorFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     match items.len() {
       0 => Ok(Self::Builtin(BuiltinFlavorRepr::default())),
-      2 => Err(darling::Error::custom("Only one flavor can be configured")),
       1 => {
         let item = &items[0];
 
@@ -370,7 +369,10 @@ impl FromMeta for FlavorFromMeta {
                 return Err(darling::Error::custom(reason));
               }
 
-              FlavorValue::parse_meta_list(meta_list).map(|value| Self::Custom { name: ident.clone(), value })
+              FlavorValue::parse_meta_list(meta_list).map(|value| Self::Custom {
+                name: ident.clone(),
+                value,
+              })
             }
             Meta::NameValue(meta_name_value) => {
               let Some(ident) = meta.path().get_ident() else {
@@ -388,12 +390,15 @@ impl FromMeta for FlavorFromMeta {
                 return Err(darling::Error::custom(reason));
               }
 
-              FlavorValue::from_expr(&meta_name_value.value)
-                .map(|value| Self::Custom { name: ident.clone(), value })
+              FlavorValue::from_expr(&meta_name_value.value).map(|value| Self::Custom {
+                name: ident.clone(),
+                value,
+              })
             }
           },
         }
       }
+      _ => Err(darling::Error::custom("Only one flavor can be configured")),
     }
   }
 }

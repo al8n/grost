@@ -58,6 +58,18 @@ impl TagFromMeta {
   pub const fn encode(&self) -> &Invokable {
     &self.encode
   }
+
+  pub(crate) fn network(path_to_grost: &Path) -> darling::Result<Self> {
+    let constructor =
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::new })?;
+    let encode =
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::encode })?;
+
+    Ok(Self {
+      constructor: constructor.into(),
+      encode: encode.into(),
+    })
+  }
 }
 
 impl TryFrom<&str> for TagFromMeta {

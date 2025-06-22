@@ -211,9 +211,7 @@ impl From<DecodeFromMeta> for DecodeSerdeHelper {
 #[allow(clippy::large_enum_variant)]
 pub(super) enum BuiltinFlavorValueSerdeHelper {
   File(String),
-  Config {
-    decode: DecodeFromMeta,
-  },
+  Config { decode: DecodeFromMeta },
   Bool(bool),
 }
 

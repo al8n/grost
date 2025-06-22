@@ -1,6 +1,6 @@
 use syn::{Ident, Path, Type};
 
-pub use decode::FieldDecodeAttribute;
+pub use decode::FieldDecodeOptions;
 pub use encode::FieldEncodeAttribute;
 
 use crate::{
@@ -8,16 +8,13 @@ use crate::{
   utils::{Invokable, MissingOperation},
 };
 
-mod decode;
-mod encode;
-
 #[derive(Debug, Clone)]
 pub struct FieldFlavorAttribute {
   pub(in crate::object) name: Ident,
   pub(in crate::object) ty: Option<Type>,
   pub(in crate::object) format: Option<Type>,
   pub(in crate::object) encode: FieldEncodeAttribute,
-  pub(in crate::object) decode: FieldDecodeAttribute,
+  pub(in crate::object) decode: FieldDecodeOptions,
   pub(in crate::object) convert: ConvertAttribute,
 }
 
@@ -43,7 +40,7 @@ impl FieldFlavorAttribute {
   }
 
   /// Returns the decode attribute for this flavor.
-  pub const fn decode(&self) -> &FieldDecodeAttribute {
+  pub const fn decode(&self) -> &FieldDecodeOptions {
     &self.decode
   }
 
@@ -52,7 +49,7 @@ impl FieldFlavorAttribute {
     ty: Option<syn::Type>,
     format: Option<syn::Type>,
     encode: FieldEncodeAttribute,
-    decode: FieldDecodeAttribute,
+    decode: FieldDecodeOptions,
   ) -> Self {
     Self {
       name,

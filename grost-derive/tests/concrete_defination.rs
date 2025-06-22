@@ -931,8 +931,7 @@ const _: () = {
   >
     ::grost::__private::convert::State<
       ::grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>,
-    >
-    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -4622,12 +4621,7 @@ const _: () = {
         <PartialUser<I> as ::grost::__private::decode::Transform<
           ::grost::__private::flavors::Network,
           ::grost::__private::flavors::network::LengthDelimited,
-          PartialRefUser<
-            '__grost_lifetime__,
-            I,
-            __GROST_READ_BUFFER__,
-            __GROST_UNKNOWN_BUFFER__,
-          >,
+          PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>,
         >>::transform(input)
         .map(|input| (read, input))
       })
@@ -4676,8 +4670,7 @@ const _: () = {
       ::grost::__private::flavors::Network,
       ::grost::__private::flavors::network::LengthDelimited,
       Self,
-    >
-    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -4723,8 +4716,7 @@ const _: () = {
       Self,
       __GROST_READ_BUFFER__,
       __GROST_UNKNOWN_BUFFER__,
-    >
-    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<
@@ -5739,8 +5731,7 @@ const _: () = {
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
       >,
-    >
-    for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
+    > for PartialRefUser<'__grost_lifetime__, I, __GROST_READ_BUFFER__, __GROST_UNKNOWN_BUFFER__>
   where
     I: ::grost::__private::convert::State<
         ::grost::__private::convert::Decoded<

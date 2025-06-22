@@ -4,20 +4,28 @@ use std::collections::BTreeMap;
 use darling::{FromMeta, util::path_to_string};
 use syn::{Attribute, Ident, Meta, Path, Type};
 
-use crate::{object::{meta::{FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldFromMeta, SelectorFieldFromMeta}, Label}, utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta}};
+use crate::{
+  object::{
+    Label,
+    meta::{
+      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta,
+      SelectorFieldFromMeta,
+    },
+  },
+  utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
+};
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub(in crate::object) struct PartialRefFieldFlavorFromMeta {
-  pub(in crate::object) encode: FieldEncodeFromMeta,
-  pub(in crate::object) decode: FieldDecodeFromMeta,
+pub(in crate::object) struct PartialFieldFlavorFromMeta {
   pub(in crate::object) transform: FieldConvertFromMeta,
   pub(in crate::object) partial_transform: FieldConvertFromMeta,
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub(in crate::object) struct PartialFieldFlavorFromMeta {
-  pub(in crate::object) partial_transform: FieldConvertFromMeta, 
-} 
+pub(in crate::object) struct PartialRefFieldFlavorFromMeta {
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  pub(in crate::object) decode: FieldDecodeFromMeta,
+}
 
 #[derive(Debug, Default, Clone)]
 pub(in crate::object) struct FieldFlavorFromMeta {
@@ -43,7 +51,7 @@ impl FromMeta for FieldFlavorFromMeta {
       #[darling(default)]
       pub(in crate::object) wire_format: Option<Type>,
       #[darling(default)]
-      pub(in crate::object) partial_ref: PartialRefFieldFlavorFromMeta, 
+      pub(in crate::object) partial_ref: PartialRefFieldFlavorFromMeta,
       #[darling(default)]
       pub(in crate::object) partial: PartialFieldFlavorFromMeta,
     }
@@ -60,6 +68,13 @@ impl FromMeta for FieldFlavorFromMeta {
       partial,
     })
   }
+}
+
+/// The meta of the partial object field
+#[derive(Debug, Default, Clone, FromMeta)]
+pub struct GenericPartialFieldFromMeta {
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
 }
 
 /// The meta of the partial reference object field
@@ -86,16 +101,9 @@ impl FromMeta for GenericPartialRefFieldFromMeta {
           ty: Option<Type>,
         }
 
-        let Helper {
-          copy,
-          attrs,
-          ty,
-        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
-        Ok(Self {
-          copy,
-          attrs,
-          ty,
-        })
+        let Helper { copy, attrs, ty } =
+          Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
+        Ok(Self { copy, attrs, ty })
       }
     })
     .map_err(|e| e.with_span(item))
@@ -116,7 +124,7 @@ pub enum GenericFieldFromMeta<TO = (), SO = ()> {
     tag: NonZeroU32,
     flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
     transform: FieldConvertFromMeta,
-    partial: PartialFieldFromMeta,
+    partial: GenericPartialFieldFromMeta,
     partial_ref: GenericPartialRefFieldFromMeta,
     selector: SelectorFieldFromMeta,
     copy: bool,
@@ -155,7 +163,7 @@ where
         .cloned()
         .filter_map(|item| match item {
           darling::ast::NestedMeta::Lit(_) => Some(Ok(item)),
-          darling::ast::NestedMeta::Meta(meta) => {
+          darling::ast::NestedMeta::Meta(ref meta) => {
             if let Meta::Path(path) = meta {
               if path.is_ident("skip") {
                 return None;
@@ -172,7 +180,7 @@ where
             }
           }
         })
-        .collect::<darling::Result<Vec<_>>>();
+        .collect::<darling::Result<Vec<_>>>()?;
 
       return SkipFieldFromMeta::from_list(&skip_meta)
         .map(|SkipFieldFromMeta { default, extra }| Self::Skipped { default, extra });
@@ -216,7 +224,7 @@ struct TaggedFieldFromMeta<TO> {
   tag: NonZeroU32,
   flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
   transform: FieldConvertFromMeta,
-  partial: PartialFieldFromMeta,
+  partial: GenericPartialFieldFromMeta,
   partial_ref: GenericPartialRefFieldFromMeta,
   selector: SelectorFieldFromMeta,
   copy: bool,
@@ -241,7 +249,7 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
                 Field label has already been specified as `{old}`",
               )));
             }
-            label = Some(Label::from_meta(item)?);
+            label = Some(Label::from_meta(meta)?);
           } else {
             remaining_items.push(item.clone());
           }
@@ -255,14 +263,13 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       schema: SchemaFromMeta,
       #[darling(default)]
       default: Option<Invokable>,
-      #[darling(default)]
       tag: NonZeroU32,
       #[darling(default)]
       flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
       #[darling(default)]
       transform: FieldConvertFromMeta,
       #[darling(default)]
-      partial: PartialFieldFromMeta,
+      partial: GenericPartialFieldFromMeta,
       #[darling(default)]
       partial_ref: GenericPartialRefFieldFromMeta,
       #[darling(default)]

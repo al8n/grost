@@ -530,7 +530,7 @@ impl ToTokens for ObjectField {
             self.__meta__.label()
           }
 
-          fn schema(&self) -> &#path_to_crate::__private::utils::SchemaAttribute {
+          fn schema(&self) -> &#path_to_crate::__private::utils::SchemaOptions {
             &self.__meta__.schema()
           }
 

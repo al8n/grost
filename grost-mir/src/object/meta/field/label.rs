@@ -313,7 +313,6 @@ impl syn::parse::Parse for Label {
 
 #[cfg(test)]
 mod tests {
-  use darling::FromMeta;
   use quote::quote;
 
   use super::*;
@@ -554,20 +553,4 @@ mod tests {
         .contains("`optional(optional(...))` is not allowed")
     );
   }
-
-  #[test]
-  fn test_label_flatten() {
-    let input = quote! {
-      outer(scalar, ty = "i32")
-    };
-    let parsed: TestFlattenLabel =
-      super::TestFlattenLabel::from_meta(&syn::parse2(input).unwrap()).unwrap();
-  }
-}
-
-#[derive(Debug, darling::FromMeta)]
-struct TestFlattenLabel {
-  #[darling(flatten)]
-  label: Option<Label>,
-  ty: syn::Type,
 }

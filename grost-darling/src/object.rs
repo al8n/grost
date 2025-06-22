@@ -414,27 +414,27 @@ impl ToTokens for Object {
             self.__args__.__meta__.default()
           }
 
-          fn schema(&self) -> &#path_to_crate::__private::utils::SchemaAttribute {
+          fn schema(&self) -> &#path_to_crate::__private::utils::SchemaOptions {
             self.__args__.__meta__.schema()
           }
 
-          fn partial(&self) -> &#path_to_crate::__private::object::PartialObjectAttribute {
+          fn partial(&self) -> &#path_to_crate::__private::object::PartialObjectOptions {
             self.__args__.__meta__.partial()
           }
 
-          fn partial_ref(&self) -> &#path_to_crate::__private::object::PartialRefObjectAttribute {
+          fn partial_ref(&self) -> &#path_to_crate::__private::object::PartialRefObjectOptions {
             self.__args__.__meta__.partial_ref()
           }
 
-          fn selector(&self) -> &#path_to_crate::__private::object::SelectorAttribute {
+          fn selector(&self) -> &#path_to_crate::__private::object::SelectorOptions {
             self.__args__.__meta__.selector()
           }
 
-          fn selector_iter(&self) -> &#path_to_crate::__private::object::SelectorIterAttribute {
+          fn selector_iter(&self) -> &#path_to_crate::__private::object::SelectorIterOptions {
             self.__args__.__meta__.selector_iter()
           }
 
-          fn indexer(&self) -> &#path_to_crate::__private::object::IndexerAttribute {
+          fn indexer(&self) -> &#path_to_crate::__private::object::IndexerOptions {
             self.__args__.__meta__.indexer()
           }
 

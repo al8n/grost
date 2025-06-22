@@ -2,7 +2,7 @@ use quote::quote;
 use syn::{Generics, Ident, Type};
 
 use crate::{
-  flavor::{DecodeAttribute, EncodeAttribute, IdentifierAttribute, TagAttribute},
+  flavor::{DecodeOptions, EncodeAttribute, IdentifierOptions, TagOptions},
   object::ObjectFlavor as ObjectFlavorAst,
 };
 
@@ -16,10 +16,10 @@ mod selector;
 pub struct ObjectFlavor {
   flavor_type: Type,
   format: Type,
-  identifier: IdentifierAttribute,
-  tag: TagAttribute,
+  identifier: IdentifierOptions,
+  tag: TagOptions,
   encode: EncodeAttribute,
-  decode: DecodeAttribute,
+  decode: DecodeOptions,
   selector: SelectorFlavor,
   selector_iter: SelectorIterFlavor,
   partial_ref: PartialRefObjectFlavor,
@@ -55,13 +55,13 @@ impl ObjectFlavor {
 
   /// Returns the identifier attribute for the flavor.
   #[inline]
-  pub const fn identifier(&self) -> &IdentifierAttribute {
+  pub const fn identifier(&self) -> &IdentifierOptions {
     &self.identifier
   }
 
   /// Returns the tag attribute for the flavor.
   #[inline]
-  pub const fn tag(&self) -> &TagAttribute {
+  pub const fn tag(&self) -> &TagOptions {
     &self.tag
   }
 
@@ -73,7 +73,7 @@ impl ObjectFlavor {
 
   /// Returns the decode attribute for this flavor.
   #[inline]
-  pub const fn decode(&self) -> &DecodeAttribute {
+  pub const fn decode(&self) -> &DecodeOptions {
     &self.decode
   }
 

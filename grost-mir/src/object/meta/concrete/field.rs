@@ -3,29 +3,22 @@ use core::num::NonZeroU32;
 use darling::{FromMeta, util::path_to_string};
 use syn::{Attribute, Meta, Path, Type};
 
-use crate::{object::{meta::{FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldFromMeta, SelectorFieldFromMeta}, Label}, utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta}};
-
+use crate::{
+  object::{
+    Label,
+    meta::{
+      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta,
+      SelectorFieldFromMeta, SkippedFieldFromMeta,
+    },
+  },
+  utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
+};
 
 /// The meta of the object field
 #[derive(Debug, Clone)]
 pub enum FieldFromMeta<TO = (), SO = ()> {
-  Skipped {
-    default: Option<Invokable>,
-    extra: SO,
-  },
-  Tagged {
-    label: Label,
-    schema: SchemaFromMeta,
-    default: Option<Invokable>,
-    tag: NonZeroU32,
-    wire_format: Option<Type>,
-    transform: FieldConvertFromMeta,
-    partial: PartialFieldFromMeta,
-    partial_ref: PartialRefFieldFromMeta,
-    selector: SelectorFieldFromMeta,
-    copy: bool,
-    extra: TO,
-  },
+  Skipped(SkippedFieldFromMeta<SO>),
+  Tagged(TaggedFieldFromMeta<TO>),
 }
 
 impl<SO, TO> FromMeta for FieldFromMeta<SO, TO>
@@ -46,20 +39,12 @@ where
     });
 
     if skipped {
-      #[derive(Debug, FromMeta)]
-      struct SkipFieldFromMeta<M> {
-        #[darling(default)]
-        default: Option<Invokable>,
-        #[darling(flatten)]
-        extra: M,
-      }
-
       let skip_meta = items
         .iter()
         .cloned()
         .filter_map(|item| match item {
           darling::ast::NestedMeta::Lit(_) => Some(Ok(item)),
-          darling::ast::NestedMeta::Meta(meta) => {
+          darling::ast::NestedMeta::Meta(ref meta) => {
             if let Meta::Path(path) = meta {
               if path.is_ident("skip") {
                 return None;
@@ -76,40 +61,24 @@ where
             }
           }
         })
-        .collect::<darling::Result<Vec<_>>>();
+        .collect::<darling::Result<Vec<_>>>()?;
 
-      return SkipFieldFromMeta::from_list(&skip_meta)
-        .map(|SkipFieldFromMeta { default, extra }| Self::Skipped { default, extra });
+      return SkippedFieldFromMeta::from_list(&skip_meta).map(Self::Skipped);
     }
 
-    let TaggedFieldFromMeta {
-      label,
-      schema,
-      default,
-      tag,
-      transform,
-      wire_format,
-      partial,
-      partial_ref,
-      selector,
-      copy,
-      extra,
-    } = TaggedFieldFromMeta::from_list(items)?;
-
-    Ok(Self::Tagged {
-      label,
-      schema,
-      default,
-      tag,
-      transform,
-      wire_format,
-      partial,
-      partial_ref,
-      selector,
-      copy,
-      extra,
-    })
+    TaggedFieldFromMeta::from_list(items).map(Self::Tagged)
   }
+}
+
+/// The meta of the partial object field
+#[derive(Debug, Default, Clone, FromMeta)]
+pub struct PartialFieldFromMeta {
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default)]
+  pub(in crate::object) transform: FieldConvertFromMeta,
+  #[darling(default)]
+  pub(in crate::object) partial_transform: FieldConvertFromMeta,
 }
 
 /// The meta of the partial reference object field
@@ -118,10 +87,8 @@ pub struct PartialRefFieldFromMeta {
   pub(in crate::object) copy: bool,
   pub(in crate::object) attrs: Vec<Attribute>,
   pub(in crate::object) ty: Option<Type>,
-  pub(in crate::object) encode: FieldEncodeFromMeta, 
+  pub(in crate::object) encode: FieldEncodeFromMeta,
   pub(in crate::object) decode: FieldDecodeFromMeta,
-  pub(in crate::object) transform: FieldConvertFromMeta,
-  pub(in crate::object) partial_transform: FieldConvertFromMeta,
 }
 
 impl FromMeta for PartialRefFieldFromMeta {
@@ -141,10 +108,6 @@ impl FromMeta for PartialRefFieldFromMeta {
           encode: FieldEncodeFromMeta,
           #[darling(default)]
           decode: FieldDecodeFromMeta,
-          #[darling(default)]
-          transform: FieldConvertFromMeta,
-          #[darling(default)]
-          partial_transform: FieldConvertFromMeta,
           #[darling(rename = "type", default)]
           ty: Option<Type>,
         }
@@ -155,8 +118,6 @@ impl FromMeta for PartialRefFieldFromMeta {
           encode,
           decode,
           ty,
-          transform,
-          partial_transform,
         } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
 
         Ok(Self {
@@ -165,8 +126,6 @@ impl FromMeta for PartialRefFieldFromMeta {
           ty,
           encode,
           decode,
-          transform,
-          partial_transform,
         })
       }
     })
@@ -175,18 +134,18 @@ impl FromMeta for PartialRefFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-struct TaggedFieldFromMeta<TO> {
-  label: Label,
-  schema: SchemaFromMeta,
-  default: Option<Invokable>,
-  tag: NonZeroU32,
-  transform: FieldConvertFromMeta,
-  partial: PartialFieldFromMeta,
-  partial_ref: PartialRefFieldFromMeta,
-  selector: SelectorFieldFromMeta,
-  copy: bool,
-  wire_format: Option<Type>,
-  extra: TO,
+pub(in crate::object) struct TaggedFieldFromMeta<TO> {
+  pub(in crate::object) label: Label,
+  pub(in crate::object) schema: SchemaFromMeta,
+  pub(in crate::object) default: Option<Invokable>,
+  pub(in crate::object) tag: NonZeroU32,
+  pub(in crate::object) transform: FieldConvertFromMeta,
+  pub(in crate::object) partial: PartialFieldFromMeta,
+  pub(in crate::object) partial_ref: PartialRefFieldFromMeta,
+  pub(in crate::object) selector: SelectorFieldFromMeta,
+  pub(in crate::object) copy: bool,
+  pub(in crate::object) wire_format: Option<Type>,
+  pub(in crate::object) extra: TO,
 }
 
 impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
@@ -207,7 +166,7 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
                 Field label has already been specified as `{old}`",
               )));
             }
-            label = Some(Label::from_meta(item)?);
+            label = Some(Label::from_meta(meta)?);
           } else {
             remaining_items.push(item.clone());
           }
@@ -221,7 +180,6 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       schema: SchemaFromMeta,
       #[darling(default)]
       default: Option<Invokable>,
-      #[darling(default)]
       tag: NonZeroU32,
       #[darling(default)]
       transform: FieldConvertFromMeta,

@@ -2,7 +2,7 @@ use crate::utils::BoolOption;
 
 use super::meta::{DecodeFromMeta, DecodeValue};
 
-impl From<DecodeFromMeta> for DecodeAttribute {
+impl From<DecodeFromMeta> for DecodeOptions {
   fn from(value: DecodeFromMeta) -> Self {
     Self {
       or_default: value.or_default,
@@ -21,7 +21,7 @@ impl From<DecodeFromMeta> for DecodeAttribute {
 }
 
 #[derive(Debug, Clone)]
-pub struct DecodeAttribute {
+pub struct DecodeOptions {
   pub(super) or_default: BoolOption,
   pub(super) scalar: DecodeValue,
   pub(super) bytes: DecodeValue,
@@ -35,7 +35,7 @@ pub struct DecodeAttribute {
   pub(super) list: DecodeValue,
 }
 
-impl DecodeAttribute {
+impl DecodeOptions {
   pub(super) fn network(_: &syn::Path) -> Self {
     let scalar = DecodeValue {
       or_default: BoolOption::default(),

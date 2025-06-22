@@ -1,14 +1,16 @@
 use darling::FromMeta;
 use syn::{Attribute, Ident, LifetimeParam, TypeParam};
 
-use crate::{flavor::GenericFlavorFromMeta, utils::{
-  grost_flavor_param, grost_lifetime, grost_read_buffer_param, grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param, Invokable, SchemaFromMeta, Attributes,
-}};
-
-use super::{
-  IndexerFromMeta, PartialObjectFromMeta,
-  SelectorFromMeta, SelectorIterFromMeta,
+use crate::{
+  flavor::GenericFlavorFromMeta,
+  utils::{
+    Attributes, Invokable, SchemaFromMeta, grost_flavor_param, grost_lifetime,
+    grost_read_buffer_param, grost_unknown_buffer_param, grost_wire_format_param,
+    grost_write_buffer_param,
+  },
 };
+
+use super::{IndexerFromMeta, PartialObjectFromMeta, SelectorFromMeta, SelectorIterFromMeta};
 
 pub use field::*;
 mod field;
@@ -17,7 +19,7 @@ fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
   syn::parse_str(&s).map_err(Into::into)
 }
 
-#[derive(Debug, Default, Clone, FromMeta)]
+#[derive(Debug, Clone, FromMeta)]
 pub(in crate::object) struct Generic {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
   pub(in crate::object) lifetime: LifetimeParam,
@@ -31,6 +33,19 @@ pub(in crate::object) struct Generic {
   pub(in crate::object) write_buffer: TypeParam,
   #[darling(default = grost_wire_format_param)]
   pub(in crate::object) wire_format: TypeParam,
+}
+
+impl Default for Generic {
+  fn default() -> Self {
+    Self {
+      lifetime: grost_lifetime(),
+      flavor: grost_flavor_param(),
+      unknown_buffer: grost_unknown_buffer_param(),
+      read_buffer: grost_read_buffer_param(),
+      write_buffer: grost_write_buffer_param(),
+      wire_format: grost_wire_format_param(),
+    }
+  }
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]

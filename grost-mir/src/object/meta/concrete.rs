@@ -1,14 +1,16 @@
 use darling::FromMeta;
-use syn::{Attribute, Ident, LifetimeParam, Meta, Type, TypeParam};
+use syn::{parse_quote, Attribute, Ident, LifetimeParam, Meta, Type, TypeParam};
+use quote::quote;
 
-use crate::{flavor::{DecodeFromMeta, IdentifierFromMeta, TagFromMeta}, utils::{
-  grost_lifetime, grost_read_buffer_param, grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param, Invokable, NestedMeta, SchemaFromMeta, Attributes
-}};
-
-use super::{
-  IndexerFromMeta, PartialObjectFromMeta,
-  SelectorFromMeta, SelectorIterFromMeta,
+use crate::{
+  flavor::{DecodeFromMeta, IdentifierFromMeta, TagFromMeta},
+  utils::{
+    Attributes, Invokable, NestedMeta, SchemaFromMeta, grost_lifetime, grost_read_buffer_param,
+    grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param,
+  },
 };
+
+use super::{IndexerFromMeta, PartialObjectFromMeta, SelectorFromMeta, SelectorIterFromMeta};
 
 pub use field::*;
 mod field;
@@ -17,7 +19,7 @@ fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
   syn::parse_str(&s).map_err(Into::into)
 }
 
-#[derive(Debug, Default, Clone, FromMeta)]
+#[derive(Debug, Clone, FromMeta)]
 pub(in crate::object) struct Generic {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
   pub(in crate::object) lifetime: LifetimeParam,
@@ -31,12 +33,40 @@ pub(in crate::object) struct Generic {
   pub(in crate::object) wire_format: TypeParam,
 }
 
+impl Default for Generic {
+  fn default() -> Self {
+    Self {
+      lifetime: grost_lifetime(),
+      unknown_buffer: grost_unknown_buffer_param(),
+      read_buffer: grost_read_buffer_param(),
+      write_buffer: grost_write_buffer_param(),
+      wire_format: grost_wire_format_param(),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
-pub struct ObjectFlavorFromMeta {
-  ty: Type,
-  wire_format: Type,
-  tag: TagFromMeta,
-  identifier: IdentifierFromMeta,
+pub(in crate::object) struct ObjectFlavorFromMeta {
+  pub(in crate::object) ty: Type,
+  pub(in crate::object) wire_format: Type,
+  pub(in crate::object) tag: TagFromMeta,
+  pub(in crate::object) identifier: IdentifierFromMeta,
+}
+
+impl ObjectFlavorFromMeta {
+  pub(in crate::object) fn network(path_to_grost: &syn::Path) -> darling::Result<Self> {
+    let ty = syn::parse2(quote!(#path_to_grost::__private::flavors::Network))?;
+    let wire_format = syn::parse2(quote!(#path_to_grost::__private::flavors::network::LengthDelimited))?;
+    let identifier = IdentifierFromMeta::network(path_to_grost)?;
+    let tag = TagFromMeta::network(path_to_grost)?;
+
+    Ok(Self {
+      ty,
+      wire_format,
+      identifier,
+      tag,
+    })
+  }
 }
 
 impl FromMeta for ObjectFlavorFromMeta {
@@ -47,13 +77,10 @@ impl FromMeta for ObjectFlavorFromMeta {
       Meta::List(ref value) => {
         #[derive(Debug, Clone, FromMeta)]
         struct Helper {
-          #[darling(default, rename = "type")]
+          #[darling(rename = "type")]
           ty: Type,
-          #[darling(default)]
           wire_format: Type,
-          #[darling(default)]
           tag: TagFromMeta,
-          #[darling(default)]
           identifier: IdentifierFromMeta,
         }
         let Helper {
@@ -85,8 +112,7 @@ impl FromMeta for ObjectFlavorFromMeta {
 // partial_ref(
 //   decode()
 // ),
-// 
-
+//
 
 #[derive(Debug, Default, Clone, FromMeta)]
 pub(in crate::object) struct PartialRefObjectFromMeta {

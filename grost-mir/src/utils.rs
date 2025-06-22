@@ -174,12 +174,15 @@ impl BoolOption {
 }
 
 /// Specifies the behavior of how to handle the missing field during decoding.
-#[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
+#[derive(Debug, Clone, PartialEq, Eq, derive_more::Display, darling::FromMeta)]
 pub enum MissingOperation {
+  #[display("or_else")]
   #[darling(rename = "or_else")]
   OrElse(Invokable),
+  #[display("or_default")]
   #[darling(rename = "or_default")]
   OrDefault,
+  #[display("ok_or_else")]
   #[darling(rename = "ok_or_else")]
   OkOrElse(Invokable),
 }
@@ -188,9 +191,9 @@ impl MissingOperation {
   /// Returns the name of the operation, which is used to generate the method name in the code.
   pub const fn name(&self) -> &'static str {
     match self {
-      MissingOperation::Or(_) => "or_else",
+      MissingOperation::OrElse(_) => "or_else",
       MissingOperation::OrDefault => "or_default",
-      MissingOperation::OkOr(_) => "ok_or_else",
+      MissingOperation::OkOrElse(_) => "ok_or_else",
     }
   }
 
@@ -203,14 +206,10 @@ impl MissingOperation {
   /// Parsing an optional missing operation from a meta list
   #[inline]
   pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
-    fn duplicate_error(
-      old_op: &MissingOperation,
-      new_op: &str,
-    ) -> darling::Error {
+    fn duplicate_error(old_op: &MissingOperation, new_op: &str) -> darling::Error {
       darling::Error::custom(format!(
         "Cannot specify both `{}` and `{}` at the same time.",
-        old_op,
-        new_op,
+        old_op, new_op,
       ))
     }
 
@@ -221,8 +220,8 @@ impl MissingOperation {
     let mut missing_operation = None;
     for item in items {
       match item {
-        darling::ast::NestedMeta::Lit(_) => {
-          return Err(darling::Error::unexpected_lit_type(item));
+        darling::ast::NestedMeta::Lit(lit) => {
+          return Err(darling::Error::unexpected_lit_type(lit));
         }
         darling::ast::NestedMeta::Meta(meta) => {
           if meta.path().is_ident("or_else") {
@@ -282,10 +281,7 @@ impl ConvertOperation {
   /// Parses an optional convert operation from a meta list
   #[inline]
   pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
-    fn duplicate_error(
-      old_op: &ConvertOperation,
-      new_op: &str,
-    ) -> darling::Error {
+    fn duplicate_error(old_op: &ConvertOperation, new_op: &str) -> darling::Error {
       darling::Error::custom(format!(
         "Cannot specify both `{}` and `{}` at the same time.",
         old_op.name(),
@@ -301,8 +297,8 @@ impl ConvertOperation {
 
     for item in items {
       match item {
-        darling::ast::NestedMeta::Lit(_) => {
-          return Err(darling::Error::unexpected_lit_type(item));
+        darling::ast::NestedMeta::Lit(lit) => {
+          return Err(darling::Error::unexpected_lit_type(lit));
         }
         darling::ast::NestedMeta::Meta(meta) => {
           if meta.path().is_ident("from") {
@@ -499,7 +495,7 @@ pub struct SchemaFromMeta {
   pub(crate) description: Option<String>,
 }
 
-impl From<SchemaFromMeta> for SchemaAttribute {
+impl From<SchemaFromMeta> for SchemaOptions {
   fn from(meta: SchemaFromMeta) -> Self {
     Self {
       name: meta.name,
@@ -510,12 +506,12 @@ impl From<SchemaFromMeta> for SchemaAttribute {
 
 /// The meta for the schema
 #[derive(Default, Debug, Clone)]
-pub struct SchemaAttribute {
-  name: Option<String>,
-  description: Option<String>,
+pub struct SchemaOptions {
+  pub(crate) name: Option<String>,
+  pub(crate) description: Option<String>,
 }
 
-impl SchemaAttribute {
+impl SchemaOptions {
   /// Returns the name of the schema
   pub const fn name(&self) -> Option<&str> {
     match self.name.as_ref() {

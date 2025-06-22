@@ -1,16 +1,18 @@
-use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
-
+use syn::{Attribute, Type};
 use quote::quote;
 
+use super::{PartialFieldOptions, FieldConvertOptions};
+
 #[derive(Debug, Clone)]
-pub struct ConcretePartialField {
-  ty: Type,
-  optional_type: Type,
-  attrs: Vec<Attribute>, 
-  // convert: ConvertAttribute,
+pub struct PartialField {
+  pub(super) ty: Type,
+  pub(super) optional_type: Type,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) transform: FieldConvertOptions,
+  pub(super) partial_transform: FieldConvertOptions,
 }
 
-impl ConcretePartialField {
+impl PartialField {
   /// Returns the specified type of the partial field, if any.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -29,26 +31,20 @@ impl ConcretePartialField {
     self.attrs.as_slice()
   }
 
-  pub(super) fn from_ast(
+  pub(super) fn from_options(
     ty: &Type,
-    partial_type: Option<&Type>,
-    attrs: &[Attribute],
+    opts: PartialFieldOptions,
   ) -> darling::Result<Self> {
-    let constraints = Punctuated::new();
-    let ty = match partial_type {
-      Some(ty) => ty.clone(),
-      None => ty.clone(),
-    };
-
     let optional_type = syn::parse2(quote! {
       ::core::option::Option<#ty>
     })?;
 
     Ok(Self {
-      ty,
+      ty: ty.clone(),
       optional_type,
-      constraints,
-      attrs: attrs.to_vec(),
+      attrs: opts.attrs,
+      transform: opts.transform,
+      partial_transform: opts.partial_transform
     })
   }
 }

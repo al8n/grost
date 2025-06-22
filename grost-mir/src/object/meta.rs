@@ -1,4 +1,4 @@
-pub use field::*; 
+pub use field::*;
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use partial::PartialObjectFromMeta;
 pub(super) use selector::{SelectorFromMeta, SelectorIterFromMeta};

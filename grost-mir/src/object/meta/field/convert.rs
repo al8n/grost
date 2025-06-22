@@ -9,11 +9,11 @@ pub struct FieldConvertFromMeta {
   pub(in crate::object) convert_operation: Option<ConvertOperation>,
 }
 
-
 impl FromMeta for FieldConvertFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    let mut missing_operation: Option<MissingOperation> = MissingOperation::parse_from_meta_list(items)?;
-    let mut convert_operation = ConvertOperation::parse_from_meta_list(items)?;
+    let missing_operation: Option<MissingOperation> =
+      MissingOperation::parse_from_meta_list(items)?;
+    let convert_operation = ConvertOperation::parse_from_meta_list(items)?;
 
     Ok(FieldConvertFromMeta {
       missing_operation,
@@ -27,7 +27,7 @@ pub enum FieldSkipEncodeOperation {
   #[darling(rename = "skip")]
   Default,
   #[darling(rename = "skip_if")]
-  If(Option<Invokable>),
+  If(Invokable),
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -54,7 +54,9 @@ impl FromMeta for FieldEncodeFromMeta {
       error_if,
     } = Helper::from_list(items)?;
     if skip.is_some() && skip_if.is_some() {
-      return Err(darling::Error::custom("Cannot specify both `skip` and `skip_if` at the same time."));
+      return Err(darling::Error::custom(
+        "Cannot specify both `skip` and `skip_if` at the same time.",
+      ));
     }
 
     let skip_operation = if skip.is_some() {
@@ -74,9 +76,9 @@ impl FromMeta for FieldEncodeFromMeta {
 
 #[derive(Debug, Default, Clone)]
 pub struct FieldDecodeFromMeta {
-  func: Option<Invokable>,
-  then: Option<Invokable>,
-  missing_operation: Option<MissingOperation>,
+  pub(in crate::object) func: Option<Invokable>,
+  pub(in crate::object) then: Option<Invokable>,
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 impl FromMeta for FieldDecodeFromMeta {
@@ -93,17 +95,19 @@ impl FromMeta for FieldDecodeFromMeta {
     let mut remaining_items = vec![];
     let mut missing_operation_items = vec![];
 
-    items
-      .iter()
-      .cloned()
-      .for_each(|item| match item {
-        darling::ast::NestedMeta::Meta(meta) if meta.path().is_ident("or_else") || meta.path().is_ident("or_else_default") || meta.path().is_ident("ok_or_else") => {
-          missing_operation_items.push(item);
-        }
-        _ => remaining_items.push(item),
-      });
+    items.iter().cloned().for_each(|item| match item {
+      darling::ast::NestedMeta::Meta(ref meta)
+        if meta.path().is_ident("or_else")
+          || meta.path().is_ident("or_else_default")
+          || meta.path().is_ident("ok_or_else") =>
+      {
+        missing_operation_items.push(item);
+      }
+      _ => remaining_items.push(item),
+    });
 
-    let mut missing_operation: Option<MissingOperation> = MissingOperation::parse_from_meta_list(&missing_operation_items)?;
+    let missing_operation: Option<MissingOperation> =
+      MissingOperation::parse_from_meta_list(&missing_operation_items)?;
 
     #[derive(Debug, Default, Clone, FromMeta)]
     struct Helper {
@@ -122,4 +126,3 @@ impl FromMeta for FieldDecodeFromMeta {
     })
   }
 }
-
