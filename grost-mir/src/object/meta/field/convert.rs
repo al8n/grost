@@ -75,10 +75,8 @@ impl FromMeta for FieldEncodeFromMeta {
 
     let skip_operation = if skip.is_some() {
       Some(FieldSkipEncodeOperation::Default)
-    } else if let Some(skip_if) = skip_if {
-      Some(FieldSkipEncodeOperation::If(skip_if))
     } else {
-      None
+      skip_if.map(FieldSkipEncodeOperation::If)
     };
 
     Ok(FieldEncodeFromMeta {

@@ -22,9 +22,4 @@ impl IndexerOptions {
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
   }
-
-  /// Returns the attributes of the indexer
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
 }

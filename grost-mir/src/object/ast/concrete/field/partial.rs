@@ -13,8 +13,9 @@ impl PartialFieldFromMeta {
   pub(super) fn finalize(self) -> darling::Result<PartialFieldOptions> {
     Ok(PartialFieldOptions {
       attrs: self.attrs,
+      partial_transform_ref: self.partial_transform_ref.finalize()?,
+      transform_ref: self.transform_ref.finalize()?,
       partial_transform: self.partial_transform.finalize()?,
-      transform: self.transform.finalize()?,
     })
   }
 }
@@ -22,7 +23,8 @@ impl PartialFieldFromMeta {
 #[derive(Debug, Clone)]
 pub(super) struct PartialFieldOptions {
   pub(in crate::object) attrs: Vec<Attribute>,
-  pub(in crate::object) transform: PartialFieldConvertOptions,
+  pub(in crate::object) transform_ref: PartialFieldConvertOptions,
+  pub(in crate::object) partial_transform_ref: PartialFieldConvertOptions,
   pub(in crate::object) partial_transform: PartialFieldConvertOptions,
 }
 
@@ -31,7 +33,8 @@ pub struct PartialField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
   pub(super) attrs: Vec<Attribute>,
-  pub(super) transform: PartialFieldConvertOptions,
+  pub(super) transform_ref: PartialFieldConvertOptions,
+  pub(super) partial_transform_ref: PartialFieldConvertOptions,
   pub(super) partial_transform: PartialFieldConvertOptions,
 }
 
@@ -56,8 +59,14 @@ impl PartialField {
 
   /// Returns the transformation options for the partial field.
   #[inline]
-  pub const fn transform(&self) -> &PartialFieldConvertOptions {
-    &self.transform
+  pub const fn transform_ref(&self) -> &PartialFieldConvertOptions {
+    &self.transform_ref
+  }
+
+  /// Returns the partial transformation options for the partial field.
+  #[inline]
+  pub const fn partial_transform_ref(&self) -> &PartialFieldConvertOptions {
+    &self.partial_transform_ref
   }
 
   /// Returns the partial transformation options for the partial field.
@@ -76,31 +85,44 @@ impl PartialField {
       ::core::option::Option<#ty>
     })?;
 
-    let transform_missing_operation = opts.transform.missing_operation.or_else(|| {
+    let transform_ref_missing_operation = opts.transform_ref.missing_operation.or_else(|| {
       object
         .partial
         .transform
         .or_default_by_label(label)
         .then_some(MissingOperation::OrDefault)
     });
-    let partial_transform_operation = opts.partial_transform.missing_operation.or_else(|| {
-      object
-        .partial
-        .partial_transform
-        .or_default_by_label(label)
-        .then_some(MissingOperation::OrDefault)
-    });
+    let partial_transform_ref_missing_operation =
+      opts.partial_transform_ref.missing_operation.or_else(|| {
+        object
+          .partial
+          .partial_transform
+          .or_default_by_label(label)
+          .then_some(MissingOperation::OrDefault)
+      });
+    let partial_transform_missing_operation =
+      opts.partial_transform.missing_operation.or_else(|| {
+        object
+          .partial
+          .partial_transform
+          .or_default_by_label(label)
+          .then_some(MissingOperation::OrDefault)
+      });
 
     Ok(Self {
       ty: ty.clone(),
       optional_type,
       attrs: opts.attrs,
-      transform: {
-        opts.transform.missing_operation = transform_missing_operation;
-        opts.transform
+      transform_ref: {
+        opts.transform_ref.missing_operation = transform_ref_missing_operation;
+        opts.transform_ref
+      },
+      partial_transform_ref: {
+        opts.partial_transform_ref.missing_operation = partial_transform_ref_missing_operation;
+        opts.partial_transform_ref
       },
       partial_transform: {
-        opts.partial_transform.missing_operation = partial_transform_operation;
+        opts.partial_transform.missing_operation = partial_transform_missing_operation;
         opts.partial_transform
       },
     })

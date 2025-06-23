@@ -229,8 +229,8 @@ impl<T, S, O> RawObject<T, S, O> {
   pub fn selector_iter_name(&self) -> Ident {
     self
       .selector_iter
-      .name()
-      .cloned()
+      .name
+      .clone()
       .unwrap_or_else(|| format_ident!("{}Iter", self.selector_name()))
   }
 

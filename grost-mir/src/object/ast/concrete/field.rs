@@ -99,8 +99,8 @@ impl<E> RawTaggedField<E> {
 #[unwrap(ref)]
 #[try_unwrap(ref)]
 pub enum RawField<TM = (), SM = ()> {
-  Skipped(RawSkippedField<SM>),
-  Tagged(RawTaggedField<TM>),
+  Skipped(Box<RawSkippedField<SM>>),
+  Tagged(Box<RawTaggedField<TM>>),
 }
 
 impl<TM, SM> RawField<TM, SM> {
@@ -113,43 +113,48 @@ impl<TM, SM> RawField<TM, SM> {
     meta: FieldFromMeta<TM, SM>,
   ) -> darling::Result<Self> {
     match meta {
-      FieldFromMeta::Skipped(meta) => Ok(Self::Skipped(RawSkippedField {
+      FieldFromMeta::Skipped(meta) => Ok(Self::Skipped(Box::new(RawSkippedField {
         name,
         ty,
         vis,
         attrs,
         default: meta.default,
         extra: meta.extra,
-      })),
-      FieldFromMeta::Tagged(TaggedFieldFromMeta {
-        label,
-        schema,
-        default,
-        tag,
-        transform,
-        wire_format,
-        partial,
-        partial_ref,
-        selector,
-        copy,
-        extra,
-      }) => Ok(Self::Tagged(RawTaggedField {
-        name,
-        ty,
-        vis,
-        attrs,
-        label,
-        schema: schema.into(),
-        default,
-        tag,
-        wire_format,
-        transform: transform.finalize()?,
-        partial: partial.finalize()?,
-        partial_ref: partial_ref.finalize()?,
-        selector: selector.finalize(),
-        copy,
-        extra,
-      })),
+      }))),
+      FieldFromMeta::Tagged(field) => {
+        let field = *field;
+        let TaggedFieldFromMeta {
+          label,
+          schema,
+          default,
+          tag,
+          transform,
+          wire_format,
+          partial,
+          partial_ref,
+          selector,
+          copy,
+          extra,
+        } = field;
+
+        Ok(Self::Tagged(Box::new(RawTaggedField {
+          name,
+          ty,
+          vis,
+          attrs,
+          label,
+          schema: schema.into(),
+          default,
+          tag,
+          wire_format,
+          transform: transform.finalize()?,
+          partial: partial.finalize()?,
+          partial_ref: partial_ref.finalize()?,
+          selector: selector.finalize(),
+          copy,
+          extra,
+        })))
+      }
     }
   }
 
@@ -157,11 +162,11 @@ impl<TM, SM> RawField<TM, SM> {
     match self {
       Self::Skipped(skipped) => {
         let (skipped, extra) = skipped.extract();
-        (RawField::Skipped(skipped), Either::Right(extra))
+        (RawField::Skipped(Box::new(skipped)), Either::Right(extra))
       }
       Self::Tagged(tagged) => {
         let (tagged, extra) = tagged.extract();
-        (RawField::Tagged(tagged), Either::Left(extra))
+        (RawField::Tagged(Box::new(tagged)), Either::Left(extra))
       }
     }
   }
@@ -628,11 +633,11 @@ impl Field {
         let type_params_usages = f
           .ty
           .uses_type_params_cloned(&purpose.into(), &object.type_params_usages);
-        SkippedField::from_raw(f, lifetime_usages, type_params_usages)
+        SkippedField::from_raw(*f, lifetime_usages, type_params_usages)
           .map(|f| Self::Skipped(Box::new(f)))
       }
       RawField::Tagged(f) => {
-        TaggedField::from_raw(object, index, f).map(|t| Self::Tagged(Box::new(t)))
+        TaggedField::from_raw(object, index, *f).map(|t| Self::Tagged(Box::new(t)))
       }
     }
   }

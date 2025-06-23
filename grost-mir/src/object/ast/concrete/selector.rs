@@ -16,6 +16,7 @@ use super::Field;
 #[derive(Debug, Clone)]
 pub struct SelectorIter {
   name: Ident,
+  attrs: Vec<Attribute>,
   ty: Type,
   selected_type: Type,
   unselected_type: Type,
@@ -37,6 +38,12 @@ impl SelectorIter {
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
+  }
+
+  /// Returns the attributes of the selector iterator.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
   }
 
   /// Returns the lifetime parameter of the selector iterator.
@@ -231,6 +238,7 @@ impl Selector {
 
     Ok(SelectorIter {
       ty,
+      attrs: selector_iter.attrs,
       selected_type,
       unselected_type,
       lifetime_param: lifetime,

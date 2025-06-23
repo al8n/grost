@@ -17,8 +17,8 @@ use crate::{
 /// The meta of the object field
 #[derive(Debug, Clone)]
 pub enum FieldFromMeta<TO = (), SO = ()> {
-  Skipped(SkippedFieldFromMeta<SO>),
-  Tagged(TaggedFieldFromMeta<TO>),
+  Skipped(Box<SkippedFieldFromMeta<SO>>),
+  Tagged(Box<TaggedFieldFromMeta<TO>>),
 }
 
 impl<SO, TO> FromMeta for FieldFromMeta<SO, TO>
@@ -47,14 +47,14 @@ where
           darling::ast::NestedMeta::Meta(ref meta) => {
             if let Meta::Path(path) = meta {
               if path.is_ident("skip") {
-                return None;
+                None
               } else if is_tagged_field_only_identifiers(path) {
-                return Some(Err(darling::Error::custom(format!(
+                Some(Err(darling::Error::custom(format!(
                   "`{}` is not supported by skipped field",
                   path_to_string(path)
-                ))));
+                ))))
               } else {
-                return Some(Ok(item));
+                Some(Ok(item))
               }
             } else {
               Some(Ok(item))
@@ -63,10 +63,10 @@ where
         })
         .collect::<darling::Result<Vec<_>>>()?;
 
-      return SkippedFieldFromMeta::from_list(&skip_meta).map(Self::Skipped);
+      return SkippedFieldFromMeta::from_list(&skip_meta).map(|f| Self::Skipped(Box::new(f)));
     }
 
-    TaggedFieldFromMeta::from_list(items).map(Self::Tagged)
+    TaggedFieldFromMeta::from_list(items).map(|f| Self::Tagged(Box::new(f)))
   }
 }
 
@@ -76,7 +76,9 @@ pub struct PartialFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
   #[darling(default)]
-  pub(in crate::object) transform: PartialFieldConvertFromMeta,
+  pub(in crate::object) transform_ref: PartialFieldConvertFromMeta,
+  #[darling(default)]
+  pub(in crate::object) partial_transform_ref: PartialFieldConvertFromMeta,
   #[darling(default)]
   pub(in crate::object) partial_transform: PartialFieldConvertFromMeta,
 }
@@ -134,7 +136,7 @@ impl FromMeta for PartialRefFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub(in crate::object) struct TaggedFieldFromMeta<TO> {
+pub struct TaggedFieldFromMeta<TO> {
   pub(in crate::object) label: Label,
   pub(in crate::object) schema: SchemaFromMeta,
   pub(in crate::object) default: Option<Invokable>,

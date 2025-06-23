@@ -14,20 +14,8 @@ impl SelectorIterFromMeta {
 
 #[derive(Debug, Default, Clone)]
 pub struct SelectorIterOptions {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-}
-
-impl SelectorIterOptions {
-  /// Returns the name of the selector iterator
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the selector iterator
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
+  pub(super) name: Option<Ident>,
+  pub(super) attrs: Vec<Attribute>,
 }
 
 impl SelectorFromMeta {
@@ -54,71 +42,6 @@ impl SelectorOptions {
   /// Returns the attributes of the selector
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct ConcreteSelectorIter {
-  name: Ident,
-  attrs: Vec<Attribute>,
-}
-
-impl ConcreteSelectorIter {
-  /// Returns the name of the concrete selector iterator
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the attributes of the concrete selector iterator
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  pub(super) fn from_attribute(
-    selector_name: &Ident,
-    attribute: &SelectorIterOptions,
-  ) -> darling::Result<Self> {
-    let name = if let Some(name) = attribute.name() {
-      name.clone()
-    } else {
-      format_ident!("{selector_name}Iter")
-    };
-
-    Ok(Self {
-      name,
-      attrs: attribute.attrs().to_vec(),
-    })
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct ConcreteSelector {
-  name: Ident,
-  attrs: Vec<Attribute>,
-}
-
-impl ConcreteSelector {
-  /// Returns the name of the concrete selector
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the attributes of the concrete selector
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  pub(super) fn from_attribute(name: &Ident, attribute: &SelectorOptions) -> darling::Result<Self> {
-    let name = if let Some(name) = &attribute.name {
-      name.clone()
-    } else {
-      format_ident!("{name}Selector")
-    };
-
-    Ok(Self {
-      name,
-      attrs: attribute.attrs().to_vec(),
-    })
   }
 }
 
@@ -174,7 +97,7 @@ impl GenericSelectorIter {
     selector_name: &Ident,
     attribute: &SelectorIterOptions,
   ) -> darling::Result<Self> {
-    let name = if let Some(name) = attribute.name() {
+    let name = if let Some(name) = &attribute.name {
       name.clone()
     } else {
       format_ident!("{selector_name}Iter")
@@ -182,7 +105,7 @@ impl GenericSelectorIter {
 
     Ok(Self {
       name,
-      attrs: attribute.attrs().to_vec(),
+      attrs: attribute.attrs.to_vec(),
     })
   }
 }

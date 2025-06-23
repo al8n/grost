@@ -36,53 +36,6 @@ pub struct DecodeOptions {
 }
 
 impl DecodeOptions {
-  pub(super) fn network(_: &syn::Path) -> Self {
-    let scalar = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let bytes = DecodeValue {
-      or_default: BoolOption::yes(),
-    };
-    let string = DecodeValue {
-      or_default: BoolOption::yes(),
-    };
-    let object = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let enumeration = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let interface = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let union = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let map = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let set = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-    let list = DecodeValue {
-      or_default: BoolOption::default(),
-    };
-
-    Self {
-      or_default: BoolOption::default(),
-      scalar,
-      bytes,
-      string,
-      object,
-      enumeration,
-      interface,
-      union,
-      map,
-      set,
-      list,
-    }
-  }
-
   #[inline]
   pub const fn or_default_by_label(&self, label: &Label) -> bool {
     match label {
