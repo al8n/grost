@@ -1,16 +1,26 @@
 use crate::{
   object::meta::{
     FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, FieldSkipEncodeOperation,
+    PartialFieldConvertFromMeta,
   },
   utils::{ConvertOperation, Invokable, MissingOperation},
 };
+
+impl PartialFieldConvertFromMeta {
+  /// Finalizes the parsing and returns a `PartialFieldConvertOptions`.
+  pub fn finalize(self) -> darling::Result<PartialFieldConvertOptions> {
+    Ok(PartialFieldConvertOptions {
+      missing_operation: self.missing_operation,
+      convert_operation: self.convert_operation,
+    })
+  }
+}
 
 impl FieldConvertFromMeta {
   /// Finalizes the parsing and returns a `FieldConvertOptions`.
   pub fn finalize(self) -> darling::Result<FieldConvertOptions> {
     Ok(FieldConvertOptions {
       missing_operation: self.missing_operation,
-      convert_operation: self.convert_operation,
     })
   }
 }
@@ -40,10 +50,23 @@ impl FieldDecodeFromMeta {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct FieldConvertOptions {
   pub(crate) missing_operation: Option<MissingOperation>,
-  pub(crate) convert_operation: Option<ConvertOperation>,
 }
 
 impl FieldConvertOptions {
+  /// Returns the missing operation that should be performed if the field is missing during converting.
+  pub const fn missing_operation(&self) -> Option<&MissingOperation> {
+    self.missing_operation.as_ref()
+  }
+}
+
+/// Represents the options for converting a field during converting.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct PartialFieldConvertOptions {
+  pub(crate) missing_operation: Option<MissingOperation>,
+  pub(crate) convert_operation: Option<ConvertOperation>,
+}
+
+impl PartialFieldConvertOptions {
   /// Returns the missing operation that should be performed if the field is missing during converting.
   pub const fn missing_operation(&self) -> Option<&MissingOperation> {
     self.missing_operation.as_ref()

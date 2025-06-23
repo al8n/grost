@@ -1,5 +1,28 @@
+use crate::object::meta::concrete::PartialRefFieldFromMeta;
+
 use super::{FieldDecodeOptions, FieldEncodeOptions};
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
+
+impl PartialRefFieldFromMeta {
+  pub(super) fn finalize(self) -> darling::Result<PartialRefFieldOptions> {
+    Ok(PartialRefFieldOptions {
+      copy: self.copy,
+      attrs: self.attrs,
+      ty: self.ty,
+      encode: self.encode.finalize()?,
+      decode: self.decode.finalize()?,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct PartialRefFieldOptions {
+  pub(in crate::object) copy: bool,
+  pub(in crate::object) attrs: Vec<Attribute>,
+  pub(in crate::object) ty: Option<Type>,
+  pub(in crate::object) encode: FieldEncodeOptions,
+  pub(in crate::object) decode: FieldDecodeOptions,
+}
 
 #[derive(Debug, Clone)]
 pub struct PartialRefField {

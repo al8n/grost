@@ -11,13 +11,11 @@ use crate::{
     ast::{
       concrete::RawObject,
       field::{
-        FieldConvertOptions, FieldDecodeOptions, FieldEncodeOptions, Index, RawSkippedField,
-        SelectorFieldOptions, SkippedField,
+        FieldConvertOptions, FieldDecodeOptions, FieldEncodeOptions, Index,
+        PartialFieldConvertOptions, RawSkippedField, SelectorFieldOptions, SkippedField,
       },
     },
-    meta::concrete::{
-      FieldFromMeta, PartialFieldFromMeta, PartialRefFieldFromMeta, TaggedFieldFromMeta,
-    },
+    meta::concrete::{FieldFromMeta, TaggedFieldFromMeta},
   },
   utils::{Invokable, MissingOperation, SchemaOptions, grost_decode_trait_lifetime},
 };
@@ -32,109 +30,30 @@ mod partial_ref;
 mod reflection;
 mod selector;
 
-impl PartialFieldFromMeta {
-  /// Finalizes the partial field meta and returns the attribute
-  pub fn finalize(self) -> darling::Result<PartialFieldOptions> {
-    Ok(PartialFieldOptions {
-      attrs: self.attrs,
-      partial_transform: self.partial_transform.finalize()?,
-      transform: self.transform.finalize()?,
-    })
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialFieldOptions {
-  pub(in crate::object) attrs: Vec<Attribute>,
-  pub(in crate::object) transform: FieldConvertOptions,
-  pub(in crate::object) partial_transform: FieldConvertOptions,
-}
-
-impl PartialFieldOptions {
-  /// Returns the attributes of the partial object field
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns the options for transforming the ref type to owned type.
-  pub const fn transform(&self) -> &FieldConvertOptions {
-    &self.transform
-  }
-
-  /// Returns the options for partially transforming the ref type to owned type.
-  pub const fn partial_transform(&self) -> &FieldConvertOptions {
-    &self.partial_transform
-  }
-}
-
-impl PartialRefFieldFromMeta {
-  fn finalize(self) -> darling::Result<PartialRefFieldOptions> {
-    Ok(PartialRefFieldOptions {
-      copy: self.copy,
-      attrs: self.attrs,
-      ty: self.ty,
-      encode: self.encode.finalize()?,
-      decode: self.decode.finalize()?,
-    })
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialRefFieldOptions {
-  pub(in crate::object) copy: bool,
-  pub(in crate::object) attrs: Vec<Attribute>,
-  pub(in crate::object) ty: Option<Type>,
-  pub(in crate::object) encode: FieldEncodeOptions,
-  pub(in crate::object) decode: FieldDecodeOptions,
-}
-
-impl PartialRefFieldOptions {
-  /// Returns the attributes of the partial reference object field
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns whether the partial reference object field is copyable
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-
-  /// Returns the type of the partial decoded object field
-  pub const fn ty(&self) -> Option<&Type> {
-    self.ty.as_ref()
-  }
-
-  /// Returns the options for encoding a field.
-  pub const fn encode(&self) -> &FieldEncodeOptions {
-    &self.encode
-  }
-
-  /// Returns the options for decoding a field.
-  pub const fn decode(&self) -> &FieldDecodeOptions {
-    &self.decode
-  }
-}
-
 #[derive(Debug, Clone)]
 pub struct RawTaggedField<E = ()> {
-  pub name: Ident,
-  pub ty: Type,
-  pub vis: Visibility,
-  pub attrs: Vec<Attribute>,
-  pub label: Label,
-  pub schema: SchemaOptions,
-  pub default: Option<Invokable>,
-  pub tag: NonZeroU32,
-  pub wire_format: Option<Type>,
-  pub transform: FieldConvertOptions,
-  pub partial: PartialFieldOptions,
-  pub partial_ref: PartialRefFieldOptions,
-  pub selector: SelectorFieldOptions,
-  pub copy: bool,
-  pub extra: E,
+  name: Ident,
+  ty: Type,
+  vis: Visibility,
+  attrs: Vec<Attribute>,
+  label: Label,
+  schema: SchemaOptions,
+  default: Option<Invokable>,
+  tag: NonZeroU32,
+  wire_format: Option<Type>,
+  transform: FieldConvertOptions,
+  partial: PartialFieldOptions,
+  partial_ref: PartialRefFieldOptions,
+  selector: SelectorFieldOptions,
+  copy: bool,
+  extra: E,
 }
 
 impl<E> RawTaggedField<E> {
+  pub(super) const fn tag(&self) -> u32 {
+    self.tag.get()
+  }
+
   fn extract(self) -> (RawTaggedField, E) {
     let Self {
       name,
@@ -376,6 +295,12 @@ impl<T> TaggedField<T> {
     &self.reflection
   }
 
+  /// Returns the transformation options for the field.
+  #[inline]
+  pub const fn transform(&self) -> &FieldConvertOptions {
+    &self.transform
+  }
+
   /// Returns the custom metadata associated with the field.
   #[inline]
   pub const fn meta(&self) -> &T {
@@ -392,6 +317,12 @@ impl<T> TaggedField<T> {
   #[inline]
   pub const fn lifetimes_usages(&self) -> &LifetimeSet {
     &self.lifetimes_usages
+  }
+
+  /// Returns `true` if the field uses generics, `false` otherwise.
+  #[inline]
+  pub fn uses_generics(&self) -> bool {
+    !self.type_params_usages.is_empty() || !self.lifetimes_usages.is_empty()
   }
 }
 
@@ -492,7 +423,7 @@ impl TaggedField {
       })?);
     }
 
-    let partial_ref_copyable = object.partial_ref.copy() || field.partial_ref.copy();
+    let partial_ref_copyable = object.partial_ref.copy() || field.partial_ref.copy;
     let partial_ref_copy_contraint = if partial_ref_copyable {
       Some(quote! {
         + ::core::marker::Copy
@@ -501,7 +432,7 @@ impl TaggedField {
       None
     };
 
-    let (partial_ref_ty, decoded_state_type) = match field.partial_ref.ty() {
+    let (partial_ref_ty, decoded_state_type) = match &field.partial_ref.ty {
       Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
@@ -551,7 +482,7 @@ impl TaggedField {
     let partial = PartialField::from_options(object, &field_ty, field.partial, &field.label)?;
     let decode_missing_operation = field
       .partial_ref
-      .decode()
+      .decode
       .missing_operation()
       .cloned()
       .or_else(|| {
@@ -689,76 +620,20 @@ impl Field {
     field: RawField,
   ) -> darling::Result<Self> {
     match field {
-      RawField::Skipped(f) => f.try_into().map(|f| Self::Skipped(Box::new(f))),
+      RawField::Skipped(f) => {
+        let purpose = Purpose::Declare;
+        let lifetime_usages = f
+          .ty
+          .uses_lifetimes_cloned(&purpose.into(), &object.lifetimes_usages);
+        let type_params_usages = f
+          .ty
+          .uses_type_params_cloned(&purpose.into(), &object.type_params_usages);
+        SkippedField::from_raw(f, lifetime_usages, type_params_usages)
+          .map(|f| Self::Skipped(Box::new(f)))
+      }
       RawField::Tagged(f) => {
         TaggedField::from_raw(object, index, f).map(|t| Self::Tagged(Box::new(t)))
       }
     }
   }
 }
-
-// #[derive(Debug, Clone)]
-// pub(in crate::object) struct TaggedField<M = ()> {
-//   pub(in crate::object) attrs: Vec<Attribute>,
-//   pub(in crate::object) vis: Visibility,
-//   pub(in crate::object) name: Ident,
-//   pub(in crate::object) ty: Type,
-//   pub(in crate::object) schema_name: String,
-//   pub(in crate::object) schema_description: String,
-//   pub(in crate::object) wire_format: Option<Type>,
-//   pub(in crate::object) transform: FieldConvertOptions,
-//   pub(in crate::object) label: Label,
-//   // pub(in crate::object) type_params_usages: IdentSet,
-//   // pub(in crate::object) lifetimes_usages: LifetimeSet,
-//   pub(in crate::object) partial_ref: PartialRefFieldOptions,
-//   pub(in crate::object) partial: PartialFieldOptions,
-//   pub(in crate::object) selector: SelectorFieldOptions,
-//   pub(in crate::object) default: Invokable,
-//   pub(in crate::object) tag: u32,
-//   pub(in crate::object) copy: bool,
-//   pub(in crate::object) meta: M,
-// }
-
-// impl<M> TaggedField<M> {
-//   pub(in crate::object) fn try_new(
-//     f: RawTaggedField<M>,
-//   ) -> darling::Result<Self>
-//   where
-//     M: Clone,
-//   {
-//     let attrs = f.attrs;
-//     let vis = f.vis;
-//     let name = f.name;
-//     let ty = f.ty;
-//     let tag = f.tag.get();
-
-//     let label = f.label;
-//     let default = match f.default {
-//       Some(path) => path,
-//       None => syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?,
-//     };
-//     let schema_name = f.schema.name.unwrap_or_else(|| name.to_string());
-//     let schema_description = f.schema.description.unwrap_or_default();
-
-//     Ok(Self {
-//       attrs,
-//       vis,
-//       name,
-//       schema_description,
-//       schema_name,
-//       type_params_usages: ty.uses_type_params_cloned(&Purpose::Declare.into(), type_params),
-//       lifetimes_usages: ty.uses_lifetimes_cloned(&Purpose::Declare.into(), lifetime_params),
-//       ty,
-//       wire_format: f.wire_format,
-//       transform: f.transform,
-//       tag,
-//       default,
-//       label,
-//       partial_ref: f.partial_ref,
-//       partial: f.partial,
-//       selector: f.selector,
-//       copy: f.copy,
-//       meta: f.extra,
-//     })
-//   }
-// }

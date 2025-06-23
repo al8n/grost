@@ -1,4 +1,4 @@
-use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
+use darling::usage::{IdentSet, LifetimeSet};
 use heck::ToUpperCamelCase;
 use quote::{format_ident, quote};
 use syn::{
@@ -6,19 +6,12 @@ use syn::{
   parse::{Parse, Parser},
 };
 
-// pub use flavor::{
-//   FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor,
-//   FieldFlavorAttribute,
-// };
-// pub(in crate::object) use generic::{GenericField, GenericTaggedField};
 pub use convert::*;
 pub use selector::SelectorFieldOptions;
 
 use crate::utils::Invokable;
 
 mod convert;
-// mod flavor;
-// mod generic;
 mod selector;
 
 #[derive(Debug, Clone)]
@@ -61,6 +54,8 @@ pub struct SkippedField<M = ()> {
   pub(super) name: Ident,
   pub(super) ty: Type,
   pub(super) default: Invokable,
+  pub(super) lifetimes_usages: LifetimeSet,
+  pub(super) type_params_usages: IdentSet,
   pub(super) meta: M,
 }
 
@@ -95,6 +90,24 @@ impl<M> SkippedField<M> {
     &self.default
   }
 
+  /// Returns the lifetimes used in the skipped field
+  #[inline]
+  pub const fn lifetimes_usages(&self) -> &LifetimeSet {
+    &self.lifetimes_usages
+  }
+
+  /// Returns the type parameters used in the skipped field
+  #[inline]
+  pub const fn type_params_usages(&self) -> &IdentSet {
+    &self.type_params_usages
+  }
+
+  /// Returns `true` if the skipped field contains any generics.
+  #[inline]
+  pub fn use_generics(&self) -> bool {
+    !self.lifetimes_usages.is_empty() || !self.type_params_usages.is_empty()
+  }
+
   /// Returns the custom metadata associated with the skipped field
   #[inline]
   pub const fn meta(&self) -> &M {
@@ -110,33 +123,32 @@ impl SkippedField {
       name: self.name,
       ty: self.ty,
       default: self.default,
+      lifetimes_usages: self.lifetimes_usages,
+      type_params_usages: self.type_params_usages,
       meta,
     }
   }
-}
 
-impl<M> TryFrom<RawSkippedField<M>> for SkippedField<M> {
-  type Error = darling::Error;
+  pub(super) fn from_raw(
+    f: RawSkippedField,
+    lifetimes_usages: LifetimeSet,
+    type_params_usages: IdentSet,
+  ) -> darling::Result<Self> {
+    let (f, extra) = f.extract();
 
-  fn try_from(f: RawSkippedField<M>) -> Result<Self, Self::Error> {
-    let attrs = f.attrs;
-    let vis = f.vis;
-    let name = f.name;
-    let ty = f.ty;
-    let default = f.default;
-
-    let default = if let Some(path) = default {
-      path
-    } else {
-      syn::parse2::<syn::Path>(quote! { ::core::default::Default::default })?.into()
-    };
-    Ok(Self {
-      attrs,
-      vis,
-      name,
-      ty,
-      default,
-      meta: f.extra,
+    Ok(SkippedField {
+      attrs: f.attrs,
+      vis: f.vis,
+      name: f.name,
+      ty: f.ty,
+      default: if let Some(path) = f.default {
+        path
+      } else {
+        syn::parse2::<syn::Path>(quote! { ::core::default::Default::default })?.into()
+      },
+      lifetimes_usages,
+      type_params_usages,
+      meta: extra,
     })
   }
 }

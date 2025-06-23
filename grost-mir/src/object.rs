@@ -8,6 +8,7 @@ pub use meta::{FieldSelection, Label};
 // };
 // pub use mir::*;
 
+pub use ast::*;
 mod ast;
 /// The meta for the object and object's fields
 pub mod meta;

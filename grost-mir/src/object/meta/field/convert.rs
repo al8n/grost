@@ -6,16 +6,30 @@ use crate::utils::{BoolOption, ConvertOperation, Invokable, MissingOperation, Ne
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct FieldConvertFromMeta {
   pub(in crate::object) missing_operation: Option<MissingOperation>,
-  pub(in crate::object) convert_operation: Option<ConvertOperation>,
 }
 
 impl FromMeta for FieldConvertFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let missing_operation: Option<MissingOperation> =
       MissingOperation::parse_from_meta_list(items)?;
+
+    Ok(Self { missing_operation })
+  }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct PartialFieldConvertFromMeta {
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
+  pub(in crate::object) convert_operation: Option<ConvertOperation>,
+}
+
+impl FromMeta for PartialFieldConvertFromMeta {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let missing_operation: Option<MissingOperation> =
+      MissingOperation::parse_from_meta_list(items)?;
     let convert_operation = ConvertOperation::parse_from_meta_list(items)?;
 
-    Ok(FieldConvertFromMeta {
+    Ok(PartialFieldConvertFromMeta {
       missing_operation,
       convert_operation,
     })

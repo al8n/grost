@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use darling::FromMeta;
 use proc_macro2::{Delimiter, TokenTree};
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::{
   Attribute, ConstParam, Expr, ExprLit, Ident, Lit, MacroDelimiter, Meta, MetaList, MetaNameValue,
   Path, PathSegment, Token, TypeParam,
@@ -254,6 +254,20 @@ impl MissingOperation {
 
     Ok(missing_operation)
   }
+
+  pub fn call(&self) -> proc_macro2::TokenStream {
+    match self {
+      MissingOperation::OrElse(invokable) => {
+        quote! { (#invokable)() }
+      }
+      MissingOperation::OrDefault => {
+        quote! { (::core::default::Default::default)() }
+      }
+      MissingOperation::OkOrElse(invokable) => {
+        quote! { (#invokable)()? }
+      }
+    }
+  }
 }
 
 /// Specifies the behavior of how to do the convert operation.
@@ -322,6 +336,17 @@ impl ConvertOperation {
       }
     }
     Ok(convert_operation)
+  }
+
+  pub fn call(&self, args: &[impl ToTokens]) -> proc_macro2::TokenStream {
+    match self {
+      ConvertOperation::From(invokable) => {
+        quote! { (#invokable)(#(#args),*) }
+      }
+      ConvertOperation::TryFrom(invokable) => {
+        quote! { (#invokable)(#(#args),*)? }
+      }
+    }
   }
 }
 

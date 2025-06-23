@@ -7,8 +7,8 @@ use crate::{
   object::{
     Label,
     meta::{
-      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, SelectorFieldFromMeta,
-      SkippedFieldFromMeta,
+      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta,
+      SelectorFieldFromMeta, SkippedFieldFromMeta,
     },
   },
   utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
@@ -76,9 +76,9 @@ pub struct PartialFieldFromMeta {
   #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
   #[darling(default)]
-  pub(in crate::object) transform: FieldConvertFromMeta,
+  pub(in crate::object) transform: PartialFieldConvertFromMeta,
   #[darling(default)]
-  pub(in crate::object) partial_transform: FieldConvertFromMeta,
+  pub(in crate::object) partial_transform: PartialFieldConvertFromMeta,
 }
 
 /// The meta of the partial reference object field

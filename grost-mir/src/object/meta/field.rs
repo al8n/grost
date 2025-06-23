@@ -2,6 +2,7 @@ use darling::FromMeta;
 
 pub use convert::{
   FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, FieldSkipEncodeOperation,
+  PartialFieldConvertFromMeta,
 };
 pub use label::Label;
 pub use selector::{FieldSelection, SelectorFieldFromMeta};

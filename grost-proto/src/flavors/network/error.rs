@@ -74,15 +74,13 @@ pub enum Error {
     /// The required capacity of the buffer.
     required: NonZeroUsize,
   },
-  /// Returned when the buffer does not contain the required field.
-  #[error("{field}{identifier} in {ty} is not found in buffer")]
+  /// Returned when the field is not found but is required in the message.
+  #[error("field {field_name} not found when constructing {struct_name}")]
   FieldNotFound {
-    /// The type of the message.
-    ty: &'static str,
-    /// The name of the field.
-    field: &'static str,
-    /// The identifier of the field.
-    identifier: Identifier,
+    /// The structure name.
+    struct_name: &'static str,
+    /// The field name.
+    field_name: &'static str,
   },
   /// Returned when the buffer contains duplicate fields for the same tag in a message.
   #[error("duplicate field {name} with identifier{identifier} in {ty}")]
@@ -252,15 +250,10 @@ impl Error {
 
   /// Creates a new missing field decoding error.
   #[inline]
-  pub const fn field_not_found(
-    ty: &'static str,
-    field: &'static str,
-    identifier: Identifier,
-  ) -> Self {
+  pub const fn field_not_found(struct_name: &'static str, field_name: &'static str) -> Self {
     Self::FieldNotFound {
-      ty,
-      field,
-      identifier,
+      struct_name,
+      field_name,
     }
   }
 
@@ -368,6 +361,10 @@ impl From<BaseError<Network>> for Error {
         ty,
         identifier,
       } => Self::duplicate_field(name, ty, identifier),
+      BaseError::FieldNotFound {
+        struct_name,
+        field_name,
+      } => Self::field_not_found(struct_name, field_name),
       BaseError::UnknownIdentifier { ty, identifier } => Self::unknown_identifier(ty, identifier),
       BaseError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
       BaseError::Custom(cow) => Self::Custom(cow),

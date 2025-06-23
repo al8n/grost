@@ -7,15 +7,17 @@ use syn::{Attribute, Ident, Meta, Path, Type};
 use crate::{
   object::{
     Label,
-    meta::{FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, SelectorFieldFromMeta},
+    meta::{
+      FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta, SelectorFieldFromMeta,
+    },
   },
   utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
 };
 
 #[derive(Debug, Default, Clone, FromMeta)]
 pub(in crate::object) struct PartialFieldFlavorFromMeta {
-  pub(in crate::object) transform: FieldConvertFromMeta,
-  pub(in crate::object) partial_transform: FieldConvertFromMeta,
+  pub(in crate::object) transform: PartialFieldConvertFromMeta,
+  pub(in crate::object) partial_transform: PartialFieldConvertFromMeta,
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
@@ -120,7 +122,7 @@ pub enum GenericFieldFromMeta<TO = (), SO = ()> {
     default: Option<Invokable>,
     tag: NonZeroU32,
     flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
-    transform: FieldConvertFromMeta,
+    transform: PartialFieldConvertFromMeta,
     partial: GenericPartialFieldFromMeta,
     partial_ref: GenericPartialRefFieldFromMeta,
     selector: SelectorFieldFromMeta,
@@ -220,7 +222,7 @@ struct TaggedFieldFromMeta<TO> {
   default: Option<Invokable>,
   tag: NonZeroU32,
   flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
-  transform: FieldConvertFromMeta,
+  transform: PartialFieldConvertFromMeta,
   partial: GenericPartialFieldFromMeta,
   partial_ref: GenericPartialRefFieldFromMeta,
   selector: SelectorFieldFromMeta,
@@ -264,7 +266,7 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       #[darling(default)]
       flavors: BTreeMap<Ident, FieldFlavorFromMeta>,
       #[darling(default)]
-      transform: FieldConvertFromMeta,
+      transform: PartialFieldConvertFromMeta,
       #[darling(default)]
       partial: GenericPartialFieldFromMeta,
       #[darling(default)]

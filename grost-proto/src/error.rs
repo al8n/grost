@@ -93,6 +93,15 @@ pub enum Error<F: Flavor + ?Sized> {
     identifier: F::Identifier,
   },
 
+  /// Returned when the field is not found but is required in the message.
+  #[display("field {field_name} not found when constructing {struct_name}")]
+  FieldNotFound {
+    /// The structure name.
+    struct_name: &'static str,
+    /// The field name.
+    field_name: &'static str,
+  },
+
   /// Returned when fail to decode the length-delimited
   #[display("length-delimited overflow the maximum value of u32")]
   LengthDelimitedOverflow,
@@ -161,6 +170,15 @@ impl<F: Flavor + ?Sized> Error<F> {
       name,
       ty,
       identifier,
+    }
+  }
+
+  /// Creates a field not found error.
+  #[inline]
+  pub const fn field_not_found(struct_name: &'static str, field_name: &'static str) -> Self {
+    Self::FieldNotFound {
+      struct_name,
+      field_name,
     }
   }
 

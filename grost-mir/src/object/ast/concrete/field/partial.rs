@@ -1,17 +1,38 @@
 use quote::quote;
 use syn::{Attribute, Type};
 
-use crate::{object::Label, utils::MissingOperation};
+use crate::{
+  object::{Label, meta::concrete::PartialFieldFromMeta},
+  utils::MissingOperation,
+};
 
-use super::{FieldConvertOptions, PartialFieldOptions};
+use super::PartialFieldConvertOptions;
+
+impl PartialFieldFromMeta {
+  /// Finalizes the partial field meta and returns the attribute
+  pub(super) fn finalize(self) -> darling::Result<PartialFieldOptions> {
+    Ok(PartialFieldOptions {
+      attrs: self.attrs,
+      partial_transform: self.partial_transform.finalize()?,
+      transform: self.transform.finalize()?,
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct PartialFieldOptions {
+  pub(in crate::object) attrs: Vec<Attribute>,
+  pub(in crate::object) transform: PartialFieldConvertOptions,
+  pub(in crate::object) partial_transform: PartialFieldConvertOptions,
+}
 
 #[derive(Debug, Clone)]
 pub struct PartialField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
   pub(super) attrs: Vec<Attribute>,
-  pub(super) transform: FieldConvertOptions,
-  pub(super) partial_transform: FieldConvertOptions,
+  pub(super) transform: PartialFieldConvertOptions,
+  pub(super) partial_transform: PartialFieldConvertOptions,
 }
 
 impl PartialField {
@@ -33,8 +54,20 @@ impl PartialField {
     self.attrs.as_slice()
   }
 
-  pub(super) fn from_options<T, S, M>(
-    object: &super::RawObject<T, S, M>,
+  /// Returns the transformation options for the partial field.
+  #[inline]
+  pub const fn transform(&self) -> &PartialFieldConvertOptions {
+    &self.transform
+  }
+
+  /// Returns the partial transformation options for the partial field.
+  #[inline]
+  pub const fn partial_transform(&self) -> &PartialFieldConvertOptions {
+    &self.partial_transform
+  }
+
+  pub(super) fn from_options(
+    object: &super::RawObject,
     ty: &Type,
     mut opts: PartialFieldOptions,
     label: &Label,

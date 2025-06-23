@@ -1,17 +1,17 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use darling::usage::{GenericsExt, IdentSet, LifetimeSet};
 use either::Either;
 use indexmap::IndexSet;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::{
   flavor::{DecodeOptions, IdentifierOptions, TagOptions},
   object::{
     ast::{
-      Indexer, ObjectConvertOptions,
+      Indexer, ObjectConvertOptions, accessors,
       concrete::{
         reflection::Reflection,
         selector::{Selector, SelectorIter},
@@ -21,7 +21,7 @@ use crate::{
     },
     meta::{
       ObjectFromMeta,
-      concrete::{ObjectFlavorFromMeta, PartialObjectFromMeta, PartialRefObjectFromMeta},
+      concrete::{ObjectFlavorFromMeta, PartialRefObjectFromMeta},
     },
   },
   utils::{Invokable, SchemaOptions},
@@ -29,71 +29,16 @@ use crate::{
 
 use field::*;
 
+pub use partial::*;
+pub use partial_ref::*;
+
+mod decode;
 mod field;
+mod indexer;
+mod partial;
+mod partial_ref;
 mod reflection;
 mod selector;
-
-impl PartialObjectFromMeta {
-  pub(super) fn finalize(self) -> PartialObjectOptions {
-    PartialObjectOptions {
-      name: self.name,
-      attrs: self.attrs,
-      transform: self.transform.into(),
-      partial_transform: self.partial_transform.into(),
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialObjectOptions {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
-  transform: ObjectConvertOptions,
-  partial_transform: ObjectConvertOptions,
-}
-
-impl PartialObjectOptions {
-  /// Returns the name of the partial object
-  pub(crate) const fn name(&self) -> Option<&Ident> {
-    self.name.as_ref()
-  }
-
-  /// Returns the attributes of the partial object
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-}
-
-#[derive(Debug, Clone)]
-pub struct PartialObject {
-  name: Ident,
-  attrs: Vec<Attribute>,
-}
-
-impl PartialObject {
-  /// Returns the name of the partial object
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the attributes of the partial object
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  pub(super) fn from_options(name: &Ident, options: PartialObjectOptions) -> darling::Result<Self> {
-    let name = if let Some(name) = options.name() {
-      name.clone()
-    } else {
-      format_ident!("Partial{}", name)
-    };
-
-    Ok(Self {
-      name,
-      attrs: options.attrs,
-    })
-  }
-}
 
 impl PartialRefObjectFromMeta {
   pub(super) fn finalize(self) -> PartialRefObjectOptions {
@@ -131,51 +76,10 @@ impl PartialRefObjectOptions {
   }
 }
 
-#[derive(Debug, Clone)]
-pub(in crate::object) struct PartialRefObject {
-  name: Ident,
-  attrs: Vec<Attribute>,
-  copy: bool,
-}
-
-impl PartialRefObject {
-  pub(super) fn from_options(
-    object_name: &Ident,
-    opts: PartialRefObjectOptions,
-  ) -> darling::Result<Self> {
-    let name = if let Some(name) = opts.name() {
-      name.clone()
-    } else {
-      format_ident!("PartialRef{}", object_name)
-    };
-
-    Ok(Self {
-      name,
-      attrs: opts.attrs,
-      copy: opts.copy,
-    })
-  }
-
-  /// Returns the name of the concrete partial decoded object
-  pub const fn name(&self) -> &Ident {
-    &self.name
-  }
-
-  /// Returns the attributes of the concrete partial decoded object
-  pub const fn attrs(&self) -> &[Attribute] {
-    self.attrs.as_slice()
-  }
-
-  /// Returns whether the concrete partial decoded object is copyable
-  pub const fn copy(&self) -> bool {
-    self.copy
-  }
-}
-
 /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
 /// over the flavor type.
 #[derive(Debug, Clone)]
-pub struct RawObject<T = (), S = (), O = ()> {
+struct RawObject<T = (), S = (), O = ()> {
   name: Ident,
   vis: Visibility,
   generics: Generics,
@@ -208,7 +112,7 @@ pub struct RawObject<T = (), S = (), O = ()> {
 
 impl<T, S, O> RawObject<T, S, O> {
   /// Creates a new `RawObject` from the given parameters.
-  pub fn new(
+  fn new(
     path_to_grost: Path,
     name: Ident,
     vis: Visibility,
@@ -228,7 +132,7 @@ impl<T, S, O> RawObject<T, S, O> {
     };
 
     fields.sort_by_key(|a| match a {
-      RawField::Tagged(f) => f.tag.get(),
+      RawField::Tagged(f) => f.tag(),
       RawField::Skipped(_) => u32::MAX, // Skipped fields come last
     });
 
@@ -237,13 +141,13 @@ impl<T, S, O> RawObject<T, S, O> {
       .iter()
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .try_for_each(|f| {
-        if tags.contains(&f.tag) {
+        let tag = f.tag();
+        if tags.contains(&tag) {
           Err(darling::Error::custom(format!(
-            "{name} has multiple fields have the same tag {}",
-            f.tag
+            "{name} has multiple fields have the same tag {tag}",
           )))
         } else {
-          tags.insert(f.tag);
+          tags.insert(tag);
           Ok(())
         }
       })?;
@@ -415,6 +319,8 @@ impl<T, S, O> RawObject<T, S, O> {
   }
 }
 
+/// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
+/// over the flavor type.
 #[derive(derive_more::Debug, Clone)]
 pub struct Object<T = (), S = (), M = ()> {
   path_to_grost: Path,
@@ -430,7 +336,7 @@ pub struct Object<T = (), S = (), M = ()> {
   generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
-  applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
+  applied_decode_trait: Rc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   flavor_type: Type,
   wire_format: Type,
   tag_options: TagOptions,
@@ -447,37 +353,10 @@ pub struct Object<T = (), S = (), M = ()> {
   selector: Selector,
   selector_iter: SelectorIter,
   reflection: Reflection,
+  type_params_usages: IdentSet,
+  lifetimes_usages: LifetimeSet,
   meta: M,
 }
-
-// /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
-// /// over the flavor type.
-// #[derive(Debug, Clone)]
-// pub(in crate::object) struct Object<T = (), S = (), O = ()> {
-//   pub(in crate::object) path_to_grost: Path,
-//   pub(in crate::object) attrs: Vec<Attribute>,
-//   pub(in crate::object) name: Ident,
-//   pub(in crate::object) schema_name: String,
-//   pub(in crate::object) schema_description: String,
-//   pub(in crate::object) vis: Visibility,
-//   pub(in crate::object) ty: Type,
-//   pub(in crate::object) reflectable: Type,
-//   pub(in crate::object) generics: Generics,
-//   pub(in crate::object) flavor: FlavorAttribute,
-//   pub(in crate::object) unknown_buffer_param: TypeParam,
-//   pub(in crate::object) read_buffer_param: TypeParam,
-//   pub(in crate::object) write_buffer_param: TypeParam,
-//   pub(in crate::object) lifetime_param: LifetimeParam,
-//   pub(in crate::object) fields: Vec<Field<T, S>>,
-//   pub(in crate::object) default: Option<Invokable>,
-//   pub(in crate::object) indexer: Indexer,
-//   pub(in crate::object) partial: PartialObject,
-//   pub(in crate::object) partial_ref: PartialRefObject,
-//   pub(in crate::object) selector: Selector,
-//   pub(in crate::object) selector_iter: SelectorIter,
-//   pub(in crate::object) copy: bool,
-//   pub(in crate::object) meta: M,
-// }
 
 impl<T, S, M> Object<T, S, M> {
   /// Returns the path to the `grost` crate
@@ -529,6 +408,12 @@ impl<T, S, M> Object<T, S, M> {
   #[inline]
   pub const fn flavor_type(&self) -> &Type {
     &self.flavor_type
+  }
+
+  /// Returns the wire format type
+  #[inline]
+  pub const fn wire_format(&self) -> &Type {
+    &self.wire_format
   }
 
   /// Returns the identifier options for the object
@@ -585,6 +470,12 @@ impl<T, S, M> Object<T, S, M> {
     self.copy
   }
 
+  /// Returns the decoded state type of the object.
+  #[inline]
+  pub const fn meta(&self) -> &M {
+    &self.meta
+  }
+
   /// Returns the fields of the object
   #[inline]
   pub const fn fields(&self) -> &[Field<T, S>] {
@@ -603,6 +494,30 @@ impl<T, S, M> Object<T, S, M> {
     &self.partial_ref
   }
 
+  /// Returns the reflection information for the object
+  #[inline]
+  pub const fn reflection(&self) -> &Reflection {
+    &self.reflection
+  }
+
+  /// Returns the indexer information
+  #[inline]
+  pub const fn indexer(&self) -> &Indexer {
+    &self.indexer
+  }
+
+  /// Returns the type parameters usages in the object definition.
+  #[inline]
+  pub const fn type_params_usages(&self) -> &IdentSet {
+    &self.type_params_usages
+  }
+
+  /// Returns the lifetimes usages in the object definition.
+  #[inline]
+  pub const fn lifetimes_usages(&self) -> &LifetimeSet {
+    &self.lifetimes_usages
+  }
+
   /// Returns the selector information
   #[inline]
   pub const fn selector(&self) -> &Selector {
@@ -615,24 +530,34 @@ impl<T, S, M> Object<T, S, M> {
     &self.selector_iter
   }
 
-  pub(in crate::object) fn from_raw(object: RawObject<T, S, M>) -> darling::Result<Self> {
-    let (object, (fields_metas, extra)) = object.extract();
-    let path_to_grost = &object.path_to_grost;
-    let attrs = &object.attrs;
-    let name = &object.name;
-    let vis = &object.vis;
+  /// Creates a new `Object` from the given parameters.
+  pub fn new(
+    path_to_grost: Path,
+    name: Ident,
+    vis: Visibility,
+    generics: Generics,
+    attrs: Vec<Attribute>,
+    fields: Vec<RawField<T, S>>,
+    meta: ObjectFromMeta<M>,
+  ) -> darling::Result<Self> {
+    let object = RawObject::new(path_to_grost, name, vis, generics, attrs, fields, meta)?;
+
+    let (mut object, (fields_metas, extra)) = object.extract();
     let generics = &object.generics;
     let (_, tg, _) = generics.split_for_impl();
 
-    let type_params_usages = &object.type_params_usages;
-    let lifetimes_usages = &object.lifetimes_usages;
-
-    let ty: Type = syn::parse2(quote! {
-      #name #tg
-    })?;
-    let reflectable: Type = syn::parse2(quote! {
-      #path_to_grost::__private::reflection::Reflectable<#ty>
-    })?;
+    let ty: Type = {
+      let name = &object.name;
+      syn::parse2(quote! {
+        #name #tg
+      })?
+    };
+    let reflectable: Type = {
+      let path_to_grost = &object.path_to_grost;
+      syn::parse2(quote! {
+        #path_to_grost::__private::reflection::Reflectable<#ty>
+      })?
+    };
 
     let fields = object
       .fields
@@ -643,15 +568,21 @@ impl<T, S, M> Object<T, S, M> {
       .collect::<darling::Result<Vec<_>>>()?;
 
     let indexer_name = object.indexer_name();
+    let selector_name = object.selector_name();
     let selector_iter_name = object.selector_iter_name();
 
     let reflection = Reflection::from_ast(&object, &fields)?;
-    let partial = PartialObject::from_options(name, object.partial)?;
-    let partial_ref = PartialRefObject::from_options(name, object.partial_ref)?;
-    let selector = Selector::from_options(name, &object.generics, object.selector, &fields)?;
+    let partial_ref = PartialRefObject::from_options(&mut object, &fields)?;
+    let partial = PartialObject::from_options(&mut object, &fields)?;
+
+    let selector =
+      Selector::from_options(&object.generics, selector_name, object.selector, &fields)?;
     let selector_iter = selector.selector_iter(selector_iter_name, object.selector_iter)?;
 
+    let path_to_grost = object.path_to_grost;
     let flavor_type = object.flavor_type;
+    let type_params_usages = object.type_params_usages;
+    let lifetimes_usages = object.lifetimes_usages;
     let wf = object.wire_format;
     let lp = object.lifetime_param;
     let lt = &lp.lifetime;
@@ -671,21 +602,24 @@ impl<T, S, M> Object<T, S, M> {
       let lt = lt.clone();
       let ub = ub.clone();
       let rb = rb.clone();
-      Arc::new(move |ty| {
+      Rc::new(move |ty| {
         syn::parse2(quote! {
           #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
         })
       })
     };
     Ok(Self {
-      path_to_grost: object.path_to_grost,
+      path_to_grost,
       copy: object.copy,
       attrs: object.attrs,
       indexer: Indexer {
         name: indexer_name,
         attrs: object.indexer.attrs,
       },
-      schema_name: object.schema.name.unwrap_or_else(|| name.to_string()),
+      schema_name: object
+        .schema
+        .name
+        .unwrap_or_else(|| object.name.to_string()),
       schema_description: object.schema.description.unwrap_or_default(),
       name: object.name,
       vis: object.vis,
@@ -718,6 +652,136 @@ impl<T, S, M> Object<T, S, M> {
       tag_options: object.tag_options,
       identifier_options: object.identifier_options,
       reflection,
+      type_params_usages,
+      lifetimes_usages,
     })
+  }
+
+  /// Returns the default value of the concrete object, if any.
+  #[inline]
+  pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let default = self.derive_default()?;
+    let accessors = self.derive_accessors()?;
+
+    let indexer_defination = self.derive_indexer_defination();
+    let indexer_impl = self.derive_indexer();
+
+    let partial_def = self.partial.derive_defination(self)?;
+    let partial_impl = self.partial.derive(self)?;
+
+    let partial_ref_def = self.derive_partial_ref_object_defination();
+    let partial_ref_impl = self.derive_partial_ref_object();
+
+    let reflection_impl = self.reflection.derive(self)?;
+
+    let selector = self.derive_selector_defination();
+    let selector_impl = self.derive_selector()?;
+
+    let selector_iter_def = self.derive_selector_iter_defination();
+    let selector_iter_impl = self.derive_selector_iter();
+
+    let decode_impl = self.derive_decode()?;
+
+    Ok(quote! {
+      #indexer_defination
+      #selector
+      #selector_iter_def
+      #partial_def
+      #partial_ref_def
+
+      const _: () = {
+        #default
+
+        #accessors
+
+        #partial_impl
+
+        #partial_ref_impl
+
+        #reflection_impl
+
+        #indexer_impl
+
+        #selector_impl
+
+        #selector_iter_impl
+
+        #decode_impl
+      };
+    })
+  }
+
+  fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
+    (self.applied_decode_trait)(quote! { #ty })
+  }
+
+  fn derive_accessors(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let name = self.name();
+    let (ig, tg, wc) = self.generics().split_for_impl();
+
+    let accessors = self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let field_name = f.name();
+        let ty = f.ty();
+        let copy = f.copy();
+
+        accessors(field_name, f.vis(), ty, copy)
+      });
+
+    Ok(quote! {
+      impl #ig #name #tg #wc {
+        #(#accessors)*
+      }
+    })
+  }
+
+  fn derive_default(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let name = self.name();
+    let (ig, tg, wc) = self.generics().split_for_impl();
+
+    if let Some(default) = &self.default {
+      Ok(quote! {
+        impl #ig ::core::default::Default for #name #tg #wc {
+          fn default() -> Self {
+            Self::new()
+          }
+        }
+
+        impl #ig ::core::default::Default for #name #tg #wc {
+          /// Creates a new instance of the object with default values.
+          pub fn new() -> Self {
+            (#default)()
+          }
+        }
+      })
+    } else {
+      let fields = self.fields().iter().map(|f| {
+        let name = f.name();
+        let default = f.default();
+        quote! {
+          #name: (#default)()
+        }
+      });
+
+      Ok(quote! {
+        impl #ig ::core::default::Default for #name #tg #wc {
+          fn default() -> Self {
+            Self::new()
+          }
+        }
+
+        impl #ig #name #tg #wc {
+          /// Creates a new instance of the object with default values.
+          pub fn new() -> Self {
+            Self {
+              #(#fields),*
+            }
+          }
+        }
+      })
+    }
   }
 }
