@@ -7,8 +7,8 @@ use crate::{
   object::{
     Label,
     meta::{
-      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta,
-      SelectorFieldFromMeta, SkippedFieldFromMeta,
+      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, SelectorFieldFromMeta,
+      SkippedFieldFromMeta,
     },
   },
   utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},

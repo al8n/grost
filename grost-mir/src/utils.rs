@@ -4,8 +4,8 @@ use darling::FromMeta;
 use proc_macro2::{Delimiter, TokenTree};
 use quote::quote;
 use syn::{
-  Attribute, Expr, ExprLit, Ident, Lit, MacroDelimiter, Meta, MetaList, MetaNameValue, Path,
-  PathSegment, Token,
+  Attribute, ConstParam, Expr, ExprLit, Ident, Lit, MacroDelimiter, Meta, MetaList, MetaNameValue,
+  Path, PathSegment, Token, TypeParam,
   ext::IdentExt,
   parse::{ParseStream, Parser, discouraged::Speculative as _},
   punctuated::Punctuated,
@@ -592,36 +592,42 @@ pub fn grost_lifetime() -> syn::LifetimeParam {
 /// Returns a generic parameter `__GROST_FLAVOR__: ?::core::marker::Sized`, which is used to represent
 /// the a flavor generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
-pub fn grost_flavor_param() -> syn::TypeParam {
+pub fn grost_flavor_param() -> TypeParam {
   syn::parse_quote!(__GROST_FLAVOR__: ?::core::marker::Sized)
 }
 
 /// Returns a generic parameter `__GROST_WIRE_FORMAT__: ?::core::marker::Sized`, which is used to represent
 /// the a wire format generic parameter in the generated code. This is used to avoid
 /// conflicts with other generic parameters in the code.
-pub fn grost_wire_format_param() -> syn::TypeParam {
+pub fn grost_wire_format_param() -> TypeParam {
   syn::parse_quote!(__GROST_WIRE_FORMAT__: ?::core::marker::Sized)
 }
 
 /// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
 /// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
 /// This is used to avoid conflicts with other generic parameters in the code.
-pub fn grost_unknown_buffer_param() -> syn::TypeParam {
+pub fn grost_unknown_buffer_param() -> TypeParam {
   quote::format_ident!("__GROST_UNKNOWN_BUFFER__").into()
 }
 
 /// Returns a generic parameter `__GROST_READ_BUFFER__`, which is used to represent
 /// the read buffer generic parameter in the generated code.
-pub fn grost_read_buffer_param() -> syn::TypeParam {
+pub fn grost_read_buffer_param() -> TypeParam {
   quote::format_ident!("__GROST_READ_BUFFER__").into()
 }
 
 /// Returns a generic parameter `__GROST_WRITE_BUFFER__`, which is used to represent
 /// the write buffer generic parameter in the generated code
-pub fn grost_write_buffer_param() -> syn::TypeParam {
+pub fn grost_write_buffer_param() -> TypeParam {
   quote::format_ident!("__GROST_WRITE_BUFFER__").into()
 }
 
 pub(crate) fn grost_decode_trait_lifetime() -> syn::LifetimeParam {
   syn::parse_quote!('__grost_decode_lifetime__)
+}
+
+pub(crate) fn grost_selected_param() -> ConstParam {
+  syn::parse_quote!(
+    const __GROST_SELECTED__: ::core::primitive::bool = true
+  )
 }

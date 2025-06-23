@@ -1,7 +1,9 @@
-use syn::{Attribute, Type};
 use quote::quote;
+use syn::{Attribute, Type};
 
-use super::{PartialFieldOptions, FieldConvertOptions};
+use crate::{object::Label, utils::MissingOperation};
+
+use super::{FieldConvertOptions, PartialFieldOptions};
 
 #[derive(Debug, Clone)]
 pub struct PartialField {
@@ -31,20 +33,43 @@ impl PartialField {
     self.attrs.as_slice()
   }
 
-  pub(super) fn from_options(
+  pub(super) fn from_options<T, S, M>(
+    object: &super::RawObject<T, S, M>,
     ty: &Type,
-    opts: PartialFieldOptions,
+    mut opts: PartialFieldOptions,
+    label: &Label,
   ) -> darling::Result<Self> {
     let optional_type = syn::parse2(quote! {
       ::core::option::Option<#ty>
     })?;
 
+    let transform_missing_operation = opts.transform.missing_operation.or_else(|| {
+      object
+        .partial
+        .transform
+        .or_default_by_label(label)
+        .then_some(MissingOperation::OrDefault)
+    });
+    let partial_transform_operation = opts.partial_transform.missing_operation.or_else(|| {
+      object
+        .partial
+        .partial_transform
+        .or_default_by_label(label)
+        .then_some(MissingOperation::OrDefault)
+    });
+
     Ok(Self {
       ty: ty.clone(),
       optional_type,
       attrs: opts.attrs,
-      transform: opts.transform,
-      partial_transform: opts.partial_transform
+      transform: {
+        opts.transform.missing_operation = transform_missing_operation;
+        opts.transform
+      },
+      partial_transform: {
+        opts.partial_transform.missing_operation = partial_transform_operation;
+        opts.partial_transform
+      },
     })
   }
 }

@@ -1,9 +1,12 @@
-use quote::{format_ident, ToTokens, quote};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::{
   flavor::{DecodeOptions, IdentifierOptions, TagOptions},
-  object::meta::ObjectFromMeta,
+  object::{
+    Label,
+    meta::{ObjectConvertFromMeta, ObjectFromMeta, ObjectLabelConvertFromMeta},
+  },
   utils::{Invokable, SchemaOptions, grost_flavor_param},
 };
 
@@ -19,7 +22,6 @@ mod concrete;
 mod field;
 // mod generic;
 mod indexer;
-mod partial;
 mod partial_ref;
 mod selector;
 
@@ -40,6 +42,236 @@ impl Indexer {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectLabelConvertOptions {
+  pub(super) or_default: Option<bool>,
+}
+
+impl ObjectLabelConvertOptions {
+  /// Returns `true` if the conversion should skip default values
+  #[inline]
+  pub const fn or_default(&self) -> bool {
+    match self.or_default {
+      Some(true) => true,
+      Some(false) => false,
+      None => false, // Default behavior is not to skip default values
+    }
+  }
+}
+
+impl From<ObjectLabelConvertFromMeta> for ObjectLabelConvertOptions {
+  fn from(meta: ObjectLabelConvertFromMeta) -> Self {
+    Self {
+      or_default: meta.or_default.into(),
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectConvertOptions {
+  pub(super) or_default: Option<bool>,
+  pub(super) scalar: ObjectLabelConvertOptions,
+  pub(super) bytes: ObjectLabelConvertOptions,
+  pub(super) string: ObjectLabelConvertOptions,
+  pub(super) object: ObjectLabelConvertOptions,
+  pub(super) enumeration: ObjectLabelConvertOptions,
+  pub(super) interface: ObjectLabelConvertOptions,
+  pub(super) union: ObjectLabelConvertOptions,
+  pub(super) map: ObjectLabelConvertOptions,
+  pub(super) set: ObjectLabelConvertOptions,
+  pub(super) list: ObjectLabelConvertOptions,
+}
+
+impl ObjectConvertOptions {
+  #[inline]
+  pub const fn or_default_by_label(&self, label: &Label) -> bool {
+    match label {
+      Label::Scalar => self.or_default_scalar(),
+      Label::Bytes => self.or_default_bytes(),
+      Label::String => self.or_default_string(),
+      Label::Object => self.or_default_object(),
+      Label::Enum => self.or_default_enumeration(),
+      Label::Interface => self.or_default_interface(),
+      Label::Union => self.or_default_union(),
+      Label::Map { .. } => self.or_default_map(),
+      Label::Set(_) => self.or_default_set(),
+      Label::List(_) => self.or_default_list(),
+      Label::Optional(_) => false,
+    }
+  }
+
+  /// Returns `true` if the conversion should skip default values
+  #[inline]
+  pub const fn or_default(&self) -> bool {
+    match self.or_default {
+      Some(true) => true,
+      Some(false) => false,
+      None => false, // Default behavior is not to skip default values
+    }
+  }
+
+  /// Returns the scalar conversion options
+  #[inline]
+  pub const fn scalar(&self) -> &ObjectLabelConvertOptions {
+    &self.scalar
+  }
+
+  #[inline]
+  pub const fn or_default_scalar(&self) -> bool {
+    if self.scalar.or_default.is_some() {
+      self.scalar.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the bytes conversion options
+  #[inline]
+  pub const fn bytes(&self) -> &ObjectLabelConvertOptions {
+    &self.bytes
+  }
+
+  pub const fn or_default_bytes(&self) -> bool {
+    if self.bytes.or_default.is_some() {
+      self.bytes.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the string conversion options
+  #[inline]
+  pub const fn string(&self) -> &ObjectLabelConvertOptions {
+    &self.string
+  }
+
+  pub const fn or_default_string(&self) -> bool {
+    if self.string.or_default.is_some() {
+      self.string.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the object conversion options
+  #[inline]
+  pub const fn object(&self) -> &ObjectLabelConvertOptions {
+    &self.object
+  }
+
+  pub const fn or_default_object(&self) -> bool {
+    if self.object.or_default.is_some() {
+      self.object.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the enumeration conversion options
+  #[inline]
+  pub const fn enumeration(&self) -> &ObjectLabelConvertOptions {
+    &self.enumeration
+  }
+
+  pub const fn or_default_enumeration(&self) -> bool {
+    if self.enumeration.or_default.is_some() {
+      self.enumeration.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the interface conversion options
+  #[inline]
+  pub const fn interface(&self) -> &ObjectLabelConvertOptions {
+    &self.interface
+  }
+
+  pub const fn or_default_interface(&self) -> bool {
+    if self.interface.or_default.is_some() {
+      self.interface.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the union conversion options
+  #[inline]
+  pub const fn union(&self) -> &ObjectLabelConvertOptions {
+    &self.union
+  }
+
+  pub const fn or_default_union(&self) -> bool {
+    if self.union.or_default.is_some() {
+      self.union.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the map conversion options
+  #[inline]
+  pub const fn map(&self) -> &ObjectLabelConvertOptions {
+    &self.map
+  }
+
+  /// Returns the map conversion options
+  #[inline]
+  pub const fn or_default_map(&self) -> bool {
+    if self.map.or_default.is_some() {
+      self.map.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the set conversion options
+  #[inline]
+  pub const fn set(&self) -> &ObjectLabelConvertOptions {
+    &self.set
+  }
+
+  pub const fn or_default_set(&self) -> bool {
+    if self.set.or_default.is_some() {
+      self.set.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the list conversion options
+  #[inline]
+  pub const fn list(&self) -> &ObjectLabelConvertOptions {
+    &self.list
+  }
+
+  pub const fn or_default_list(&self) -> bool {
+    if self.list.or_default.is_some() {
+      self.list.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+}
+
+impl From<ObjectConvertFromMeta> for ObjectConvertOptions {
+  fn from(meta: ObjectConvertFromMeta) -> Self {
+    Self {
+      or_default: meta.or_default.into(),
+      scalar: meta.scalar.into(),
+      bytes: meta.bytes.into(),
+      string: meta.string.into(),
+      object: meta.object.into(),
+      enumeration: meta.enumeration.into(),
+      interface: meta.interface.into(),
+      union: meta.union.into(),
+      map: meta.map.into(),
+      set: meta.set.into(),
+      list: meta.list.into(),
+    }
   }
 }
 

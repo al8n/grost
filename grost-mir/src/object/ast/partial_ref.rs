@@ -3,7 +3,6 @@
 
 // use crate::object::meta::concrete::PartialRefObjectFromMeta;
 
-
 // #[derive(Debug, Clone)]
 // pub struct GenericPartialRefObject {
 //   name: Ident,

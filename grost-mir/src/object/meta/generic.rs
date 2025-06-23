@@ -10,7 +10,7 @@ use crate::{
   },
 };
 
-use super::{IndexerFromMeta, PartialObjectFromMeta, SelectorFromMeta, SelectorIterFromMeta};
+use super::{IndexerFromMeta, SelectorFromMeta, SelectorIterFromMeta};
 
 pub use field::*;
 mod field;
@@ -59,6 +59,14 @@ pub(in crate::object) struct GenericPartialRefObjectFromMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
+pub(in crate::object) struct GenericPartialObjectFromMeta {
+  #[darling(default, rename = "rename")]
+  pub(in crate::object) name: Option<Ident>,
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
+}
+
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct GenericObjectFromMeta<E> {
   #[darling(default)]
   pub(in crate::object) default: Option<Invokable>,
@@ -67,7 +75,7 @@ pub struct GenericObjectFromMeta<E> {
   #[darling(default)]
   pub(in crate::object) schema: SchemaFromMeta,
   #[darling(default)]
-  pub(in crate::object) partial: PartialObjectFromMeta,
+  pub(in crate::object) partial: GenericPartialObjectFromMeta,
   #[darling(default)]
   pub(in crate::object) partial_ref: GenericPartialRefObjectFromMeta,
   #[darling(default)]

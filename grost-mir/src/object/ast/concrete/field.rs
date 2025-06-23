@@ -1,16 +1,25 @@
 use std::num::NonZeroU32;
 
-use darling::usage::{GenericsExt, IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
-use syn::{punctuated::Punctuated, Attribute, Ident, Path, Type, Visibility, WherePredicate};
+use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
+use either::Either;
 use quote::quote;
+use syn::{Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated};
 
 use crate::{
   object::{
-    ast::{concrete::RawObject, field::{
-      FieldConvertOptions, FieldDecodeOptions, FieldEncodeOptions, Index, RawSkippedField, SelectorFieldOptions, SkippedField
-    }}, meta::concrete::{FieldFromMeta, PartialFieldFromMeta, PartialRefFieldFromMeta, TaggedFieldFromMeta}, Label
+    Label,
+    ast::{
+      concrete::RawObject,
+      field::{
+        FieldConvertOptions, FieldDecodeOptions, FieldEncodeOptions, Index, RawSkippedField,
+        SelectorFieldOptions, SkippedField,
+      },
+    },
+    meta::concrete::{
+      FieldFromMeta, PartialFieldFromMeta, PartialRefFieldFromMeta, TaggedFieldFromMeta,
+    },
   },
-  utils::{grost_decode_trait_lifetime, Invokable, SchemaOptions},
+  utils::{Invokable, MissingOperation, SchemaOptions, grost_decode_trait_lifetime},
 };
 
 pub use partial::*;
@@ -18,12 +27,10 @@ pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
-
 mod partial;
 mod partial_ref;
 mod reflection;
 mod selector;
-
 
 impl PartialFieldFromMeta {
   /// Finalizes the partial field meta and returns the attribute
@@ -49,7 +56,6 @@ impl PartialFieldOptions {
     self.attrs.as_slice()
   }
 
-
   /// Returns the options for transforming the ref type to owned type.
   pub const fn transform(&self) -> &FieldConvertOptions {
     &self.transform
@@ -60,7 +66,6 @@ impl PartialFieldOptions {
     &self.partial_transform
   }
 }
-
 
 impl PartialRefFieldFromMeta {
   fn finalize(self) -> darling::Result<PartialRefFieldOptions> {
@@ -111,7 +116,7 @@ impl PartialRefFieldOptions {
 }
 
 #[derive(Debug, Clone)]
-pub struct RawTaggedField<E> {
+pub struct RawTaggedField<E = ()> {
   pub name: Ident,
   pub ty: Type,
   pub vis: Visibility,
@@ -127,6 +132,48 @@ pub struct RawTaggedField<E> {
   pub selector: SelectorFieldOptions,
   pub copy: bool,
   pub extra: E,
+}
+
+impl<E> RawTaggedField<E> {
+  fn extract(self) -> (RawTaggedField, E) {
+    let Self {
+      name,
+      ty,
+      vis,
+      attrs,
+      label,
+      schema,
+      default,
+      tag,
+      wire_format,
+      transform,
+      partial,
+      partial_ref,
+      selector,
+      copy,
+      extra,
+    } = self;
+    (
+      RawTaggedField {
+        name,
+        ty,
+        vis,
+        attrs,
+        label,
+        schema,
+        default,
+        tag,
+        wire_format,
+        transform,
+        partial,
+        partial_ref,
+        selector,
+        copy,
+        extra: (),
+      },
+      extra,
+    )
+  }
 }
 
 #[derive(Debug, Clone, derive_more::IsVariant, derive_more::Unwrap, derive_more::TryUnwrap)]
@@ -186,6 +233,19 @@ impl<TM, SM> RawField<TM, SM> {
       })),
     }
   }
+
+  pub(crate) fn extract(self) -> (RawField, Either<TM, SM>) {
+    match self {
+      Self::Skipped(skipped) => {
+        let (skipped, extra) = skipped.extract();
+        (RawField::Skipped(skipped), Either::Right(extra))
+      }
+      Self::Tagged(tagged) => {
+        let (tagged, extra) = tagged.extract();
+        (RawField::Tagged(tagged), Either::Left(extra))
+      }
+    }
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -207,6 +267,7 @@ pub struct TaggedField<T = ()> {
   selector: SelectorField,
   schema_name: String,
   schema_description: String,
+  transform: FieldConvertOptions,
   tag: u32,
   copy: bool,
   meta: T,
@@ -332,13 +393,40 @@ impl<T> TaggedField<T> {
   pub const fn lifetimes_usages(&self) -> &LifetimeSet {
     &self.lifetimes_usages
   }
+}
 
-  fn from_ast<S, M>(
-    object: &RawObject<T, S, M>,
+impl TaggedField {
+  pub(super) fn with_meta<M>(self, meta: M) -> TaggedField<M> {
+    TaggedField {
+      name: self.name,
+      vis: self.vis,
+      ty: self.ty,
+      label: self.label,
+      default: self.default,
+      attrs: self.attrs,
+      wire_format: self.wire_format,
+      wire_format_reflection: self.wire_format_reflection,
+      type_params_usages: self.type_params_usages,
+      lifetimes_usages: self.lifetimes_usages,
+      partial: self.partial,
+      partial_ref: self.partial_ref,
+      index: self.index,
+      reflection: self.reflection,
+      selector: self.selector,
+      schema_name: self.schema_name,
+      schema_description: self.schema_description,
+      transform: self.transform,
+      tag: self.tag,
+      copy: self.copy,
+      meta,
+    }
+  }
+
+  fn from_raw(
+    object: &RawObject,
     index: usize,
-    field: RawTaggedField<T>,
-  ) -> darling::Result<Self>
-  {
+    mut field: RawTaggedField,
+  ) -> darling::Result<Self> {
     let path_to_grost = &object.path_to_grost;
     let field_ty = &field.ty;
     let flavor_type = &object.flavor_type;
@@ -355,10 +443,11 @@ impl<T> TaggedField<T> {
     let mut selector_constraints = Punctuated::new();
 
     let purpose = Purpose::Declare;
-    let field_lifetimes_usages = field_ty.uses_lifetimes_cloned(&purpose.into(), &object.lifetimes_usages);
-    let field_type_params_usages = field_ty.uses_type_params_cloned(&purpose.into(), &object.type_params_usages);
-    let use_generics =
-      !field_lifetimes_usages.is_empty() || !field_type_params_usages.is_empty();
+    let field_lifetimes_usages =
+      field_ty.uses_lifetimes_cloned(&purpose.into(), &object.lifetimes_usages);
+    let field_type_params_usages =
+      field_ty.uses_type_params_cloned(&purpose.into(), &object.type_params_usages);
+    let use_generics = !field_lifetimes_usages.is_empty() || !field_type_params_usages.is_empty();
 
     let wfr = syn::parse2(quote! {
       #path_to_grost::__private::reflection::WireFormatReflection<
@@ -412,10 +501,7 @@ impl<T> TaggedField<T> {
       None
     };
 
-    let (partial_ref_ty, decoded_state_type) = match field
-      .partial_ref
-      .ty()
-    {
+    let (partial_ref_ty, decoded_state_type) = match field.partial_ref.ty() {
       Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
@@ -462,7 +548,25 @@ impl<T> TaggedField<T> {
     let schema_name = field.schema.name.unwrap_or_else(|| field.name.to_string());
     let schema_description = field.schema.description.unwrap_or_default();
     let field_ty = field.ty;
-    let partial = PartialField::from_options(&field_ty, field.partial)?;
+    let partial = PartialField::from_options(object, &field_ty, field.partial, &field.label)?;
+    let decode_missing_operation = field
+      .partial_ref
+      .decode()
+      .missing_operation()
+      .cloned()
+      .or_else(|| {
+        object
+          .partial_ref
+          .decode
+          .or_default_by_label(&field.label)
+          .then_some(MissingOperation::OrDefault)
+      });
+    let transform_missing_operation = field.transform.missing_operation().cloned().or_else(|| {
+      object
+        .transform
+        .or_default_by_label(&field.label)
+        .then_some(MissingOperation::OrDefault)
+    });
 
     let partial_ref = PartialRefField {
       ty: partial_ref_ty,
@@ -472,8 +576,11 @@ impl<T> TaggedField<T> {
       attrs: field.partial_ref.attrs,
       constraints: partial_ref_constraints,
       copy: partial_ref_copyable,
-      encode: ,
-      decode: ,
+      encode: field.partial_ref.encode,
+      decode: {
+        field.partial_ref.decode.missing_operation = decode_missing_operation;
+        field.partial_ref.decode
+      },
     };
     let selector = SelectorField {
       ty: selector_type,
@@ -502,7 +609,9 @@ impl<T> TaggedField<T> {
       attrs: field.attrs,
       default: match field.default {
         Some(path) => path,
-        None => syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?,
+        None => {
+          syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?
+        }
       },
       schema_description,
       schema_name,
@@ -512,6 +621,10 @@ impl<T> TaggedField<T> {
       meta: field.extra,
       wire_format: wf,
       wire_format_reflection: wfr,
+      transform: {
+        field.transform.missing_operation = transform_missing_operation;
+        field.transform
+      },
       index,
       selector,
       reflection,
@@ -567,18 +680,18 @@ impl<T, S> Field<T, S> {
       Self::Tagged(tagged) => tagged.default(),
     }
   }
+}
 
-  pub(super) fn from_ast<M>(
-    object: &RawObject<T, S, M>,
+impl Field {
+  pub(super) fn from_raw(
+    object: &RawObject,
     index: usize,
-    field: RawField<T, S>,
-  ) -> darling::Result<Self>
-  {
+    field: RawField,
+  ) -> darling::Result<Self> {
     match field {
       RawField::Skipped(f) => f.try_into().map(|f| Self::Skipped(Box::new(f))),
       RawField::Tagged(f) => {
-        TaggedField::from_ast(object, index, f)
-          .map(|t| Self::Tagged(Box::new(t)))
+        TaggedField::from_raw(object, index, f).map(|t| Self::Tagged(Box::new(t)))
       }
     }
   }

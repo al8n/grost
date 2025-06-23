@@ -39,8 +39,8 @@ impl FieldDecodeFromMeta {
 /// Represents the options for converting a field during converting.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct FieldConvertOptions {
-  missing_operation: Option<MissingOperation>,
-  convert_operation: Option<ConvertOperation>,
+  pub(crate) missing_operation: Option<MissingOperation>,
+  pub(crate) convert_operation: Option<ConvertOperation>,
 }
 
 impl FieldConvertOptions {
@@ -77,9 +77,9 @@ impl FieldEncodeOptions {
 /// Represents the options for decoding a field.
 #[derive(Debug, Default, Clone)]
 pub struct FieldDecodeOptions {
-  missing_operation: Option<MissingOperation>,
-  then: Option<Invokable>,
-  func: Option<Invokable>,
+  pub(crate) missing_operation: Option<MissingOperation>,
+  pub(crate) then: Option<Invokable>,
+  pub(crate) func: Option<Invokable>,
 }
 
 impl FieldDecodeOptions {

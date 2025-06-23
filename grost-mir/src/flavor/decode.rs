@@ -1,4 +1,4 @@
-use crate::utils::BoolOption;
+use crate::{object::Label, utils::BoolOption};
 
 use super::meta::{DecodeFromMeta, DecodeValue};
 
@@ -81,6 +81,29 @@ impl DecodeOptions {
       set,
       list,
     }
+  }
+
+  #[inline]
+  pub const fn or_default_by_label(&self, label: &Label) -> bool {
+    match label {
+      Label::Scalar => self.scalar.or_default.is_yes(),
+      Label::Bytes => self.bytes.or_default.is_yes(),
+      Label::String => self.string.or_default.is_yes(),
+      Label::Object => self.object.or_default.is_yes(),
+      Label::Enum => self.enumeration.or_default.is_yes(),
+      Label::Interface => self.interface.or_default.is_yes(),
+      Label::Union => self.union.or_default.is_yes(),
+      Label::Map { .. } => self.map.or_default.is_yes(),
+      Label::Set(_) => self.set.or_default.is_yes(),
+      Label::List(_) => self.list.or_default.is_yes(),
+      Label::Optional(_) => false,
+    }
+  }
+
+  /// Returns `true` if there is a global `or_default` option set
+  #[inline]
+  pub const fn or_default(&self) -> bool {
+    self.or_default.is_yes()
   }
 
   /// Returns `true` if the encoding should skip default values

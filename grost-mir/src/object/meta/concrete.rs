@@ -1,16 +1,17 @@
 use darling::FromMeta;
-use syn::{parse_quote, Attribute, Ident, LifetimeParam, Meta, Type, TypeParam};
 use quote::quote;
+use syn::{Attribute, Ident, LifetimeParam, Meta, Type, TypeParam};
 
 use crate::{
   flavor::{DecodeFromMeta, IdentifierFromMeta, TagFromMeta},
+  object::meta::ObjectConvertFromMeta,
   utils::{
     Attributes, Invokable, NestedMeta, SchemaFromMeta, grost_lifetime, grost_read_buffer_param,
     grost_unknown_buffer_param, grost_wire_format_param, grost_write_buffer_param,
   },
 };
 
-use super::{IndexerFromMeta, PartialObjectFromMeta, SelectorFromMeta, SelectorIterFromMeta};
+use super::{IndexerFromMeta, SelectorFromMeta, SelectorIterFromMeta};
 
 pub use field::*;
 mod field;
@@ -56,7 +57,8 @@ pub(in crate::object) struct ObjectFlavorFromMeta {
 impl ObjectFlavorFromMeta {
   pub(in crate::object) fn network(path_to_grost: &syn::Path) -> darling::Result<Self> {
     let ty = syn::parse2(quote!(#path_to_grost::__private::flavors::Network))?;
-    let wire_format = syn::parse2(quote!(#path_to_grost::__private::flavors::network::LengthDelimited))?;
+    let wire_format =
+      syn::parse2(quote!(#path_to_grost::__private::flavors::network::LengthDelimited))?;
     let identifier = IdentifierFromMeta::network(path_to_grost)?;
     let tag = TagFromMeta::network(path_to_grost)?;
 
@@ -127,6 +129,18 @@ pub(in crate::object) struct PartialRefObjectFromMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
+pub(in crate::object) struct PartialObjectFromMeta {
+  #[darling(default, rename = "rename")]
+  pub(in crate::object) name: Option<Ident>,
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default)]
+  pub(in crate::object) transform: ObjectConvertFromMeta,
+  #[darling(default)]
+  pub(in crate::object) partial_transform: ObjectConvertFromMeta,
+}
+
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct ObjectFromMeta<E> {
   #[darling(default)]
   pub(in crate::object) default: Option<Invokable>,
@@ -144,6 +158,8 @@ pub struct ObjectFromMeta<E> {
   pub(in crate::object) selector_iter: SelectorIterFromMeta,
   #[darling(default)]
   pub(in crate::object) indexer: IndexerFromMeta,
+  #[darling(default)]
+  pub(in crate::object) transform: ObjectConvertFromMeta,
   #[darling(default)]
   pub(in crate::object) flavor: Option<ObjectFlavorFromMeta>,
   #[darling(default)]

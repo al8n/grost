@@ -1,5 +1,5 @@
+use super::{FieldDecodeOptions, FieldEncodeOptions};
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
-use super::{FieldEncodeOptions, FieldDecodeOptions};
 
 #[derive(Debug, Clone)]
 pub struct PartialRefField {

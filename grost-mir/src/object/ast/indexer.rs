@@ -13,8 +13,8 @@ impl From<IndexerFromMeta> for IndexerOptions {
 
 #[derive(Debug, Default, Clone)]
 pub struct IndexerOptions {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
+  pub(crate) name: Option<Ident>,
+  pub(crate) attrs: Vec<Attribute>,
 }
 
 impl IndexerOptions {

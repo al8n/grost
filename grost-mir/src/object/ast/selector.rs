@@ -41,8 +41,8 @@ impl SelectorFromMeta {
 
 #[derive(Debug, Clone)]
 pub struct SelectorOptions {
-  name: Option<Ident>,
-  attrs: Vec<Attribute>,
+  pub(crate) name: Option<Ident>,
+  pub(crate) attrs: Vec<Attribute>,
 }
 
 impl SelectorOptions {

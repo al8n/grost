@@ -1,14 +1,28 @@
+use std::sync::Arc;
+
 use darling::usage::{GenericsExt, IdentSet, LifetimeSet};
+use either::Either;
 use indexmap::IndexSet;
-use quote::{quote, format_ident};
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
 
 use crate::{
   flavor::{DecodeOptions, IdentifierOptions, TagOptions},
   object::{
     ast::{
-      indexer::IndexerOptions, selector::{SelectorIterOptions, SelectorOptions},
-    }, meta::{concrete::{ObjectFlavorFromMeta, PartialRefObjectFromMeta}, ObjectFromMeta, PartialObjectFromMeta},
+      Indexer, ObjectConvertOptions,
+      concrete::{
+        reflection::Reflection,
+        selector::{Selector, SelectorIter},
+      },
+      indexer::IndexerOptions,
+      selector::{SelectorIterOptions, SelectorOptions},
+    },
+    meta::{
+      ObjectFromMeta,
+      concrete::{ObjectFlavorFromMeta, PartialObjectFromMeta, PartialRefObjectFromMeta},
+    },
   },
   utils::{Invokable, SchemaOptions},
 };
@@ -16,12 +30,16 @@ use crate::{
 use field::*;
 
 mod field;
+mod reflection;
+mod selector;
 
 impl PartialObjectFromMeta {
   pub(super) fn finalize(self) -> PartialObjectOptions {
     PartialObjectOptions {
       name: self.name,
       attrs: self.attrs,
+      transform: self.transform.into(),
+      partial_transform: self.partial_transform.into(),
     }
   }
 }
@@ -30,6 +48,8 @@ impl PartialObjectFromMeta {
 pub struct PartialObjectOptions {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
+  transform: ObjectConvertOptions,
+  partial_transform: ObjectConvertOptions,
 }
 
 impl PartialObjectOptions {
@@ -61,11 +81,8 @@ impl PartialObject {
     self.attrs.as_slice()
   }
 
-  pub(super) fn from_attribute(
-    name: &Ident,
-    attribute: &PartialObjectOptions,
-  ) -> darling::Result<Self> {
-    let name = if let Some(name) = attribute.name() {
+  pub(super) fn from_options(name: &Ident, options: PartialObjectOptions) -> darling::Result<Self> {
+    let name = if let Some(name) = options.name() {
       name.clone()
     } else {
       format_ident!("Partial{}", name)
@@ -73,7 +90,7 @@ impl PartialObject {
 
     Ok(Self {
       name,
-      attrs: attribute.attrs().to_vec(),
+      attrs: options.attrs,
     })
   }
 }
@@ -122,11 +139,11 @@ pub(in crate::object) struct PartialRefObject {
 }
 
 impl PartialRefObject {
-  pub(super) fn from_attribute(
+  pub(super) fn from_options(
     object_name: &Ident,
-    attribute: &PartialRefObjectOptions,
+    opts: PartialRefObjectOptions,
   ) -> darling::Result<Self> {
-    let name = if let Some(name) = attribute.name() {
+    let name = if let Some(name) = opts.name() {
       name.clone()
     } else {
       format_ident!("PartialRef{}", object_name)
@@ -134,8 +151,8 @@ impl PartialRefObject {
 
     Ok(Self {
       name,
-      attrs: attribute.attrs().to_vec(),
-      copy: attribute.copy(),
+      attrs: opts.attrs,
+      copy: opts.copy,
     })
   }
 
@@ -154,7 +171,6 @@ impl PartialRefObject {
     self.copy
   }
 }
-
 
 /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
 /// over the flavor type.
@@ -176,6 +192,7 @@ pub struct RawObject<T = (), S = (), O = ()> {
   identifier_options: IdentifierOptions,
   default: Option<Invokable>,
   schema: SchemaOptions,
+  transform: ObjectConvertOptions,
   partial: PartialObjectOptions,
   partial_ref: PartialRefObjectOptions,
   selector: SelectorOptions,
@@ -200,7 +217,12 @@ impl<T, S, O> RawObject<T, S, O> {
     mut fields: Vec<RawField<T, S>>,
     meta: ObjectFromMeta<O>,
   ) -> darling::Result<Self> {
-    let ObjectFlavorFromMeta { ty: flavor_type, wire_format, tag, identifier } = match meta.flavor {
+    let ObjectFlavorFromMeta {
+      ty: flavor_type,
+      wire_format,
+      tag,
+      identifier,
+    } = match meta.flavor {
       Some(meta) => meta,
       None => ObjectFlavorFromMeta::network(&path_to_grost)?,
     };
@@ -258,6 +280,7 @@ impl<T, S, O> RawObject<T, S, O> {
       selector: meta.selector.finalize(),
       selector_iter: meta.selector_iter.finalize(),
       indexer: meta.indexer.into(),
+      transform: meta.transform.into(),
       copy: meta.copy,
       unknown_buffer_param: meta.generic.unknown_buffer,
       lifetime_param: meta.generic.lifetime,
@@ -315,6 +338,81 @@ impl<T, S, O> RawObject<T, S, O> {
       .cloned()
       .unwrap_or_else(|| format_ident!("{}Index", self.name))
   }
+
+  fn extract(self) -> (RawObject, (Vec<Either<T, S>>, O)) {
+    let Self {
+      name,
+      vis,
+      generics,
+      ty,
+      reflectable,
+      lifetimes_usages,
+      type_params_usages,
+      attrs,
+      fields,
+      path_to_grost,
+      flavor_type,
+      wire_format,
+      tag_options,
+      identifier_options,
+      default,
+      schema,
+      transform,
+      partial,
+      partial_ref,
+      selector,
+      selector_iter,
+      indexer,
+      copy,
+      unknown_buffer_param,
+      lifetime_param,
+      read_buffer_param,
+      write_buffer_param,
+      extra,
+    } = self;
+
+    let mut fields_metas = Vec::with_capacity(fields.len());
+    let mut extracted_fields = Vec::with_capacity(fields.len());
+    for f in fields {
+      let (field, extra) = f.extract();
+      fields_metas.push(extra);
+      extracted_fields.push(field);
+    }
+
+    (
+      RawObject {
+        name,
+        vis,
+        generics,
+        ty,
+        reflectable,
+        lifetimes_usages,
+        type_params_usages,
+        attrs,
+        fields: extracted_fields,
+        path_to_grost,
+        flavor_type,
+        wire_format,
+        tag_options,
+        identifier_options,
+        default,
+        schema,
+        transform,
+        partial,
+        partial_ref,
+        selector,
+        selector_iter,
+        indexer,
+        copy,
+        unknown_buffer_param,
+        lifetime_param,
+        read_buffer_param,
+        write_buffer_param,
+        extra: (),
+      },
+      (fields_metas, extra),
+    )
+  }
 }
 
 #[derive(derive_more::Debug, Clone)]
@@ -326,31 +424,31 @@ pub struct Object<T = (), S = (), M = ()> {
   schema_description: String,
   vis: Visibility,
   ty: Type,
+  copy: bool,
   decoded_state_type: Type,
   reflectable: Type,
   generics: Generics,
-  /// Extra constraints when deriving `Decode` trait for the partial decoded object.
-  decode_generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
-  flavor: FlavorAttribute,
+  flavor_type: Type,
+  wire_format: Type,
+  tag_options: TagOptions,
+  identifier_options: IdentifierOptions,
   unknown_buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   read_buffer_param: TypeParam,
   write_buffer_param: TypeParam,
-  fields: Vec<Field<F>>,
+  fields: Vec<Field<T, S>>,
   indexer: Indexer,
   default: Option<Invokable>,
   partial: PartialObject,
   partial_ref: PartialRefObject,
   selector: Selector,
   selector_iter: SelectorIter,
-  reflection: ObjectReflection,
+  reflection: Reflection,
   meta: M,
 }
-
-
 
 // /// The AST for a concrete object, a concrete object which means there is only one flavor and the generated code will not be generic
 // /// over the flavor type.
@@ -381,224 +479,245 @@ pub struct Object<T = (), S = (), M = ()> {
 //   pub(in crate::object) meta: M,
 // }
 
-// impl<M, F> Object<M, F> {
-//   /// Returns the path to the `grost` crate
-//   #[inline]
-//   pub const fn path_to_grost(&self) -> &Path {
-//     &self.path_to_grost
-//   }
+impl<T, S, M> Object<T, S, M> {
+  /// Returns the path to the `grost` crate
+  #[inline]
+  pub const fn path_to_grost(&self) -> &Path {
+    &self.path_to_grost
+  }
 
-//   /// Returns the name of the object
-//   #[inline]
-//   pub const fn name(&self) -> &Ident {
-//     &self.name
-//   }
+  /// Returns the name of the object
+  #[inline]
+  pub const fn name(&self) -> &Ident {
+    &self.name
+  }
 
-//   /// Returns the schema name of the object
-//   #[inline]
-//   pub const fn schema_name(&self) -> &str {
-//     self.schema_name.as_str()
-//   }
+  /// Returns the schema name of the object
+  #[inline]
+  pub const fn schema_name(&self) -> &str {
+    self.schema_name.as_str()
+  }
 
-//   /// Returns the schema description of the object
-//   #[inline]
-//   pub const fn schema_description(&self) -> &str {
-//     self.schema_description.as_str()
-//   }
+  /// Returns the schema description of the object
+  #[inline]
+  pub const fn schema_description(&self) -> &str {
+    self.schema_description.as_str()
+  }
 
-//   /// Returns the visibility of the object
-//   #[inline]
-//   pub const fn vis(&self) -> &Visibility {
-//     &self.vis
-//   }
+  /// Returns the visibility of the object
+  #[inline]
+  pub const fn vis(&self) -> &Visibility {
+    &self.vis
+  }
 
-//   /// Returns the type of the object
-//   ///
-//   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
-//   #[inline]
-//   pub const fn ty(&self) -> &Type {
-//     &self.ty
-//   }
+  /// Returns the type of the object
+  ///
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `MyObject<T>`.
+  #[inline]
+  pub const fn ty(&self) -> &Type {
+    &self.ty
+  }
 
-//   /// Returns the reflectable trait which replaces the generic parameter with the type of the object
-//   /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
-//   #[inline]
-//   pub const fn reflectable(&self) -> &Type {
-//     &self.reflectable
-//   }
+  /// Returns the reflectable trait which replaces the generic parameter with the type of the object
+  /// e.g. If a struct is `struct MyObject<T> { ... }`, this will return `Reflectable<MyObject<T>>`.
+  #[inline]
+  pub const fn reflectable(&self) -> &Type {
+    &self.reflectable
+  }
 
-//   /// Returns the flavor
-//   #[inline]
-//   pub const fn flavor(&self) -> &FlavorAttribute {
-//     &self.flavor
-//   }
+  /// Returns the flavor
+  #[inline]
+  pub const fn flavor_type(&self) -> &Type {
+    &self.flavor_type
+  }
 
-//   /// Returns the generic unknown buffer type parameter.
-//   #[inline]
-//   pub const fn unknown_buffer_param(&self) -> &TypeParam {
-//     &self.unknown_buffer_param
-//   }
+  /// Returns the identifier options for the object
+  #[inline]
+  pub const fn identifier_options(&self) -> &IdentifierOptions {
+    &self.identifier_options
+  }
 
-//   /// Returns the generic read buffer type parameter.
-//   #[inline]
-//   pub const fn read_buffer_param(&self) -> &TypeParam {
-//     &self.read_buffer_param
-//   }
+  /// Returns the tag options for the object
+  #[inline]
+  pub const fn tag_options(&self) -> &TagOptions {
+    &self.tag_options
+  }
 
-//   /// Returns the generic write buffer type parameter.
-//   #[inline]
-//   pub const fn write_buffer_param(&self) -> &TypeParam {
-//     &self.write_buffer_param
-//   }
+  /// Returns the generic unknown buffer type parameter.
+  #[inline]
+  pub const fn unknown_buffer_param(&self) -> &TypeParam {
+    &self.unknown_buffer_param
+  }
 
-//   /// Returns the generic lifetime parameter.
-//   #[inline]
-//   pub const fn lifetime_param(&self) -> &LifetimeParam {
-//     &self.lifetime_param
-//   }
+  /// Returns the generic read buffer type parameter.
+  #[inline]
+  pub const fn read_buffer_param(&self) -> &TypeParam {
+    &self.read_buffer_param
+  }
 
-//   /// Returns the generics in the object definition if any.
-//   #[inline]
-//   pub const fn generics(&self) -> &Generics {
-//     &self.generics
-//   }
+  /// Returns the generic write buffer type parameter.
+  #[inline]
+  pub const fn write_buffer_param(&self) -> &TypeParam {
+    &self.write_buffer_param
+  }
 
-//   /// Returns the attributes in the object definition.
-//   #[inline]
-//   pub const fn attrs(&self) -> &[Attribute] {
-//     self.attrs.as_slice()
-//   }
+  /// Returns the generic lifetime parameter.
+  #[inline]
+  pub const fn lifetime_param(&self) -> &LifetimeParam {
+    &self.lifetime_param
+  }
 
-//   /// Returns `true` if the object is copyable, `false` otherwise.
-//   #[inline]
-//   pub const fn copy(&self) -> bool {
-//     self.copy
-//   }
+  /// Returns the generics in the object definition if any.
+  #[inline]
+  pub const fn generics(&self) -> &Generics {
+    &self.generics
+  }
 
-//   /// Returns the fields of the object
-//   #[inline]
-//   pub const fn fields(&self) -> &[Field<F>] {
-//     self.fields.as_slice()
-//   }
+  /// Returns the attributes in the object definition.
+  #[inline]
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
 
-//   /// Returns the partial object information
-//   #[inline]
-//   pub const fn partial(&self) -> &PartialObject {
-//     &self.partial
-//   }
+  /// Returns `true` if the object is copyable, `false` otherwise.
+  #[inline]
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
 
-//   /// Returns the partial decoded object information
-//   #[inline]
-//   pub const fn partial_ref(&self) -> &PartialRefObject {
-//     &self.partial_ref
-//   }
+  /// Returns the fields of the object
+  #[inline]
+  pub const fn fields(&self) -> &[Field<T, S>] {
+    self.fields.as_slice()
+  }
 
-//   /// Returns the selector information
-//   #[inline]
-//   pub const fn selector(&self) -> &Selector {
-//     &self.selector
-//   }
+  /// Returns the partial object information
+  #[inline]
+  pub const fn partial(&self) -> &PartialObject {
+    &self.partial
+  }
 
-//   /// Returns the selector iterator information
-//   #[inline]
-//   pub const fn selector_iter(&self) -> &SelectorIter {
-//     &self.selector_iter
-//   }
+  /// Returns the partial decoded object information
+  #[inline]
+  pub const fn partial_ref(&self) -> &PartialRefObject {
+    &self.partial_ref
+  }
 
-//   pub(in crate::object) fn try_new<O>(
-//     object: &O,
-//     flavor: &FlavorAttribute,
-//   ) -> darling::Result<Self> {
-//     let path_to_grost = object.path_to_grost().clone();
-//     let attrs = object.attrs().to_vec();
-//     let name = object.name().clone();
-//     let vis = object.vis().clone();
-//     let generics = object.generics().clone();
-//     let (_, tg, _) = generics.split_for_impl();
+  /// Returns the selector information
+  #[inline]
+  pub const fn selector(&self) -> &Selector {
+    &self.selector
+  }
 
-//     let type_params = generics.declared_type_params();
-//     let lifetimes = generics.declared_lifetimes();
+  /// Returns the selector iterator information
+  #[inline]
+  pub const fn selector_iter(&self) -> &SelectorIter {
+    &self.selector_iter
+  }
 
-//     let ty: Type = syn::parse2(quote! {
-//       #name #tg
-//     })?;
-//     let reflectable: Type = syn::parse2(quote! {
-//       #path_to_grost::__private::reflection::Reflectable<#ty>
-//     })?;
+  pub(in crate::object) fn from_raw(object: RawObject<T, S, M>) -> darling::Result<Self> {
+    let (object, (fields_metas, extra)) = object.extract();
+    let path_to_grost = &object.path_to_grost;
+    let attrs = &object.attrs;
+    let name = &object.name;
+    let vis = &object.vis;
+    let generics = &object.generics;
+    let (_, tg, _) = generics.split_for_impl();
 
-//     let mut tags = IndexSet::new();
-//     let fields = object
-//       .fields()
-//       .iter()
-//       .map(|&f| {
-//         if f.skip() {
-//           SkippedField::try_new(f, &type_params, &lifetimes)
-//             .map(|f| Field::Skipped(Box::new(f)))
-//         } else {
-//           TaggedField::try_new(f, flavor, &type_params, &lifetimes).and_then(|f| {
-//             if tags.contains(&f.tag()) {
-//               Err(darling::Error::custom(format!(
-//                 "{name} has multiple fields have the same tag {}",
-//                 f.tag()
-//               )))
-//             } else {
-//               tags.insert(f.tag());
-//               Ok(Field::Tagged(Box::new(f)))
-//             }
-//           })
-//         }
-//       })
-//       .collect::<darling::Result<Vec<_>>>()
-//       .and_then(|fields| {
-//         if fields.is_empty() {
-//           Err(darling::Error::custom(format!(
-//             "{name} must have at least one field"
-//           )))
-//         } else {
-//           Ok(fields)
-//         }
-//       })?;
+    let type_params_usages = &object.type_params_usages;
+    let lifetimes_usages = &object.lifetimes_usages;
 
-//     let partial = PartialObject::from_attribute(&name, object.partial())?;
-//     let partial_ref = PartialRefObject::from_attribute(&name, object.partial_ref())?;
-//     let selector = Selector::from_attribute(&name, object.selector())?;
-//     let selector_iter =
-//       SelectorIter::from_attribute(selector.name(), object.selector_iter())?;
+    let ty: Type = syn::parse2(quote! {
+      #name #tg
+    })?;
+    let reflectable: Type = syn::parse2(quote! {
+      #path_to_grost::__private::reflection::Reflectable<#ty>
+    })?;
 
-//     Ok(Self {
-//       path_to_grost,
-//       copy: object.copy(),
-//       attrs,
-//       indexer: Indexer {
-//         name: object.indexer_name().clone(),
-//         attrs: object.indexer().attrs().to_vec(),
-//       },
-//       schema_name: object
-//         .schema()
-//         .name()
-//         .map_or_else(|| name.to_string(), |s| s.to_string()),
-//       schema_description: object
-//         .schema()
-//         .description()
-//         .unwrap_or_default()
-//         .to_string(),
-//       name,
-//       vis,
-//       ty,
-//       reflectable,
-//       generics,
-//       flavor: flavor.clone(),
-//       fields,
-//       default: object.default().cloned(),
-//       partial,
-//       partial_ref,
-//       selector,
-//       selector_iter,
-//       meta: object.meta().clone(),
-//       unknown_buffer_param: object.unknown_buffer_type_param().clone(),
-//       lifetime_param: object.lifetime_param().clone(),
-//       read_buffer_param: object.read_buffer_type_param().clone(),
-//       write_buffer_param: object.write_buffer_type_param().clone(),
-//     })
-//   }
-// }
+    let fields = object
+      .fields
+      .iter()
+      .cloned()
+      .enumerate()
+      .map(|(idx, f)| Field::from_raw(&object, idx, f))
+      .collect::<darling::Result<Vec<_>>>()?;
+
+    let indexer_name = object.indexer_name();
+    let selector_iter_name = object.selector_iter_name();
+
+    let reflection = Reflection::from_ast(&object, &fields)?;
+    let partial = PartialObject::from_options(name, object.partial)?;
+    let partial_ref = PartialRefObject::from_options(name, object.partial_ref)?;
+    let selector = Selector::from_options(name, &object.generics, object.selector, &fields)?;
+    let selector_iter = selector.selector_iter(selector_iter_name, object.selector_iter)?;
+
+    let flavor_type = object.flavor_type;
+    let wf = object.wire_format;
+    let lp = object.lifetime_param;
+    let lt = &lp.lifetime;
+    let ubp = object.unknown_buffer_param;
+    let ub = &ubp.ident;
+    let rbp = object.read_buffer_param;
+    let rb = &rbp.ident;
+
+    let decoded_state_type = syn::parse2(quote! {
+      #path_to_grost::__private::convert::Decoded<#lt, #flavor_type, #wf, #rb, #ub>
+    })?;
+
+    let applied_decode_trait = {
+      let path_to_grost = path_to_grost.clone();
+      let flavor_ty = flavor_type.clone();
+      let wf = wf.clone();
+      let lt = lt.clone();
+      let ub = ub.clone();
+      let rb = rb.clone();
+      Arc::new(move |ty| {
+        syn::parse2(quote! {
+          #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+        })
+      })
+    };
+    Ok(Self {
+      path_to_grost: object.path_to_grost,
+      copy: object.copy,
+      attrs: object.attrs,
+      indexer: Indexer {
+        name: indexer_name,
+        attrs: object.indexer.attrs,
+      },
+      schema_name: object.schema.name.unwrap_or_else(|| name.to_string()),
+      schema_description: object.schema.description.unwrap_or_default(),
+      name: object.name,
+      vis: object.vis,
+      ty: object.ty,
+      reflectable,
+      generics: object.generics,
+      fields: fields
+        .into_iter()
+        .zip(fields_metas)
+        .map(|(f, extra)| match (f, extra) {
+          (Field::Skipped(f), Either::Right(meta)) => Field::Skipped(Box::new(f.with_meta(meta))),
+          (Field::Tagged(f), Either::Left(meta)) => Field::Tagged(Box::new(f.with_meta(meta))),
+          _ => unreachable!("Field and meta mismatch"),
+        })
+        .collect(),
+      default: object.default,
+      partial,
+      partial_ref,
+      selector,
+      selector_iter,
+      meta: extra,
+      unknown_buffer_param: ubp,
+      lifetime_param: lp,
+      read_buffer_param: rbp,
+      write_buffer_param: object.write_buffer_param,
+      decoded_state_type,
+      applied_decode_trait,
+      flavor_type,
+      wire_format: wf,
+      tag_options: object.tag_options,
+      identifier_options: object.identifier_options,
+      reflection,
+    })
+  }
+}

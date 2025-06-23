@@ -1,7 +1,10 @@
 use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
 use heck::ToUpperCamelCase;
 use quote::{format_ident, quote};
-use syn::{parse::{Parse, Parser}, Attribute, Ident, Type, Variant, Visibility};
+use syn::{
+  Attribute, Ident, Type, Variant, Visibility,
+  parse::{Parse, Parser},
+};
 
 // pub use flavor::{
 //   FieldDecodeFlavor, FieldEncodeFlavor, FieldFlavor,
@@ -99,8 +102,20 @@ impl<M> SkippedField<M> {
   }
 }
 
-impl<M> TryFrom<RawSkippedField<M>> for SkippedField<M>
-{
+impl SkippedField {
+  pub(super) fn with_meta<M>(self, meta: M) -> SkippedField<M> {
+    SkippedField {
+      attrs: self.attrs,
+      vis: self.vis,
+      name: self.name,
+      ty: self.ty,
+      default: self.default,
+      meta,
+    }
+  }
+}
+
+impl<M> TryFrom<RawSkippedField<M>> for SkippedField<M> {
   type Error = darling::Error;
 
   fn try_from(f: RawSkippedField<M>) -> Result<Self, Self::Error> {
@@ -113,8 +128,7 @@ impl<M> TryFrom<RawSkippedField<M>> for SkippedField<M>
     let default = if let Some(path) = default {
       path
     } else {
-      syn::parse2::<syn::Path>(quote! { ::core::default::Default::default })?
-        .into()
+      syn::parse2::<syn::Path>(quote! { ::core::default::Default::default })?.into()
     };
     Ok(Self {
       attrs,
@@ -138,6 +152,28 @@ pub struct RawSkippedField<M = ()> {
 }
 
 impl<M> RawSkippedField<M> {
+  pub(super) fn extract(self) -> (RawSkippedField, M) {
+    let Self {
+      attrs,
+      vis,
+      name,
+      ty,
+      default,
+      extra,
+    } = self;
+    (
+      RawSkippedField {
+        attrs,
+        vis,
+        name,
+        ty,
+        default,
+        extra: (),
+      },
+      extra,
+    )
+  }
+
   // /// Returns the name of the skipped field
   // #[inline]
   // pub const fn name(&self) -> &Ident {

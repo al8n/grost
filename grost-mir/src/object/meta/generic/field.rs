@@ -7,10 +7,7 @@ use syn::{Attribute, Ident, Meta, Path, Type};
 use crate::{
   object::{
     Label,
-    meta::{
-      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta,
-      SelectorFieldFromMeta,
-    },
+    meta::{FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, SelectorFieldFromMeta},
   },
   utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
 };
