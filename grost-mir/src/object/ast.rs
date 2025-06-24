@@ -11,7 +11,8 @@ use crate::{
 };
 
 pub use concrete::{
-  Object, PartialObject, PartialObjectOptions, PartialRefObject, PartialRefObjectOptions,
+  Object, PartialObject, PartialObjectOptions, PartialRefObject, PartialRefObjectOptions, RawField,
+  RawTaggedField,
 };
 
 // pub(super) use concrete::ConcreteObject;

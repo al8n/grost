@@ -20,3 +20,11 @@ pub struct SkippedFieldFromMeta<M = ()> {
   #[darling(flatten)]
   pub(in crate::object) extra: M,
 }
+
+/// A raw field meta trait that links the tagged and skipped meta types together.
+pub trait RawFieldMeta {
+  /// The type of skipped meta for this field.
+  type Skipped;
+  /// The type of tagged meta for this field.
+  type Tagged;
+}

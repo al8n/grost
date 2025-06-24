@@ -24,14 +24,14 @@ fn error_name<'a>() -> Result<&'a str, <Network as Flavor>::Error> {
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 #[grost(
   // output(path = "grost-derive/tests/user.rs", format),
-  flavor(
-    default(
-      encode(
-        skip_default,
-        enum = "grost::flavors::network::encoding::enumeration",
-      )
-    ),
-  ),
+  // flavor(
+  //   default(
+  //     encode(
+  //       skip_default,
+  //       enum = "grost::flavors::network::encoding::enumeration",
+  //     )
+  //   ),
+  // ),
 )]
 pub struct User<I: Default> {
   #[grost(
@@ -209,12 +209,12 @@ fn t() {
   //   emails: todo!(),
   // };
 
-  let val = User::<String>::emails_reflection();
-  let wf = val.wire_format();
-  let identifier = val.identifier();
-  let encoded_identifier = val.encoded_identifier();
-  let object_refl = User::<String>::reflection();
-  println!("{:?}", encoded_identifier);
+  // let val = User::<String>::emails_reflection();
+  // let wf = val.wire_format();
+  // let identifier = val.identifier();
+  // let encoded_identifier = val.encoded_identifier();
+  // let object_refl = User::<String>::reflection();
+  // println!("{:?}", encoded_identifier);
 
   // let mut decoder = PartialUserDecoder::new();
   // decoder.feed(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).unwrap();

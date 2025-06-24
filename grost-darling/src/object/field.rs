@@ -1,21 +1,24 @@
-use darling::{FromDeriveInput, FromMeta, ast::Data, util::Ignored};
-use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, Generics, Ident, Path, Visibility};
+use darling::{FromDeriveInput, FromField, FromMeta, ast::Data, util::Ignored};
+use quote::{format_ident, quote};
+use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use super::{Attributes, Field};
+use super::Attributes;
 
-const BUILTIN_NAMES: &[&str] = &[
-  "schema",
-  "default",
-  "tag",
-  "flavor",
-  "convert",
-  "partial",
-  "partial_ref",
-  "selector",
-  "copy",
-  "skip",
-];
+#[derive(Debug, Default, Clone, FromMeta)]
+struct DarlingFromMeta {
+  #[darling(default, map = "super::super::map_option_meta")]
+  darling: Option<syn::Meta>,
+}
+
+#[derive(Debug, FromField)]
+#[darling(attributes(grost), forward_attrs)]
+struct Field {
+  ident: Option<Ident>,
+  vis: Visibility,
+  ty: Type,
+  tag: DarlingFromMeta,
+  skip: DarlingFromMeta,
+}
 
 #[derive(Debug, FromMeta)]
 struct FieldMeta {
@@ -71,51 +74,6 @@ impl ObjectField {
     })
   }
 
-  fn derive_custom_meta(&self, fields: &darling::ast::Fields<&Field>) -> proc_macro2::TokenStream {
-    let meta_name = match self.rename.as_ref() {
-      Some(name) => format_ident!("{}Meta", name),
-      None => format_ident!("{}Meta", self.ident),
-    };
-
-    let generics = &self.generics;
-    let (ig, tg, w) = generics.split_for_impl();
-
-    let vis = &self.vis;
-    let fields_declare = fields.iter().map(|f| {
-      let ty = &f.ty;
-      let vis = &f.vis;
-      let ident = f
-        .ident
-        .as_ref()
-        .expect("Object should only have named fields");
-      quote! {
-        #vis #ident: #ty,
-      }
-    });
-    let accessors = fields.iter().map(|f| {
-      let name = f.ident.as_ref().unwrap();
-      let ty = &f.ty;
-      let vis = &f.vis;
-      quote! {
-        #[inline]
-        #vis const fn #name(&self) -> &#ty {
-          &self.#name
-        }
-      }
-    });
-
-    quote! {
-      #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-      #vis struct #meta_name #generics #w {
-        #(#fields_declare),*
-      }
-
-      impl #ig #meta_name #tg #w {
-        #(#accessors)*
-      }
-    }
-  }
-
   fn name(&self, prefix: &str, suffix: &str) -> Ident {
     if let Some(rename) = &self.rename {
       format_ident!("{}{}{}", prefix, rename, suffix)
@@ -123,426 +81,253 @@ impl ObjectField {
       format_ident!("{}{}{}", prefix, self.ident, suffix)
     }
   }
-}
 
-impl ToTokens for ObjectField {
-  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-    let input_name = self.name("", "");
-    let nested_meta = self.name("__", "NestedMeta__");
+  fn derive_hidden_meta(
+    path_to_crate: &Path,
+    vis: &Visibility,
+    name: &Ident,
+    hidden_name: &Ident,
+    fields: &[&Field],
+  ) -> proc_macro2::TokenStream {
+    if fields.is_empty() {
+      return quote! {};
+    }
 
-    let hidden_input_name = self.name("__", "Input__");
-    let field_meta_without_label_name = self.name("__", "FieldMetaWithoutLabel__");
-    let field_meta_with_label_name = self.name("__", "FieldMeta__");
-    let custom_meta_name = self.name("", "Meta");
-    let vis = &self.vis;
-    let path_to_crate = &self.path_to_crate;
-    let generics = &self.generics;
-    let (ig, tg, w) = generics.split_for_impl();
+    let mut fields_def = vec![];
+    let mut fields_into = vec![];
+    fields.iter().for_each(|f| {
+      let ty = &f.ty;
+      let vis = &f.vis;
+      let ident = f
+        .ident
+        .as_ref()
+        .expect("Already checked field must have a name");
 
-    let attribute = &self.attribute;
-    let attribute_str = attribute.to_string();
-    let builtin_meta_fields_names = {
-      let idents = BUILTIN_NAMES.iter().map(|name| {
-        let ident = format_ident!("{name}");
-        quote!(#ident,)
-      });
+      if let Some(meta) = f.tag.darling.as_ref() {
+        fields_def.push(quote! {
+          #[#meta]
+          #vis #ident: #ty
+        });
+        fields_into.push(quote! {
+          #ident: input.#ident
+        });
+      } else {
+        fields_def.push(quote! {
+          #vis #ident: #ty
+        });
+        fields_into.push(quote! {
+          #ident: input.#ident
+        });
+      }
+    });
+
+    quote! {
+      #[derive(::core::fmt::Debug, #path_to_crate::__private::darling::FromMeta)]
+      #vis struct #hidden_name {
+        #(#fields_def),*
+      }
+
+      impl #path_to_crate::__private::darling::FromMeta for #name {
+        fn from_meta(
+          meta: &#path_to_crate::__private::syn::Meta,
+        ) -> #path_to_crate::__private::darling::Result<Self> {
+          <#hidden_name as #path_to_crate::__private::darling::FromMeta>::from_meta(meta)
+            .map(|input| Self {
+              #(#fields_into),*
+            })
+        }
+      }
+    }
+  }
+
+  fn derive_meta_def(
+    vis: &Visibility,
+    name: &Ident,
+    fields: &[&Field],
+  ) -> proc_macro2::TokenStream {
+    if fields.is_empty() {
+      return quote! {};
+    }
+
+    let fields = fields.iter().map(|f| {
+      let ty = &f.ty;
+      let vis = &f.vis;
+      let ident = f
+        .ident
+        .as_ref()
+        .expect("Already checked field must have a name");
 
       quote! {
-        #(#idents)*
+        #vis #ident: #ty
       }
-    };
+    });
+
+    quote! {
+      #[derive(::core::fmt::Debug)]
+      #vis struct #name {
+        #(#fields),*
+      }
+    }
+  }
+
+  pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let vis = &self.vis;
+    let path_to_crate = &self.path_to_crate;
+
+    let generics = &self.generics;
+    if !generics.params.is_empty() || generics.where_clause.is_some() {
+      return Err(darling::Error::custom(
+        "`field` attribute macro does not support generic parameters",
+      ));
+    }
+
+    let attr = &self.attribute;
     let meta = &self.meta;
-    let (
-      custom_meta,
-      custom_meta_ty,
-      custom_meta_getter,
-      custom_meta_fields,
-      custom_meta_fields_without_darling,
-      custom_meta_fields_deconstructor,
-      into_outer,
-    ) = match self.data.as_ref() {
+    let input_name = self.name("", "");
+    let hidden_input_name = self.name("__", "Input__");
+    let hidden_skipped_meta_name = self.name("__", "SkippedMeta__");
+    let hidden_tagged_meta_name = self.name("__", "TaggedMeta__");
+    let skipped_meta_name = self.name("", "SkippedMeta");
+    let tagged_meta_name = self.name("", "TaggedMeta");
+
+    let mut custom_skipped_fields = vec![];
+    let mut custom_tagged_fields = vec![];
+
+    match self.data.as_ref() {
       Data::Enum(_) => unreachable!("`field` should not be used for enums"),
       Data::Struct(fields) => {
-        if fields.is_unit() || fields.is_empty() {
-          (quote!(), quote!(()), quote!(&()), None, None, None, None)
-        } else {
-          (
-            self.derive_custom_meta(&fields),
-            quote!(#custom_meta_name #tg),
-            quote!(&self.__custom_meta__),
-            Some({
-              let fields = fields.iter().map(|f| {
-                let ty = &f.ty;
-                let vis = &f.vis;
-                let meta = f.darling.as_ref().map(|m| {
-                  quote! {
-                    #[#m]
-                  }
-                });
-                let name = f
-                  .ident
-                  .as_ref()
-                  .expect("`field` should only work on structs with named fields");
-                quote! {
-                  #meta
-                  #vis #name: #ty,
-                }
-              });
-              quote! {
-                #(#fields)*
-              }
-            }),
-            Some({
-              quote! {
-                #[doc(hidden)]
-                __custom_meta__: #custom_meta_name #tg,
-              }
-            }),
-            Some({
-              let fields = fields.iter().map(|f| {
-                let field_name = f.ident.as_ref().unwrap();
-                quote! { #field_name, }
-              });
+        if !(fields.is_unit() || fields.is_empty()) {
+          if !fields.is_struct() {
+            return Err(darling::Error::custom(
+              "`field` attribute macro can only be used with struct-like data",
+            ));
+          }
 
-              quote! {
-                #(#fields)*
-              }
-            }),
-            Some({
-              let fields = fields.iter().map(|f| {
-                let field_name = f.ident.as_ref().unwrap();
-                quote! { #field_name: input.#field_name, }
-              });
+          for f in fields.into_iter() {
+            if f.ident.is_none() {
+              return Err(darling::Error::custom(
+                "tuple-like structs are not supported by `field` attribute macro",
+              ));
+            }
 
-              quote! {
-                __custom_meta__: #custom_meta_name #tg {
-                  #(#fields)*
-                },
-              }
-            }),
-          )
+            if f.tag.darling.is_some() {
+              custom_tagged_fields.push(f);
+            }
+
+            if f.skip.darling.is_some() {
+              custom_skipped_fields.push(f);
+            }
+          }
         }
       }
     };
 
-    tokens.extend(quote! {
-      #custom_meta
+    let skipped_meta = Self::derive_meta_def(vis, &skipped_meta_name, &custom_skipped_fields);
+
+    let tagged_meta = Self::derive_meta_def(vis, &tagged_meta_name, &custom_tagged_fields);
+
+    let hidden_skipped_meta = Self::derive_hidden_meta(
+      path_to_crate,
+      vis,
+      &skipped_meta_name,
+      &hidden_skipped_meta_name,
+      &custom_skipped_fields,
+    );
+    let hidden_tagged_meta = Self::derive_hidden_meta(
+      path_to_crate,
+      vis,
+      &tagged_meta_name,
+      &hidden_tagged_meta_name,
+      &custom_tagged_fields,
+    );
+
+    let tagged_fields_meta_ty = if custom_tagged_fields.is_empty() {
+      quote!(())
+    } else {
+      quote!(#tagged_meta_name)
+    };
+
+    let skipped_fields_meta_ty = if custom_skipped_fields.is_empty() {
+      quote!(())
+    } else {
+      quote!(#skipped_meta_name)
+    };
+
+    Ok(quote! {
+      #skipped_meta
+
+      #tagged_meta
 
       #(#meta)*
       #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-      #vis struct #input_name #tg #w {
+      #vis struct #input_name {
         ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
         vis: #path_to_crate::__private::syn::Visibility,
         ty: #path_to_crate::__private::syn::Type,
         attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
 
-        #custom_meta_fields_without_darling
-
-        __meta__: #path_to_crate::__private::object::FieldOptions,
+        meta: #path_to_crate::__private::object::meta::FieldFromMeta<#tagged_fields_meta_ty, #skipped_fields_meta_ty>,
       }
 
       const _: () = {
-        use #path_to_crate::__private::{darling, syn};
+        use #path_to_crate::__private::darling;
 
-        #[allow(clippy::large_enum_variant)]
-        enum #nested_meta {
-          Label(#path_to_crate::__private::object::Label),
-          Nested(#path_to_crate::__private::darling::ast::NestedMeta),
-        }
+        #hidden_skipped_meta
+        #hidden_tagged_meta
 
-        impl #path_to_crate::__private::syn::parse::Parse for #nested_meta {
-          fn parse(input: #path_to_crate::__private::syn::parse::ParseStream) -> #path_to_crate::__private::syn::Result<Self> {
-            if #path_to_crate::__private::object::Label::peek(&input)? {
-              let label: #path_to_crate::__private::object::Label = input.parse()?;
-              ::core::result::Result::Ok(Self::Label(label))
-            } else {
-              #path_to_crate::__private::darling::ast::NestedMeta::parse(input).map(Self::Nested)
-            }
-          }
-        }
-
-        #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromMeta)]
-        struct #field_meta_without_label_name #generics #w {
-          #[darling(default)]
-          schema: #path_to_crate::__private::utils::SchemaFromMeta,
-          #[darling(default)]
-          default: ::core::option::Option<#path_to_crate::__private::utils::Invokable>,
-          #[darling(default)]
-          tag: ::core::option::Option<::core::num::NonZeroU32>,
-          #[darling(default)]
-          flavor: #path_to_crate::__private::object::meta::GenericFieldFlavorFromMeta,
-          #[darling(default)]
-          convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
-          #[darling(default)]
-          partial: #path_to_crate::__private::object::meta::PartialFieldFromMeta,
-          #[darling(default)]
-          partial_ref: #path_to_crate::__private::object::meta::GenericPartialRefFieldFromMeta,
-          #[darling(default)]
-          selector: #path_to_crate::__private::object::meta::SelectorFieldFromMeta,
-          #[darling(default)]
-          copy: ::core::primitive::bool,
-          #[darling(default)]
-          skip: ::core::primitive::bool,
-          #custom_meta_fields
-        }
-
-        struct #field_meta_with_label_name #generics #w {
-          label: ::core::option::Option<#path_to_crate::__private::object::Label>,
-          schema: #path_to_crate::__private::utils::SchemaFromMeta,
-          default: ::core::option::Option<#path_to_crate::__private::utils::Invokable>,
-          tag: ::core::option::Option<::core::num::NonZeroU32>,
-          flavor: #path_to_crate::__private::object::meta::GenericFieldFlavorFromMeta,
-          convert: #path_to_crate::__private::object::meta::ConvertFromMeta,
-          partial: #path_to_crate::__private::object::meta::PartialFieldFromMeta,
-          partial_ref: #path_to_crate::__private::object::meta::GenericPartialRefFieldFromMeta,
-          selector: #path_to_crate::__private::object::meta::SelectorFieldFromMeta,
-          copy: ::core::primitive::bool,
-          skip: ::core::primitive::bool,
-          #custom_meta_fields_without_darling
-        }
-
-        impl #ig #path_to_crate::__private::darling::FromMeta for #field_meta_with_label_name #tg #w {
-          fn from_meta(
-            item: &#path_to_crate::__private::syn::Meta,
-          ) -> #path_to_crate::__private::darling::Result<Self> {
-            (match item {
-              #path_to_crate::__private::syn::Meta::Path(_) => Self::from_word(),
-              #path_to_crate::__private::syn::Meta::NameValue(value) => Self::from_expr(&value.value),
-              #path_to_crate::__private::syn::Meta::List(value) => {
-                use #path_to_crate::__private::syn::parse::Parser;
-
-                let punctuated =
-                  #path_to_crate::__private::syn::punctuated::Punctuated::<#nested_meta, #path_to_crate::__private::syn::Token![,]>::parse_terminated
-                    .parse2(value.tokens.clone())?;
-
-                let mut nested_meta = ::std::vec::Vec::new();
-                let mut label: ::core::option::Option<#path_to_crate::__private::object::Label> = ::core::option::Option::None;
-                for item in punctuated {
-                  match item {
-                    #nested_meta::Label(l) => {
-                      if let ::core::option::Option::Some(ref label) = label {
-                        return ::core::result::Result::Err(#path_to_crate::__private::darling::Error::custom(
-                          ::std::format!(
-                            "Cannot specify both `{label}` and `{l}` at the same time.",
-                          )
-                        ));
-                      }
-                      label = ::core::option::Option::Some(l);
-                    }
-                    #nested_meta::Nested(value) => {
-                      nested_meta.push(value);
-                    }
-                  }
-                }
-
-                let #field_meta_without_label_name #tg {
-                  #builtin_meta_fields_names
-                  #custom_meta_fields_deconstructor
-                } = <#field_meta_without_label_name #tg as #path_to_crate::__private::darling::FromMeta>::from_list(&nested_meta)?;
-                ::core::result::Result::Ok(Self {
-                  label: if skip {
-                    ::core::option::Option::None
-                  } else {
-                    ::core::option::Option::Some(label.ok_or_else(|| #path_to_crate::__private::darling::Error::custom("Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional] to be specified for a field"))?)
-                  },
-                  #builtin_meta_fields_names
-                  #custom_meta_fields_deconstructor
-                })
-              }
-            })
-            .map_err(|e| e.with_span(item))
-          }
-        }
-
-        #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-        struct #hidden_input_name #generics #w {
+        #[derive(::core::fmt::Debug, ::core::clone::Clone, #path_to_crate::__private::darling::FromField)]
+        #[darling(attributes(#attr), forward_attrs)]
+        struct #hidden_input_name {
           ident: ::core::option::Option<#path_to_crate::__private::syn::Ident>,
           vis: #path_to_crate::__private::syn::Visibility,
           ty: #path_to_crate::__private::syn::Type,
           attrs: ::std::vec::Vec<#path_to_crate::__private::syn::Attribute>,
 
-          #custom_meta_fields
-
-          __meta__: #path_to_crate::__private::object::meta::FieldFromMeta,
+          #[darling(flatten)]
+          meta: #path_to_crate::__private::object::meta::FieldFromMeta<#tagged_fields_meta_ty, #skipped_fields_meta_ty>,
         }
 
-        impl #ig #path_to_crate::__private::darling::FromField for #hidden_input_name #tg #w {
+        impl #path_to_crate::__private::darling::FromField for #input_name {
           fn from_field(
             field: &#path_to_crate::__private::syn::Field,
           ) -> #path_to_crate::__private::darling::Result<Self> {
-            use #path_to_crate::__private::quote::ToTokens;
+            <#hidden_input_name as #path_to_crate::__private::darling::FromField>::from_field(field)
+              .and_then(|input| {
+                let ident = input.ident;
+                let vis = input.vis;
+                let ty = input.ty;
+                let attrs = input.attrs;
 
-            let mut errors = #path_to_crate::__private::darling::Error::accumulator();
-            let mut fwd_attrs: ::std::vec::Vec<
-              #path_to_crate::__private::syn::Attribute,
-            > = ::std::vec::Vec::new();
-            let mut meta: ::core::option::Option<#field_meta_with_label_name #tg> = ::core::option::Option::None;
-
-            for attr in &field.attrs {
-              match ::darling::export::ToString::to_string(
-                &attr.path().clone().into_token_stream(),
-              )
-                .as_str()
-              {
-                #attribute_str => {
-                  if meta.is_some() {
-                    errors.push(
-                      #path_to_crate::__private::darling::Error::custom(
-                        ::std::format!(
-                          "Cannot specify `{}` attribute multiple times on the same field.",
-                          #attribute_str
-                        )
-                      )
-                      .with_span(attr),
-                    );
-                    continue;
-                  }
-
-                  match <#field_meta_with_label_name #tg as #path_to_crate::__private::darling::FromMeta>::from_meta(&attr.meta) {
-                    ::core::result::Result::Ok(val) => {
-                      meta = ::core::option::Option::Some(val);
-                    },
-                    ::core::result::Result::Err(e) => {
-                      errors.push(e);
-                    }
-                  }
-                }
-                _ => fwd_attrs.push(attr.clone()),
-              }
-            }
-
-            if meta.is_none() {
-              errors.push(
-                #path_to_crate::__private::darling::Error::missing_field(#attribute_str),
-              );
-            }
-
-            errors.finish()?;
-
-            let ::core::option::Option::Some(meta) = meta else {
-              ::core::panic!("Uninitialized fields without defaults were already checked")
-            };
-
-            let #field_meta_with_label_name #tg {
-              label,
-              #builtin_meta_fields_names
-              #custom_meta_fields_deconstructor
-            } = meta;
-
-            ::core::result::Result::Ok(Self {
-              ident: field.ident.clone(),
-              ty: field.ty.clone(),
-              vis: field.vis.clone(),
-              attrs: fwd_attrs,
-              #custom_meta_fields_deconstructor
-              __meta__: #path_to_crate::__private::object::meta::FieldFromMeta {
-                label,
-                #builtin_meta_fields_names
-              },
-            })
+                ::core::result::Result::Ok(Self {
+                  ident,
+                  vis,
+                  ty,
+                  attrs,
+                  meta: input.meta,
+                })
+              })
           }
         }
 
-        #path_to_crate::__private::darling::uses_type_params!(#input_name #tg, ty);
-        #path_to_crate::__private::darling::uses_lifetimes!(#input_name #tg, ty);
+        impl ::core::convert::TryFrom<#input_name> for #path_to_crate::__private::object::RawField<#tagged_fields_meta_ty, #skipped_fields_meta_ty> {
+          type Error = #path_to_crate::__private::darling::Error;
 
-        impl #ig ::core::convert::TryFrom<#hidden_input_name #tg> for #input_name #tg #w {
-          type Error = #path_to_crate::__private::syn::Error;
-
-          #[inline]
-          fn try_from(input: #hidden_input_name #tg) -> ::core::result::Result<Self, Self::Error> {
-            ::core::result::Result::Ok(Self {
-              ident: input.ident,
-              vis: input.vis,
-              ty: input.ty,
-              attrs: input.attrs,
-              __meta__: input.__meta__.finalize()?,
-              #into_outer
-            })
+          fn try_from(input: #input_name) -> ::core::result::Result<Self, Self::Error> {
+            #path_to_crate::__private::object::RawField::new(
+              input.attrs,
+              input.vis,
+              input.ident.expect("Already checked field must have a name"),
+              input.ty,
+              input.meta,
+            )
           }
         }
 
-        impl #ig #path_to_crate::__private::darling::FromField for #input_name #tg #w {
-          fn from_field(
-            field: &#path_to_crate::__private::syn::Field,
-          ) -> #path_to_crate::__private::darling::Result<Self> {
-            <#hidden_input_name #tg as #path_to_crate::__private::darling::FromField>::from_field(field)
-              .and_then(|field| ::core::convert::TryInto::try_into(field).map_err(#path_to_crate::__private::darling::Error::from))
-          }
-        }
-
-        impl #ig #path_to_crate::__private::object::RawField for #input_name #tg #w {
-          type Meta = #custom_meta_ty;
-
-          #[inline]
-          fn name(&self) -> &#path_to_crate::__private::syn::Ident {
-            self.ident.as_ref().expect("the field of the named struct must have a name")
-          }
-
-          #[inline]
-          fn ty(&self) -> &#path_to_crate::__private::syn::Type {
-            &self.ty
-          }
-
-          #[inline]
-          fn vis(&self) -> &#path_to_crate::__private::syn::Visibility {
-            &self.vis
-          }
-
-          #[inline]
-          fn attrs(&self) -> &[#path_to_crate::__private::syn::Attribute] {
-            &self.attrs
-          }
-
-          fn tag(&self) -> ::core::option::Option<::core::num::NonZeroU32> {
-            self.__meta__.tag()
-          }
-
-          fn flavors(&self) -> &[#path_to_crate::__private::object::FieldFlavorAttribute] {
-            self.__meta__.flavors()
-          }
-
-          fn convert(&self) -> &#path_to_crate::__private::object::ConvertAttribute {
-            &self.__meta__.convert()
-          }
-
-          fn partial(&self) -> &#path_to_crate::__private::object::PartialFieldOptions {
-            self.__meta__.partial()
-          }
-
-          fn partial_ref(&self) -> &#path_to_crate::__private::object::PartialRefFieldOptions {
-            self.__meta__.partial_ref()
-          }
-
-          fn copy(&self) -> ::core::primitive::bool {
-            self.__meta__.copy()
-          }
-
-          fn skip(&self) -> ::core::primitive::bool {
-            self.__meta__.skip()
-          }
-
-          fn selector(&self) -> &#path_to_crate::__private::object::SelectorFieldOptions {
-            &self.__meta__.selector()
-          }
-
-          fn label(&self) -> ::core::option::Option<&#path_to_crate::__private::object::Label> {
-            self.__meta__.label()
-          }
-
-          fn schema(&self) -> &#path_to_crate::__private::utils::SchemaOptions {
-            &self.__meta__.schema()
-          }
-
-          fn default(&self) -> ::core::option::Option<&#path_to_crate::__private::utils::Invokable> {
-            self.__meta__.default()
-          }
-
-          fn meta(&self) -> &Self::Meta {
-            #custom_meta_getter
-          }
+        impl #path_to_crate::__private::object::meta::RawFieldMeta for #input_name {
+          type Skipped = #skipped_fields_meta_ty;
+          type Tagged = #tagged_fields_meta_ty;
         }
       };
-    });
+    })
   }
 }

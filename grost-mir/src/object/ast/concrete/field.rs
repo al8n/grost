@@ -106,10 +106,10 @@ pub enum RawField<TM = (), SM = ()> {
 impl<TM, SM> RawField<TM, SM> {
   /// Creates a new raw field
   pub fn new(
+    attrs: Vec<Attribute>,
+    vis: Visibility,
     name: Ident,
     ty: Type,
-    vis: Visibility,
-    attrs: Vec<Attribute>,
     meta: FieldFromMeta<TM, SM>,
   ) -> darling::Result<Self> {
     match meta {

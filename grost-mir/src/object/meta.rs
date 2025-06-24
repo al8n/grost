@@ -3,7 +3,7 @@ pub use field::*;
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use selector::{SelectorFromMeta, SelectorIterFromMeta};
 
-pub use concrete::ObjectFromMeta;
+pub use concrete::{FieldFromMeta, ObjectFromMeta};
 pub use generic::GenericObjectFromMeta;
 use syn::Meta;
 

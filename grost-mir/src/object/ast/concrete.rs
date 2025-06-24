@@ -27,8 +27,7 @@ use crate::{
   utils::{Invokable, SchemaOptions},
 };
 
-use field::*;
-
+pub use field::*;
 pub use partial::*;
 pub use partial_ref::*;
 
@@ -533,10 +532,10 @@ impl<T, S, M> Object<T, S, M> {
   /// Creates a new `Object` from the given parameters.
   pub fn new(
     path_to_grost: Path,
-    name: Ident,
-    vis: Visibility,
-    generics: Generics,
     attrs: Vec<Attribute>,
+    vis: Visibility,
+    name: Ident,
+    generics: Generics,
     fields: Vec<RawField<T, S>>,
     meta: ObjectFromMeta<M>,
   ) -> darling::Result<Self> {
@@ -783,5 +782,34 @@ impl<T, S, M> Object<T, S, M> {
         }
       })
     }
+  }
+}
+
+impl<T, S, M> ToTokens for Object<T, S, M> {
+  fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+    let name = self.name();
+    let vis = self.vis();
+    let generics = self.generics();
+    let wc = generics.where_clause.as_ref();
+    let attrs = self.attrs();
+
+    let fields = self.fields().iter().map(|f| {
+      let name = f.name();
+      let ty = f.ty();
+      let vis = f.vis();
+      let attrs = f.attrs();
+
+      quote! {
+        #(#attrs)*
+        #vis #name: #ty
+      }
+    });
+
+    tokens.extend(quote! {
+      #(#attrs)*
+      #vis struct #name #generics #wc {
+        #(#fields),*
+      }
+    });
   }
 }
