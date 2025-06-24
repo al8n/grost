@@ -327,6 +327,40 @@ macro_rules! list {
             })
         }
       }
+
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialTransform<$crate::__private::flavors::Network, $crate::__private::flavors::network::Packed<W>, $ty> for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
+        T: $crate::__private::selection::Selectable<$crate::__private::flavors::Network>
+          + $crate::__private::decode::PartialTransform<$crate::__private::flavors::Network, W, T>,
+        Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Network, Selector = T::Selector>,
+      {
+        fn partial_transform(
+          input: $ty,
+          selector: &T::Selector,
+        ) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Network as $crate::__private::flavors::Flavor>::Error>
+        where
+          Self: Sized
+        {
+          if $crate::__private::selection::Selector::is_empty(selector) {
+            return ::core::result::Result::Ok(::core::option::Option::None);
+          }
+
+          input.into_iter()
+            .filter_map(|res| {
+              match T::partial_transform(res, selector) {
+                ::core::result::Result::Ok(val) => val.map(|val| ::core::result::Result::Ok(val)),
+                ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
+              }
+            })
+            .collect::<::core::result::Result<$ty, _>>()
+            .map(|val| if val.is_empty() {
+              ::core::option::Option::None
+            } else {
+              ::core::option::Option::Some(val)
+            })
+        }
+      }
     )*
   };
   (@selectable $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {

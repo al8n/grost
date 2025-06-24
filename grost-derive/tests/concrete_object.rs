@@ -38,7 +38,7 @@ pub struct User<I: Default> {
     tag = 1,
     schema(description = "The id of the user"),
     selector(select = "all"),
-    flavor(default = "grost::flavors::network::LengthDelimited"),
+    wire_format = "grost::flavors::network::LengthDelimited",
     bytes
   )]
   id: I,

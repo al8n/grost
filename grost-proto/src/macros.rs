@@ -170,6 +170,24 @@ macro_rules! identity_partial_transform {
           ::core::result::Result::Ok(::core::option::Option::Some(input))
         }
       }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialTransform<$flavor, $wf, ::core::option::Option<Self>> for $ty {
+        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        where
+          Self: Sized,
+        {
+          match input {
+            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
+            ::core::option::Option::Some(input) => {
+              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+                return ::core::result::Result::Ok(::core::option::Option::None);
+              }
+
+              ::core::result::Result::Ok(::core::option::Option::Some(input))
+            }
+          }
+        }
+      }
     )*
   };
 }

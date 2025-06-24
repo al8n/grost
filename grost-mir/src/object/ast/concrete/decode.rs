@@ -93,6 +93,8 @@ fn derive_partial_object_decode<T, S, M>(
   let wf = object.wire_format();
 
   let decode_trait = partial_object.applied_decode_trait(quote! { Self })?;
+  let decode_from_partial_trait =
+    partial_object.applied_decode_trait(quote! { #partial_object_ty })?;
   let decode_to_object_trait = object.applied_decode_trait(quote! { Self })?;
   let partial_ref_object_ty = object.partial_ref().ty();
   let object_ty = object.ty();
@@ -113,6 +115,33 @@ fn derive_partial_object_decode<T, S, M>(
         .predicates
         .extend(preds.iter().cloned());
     }
+
+    object
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .try_for_each(|f| {
+        if f.uses_generics() {
+          output
+            .make_where_clause()
+            .predicates
+            .extend(f.selector().type_constraints().iter().cloned());
+          let field_ty = f.ty();
+          let field_wf = f.wire_format();
+          output
+            .make_where_clause()
+            .predicates
+            .push(syn::parse2(quote! {
+              #field_ty: #path_to_grost::__private::decode::PartialTransform<
+                #flavor_ty,
+                #field_wf,
+                #field_ty,
+              >
+            })?);
+        }
+        darling::Result::Ok(())
+      })?;
+
     output
       .make_where_clause()
       .predicates
@@ -153,8 +182,14 @@ fn derive_partial_object_decode<T, S, M>(
       fields_partial_transform.push({
         let call = match partial_transform_options.convert_operation() {
           None => {
-            quote! {
-              <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_field_ty>>::partial_transform(value, selector.#field_selector())?
+            if f.label().is_optional() {
+              quote! {
+                <<#partial_field_ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, <#partial_field_ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output>>::partial_transform(value, selector.#field_selector())?
+              }
+            } else {
+              quote! {
+                <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_field_ty>>::partial_transform(value, selector.#field_selector())?
+              }
             }
           }
           Some(transform) => {
@@ -183,7 +218,7 @@ fn derive_partial_object_decode<T, S, M>(
           let call = missing_operation.call();
           quote! {
             else {
-              ::core::option::Option::Some(#call)
+              #call
             }
           }
         }
@@ -199,11 +234,17 @@ fn derive_partial_object_decode<T, S, M>(
         },
       };
 
-      quote! {
-        #name: {
-          if let ::core::option::Option::Some(value) = input.#name {
-            ::core::option::Option::Some(value)
-          } #on_missing
+      if f.label().is_optional() {
+        quote! {
+          #name: input.#name
+        }
+      } else {
+        quote! {
+          #name: {
+            if let ::core::option::Option::Some(value) = input.#name {
+              value
+            } #on_missing
+          }
         }
       }
     });
@@ -243,7 +284,7 @@ fn derive_partial_object_decode<T, S, M>(
         #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
-        <#partial_object_ty as #decode_trait>::decode(context, src)
+        <#partial_object_ty as #decode_from_partial_trait>::decode(context, src)
           .and_then(|(read, input)| {
             <#object_ty as #path_to_grost::__private::decode::Transform::<#flavor_ty, #wf, #partial_object_ty>>::transform(input)
               .map(|input| (read, input))
@@ -354,7 +395,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
         let partial_field_ty = f.partial().ty();
         if let Some(missing_operation) = partial_transform_ref_options.missing_operation() {
           let call = missing_operation.call();
-          ptpr_on_missing.push(quote! {
+          pptpr_on_missing.push(quote! {
             if selector.#is_field_selected() {
               if this.#field_name.is_none() {
                 this.#field_name = ::core::option::Option::Some(#call);
@@ -363,7 +404,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
           });
         }
 
-        ptpr.push({
+        pptpr.push({
           let call = match partial_transform_ref_options.convert_operation() {
             None => {
               quote! {
@@ -387,7 +428,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
         let transform_ref_options = f.partial().transform_ref();
         if let Some(missing_operation) = transform_ref_options.missing_operation() {
           let call = missing_operation.call();
-          pptpr_on_missing.push(quote! {
+          ptpr_on_missing.push(quote! {
             if selector.#is_field_selected() {
               if this.#field_name.is_none() {
                 this.#field_name = ::core::option::Option::Some(#call);
@@ -396,7 +437,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
           });
         }
 
-        pptpr.push({
+        ptpr.push({
           let call = match transform_ref_options.convert_operation() {
             None => {
               quote! {

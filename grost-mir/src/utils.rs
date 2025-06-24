@@ -360,8 +360,20 @@ impl FromMeta for NoopFromMeta {
     Ok(Self)
   }
 
-  fn from_list(_: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
-    Ok(Self)
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let mut errors = darling::Error::accumulator();
+    for item in items {
+      match item {
+        darling::ast::NestedMeta::Lit(lit) => {
+          errors.push(darling::Error::unexpected_lit_type(lit));
+        }
+        darling::ast::NestedMeta::Meta(meta) => {
+          errors.push(darling::Error::unknown_field_path(meta.path()))
+        }
+      }
+    }
+
+    errors.finish().map(|_| Self)
   }
 }
 

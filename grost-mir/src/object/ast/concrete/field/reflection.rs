@@ -173,16 +173,14 @@ impl FieldReflection {
     let mut field_reflection_constraints = Punctuated::new();
 
     if use_generics {
-      {
-        let pred: WherePredicate = syn::parse2(quote! {
-          #path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::SchemaType>
-        })?;
-        field_reflection_constraints.push(pred.clone());
-        field_reflection_generics
-          .make_where_clause()
-          .predicates
-          .push(pred);
-      }
+      let pred: WherePredicate = syn::parse2(quote! {
+        #path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::SchemaType>
+      })?;
+      field_reflection_constraints.push(pred.clone());
+      field_reflection_generics
+        .make_where_clause()
+        .predicates
+        .push(pred);
     }
 
     let field_reflection = field_reflection(path_to_grost, object_type, flavor_type, tag)?;

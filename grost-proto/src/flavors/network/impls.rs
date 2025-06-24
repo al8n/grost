@@ -42,20 +42,41 @@ where
   }
 }
 
-impl<W, I, T> PartialTransform<Network, W, I> for Option<T>
-where
-  W: WireFormat<Network>,
-  T: PartialTransform<Network, W, I> + Sized,
-  I: Selectable<Network>,
-  T: Selectable<Network, Selector = <I as Selectable<Network>>::Selector>,
-{
-  fn partial_transform(
-    input: I,
-    selector: &<I as Selectable<Network>>::Selector,
-  ) -> Result<Option<Self>, <Network as Flavor>::Error>
-  where
-    Self: Sized,
-  {
-    T::partial_transform(input, selector).map(|opt| opt.map(Some))
-  }
-}
+// impl<W, I, T> PartialTransform<Network, W, I> for Option<T>
+// where
+//   W: WireFormat<Network>,
+//   T: PartialTransform<Network, W, I> + Sized,
+//   I: Selectable<Network>,
+//   T: Selectable<Network, Selector = <I as Selectable<Network>>::Selector>,
+// {
+//   fn partial_transform(
+//     input: I,
+//     selector: &<I as Selectable<Network>>::Selector,
+//   ) -> Result<Option<Self>, <Network as Flavor>::Error>
+//   where
+//     Self: Sized,
+//   {
+//     T::partial_transform(input, selector).map(|opt| opt.map(Some))
+//   }
+// }
+
+// impl<W, I, T> PartialTransform<Network, W, Option<I>> for T
+// where
+//   W: WireFormat<Network>,
+//   T: PartialTransform<Network, W, I> + Sized,
+//   I: Selectable<Network>,
+//   T: Selectable<Network, Selector = <I as Selectable<Network>>::Selector>,
+// {
+//   fn partial_transform(
+//     input: Option<I>,
+//     selector: &<I as Selectable<Network>>::Selector,
+//   ) -> Result<Option<Self>, <Network as Flavor>::Error>
+//   where
+//     Self: Sized,
+//   {
+//     match input {
+//       Some(input) => T::partial_transform(input, selector),
+//       None => Ok(None),
+//     }
+//   }
+// }

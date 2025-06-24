@@ -3,7 +3,7 @@ use crate::{
   decode::{PartialTransform, Str, Transform},
   decoded_state, flatten_state,
   flavors::{Network, network::LengthDelimited},
-  selectable,
+  identity_partial_transform, identity_transform, selectable,
 };
 use std::string::String;
 
@@ -17,6 +17,17 @@ str_bridge!(Network: String {
   from_str: |val: &str| String::from(val);
   as_str: AsRef::as_ref;
 },);
+
+identity_transform!(
+  Network {
+    String as LengthDelimited,
+  }
+);
+identity_partial_transform!(
+  Network {
+    String as LengthDelimited,
+  }
+);
 
 impl Transform<Network, LengthDelimited, &str> for String {
   fn transform(input: &str) -> Result<Self, <Network as crate::flavors::Flavor>::Error>

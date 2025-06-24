@@ -405,6 +405,9 @@ impl TaggedField {
           })?;
           selector_constraints.push(pred.clone());
           partial_ref_constraints.push(pred);
+          partial_ref_constraints.push(syn::parse2(quote! {
+            <#field_ty as #dwf>::Format: #lifetime
+          })?);
         }
 
         syn::parse2(quote! {

@@ -81,9 +81,22 @@ impl PartialField {
     mut opts: PartialFieldOptions,
     label: &Label,
   ) -> darling::Result<Self> {
-    let optional_type = syn::parse2(quote! {
-      ::core::option::Option<#ty>
-    })?;
+    let path_to_grost = &object.path_to_grost;
+    let (ty, optional_type) = if label.is_optional() {
+      (
+        syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
+        })?,
+        ty.clone(),
+      )
+    } else {
+      (
+        ty.clone(),
+        syn::parse2(quote! {
+          ::core::option::Option<#ty>
+        })?,
+      )
+    };
 
     let transform_ref_missing_operation = opts.transform_ref.missing_operation.or_else(|| {
       object
@@ -110,7 +123,7 @@ impl PartialField {
       });
 
     Ok(Self {
-      ty: ty.clone(),
+      ty,
       optional_type,
       attrs: opts.attrs,
       transform_ref: {
