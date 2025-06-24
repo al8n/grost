@@ -157,7 +157,7 @@ impl crate::flavors::Identifier<super::Network> for Identifier {
 
   fn decode<'de, B>(buf: B) -> Result<(usize, Self), super::Error>
   where
-    B: crate::buffer::ReadBuf + Sized,
+    B: crate::buffer::ReadBuf + Sized + 'de,
     Self: Sized,
   {
     Self::decode(buf.as_bytes())

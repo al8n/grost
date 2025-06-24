@@ -207,6 +207,21 @@ macro_rules! deref_decode_impl {
           T::transform(input).map(Into::into)
         }
       }
+
+      impl<F, W, I, T> PartialTransform<F, W, I> for $ty
+      where
+        F: Flavor + ?Sized,
+        W: WireFormat<F>,
+        T: PartialTransform<F, W, I> + Sized,
+        I: Selectable<F, Selector = <T as Selectable<F>>::Selector>,
+      {
+        fn partial_transform(input: I, selector: &Self::Selector) -> Result<Option<Self>, F::Error>
+        where
+          Self: Sized,
+        {
+          T::partial_transform(input, selector).map(|val| val.map(Into::into))
+        }
+      }
     )*
   };
 }

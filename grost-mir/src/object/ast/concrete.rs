@@ -203,7 +203,7 @@ impl<T, S, O> RawObject<T, S, O> {
       .partial_ref
       .name()
       .cloned()
-      .unwrap_or_else(|| format_ident!("PartialRef{}", self.name))
+      .unwrap_or_else(|| format_ident!("Partial{}Ref", self.name))
   }
 
   #[inline]

@@ -118,6 +118,7 @@ impl<'a, W: WireFormat<Network>> WireFormat<Network> for Borrowed<'a, W> {
   const NAME: &'static str = "borrowed";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Self(PhantomData);
+  const REPEATED: bool = W::REPEATED;
 }
 
 /// A wire format for borrowed data.
@@ -239,7 +240,7 @@ impl<W: WireFormat<Network>, I: WireFormat<Network>> WireFormat<Network> for Fla
 /// | identifier | total_length | elem1 | elem2 | elem3 | ... |
 /// ```
 ///
-/// `Repeated<Stream>` encoding repeats the field identifier for each element:
+/// `Stream` encoding repeats the field identifier for each element:
 ///
 /// ```text
 /// | identifier | elem1 | identifier | elem2 | identifier | elem3 | ... |
@@ -254,95 +255,29 @@ impl<W: WireFormat<Network>, I: WireFormat<Network>> WireFormat<Network> for Fla
 // TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
 pub struct Stream<W: ?Sized, const I: u32>(PhantomData<W>);
 
-/// Represents the wire format for repeated fields.
-///
-/// `Repeated<W>` is a marker type that indicates a field should be encoded as a repeated
-/// field, where `W` is the wire format of the contained elements.
-///
-/// By default, repeated fields are encoded using length-prefixed encoding:
-///
-/// ```text
-/// | identifier | total_length | elem1 | elem2 | elem3 | ... |
-/// ```
-///
-/// However, for a streaming encoding format where each element is individually tagged with
-/// the field identifier, use `Repeated<Stream>` instead. See the [`Stream`] type
-/// documentation for more details.
-#[derive(PartialEq, Eq, Hash)]
-pub struct Repeated<W: ?Sized>(PhantomData<W>);
-
-impl<W: ?Sized> From<Repeated<W>> for WireType {
-  fn from(_: Repeated<W>) -> Self {
-    WireType::LengthDelimited
-  }
-}
-
-impl<W> core::fmt::Debug for Repeated<W>
-where
-  W: core::fmt::Debug,
-{
-  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    f.debug_tuple("Repeated").finish()
-  }
-}
-
-impl<W> core::fmt::Display for Repeated<W>
-where
-  W: ?Sized + core::fmt::Display,
-{
-  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "repeated")
-  }
-}
-
-impl<W: ?Sized> Default for Repeated<W> {
-  /// Returns the wire format for repeated.
-  #[inline]
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
-impl<W: ?Sized> Repeated<W> {
-  /// Returns the wire format for repeated.
-  #[inline]
-  pub const fn new() -> Self {
-    Self(PhantomData)
-  }
-}
-
-impl<W: ?Sized> Clone for Repeated<W> {
+impl<W: ?Sized, const I: u32> Clone for Stream<W, I> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized> Copy for Repeated<W> {}
+impl<W: ?Sized, const I: u32> Copy for Stream<W, I> {}
 
-macro_rules! impl_wire_format_for_repeated {
-  ($($wf:ty),+$(,)?) => {
-    $(
-      impl WireFormat<Network> for Repeated<$wf> {
-        const NAME: &'static str = "repeated";
-        const WIRE_TYPE: WireType = WireType::LengthDelimited;
-        const SELF: Self = Self(PhantomData);
-      }
-
-      impl<const I: u32> WireFormat<Network> for Repeated<Stream<$wf, I>> {
-        const NAME: &'static str = "repeated";
-        const WIRE_TYPE: WireType = <$wf>::WIRE_TYPE;
-        const SELF: Self = Self(PhantomData);
-      }
-    )*
-  };
+impl<const I: u32, W> WireFormat<Network> for Stream<W, I>
+where
+  W: WireFormat<Network>,
+{
+  const NAME: &'static str = "stream";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self(PhantomData);
+  const REPEATED: bool = true;
 }
 
-impl_wire_format_for_repeated!(
-  Fixed8,
-  Fixed16,
-  Fixed32,
-  Fixed64,
-  Fixed128,
-  Varint,
-  LengthDelimited,
-);
+impl<const I: u32, W> From<Stream<W, I>> for WireType
+where
+  W: WireFormat<Network>,
+{
+  fn from(_: Stream<W, I>) -> Self {
+    W::WIRE_TYPE
+  }
+}

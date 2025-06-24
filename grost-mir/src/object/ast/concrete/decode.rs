@@ -222,14 +222,24 @@ fn derive_partial_object_decode<T, S, M>(
             }
           }
         }
-        None => quote! {
-          else {
-            return ::core::result::Result::Err(
-              ::core::convert::Into::into(#path_to_grost::__private::error::Error::field_not_found(
-                ::core::stringify!(#object_name),
-                ::core::stringify!(#name),
-              ))
-            );
+        None => {
+          if f.label().is_list() || f.label().is_set() || f.label().is_map() {
+            quote! {
+              else {
+                ::core::default::Default::default()
+              }
+            }
+          } else {
+            quote! {
+              else {
+                return ::core::result::Result::Err(
+                  ::core::convert::Into::into(#path_to_grost::__private::error::Error::field_not_found(
+                    ::core::stringify!(#object_name),
+                    ::core::stringify!(#name),
+                  ))
+                );
+              }
+            }
           }
         },
       };

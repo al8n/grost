@@ -128,31 +128,31 @@ impl syn::parse::Parse for Label {
         () if ident.eq("interface") => Self::Interface,
         () if ident.eq("map") => {
           return Err(syn::Error::new(
-            input.span(),
+            ident.span(),
             "`map` requires a key and value, e.g. `map(key(...), value(...))`",
           ));
         }
         () if ident.eq("set") => {
           return Err(syn::Error::new(
-            input.span(),
+            ident.span(),
             "`set` requires a type, e.g. `set(...)`",
           ));
         }
         () if ident.eq("list") => {
           return Err(syn::Error::new(
-            input.span(),
+            ident.span(),
             "`list` requires a type, e.g. `list(...)`",
           ));
         }
         () if ident.eq("optional") => {
           return Err(syn::Error::new(
-            input.span(),
+            ident.span(),
             "`optional` requires a type, e.g. `optional(...)`",
           ));
         }
         _ => {
           return Err(syn::Error::new(
-            input.span(),
+            ident.span(),
             "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
           ));
         }
@@ -166,7 +166,7 @@ impl syn::parse::Parse for Label {
 
       if content.is_empty() {
         return Err(syn::Error::new(
-          input.span(),
+          content.span(),
           "Unexpected format `map()`, expected `map(key(...), value(...))`",
         ));
       }
@@ -248,22 +248,22 @@ impl syn::parse::Parse for Label {
 
           // Ensure both key and value were provided
           let key = key_ty
-            .ok_or_else(|| syn::Error::new(input.span(), "Missing `key(...)` in `map(...)`"))?;
+            .ok_or_else(|| syn::Error::new(content.span(), "Missing `key(...)` in `map(...)`"))?;
 
           let value = value_ty
-            .ok_or_else(|| syn::Error::new(input.span(), "Missing `value(...)` in `map(...)`"))?;
+            .ok_or_else(|| syn::Error::new(content.span(), "Missing `value(...)` in `map(...)`"))?;
 
           Self::Map { key, value }
         }
         () if ident.eq("key") => {
           return Err(syn::Error::new(
-            input.span(),
+            content.span(),
             "`key` can only be used in `map(...)`",
           ));
         }
         () if ident.eq("value") => {
           return Err(syn::Error::new(
-            input.span(),
+            content.span(),
             "`value` can only be used in `map(...)`",
           ));
         }
@@ -271,14 +271,14 @@ impl syn::parse::Parse for Label {
           let ty = Label::parse(&content)?;
           if ty.is_set() {
             return Err(syn::Error::new(
-              input.span(),
+              content.span(),
               "`set(set(...))` is not allowed",
             ));
           }
 
           if ty.is_map() {
             return Err(syn::Error::new(
-              input.span(),
+              content.span(),
               "`set(map(...))` is not allowed",
             ));
           }
@@ -290,15 +290,37 @@ impl syn::parse::Parse for Label {
           let ty = Label::parse(&content)?;
           if ty.is_optional() {
             return Err(syn::Error::new(
-              input.span(),
+              content.span(),
               "`optional(optional(...))` is not allowed",
             ));
           }
+
+          if ty.is_map() {
+            return Err(syn::Error::new(
+              content.span(),
+              "`optional(map(...))` is not allowed, please directly use `map(...)` instead",
+            ));
+          }
+
+          if ty.is_set() {
+            return Err(syn::Error::new(
+              content.span(),
+              "`optional(set(...))` is not allowed, please directly use `set(...)` instead",
+            ));
+          }
+
+          if ty.is_list() {
+            return Err(syn::Error::new(
+              content.span(),
+              "`optional(list(...))` is not allowed, please directly use `list(...)` instead",
+            ));
+          }
+
           Self::Optional(Arc::new(ty))
         }
         _ => {
           return Err(syn::Error::new(
-            input.span(),
+            content.span(),
             "Expected one of [map, set, list, optional]",
           ));
         }

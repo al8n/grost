@@ -21,6 +21,27 @@ fn error_name<'a>() -> Result<&'a str, <Network as Flavor>::Error> {
   Ok("name")
 }
 
+// transform(
+//   default = ,
+//   from = ,
+//   try_from = ,
+// ),
+// flavor(default(
+//   partial_transform(
+//     default = ,
+//     from = ,
+//     try_from = ,
+//     or_default = ,
+//     or_else = ,
+//   ),
+//   decode(
+//     fn = ,
+//     then = ,
+//     or_default = ,
+//     or_else = ,
+//   ),
+// )),
+
 #[derive(Debug, Clone, PartialEq, Eq, Object)]
 #[grost(
   // output(path = "grost-derive/tests/user.rs", format),
@@ -46,27 +67,7 @@ pub struct User<I: Default> {
     tag = 2,
     schema(description = "The nick name of the user"),
     selector(select = "all"),
-    string,
-    // transform(
-    //   default = ,
-    //   from = ,
-    //   try_from = ,
-    // ),
-    // flavor(default(
-    //   partial_transform(
-    //     default = ,
-    //     from = ,
-    //     try_from = ,
-    //     or_default = ,
-    //     or_else = ,
-    //   ),
-    //   decode(
-    //     fn = ,
-    //     then = ,
-    //     or_default = ,
-    //     or_else = ,
-    //   ),
-    // )),
+    string
   )]
   name: String,
   #[grost(

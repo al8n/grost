@@ -139,7 +139,7 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   /// Decode the identifier from a buffer.
   fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
   where
-    B: ReadBuf + Sized,
+    B: ReadBuf + Sized + 'de,
     Self: Sized;
 }
 
@@ -153,6 +153,8 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const NAME: &'static str;
   /// The self.
   const SELF: Self;
+  /// `true` if the wire format is repeated.
+  const REPEATED: bool = false;
 }
 
 /// The default wire format for a type on flavor `F`.

@@ -140,6 +140,23 @@ const _: () = {
 };
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
+pub trait WriteBuf {
+  /// Advance the internal cursor of the write buffer
+  fn advance_mut(&mut self, cnt: usize);
+
+  /// Returns a mutable slice of the buffer.
+  fn remaining_mut(&mut self) -> usize;
+}
+
+impl WriteBuf for &mut [u8] {
+  fn advance_mut(&mut self, cnt: usize) {}
+
+  fn remaining_mut(&mut self) -> usize {
+    self.len()
+  }
+}
+
+/// A trait for implementing custom buffers that can store and manipulate byte sequences.
 pub trait ReadBuf {
   /// Returns an empty read buffer.
   fn empty() -> Self;
