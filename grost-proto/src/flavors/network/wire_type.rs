@@ -1,6 +1,6 @@
 use core::marker::PhantomData;
 
-use crate::flavors::WireFormat;
+use crate::{buffer::Buffer, flavors::WireFormat};
 
 use super::Network;
 
@@ -250,34 +250,64 @@ impl<W: WireFormat<Network>, I: WireFormat<Network>> WireFormat<Network> for Fla
 /// - Streaming scenarios where you need to process elements before receiving the entire collection
 /// - Compatibility with Protocol Buffer's default repeated field encoding
 /// - Cases where elements may be added incrementally
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[derive(derive_more::Display)]
 #[display("stream")]
 // TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
-pub struct Stream<W: ?Sized, const I: u32>(PhantomData<W>);
+pub struct Stream<W: ?Sized, B: ?Sized, const I: u32> {
+  _w: PhantomData<W>,
+  _b: PhantomData<B>,
+}
 
-impl<W: ?Sized, const I: u32> Clone for Stream<W, I> {
+impl<W: ?Sized, B: ?Sized, const I: u32> Clone for Stream<W, B, I> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized, const I: u32> Copy for Stream<W, I> {}
+impl<W: ?Sized, B: ?Sized, const I: u32> Copy for Stream<W, B, I> {}
 
-impl<const I: u32, W> WireFormat<Network> for Stream<W, I>
+impl<W: ?Sized, B: ?Sized, const I: u32> PartialEq for Stream<W, B, I> {
+  fn eq(&self, _: &Self) -> bool {
+    true
+  }
+}
+
+impl<W: ?Sized, B: ?Sized, const I: u32> Eq for Stream<W, B, I> {}
+
+impl<W: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for Stream<W, B, I> {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    self._w.hash(state);
+    self._b.hash(state);
+    I.hash(state);
+  }
+}
+
+impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Stream<W, B, I> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.debug_struct("Stream").finish()
+  }
+}
+
+impl<W, B, const I: u32> WireFormat<Network> for Stream<W, B, I>
 where
   W: WireFormat<Network>,
+  B: ?Sized,
 {
   const NAME: &'static str = "stream";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self(PhantomData);
+  const SELF: Self = Self {
+    _w: PhantomData,
+    _b: PhantomData,
+  };
   const REPEATED: bool = true;
 }
 
-impl<const I: u32, W> From<Stream<W, I>> for WireType
+impl<const I: u32, W, B> From<Stream<W, B, I>> for WireType
 where
   W: WireFormat<Network>,
+  B: ?Sized,
 {
-  fn from(_: Stream<W, I>) -> Self {
+  fn from(_: Stream<W, B, I>) -> Self {
     W::WIRE_TYPE
   }
 }
