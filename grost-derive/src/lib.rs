@@ -6,7 +6,6 @@ pub fn derive_object(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
   let object = match Object::from_derive_input(input.into()) {
     Ok(input) => input,
     Err(e) => {
-      println!("Object Error: {:?}", e);
       return e.write_errors().into();
     }
   };

@@ -6,8 +6,8 @@ use crate::{
   flavor::{DecodeFromMeta, IdentifierFromMeta, TagFromMeta},
   object::meta::ObjectConvertFromMeta,
   utils::{
-    Attributes, Invokable, NestedMeta, SchemaFromMeta, grost_lifetime, grost_read_buffer_param,
-    grost_unknown_buffer_param, grost_write_buffer_param,
+    Attributes, Invokable, NestedMeta, NoopFromMeta, SchemaFromMeta, grost_lifetime,
+    grost_read_buffer_param, grost_unknown_buffer_param, grost_write_buffer_param,
   },
 };
 
@@ -138,7 +138,7 @@ pub(in crate::object) struct PartialObjectFromMeta {
 }
 
 #[derive(Debug, Default, Clone, FromMeta)]
-pub struct ObjectFromMeta<E> {
+pub struct ObjectFromMeta<E = NoopFromMeta> {
   #[darling(default)]
   pub(in crate::object) default: Option<Invokable>,
   #[darling(default)]

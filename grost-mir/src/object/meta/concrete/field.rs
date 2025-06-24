@@ -11,12 +11,12 @@ use crate::{
       SelectorFieldFromMeta, SkippedFieldFromMeta,
     },
   },
-  utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
+  utils::{Attributes, Invokable, NestedMeta, NoopFromMeta, SchemaFromMeta},
 };
 
 /// The meta of the object field
 #[derive(Debug, Clone)]
-pub enum FieldFromMeta<TO = (), SO = ()> {
+pub enum FieldFromMeta<TO = NoopFromMeta, SO = NoopFromMeta> {
   Skipped(Box<SkippedFieldFromMeta<SO>>),
   Tagged(Box<TaggedFieldFromMeta<TO>>),
 }
@@ -65,7 +65,6 @@ where
 
       return SkippedFieldFromMeta::from_list(&skip_meta).map(|f| Self::Skipped(Box::new(f)));
     }
-
     TaggedFieldFromMeta::from_list(items).map(|f| Self::Tagged(Box::new(f)))
   }
 }
@@ -136,7 +135,7 @@ impl FromMeta for PartialRefFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub struct TaggedFieldFromMeta<TO> {
+pub struct TaggedFieldFromMeta<TO = NoopFromMeta> {
   pub(in crate::object) label: Label,
   pub(in crate::object) schema: SchemaFromMeta,
   pub(in crate::object) default: Option<Invokable>,
@@ -157,23 +156,24 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
 
     for item in items {
       if let darling::ast::NestedMeta::Meta(meta) = item {
-        if let Meta::Path(path) = meta {
-          if Label::possible_idents()
-            .iter()
-            .any(|ident| path.is_ident(ident))
-          {
-            if let Some(old) = label {
-              return Err(darling::Error::custom(format!(
-                "
-                Field label has already been specified as `{old}`",
-              )));
-            }
-            label = Some(Label::from_meta(meta)?);
-          } else {
-            remaining_items.push(item.clone());
+        let path = meta.path();
+        if Label::possible_idents()
+          .iter()
+          .any(|ident| path.is_ident(ident))
+        {
+          if let Some(old) = label {
+            return Err(darling::Error::custom(format!(
+              "Field label has already been specified as `{old}`",
+            )));
           }
+          label = Some(Label::from_meta(meta)?);
+        } else {
+          remaining_items.push(item.clone());
         }
+        continue;
       }
+
+      remaining_items.push(item.clone());
     }
 
     #[derive(Debug, FromMeta)]

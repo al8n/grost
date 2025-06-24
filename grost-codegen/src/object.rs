@@ -9,3 +9,6 @@ pub struct Object {
   #[grost(darling(default))]
   pub output: Option<Output>,
 }
+
+#[test]
+fn t() {}

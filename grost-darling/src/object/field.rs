@@ -129,9 +129,38 @@ impl ObjectField {
 
       impl #path_to_crate::__private::darling::FromMeta for #name {
         fn from_meta(
-          meta: &#path_to_crate::__private::syn::Meta,
+          item: &#path_to_crate::__private::syn::Meta,
         ) -> #path_to_crate::__private::darling::Result<Self> {
-          <#hidden_name as #path_to_crate::__private::darling::FromMeta>::from_meta(meta)
+          (match *item {
+            #path_to_crate::__private::syn::Meta::Path(_) => Self::from_word(),
+            #path_to_crate::__private::syn::Meta::List(ref value) => {
+              Self::from_list(&#path_to_crate::__private::utils::NestedMeta::parse_meta_list(value.tokens.clone())?[..])
+            }
+            #path_to_crate::__private::syn::Meta::NameValue(ref value) => Self::from_expr(&value.value),
+          })
+          .map_err(|e| e.with_span(item))
+        }
+
+        fn from_expr(
+          expr: &#path_to_crate::__private::syn::Expr,
+        ) -> #path_to_crate::__private::darling::Result<Self> {
+          <#hidden_name as #path_to_crate::__private::darling::FromMeta>::from_expr(expr)
+            .map(|input| Self {
+              #(#fields_into),*
+            })
+        }
+
+        fn from_word() -> #path_to_crate::__private::darling::Result<Self> {
+          <#hidden_name as #path_to_crate::__private::darling::FromMeta>::from_word()
+            .map(|input| Self {
+              #(#fields_into),*
+            })
+        }
+
+        fn from_list(
+          items: &[#path_to_crate::__private::darling::ast::NestedMeta],
+        ) -> #path_to_crate::__private::darling::Result<Self> {
+          <#hidden_name as #path_to_crate::__private::darling::FromMeta>::from_list(items)
             .map(|input| Self {
               #(#fields_into),*
             })
@@ -242,13 +271,13 @@ impl ObjectField {
     );
 
     let tagged_fields_meta_ty = if custom_tagged_fields.is_empty() {
-      quote!(())
+      quote!(#path_to_crate::__private::utils::NoopFromMeta)
     } else {
       quote!(#tagged_meta_name)
     };
 
     let skipped_fields_meta_ty = if custom_skipped_fields.is_empty() {
-      quote!(())
+      quote!(#path_to_crate::__private::utils::NoopFromMeta)
     } else {
       quote!(#skipped_meta_name)
     };

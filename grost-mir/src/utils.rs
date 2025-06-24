@@ -350,8 +350,23 @@ impl ConvertOperation {
   }
 }
 
-#[derive(Debug)]
-pub(crate) enum NestedMeta {
+/// A no-op meta type, which is used when the meta data is not needed or
+/// should be ignored.
+#[derive(Debug, Clone, Default)]
+pub struct NoopFromMeta;
+
+impl FromMeta for NoopFromMeta {
+  fn from_word() -> darling::Result<Self> {
+    Ok(Self)
+  }
+
+  fn from_list(_: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    Ok(Self)
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum NestedMeta {
   Lit(syn::Lit),
   Meta(syn::Meta),
 }
