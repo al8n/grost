@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-  Decoded, State,
+  PartialRef, State,
   buffer::{Buffer, ReadBuf},
   decode::{Decode, Transform},
   flavors::{
@@ -15,7 +15,7 @@ impl<'a, T, W, TW, B, UB, const N: usize> Transform<Network, W, PackedDecoder<'a
 where
   W: WireFormat<Network> + 'a,
   TW: WireFormat<Network> + 'a,
-  T: State<Decoded<'a, Network, TW, B, UB>, Input = &'a [u8]>
+  T: State<PartialRef<'a, Network, TW, B, UB>>
     + Decode<'a, Network, TW, T::Output, B, UB>
     + Transform<Network, TW, T::Output>
     + 'a,
@@ -51,7 +51,7 @@ where
 // where
 //   W: WireFormat<Network> + 'a,
 //   TW: WireFormat<Network> + 'a,
-//   T: State<Decoded<'a, Network, TW, UB>, Input = &'a [u8]>
+//   T: State<PartialRef<'a, Network, TW, UB>, Input = &'a [u8]>
 //     + Decode<'a, Network, TW, T::Output, UB>
 //     + Selectable<Network, TW>
 //     + PartialTransform<Network, TW, T::Output>

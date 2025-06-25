@@ -22,7 +22,6 @@ impl<RB: ?Sized, O> State<Flatten<O>> for Str<RB>
 where
   RB: ReadBuf,
 {
-  type Input = Self;
   type Output = Self;
 }
 

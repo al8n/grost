@@ -112,7 +112,7 @@ impl PartialObject {
     let unknown_buffer_param = &object.unknown_buffer_param;
     let read_buffer_param = &object.read_buffer_param;
 
-    let generics = object.generics.clone();
+    let mut generics = object.generics.clone();
     let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
 
     let flavor_ty = &object.flavor_type;
@@ -131,6 +131,10 @@ impl PartialObject {
           let partial_ref_ty = f.partial_ref().ty();
           let wf = f.wire_format();
 
+          generics
+            .make_where_clause()
+            .predicates
+            .extend(f.partial().type_constraints().iter().cloned());
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
             #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>

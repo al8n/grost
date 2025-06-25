@@ -1,10 +1,6 @@
-use quote::quote;
-use syn::{Attribute, Type};
+use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
-use crate::{
-  object::{Label, meta::concrete::PartialFieldFromMeta},
-  utils::MissingOperation,
-};
+use crate::object::meta::concrete::PartialFieldFromMeta;
 
 use super::PartialFieldConvertOptions;
 
@@ -12,6 +8,8 @@ impl PartialFieldFromMeta {
   /// Finalizes the partial field meta and returns the attribute
   pub(super) fn finalize(self) -> darling::Result<PartialFieldOptions> {
     Ok(PartialFieldOptions {
+      ty: self.ty,
+      copy: self.copy,
       attrs: self.attrs,
       partial_transform_ref: self.partial_transform_ref.finalize()?,
       transform_ref: self.transform_ref.finalize()?,
@@ -22,17 +20,21 @@ impl PartialFieldFromMeta {
 
 #[derive(Debug, Clone)]
 pub(super) struct PartialFieldOptions {
-  pub(in crate::object) attrs: Vec<Attribute>,
-  pub(in crate::object) transform_ref: PartialFieldConvertOptions,
-  pub(in crate::object) partial_transform_ref: PartialFieldConvertOptions,
-  pub(in crate::object) partial_transform: PartialFieldConvertOptions,
+  pub(super) ty: Option<Type>,
+  pub(super) copy: bool,
+  pub(super) attrs: Vec<Attribute>,
+  pub(super) transform_ref: PartialFieldConvertOptions,
+  pub(super) partial_transform_ref: PartialFieldConvertOptions,
+  pub(super) partial_transform: PartialFieldConvertOptions,
 }
 
 #[derive(Debug, Clone)]
 pub struct PartialField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
+  pub(super) state_type: Option<Type>,
   pub(super) attrs: Vec<Attribute>,
+  pub(super) constraints: Punctuated<WherePredicate, Comma>,
   pub(super) transform_ref: PartialFieldConvertOptions,
   pub(super) partial_transform_ref: PartialFieldConvertOptions,
   pub(super) partial_transform: PartialFieldConvertOptions,
@@ -49,6 +51,12 @@ impl PartialField {
   #[inline]
   pub const fn optional_type(&self) -> &Type {
     &self.optional_type
+  }
+
+  /// Returns the partial state type of the partial field, if any.
+  #[inline]
+  pub const fn state_type(&self) -> Option<&Type> {
+    self.state_type.as_ref()
   }
 
   /// Returns the attributes of the partial field.
@@ -75,69 +83,9 @@ impl PartialField {
     &self.partial_transform
   }
 
-  pub(super) fn from_options(
-    object: &super::RawObject,
-    ty: &Type,
-    mut opts: PartialFieldOptions,
-    label: &Label,
-  ) -> darling::Result<Self> {
-    let path_to_grost = &object.path_to_grost;
-    let (ty, optional_type) = if label.is_optional() {
-      (
-        syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
-        })?,
-        ty.clone(),
-      )
-    } else {
-      (
-        ty.clone(),
-        syn::parse2(quote! {
-          ::core::option::Option<#ty>
-        })?,
-      )
-    };
-
-    let transform_ref_missing_operation = opts.transform_ref.missing_operation.or_else(|| {
-      object
-        .partial
-        .transform
-        .or_default_by_label(label)
-        .then_some(MissingOperation::OrDefault)
-    });
-    let partial_transform_ref_missing_operation =
-      opts.partial_transform_ref.missing_operation.or_else(|| {
-        object
-          .partial
-          .partial_transform
-          .or_default_by_label(label)
-          .then_some(MissingOperation::OrDefault)
-      });
-    let partial_transform_missing_operation =
-      opts.partial_transform.missing_operation.or_else(|| {
-        object
-          .partial
-          .partial_transform
-          .or_default_by_label(label)
-          .then_some(MissingOperation::OrDefault)
-      });
-
-    Ok(Self {
-      ty,
-      optional_type,
-      attrs: opts.attrs,
-      transform_ref: {
-        opts.transform_ref.missing_operation = transform_ref_missing_operation;
-        opts.transform_ref
-      },
-      partial_transform_ref: {
-        opts.partial_transform_ref.missing_operation = partial_transform_ref_missing_operation;
-        opts.partial_transform_ref
-      },
-      partial_transform: {
-        opts.partial_transform.missing_operation = partial_transform_missing_operation;
-        opts.partial_transform
-      },
-    })
+  /// Returns the type constraints of the partial field.
+  #[inline]
+  pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.constraints
   }
 }

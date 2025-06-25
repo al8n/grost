@@ -1,16 +1,9 @@
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::{
-  buffer::ReadBuf,
-  decode::Decode,
-  decoded_state, default_wire_format,
-  encode::Encode,
-  flatten_state,
-  flavors::{
-    Network,
-    network::{Context, Error, Fixed32, Fixed128, LengthDelimited, Unknown, Varint},
-  },
-  identity_transform, partial_encode_scalar, selectable,
+  buffer::ReadBuf, decode::Decode, default_wire_format, encode::Encode, flatten_state, flavors::{
+    network::{Context, Error, Fixed128, Fixed32, LengthDelimited, Unknown, Varint}, Network
+  }, identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable
 };
 
 macro_rules! ip_addr {
@@ -125,7 +118,8 @@ ip_addr!(Ipv4Addr::Fixed32(u32));
 ip_addr!(Ipv6Addr::Fixed128(u128));
 selectable!(@scalar Network: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
-decoded_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
+partial_ref_state!(@scalar &'a Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
+partial_state!(@scalar Network: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
 identity_transform!(
   Network {

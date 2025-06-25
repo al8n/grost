@@ -16,6 +16,7 @@ use crate::{
         reflection::Reflection,
         selector::{Selector, SelectorIter},
       },
+      derive_flatten_state,
       indexer::IndexerOptions,
       selector::{SelectorIterOptions, SelectorOptions},
     },
@@ -330,7 +331,8 @@ pub struct Object<T = (), S = (), M = ()> {
   vis: Visibility,
   ty: Type,
   copy: bool,
-  decoded_state_type: Type,
+  partial_state_type: Type,
+  partial_ref_state_type: Type,
   reflectable: Type,
   generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
@@ -590,8 +592,12 @@ impl<T, S, M> Object<T, S, M> {
     let rbp = object.read_buffer_param;
     let rb = &rbp.ident;
 
-    let decoded_state_type = syn::parse2(quote! {
-      #path_to_grost::__private::convert::Decoded<#lt, #flavor_type, #wf, #rb, #ub>
+    let partial_ref_state_type = syn::parse2(quote! {
+      #path_to_grost::__private::convert::PartialRef<#lt, #flavor_type, #wf, #rb, #ub>
+    })?;
+
+    let partial_state_type = syn::parse2(quote! {
+      #path_to_grost::__private::convert::Partial<#flavor_type, #wf>
     })?;
 
     let applied_decode_trait = {
@@ -644,7 +650,8 @@ impl<T, S, M> Object<T, S, M> {
       lifetime_param: lp,
       read_buffer_param: rbp,
       write_buffer_param: object.write_buffer_param,
-      decoded_state_type,
+      partial_ref_state_type,
+      partial_state_type,
       applied_decode_trait,
       flavor_type,
       wire_format: wf,
@@ -680,6 +687,10 @@ impl<T, S, M> Object<T, S, M> {
     let selector_iter_impl = self.derive_selector_iter();
 
     let decode_impl = self.derive_decode()?;
+    let flatten_state_impl =
+      derive_flatten_state(self.path_to_grost(), self.generics(), self.name());
+    let partial_state_impl = self.derive_partial_state();
+    let partial_ref_state_impl = self.derive_partial_ref_state()?;
 
     Ok(quote! {
       #indexer_defination
@@ -692,6 +703,12 @@ impl<T, S, M> Object<T, S, M> {
         #default
 
         #accessors
+
+        #flatten_state_impl
+
+        #partial_state_impl
+
+        #partial_ref_state_impl
 
         #partial_impl
 
@@ -782,6 +799,82 @@ impl<T, S, M> Object<T, S, M> {
         }
       })
     }
+  }
+
+  fn derive_partial_state(&self) -> proc_macro2::TokenStream {
+    let path_to_grost = self.path_to_grost();
+    let object_ty = self.ty();
+    let partial_object_ty = self.partial().ty();
+    let partial_ref_object_ty = self.partial_ref().ty();
+    let partial_state_type = &self.partial_state_type;
+
+    let (partial_ig, _, partial_wc) = self.partial().generics().split_for_impl();
+    let (partial_ref_ig, _, partial_ref_wc) = self.partial_ref().generics().split_for_impl();
+
+    quote! {
+      impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #object_ty #partial_wc {
+        type Output = #partial_object_ty;
+      }
+
+      impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_object_ty #partial_wc {
+        type Output = Self;
+      }
+
+      impl #partial_ref_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_ref_object_ty #partial_ref_wc {
+        type Output = Self;
+      }
+    }
+  }
+
+  fn derive_partial_ref_state(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let partial_ref_state_type = &self.partial_ref_state_type;
+    let path_to_grost = self.path_to_grost();
+    let generics = self.partial_ref().generics();
+    let (ig, _, where_clauses) = generics.split_for_impl();
+    let ty = self.ty();
+    let partial_ref_object_ty = self.partial_ref().ty();
+
+    let partial_object_impl = {
+      let mut g = generics.clone();
+      let partial = self.partial();
+      let partial_ty = partial.ty();
+      if let Some(preds) = partial
+        .generics()
+        .where_clause
+        .as_ref()
+        .map(|wc| &wc.predicates)
+      {
+        if !preds.is_empty() {
+          g.make_where_clause()
+            .predicates
+            .extend(preds.iter().cloned());
+        }
+      }
+      let (ig, _, where_clauses) = g.split_for_impl();
+      quote! {
+        #[automatically_derived]
+        #[allow(non_camel_case_types, clippy::type_complexity)]
+        impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ty #where_clauses {
+          type Output = #partial_ref_object_ty;
+        }
+      }
+    };
+
+    Ok(quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #ty #where_clauses {
+        type Output = #partial_ref_object_ty;
+      }
+
+      #partial_object_impl
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
+        type Output = Self;
+      }
+    })
   }
 }
 

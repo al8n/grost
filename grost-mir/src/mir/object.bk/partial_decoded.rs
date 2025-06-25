@@ -304,7 +304,7 @@ impl PartialRefObject {
           tag.get(),
           &flavor,
         );
-        let decoded_state = decoded_state_ty(
+        let partial_ref_state = partial_ref_state_ty(
           path_to_grost,
           &self.parent_name,
           &self.object_generics.split_for_impl().1,
@@ -315,7 +315,7 @@ impl PartialRefObject {
         );
         let vis = &f.field.vis;
         let name = f.name();
-        let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
+        let output_type = syn::parse2(quote! { <#ty as #partial_ref_state>::Output })?;
         let field = syn::Field::parse_named.parse2(quote! {
           #vis #name: ::core::option::Option<#output_type>
         })?;
@@ -326,7 +326,7 @@ impl PartialRefObject {
           &self.object_generics.split_for_impl().1,
           ty,
           &wf,
-          &decoded_state,
+          &partial_ref_state,
           &flavor,
           f.copy(),
         )?
@@ -378,7 +378,7 @@ impl PartialRefObject {
         f.tag.get(),
         &flavor,
       );
-      let decoded_state = decoded_state_ty(
+      let partial_ref_state = partial_ref_state_ty(
         path_to_grost,
         object_name,
         &object_type_generics,
@@ -394,7 +394,7 @@ impl PartialRefObject {
         &object_type_generics,
         object_field_ty,
         &wf,
-        &decoded_state,
+        &partial_ref_state,
         &flavor,
         f.copy,
       )? {
@@ -573,7 +573,7 @@ impl PartialRefObject {
         tag.get(),
         &generics.flavor_param().ident,
       );
-      let decoded_state = decoded_state_ty(
+      let partial_ref_state = partial_ref_state_ty(
         path_to_grost,
         input.name(),
         &object_tg,
@@ -585,7 +585,7 @@ impl PartialRefObject {
       let vis = f.vis();
       let name = f.name();
       let attrs = f.partial_ref().attrs();
-      let output_type = syn::parse2(quote! { <#ty as #decoded_state>::Output })?;
+      let output_type = syn::parse2(quote! { <#ty as #partial_ref_state>::Output })?;
       let field = syn::Field::parse_named.parse2(quote! {
         #(#attrs)*
         #vis #name: ::core::option::Option<#output_type>
@@ -597,7 +597,7 @@ impl PartialRefObject {
         &object_tg,
         ty,
         &wf,
-        &decoded_state,
+        &partial_ref_state,
         &generics.flavor_param().ident,
         f.partial_ref().copy() || copyable,
       )?
@@ -803,7 +803,7 @@ where
   }
 }
 
-fn decoded_state_ty(
+fn partial_ref_state_ty(
   path_to_grost: &syn::Path,
   object_name: &Ident,
   object_type_generics: &TypeGenerics<'_>,
@@ -814,7 +814,7 @@ fn decoded_state_ty(
 ) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::convert::State<
-      #path_to_grost::__private::convert::Decoded<
+      #path_to_grost::__private::convert::PartialRef<
         #lifetime,
         #flavor,
         <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>>::Reflection,
@@ -831,7 +831,7 @@ fn constraints(
   object_type_generics: &TypeGenerics<'_>,
   ty: &syn::Type,
   wf: &syn::Type,
-  decoded_state: &syn::Type,
+  partial_ref_state: &syn::Type,
   flavor: impl ToTokens,
   copy: bool,
 ) -> syn::Result<impl Iterator<Item = WherePredicate>> {
@@ -847,10 +847,10 @@ fn constraints(
           #path_to_grost::__private::flavors::WireFormat<#flavor>
       })?,
       syn::parse2(quote! {
-        #ty: #decoded_state
+        #ty: #partial_ref_state
       })?,
       syn::parse2(quote! {
-        <#ty as #decoded_state>::Output: ::core::marker::Sized #copy_constraint
+        <#ty as #partial_ref_state>::Output: ::core::marker::Sized #copy_constraint
       })?,
     ]
     .into_iter(),
@@ -882,7 +882,7 @@ where
       f.tag().expect("field tag is required").get(),
       &flavor_param.ident,
     );
-    let decoded_state = decoded_state_ty(
+    let partial_ref_state = partial_ref_state_ty(
       path_to_grost,
       object_name,
       &tg,
@@ -898,7 +898,7 @@ where
       &tg,
       ty,
       &wf,
-      &decoded_state,
+      &partial_ref_state,
       &flavor_param.ident,
       f.partial_ref().copy() || copy,
     )?);

@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use crate::{
-  Decoded, State,
+  PartialRef, State,
   buffer::{Buffer, ReadBuf},
   decode::Decode,
   encode::Encode,
@@ -138,9 +138,7 @@ where
 impl<'a, B, UB, W, T> Iterator for PackedDecoder<'a, T, B, UB, W>
 where
   W: WireFormat<Network> + 'a,
-  T: State<Decoded<'a, Network, W, B, UB>, Input = &'a [u8]>
-    + Decode<'a, Network, W, T::Output, B, UB>
-    + 'a,
+  T: State<PartialRef<'a, Network, W, B, UB>> + Decode<'a, Network, W, T::Output, B, UB> + 'a,
   T::Output: Sized,
   UB: Buffer<Unknown<B>> + 'a,
   B: ReadBuf + 'a,

@@ -80,11 +80,11 @@ pub mod __private {
     convert::{self, *},
     debug_assert_read_eq, debug_assert_write_eq,
     decode::{self, *},
-    decoded_state, default_wire_format,
+    default_wire_format,
     encode::{self, *},
     error::{self, *},
     flavors::{self, RawTag},
-    indexer, network_varint, partial_encode_scalar, reflection, selectable,
+    indexer, network_varint, partial_encode_scalar, partial_ref_state, reflection, selectable,
     selection::{self, *},
   };
   pub use varing;

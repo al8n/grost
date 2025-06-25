@@ -80,6 +80,39 @@ where
 {
 }
 
+/// A trait for merging the input type `I` into the current type `Self`.
+pub trait Merge<'de, F, W, I>: Default
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  /// Merges the input type `I` into the current type `Self`.
+  fn merge(&mut self, other: I) -> Result<(), F::Error>;
+}
+
+impl<'de, F, W, I, T> Merge<'de, F, W, Option<I>> for Option<T>
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  T: Merge<'de, F, W, I>,
+{
+  fn merge(&mut self, other: Option<I>) -> Result<(), <F as Flavor>::Error> {
+    match other {
+      Some(value) => {
+        if let Some(inner) = self {
+          inner.merge(value)
+        } else {
+          let mut this = T::default();
+          this.merge(value).map(|_| {
+            *self = Some(this);
+          })
+        }
+      }
+      None => Ok(()),
+    }
+  }
+}
+
 /// A trait for transforming the input type `I` into the current type `Self`.
 pub trait Transform<F, W, I>
 where

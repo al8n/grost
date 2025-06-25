@@ -1,15 +1,14 @@
 use crate::{
-  buffer::ReadBuf,
-  decode::{PartialTransform, Str, Transform},
-  decoded_state, flatten_state,
-  flavors::{Network, network::LengthDelimited},
-  identity_partial_transform, identity_transform, selectable,
+  buffer::ReadBuf, decode::{PartialTransform, Str, Transform}, flatten_state, flavors::{network::LengthDelimited, Network}, identity_partial_transform, identity_transform, partial_ref_state, partial_state, selectable
 };
 use std::string::String;
 
 selectable!(@scalar Network:String);
-decoded_state!(
+partial_ref_state!(
   &'a Network: String as LengthDelimited => Str<__GROST_READ_BUF__>
+);
+partial_state!(
+  Network: String as LengthDelimited => String
 );
 flatten_state!(String);
 

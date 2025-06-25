@@ -1,22 +1,97 @@
-/// A trait for types that can be transformed from the input type to the output type.
-///
 /// The generic `S` can be any type representing a state.
 pub trait State<S: ?Sized> {
-  /// The input state type.
-  type Input: ?Sized;
   /// The output state type.
   type Output: ?Sized;
 }
 
-/// A state which shows the type in encoded state.
-pub struct Decoded<'a, F: ?Sized, W: ?Sized, B: ?Sized, UB: ?Sized> {
+/// A state which shows the type in partial state.
+///
+/// A partial is a state that represents a type that contains partial information.
+///
+/// e.g. The below example shows a partial of a user type, the partial type may not contains all fields of the user type.
+///
+/// ```ignore
+/// struct User {
+///   name: String,
+///   email: String,
+///   age: u8,
+/// }
+///
+/// struct PartialUser {
+///   name: Option<String>,
+///   email: Option<String>,
+///   age: Option<u8>,
+/// }
+/// ```
+///
+/// See also [`PartialRef`] state.
+pub struct Partial<F: ?Sized, W: ?Sized> {
+  _wf: core::marker::PhantomData<W>,
+  _flavor: core::marker::PhantomData<F>,
+}
+
+impl<F, W> Clone for Partial<F, W>
+where
+  F: ?Sized,
+  W: ?Sized,
+{
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<F, W> Copy for Partial<F, W>
+where
+  F: ?Sized,
+  W: ?Sized,
+{
+}
+
+impl<F, W, T> State<Partial<F, W>> for &T
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Partial<F, W>>,
+{
+  type Output = T::Output;
+}
+
+impl<F, W, T> State<Partial<F, W>> for &mut T
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Partial<F, W>>,
+{
+  type Output = T::Output;
+}
+
+/// A state which shows the type in partial reference state.
+///
+/// A partial reference is a state that represents a type that contains partial information, and the fields in the type may or may not be fully decoded.
+///
+/// e.g. The below example shows a partial reference of a user type, the partial reference type may not contains all fields of the user type, and the type are partially decoded.
+///
+/// ```ignore
+/// struct User {
+///   name: String,
+///   email: String,
+///   age: u8,
+/// }
+///
+/// struct PartialUserRef<'a> {
+///   name: Option<&'a str>,
+///   email: Option<&'a str>,
+///   age: Option<u8>,
+/// }
+/// ```
+pub struct PartialRef<'a, F: ?Sized, W: ?Sized, B: ?Sized, UB: ?Sized> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
   _read_buf: core::marker::PhantomData<B>,
   _unknown_buffer: core::marker::PhantomData<UB>,
 }
 
-impl<'a, F, W, B, UB> Clone for Decoded<'a, F, W, B, UB>
+impl<'a, F, W, B, UB> Clone for PartialRef<'a, F, W, B, UB>
 where
   F: ?Sized,
   W: ?Sized,
@@ -28,7 +103,7 @@ where
   }
 }
 
-impl<'a, F, W, B, UB> Copy for Decoded<'a, F, W, B, UB>
+impl<'a, F, W, B, UB> Copy for PartialRef<'a, F, W, B, UB>
 where
   F: ?Sized,
   W: ?Sized,
@@ -37,20 +112,18 @@ where
 {
 }
 
-impl<'a, F, W, T, B, UB> State<Decoded<'a, F, W, B, UB>> for &'a T
+impl<'a, F, W, T, B, UB> State<PartialRef<'a, F, W, B, UB>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,
-  T: State<Decoded<'a, F, W, B, UB>>,
+  T: State<PartialRef<'a, F, W, B, UB>>,
   B: ?Sized,
   UB: ?Sized,
 {
-  type Input = T::Input;
   type Output = T::Output;
 }
 
 impl<T> State<Option<Innermost>> for Option<T> {
-  type Input = T;
   type Output = Self;
 }
 
@@ -58,7 +131,13 @@ impl<T> State<Option<Innermost>> for &T
 where
   T: State<Option<Innermost>>,
 {
-  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<T> State<Option<Innermost>> for &mut T
+where
+  T: State<Option<Innermost>>,
+{
   type Output = T::Output;
 }
 
@@ -67,7 +146,6 @@ where
 pub struct Innermost(());
 
 impl<T: ?Sized> State<Innermost> for T {
-  type Input = T;
   type Output = T;
 }
 
@@ -81,22 +159,28 @@ where
   S: ?Sized,
   T: State<Flatten<S>> + ?Sized,
 {
-  type Input = T::Input;
+  type Output = T::Output;
+}
+
+impl<S, T> State<Flatten<S>> for &mut T
+where
+  S: ?Sized,
+  T: State<Flatten<S>> + ?Sized,
+{
   type Output = T::Output;
 }
 
 macro_rules! wrapper_impl {
-  (@decoded_state $($ty:ty),+$(,)?) => {
+  (@partial_ref_state $($ty:ty),+$(,)?) => {
     $(
-      impl<'a, F, W, B, UB, T> State<Decoded<'a, F, W, B, UB>> for $ty
+      impl<'a, F, W, B, UB, T> State<PartialRef<'a, F, W, B, UB>> for $ty
       where
-        T: State<Decoded<'a, F, W, B, UB>> + ?Sized,
+        T: State<PartialRef<'a, F, W, B, UB>> + ?Sized,
         F: ?Sized,
         W: ?Sized,
         B: ?Sized,
         UB: ?Sized,
       {
-        type Input = T::Input;
         type Output = T::Output;
       }
 
@@ -110,7 +194,6 @@ macro_rules! wrapper_impl {
         T: State<Flatten<S>> + ?Sized,
         S: ?Sized,
       {
-        type Input = T::Input;
         type Output = T::Output;
       }
     )*
@@ -121,7 +204,6 @@ macro_rules! wrapper_impl {
       where
         T: State<Flatten<S>>,
       {
-        type Input = T::Input;
         type Output = T::Output;
       }
     )*
@@ -132,7 +214,6 @@ macro_rules! wrapper_impl {
       where
         T: State<Flatten>,
       {
-        type Input = Self;
         type Output = Self;
       }
 
@@ -140,22 +221,20 @@ macro_rules! wrapper_impl {
       where
         T: State<Flatten<Innermost>>,
       {
-        type Input = T::Input;
         type Output = T::Output;
       }
     )*
   };
 }
 
-impl<'a, F, W, B, UB, T> State<Decoded<'a, F, W, B, UB>> for Option<T>
+impl<'a, F, W, B, UB, T> State<PartialRef<'a, F, W, B, UB>> for Option<T>
 where
-  T: State<Decoded<'a, F, W, B, UB>>,
+  T: State<PartialRef<'a, F, W, B, UB>>,
   F: ?Sized,
   W: ?Sized,
   B: ?Sized,
   UB: ?Sized,
 {
-  type Input = T::Input;
   type Output = T::Output;
 }
 
@@ -163,7 +242,6 @@ impl<T> State<Flatten> for Option<T>
 where
   T: State<Flatten>,
 {
-  type Input = Self;
   type Output = T::Output;
 }
 
@@ -171,7 +249,6 @@ impl<T> State<Flatten<Innermost>> for Option<T>
 where
   T: State<Flatten<Innermost>>,
 {
-  type Input = T::Input;
   type Output = T::Output;
 }
 
@@ -180,7 +257,7 @@ const _: () = {
   use std::{boxed::Box, rc::Rc, sync::Arc};
 
   wrapper_impl!(
-    @decoded_state
+    @partial_ref_state
     Box<T>,
     Rc<T>,
     Arc<T>,
@@ -209,7 +286,7 @@ const _: () = {
   use triomphe_0_1::Arc;
 
   wrapper_impl!(
-    @decoded_state
+    @partial_ref_state
     Arc<T>,
   );
 };

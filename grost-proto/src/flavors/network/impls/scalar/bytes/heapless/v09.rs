@@ -233,7 +233,7 @@ impl<const N: usize, L: LenType> TypeRef<Network, Vec<u8, N, L>> for &[u8] {
 impl<const N: usize, L: LenType> PartialMessage<Network> for Vec<u8, N, L> {
   type UnknownBuffer<B> = ();
 
-  type Decoded<'a>
+  type PartialRef<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;
@@ -252,7 +252,7 @@ impl<const N: usize, L: LenType> PartialMessage<Network> for Vec<u8, N, L> {
 impl<const N: usize, L: LenType> Message<Network> for Vec<u8, N, L> {
   type Partial = Self;
 
-  type Decoded<'a>
+  type PartialRef<'a>
     = &'a [u8]
   where
     Self: Sized + 'a;

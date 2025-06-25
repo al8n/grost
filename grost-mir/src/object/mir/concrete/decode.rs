@@ -11,21 +11,21 @@ impl<M, F> super::ConcreteObject<M, F> {
     let object_impl = derive_object_decode(self)?;
     let partial_ref_object_impl = derive_partial_ref_object_decode(self)?;
     let partial_object_decode_impl = derive_partial_object_decode(self)?;
-    let decoded_state_impl = derive_decoded_state(self)?;
+    let partial_ref_state_impl = derive_partial_ref_state(self)?;
 
     Ok(quote! {
       #object_impl
       #partial_object_decode_impl
       #partial_ref_object_impl
-      #decoded_state_impl
+      #partial_ref_state_impl
     })
   }
 }
 
-fn derive_decoded_state<M, F>(
+fn derive_partial_ref_state<M, F>(
   object: &super::ConcreteObject<M, F>,
 ) -> darling::Result<proc_macro2::TokenStream> {
-  let decoded_state_type = object.decoded_state_type();
+  let partial_ref_state_type = object.partial_ref_state_type();
   let path_to_grost = object.path_to_grost();
   let generics = object.partial_ref().generics();
   let (ig, _, where_clauses) = generics.split_for_impl();
@@ -53,8 +53,7 @@ fn derive_decoded_state<M, F>(
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ty #where_clauses {
-        type Input = &#lt [::core::primitive::u8];
+      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ty #where_clauses {
         type Output = #partial_ref_object_ty;
       }
     }
@@ -63,8 +62,7 @@ fn derive_decoded_state<M, F>(
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #ty #where_clauses {
-      type Input = &#lt [::core::primitive::u8];
+    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #ty #where_clauses {
       type Output = #partial_ref_object_ty;
     }
 
@@ -72,8 +70,7 @@ fn derive_decoded_state<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ref_object_ty #where_clauses {
-      type Input = &#lt [::core::primitive::u8];
+    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
       type Output = Self;
     }
   })

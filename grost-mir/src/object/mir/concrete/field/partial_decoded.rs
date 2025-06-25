@@ -6,7 +6,7 @@ use crate::object::ConvertAttribute;
 pub struct ConcretePartialRefField {
   pub(super) ty: Type,
   pub(super) optional_type: Type,
-  pub(super) decoded_state_type: Option<Type>,
+  pub(super) partial_ref_state_type: Option<Type>,
   pub(super) decode_trait_type: Type,
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
@@ -31,8 +31,8 @@ impl ConcretePartialRefField {
   ///
   /// Returns `Some(_)` only if the field use generics,
   #[inline]
-  pub const fn decoded_state_type(&self) -> Option<&Type> {
-    self.decoded_state_type.as_ref()
+  pub const fn partial_ref_state_type(&self) -> Option<&Type> {
+    self.partial_ref_state_type.as_ref()
   }
 
   /// Returns the field decode trait type for this partial decoded field.

@@ -24,7 +24,6 @@ impl<RB: ?Sized, O> State<Flatten<O>> for BytesSlice<RB>
 where
   RB: ReadBuf,
 {
-  type Input = Self;
   type Output = Self;
 }
 

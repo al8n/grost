@@ -70,16 +70,59 @@ where
 }
 
 /// The meta of the partial object field
-#[derive(Debug, Default, Clone, FromMeta)]
+#[derive(Debug, Default, Clone)]
 pub struct PartialFieldFromMeta {
-  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) ty: Option<Type>,
+  pub(in crate::object) copy: bool,
   pub(in crate::object) attrs: Vec<Attribute>,
-  #[darling(default)]
   pub(in crate::object) transform_ref: PartialFieldConvertFromMeta,
-  #[darling(default)]
   pub(in crate::object) partial_transform_ref: PartialFieldConvertFromMeta,
-  #[darling(default)]
   pub(in crate::object) partial_transform: PartialFieldConvertFromMeta,
+}
+
+impl FromMeta for PartialFieldFromMeta {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (match *item {
+      Meta::Path(_) => Self::from_word(),
+      Meta::NameValue(ref value) => Self::from_expr(&value.value),
+      Meta::List(ref value) => {
+        #[derive(Debug, Default, Clone, FromMeta)]
+        struct Helper {
+          #[darling(default)]
+          ty: Option<Type>,
+          #[darling(default)]
+          copy: bool,
+          #[darling(default, map = "Attributes::into_inner")]
+          attrs: Vec<Attribute>,
+          #[darling(default)]
+          transform_ref: PartialFieldConvertFromMeta,
+          #[darling(default)]
+          partial_transform_ref: PartialFieldConvertFromMeta,
+          #[darling(default)]
+          partial_transform: PartialFieldConvertFromMeta,
+        }
+
+        let Helper {
+          ty,
+          copy,
+          attrs,
+          transform_ref,
+          partial_transform_ref,
+          partial_transform,
+        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
+
+        Ok(Self {
+          ty,
+          copy,
+          attrs,
+          transform_ref,
+          partial_transform_ref,
+          partial_transform,
+        })
+      }
+    })
+    .map_err(|e| e.with_span(item))
+  }
 }
 
 /// The meta of the partial reference object field

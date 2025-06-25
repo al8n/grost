@@ -23,7 +23,8 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::partial_ref_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::partial_state!(@scalar $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
@@ -42,7 +43,7 @@ macro_rules! varint {
     ),+$(,)?
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::decoded_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::partial_ref_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
@@ -218,20 +219,35 @@ macro_rules! selectable {
   };
 }
 
-/// A macro emits basic [`State<Decoded<'_, Flavor, WireFormat>>`](super::State) implementations for `Self`
+/// A macro emits basic [`State<PartialRef<'_, Flavor, WireFormat, Src, UB>>`](super::State) implementations for `Self`
 #[macro_export]
-macro_rules! decoded_state {
+macro_rules! partial_ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<$lifetime, $flavor, $wf, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty {
-        type Input = & $lifetime [u8];
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<$lifetime, $flavor, $wf, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty {
         type Output = $target;
       }
     )*
   };
   (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::decoded_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+    $crate::partial_ref_state!(& $lifetime $flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+  };
+}
+
+/// A macro emits basic [`State<Partial<Flavor, WireFormat>>`](super::State) implementations for `Self`
+#[macro_export]
+macro_rules! partial_state {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
+    $(
+      #[allow(non_camel_case_types)]
+      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::State<$crate::__private::convert::Partial<$flavor, $wf>> for $ty {
+        type Output = $target;
+      }
+    )*
+  };
+  (@scalar $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
+    $crate::partial_state!($flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
   };
 }
 
@@ -259,7 +275,6 @@ macro_rules! flatten_state {
       impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
         $crate::__private::convert::Flatten<S>
       > for $ty {
-        type Input = $ty;
         type Output = $ty;
       }
     )*

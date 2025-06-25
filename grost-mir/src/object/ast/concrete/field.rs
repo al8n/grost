@@ -375,6 +375,7 @@ impl TaggedField {
     let read_buffer_param = &object.read_buffer_param;
     let read_buffer = &read_buffer_param.ident;
 
+    let mut partial_constraints = Punctuated::new();
     let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
@@ -440,12 +441,51 @@ impl TaggedField {
       None
     };
 
-    let (partial_ref_ty, decoded_state_type) = match &field.partial_ref.ty {
+    let partial_copyable = object.partial_ref.copy() || field.partial.copy;
+    let partial_copy_contraint = if partial_copyable {
+      Some(quote! {
+        + ::core::marker::Copy
+      })
+    } else {
+      None
+    };
+
+    let (partial_ty, partial_state_type) = match &field.partial.ty {
       Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
           #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Decoded<
+            #path_to_grost::__private::convert::Partial<
+              #flavor_type,
+              #wf,
+            >
+          >
+        })?;
+
+        if use_generics {
+          partial_constraints.push(syn::parse2(quote! {
+            #field_ty: #state_type
+          })?);
+          partial_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_copy_contraint
+          })?);
+        }
+
+        (
+          syn::parse2(quote! {
+            <#field_ty as #state_type>::Output
+          })?,
+          Some(state_type),
+        )
+      }
+    };
+
+    let (partial_ref_ty, partial_ref_state_type) = match &field.partial_ref.ty {
+      Some(ty) => (ty.clone(), None),
+      None => {
+        let state_type: Type = syn::parse2(quote! {
+          #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::PartialRef<
               #lifetime,
               #flavor_type,
               #wf,
@@ -479,6 +519,9 @@ impl TaggedField {
       #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #read_buffer, #unknown_buffer>
     })?;
 
+    let optional_partial_type = syn::parse2(quote! {
+      ::core::option::Option<#partial_ty>
+    })?;
     let optional_partial_ref_type = syn::parse2(quote! {
       ::core::option::Option<#partial_ref_ty>
     })?;
@@ -487,37 +530,77 @@ impl TaggedField {
     let schema_name = field.schema.name.unwrap_or_else(|| field.name.to_string());
     let schema_description = field.schema.description.unwrap_or_default();
     let field_ty = field.ty;
-    let partial = PartialField::from_options(object, &field_ty, field.partial, &field.label)?;
-    let decode_missing_operation = field
-      .partial_ref
-      .decode
-      .missing_operation()
-      .cloned()
-      .or_else(|| {
-        object
-          .partial_ref
-          .decode
-          .or_default_by_label(&field.label)
-          .then_some(MissingOperation::OrDefault)
-      });
-    let transform_missing_operation = field.transform.missing_operation().cloned().or_else(|| {
-      object
-        .transform
-        .or_default_by_label(&field.label)
-        .then_some(MissingOperation::OrDefault)
-    });
-
+    let partial = PartialField {
+      ty: partial_ty,
+      optional_type: optional_partial_type,
+      state_type: partial_state_type,
+      attrs: field.partial.attrs,
+      constraints: partial_constraints,
+      transform_ref: {
+        let mo = field.partial.transform_ref.missing_operation.or_else(|| {
+          object
+            .partial
+            .transform
+            .or_default_by_label(&field.label)
+            .then_some(MissingOperation::OrDefault)
+        });
+        field.partial.transform_ref.missing_operation = mo;
+        field.partial.transform_ref
+      },
+      partial_transform_ref: {
+        let mo = field
+          .partial
+          .partial_transform_ref
+          .missing_operation
+          .or_else(|| {
+            object
+              .partial
+              .partial_transform
+              .or_default_by_label(&field.label)
+              .then_some(MissingOperation::OrDefault)
+          });
+        field.partial.partial_transform_ref.missing_operation = mo;
+        field.partial.partial_transform_ref
+      },
+      partial_transform: {
+        let mo = field
+          .partial
+          .partial_transform
+          .missing_operation
+          .or_else(|| {
+            object
+              .partial
+              .partial_transform
+              .or_default_by_label(&field.label)
+              .then_some(MissingOperation::OrDefault)
+          });
+        field.partial.partial_transform.missing_operation = mo;
+        field.partial.partial_transform
+      },
+    };
     let partial_ref = PartialRefField {
       ty: partial_ref_ty,
       optional_type: optional_partial_ref_type,
-      decoded_state_type,
+      state_type: partial_ref_state_type,
       decode_trait_type,
       attrs: field.partial_ref.attrs,
       constraints: partial_ref_constraints,
       copy: partial_ref_copyable,
       encode: field.partial_ref.encode,
       decode: {
-        field.partial_ref.decode.missing_operation = decode_missing_operation;
+        let mo = field
+          .partial_ref
+          .decode
+          .missing_operation()
+          .cloned()
+          .or_else(|| {
+            object
+              .partial_ref
+              .decode
+              .or_default_by_label(&field.label)
+              .then_some(MissingOperation::OrDefault)
+          });
+        field.partial_ref.decode.missing_operation = mo;
         field.partial_ref.decode
       },
     };
@@ -538,35 +621,41 @@ impl TaggedField {
     )?;
 
     Ok(Self {
+      index,
+      selector,
+      reflection,
       partial,
       partial_ref,
+      schema_description,
+      schema_name,
+      type_params_usages: field_type_params_usages,
+      lifetimes_usages: field_lifetimes_usages,
+      wire_format: wf,
+      wire_format_reflection: wfr,
+      transform: {
+        let mo = field.transform.missing_operation().cloned().or_else(|| {
+          object
+            .transform
+            .or_default_by_label(&field.label)
+            .then_some(MissingOperation::OrDefault)
+        });
+        field.transform.missing_operation = mo;
+        field.transform
+      },
       name: field.name,
       vis: field.vis,
       label: field.label,
       tag: field.tag.get(),
       ty: field_ty,
       attrs: field.attrs,
+      copy: field.copy,
       default: match field.default {
         Some(path) => path,
         None => {
           syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?
         }
       },
-      schema_description,
-      schema_name,
-      type_params_usages: field_type_params_usages,
-      lifetimes_usages: field_lifetimes_usages,
-      copy: field.copy,
       meta: field.extra,
-      wire_format: wf,
-      wire_format_reflection: wfr,
-      transform: {
-        field.transform.missing_operation = transform_missing_operation;
-        field.transform
-      },
-      index,
-      selector,
-      reflection,
     })
   }
 }

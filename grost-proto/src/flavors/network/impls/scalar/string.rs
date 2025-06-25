@@ -125,9 +125,14 @@ macro_rules! array_str {
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited;
     );
 
-    $crate::decoded_state!(
+    $crate::partial_ref_state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>
+    );
+
+    $crate::partial_state!(
+      $crate::__private::flavors::Network:
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => $ty
     );
 
     $crate::flatten_state!($ty [const N: usize]);

@@ -356,8 +356,8 @@
 // //   S: Message,
 // //   B: for<'a> From<&'a [u8]> + AsRef<[u8]> + Clone,
 // // {
-// //   type Decoded<'a>
-// //     = EncodedSelectionSet<'a, S::Decoded<'a>>
+// //   type PartialRef<'a>
+// //     = EncodedSelectionSet<'a, S::PartialRef<'a>>
 // //   where
 // //     Self: Sized + 'a;
 
@@ -529,7 +529,7 @@
 // //   }
 // // }
 
-// // impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Decoded<'a>>
+// // impl<'a, S, B> IntoTarget<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::PartialRef<'a>>
 // // where
 // //   S: Message,
 // //   B: From<&'a [u8]>,
@@ -544,7 +544,7 @@
 // //   }
 // // }
 
-// // impl<'a, S, B> TypeRef<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::Decoded<'a>>
+// // impl<'a, S, B> TypeRef<SelectionSet<S, B>> for EncodedSelectionSet<'a, S::PartialRef<'a>>
 // // where
 // //   S: Message,
 // //   B: From<&'a [u8]>,

@@ -1,19 +1,13 @@
 use core::num::NonZeroU32;
 
 use crate::{
-  buffer::{Buffer, ReadBuf},
-  decode::Decode,
-  decoded_state, default_wire_format,
-  encode::Encode,
-  flatten_state,
-  flavors::network::{Context, Error, Fixed32, Network, Unknown, Varint},
-  identity_partial_transform, identity_transform, partial_encode_scalar, selectable,
-  try_from_bridge,
+  buffer::{Buffer, ReadBuf}, decode::Decode, default_wire_format, encode::Encode, flatten_state, flavors::network::{Context, Error, Fixed32, Network, Unknown, Varint}, identity_partial_transform, identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable, try_from_bridge
 };
 
 default_wire_format!(Network: u32 as Varint);
 selectable!(@scalar Network: u32, NonZeroU32);
-decoded_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
+partial_ref_state!(@scalar &'a Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
+partial_state!(@scalar Network: u32 as Fixed32, NonZeroU32 as Fixed32, u32 as Varint, NonZeroU32 as Varint);
 flatten_state!(u32, NonZeroU32);
 identity_transform!(
   Network {

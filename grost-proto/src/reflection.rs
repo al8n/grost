@@ -224,9 +224,9 @@ where
 //   #[inline]
 //   pub const fn decoded(
 //     &self,
-//   ) -> decoded::DecodedReflection<T, Identified<ObjectField, TAG>, F>
+//   ) -> decoded::PartialRefReflection<T, Identified<ObjectField, TAG>, F>
 //   {
-//     decoded::DecodedReflection::new()
+//     decoded::PartialRefReflection::new()
 //   }
 
 //   /// Returns the reflection to the encode fn of the field.
@@ -365,7 +365,7 @@ where
 //     T,
 //     Identified<
 //       EncodeReflection<
-//         super::Decoded<
+//         super::PartialRef<
 //           'a,
 //           F,
 //           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -381,7 +381,7 @@ where
 //       T,
 //       Identified<
 //         EncodeReflection<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -399,14 +399,14 @@ where
 //   #[inline]
 //   pub const fn encoded_decoded_len<'a>(
 //     &self,
-//   ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//   ) -> Reflection<T, Identified<EncodeReflection<Len<super::PartialRef<
 //     'a,
 //     F,
 //     <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
 //   >>>, TAG>, F>
 //   where
 //     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-//     Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//     Reflection<T, Identified<EncodeReflection<Len<super::PartialRef<
 //       'a,
 //       F,
 //       <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -423,7 +423,7 @@ where
 //     T,
 //     Identified<
 //       PartialEncodeReflection<
-//         super::Decoded<
+//         super::PartialRef<
 //           'a,
 //           F,
 //           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -439,7 +439,7 @@ where
 //       T,
 //       Identified<
 //         PartialEncodeReflection<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -462,7 +462,7 @@ where
 //     Identified<
 //       PartialEncodeReflection<
 //         Len<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -480,7 +480,7 @@ where
 //       Identified<
 //         PartialEncodeReflection<
 //           Len<
-//             super::Decoded<
+//             super::PartialRef<
 //               'a,
 //               F,
 //               <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,

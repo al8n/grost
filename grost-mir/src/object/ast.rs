@@ -465,7 +465,6 @@ fn derive_flatten_state(
     #[allow(non_camel_case_types, clippy::type_complexity)]
     impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>> for #name #tg #w {
       type Output = Self;
-      type Input = Self;
     }
   }
 }

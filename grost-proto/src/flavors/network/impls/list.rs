@@ -144,7 +144,6 @@ macro_rules! list {
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )? > $crate::__private::convert::State<
         $crate::__private::convert::Flatten
       > for $ty {
-        type Input = $ty;
         type Output = $ty;
       }
 
@@ -152,26 +151,24 @@ macro_rules! list {
       where
         T: $crate::__private::convert::State<$crate::__private::convert::Flatten<$crate::__private::convert::Innermost>>,
       {
-        type Input = T::Input;
         type Output = T::Output;
       }
     )*
   };
-  (@decoded_state(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@partial_ref_state(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, LengthDelimited, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty
+      impl<'a, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<'a, $crate::__private::flavors::Network, LengthDelimited, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty
       {
-        type Input = $crate::__private::decode::BytesSlice<__GROST_READ_BUF__>;
         type Output = $crate::__private::decode::BytesSlice<__GROST_READ_BUF__>;
       }
     )*
   };
-  (@decoded_state(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@partial_ref_state(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
       impl<'a, T, W, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
-        $crate::__private::convert::Decoded<
+        $crate::__private::convert::PartialRef<
           'a,
           $crate::__private::flavors::Network,
           Packed<W>,
@@ -182,16 +179,15 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
-        type Input = &'a [u8];
         type Output = $crate::__private::flavors::network::PackedDecoder<'a, T, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, W>;
       }
     )*
   };
-  (@decoded_state(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@partial_ref_state(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
       impl<'a, T, W, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
-        $crate::__private::convert::Decoded<
+        $crate::__private::convert::PartialRef<
           'a,
           $crate::__private::flavors::Network,
           Borrowed<'a, Packed<W>>,
@@ -202,7 +198,6 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network>,
       {
-        type Input = &'a [u8];
         type Output = $crate::__private::flavors::network::PackedDecoder<'a, T, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, W>;
       }
     )*
@@ -267,7 +262,7 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
-        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, TW, B, UB>, Input = &'a [u8]>
+        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, $crate::__private::flavors::Network, TW, B, UB>>
           + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, TW, T::Output, B, UB>
           + $crate::__private::decode::Transform<$crate::__private::flavors::Network, TW, T::Output>
           + 'a,
@@ -291,7 +286,7 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'a,
-        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'a, $crate::__private::flavors::Network, TW, B, UB>, Input = &'a [u8]>
+        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, $crate::__private::flavors::Network, TW, B, UB>>
           + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Network, TW, T::Output, B, UB>
           + $crate::__private::selection::Selectable<$crate::__private::flavors::Network>
           + $crate::__private::decode::PartialTransform<$crate::__private::flavors::Network, TW, T::Output>
@@ -377,7 +372,7 @@ macro_rules! list {
     $(
       impl<'de, T, W, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Network, Packed<W>, PackedDecoder<'de, T, B, UB, W>, B, UB> for $ty
       where
-        T: $crate::__private::convert::State<$crate::__private::convert::Decoded<'de, $crate::__private::flavors::Network, W, B, UB>, Input = &'de [u8]>
+        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, $crate::__private::flavors::Network, W, B, UB>>
           + $crate::__private::Decode<'de, $crate::__private::flavors::Network, W, T::Output, B, UB>,
         T::Output: ::core::marker::Sized,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Network> + 'de,
@@ -529,9 +524,9 @@ macro_rules! list {
 }
 
 list!(@flatten_state [T; N] [const N: usize], [T]);
-list!(@decoded_state(bytes) [u8; N] [const N: usize], [u8]);
-list!(@decoded_state(packed) [T; N] [const N: usize], [T]);
-list!(@decoded_state(borrow) [T; N] [const N: usize], [T]);
+list!(@partial_ref_state(bytes) [u8; N] [const N: usize], [u8]);
+list!(@partial_ref_state(packed) [T; N] [const N: usize], [T]);
+list!(@partial_ref_state(borrow) [T; N] [const N: usize], [T]);
 list!(@identity_transform [T; N] [const N: usize]);
 list!(@default_wire_format [T; N] [const N: usize], [T]);
 list!(@selectable [T; N] [const N: usize], [T]);
@@ -731,9 +726,9 @@ const _: () = {
   use std::vec::Vec;
 
   list!(@flatten_state Vec<T>);
-  list!(@decoded_state(bytes) Vec<u8>);
-  list!(@decoded_state(packed) Vec<T>);
-  list!(@decoded_state(borrow) Vec<T>);
+  list!(@partial_ref_state(bytes) Vec<u8>);
+  list!(@partial_ref_state(packed) Vec<T>);
+  list!(@partial_ref_state(borrow) Vec<T>);
   list!(@default_wire_format Vec<T>);
   list!(@identity_transform Vec<T>);
   list!(@packed_transform Vec<T>);
@@ -755,9 +750,9 @@ const _: () = {
   use smallvec_1::SmallVec;
 
   list!(@flatten_state SmallVec<[T; N]> [const N: usize]);
-  list!(@decoded_state(bytes) SmallVec<[u8; N]> [const N: usize]);
-  list!(@decoded_state(packed) SmallVec<[T; N]> [const N: usize]);
-  list!(@decoded_state(borrow) SmallVec<[T; N]> [const N: usize]);
+  list!(@partial_ref_state(bytes) SmallVec<[u8; N]> [const N: usize]);
+  list!(@partial_ref_state(packed) SmallVec<[T; N]> [const N: usize]);
+  list!(@partial_ref_state(borrow) SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
   list!(@packed_transform SmallVec<[T; N]> [const N: usize]);
@@ -783,9 +778,9 @@ const _: () = {
   use arrayvec_0_7::ArrayVec;
 
   list!(@flatten_state ArrayVec<T, N> [const N: usize]);
-  list!(@decoded_state(bytes) ArrayVec<u8, N> [const N: usize]);
-  list!(@decoded_state(packed) ArrayVec<T, N> [const N: usize]);
-  list!(@decoded_state(borrow) ArrayVec<T, N> [const N: usize]);
+  list!(@partial_ref_state(bytes) ArrayVec<u8, N> [const N: usize]);
+  list!(@partial_ref_state(packed) ArrayVec<T, N> [const N: usize]);
+  list!(@partial_ref_state(borrow) ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
   list!(@packed_transform ArrayVec<T, N> [const N: usize]);
@@ -830,9 +825,9 @@ const _: () = {
   }
 
   list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@decoded_state(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
-  list!(@decoded_state(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@decoded_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@partial_ref_state(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
+  list!(@partial_ref_state(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
@@ -857,9 +852,9 @@ const _: () = {
     use tinyvec_1::TinyVec;
 
     list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@decoded_state(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
-    list!(@decoded_state(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@decoded_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@partial_ref_state(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
+    list!(@partial_ref_state(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);

@@ -7,72 +7,13 @@ impl<T, S, M> super::Object<T, S, M> {
     let object_impl = derive_object_decode(self)?;
     let partial_ref_object_impl = derive_partial_ref_object_decode(self)?;
     let partial_object_decode_impl = derive_partial_object_decode(self)?;
-    let decoded_state_impl = derive_decoded_state(self)?;
 
     Ok(quote! {
       #object_impl
       #partial_object_decode_impl
       #partial_ref_object_impl
-      #decoded_state_impl
     })
   }
-}
-
-fn derive_decoded_state<T, S, M>(
-  object: &super::Object<T, S, M>,
-) -> darling::Result<proc_macro2::TokenStream> {
-  let decoded_state_type = &object.decoded_state_type;
-  let path_to_grost = object.path_to_grost();
-  let generics = object.partial_ref().generics();
-  let (ig, _, where_clauses) = generics.split_for_impl();
-  let ty = object.ty();
-  let lt = &object.lifetime_param().lifetime;
-  let partial_ref_object_ty = object.partial_ref().ty();
-
-  let partial_object_impl = {
-    let mut g = generics.clone();
-    let partial = object.partial();
-    let partial_ty = partial.ty();
-    if let Some(preds) = partial
-      .generics()
-      .where_clause
-      .as_ref()
-      .map(|wc| &wc.predicates)
-    {
-      if !preds.is_empty() {
-        g.make_where_clause()
-          .predicates
-          .extend(preds.iter().cloned());
-      }
-    }
-    let (ig, _, where_clauses) = g.split_for_impl();
-    quote! {
-      #[automatically_derived]
-      #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ty #where_clauses {
-        type Input = &#lt [::core::primitive::u8];
-        type Output = #partial_ref_object_ty;
-      }
-    }
-  };
-
-  Ok(quote! {
-    #[automatically_derived]
-    #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #ty #where_clauses {
-      type Input = &#lt [::core::primitive::u8];
-      type Output = #partial_ref_object_ty;
-    }
-
-    #partial_object_impl
-
-    #[automatically_derived]
-    #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#decoded_state_type> for #partial_ref_object_ty #where_clauses {
-      type Input = &#lt [::core::primitive::u8];
-      type Output = Self;
-    }
-  })
 }
 
 fn derive_partial_object_decode<T, S, M>(

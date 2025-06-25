@@ -265,7 +265,7 @@ impl<F> ConcreteTaggedField<F> {
       None
     };
 
-    let (partial_ref_ty, decoded_state_type) = match field
+    let (partial_ref_ty, partial_ref_state_type) = match field
       .flavor()
       .ty()
       .or_else(|| field.partial_ref_type())
@@ -274,7 +274,7 @@ impl<F> ConcreteTaggedField<F> {
       None => {
         let state_type: Type = syn::parse2(quote! {
           #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Decoded<
+            #path_to_grost::__private::convert::PartialRef<
               #lifetime,
               #flavor_type,
               #wf,
@@ -323,7 +323,7 @@ impl<F> ConcreteTaggedField<F> {
     let partial_ref = ConcretePartialRefField {
       ty: partial_ref_ty,
       optional_type: optional_partial_ref_type,
-      decoded_state_type,
+      partial_ref_state_type,
       decode_trait_type,
       attrs: field.partial_ref.attrs,
       constraints: partial_ref_constraints,

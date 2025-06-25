@@ -121,9 +121,13 @@ macro_rules! array_bytes {
       $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited,
     );
-    $crate::decoded_state!(
+    $crate::partial_ref_state!(
       &'a $crate::__private::flavors::Network:
         $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => &'a [::core::primitive::u8]
+    );
+    $crate::partial_state!(
+      $crate::__private::flavors::Network:
+        $ty [const N: usize] as $crate::__private::flavors::network::LengthDelimited => $ty
     );
 
     impl<'a, UB, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::flavors::Network, $crate::__private::flavors::network::LengthDelimited, &'a [u8], UB> for $ty {

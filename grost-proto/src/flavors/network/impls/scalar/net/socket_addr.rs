@@ -1,15 +1,9 @@
 use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
 use crate::{
-  decode::Decode,
-  decoded_state, default_wire_format,
-  encode::Encode,
-  flatten_state,
-  flavors::{
-    Network,
-    network::{Context, Error, LengthDelimited, Unknown},
-  },
-  identity_transform, partial_encode_scalar, selectable,
+  decode::Decode, default_wire_format, encode::Encode, flatten_state, flavors::{
+    network::{Context, Error, LengthDelimited, Unknown}, Network
+  }, identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable
 };
 
 const PORT_SIZE: usize = 2;
@@ -144,7 +138,8 @@ default_wire_format!(
   SocketAddr as LengthDelimited;
 );
 selectable!(@scalar Network: SocketAddrV4, SocketAddrV6, SocketAddr);
-decoded_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
+partial_ref_state!(@scalar &'a Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
+partial_state!(@scalar Network: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
 identity_transform!(
   Network {

@@ -160,7 +160,7 @@ impl Network {
 
     let partial_object = object.partial();
     let partial_object_name = partial_object.name();
-    let partial_object_decoded_state_generics = {
+    let partial_object_partial_ref_state_generics = {
       let mut generics = replaced_generics.clone();
       if let Some(ref g) = partial_object.generics().where_clause {
         generics
@@ -171,8 +171,8 @@ impl Network {
       generics
     };
     let (_, partial_object_tg, _) = partial_object.generics().split_for_impl();
-    let (_, _, partial_object_decoded_state_where_clause) =
-      partial_object_decoded_state_generics.split_for_impl();
+    let (_, _, partial_object_partial_ref_state_where_clause) =
+      partial_object_partial_ref_state_generics.split_for_impl();
 
     let object_name = object.name();
     let (_, object_tg, _) = object.generics().split_for_impl();
@@ -181,21 +181,21 @@ impl Network {
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_decoded_state_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_partial_ref_state_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Decoded<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = Self;
       }

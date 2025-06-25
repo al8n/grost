@@ -36,8 +36,12 @@ macro_rules! try_str_bridge {
         $ty $([ $(const $g: usize),* ])?
       );
 
-      $crate::decoded_state!(&'a Network:
+      $crate::partial_ref_state!(&'a Network:
         $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>
+      );
+
+      $crate::partial_state!(Network:
+        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::network::LengthDelimited => $ty
       );
 
       $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);

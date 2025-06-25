@@ -1,8 +1,5 @@
 use crate::{
-  decode::{Decode, PartialTransform, Str, Transform},
-  decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{LengthDelimited, Network},
-  identity_partial_transform, identity_transform, selectable,
+  decode::{Decode, PartialTransform, Str, Transform}, decode_bridge, default_wire_format, encode_bridge, flatten_state, flavors::network::{LengthDelimited, Network}, identity_partial_transform, identity_transform, partial_ref_state, partial_state, selectable
 };
 use smol_str_0_3::SmolStr;
 
@@ -27,8 +24,11 @@ decode_bridge!(
 );
 
 flatten_state!(SmolStr);
-decoded_state!(
+partial_ref_state!(
   &'a Network: SmolStr as LengthDelimited => &'a str
+);
+partial_state!(
+  Network: SmolStr as LengthDelimited => SmolStr
 );
 identity_transform!(
   Network {

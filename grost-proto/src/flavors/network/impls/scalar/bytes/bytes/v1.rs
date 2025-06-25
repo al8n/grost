@@ -1,8 +1,5 @@
 use crate::{
-  decode::{BytesSlice, Transform},
-  decode_bridge, decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{LengthDelimited, Network},
-  selectable,
+  decode::{BytesSlice, Transform}, decode_bridge, default_wire_format, encode_bridge, flatten_state, flavors::network::{LengthDelimited, Network}, partial_ref_state, partial_state, selectable
 };
 use bytes_1::{Bytes, BytesMut};
 
@@ -34,10 +31,15 @@ decode_bridge!(
   },
 );
 
-decoded_state!(
+partial_ref_state!(
   &'a Network:
     Bytes as LengthDelimited => &'a [u8],
     BytesMut as LengthDelimited => &'a [u8],
+);
+partial_state!(
+  Network:
+    Bytes as LengthDelimited => Bytes,
+    BytesMut as LengthDelimited => BytesMut,
 );
 flatten_state!(Bytes, BytesMut);
 bytes_bridge!(

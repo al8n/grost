@@ -1,15 +1,13 @@
 use crate::{
-  decode::{BytesSlice, Decode, Str},
-  decoded_state, default_wire_format, encode_bridge, flatten_state,
-  flavors::network::{Context, Error, LengthDelimited, Network, Unknown},
-  selectable,
+  decode::{BytesSlice, Decode, Str}, default_wire_format, encode_bridge, flatten_state, flavors::network::{Context, Error, LengthDelimited, Network, Unknown}, partial_ref_state, partial_state, selectable
 };
 
 default_wire_format!(
   Network: str as LengthDelimited
 );
 selectable!(@scalar Network:str);
-decoded_state!(&'a Network: str as LengthDelimited => Str<__GROST_READ_BUF__>);
+partial_ref_state!(&'a Network: str as LengthDelimited => Str<__GROST_READ_BUF__>);
+partial_state!(Network: str as LengthDelimited => str);
 flatten_state!(str);
 
 encode_bridge!(

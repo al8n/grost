@@ -34,7 +34,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   schema_description: String,
   vis: Visibility,
   ty: Type,
-  decoded_state_type: Type,
+  partial_ref_state_type: Type,
   reflectable: Type,
   generics: Generics,
   /// Extra constraints when deriving `Decode` trait for the partial decoded object.
@@ -132,8 +132,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the decoded state type of the concrete object.
   #[inline]
-  pub const fn decoded_state_type(&self) -> &Type {
-    &self.decoded_state_type
+  pub const fn partial_ref_state_type(&self) -> &Type {
+    &self.partial_ref_state_type
   }
 
   /// Returns the reflectable type of the concrete object.
@@ -400,8 +400,8 @@ impl<M, F> ConcreteObject<M, F> {
           })?;
         output
       },
-      decoded_state_type: syn::parse2(quote! {
-        #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #rb, #ub>
+      partial_ref_state_type: syn::parse2(quote! {
+        #path_to_grost::__private::convert::PartialRef<#lt, #flavor_ty, #wf, #rb, #ub>
       })?,
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
