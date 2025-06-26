@@ -1,6 +1,10 @@
+use quote::quote;
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
-use crate::object::meta::concrete::PartialFieldFromMeta;
+use crate::{
+  object::{Label, meta::concrete::PartialFieldFromMeta},
+  utils::MissingOperation,
+};
 
 use super::PartialFieldConvertOptions;
 
@@ -35,6 +39,9 @@ pub struct PartialField {
   pub(super) state_type: Option<Type>,
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
+  pub(super) transform_ref_constraints: Punctuated<WherePredicate, Comma>,
+  pub(super) partial_transform_ref_constraints: Punctuated<WherePredicate, Comma>,
+  pub(super) partial_transform_constraints: Punctuated<WherePredicate, Comma>,
   pub(super) transform_ref: PartialFieldConvertOptions,
   pub(super) partial_transform_ref: PartialFieldConvertOptions,
   pub(super) partial_transform: PartialFieldConvertOptions,
@@ -87,5 +94,203 @@ impl PartialField {
   #[inline]
   pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
     &self.constraints
+  }
+
+  /// Returns the transformation reference constraints of the partial field.
+  #[inline]
+  pub const fn transform_ref_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.transform_ref_constraints
+  }
+
+  /// Returns the partial transformation reference constraints of the partial field.
+  #[inline]
+  pub const fn partial_transform_ref_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.partial_transform_ref_constraints
+  }
+
+  /// Returns the partial transformation constraints of the partial field.
+  #[inline]
+  pub const fn partial_transform_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.partial_transform_constraints
+  }
+
+  pub(super) fn try_new<T, S, M>(
+    object: &super::RawObject<T, S, M>,
+    use_generics: bool,
+    field_ty: &Type,
+    wf: &Type,
+    label: &Label,
+    mut opts: PartialFieldOptions,
+  ) -> darling::Result<Self> {
+    let flavor_type = &object.flavor_type;
+    let path_to_grost = &object.path_to_grost;
+
+    let mut type_constraints = Punctuated::new();
+    let mut transform_ref_constraints = Punctuated::new();
+    let mut partial_transform_ref_constraints = Punctuated::new();
+    let mut partial_transform_constraints = Punctuated::new();
+
+    let partial_copyable = object.partial.copy || opts.copy;
+    let partial_copy_contraint = if partial_copyable {
+      Some(quote! {
+        + ::core::marker::Copy
+      })
+    } else {
+      None
+    };
+    let (ty, state_type) = match &opts.ty {
+      Some(ty) => (ty.clone(), None),
+      None => {
+        let state_type: Type = syn::parse2(quote! {
+          #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Partial<
+              #flavor_type,
+            >
+          >
+        })?;
+
+        if use_generics {
+          type_constraints.extend([
+            syn::parse2::<WherePredicate>(quote! {
+              #field_ty: #state_type
+            })?,
+            syn::parse2(quote! {
+              <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_copy_contraint
+            })?,
+          ]);
+
+          let selectable_constraint: WherePredicate = syn::parse2(quote! {
+            #field_ty: #path_to_grost::__private::selection::Selectable<#flavor_type>
+          })?;
+          partial_transform_constraints.extend([
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #state_type>::Output: #path_to_grost::__private::decode::PartialTransform<
+                #flavor_type,
+                #wf,
+                <#field_ty as #state_type>::Output,
+              >
+            })?,
+            selectable_constraint.clone(),
+          ]);
+
+          let ltp = &object.lifetime_param;
+          let lt = &ltp.lifetime;
+          let rbp = &object.read_buffer_param;
+          let rb = &rbp.ident;
+          let ubp = &object.unknown_buffer_param;
+          let ub = &ubp.ident;
+
+          let ref_state_type: Type = syn::parse2(quote! {
+            #path_to_grost::__private::convert::State<
+              #path_to_grost::__private::convert::PartialRef<
+                #lt,
+                #flavor_type,
+                #wf,
+                #rb,
+                #ub,
+              >
+            >
+          })?;
+
+          partial_transform_ref_constraints.extend([
+            syn::parse2::<WherePredicate>(quote! {
+              #field_ty: #path_to_grost::__private::selection::Selectable<#flavor_type>
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #state_type>::Output: #path_to_grost::__private::decode::PartialTransform<
+                #flavor_type,
+                #wf,
+                <#field_ty as #ref_state_type>::Output,
+                Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector,
+              >
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              #field_ty: #ref_state_type
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #ref_state_type>::Output: ::core::marker::Sized +  #path_to_grost::__private::selection::Selectable<
+                #flavor_type,
+                Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector,
+              >
+            })?,
+          ]);
+
+          transform_ref_constraints.extend([
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #state_type>::Output: #path_to_grost::__private::decode::Transform<
+                #flavor_type,
+                #wf,
+                <#field_ty as #ref_state_type>::Output,
+              >
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              #field_ty: #ref_state_type
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #ref_state_type>::Output: ::core::marker::Sized
+            })?,
+          ]);
+        }
+
+        (
+          syn::parse2(quote! {
+            <#field_ty as #state_type>::Output
+          })?,
+          Some(state_type),
+        )
+      }
+    };
+
+    let optional_type = if label.is_optional() {
+      ty.clone()
+    } else {
+      syn::parse2(quote! {
+        ::core::option::Option<#ty>
+      })?
+    };
+
+    Ok(Self {
+      ty,
+      optional_type,
+      state_type,
+      attrs: opts.attrs,
+      constraints: type_constraints,
+      transform_ref_constraints,
+      partial_transform_constraints,
+      partial_transform_ref_constraints,
+      transform_ref: {
+        let mo = opts.transform_ref.missing_operation.or_else(|| {
+          object
+            .partial
+            .transform
+            .or_default_by_label(label)
+            .then_some(MissingOperation::OrDefault)
+        });
+        opts.transform_ref.missing_operation = mo;
+        opts.transform_ref
+      },
+      partial_transform_ref: {
+        let mo = opts.partial_transform_ref.missing_operation.or_else(|| {
+          object
+            .partial
+            .partial_transform
+            .or_default_by_label(label)
+            .then_some(MissingOperation::OrDefault)
+        });
+        opts.partial_transform_ref.missing_operation = mo;
+        opts.partial_transform_ref
+      },
+      partial_transform: {
+        let mo = opts.partial_transform.missing_operation.or_else(|| {
+          object
+            .partial
+            .partial_transform
+            .or_default_by_label(label)
+            .then_some(MissingOperation::OrDefault)
+        });
+        opts.partial_transform.missing_operation = mo;
+        opts.partial_transform
+      },
+    })
   }
 }

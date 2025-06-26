@@ -1,11 +1,11 @@
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
-macro_rules! network_varint {
+macro_rules! groto_varint {
   ($(
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
     $crate::varint!(
-      $crate::__private::flavors::Network:$crate::__private::flavors::network::Varint {
+      $crate::__private::flavors::Groto:$crate::__private::flavors::groto::Varint {
         $(
           $ty $([ $(const $g: usize),* ])?
         ),+
@@ -24,7 +24,7 @@ macro_rules! varint {
   }) => {
     $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
     $($crate::partial_ref_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::partial_state!(@scalar $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
+    $($crate::partial_state!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
     $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
     $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
@@ -33,9 +33,9 @@ macro_rules! varint {
     $($crate::identity_transform!($flavor {
       $ty $([ $(const $g: usize),* ])? as $wf,
     });)*
-    $($crate::identity_partial_transform!($flavor {
-      $ty $([ $(const $g: usize),* ])? as $wf,
-    });)*
+    // $($crate::identity_partial_transform!($flavor {
+    //   $ty $([ $(const $g: usize),* ])? as $wf,
+    // });)*
   };
   (@without_flatten_state $flavor:ty:$wf:ty {
     $(
@@ -143,50 +143,9 @@ macro_rules! identity_transform {
     $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?
   }) => {
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Transform<$flavor, $wf, Self> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, $ty, $wf, $flavor> for $ty {
         fn transform(input: $ty) -> ::core::result::Result<Self, <$flavor as $crate::__private::flavors::Flavor>::Error> {
           ::core::result::Result::Ok(input)
-        }
-      }
-    )*
-  };
-}
-
-/// A macro emits [`PartialTransform`](super::decode::PartialTransform) implementations for the `Self`
-#[macro_export]
-macro_rules! identity_partial_transform {
-  ($flavor:ty {
-    $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?
-  }) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialTransform<$flavor, $wf, Self> for $ty {
-        fn partial_transform(input: Self, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        where
-          Self: Sized,
-        {
-          if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-            return ::core::result::Result::Ok(::core::option::Option::None);
-          }
-
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialTransform<$flavor, $wf, ::core::option::Option<Self>> for $ty {
-        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        where
-          Self: Sized,
-        {
-          match input {
-            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
-            ::core::option::Option::Some(input) => {
-              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-                return ::core::result::Result::Ok(::core::option::Option::None);
-              }
-
-              ::core::result::Result::Ok(::core::option::Option::Some(input))
-            }
-          }
         }
       }
     )*
@@ -201,6 +160,10 @@ macro_rules! selectable {
       #[allow(non_camel_case_types)]
       impl$(< $(const $g: ::core::primitive::usize),* >)? $crate::__private::selection::Selectable<$flavor> for $ty {
         type Selector = ::core::primitive::bool;
+
+        fn is_empty(&self) -> bool {
+          false
+        }
       }
     )*
   };
@@ -226,7 +189,7 @@ macro_rules! partial_ref_state {
     $(
       #[allow(non_camel_case_types)]
       impl<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<$lifetime, $flavor, $wf, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty {
-        type Output = $target;
+        type Output = ::core::option::Option<$target>;
       }
     )*
   };
@@ -238,16 +201,16 @@ macro_rules! partial_ref_state {
 /// A macro emits basic [`State<Partial<Flavor, WireFormat>>`](super::State) implementations for `Self`
 #[macro_export]
 macro_rules! partial_state {
-  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
+  ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::State<$crate::__private::convert::Partial<$flavor, $wf>> for $ty {
-        type Output = $target;
+      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::State<$crate::__private::convert::Partial<$flavor>> for $ty {
+        type Output = ::core::option::Option<$target>;
       }
     )*
   };
-  (@scalar $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty),+$(,)?) => {
-    $crate::partial_state!($flavor: $($ty $([ $(const $g: usize),* ])? as $wf => $ty),+);
+  (@scalar $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
+    $crate::partial_state!($flavor: $($ty $([ $(const $g: usize),* ])? => $ty),+);
   };
 }
 

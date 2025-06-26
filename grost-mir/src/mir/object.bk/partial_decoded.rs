@@ -167,8 +167,8 @@ impl PartialRefObject {
   /// Returns a type which replace the corresponding generic parameters with the given lifetime or concrete types.
   ///
   /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`,
-  /// and the given flavor type is `grost::flavors::Network` and the given unknown buffer type is `()`,
-  /// the output type will be `PartialRefUser<'__grost_lifetime__, grost::flavors::Network, ()>`.
+  /// and the given flavor type is `grost::flavors::Groto` and the given unknown buffer type is `()`,
+  /// the output type will be `PartialRefUser<'__grost_lifetime__, grost::flavors::Groto, ()>`.
   pub fn type_with(
     &self,
     lifetime: Option<&syn::Lifetime>,
@@ -212,7 +212,7 @@ impl PartialRefObject {
   /// Returns a new generics which replaces the corresponding generic parameters with the given lifetime or concrete types.
   ///
   /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`,
-  /// and the given flavor type is `grost::flavors::Network` and the given unknown buffer type is `()`,
+  /// and the given flavor type is `grost::flavors::Groto` and the given unknown buffer type is `()`,
   /// the output generics will remove the flavor and unknown buffer generic parameters in both the params and where clause.
   pub fn remove_generics(
     &self,

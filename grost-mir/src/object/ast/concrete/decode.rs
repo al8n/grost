@@ -42,59 +42,8 @@ fn derive_partial_object_decode<T, S, M>(
   let object_name = object.name();
   let selector_ty = object.selector().ty();
 
-  let partial_transform_from_partial_generics = {
-    let mut output = partial_object.generics().clone();
-    if let Some(preds) = object
-      .partial()
-      .generics()
-      .where_clause
-      .as_ref()
-      .map(|wc| &wc.predicates)
-    {
-      output
-        .make_where_clause()
-        .predicates
-        .extend(preds.iter().cloned());
-    }
-
-    object
-      .fields()
-      .iter()
-      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
-      .try_for_each(|f| {
-        if f.uses_generics() {
-          output
-            .make_where_clause()
-            .predicates
-            .extend(f.selector().type_constraints().iter().cloned());
-          let field_ty = f.ty();
-          let field_wf = f.wire_format();
-          output
-            .make_where_clause()
-            .predicates
-            .push(syn::parse2(quote! {
-              #field_ty: #path_to_grost::__private::decode::PartialTransform<
-                #flavor_ty,
-                #field_wf,
-                #field_ty,
-              >
-            })?);
-        }
-        darling::Result::Ok(())
-      })?;
-
-    output
-      .make_where_clause()
-      .predicates
-      .push(syn::parse2(quote! {
-        #partial_object_ty: #path_to_grost::__private::selection::Selectable<#flavor_ty, Selector = #selector_ty>
-      })?);
-
-    output
-  };
-
   let (partial_transform_from_partial_ig, _, partial_transform_from_partial_where_clauses) =
-    partial_transform_from_partial_generics.split_for_impl();
+    object.partial.partial_transform_generics.split_for_impl();
 
   let mut partial_transform_on_missing = vec![];
   let mut fields_partial_transform = vec![];
@@ -340,6 +289,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
       let is_field_selected = format_ident!("is_{}_selected", field_name);
       let field_selector = format_ident!("{}_ref", field_name);
       let partial_ref_field_ty = f.partial_ref().ty();
+      let optional = f.label().is_optional();
 
       {
         let partial_transform_ref_options = f.partial().partial_transform_ref();
@@ -358,8 +308,14 @@ fn derive_partial_ref_object_decode<T, S, M>(
         pptpr.push({
           let call = match partial_transform_ref_options.convert_operation() {
             None => {
-              quote! {
-                <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?
+              if optional {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?.and_then(::core::convert::identity)
+                }
+              } else {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?
+                }
               }
             }
             Some(transform) => {
@@ -400,9 +356,17 @@ fn derive_partial_ref_object_decode<T, S, M>(
             }
           };
 
-          quote! {
-            if let ::core::option::Option::Some(value) = input.#field_name {
-              this.#field_name = ::core::option::Option::Some(#call);
+          if f.label().is_optional() {
+            quote! {
+              if let ::core::option::Option::Some(value) = input.#field_name {
+                this.#field_name = #call;
+              }
+            }
+          } else {
+            quote! {
+              if let ::core::option::Option::Some(value) = input.#field_name {
+                this.#field_name = ::core::option::Option::Some(#call);
+              }
             }
           }
         });
@@ -475,51 +439,15 @@ fn derive_partial_ref_object_decode<T, S, M>(
   };
   let (decode_partial_ig, _, decode_partial_where_clauses) =
     decode_partial_generics.split_for_impl();
-
-  let transform_from_partial_ref_generics = {
-    let mut output = partial_ref_object.transform_generics().clone();
-    if let Some(preds) = object
-      .partial()
-      .generics()
-      .where_clause
-      .as_ref()
-      .map(|wc| &wc.predicates)
-    {
-      output
-        .make_where_clause()
-        .predicates
-        .extend(preds.iter().cloned());
-    }
-    output
-  };
-  let (transform_from_partial_ref_ig, _, transform_from_partial_ref_where_clauses) =
-    transform_from_partial_ref_generics.split_for_impl();
-  let partial_transform_from_partial_ref_generics = {
-    let mut output = partial_ref_object.partial_transform_generics().clone();
-    if let Some(preds) = object
-      .partial()
-      .generics()
-      .where_clause
-      .as_ref()
-      .map(|wc| &wc.predicates)
-    {
-      output
-        .make_where_clause()
-        .predicates
-        .extend(preds.iter().cloned());
-    }
-    output
-      .make_where_clause()
-      .predicates
-      .push(syn::parse2(quote! {
-        #partial_ref_object_ty: #path_to_grost::__private::selection::Selectable<#flavor_ty, Selector = #selector_ty>
-      })?);
-
-    output
-  };
-
+  let (transform_from_partial_ref_ig, _, transform_from_partial_ref_where_clauses) = object
+    .partial
+    .transform_from_partial_ref_generics
+    .split_for_impl();
   let (partial_transform_from_partial_ref_ig, _, partial_transform_from_partial_ref_where_clauses) =
-    partial_transform_from_partial_ref_generics.split_for_impl();
+    object
+      .partial
+      .partial_transform_from_partial_ref_generics
+      .split_for_impl();
 
   let wf = object.wire_format();
 
@@ -575,7 +503,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
                 offset += <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::skip(context, identifier.wire_type(), src.slice(offset..))?;
               } else {
                 let encoded_len = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::flavors::Identifier<#flavor_ty>>::encoded_len(&identifier);
-                let (read, unknown) = <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.slice(offset - encoded_len..))?;
+                let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.slice(offset - encoded_len..))?;
                 offset += read;
                 let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubg::new());
 

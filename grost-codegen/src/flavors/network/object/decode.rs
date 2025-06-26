@@ -1,8 +1,8 @@
 use quote::format_ident;
 
-use super::{Network, Object, quote};
+use super::{Groto, Object, quote};
 
-impl Network {
+impl Groto {
   pub(super) fn derive_object_decode(
     &self,
     object: &Object,
@@ -18,7 +18,7 @@ impl Network {
     {
       let where_clauses = replaced_generics.make_where_clause();
       where_clauses.predicates.push(syn::parse2(quote! {
-        Self: #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited>
+        Self: #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited>
       })?);
       where_clauses.predicates.push(syn::parse2(quote! {
         #ubi: #ltg
@@ -58,7 +58,7 @@ impl Network {
       let field_decode_trait_with_types = quote! {
         #path_to_grost::__private::Decode<
           #ltg,
-          #path_to_grost::__private::flavors::Network,
+          #path_to_grost::__private::flavors::Groto,
           <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection,
           #output_type,
           #ubi
@@ -67,7 +67,7 @@ impl Network {
       let field_partial_decode_trait_with_types = quote! {
         #path_to_grost::__private::PartialDecode<
           #ltg,
-          #path_to_grost::__private::flavors::Network,
+          #path_to_grost::__private::flavors::Groto,
           <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection,
           #output_type,
           #ubi
@@ -90,14 +90,14 @@ impl Network {
           #path_to_grost::__private::reflection::IdentifierReflection<
             #path_to_grost::__private::reflection::ObjectFieldReflection<
               #object_name #object_tg,
-              #path_to_grost::__private::flavors::network::Identifier,
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::flavors::groto::Identifier,
+              #path_to_grost::__private::flavors::Groto,
               #tag,
             >
           > as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>
         >::REFLECTION => {
           if this.#field_name.is_some() {
-            return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::duplicate_field(
+            return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::duplicate_field(
               #object_name_str,
               #field_name_str,
               identifier,
@@ -105,7 +105,7 @@ impl Network {
           }
 
           if offset >= buf_len {
-            return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
+            return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_underflow());
           }
 
           let (read, val) = <#object_ty as #field_decode_trait_with_types>::decode::<__GROST_BUF__>(ctx, buf.slice(offset..))?;
@@ -119,22 +119,22 @@ impl Network {
           #path_to_grost::__private::reflection::IdentifierReflection<
             #path_to_grost::__private::reflection::ObjectFieldReflection<
               #object_name #object_tg,
-              #path_to_grost::__private::flavors::network::Identifier,
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::flavors::groto::Identifier,
+              #path_to_grost::__private::flavors::Groto,
               #tag,
             >
           > as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>
         >::REFLECTION => {
           if offset >= buf_len {
-            return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
+            return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_underflow());
           }
 
           if selector.#field_is_selected() {
-            let (read, val) = <#object_ty as #path_to_grost::__private::PartialDecode<'_, #path_to_grost::__private::flavors::Network, <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection, #output_type, #ubi>>::partial_decode::<__GROST_BUF__>(ctx, buf.slice(offset..), selector.#field_selector_ref())?;
+            let (read, val) = <#object_ty as #path_to_grost::__private::PartialDecode<'_, #path_to_grost::__private::flavors::Groto, <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection, #output_type, #ubi>>::partial_decode::<__GROST_BUF__>(ctx, buf.slice(offset..), selector.#field_selector_ref())?;
             offset += read;
             this.#field_name = val;
           } else {
-            offset += <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
+            offset += <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
           }
         },
       });
@@ -147,8 +147,8 @@ impl Network {
       .predicates
       .push(syn::parse2(quote! {
         Self: #path_to_grost::__private::selection::Selectable<
-          #path_to_grost::__private::flavors::Network,
-          #path_to_grost::__private::flavors::network::LengthDelimited,
+          #path_to_grost::__private::flavors::Groto,
+          #path_to_grost::__private::flavors::groto::LengthDelimited,
           Selector = #selector,
         >
       })?);
@@ -181,36 +181,36 @@ impl Network {
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_partial_ref_state_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_partial_ref_state_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = Self;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #decode_ig #path_to_grost::__private::Decode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #partial_decode_ty #decode_where_clause {
+      impl #decode_ig #path_to_grost::__private::Decode<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, Self, #ubi> for #partial_decode_ty #decode_where_clause {
         fn decode<__GROST_BUF__>(
-          ctx: &#path_to_grost::__private::flavors::network::Context,
+          ctx: &#path_to_grost::__private::flavors::groto::Context,
           buf: __GROST_BUF__,
-        ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::flavors::network::Error>
+        ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
           __GROST_BUF__: #path_to_grost::__private::ReadBuf<#ltg>,
-          #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::network::Unknown<__GROST_BUF__>>,
+          #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::groto::Unknown<__GROST_BUF__>>,
         {
           let bytes = buf.as_bytes();
           let mut this = Self::new();
@@ -219,14 +219,14 @@ impl Network {
           let buf_len = bytes.len();
           while offset < buf_len {
             let (encoded_identifier_len, identifier) =
-              #path_to_grost::__private::flavors::network::Identifier::decode(&bytes[offset..])?;
+              #path_to_grost::__private::flavors::groto::Identifier::decode(&bytes[offset..])?;
             offset += encoded_identifier_len;
 
             match &identifier {
               #(#decode_branches)*
               _ => {
                 if ctx.err_on_unknown() {
-                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::unknown_identifier(
+                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::unknown_identifier(
                     #object_name_str,
                     identifier,
                   ));
@@ -234,18 +234,18 @@ impl Network {
 
                 if ctx.skip_unknown() {
                   if offset >= buf_len {
-                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
+                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_underflow());
                   }
 
-                  offset += <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
+                  offset += <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
                 } else {
-                  let (read, unknown) = <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
+                  let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
                   offset += read;
                   let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubi::new());
 
                   if let ::core::option::Option::Some(unknown) = unknowns_mut.push(unknown) {
                     let len = #path_to_grost::__private::Buffer::len(unknowns_mut);
-                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_overflow(
+                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_overflow(
                       len,
                       ::core::num::NonZeroUsize::new(len + 1).unwrap(),
                     ));
@@ -261,16 +261,16 @@ impl Network {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #partial_decode_ig #path_to_grost::__private::PartialDecode<#ltg, #path_to_grost::__private::flavors::Network, #path_to_grost::__private::flavors::network::LengthDelimited, Self, #ubi> for #partial_decode_ty #partial_decode_where_clause {
+      impl #partial_decode_ig #path_to_grost::__private::PartialDecode<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, Self, #ubi> for #partial_decode_ty #partial_decode_where_clause {
         fn partial_decode<__GROST_BUF__>(
-          ctx: &#path_to_grost::__private::flavors::network::Context,
+          ctx: &#path_to_grost::__private::flavors::groto::Context,
           buf: __GROST_BUF__,
           selector: &Self::Selector,
-        ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<Self>), #path_to_grost::__private::flavors::network::Error>
+        ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<Self>), #path_to_grost::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
           __GROST_BUF__: #path_to_grost::__private::ReadBuf<#ltg>,
-          #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::network::Unknown<__GROST_BUF__>>,
+          #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::groto::Unknown<__GROST_BUF__>>,
         {
           let bytes = buf.as_bytes();
           let mut this = Self::new();
@@ -278,14 +278,14 @@ impl Network {
           let buf_len = bytes.len();
           while offset < buf_len {
             let (encoded_identifier_len, identifier) =
-              #path_to_grost::__private::flavors::network::Identifier::decode(&bytes[offset..])?;
+              #path_to_grost::__private::flavors::groto::Identifier::decode(&bytes[offset..])?;
             offset += encoded_identifier_len;
 
             match &identifier {
               #(#partial_decode_branches)*
               _ => {
                 if ctx.err_on_unknown() {
-                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::unknown_identifier(
+                  return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::unknown_identifier(
                     #object_name_str,
                     identifier,
                   ));
@@ -293,18 +293,18 @@ impl Network {
 
                 if ctx.skip_unknown() {
                   if offset >= buf_len {
-                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_underflow());
+                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_underflow());
                   }
 
-                  offset += <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
+                  offset += <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::skip(ctx, identifier.wire_type(), buf.slice(offset..))?;
                 } else {
-                  let (read, unknown) = <#path_to_grost::__private::flavors::Network as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
+                  let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
                   offset += read;
                   let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubi::new());
 
                   if let ::core::option::Option::Some(unknown) = unknowns_mut.push(unknown) {
                     let len = #path_to_grost::__private::Buffer::len(unknowns_mut);
-                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::network::Error::buffer_overflow(
+                    return ::core::result::Result::Err(#path_to_grost::__private::flavors::groto::Error::buffer_overflow(
                       len,
                       ::core::num::NonZeroUsize::new(len + 1).unwrap(),
                     ));

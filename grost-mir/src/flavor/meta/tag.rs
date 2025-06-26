@@ -61,9 +61,9 @@ impl TagFromMeta {
 
   pub(crate) fn network(path_to_grost: &Path) -> darling::Result<Self> {
     let constructor =
-      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::new })?;
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Tag::new })?;
     let encode =
-      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Tag::encode })?;
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Tag::encode })?;
 
     Ok(Self {
       constructor: constructor.into(),

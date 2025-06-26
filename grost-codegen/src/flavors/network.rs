@@ -9,19 +9,16 @@ use super::FlavorGenerator;
 mod object;
 
 #[derive(Clone)]
-pub struct Network {
+pub struct Groto {
   ty: syn::Type,
   name: &'static str,
 }
 
-impl Network {
-  /// Returns a new `Network` flavor
+impl Groto {
+  /// Returns a new `Groto` flavor
   pub fn new(path_to_grost: &syn::Path) -> Self {
-    let ty = syn::parse_quote!(#path_to_grost::__private::flavors::Network);
-    Self {
-      ty,
-      name: "Network",
-    }
+    let ty = syn::parse_quote!(#path_to_grost::__private::flavors::Groto);
+    Self { ty, name: "Groto" }
   }
 
   // fn field_identifier(&self, path_to_grost: &syn::Path, field: &Field) -> proc_macro2::TokenStream {
@@ -29,9 +26,9 @@ impl Network {
   //   let wf = field.get_wire_format_or_default(path_to_grost, self);
 
   //   quote! {
-  //     #path_to_grost::__private::flavors::network::Identifier::new(
-  //       <#wf as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Network>>::WIRE_TYPE,
-  //       #path_to_grost::__private::flavors::network::Tag::new(#tag),
+  //     #path_to_grost::__private::flavors::groto::Identifier::new(
+  //       <#wf as #path_to_grost::__private::flavors::WireFormat<#path_to_grost::__private::flavors::Groto>>::WIRE_TYPE,
+  //       #path_to_grost::__private::flavors::groto::Tag::new(#tag),
   //     )
   //   }
   // }
@@ -64,7 +61,7 @@ impl Network {
   //   quote! {
   //     #[automatically_derived]
   //     impl #path_to_grost::__private::flavors::DefaultWireFormat<#ty> for #struct_name {
-  //       type Format = #path_to_grost::__private::flavors::network::LengthDelimited;
+  //       type Format = #path_to_grost::__private::flavors::groto::LengthDelimited;
   //     }
   //   }
   // }
@@ -77,15 +74,15 @@ impl Network {
   // ) -> proc_macro2::TokenStream {
   //   quote! {
   //     #path_to_grost::__private::partial_ref_state!(
-  //       &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #struct_name
-  //         as #path_to_grost::__private::flavors::network::LengthDelimited
-  //         => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+  //       &'__grost_lifetime__ #path_to_grost::__private::flavors::Groto: #struct_name
+  //         as #path_to_grost::__private::flavors::groto::LengthDelimited
+  //         => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
   //     );
   //   }
   // }
 }
 
-impl FlavorGenerator for Network {
+impl FlavorGenerator for Groto {
   fn ty(&self) -> &syn::Type {
     &self.ty
   }
@@ -102,7 +99,7 @@ impl FlavorGenerator for Network {
   //   let name_ident = enum_.name();
 
   //   Ok(quote! {
-  //     #path_to_grost::__private::network_varint!(#name_ident);
+  //     #path_to_grost::__private::groto_varint!(#name_ident);
   //   })
   // }
 
@@ -134,9 +131,9 @@ impl FlavorGenerator for Network {
     //   // #partial_struct_encoded_state
 
     //   // #path_to_grost::__private::partial_ref_state!(
-    //   //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Network: #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
-    //   //     as #path_to_grost::__private::flavors::network::LengthDelimited
-    //   //     => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+    //   //   &'__grost_lifetime__ #path_to_grost::__private::flavors::Groto: #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
+    //   //     as #path_to_grost::__private::flavors::groto::LengthDelimited
+    //   //     => #partial_ref_struct_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
     //   // );
 
     //   // #default_format

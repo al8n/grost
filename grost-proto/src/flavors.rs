@@ -2,7 +2,7 @@ use super::buffer::ReadBuf;
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
-pub use network::Network;
+pub use groto::Groto;
 
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {
@@ -117,7 +117,7 @@ macro_rules! wire_type {
 }
 
 /// The network flavor
-pub mod network;
+pub mod groto;
 
 /// The flavor for encoding and decoding selector
 pub mod selector;
@@ -269,12 +269,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: &mut [u8],
   ) -> Result<usize, Self::Error>
   where
-    B: ReadBuf;
+    B: ReadBuf + 'de;
 
   /// Returns the length of the encoded unknown value.
   fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
   where
-    B: ReadBuf;
+    B: ReadBuf + 'de;
 
   /// Decodes an unknown value from a buffer.
   ///
@@ -286,7 +286,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<(usize, Self::Unknown<B>), Self::Error>
   where
-    B: ReadBuf;
+    B: ReadBuf + 'de;
 
   /// Skips number of bytes in the buffer according to the wire type.
   fn skip<'de, B>(
@@ -295,7 +295,7 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: B,
   ) -> Result<usize, Self::Error>
   where
-    B: ReadBuf;
+    B: ReadBuf + 'de;
 }
 
 /// A raw tag for a field.

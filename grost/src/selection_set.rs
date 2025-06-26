@@ -21,7 +21,7 @@
 // };
 // use varing::Varint;
 
-// use crate::flavors::network::{EncodeError, Identifier};
+// use crate::flavors::groto::{EncodeError, Identifier};
 
 // pub struct SelectionSet<S, UB> {
 //   selector: S,

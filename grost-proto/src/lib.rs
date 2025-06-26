@@ -15,7 +15,6 @@ pub use smol_str_0_3 as smol_str;
 #[cfg(feature = "quickcheck")]
 pub use quickcheck;
 
-pub use convert::*;
 // pub use select_set::SelectionSet;
 
 /// The flavors of the encoding/decoding
@@ -84,7 +83,7 @@ pub mod __private {
     encode::{self, *},
     error::{self, *},
     flavors::{self, RawTag},
-    indexer, network_varint, partial_encode_scalar, partial_ref_state, reflection, selectable,
+    groto_varint, indexer, partial_encode_scalar, partial_ref_state, reflection, selectable,
     selection::{self, *},
   };
   pub use varing;

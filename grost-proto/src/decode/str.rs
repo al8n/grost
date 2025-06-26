@@ -1,4 +1,9 @@
-use crate::{Flatten, State, buffer::ReadBuf, flavors::Flavor, selection::Selectable};
+use crate::{
+  buffer::ReadBuf,
+  convert::{Flatten, State},
+  flavors::Flavor,
+  selection::Selectable,
+};
 
 /// The decoded type for `str`
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -16,6 +21,10 @@ where
 
 impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for Str<RB> {
   type Selector = bool;
+
+  fn is_empty(&self) -> bool {
+    false
+  }
 }
 
 impl<RB: ?Sized, O> State<Flatten<O>> for Str<RB>

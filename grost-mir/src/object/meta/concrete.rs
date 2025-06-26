@@ -53,11 +53,11 @@ pub(in crate::object) struct ObjectFlavorFromMeta {
 
 impl ObjectFlavorFromMeta {
   pub(in crate::object) fn network(path_to_grost: &syn::Path) -> darling::Result<Self> {
-    let ty = syn::parse2(quote!(#path_to_grost::__private::flavors::Network))?;
+    let ty = syn::parse2(quote!(#path_to_grost::__private::flavors::Groto))?;
     let wire_format =
-      syn::parse2(quote!(#path_to_grost::__private::flavors::network::LengthDelimited))?;
-    let identifier = IdentifierFromMeta::network(path_to_grost)?;
-    let tag = TagFromMeta::network(path_to_grost)?;
+      syn::parse2(quote!(#path_to_grost::__private::flavors::groto::LengthDelimited))?;
+    let identifier = IdentifierFromMeta::groto(path_to_grost)?;
+    let tag = TagFromMeta::groto(path_to_grost)?;
 
     Ok(Self {
       ty,
@@ -103,7 +103,7 @@ impl FromMeta for ObjectFlavorFromMeta {
 
 //
 // flavor(
-//   type = "Network",
+//   type = "Groto",
 //   wire_format = "LengthDelimited",
 //   tag(),
 //   identifier(),
@@ -131,6 +131,8 @@ pub(in crate::object) struct PartialObjectFromMeta {
   pub(in crate::object) name: Option<Ident>,
   #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default)]
+  pub(in crate::object) copy: bool,
   #[darling(default)]
   pub(in crate::object) transform: ObjectConvertFromMeta,
   #[darling(default)]

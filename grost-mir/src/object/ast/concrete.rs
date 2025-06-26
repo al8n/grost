@@ -128,7 +128,7 @@ impl<T, S, O> RawObject<T, S, O> {
       identifier,
     } = match meta.flavor {
       Some(meta) => meta,
-      None => ObjectFlavorFromMeta::network(&path_to_grost)?,
+      None => ObjectFlavorFromMeta::groto(&path_to_grost)?,
     };
 
     fields.sort_by_key(|a| match a {
@@ -597,7 +597,7 @@ impl<T, S, M> Object<T, S, M> {
     })?;
 
     let partial_state_type = syn::parse2(quote! {
-      #path_to_grost::__private::convert::Partial<#flavor_type, #wf>
+      #path_to_grost::__private::convert::Partial<#flavor_type>
     })?;
 
     let applied_decode_trait = {

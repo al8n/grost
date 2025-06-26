@@ -22,15 +22,15 @@ mod tag;
 //     match self.default {
 //       BuiltinFlavorRepr::Nested(default_flavor_value_parser) => flavors.push(FlavorAttribute {
 //         name: format_ident!("default"),
-//         ty: parse_quote!(#path_to_grost::__private::flavors::Network),
-//         format: parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited),
-//         identifier: IdentifierOptions::network(path_to_grost),
-//         tag: TagOptions::network(path_to_grost),
+//         ty: parse_quote!(#path_to_grost::__private::flavors::Groto),
+//         format: parse_quote!(#path_to_grost::__private::flavors::groto::LengthDelimited),
+//         identifier: IdentifierOptions::groto(path_to_grost),
+//         tag: TagOptions::groto(path_to_grost),
 //         decode: default_flavor_value_parser.decode.into(),
 //       }),
 //       BuiltinFlavorRepr::Bool(val) => {
 //         if val {
-//           flavors.push(FlavorAttribute::network_object(path_to_grost)?);
+//           flavors.push(FlavorAttribute::groto_object(path_to_grost)?);
 //         }
 //       }
 //     }
@@ -68,11 +68,11 @@ mod tag;
 
 // impl FlavorAttribute {
 //   fn network_object(path_to_grost: &Path) -> syn::Result<Self> {
-//     let ty = parse_quote!(#path_to_grost::__private::flavors::Network);
-//     let format = parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited);
-//     let identifier = IdentifierOptions::network(path_to_grost);
-//     let tag = TagOptions::network(path_to_grost);
-//     let decode = DecodeOptions::network(path_to_grost);
+//     let ty = parse_quote!(#path_to_grost::__private::flavors::Groto);
+//     let format = parse_quote!(#path_to_grost::__private::flavors::groto::LengthDelimited);
+//     let identifier = IdentifierOptions::groto(path_to_grost);
+//     let tag = TagOptions::groto(path_to_grost);
+//     let decode = DecodeOptions::groto(path_to_grost);
 
 //     Ok(Self {
 //       name: format_ident!("network"),

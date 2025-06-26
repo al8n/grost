@@ -1,7 +1,21 @@
+pub use partial_transform::*;
+pub use transform::*;
+
+mod partial_transform;
+mod transform;
+
 /// The generic `S` can be any type representing a state.
 pub trait State<S: ?Sized> {
   /// The output state type.
   type Output: ?Sized;
+}
+
+/// A state which yields the type itself.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Identity;
+
+impl<T> State<Identity> for T {
+  type Output = T;
 }
 
 /// A state which shows the type in partial state.
@@ -25,42 +39,33 @@ pub trait State<S: ?Sized> {
 /// ```
 ///
 /// See also [`PartialRef`] state.
-pub struct Partial<F: ?Sized, W: ?Sized> {
-  _wf: core::marker::PhantomData<W>,
+pub struct Partial<F: ?Sized> {
   _flavor: core::marker::PhantomData<F>,
 }
 
-impl<F, W> Clone for Partial<F, W>
+impl<F> Clone for Partial<F>
 where
   F: ?Sized,
-  W: ?Sized,
 {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<F, W> Copy for Partial<F, W>
-where
-  F: ?Sized,
-  W: ?Sized,
-{
-}
+impl<F> Copy for Partial<F> where F: ?Sized {}
 
-impl<F, W, T> State<Partial<F, W>> for &T
+impl<F, T> State<Partial<F>> for &T
 where
   F: ?Sized,
-  W: ?Sized,
-  T: State<Partial<F, W>>,
+  T: State<Partial<F>>,
 {
   type Output = T::Output;
 }
 
-impl<F, W, T> State<Partial<F, W>> for &mut T
+impl<F, T> State<Partial<F>> for &mut T
 where
   F: ?Sized,
-  W: ?Sized,
-  T: State<Partial<F, W>>,
+  T: State<Partial<F>>,
 {
   type Output = T::Output;
 }
@@ -84,40 +89,40 @@ where
 ///   age: Option<u8>,
 /// }
 /// ```
-pub struct PartialRef<'a, F: ?Sized, W: ?Sized, B: ?Sized, UB: ?Sized> {
+pub struct PartialRef<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
-  _read_buf: core::marker::PhantomData<B>,
+  _read_buf: core::marker::PhantomData<RB>,
   _unknown_buffer: core::marker::PhantomData<UB>,
 }
 
-impl<'a, F, W, B, UB> Clone for PartialRef<'a, F, W, B, UB>
+impl<'a, RB, UB, W, F> Clone for PartialRef<'a, RB, UB, W, F>
 where
   F: ?Sized,
   W: ?Sized,
   UB: ?Sized,
-  B: ?Sized,
+  RB: ?Sized,
 {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<'a, F, W, B, UB> Copy for PartialRef<'a, F, W, B, UB>
+impl<'a, RB, UB, W, F> Copy for PartialRef<'a, RB, UB, W, F>
 where
   F: ?Sized,
   W: ?Sized,
   UB: ?Sized,
-  B: ?Sized,
+  RB: ?Sized,
 {
 }
 
-impl<'a, F, W, T, B, UB> State<PartialRef<'a, F, W, B, UB>> for &'a T
+impl<'a, RB, UB, W, F, T> State<PartialRef<'a, RB, UB, W, F>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,
-  T: State<PartialRef<'a, F, W, B, UB>>,
-  B: ?Sized,
+  T: State<PartialRef<'a, RB, UB, W, F>>,
+  RB: ?Sized,
   UB: ?Sized,
 {
   type Output = T::Output;
@@ -171,6 +176,17 @@ where
 }
 
 macro_rules! wrapper_impl {
+  (@partial_state $($ty:ty => $output:ty),+$(,)?) => {
+    $(
+      impl<'a, F, T> State<Partial<F>> for $ty
+      where
+        T: State<Partial<F>> + ?Sized,
+        F: ?Sized,
+      {
+        type Output = $output;
+      }
+    )*
+  };
   (@partial_ref_state $($ty:ty),+$(,)?) => {
     $(
       impl<'a, F, W, B, UB, T> State<PartialRef<'a, F, W, B, UB>> for $ty
@@ -264,6 +280,13 @@ const _: () = {
   );
 
   wrapper_impl!(
+    @partial_state
+    Box<T> => Box<T::Output>,
+    Rc<T> => Rc<T::Output>,
+    Arc<T> => Arc<T::Output>,
+  );
+
+  wrapper_impl!(
     @flatten(Sized, ?Optional)
     std::collections::VecDeque<T>,
     std::collections::LinkedList<T>,
@@ -288,5 +311,9 @@ const _: () = {
   wrapper_impl!(
     @partial_ref_state
     Arc<T>,
+  );
+  wrapper_impl!(
+    @partial_state
+    Arc<T> => Arc<T::Output>,
   );
 };

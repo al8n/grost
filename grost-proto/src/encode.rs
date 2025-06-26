@@ -444,6 +444,10 @@ macro_rules! deref_partial_encode_impl {
         F: Flavor + ?Sized,
       {
         type Selector = T::Selector;
+
+        fn is_empty(&self) -> bool {
+          (**self).is_empty()
+        }
       }
 
       impl<F, W, T> PartialEncode<F, W> for $ty

@@ -64,9 +64,9 @@ impl IdentifierFromMeta {
 
   pub(crate) fn network(path_to_grost: &Path) -> darling::Result<Self> {
     let constructor =
-      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::network::Identifier::new })?;
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Identifier::new })?;
     let encode = syn::parse2::<Path>(
-      quote! { #path_to_grost::__private::flavors::network::Identifier::encode },
+      quote! { #path_to_grost::__private::flavors::groto::Identifier::encode },
     )?;
 
     Ok(Self {

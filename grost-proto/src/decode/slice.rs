@@ -18,6 +18,10 @@ impl<RB: ReadBuf> Default for BytesSlice<RB> {
 
 impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for BytesSlice<RB> {
   type Selector = bool;
+
+  fn is_empty(&self) -> bool {
+    false
+  }
 }
 
 impl<RB: ?Sized, O> State<Flatten<O>> for BytesSlice<RB>

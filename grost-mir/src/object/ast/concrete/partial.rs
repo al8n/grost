@@ -23,6 +23,7 @@ impl PartialObjectFromMeta {
       attrs: self.attrs,
       transform: self.transform.into(),
       partial_transform: self.partial_transform.into(),
+      copy: self.copy,
     }
   }
 }
@@ -33,6 +34,7 @@ pub struct PartialObjectOptions {
   pub(super) attrs: Vec<Attribute>,
   pub(super) transform: ObjectConvertOptions,
   pub(super) partial_transform: ObjectConvertOptions,
+  pub(super) copy: bool,
 }
 
 impl PartialObjectOptions {
@@ -54,6 +56,9 @@ pub struct PartialObject {
   generics: Generics,
   /// Extra constraints when deriving `Decode` trait for the partial decoded object.
   decode_generics: Generics,
+  pub(super) transform_from_partial_ref_generics: Generics,
+  pub(super) partial_transform_from_partial_ref_generics: Generics,
+  pub(super) partial_transform_generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   applied_decode_trait: Rc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
@@ -114,6 +119,10 @@ impl PartialObject {
 
     let mut generics = object.generics.clone();
     let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
+    let mut transform_ref_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
+    let mut partial_transform_ref_constraints: Punctuated<WherePredicate, Comma> =
+      Punctuated::new();
+    let mut partial_transform_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
 
     let flavor_ty = &object.flavor_type;
     let path_to_grost = &object.path_to_grost;
@@ -130,11 +139,19 @@ impl PartialObject {
           let ty = f.ty();
           let partial_ref_ty = f.partial_ref().ty();
           let wf = f.wire_format();
+          let partial = f.partial();
 
           generics
             .make_where_clause()
             .predicates
-            .extend(f.partial().type_constraints().iter().cloned());
+            .extend(partial.type_constraints().iter().cloned());
+
+          transform_ref_constraints.extend(partial.transform_ref_constraints().iter().cloned());
+          partial_transform_ref_constraints
+            .extend(partial.partial_transform_ref_constraints().iter().cloned());
+          partial_transform_constraints
+            .extend(partial.partial_transform_constraints().iter().cloned());
+
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
             #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
@@ -202,6 +219,94 @@ impl PartialObject {
             })
             .map(|pred| wc.predicates.push(pred))
           })?;
+        output
+      },
+      transform_from_partial_ref_generics: {
+        let lt = object.lifetime_param.clone();
+        let mut output = Generics::default();
+        output
+          .params
+          .extend(generics.lifetimes().cloned().map(GenericParam::from));
+        output.params.push(GenericParam::Lifetime(lt.clone()));
+        output
+          .params
+          .extend(generics.type_params().cloned().map(GenericParam::from));
+        output
+          .params
+          .push(GenericParam::Type(read_buffer_param.clone()));
+        output
+          .params
+          .push(GenericParam::Type(unknown_buffer_param.clone()));
+        output
+          .params
+          .extend(generics.const_params().cloned().map(GenericParam::from));
+        output.where_clause = generics.where_clause.clone();
+        let wc = output.make_where_clause();
+        wc.predicates.extend(transform_ref_constraints);
+        wc.predicates.push(syn::parse2(quote! {
+          #rb: #path_to_grost::__private::buffer::ReadBuf + #lt
+        })?);
+        wc.predicates.push(syn::parse2(quote! {
+          #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt
+        })?);
+        generics
+          .lifetimes()
+          .filter(|lt| lt.lifetime.ident.ne("static"))
+          .try_for_each(|ltp| {
+            let ident = &ltp.lifetime;
+            syn::parse2(quote! {
+              #lt: #ident
+            })
+            .map(|pred| wc.predicates.push(pred))
+          })?;
+        output
+      },
+      partial_transform_from_partial_ref_generics: {
+        let lt = object.lifetime_param.clone();
+        let mut output = Generics::default();
+        output
+          .params
+          .extend(generics.lifetimes().cloned().map(GenericParam::from));
+        output.params.push(GenericParam::Lifetime(lt.clone()));
+        output
+          .params
+          .extend(generics.type_params().cloned().map(GenericParam::from));
+        output
+          .params
+          .push(GenericParam::Type(read_buffer_param.clone()));
+        output
+          .params
+          .push(GenericParam::Type(unknown_buffer_param.clone()));
+        output
+          .params
+          .extend(generics.const_params().cloned().map(GenericParam::from));
+        output.where_clause = generics.where_clause.clone();
+        let wc = output.make_where_clause();
+        wc.predicates.extend(partial_transform_ref_constraints);
+        wc.predicates.push(syn::parse2(quote! {
+          #rb: #path_to_grost::__private::buffer::ReadBuf + #lt
+        })?);
+        wc.predicates.push(syn::parse2(quote! {
+          #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt
+        })?);
+        generics
+          .lifetimes()
+          .filter(|lt| lt.lifetime.ident.ne("static"))
+          .try_for_each(|ltp| {
+            let ident = &ltp.lifetime;
+            syn::parse2(quote! {
+              #lt: #ident
+            })
+            .map(|pred| wc.predicates.push(pred))
+          })?;
+        output
+      },
+      partial_transform_generics: {
+        let mut output = generics.clone();
+        output
+          .make_where_clause()
+          .predicates
+          .extend(partial_transform_constraints);
         output
       },
       generics,

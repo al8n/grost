@@ -405,8 +405,8 @@ mod tests {
     let config = r###"
     {
       "identifier": {
-        "constructor": "grost::flavors::network::Tag::constructor",
-        "encode": "grost::flavors::network::Tag::encode"
+        "constructor": "grost::flavors::groto::Tag::constructor",
+        "encode": "grost::flavors::groto::Tag::encode"
       }
     }
     "###;
@@ -417,7 +417,7 @@ mod tests {
         .to_token_stream()
         .to_string()
         .replace(" ", ""),
-      "grost::flavors::network::Tag::constructor"
+      "grost::flavors::groto::Tag::constructor"
     );
     assert_eq!(
       t.identifier
@@ -425,7 +425,7 @@ mod tests {
         .to_token_stream()
         .to_string()
         .replace(" ", ""),
-      "grost::flavors::network::Tag::encode"
+      "grost::flavors::groto::Tag::encode"
     );
   }
 }
