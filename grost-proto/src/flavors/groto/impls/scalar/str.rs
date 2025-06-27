@@ -2,15 +2,16 @@ use crate::{
   decode::{BytesSlice, Decode, Str},
   default_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Context, Error, Groto, LengthDelimited, Unknown},
-  partial_ref_state, partial_state, selectable,
+  partial_ref_state, selectable,
 };
 
 default_wire_format!(
   Groto: str as LengthDelimited
 );
 selectable!(@scalar Groto:str);
-partial_ref_state!(&'a Groto: str as LengthDelimited => Str<__GROST_READ_BUF__>);
-// partial_state!(Groto: str => str);
+partial_ref_state!(&'a Groto:
+  str as LengthDelimited => Str<__GROST_READ_BUF__>,
+);
 flatten_state!(str);
 
 encode_bridge!(

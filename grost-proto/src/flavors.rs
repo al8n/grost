@@ -163,22 +163,6 @@ pub trait DefaultWireFormat<F: Flavor + ?Sized> {
   type Format: WireFormat<F>;
 }
 
-impl<T, F> DefaultWireFormat<F> for &T
-where
-  T: DefaultWireFormat<F> + ?Sized,
-  F: Flavor + ?Sized,
-{
-  type Format = T::Format;
-}
-
-impl<T, F> DefaultWireFormat<F> for Option<T>
-where
-  T: DefaultWireFormat<F>,
-  F: Flavor + ?Sized,
-{
-  type Format = T::Format;
-}
-
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
   use std::{boxed::Box, rc::Rc, sync::Arc};

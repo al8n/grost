@@ -5,7 +5,7 @@ use crate::{
   buffer::{Buffer, ReadBuf},
   convert::{Partial, PartialRef, PartialTransform, State, Transform},
   decode::Decode,
-  flavors::{Flavor, Groto, WireFormat},
+  flavors::{DefaultWireFormat, Flavor, Groto, WireFormat, groto::Optional},
   selection::{Selectable, Selector},
 };
 
@@ -111,23 +111,6 @@ where
   }
 }
 
-impl<T> State<Partial<Groto>> for Option<T>
-where
-  T: State<Partial<Groto>>,
-{
-  type Output = T::Output;
-}
-
-impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, W, Groto>> for Option<T>
-where
-  T: State<PartialRef<'a, RB, UB, W, Groto>>,
-  W: ?Sized,
-  RB: ?Sized,
-  UB: ?Sized,
-{
-  type Output = T::Output;
-}
-
 impl<I, O, W, T> PartialTransform<I, Option<O>, W, Groto> for Option<T>
 where
   W: WireFormat<Groto>,
@@ -143,3 +126,35 @@ where
   }
 }
 
+impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Optional<W>, Groto>> for Option<T>
+where
+  T: State<PartialRef<'a, RB, UB, W, Groto>>,
+  T::Output: Sized,
+  W: ?Sized,
+  RB: ?Sized,
+  UB: ?Sized,
+{
+  type Output = Option<T::Output>;
+}
+
+impl<T> State<Partial<Groto>> for Option<T>
+where
+  T: State<Partial<Groto>>,
+  T::Output: Sized,
+{
+  type Output = Option<T::Output>;
+}
+
+impl<T> DefaultWireFormat<Groto> for Option<T>
+where
+  T: DefaultWireFormat<Groto>,
+{
+  type Format = Optional<T::Format>;
+}
+
+impl<T> DefaultWireFormat<Groto> for &T
+where
+  T: DefaultWireFormat<Groto> + ?Sized,
+{
+  type Format = T::Format;
+}

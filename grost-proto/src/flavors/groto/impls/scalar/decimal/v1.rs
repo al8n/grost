@@ -7,7 +7,10 @@ use rust_decimal_1::Decimal as f128;
 
 default_wire_format!(Groto: f128 as Fixed128);
 selectable!(@scalar Groto:f128);
-partial_ref_state!(@scalar &'a Groto: f128 as Fixed128, f128 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  f128 as Fixed128,
+  f128 as Varint,
+);
 partial_state!(@scalar Groto: f128);
 flatten_state!(f128);
 identity_transform!(

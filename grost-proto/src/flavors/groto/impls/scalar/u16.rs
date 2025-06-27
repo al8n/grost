@@ -13,7 +13,12 @@ use crate::{
 
 default_wire_format!(Groto: u16 as Varint);
 selectable!(@scalar Groto: u16, NonZeroU16);
-partial_ref_state!(@scalar &'a Groto: u16 as Fixed16, NonZeroU16 as Fixed16, u16 as Varint, NonZeroU16 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  u16 as Fixed16,
+  NonZeroU16 as Fixed16,
+  u16 as Varint,
+  NonZeroU16 as Varint,
+);
 partial_state!(@scalar Groto: u16, NonZeroU16);
 flatten_state!(u16, NonZeroU16);
 identity_transform!(Groto {

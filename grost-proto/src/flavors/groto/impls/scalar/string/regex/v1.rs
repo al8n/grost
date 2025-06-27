@@ -39,7 +39,7 @@ macro_rules! try_str_bridge {
       );
 
       $crate::partial_ref_state!(&'a Groto:
-        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>
+        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>,
       );
 
       $crate::partial_state!(Groto:

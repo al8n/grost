@@ -6,7 +6,10 @@ use crate::{
 
 default_wire_format!(Groto: f64 as Fixed64);
 selectable!(@scalar Groto:f64);
-partial_ref_state!(@scalar &'a Groto: f64 as Fixed64, f64 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  f64 as Fixed64,
+  f64 as Varint,
+);
 partial_state!(@scalar Groto: f64);
 flatten_state!(f64);
 identity_transform!(

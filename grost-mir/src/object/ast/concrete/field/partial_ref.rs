@@ -156,9 +156,13 @@ impl PartialRefField {
       }
     };
 
-    let optional_type = syn::parse2(quote! {
-      ::core::option::Option<#ty>
-    })?;
+    let optional_type = if label.is_optional() {
+      ty.clone()
+    } else {
+      syn::parse2(quote! {
+        ::core::option::Option<#ty>
+      })?
+    };
 
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {

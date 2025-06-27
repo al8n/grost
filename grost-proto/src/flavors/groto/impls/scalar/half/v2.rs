@@ -8,7 +8,10 @@ use half_2::f16;
 default_wire_format!(Groto: f16 as Fixed16);
 
 selectable!(@scalar Groto:f16);
-partial_ref_state!(@scalar &'a Groto: f16 as Fixed16, f16 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  f16 as Fixed16,
+  f16 as Varint,
+);
 partial_state!(@scalar Groto: f16);
 flatten_state!(f16);
 identity_transform!(

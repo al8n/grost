@@ -12,7 +12,12 @@ use core::num::NonZeroI16;
 
 default_wire_format!(Groto: i16 as Varint);
 selectable!(@scalar Groto: i16, NonZeroI16);
-partial_ref_state!(@scalar &'a Groto: i16 as Fixed16, NonZeroI16 as Fixed16, i16 as Varint, NonZeroI16 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  i16 as Fixed16,
+  NonZeroI16 as Fixed16,
+  i16 as Varint,
+  NonZeroI16 as Varint,
+);
 partial_state!(@scalar Groto: i16, NonZeroI16);
 flatten_state!(i16, NonZeroI16);
 identity_transform!(

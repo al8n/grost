@@ -7,7 +7,12 @@ use core::num::NonZeroI8;
 
 default_wire_format!(Groto: i8 as Fixed8);
 selectable!(@scalar Groto:i8, NonZeroI8);
-partial_ref_state!(@scalar &'a Groto: i8 as Fixed8, NonZeroI8 as Fixed8, i8 as Varint, NonZeroI8 as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  i8 as Fixed8,
+  NonZeroI8 as Fixed8,
+  i8 as Varint,
+  NonZeroI8 as Varint,
+);
 partial_state!(@scalar Groto: i8, NonZeroI8);
 flatten_state!(i8, NonZeroI8);
 identity_transform!(

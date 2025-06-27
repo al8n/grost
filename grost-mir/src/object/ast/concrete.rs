@@ -812,14 +812,20 @@ impl<T, S, M> Object<T, S, M> {
     let (partial_ref_ig, _, partial_ref_wc) = self.partial_ref().generics().split_for_impl();
 
     quote! {
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #object_ty #partial_wc {
         type Output = #partial_object_ty;
       }
 
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_object_ty #partial_wc {
         type Output = Self;
       }
 
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #partial_ref_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_ref_object_ty #partial_ref_wc {
         type Output = Self;
       }

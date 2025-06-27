@@ -7,7 +7,10 @@ use crate::{
 default_wire_format!(Groto: bool as Fixed8);
 
 selectable!(@scalar Groto:bool);
-partial_ref_state!(@scalar &'a Groto: bool as Fixed8, bool as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  bool as Fixed8,
+  bool as Varint,
+);
 partial_state!(@scalar Groto: bool);
 flatten_state!(bool);
 identity_transform!(

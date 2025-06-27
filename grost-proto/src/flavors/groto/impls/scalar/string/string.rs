@@ -10,7 +10,8 @@ use std::string::String;
 
 selectable!(@scalar Groto:String);
 partial_ref_state!(
-  &'a Groto: String as LengthDelimited => Str<__GROST_READ_BUF__>
+  &'a Groto:
+    String as LengthDelimited => Str<__GROST_READ_BUF__>,
 );
 partial_state!(
   Groto: String => String

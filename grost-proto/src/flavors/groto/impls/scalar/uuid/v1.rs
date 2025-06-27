@@ -7,7 +7,10 @@ use crate::{
 };
 
 selectable!(@scalar Groto:Uuid);
-partial_ref_state!(@scalar &'a Groto: Uuid as Fixed128, Uuid as Varint);
+partial_ref_state!(@scalar &'a Groto:
+  Uuid as Fixed128,
+  Uuid as Varint,
+);
 partial_state!(@scalar Groto: Uuid);
 flatten_state!(Uuid);
 

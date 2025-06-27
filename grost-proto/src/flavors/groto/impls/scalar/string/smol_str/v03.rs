@@ -30,7 +30,8 @@ decode_bridge!(
 
 flatten_state!(SmolStr);
 partial_ref_state!(
-  &'a Groto: SmolStr as LengthDelimited => &'a str
+  &'a Groto:
+    SmolStr as LengthDelimited => &'a str,
 );
 partial_state!(
   Groto: SmolStr => SmolStr

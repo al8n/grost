@@ -174,30 +174,6 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
 /// implementation `impl<'a, T> Encode<Groto, Borrowed<'a, LengthDelimited>> for [&'a T]` in
 /// this crate.
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("packed")]
-pub struct Packed<W: ?Sized>(PhantomData<W>);
-
-impl<W: ?Sized> Clone for Packed<W> {
-  fn clone(&self) -> Self {
-    *self
-  }
-}
-
-impl<W: ?Sized> Copy for Packed<W> {}
-
-impl<W: WireFormat<Groto>> From<Packed<W>> for WireType {
-  fn from(_: Packed<W>) -> Self {
-    W::WIRE_TYPE
-  }
-}
-
-impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
-  const NAME: &'static str = "packed";
-  const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self(PhantomData);
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
 #[display("flatten")]
 pub struct Flatten<W: ?Sized, I: ?Sized> {
   _w: PhantomData<W>,
@@ -225,6 +201,55 @@ impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<W
     _w: PhantomData,
     _i: PhantomData,
   };
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("packed")]
+pub struct Packed<W: ?Sized>(PhantomData<W>);
+
+impl<W: ?Sized> Clone for Packed<W> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<W: ?Sized> Copy for Packed<W> {}
+
+impl<W: WireFormat<Groto>> From<Packed<W>> for WireType {
+  fn from(_: Packed<W>) -> Self {
+    W::WIRE_TYPE
+  }
+}
+
+impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
+  const NAME: &'static str = "packed";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self(PhantomData);
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("optional")]
+pub struct Optional<W: ?Sized>(PhantomData<W>);
+
+impl<W: ?Sized> Clone for Optional<W> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<W: ?Sized> Copy for Optional<W> {}
+
+impl<W: WireFormat<Groto>> From<Optional<W>> for WireType {
+  fn from(_: Optional<W>) -> Self {
+    W::WIRE_TYPE
+  }
+}
+
+impl<W: WireFormat<Groto>> WireFormat<Groto> for Optional<W> {
+  const NAME: &'static str = "packed";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Self(PhantomData);
+  const REPEATED: bool = W::REPEATED;
 }
 
 /// The stream wire format for element encoding within repeated fields.

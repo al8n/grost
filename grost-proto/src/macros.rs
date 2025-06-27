@@ -5,11 +5,12 @@ macro_rules! groto_varint {
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
     $crate::varint!(
-      $crate::__private::flavors::Groto:$crate::__private::flavors::groto::Varint {
-        $(
-          $ty $([ $(const $g: usize),* ])?
-        ),+
-      }
+      $crate::__private::flavors::Groto:
+        $crate::__private::flavors::groto::Varint {
+          $(
+            $ty $([ $(const $g: usize),* ])?
+          ),+
+        }
     );
   };
 }

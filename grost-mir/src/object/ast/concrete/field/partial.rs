@@ -246,9 +246,13 @@ impl PartialField {
       }
     };
 
-    let optional_type = syn::parse2(quote! {
-      ::core::option::Option<#ty>
-    })?;
+    let optional_type = if label.is_optional() {
+      ty.clone()
+    } else {
+      syn::parse2(quote! {
+        ::core::option::Option<#ty>
+      })?
+    };
 
     Ok(Self {
       ty,
