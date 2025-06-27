@@ -295,27 +295,6 @@ impl syn::parse::Parse for Label {
             ));
           }
 
-          if ty.is_map() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`optional(map(...))` is not allowed, please directly use `map(...)` instead",
-            ));
-          }
-
-          if ty.is_set() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`optional(set(...))` is not allowed, please directly use `set(...)` instead",
-            ));
-          }
-
-          if ty.is_list() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`optional(list(...))` is not allowed, please directly use `list(...)` instead",
-            ));
-          }
-
           Self::Optional(Arc::new(ty))
         }
         _ => {

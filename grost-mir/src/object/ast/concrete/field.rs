@@ -2,7 +2,7 @@ use std::num::NonZeroU32;
 
 use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
 use either::Either;
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::{Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated};
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
     },
     meta::concrete::{FieldFromMeta, TaggedFieldFromMeta},
   },
-  utils::{Invokable, MissingOperation, SchemaOptions, grost_decode_trait_lifetime},
+  utils::{Invokable, MissingOperation, SchemaOptions},
 };
 
 pub use partial::*;
@@ -370,10 +370,6 @@ impl TaggedField {
     let object_ty = &object.ty;
     let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let unknown_buffer = &unknown_buffer_param.ident;
-    let read_buffer_param = &object.read_buffer_param;
-    let read_buffer = &read_buffer_param.ident;
 
     let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
@@ -385,20 +381,17 @@ impl TaggedField {
       field_ty.uses_type_params_cloned(&purpose.into(), &object.type_params_usages);
     let use_generics = !field_lifetimes_usages.is_empty() || !field_type_params_usages.is_empty();
 
-    let wfr = syn::parse2(quote! {
-      #path_to_grost::__private::reflection::WireFormatReflection<
-        #object_ty,
-        #flavor_type,
-        #tag,
-      >
-    })?;
+    let wfr = syn::parse2(wire_format_reflection(
+      path_to_grost,
+      object_ty,
+      flavor_type,
+      tag,
+    ))?;
     let wf = match field.wire_format {
       Some(wf) => wf,
       None => {
-        let dwf = quote! {
-          #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
-        };
-
+        let dwf = default_wire_format(path_to_grost, flavor_type);
+        let format = default_wire_format_associated(path_to_grost, flavor_type, field_ty);
         if use_generics {
           let pred: WherePredicate = syn::parse2(quote! {
             #field_ty: #dwf
@@ -407,87 +400,20 @@ impl TaggedField {
           partial_ref_constraints.extend([
             pred,
             syn::parse2(quote! {
-              <#field_ty as #dwf>::Format: #lifetime
+              #format: #lifetime
             })?,
           ]);
         }
 
-        syn::parse2(quote! {
-          <#field_ty as #dwf>::Format
-        })?
+        syn::parse2(format)?
       }
     };
-
-    let selectable = syn::parse2(quote! {
-      #path_to_grost::__private::selection::Selectable<
-        #flavor_type,
-      >
-    })?;
-    let selector_type = syn::parse2(quote! {
-      <#field_ty as #selectable>::Selector
-    })?;
-
-    if use_generics {
-      selector_constraints.push(syn::parse2(quote! {
-        #field_ty: #selectable
-      })?);
-    }
-
-    let partial_ref_copyable = object.partial_ref.copy() || field.partial_ref.copy;
-    let partial_ref_copy_contraint = if partial_ref_copyable {
-      Some(quote! {
-        + ::core::marker::Copy
-      })
-    } else {
-      None
-    };
-
-    let (partial_ref_ty, partial_ref_state_type) = match &field.partial_ref.ty {
-      Some(ty) => (ty.clone(), None),
-      None => {
-        let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::PartialRef<
-              #lifetime,
-              #flavor_type,
-              #wf,
-              #read_buffer,
-              #unknown_buffer,
-            >
-          >
-        })?;
-
-        if use_generics {
-          partial_ref_constraints.push(syn::parse2(quote! {
-            #field_ty: #state_type
-          })?);
-          partial_ref_constraints.push(syn::parse2(quote! {
-            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_ref_copy_contraint
-          })?);
-        }
-
-        (
-          syn::parse2(quote! {
-            <#field_ty as #state_type>::Output
-          })?,
-          Some(state_type),
-        )
-      }
-    };
-
-    let decode_lt = grost_decode_trait_lifetime();
-    let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::Decode<#decode_lt, #flavor_type, #wf, #partial_ref_ty, #read_buffer, #unknown_buffer>
-    })?;
-
-    let optional_partial_ref_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_ref_ty>
-    })?;
 
     let index = Index::new(index, &field.name, field.tag.get())?;
     let schema_name = field.schema.name.unwrap_or_else(|| field.name.to_string());
     let schema_description = field.schema.description.unwrap_or_default();
     let field_ty = field.ty;
+
     let partial = PartialField::try_new(
       object,
       use_generics,
@@ -496,39 +422,25 @@ impl TaggedField {
       &field.label,
       field.partial,
     )?;
-    let partial_ref = PartialRefField {
-      ty: partial_ref_ty,
-      optional_type: optional_partial_ref_type,
-      state_type: partial_ref_state_type,
-      decode_trait_type,
-      attrs: field.partial_ref.attrs,
-      constraints: partial_ref_constraints,
-      copy: partial_ref_copyable,
-      encode: field.partial_ref.encode,
-      decode: {
-        let mo = field
-          .partial_ref
-          .decode
-          .missing_operation()
-          .cloned()
-          .or_else(|| {
-            object
-              .partial_ref
-              .decode
-              .or_default_by_label(&field.label)
-              .then_some(MissingOperation::OrDefault)
-          });
-        field.partial_ref.decode.missing_operation = mo;
-        field.partial_ref.decode
-      },
-    };
-    let selector = SelectorField {
-      ty: selector_type,
-      selectable,
-      attrs: field.selector.attrs,
-      constraints: selector_constraints,
-      default: field.selector.select,
-    };
+
+    let partial_ref = PartialRefField::try_new(
+      object,
+      use_generics,
+      &field_ty,
+      &wf,
+      &field.label,
+      field.partial_ref,
+      partial_ref_constraints,
+    )?;
+
+    let selector = SelectorField::try_new(
+      object,
+      use_generics,
+      &field_ty,
+      field.selector,
+      selector_constraints,
+    )?;
+
     let reflection = FieldReflection::try_new(
       object,
       &field_ty,
@@ -650,5 +562,97 @@ impl Field {
         TaggedField::from_raw(object, index, *f).map(|t| Self::Tagged(Box::new(t)))
       }
     }
+  }
+}
+
+fn wire_format_reflection(
+  path_to_grost: &Path,
+  object_type: impl ToTokens,
+  flavor_type: impl ToTokens,
+  tag: u32,
+) -> proc_macro2::TokenStream {
+  quote! {
+    #path_to_grost::__private::reflection::WireFormatReflection<
+      #object_type,
+      #flavor_type,
+      #tag,
+    >
+  }
+}
+
+fn selectable(path_to_grost: &Path, flavor_type: impl ToTokens) -> proc_macro2::TokenStream {
+  quote! {
+    #path_to_grost::__private::selection::Selectable<#flavor_type>
+  }
+}
+
+fn selector(
+  path_to_grost: &Path,
+  flavor_type: impl ToTokens,
+  field_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  let selectable = selectable(path_to_grost, flavor_type);
+  quote! {
+    <#field_type as #selectable>::Selector
+  }
+}
+
+fn default_wire_format(
+  path_to_grost: &Path,
+  flavor_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  quote! {
+    #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+  }
+}
+
+fn default_wire_format_associated(
+  path_to_grost: &Path,
+  flavor_type: impl ToTokens,
+  field_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  let dwf = default_wire_format(path_to_grost, flavor_type);
+  quote! {
+    <#field_type as #dwf>::Format
+  }
+}
+
+fn applied_partial_ref_state(
+  path_to_grost: &Path,
+  lt: impl ToTokens,
+  read_buffer: impl ToTokens,
+  unknown_buffer: impl ToTokens,
+  wf: impl ToTokens,
+  flavor_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  let ty = applied_partial_ref(
+    path_to_grost,
+    lt,
+    read_buffer,
+    unknown_buffer,
+    wf,
+    flavor_type,
+  );
+  quote! {
+    #path_to_grost::__private::convert::State<#ty>
+  }
+}
+
+fn applied_partial_ref(
+  path_to_grost: &Path,
+  lt: impl ToTokens,
+  read_buffer: impl ToTokens,
+  unknown_buffer: impl ToTokens,
+  wf: impl ToTokens,
+  flavor_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  quote! {
+    #path_to_grost::__private::convert::PartialRef<
+      #lt,
+      #read_buffer,
+      #unknown_buffer,
+      #wf,
+      #flavor_type,
+    >
   }
 }

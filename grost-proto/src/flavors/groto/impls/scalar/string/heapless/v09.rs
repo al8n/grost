@@ -8,7 +8,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto,
-    network::{Context, DecodeError, EncodeError, Unknown, WireType},
+    groto::{Context, DecodeError, EncodeError, Unknown, WireType},
   },
 };
 

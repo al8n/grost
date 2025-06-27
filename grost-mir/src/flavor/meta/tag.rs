@@ -59,7 +59,7 @@ impl TagFromMeta {
     &self.encode
   }
 
-  pub(crate) fn network(path_to_grost: &Path) -> darling::Result<Self> {
+  pub(crate) fn groto(path_to_grost: &Path) -> darling::Result<Self> {
     let constructor =
       syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Tag::new })?;
     let encode =

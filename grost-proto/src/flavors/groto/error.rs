@@ -30,7 +30,7 @@ pub enum Error {
   #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
   UnsupportedTagValue(u32),
   /// Returned when the type cannot be encoded in the given wire type format
-  #[error("cannot encode {ty} in {wire_type} format in network flavor")]
+  #[error("cannot encode {ty} in {wire_type} format in groto flavor")]
   UnsupportedWireType {
     /// The type of the value.
     ty: &'static str,
@@ -38,7 +38,7 @@ pub enum Error {
     wire_type: WireType,
   },
   /// Returned when the type cannot be encoded in the given wire type format
-  #[error("cannot encode {ty} with tag({tag}) in network flavor")]
+  #[error("cannot encode {ty} with tag({tag}) in groto flavor")]
   UnsupportedTag {
     /// The type of the value.
     ty: &'static str,
@@ -46,7 +46,7 @@ pub enum Error {
     tag: Tag,
   },
   /// Returned when the type cannot be encoded with the given identifier
-  #[error("cannot encode {ty} with identifier({identifier}) format in network flavor")]
+  #[error("cannot encode {ty} with identifier({identifier}) format in groto flavor")]
   UnsupportedIdentifier {
     /// The type of the value.
     ty: &'static str,

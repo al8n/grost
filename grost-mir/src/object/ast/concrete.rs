@@ -609,7 +609,7 @@ impl<T, S, M> Object<T, S, M> {
       let rb = rb.clone();
       Rc::new(move |ty| {
         syn::parse2(quote! {
-          #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+          #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
         })
       })
     };

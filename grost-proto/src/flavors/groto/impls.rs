@@ -3,7 +3,7 @@ pub use packed_decoder::PackedDecoder;
 
 use crate::{
   buffer::{Buffer, ReadBuf},
-  convert::{Partial, PartialTransform, State, Transform},
+  convert::{Partial, PartialRef, PartialTransform, State, Transform},
   decode::Decode,
   flavors::{Flavor, Groto, WireFormat},
   selection::{Selectable, Selector},
@@ -25,7 +25,7 @@ macro_rules! identity_partial_transform {
         }
       }
 
-      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::PartialTransform<$flavor, $wf, ::core::option::Option<Self>, $crate::__private::convert::Partial<$flavor>> for $ty {
+      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$flavor, $wf, ::core::option::Option<Self>, $crate::__private::convert::Partial<$flavor>> for $ty {
       //   fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<<Self as $crate::__private::convert::State<$crate::__private::convert::Partial<$flavor>>>::Output, <$flavor as $crate::__private::flavors::Flavor>::Error>
       //   where
       //     Self: Sized,
@@ -111,8 +111,21 @@ where
   }
 }
 
-impl<T> State<Partial<Groto>> for Option<T> {
-  type Output = Self;
+impl<T> State<Partial<Groto>> for Option<T>
+where
+  T: State<Partial<Groto>>,
+{
+  type Output = T::Output;
+}
+
+impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, W, Groto>> for Option<T>
+where
+  T: State<PartialRef<'a, RB, UB, W, Groto>>,
+  W: ?Sized,
+  RB: ?Sized,
+  UB: ?Sized,
+{
+  type Output = T::Output;
 }
 
 impl<I, O, W, T> PartialTransform<I, Option<O>, W, Groto> for Option<T>

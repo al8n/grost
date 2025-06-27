@@ -147,7 +147,7 @@ fn derive_partial_object_decode<M, F>(
           #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_object_ty, #read_buffer_ident, #ubg>
         >::decode(context, src)
           .and_then(|(read, input)| {
-            <#partial_object_ty as #path_to_grost::__private::decode::Transform::<#flavor_ty, #wf, #partial_ref_object_ty>>::transform(input)
+            <#partial_object_ty as #path_to_grost::__private::convert::Transform::<#flavor_ty, #wf, #partial_ref_object_ty>>::transform(input)
               .map(|input| (read, input))
           })
       }
@@ -155,7 +155,7 @@ fn derive_partial_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, Self> for #partial_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, Self> for #partial_object_ty #where_clauses {
       fn transform(input: Self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         ::core::result::Result::Ok(input)
       }
@@ -163,7 +163,7 @@ fn derive_partial_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_object_ty> for #object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, #partial_object_ty> for #object_ty #where_clauses {
       fn transform(__grost_partial_object_input__: #partial_object_ty) -> ::core::result::Result<#object_ty, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         // ::core::result::Result::Ok(input)
         ::core::todo!()
@@ -207,7 +207,7 @@ fn derive_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, Self> for #object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, Self> for #object_ty #where_clauses {
       fn transform(input: Self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         ::core::result::Result::Ok(input)
       }
@@ -294,7 +294,7 @@ fn derive_partial_ref_object_decode<M, F>(
           None => {
             quote! {
               if let ::core::option::Option::Some(value) = input.#field_name {
-                this.#field_name = ::core::option::Option::Some(<#partial_field_ty as #path_to_grost::__private::decode::Transform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::transform(value)?);
+                this.#field_name = ::core::option::Option::Some(<#partial_field_ty as #path_to_grost::__private::convert::Transform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::transform(value)?);
               }
             }
           }
@@ -316,7 +316,7 @@ fn derive_partial_ref_object_decode<M, F>(
             quote! {
               if let ::core::option::Option::Some(value) = input.#field_name {
                 if selector.#is_field_selected() {
-                  this.#field_name = <#partial_field_ty as #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?;
+                  this.#field_name = <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#flavor_ty, #field_wf, #partial_ref_field_ty>>::partial_transform(value, selector.#field_selector())?;
                 }
               }
             }
@@ -463,7 +463,7 @@ fn derive_partial_ref_object_decode<M, F>(
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, Self> for #partial_ref_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, Self> for #partial_ref_object_ty #where_clauses {
       fn transform(input: Self) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         ::core::result::Result::Ok(input)
       }
@@ -570,7 +570,7 @@ fn derive_partial_ref_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #transform_from_partial_ref_ig #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #transform_from_partial_ref_where_clauses {
+    impl #transform_from_partial_ref_ig #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #transform_from_partial_ref_where_clauses {
       fn transform(input: #partial_ref_object_ty) -> ::core::result::Result<Self, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         let mut this = Self::new();
 
@@ -584,7 +584,7 @@ fn derive_partial_ref_object_decode<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #partial_transform_from_partial_ref_ig #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #partial_transform_from_partial_ref_where_clauses {
+    impl #partial_transform_from_partial_ref_ig #path_to_grost::__private::convert::PartialTransform<#flavor_ty, #wf, #partial_ref_object_ty> for #partial_object_ty #partial_transform_from_partial_ref_where_clauses {
       fn partial_transform(
         input: #partial_ref_object_ty,
         selector: &#selector_ty,

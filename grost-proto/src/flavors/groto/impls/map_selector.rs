@@ -3,7 +3,7 @@
 //   encode::{Encode, PartialEncode},
 //   flavors::{
 //     DefaultWireFormat, Groto, WireFormat,
-//     network::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Tag, Unknown},
+//     groto::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Tag, Unknown},
 //   },
 //   map::MapSelector,
 //   selector::{Selectable, Selector},

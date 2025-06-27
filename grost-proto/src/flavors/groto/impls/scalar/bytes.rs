@@ -83,7 +83,7 @@ macro_rules! array_bytes {
       $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Groto as $crate::__private::flavors::groto::LengthDelimited);
     }
 
-    impl<'de, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self> for $ty {
+    impl<'de, const $g: ::core::primitive::usize> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self> for $ty {
       fn decode<UB>(
         context: &$crate::__private::flavors::groto::Context,
         src: &'de [::core::primitive::u8],
@@ -92,7 +92,7 @@ macro_rules! array_bytes {
         Self: ::core::marker::Sized + 'de,
         UB: $crate::__private::Buffer<$crate::__private::flavors::groto::Unknown<&'de [::core::primitive::u8]>>,
       {
-        <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, &'de [::core::primitive::u8]>>::decode::<()>(context, src)
+        <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, &'de [::core::primitive::u8]>>::decode::<()>(context, src)
           .and_then(|(len, bytes)| {
             $from_bytes(bytes).map(|s| (len, s))
           })
@@ -106,14 +106,14 @@ macro_rules! array_bytes {
         Self: ::core::marker::Sized + 'de,
         UB: $crate::__private::Buffer<$crate::__private::flavors::groto::Unknown<&'de [::core::primitive::u8]>>,
       {
-        <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, &'de [::core::primitive::u8]>>::decode_length_delimited::<()>(context, src)
+        <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, &'de [::core::primitive::u8]>>::decode_length_delimited::<()>(context, src)
           .and_then(|(len, bytes)| {
             $from_bytes(bytes).map(|s| (len, s))
           })
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::DecodeOwned<$crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::decode::DecodeOwned<$crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self> for $ty {
       $crate::decode_owned_scalar!(@impl $crate::__private::flavors::Groto as $crate::__private::flavors::groto::LengthDelimited);
     }
 

@@ -107,7 +107,7 @@ macro_rules! array_str {
       $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Groto as $crate::__private::flavors::groto::LengthDelimited);
     }
 
-    impl<'de, B, UB, const $g: ::core::primitive::usize> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self, B, UB> for $ty {
+    impl<'de, B, UB, const $g: ::core::primitive::usize> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, Self, B, UB> for $ty {
       fn decode(
         context: &'de $crate::__private::flavors::groto::Context,
         src: B,
@@ -117,7 +117,7 @@ macro_rules! array_str {
         B: $crate::__private::ReadBuf + 'de,
         UB: $crate::__private::Buffer<$crate::__private::flavors::groto::Unknown<B>> + 'de,
       {
-        <::core::primitive::str as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB>>::decode(context, src)
+        <::core::primitive::str as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB>>::decode(context, src)
           .and_then(|(len, bytes)| {
             $from_str(bytes.as_ref()).map(|s| (len, s))
           })
@@ -153,7 +153,7 @@ macro_rules! array_str {
       }
     );
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::Transform<&str, Self, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto, > for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::convert::Transform<&str, Self, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto, > for $ty {
       fn transform(input: &str) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as crate::flavors::Flavor>::Error>
       where
         Self: Sized,
@@ -162,13 +162,13 @@ macro_rules! array_str {
       }
     }
 
-    impl<const $g: ::core::primitive::usize> $crate::__private::PartialTransform<&str, ::core::option::Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
+    impl<const $g: ::core::primitive::usize> $crate::__private::convert::PartialTransform<&str, ::core::option::Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
       fn partial_transform(input: &str, selector: &bool) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as crate::flavors::Flavor>::Error>
       where
         Self: Sized,
       {
         if *selector {
-          <Self as $crate::__private::Transform< &str, Self, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::transform(input)
+          <Self as $crate::__private::convert::Transform<&str, Self, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::transform(input)
             .map(Some)
         } else {
           Ok(None)

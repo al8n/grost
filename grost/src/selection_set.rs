@@ -16,7 +16,7 @@
 
 // use grost_proto::{
 //   Tag,
-//   flavors::{Flavor, network::WireType},
+//   flavors::{Flavor, groto::WireType},
 //   unknown::Unknown,
 // };
 // use varing::Varint;

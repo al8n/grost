@@ -140,6 +140,7 @@ impl PartialObject {
           let partial_ref_ty = f.partial_ref().ty();
           let wf = f.wire_format();
           let partial = f.partial();
+          let partial_ty = partial.ty();
 
           generics
             .make_where_clause()
@@ -154,10 +155,10 @@ impl PartialObject {
 
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
+            #ty: #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
           })?);
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_ref_ty>
+            #ty: #path_to_grost::__private::convert::Transform<#partial_ref_ty, #partial_ty, #wf, #flavor_ty>
           })?);
         }
 
@@ -181,7 +182,7 @@ impl PartialObject {
         let rb = rb.clone();
         Rc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
           })
         })
       },

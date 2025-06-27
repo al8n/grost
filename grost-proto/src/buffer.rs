@@ -149,7 +149,7 @@ pub trait WriteBuf {
 }
 
 impl WriteBuf for &mut [u8] {
-  fn advance_mut(&mut self, cnt: usize) {}
+  fn advance_mut(&mut self, _: usize) {}
 
   fn remaining_mut(&mut self) -> usize {
     self.len()

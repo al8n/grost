@@ -103,10 +103,10 @@ impl ConcretePartialObject {
 
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
+            #ty: #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
           })?);
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::Transform<#flavor_ty, #wf, #partial_ref_ty>
+            #ty: #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, #partial_ref_ty>
           })?);
         }
 
@@ -131,7 +131,7 @@ impl ConcretePartialObject {
         let rb = rb.clone();
         Arc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
           })
         })
       },

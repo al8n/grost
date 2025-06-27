@@ -116,7 +116,7 @@ macro_rules! wire_type {
   };
 }
 
-/// The network flavor
+/// The groto flavor
 pub mod groto;
 
 /// The flavor for encoding and decoding selector

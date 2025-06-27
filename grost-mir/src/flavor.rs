@@ -67,7 +67,7 @@ mod tag;
 // }
 
 // impl FlavorAttribute {
-//   fn network_object(path_to_grost: &Path) -> syn::Result<Self> {
+//   fn groto_object(path_to_grost: &Path) -> syn::Result<Self> {
 //     let ty = parse_quote!(#path_to_grost::__private::flavors::Groto);
 //     let format = parse_quote!(#path_to_grost::__private::flavors::groto::LengthDelimited);
 //     let identifier = IdentifierOptions::groto(path_to_grost);
@@ -75,7 +75,7 @@ mod tag;
 //     let decode = DecodeOptions::groto(path_to_grost);
 
 //     Ok(Self {
-//       name: format_ident!("network"),
+//       name: format_ident!("groto"),
 //       ty,
 //       format,
 //       identifier,

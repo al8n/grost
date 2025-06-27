@@ -170,7 +170,7 @@ macro_rules! list {
   (@partial_ref_state(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<'a, $crate::__private::flavors::Groto, LengthDelimited, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__>> for $ty
+      impl<'a, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<'a, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, LengthDelimited, $crate::__private::flavors::Groto>> for $ty
       {
         type Output = $crate::__private::decode::BytesSlice<__GROST_READ_BUF__>;
       }
@@ -182,10 +182,10 @@ macro_rules! list {
       impl<'a, T, W, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
         $crate::__private::convert::PartialRef<
           'a,
-          $crate::__private::flavors::Groto,
-          Packed<W>,
           __GROST_READ_BUF__,
           __GROST_UNKNOWN_BUFFER__,
+          Packed<W>,
+          $crate::__private::flavors::Groto,
         >
       > for $ty
       where
@@ -201,10 +201,10 @@ macro_rules! list {
       impl<'a, T, W, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
         $crate::__private::convert::PartialRef<
           'a,
-          $crate::__private::flavors::Groto,
-          Borrowed<'a, Packed<W>>,
           __GROST_READ_BUF__,
           __GROST_UNKNOWN_BUFFER__,
+          Borrowed<'a, Packed<W>>,
+          $crate::__private::flavors::Groto,
         >
       > for $ty
       where
@@ -239,11 +239,11 @@ macro_rules! list {
   // TODO(al8n): remove the wire format generic from `Selectable`?
   // (@identity_partial_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
   //   $(
-  //     impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialTransform<$crate::__private::flavors::Groto, W, Self> for $ty
+  //     impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<$crate::__private::flavors::Groto, W, Self> for $ty
   //     where
   //       W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
   //       T: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, W>
-  //         + $crate::__private::PartialTransform<$crate::__private::flavors::Groto, W, Self>,
+  //         + $crate::__private::convert::PartialTransform<$crate::__private::flavors::Groto, W, Self>,
   //       Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, W, Selector = T::Selector>,
   //     {
   //       fn partial_transform(input: Self, selector: &T::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
@@ -270,7 +270,7 @@ macro_rules! list {
   // };
   (@packed_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<'a, T, W, TW, B, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::Transform<$crate::__private::flavors::groto::PackedDecoder<'a, T, B, UB, TW>, $ty, W, $crate::__private::flavors::Groto> for $ty
+      impl<'a, T, W, TW, B, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::Transform<$crate::__private::flavors::groto::PackedDecoder<'a, T, B, UB, TW>, $ty, W, $crate::__private::flavors::Groto> for $ty
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
@@ -334,7 +334,7 @@ macro_rules! list {
         }
       }
 
-      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::PartialTransform<
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<
         Self,
         ::core::option::Option<Self>,
         $crate::__private::flavors::groto::Packed<W>,
@@ -399,10 +399,10 @@ macro_rules! list {
   };
   (@decode_to_packed_decoder $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<'de, T, W, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, Packed<W>, PackedDecoder<'de, T, B, UB, W>, B, UB> for $ty
+      impl<'de, T, W, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, Packed<W>, PackedDecoder<'de, T, B, UB, W>, B, UB> for $ty
       where
         T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, B, UB, W, $crate::__private::flavors::Groto>>
-          + $crate::__private::Decode<'de, $crate::__private::flavors::Groto, W, T::Output, B, UB>,
+          + $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, W, T::Output, B, UB>,
         T::Output: ::core::marker::Sized,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'de,
       {
@@ -417,14 +417,14 @@ macro_rules! list {
     { $try_from:expr }
   ),+$(,)?) => {
     $(
-      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, Self, B, UB> for $ty {
+      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, Self, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf + 'de,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<B>> + 'de,
         {
-          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
+          <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
             .and_then(|(read, bytes)| {
               ($try_from)(bytes.as_ref())
                 .map(|value| (read, value))
@@ -433,14 +433,14 @@ macro_rules! list {
         }
       }
 
-      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB> for $ty {
+      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, $crate::__private::decode::BytesSlice<B>), $crate::__private::flavors::groto::Error>
         where
           $crate::__private::decode::BytesSlice<B>: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf + 'de,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<B>> + 'de,
         {
-          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
+          <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
         }
       }
     )*
@@ -452,26 +452,26 @@ macro_rules! list {
     { $from:expr }
   ),+$(,)?) => {
     $(
-      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, Self, B, UB> for $ty {
+      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, Self, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, Self), $crate::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf + 'de,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<B>> + 'de,
         {
-          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
+          <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
             .map(|(read, bytes)| (read, ($from)(bytes.as_ref())))
         }
       }
 
-      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB> for $ty {
+      impl<'de, B, UB, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB> for $ty {
         fn decode(context: &'de Context, src: B) -> ::core::result::Result<(usize, $crate::__private::decode::BytesSlice<B>), $crate::__private::flavors::groto::Error>
         where
           $crate::__private::decode::BytesSlice<B>: ::core::marker::Sized,
           B: $crate::__private::buffer::ReadBuf + 'de,
           UB: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<B>> + 'de,
         {
-          <[::core::primitive::u8] as $crate::__private::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
+          <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::BytesSlice<B>, B, UB>>::decode(context, src)
         }
       }
     )*

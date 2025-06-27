@@ -276,10 +276,10 @@ impl<F> ConcreteTaggedField<F> {
           #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::PartialRef<
               #lifetime,
-              #flavor_type,
-              #wf,
               #read_buffer,
               #unknown_buffer,
+              #wf,
+              #flavor_type,
             >
           >
         })?;
@@ -305,7 +305,7 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_ty = object.flavor().ty();
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #read_buffer, #unknown_buffer>
+      #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #read_buffer, #unknown_buffer>
     })?;
 
     let optional_partial_ref_type = syn::parse2(quote! {

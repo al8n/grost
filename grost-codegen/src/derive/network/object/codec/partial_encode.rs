@@ -1,6 +1,6 @@
 use quote::{ToTokens, quote};
 
-use crate::{Object, network::Groto};
+use crate::{Object, groto::Groto};
 
 impl Groto {
   pub(crate) fn derive_partial_encode(

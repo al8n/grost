@@ -4,7 +4,7 @@ use crate::{
   encode::Encode,
   flavors::{
     DefaultWireFormat,
-    network::Context,
+    groto::Context,
     selector::{
       DecodeError, EncodeError, Select, SelectorIdentifier, SelectorTag, SelectorWireType, Unknown,
       Zst,

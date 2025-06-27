@@ -20,7 +20,7 @@ mod wire_type;
 /// The unknown data types
 mod unknown;
 
-/// The network flavor
+/// The groto flavor
 #[derive(
   Debug, Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, derive_more::Display,
 )]

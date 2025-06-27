@@ -316,7 +316,7 @@ impl<M, F> ConcreteObject<M, F> {
           let flavor_ty = object.flavor().ty();
           let wf = f.wire_format();
           decode_constraints.push(syn::parse2(quote! {
-            #field_ty: #path_to_grost::__private::Decode<
+            #field_ty: #path_to_grost::__private::decode::Decode<
               #lt,
               #flavor_ty,
               #wf,
@@ -359,7 +359,7 @@ impl<M, F> ConcreteObject<M, F> {
         let rb = rb.clone();
         Arc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
           })
         })
       },

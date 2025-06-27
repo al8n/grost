@@ -30,8 +30,8 @@ mod serde;
 
 pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
   (
-    "network",
-    "The `network` flavor is reserved and equivalent to the default flavor. Use `default` to configure the default behavior instead.",
+    "groto",
+    "The `groto` flavor is reserved and equivalent to the default flavor. Use `default` to configure the default behavior instead.",
   ),
   (
     "storage",

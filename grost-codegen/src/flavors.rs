@@ -1,7 +1,7 @@
 // use super::{Enum, Object};
 
-/// The derive generator for the network flavor
-pub mod network;
+/// The derive generator for the groto flavor
+pub mod groto;
 
 use crate::Object;
 

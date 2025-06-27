@@ -77,7 +77,7 @@ fixed_size!(
 /// struct Friends(Vec<String>);
 /// ```
 ///
-/// And somehow, in a gossip network, you receive three friends names from different peers.
+/// And somehow, in a gossip groto, you receive three friends names from different peers.
 ///
 /// ```ignore
 /// let peer1_subscriber = subscribe_peer(1);
@@ -154,7 +154,7 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
 /// struct Friends(Vec<String>);
 /// ```
 ///
-/// And somehow, in a gossip network, you receive three friends names from different peers.
+/// And somehow, in a gossip groto, you receive three friends names from different peers.
 ///
 /// ```ignore
 /// let peer1_subscriber = subscribe_peer(1);

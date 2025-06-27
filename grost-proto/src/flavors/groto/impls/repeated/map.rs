@@ -1,7 +1,7 @@
 // use crate::{
 //   flavors::{
 //     Groto,
-//     network::{Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Varint},
+//     groto::{Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Varint},
 //   },
 //   selector::Selectable,
 // };
@@ -371,7 +371,7 @@
 
 //   use crate::{
 //     encode::Encode,
-//     flavors::{Groto, network::Repeated},
+//     flavors::{Groto, groto::Repeated},
 //   };
 
 //   macro_rules! tinyvec_impl {

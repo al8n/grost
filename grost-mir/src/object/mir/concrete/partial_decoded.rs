@@ -179,13 +179,13 @@ impl ConcretePartialRefObject {
         let wf = field.wire_format();
 
         decode_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
+          #ty: #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
         })?);
         transform_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::decode::Transform<#flavor_ty, #wf, #partial_ref_ty>
+          #ty: #path_to_grost::__private::convert::Transform<#flavor_ty, #wf, #partial_ref_ty>
         })?);
         partial_transform_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::decode::PartialTransform<#flavor_ty, #wf, #partial_ref_ty>
+          #ty: #path_to_grost::__private::convert::PartialTransform<#flavor_ty, #wf, #partial_ref_ty>
         })?);
         partial_transform_constraints.push(syn::parse2(quote! {
           #partial_ref_ty: #path_to_grost::__private::selection::Selectable<
@@ -321,7 +321,7 @@ impl ConcretePartialRefObject {
         let rb = rb.clone();
         Arc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
           })
         })
       },

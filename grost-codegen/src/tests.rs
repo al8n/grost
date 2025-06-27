@@ -6,7 +6,7 @@
 
 // // use crate::{Field, Object, field::getter, ty::Ty};
 
-// // use crate::{Field, Object, SchemaGeneratorBuilder, field::getter, network::Groto, ty::Ty};
+// // use crate::{Field, Object, SchemaGeneratorBuilder, field::getter, groto::Groto, ty::Ty};
 
 // use super::{Enum, EnumVariant, SafeIdent, SchemaGenerator};
 
@@ -98,8 +98,8 @@
 //   let code: syn::File = syn::parse2(generated).unwrap();
 //   let definations = prettyplease::unparse(&code);
 
-//   let network = Groto::new(&parse_quote!(::grost));
-//   let generated = generator.derive(&network).unwrap();
+//   let groto = Groto::new(&parse_quote!(::grost));
+//   let generated = generator.derive(&groto).unwrap();
 //   let code: syn::File = syn::parse2(generated).unwrap();
 //   let impls = prettyplease::unparse(&code);
 

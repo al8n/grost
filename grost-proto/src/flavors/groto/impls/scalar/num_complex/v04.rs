@@ -2,7 +2,7 @@ use num_complex_0_4::Complex;
 
 use crate::{
   decode::{Decode, DecodeOwned}, encode::Encode, flavors::{
-    network::{Context, DecodeError, EncodeError, Identifier, Unknown, WireType}, Groto
+    groto::{Context, DecodeError, EncodeError, Identifier, Unknown, WireType}, Groto
   }, message, partial_encode_scalar, Tag
 };
 

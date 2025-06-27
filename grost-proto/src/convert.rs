@@ -243,17 +243,6 @@ macro_rules! wrapper_impl {
   };
 }
 
-impl<'a, F, W, B, UB, T> State<PartialRef<'a, F, W, B, UB>> for Option<T>
-where
-  T: State<PartialRef<'a, F, W, B, UB>>,
-  F: ?Sized,
-  W: ?Sized,
-  B: ?Sized,
-  UB: ?Sized,
-{
-  type Output = T::Output;
-}
-
 impl<T> State<Flatten> for Option<T>
 where
   T: State<Flatten>,

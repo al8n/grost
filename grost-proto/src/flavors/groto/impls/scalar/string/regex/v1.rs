@@ -60,7 +60,7 @@ macro_rules! try_str_bridge {
         }
       );
 
-      impl $crate::__private::Transform<&str, Self, LengthDelimited, Groto> for $ty {
+      impl $crate::__private::convert::Transform<&str, Self, LengthDelimited, Groto> for $ty {
         fn transform(input: &str) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
         where
           Self: Sized,
@@ -69,13 +69,13 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl $crate::__private::PartialTransform<&str, Option<$ty>, LengthDelimited, Groto> for $ty {
+      impl $crate::__private::convert::PartialTransform<&str, Option<$ty>, LengthDelimited, Groto> for $ty {
         fn partial_transform(input: &str, selector: &bool) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
         where
           Self: Sized,
         {
           if *selector {
-            <Self as $crate::__private::Transform<&str, Self, LengthDelimited, Groto>>::transform(input)
+            <Self as $crate::__private::convert::Transform<&str, Self, LengthDelimited, Groto>>::transform(input)
               .map(Some)
           } else {
             Ok(None)
@@ -83,7 +83,7 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl<B: ReadBuf> $crate::__private::Transform<Str<B>, Self, LengthDelimited, Groto> for $ty {
+      impl<B: ReadBuf> $crate::__private::convert::Transform<Str<B>, Self, LengthDelimited, Groto> for $ty {
         fn transform(input: Str<B>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
         where
           Self: Sized,
@@ -92,13 +92,13 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl<B: ReadBuf> $crate::__private::PartialTransform<Str<B>, Option<$ty>, LengthDelimited, Groto> for $ty {
+      impl<B: ReadBuf> $crate::__private::convert::PartialTransform<Str<B>, Option<$ty>, LengthDelimited, Groto> for $ty {
         fn partial_transform(input: Str<B>, selector: &bool) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
         where
           Self: Sized,
         {
           if *selector {
-            <Self as $crate::__private::Transform<Str<B>, Self, LengthDelimited, Groto>>::transform(input)
+            <Self as $crate::__private::convert::Transform<Str<B>, Self, LengthDelimited, Groto>>::transform(input)
               .map(Some)
           } else {
             Ok(None)

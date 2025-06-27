@@ -56,7 +56,7 @@ impl Groto {
       let object_ty = f.object_type();
       let wfr = f.wire();
       let field_decode_trait_with_types = quote! {
-        #path_to_grost::__private::Decode<
+        #path_to_grost::__private::decode::Decode<
           #ltg,
           #path_to_grost::__private::flavors::Groto,
           <#wfr as #path_to_grost::__private::reflection::Reflectable<#object_name #object_tg>>::Reflection,
@@ -202,7 +202,7 @@ impl Groto {
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #decode_ig #path_to_grost::__private::Decode<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, Self, #ubi> for #partial_decode_ty #decode_where_clause {
+      impl #decode_ig #path_to_grost::__private::decode::Decode<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, Self, #ubi> for #partial_decode_ty #decode_where_clause {
         fn decode<__GROST_BUF__>(
           ctx: &#path_to_grost::__private::flavors::groto::Context,
           buf: __GROST_BUF__,

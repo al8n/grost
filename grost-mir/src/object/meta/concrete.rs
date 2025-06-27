@@ -52,7 +52,7 @@ pub(in crate::object) struct ObjectFlavorFromMeta {
 }
 
 impl ObjectFlavorFromMeta {
-  pub(in crate::object) fn network(path_to_grost: &syn::Path) -> darling::Result<Self> {
+  pub(in crate::object) fn groto(path_to_grost: &syn::Path) -> darling::Result<Self> {
     let ty = syn::parse2(quote!(#path_to_grost::__private::flavors::Groto))?;
     let wire_format =
       syn::parse2(quote!(#path_to_grost::__private::flavors::groto::LengthDelimited))?;
