@@ -268,7 +268,12 @@ macro_rules! list {
   //     }
   //   )*
   // };
-  (@packed_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@partial_transform(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      
+    )*
+  };
+  (@partial_transform(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<'a, T, W, TW, B, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::Transform<$crate::__private::flavors::groto::PackedDecoder<'a, T, B, UB, TW>, $ty, W, $crate::__private::flavors::Groto> for $ty
       where
@@ -294,7 +299,7 @@ macro_rules! list {
         }
       }
 
-      impl<'a, T, W, TW, B, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<PackedDecoder<'a, T, B, UB, TW>, ::core::option::Option<Self>, W, $crate::__private::flavors::Groto> for $ty
+      impl<'a, T, W, TW, B, UB, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<PackedDecoder<'a, T, B, UB, TW>, ::core::option::Option<Self>, Packed<W>, $crate::__private::flavors::Groto> for $ty
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
@@ -762,7 +767,7 @@ const _: () = {
   list!(@partial_ref_state(borrow) Vec<T>);
   list!(@default_wire_format Vec<T>);
   list!(@identity_transform Vec<T>);
-  list!(@packed_transform Vec<T>);
+  list!(@partial_transform(packed) Vec<T>);
   list!(@selectable Vec<T>);
   list!(@decode_to_packed_decoder Vec<T>);
   list!(@decode_to_packed_decoder(from_bytes) Vec<u8> {
@@ -787,7 +792,7 @@ const _: () = {
   list!(@partial_ref_state(borrow) SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
-  list!(@packed_transform SmallVec<[T; N]> [const N: usize]);
+  list!(@partial_transform(packed) SmallVec<[T; N]> [const N: usize]);
   list!(@selectable SmallVec<[T; N]> [const N: usize]);
   list!(
     @decode_to_packed_decoder SmallVec<[T; N]> [const N: usize]
@@ -816,7 +821,7 @@ const _: () = {
   list!(@partial_ref_state(borrow) ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
-  list!(@packed_transform ArrayVec<T, N> [const N: usize]);
+  list!(@partial_transform(packed) ArrayVec<T, N> [const N: usize]);
   list!(@selectable ArrayVec<T, N> [const N: usize]);
   list!(
     @decode_to_packed_decoder ArrayVec<T, N> [const N: usize]
@@ -865,7 +870,7 @@ const _: () = {
   list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@partial_transform(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(
     @decode_to_packed_decoder:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
@@ -900,7 +905,7 @@ const _: () = {
     list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@packed_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@partial_transform(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(
       @decode_to_packed_decoder:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>

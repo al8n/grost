@@ -2,12 +2,11 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{Buffer, ReadBuf},
-  convert::{PartialRef, State},
+  convert::{Flatten, Partial, PartialRef, State},
   decode::Decode,
   encode::Encode,
   flavors::{
-    Groto, WireFormat,
-    groto::{Context, Error, LengthDelimited, Unknown},
+    groto::{Context, Error, Fixed8, LengthDelimited, Unknown}, Groto, WireFormat
   },
   selection::Selectable,
 };
@@ -55,7 +54,7 @@ impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a,
 
 impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, T, B, UB, W> {}
 
-impl<'a, B, UB> PackedDecoder<'a, u8, B, UB, LengthDelimited>
+impl<'a, B, UB> PackedDecoder<'a, u8, B, UB, Fixed8>
 where
   UB: ?Sized,
   B: ReadBuf,
@@ -81,7 +80,7 @@ where
   }
 }
 
-impl<'a, B, UB> core::ops::Deref for PackedDecoder<'a, u8, B, UB, LengthDelimited>
+impl<'a, B, UB> core::ops::Deref for PackedDecoder<'a, u8, B, UB, Fixed8>
 where
   UB: ?Sized,
   B: ReadBuf,
@@ -94,7 +93,7 @@ where
   }
 }
 
-impl<'a, B, UB> AsRef<[u8]> for PackedDecoder<'a, u8, B, UB, LengthDelimited>
+impl<'a, B, UB> AsRef<[u8]> for PackedDecoder<'a, u8, B, UB, Fixed8>
 where
   UB: ?Sized,
   B: ReadBuf,
@@ -236,4 +235,22 @@ where
       },
     ))
   }
+}
+
+impl<'a, T, B, UB, W> State<Partial<Groto>> for PackedDecoder<'a, T, B, UB, W>
+where
+  T: ?Sized,
+  W: ?Sized,
+  UB: ?Sized,
+{
+  type Output = Self;
+}
+
+impl<'a, T, B, UB, W> State<Flatten> for PackedDecoder<'a, T, B, UB, W>
+where
+  T: ?Sized,
+  W: ?Sized,
+  UB: ?Sized,
+{
+  type Output = Self;
 }

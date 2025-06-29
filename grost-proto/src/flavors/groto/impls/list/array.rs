@@ -2,11 +2,10 @@ use core::mem::MaybeUninit;
 
 use crate::{
   buffer::{Buffer, ReadBuf},
-  convert::{PartialRef, State, Transform},
+  convert::{PartialRef, PartialTransform, State, Transform},
   decode::Decode,
   flavors::{
-    Groto, WireFormat,
-    groto::{Error, PackedDecoder, Unknown},
+    groto::{Error, Fixed8, LengthDelimited, PackedDecoder, Unknown}, Groto, WireFormat
   },
 };
 
@@ -48,5 +47,20 @@ where
     // Safety: We have filled all elements of the array with initialized values.
     // TODO(al8n): remove the `unsafe` block when https://github.com/rust-lang/rust/issues/79711 is resolved.
     Ok(unsafe { array.map(|item| item.assume_init()) })
+  }
+}
+
+impl<'a, B, UB> PartialTransform<PackedDecoder<'a, u8, B, UB, Fixed8>, Option<Self>, LengthDelimited, Groto>
+  for Vec<u8>
+where
+  UB: Buffer<Unknown<B>> + 'a,
+  B: ReadBuf + 'a,
+{
+  fn partial_transform(input: PackedDecoder<'a, u8, B, UB, Fixed8>, selector: &Self::Selector) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error> {
+    if *selector {
+      Ok(Some(Vec::from(input.as_slice())))
+    } else {
+      Ok(None)
+    }
   }
 }
