@@ -11,7 +11,7 @@ use crate::{
       SelectorFieldFromMeta, SkippedFieldFromMeta,
     },
   },
-  utils::{Attributes, Invokable, NestedMeta, NoopFromMeta, SchemaFromMeta},
+  utils::{Attributes, NestedMeta, NoopFromMeta, SchemaFromMeta},
 };
 
 /// The meta of the object field
@@ -181,7 +181,6 @@ impl FromMeta for PartialRefFieldFromMeta {
 pub struct TaggedFieldFromMeta<TO = NoopFromMeta> {
   pub(in crate::object) label: Label,
   pub(in crate::object) schema: SchemaFromMeta,
-  pub(in crate::object) default: Option<Invokable>,
   pub(in crate::object) tag: NonZeroU32,
   pub(in crate::object) transform: FieldConvertFromMeta,
   pub(in crate::object) partial: PartialFieldFromMeta,
@@ -223,8 +222,6 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
     struct Helper<TO> {
       #[darling(default)]
       schema: SchemaFromMeta,
-      #[darling(default)]
-      default: Option<Invokable>,
       tag: NonZeroU32,
       #[darling(default)]
       transform: FieldConvertFromMeta,
@@ -252,7 +249,6 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
         ))
       })?,
       schema: helper.schema,
-      default: helper.default,
       tag: helper.tag,
       wire_format: helper.wire_format,
       transform: helper.transform,

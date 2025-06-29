@@ -9,8 +9,6 @@ use syn::{
 pub use convert::*;
 pub use selector::SelectorFieldOptions;
 
-use crate::utils::Invokable;
-
 mod convert;
 mod selector;
 
@@ -53,7 +51,6 @@ pub struct SkippedField<M = ()> {
   pub(super) vis: Visibility,
   pub(super) name: Ident,
   pub(super) ty: Type,
-  pub(super) default: Invokable,
   pub(super) lifetimes_usages: LifetimeSet,
   pub(super) type_params_usages: IdentSet,
   pub(super) meta: M,
@@ -82,12 +79,6 @@ impl<M> SkippedField<M> {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
-  }
-
-  /// Returns the path to the default value function for the skipped field
-  #[inline]
-  pub const fn default(&self) -> &Invokable {
-    &self.default
   }
 
   /// Returns the lifetimes used in the skipped field
@@ -122,7 +113,6 @@ impl SkippedField {
       vis: self.vis,
       name: self.name,
       ty: self.ty,
-      default: self.default,
       lifetimes_usages: self.lifetimes_usages,
       type_params_usages: self.type_params_usages,
       meta,
@@ -141,11 +131,6 @@ impl SkippedField {
       vis: f.vis,
       name: f.name,
       ty: f.ty,
-      default: if let Some(path) = f.default {
-        path
-      } else {
-        syn::parse2::<syn::Path>(quote! { ::core::default::Default::default })?.into()
-      },
       lifetimes_usages,
       type_params_usages,
       meta: extra,
@@ -159,7 +144,6 @@ pub struct RawSkippedField<M = ()> {
   pub(super) vis: Visibility,
   pub(super) name: Ident,
   pub(super) ty: Type,
-  pub(super) default: Option<Invokable>,
   pub(super) extra: M,
 }
 
@@ -170,7 +154,6 @@ impl<M> RawSkippedField<M> {
       vis,
       name,
       ty,
-      default,
       extra,
     } = self;
     (
@@ -179,7 +162,6 @@ impl<M> RawSkippedField<M> {
         vis,
         name,
         ty,
-        default,
         extra: (),
       },
       extra,

@@ -5,25 +5,43 @@ edition.workspace = true
 publish = false
 
 [features]
+default = ["std"]
+std = ["grost/std", "tinyvec_1?/std"]
+alloc = ["grost/alloc", "tinyvec_1?/alloc"]
+
 quickcheck = ["grost/quickcheck"]
 
+arrayvec_0_7 = ["grost/arrayvec_0_7", "dep:arrayvec_0_7"]
 arbitrary-int_1 = ["grost/arbitrary-int_1", "dep:arbitrary-int_1"]
+bytes_1 = ["grost/bytes_1", "dep:bytes_1"]
 bnum_0_13 = ["grost/bnum_0_13", "dep:bnum_0_13"]
 chrono_0_4 = ["grost/chrono_0_4", "dep:chrono_0_4"]
 chrono-tz_0_10 = ["grost/chrono-tz_0_10", "dep:chrono-tz_0_10"]
-half_2 = ["grost/half_2", "dep:half_2"]
-ruint_1 = ["grost/ruint_1", "dep:ruint_1"]
 decimal_1 = ["grost/decimal_1", "dep:rust_decimal_1"]
+half_2 = ["grost/half_2", "dep:half_2"]
+regex_1 = ["grost/regex_1", "dep:regex_1"]
+ruint_1 = ["grost/ruint_1", "dep:ruint_1"]
+smol_str_0_3 = ["grost/smol_str_0_3", "dep:smol_str_0_3"]
+smallvec_1 = ["grost/smallvec_1", "dep:smallvec_1"]
 time_0_3 = ["grost/time_0_3", "dep:time_0_3"]
+tinystr_0_8 = ["grost/tinystr_0_8", "dep:tinystr_0_8"]
+tinyvec_1 = ["grost/tinyvec_1", "dep:tinyvec_1"]
 
 [dependencies]
 grost = { path = "../grost", version = "0.1", default-features = false, features = ["quickcheck", "std", "derive"] }
 
+arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
 arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
 chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
 chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
 half_2 = { package = "half", version = "2", default-features = false, optional = true }
+regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
 ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
 rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
+smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true, features = ["const_generics"] }
 time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
+tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
+tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }

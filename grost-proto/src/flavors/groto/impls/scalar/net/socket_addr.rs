@@ -154,6 +154,13 @@ identity_transform!(
     SocketAddr as LengthDelimited,
   }
 );
+identity_partial_transform!(
+  Groto {
+    SocketAddrV4 as LengthDelimited,
+    SocketAddrV6 as LengthDelimited,
+    SocketAddr as LengthDelimited,
+  }
+);
 
 impl Encode<Groto, LengthDelimited> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {

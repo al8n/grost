@@ -137,6 +137,15 @@ identity_transform!(
     IpAddr as LengthDelimited,
   }
 );
+identity_partial_transform!(
+  Groto {
+    Ipv4Addr as Fixed32,
+    Ipv4Addr as Varint,
+    Ipv6Addr as Fixed128,
+    Ipv6Addr as Varint,
+    IpAddr as LengthDelimited,
+  }
+);
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;

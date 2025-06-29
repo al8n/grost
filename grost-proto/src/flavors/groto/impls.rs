@@ -100,16 +100,20 @@ where
   }
 }
 
-impl<W, T> Transform<Self, Self, W, Groto> for Option<T>
+impl<W, I, O, T> Transform<Option<I>, Option<O>, Optional<W>, Groto> for Option<T>
 where
   W: WireFormat<Groto>,
+  T: Transform<I, O, W, Groto>,
 {
-  fn transform(input: Self) -> Result<Self, <Groto as Flavor>::Error> {
-    Ok(input)
+  fn transform(input: Option<I>) -> Result<Option<O>, <Groto as Flavor>::Error> {
+    match input {
+      Some(value) => T::transform(value).map(Some),
+      None => Ok(None),
+    }
   }
 }
 
-impl<I, O, W, T> PartialTransform<I, Option<O>, W, Groto> for Option<T>
+impl<I, O, W, T> PartialTransform<Option<I>, Option<O>, Optional<W>, Groto> for Option<T>
 where
   W: WireFormat<Groto>,
   T: PartialTransform<I, Option<O>, W, Groto> + Sized + Selectable<Groto>,
@@ -117,10 +121,15 @@ where
   O: Selectable<Groto, Selector = Self::Selector>,
 {
   fn partial_transform(
-    input: I,
+    input: Option<I>,
     selector: &Self::Selector,
   ) -> Result<Option<O>, <Groto as Flavor>::Error> {
-    <T as PartialTransform<I, Option<O>, W, Groto>>::partial_transform(input, selector)
+    match input {
+      Some(value) => {
+        <T as PartialTransform<I, Option<O>, W, Groto>>::partial_transform(value, selector)
+      }
+      None => Ok(None),
+    }
   }
 }
 

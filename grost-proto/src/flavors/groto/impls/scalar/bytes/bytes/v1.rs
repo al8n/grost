@@ -38,8 +38,8 @@ decode_bridge!(
 
 partial_ref_state!(
   &'a Groto:
-    Bytes as LengthDelimited => &'a [u8],
-    BytesMut as LengthDelimited => &'a [u8],
+    Bytes as LengthDelimited => BytesSlice<__GROST_READ_BUF__>,
+    BytesMut as LengthDelimited => BytesSlice<__GROST_READ_BUF__>,
 );
 partial_state!(
   Groto:

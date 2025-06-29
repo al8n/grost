@@ -34,6 +34,20 @@ macro_rules! try_str_bridge {
         },
       );
 
+      impl<'a, B, UB> $crate::__private::decode::Decode<'a,  $crate::__private::flavors::Groto,  $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB> for $ty {
+        fn decode(
+          context: &'a <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Context,
+          src: B,
+        ) -> ::core::result::Result<(usize, $crate::__private::decode::Str<B>), <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Error>
+        where
+          $crate::__private::decode::Str<B>: Sized + 'a,
+          B: $crate::buffer::ReadBuf,
+          UB: $crate::buffer::Buffer<<$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Unknown<B>> + 'a,
+        {
+          <&str as $crate::__private::decode::Decode<'a, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB>>::decode(context, src)
+        }
+      }
+
       $crate::selectable!(@scalar Groto:
         $ty $([ $(const $g: usize),* ])?
       );

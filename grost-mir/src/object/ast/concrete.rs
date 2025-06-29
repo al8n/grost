@@ -348,7 +348,6 @@ pub struct Object<T = (), S = (), M = ()> {
   write_buffer_param: TypeParam,
   fields: Vec<Field<T, S>>,
   indexer: Indexer,
-  default: Option<Invokable>,
   partial: PartialObject,
   partial_ref: PartialRefObject,
   selector: Selector,
@@ -640,7 +639,6 @@ impl<T, S, M> Object<T, S, M> {
           _ => unreachable!("Field and meta mismatch"),
         })
         .collect(),
-      default: object.default,
       partial,
       partial_ref,
       selector,
@@ -666,7 +664,6 @@ impl<T, S, M> Object<T, S, M> {
   /// Returns the default value of the concrete object, if any.
   #[inline]
   pub fn derive(&self) -> darling::Result<proc_macro2::TokenStream> {
-    let default = self.derive_default()?;
     let accessors = self.derive_accessors()?;
 
     let indexer_defination = self.derive_indexer_defination();
@@ -700,8 +697,6 @@ impl<T, S, M> Object<T, S, M> {
       #partial_ref_def
 
       const _: () = {
-        #default
-
         #accessors
 
         #flatten_state_impl
@@ -760,53 +755,6 @@ impl<T, S, M> Object<T, S, M> {
         #(#accessors)*
       }
     })
-  }
-
-  fn derive_default(&self) -> darling::Result<proc_macro2::TokenStream> {
-    let name = self.name();
-    let (ig, tg, wc) = self.generics().split_for_impl();
-
-    if let Some(default) = &self.default {
-      Ok(quote! {
-        impl #ig ::core::default::Default for #name #tg #wc {
-          fn default() -> Self {
-            Self::new()
-          }
-        }
-
-        impl #ig ::core::default::Default for #name #tg #wc {
-          /// Creates a new instance of the object with default values.
-          pub fn new() -> Self {
-            (#default)()
-          }
-        }
-      })
-    } else {
-      let fields = self.fields().iter().map(|f| {
-        let name = f.name();
-        let default = f.default();
-        quote! {
-          #name: (#default)()
-        }
-      });
-
-      Ok(quote! {
-        impl #ig ::core::default::Default for #name #tg #wc {
-          fn default() -> Self {
-            Self::new()
-          }
-        }
-
-        impl #ig #name #tg #wc {
-          /// Creates a new instance of the object with default values.
-          pub fn new() -> Self {
-            Self {
-              #(#fields),*
-            }
-          }
-        }
-      })
-    }
   }
 
   fn derive_partial_state(&self) -> proc_macro2::TokenStream {

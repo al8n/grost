@@ -24,10 +24,7 @@ impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for BytesSlice<RB> {
   }
 }
 
-impl<RB: ?Sized, O> State<Flatten<O>> for BytesSlice<RB>
-where
-  RB: ReadBuf,
-{
+impl<RB: ?Sized, O> State<Flatten<O>> for BytesSlice<RB> {
   type Output = Self;
 }
 

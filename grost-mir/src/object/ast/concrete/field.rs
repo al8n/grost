@@ -17,7 +17,7 @@ use crate::{
     },
     meta::concrete::{FieldFromMeta, TaggedFieldFromMeta},
   },
-  utils::{Invokable, MissingOperation, SchemaOptions},
+  utils::{MissingOperation, SchemaOptions},
 };
 
 pub use partial::*;
@@ -38,7 +38,6 @@ pub struct RawTaggedField<E = ()> {
   attrs: Vec<Attribute>,
   label: Label,
   schema: SchemaOptions,
-  default: Option<Invokable>,
   tag: NonZeroU32,
   wire_format: Option<Type>,
   transform: FieldConvertOptions,
@@ -62,7 +61,6 @@ impl<E> RawTaggedField<E> {
       attrs,
       label,
       schema,
-      default,
       tag,
       wire_format,
       transform,
@@ -80,7 +78,6 @@ impl<E> RawTaggedField<E> {
         attrs,
         label,
         schema,
-        default,
         tag,
         wire_format,
         transform,
@@ -118,7 +115,6 @@ impl<TM, SM> RawField<TM, SM> {
         ty,
         vis,
         attrs,
-        default: meta.default,
         extra: meta.extra,
       }))),
       FieldFromMeta::Tagged(field) => {
@@ -126,7 +122,6 @@ impl<TM, SM> RawField<TM, SM> {
         let TaggedFieldFromMeta {
           label,
           schema,
-          default,
           tag,
           transform,
           wire_format,
@@ -144,7 +139,6 @@ impl<TM, SM> RawField<TM, SM> {
           attrs,
           label,
           schema: schema.into(),
-          default,
           tag,
           wire_format,
           transform: transform.finalize()?,
@@ -178,7 +172,6 @@ pub struct TaggedField<T = ()> {
   vis: Visibility,
   ty: Type,
   label: Label,
-  default: Invokable,
   attrs: Vec<Attribute>,
   wire_format: Type,
   wire_format_reflection: Type,
@@ -238,12 +231,6 @@ impl<T> TaggedField<T> {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
-  }
-
-  /// Returns the default value of the field.
-  #[inline]
-  pub const fn default(&self) -> &Invokable {
-    &self.default
   }
 
   /// Returns the tag of the field.
@@ -338,7 +325,6 @@ impl TaggedField {
       vis: self.vis,
       ty: self.ty,
       label: self.label,
-      default: self.default,
       attrs: self.attrs,
       wire_format: self.wire_format,
       wire_format_reflection: self.wire_format_reflection,
@@ -479,12 +465,6 @@ impl TaggedField {
       ty: field_ty,
       attrs: field.attrs,
       copy: field.copy,
-      default: match field.default {
-        Some(path) => path,
-        None => {
-          syn::parse2::<Path>(quote! { ::core::default::Default::default }).map(Into::into)?
-        }
-      },
       meta: field.extra,
     })
   }
@@ -528,14 +508,6 @@ impl<T, S> Field<T, S> {
     match self {
       Self::Skipped(skipped) => skipped.vis(),
       Self::Tagged(tagged) => tagged.vis(),
-    }
-  }
-
-  #[inline]
-  pub const fn default(&self) -> &Invokable {
-    match self {
-      Self::Skipped(skipped) => skipped.default(),
-      Self::Tagged(tagged) => tagged.default(),
     }
   }
 }

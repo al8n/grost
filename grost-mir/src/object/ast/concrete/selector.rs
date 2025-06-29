@@ -1005,37 +1005,33 @@ fn selector_field_fns<T, S, M>(
       let field_name = f.name();
       let flavor_ty = object.flavor_type();
       let select_fn_name = format_ident!("select_{}", field_name);
-      let select_fn_doc = format!(" Select the `{}.{}` field", object_name, field_name);
+      let select_fn_doc = format!(" Select the `{object_name}.{field_name}` field");
       let unselect_fn_name = format_ident!("unselect_{}", field_name);
-      let unselect_fn_doc = format!(" Unselect the `{}.{}` field", object_name, field_name);
+      let unselect_fn_doc = format!(" Unselect the `{object_name}.{field_name}` field");
       let update_fn_name = format_ident!("update_{}", field_name);
-      let update_fn_doc = format!(" Update the `{}.{}` field", object_name, field_name);
+      let update_fn_doc = format!(" Update the `{object_name}.{field_name}` field");
       let with_fn_name = format_ident!("with_{}", field_name);
-      let with_fn_doc = format!(" Set the `{}.{}` field", object_name, field_name);
+      let with_fn_doc = format!(" Set the `{object_name}.{field_name}` field");
       let without_fn_name = format_ident!("without_{}", field_name);
-      let without_fn_doc = format!(" Unset the `{}.{}` field", object_name, field_name);
+      let without_fn_doc = format!(" Unset the `{object_name}.{field_name}` field");
       let maybe_fn_name = format_ident!("maybe_{}", field_name);
-      let maybe_fn_doc = format!(" Set or unset the `{}.{}` field", object_name, field_name);
+      let maybe_fn_doc = format!(" Set or unset the `{object_name}.{field_name}` field");
       let is_field_selected_fn_name = format_ident!("is_{}_selected", field_name);
       let is_field_selected_fn_doc = format!(
-        " Returns `true` if the `{}.{}` field is selected",
-        object_name, field_name
+        " Returns `true` if the `{object_name}.{field_name}` field is selected"
       );
       let is_field_unselected_fn_name = format_ident!("is_{}_unselected", field_name);
       let is_field_unselected_fn_doc = format!(
-        " Returns `true` if the `{}.{}` field is unselected",
-        object_name, field_name
+        " Returns `true` if the `{object_name}.{field_name}` field is unselected"
       );
 
       let ref_fn_name = format_ident!("{}_ref", field_name);
       let ref_fn_doc = format!(
-        " Get a reference to the selector of `{}.{}` field",
-        object_name, field_name
+        " Get a reference to the selector of `{object_name}.{field_name}` field"
       );
       let ref_mut_fn_name = format_ident!("{}_mut", field_name);
       let ref_mut_fn_doc = format!(
-        " Get a mutable reference to the selector of `{}.{}` field",
-        object_name, field_name
+        " Get a mutable reference to the selector of `{object_name}.{field_name}` field"
       );
       quote! {
         #[doc = #select_fn_doc]

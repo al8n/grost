@@ -130,8 +130,8 @@ macro_rules! array_str {
     );
 
     $crate::partial_ref_state!(
-      &'a $crate::__private::flavors::Groto:
-        $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>
+      @scalar &'a $crate::__private::flavors::Groto:
+        $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited
     );
 
     $crate::partial_state!(
