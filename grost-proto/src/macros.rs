@@ -34,9 +34,35 @@ macro_rules! varint {
     $($crate::identity_transform!($flavor {
       $ty $([ $(const $g: usize),* ])? as $wf,
     });)*
-    // $($crate::identity_partial_transform!($flavor {
-    //   $ty $([ $(const $g: usize),* ])? as $wf,
-    // });)*
+
+    $(
+      impl $(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$ty, ::core::option::Option<$ty>, $wf, $flavor> for $ty {
+        fn partial_transform(input: Self, selector: &bool) -> ::core::result::Result<::core::option::Option<$ty>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        {
+          if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+            return ::core::result::Result::Ok(::core::option::Option::None);
+          }
+
+          ::core::result::Result::Ok(::core::option::Option::Some(input))
+        }
+      }
+
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::groto::Optional<$wf>, $flavor,> for $ty {
+        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        {
+          match input {
+            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
+            ::core::option::Option::Some(input) => {
+              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+                return ::core::result::Result::Ok(::core::option::Option::None);
+              }
+
+              ::core::result::Result::Ok(::core::option::Option::Some(input))
+            }
+          }
+        }
+      }
+    )*
   };
   (@without_flatten_state $flavor:ty:$wf:ty {
     $(

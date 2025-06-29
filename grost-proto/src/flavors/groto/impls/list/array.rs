@@ -33,9 +33,13 @@ where
     for (index, res) in input.enumerate() {
       let (_, item) = res?;
       if index >= N {
-        return Err(Error::custom(format!(
+        #[cfg(any(feature = "alloc", feature = "std"))]
+        let err_msg = ::std::format!(
           "expected array of length {N}, but got more elements"
-        )));
+        );
+        #[cfg(not(any(feature = "alloc", feature = "std")))]
+        let err_msg = "got more elements than array capacity";
+        return Err(Error::custom(err_msg));
       }
       let item = T::transform(item)?;
       array[index].write(item);

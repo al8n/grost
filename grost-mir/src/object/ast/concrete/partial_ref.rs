@@ -397,7 +397,7 @@ impl<T, S, M> Object<T, S, M> {
     }
   }
 
-  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
+  pub(super) fn derive_partial_ref_object(&self) -> darling::Result<proc_macro2::TokenStream> {
     let partial_ref_object = self.partial_ref();
     let partial_ref_object_ty = partial_ref_object.ty();
     let fields_init = self.fields().iter().filter_map(|f| {
@@ -425,20 +425,23 @@ impl<T, S, M> Object<T, S, M> {
       .fields()
       .iter()
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
-      .for_each(|f| {
+      .try_for_each(|f| {
         let field_name = f.name();
         let ty = &f.partial_ref().ty();
         let vis = f.vis();
         fields_accessors.push(optional_accessors(
+          &self.path_to_grost,
           field_name,
           vis,
           ty,
+          f.label(),
           f.partial_ref().copy(),
-        ));
+        )?);
         is_empty.push(quote! {
           self.#field_name.is_none()
         });
-      });
+        darling::Result::Ok(())
+      })?;
 
     let (ig, _, where_clauses) = partial_ref_object.generics().split_for_impl();
     let ubfn = &partial_ref_object.unknown_buffer_field_name;
@@ -451,7 +454,7 @@ impl<T, S, M> Object<T, S, M> {
       partial_ref_object.name(),
     );
 
-    quote! {
+    Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig ::core::default::Default for #partial_ref_object_ty #where_clauses
@@ -538,6 +541,6 @@ impl<T, S, M> Object<T, S, M> {
 
         #(#fields_accessors)*
       }
-    }
+    })
   }
 }

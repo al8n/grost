@@ -676,7 +676,7 @@ impl<T, S, M> Object<T, S, M> {
     let partial_impl = self.partial.derive(self)?;
 
     let partial_ref_def = self.derive_partial_ref_object_defination();
-    let partial_ref_impl = self.derive_partial_ref_object();
+    let partial_ref_impl = self.derive_partial_ref_object()?;
 
     let reflection_impl = self.reflection.derive(self)?;
 
@@ -744,8 +744,16 @@ impl<T, S, M> Object<T, S, M> {
         let ty = f.ty();
         let copy = f.copy();
 
-        accessors(field_name, f.vis(), ty, copy)
-      });
+        accessors(
+          self.path_to_grost(),
+          field_name,
+          f.vis(),
+          ty,
+          f.label(),
+          copy,
+        )
+      })
+      .collect::<darling::Result<Vec<_>>>()?;
 
     Ok(quote! {
       impl #ig #name #tg #wc {

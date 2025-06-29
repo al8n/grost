@@ -407,8 +407,16 @@ impl PartialObject {
         let ty = f.partial().ty();
         let copy = f.copy();
 
-        optional_accessors(field_name, f.vis(), ty, copy)
-      });
+        optional_accessors(
+          object.path_to_grost(),
+          field_name,
+          f.vis(),
+          ty,
+          f.label(),
+          copy,
+        )
+      })
+      .collect::<darling::Result<Vec<_>>>()?;
 
     let (ig, tg, where_clauses) = generics.split_for_impl();
     let flatten_state = derive_flatten_state(object.path_to_grost(), generics, name);

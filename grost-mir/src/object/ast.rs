@@ -281,11 +281,13 @@ impl From<ObjectConvertFromMeta> for ObjectConvertOptions {
 }
 
 fn accessors(
+  path_to_grost: &Path,
   field_name: &Ident,
   vis: &Visibility,
   ty: &Type,
+  label: &Label,
   copy: bool,
-) -> proc_macro2::TokenStream {
+) -> darling::Result<proc_macro2::TokenStream> {
   let ref_fn = format_ident!("{}_ref", field_name);
   let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
   let ref_mut_fn = format_ident!("{}_mut", field_name);
@@ -295,41 +297,157 @@ fn accessors(
   let with_fn = format_ident!("with_{}", field_name);
   let constable = copy.then(|| quote! { const });
 
-  quote! {
-    #[doc = #ref_fn_doc]
-    #[inline]
-    #vis const fn #ref_fn(&self) -> &#ty {
-      &self.#field_name
-    }
+  Ok(match label {
+    Label::Optional(_) => {
+      let unwrap_ref_fn = format_ident!("unwrap_{}_ref", field_name);
+      let unwrap_ref_fn_doc =
+        format!(" Returns a reference to the `{field_name}` if it is not `None`");
+      let unwrap_mut_fn = format_ident!("unwrap_{}_mut", field_name);
+      let unwrap_mut_fn_doc =
+        format!(" Returns a mutable reference to the `{field_name}` if it is not `None`");
+      let panic_msg = format!("`{field_name}` is `None`");
+      let panic_msg_doc = format!(" - Panics if the `{field_name}` is `None`");
+      let update_fn = format_ident!("update_{}", field_name);
+      let update_fn_doc =
+        format!(" Update the `{field_name}` to the given value or clear the `{field_name}`");
+      let clear_fn = format_ident!("clear_{}", field_name);
+      let clear_fn_doc = format!(" Clear the value of `{field_name}`");
+      let take_fn = format_ident!("take_{}", field_name);
+      let take_fn_doc = format!(" Takes the value of `{field_name}` out if it is not `None`");
+      let without_fn = format_ident!("without_{}", field_name);
+      let maybe_fn = format_ident!("maybe_{}", field_name);
+      let flatten_ty = quote! {
+        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
+      };
 
-    #[doc = #ref_mut_fn_doc]
-    #[inline]
-    #vis const fn #ref_mut_fn(&mut self) -> &mut #ty {
-      &mut self.#field_name
-    }
+      quote! {
+        #[doc = #ref_fn_doc]
+        #[inline]
+        #vis const fn #ref_fn(&self) -> ::core::option::Option<&#flatten_ty> {
+          self.#field_name.as_ref()
+        }
 
-    #[doc = #set_fn_doc]
-    #[inline]
-    #vis #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
-      self.#field_name = value;
-      self
-    }
+        #[doc = #ref_mut_fn_doc]
+        #[inline]
+        #vis const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #flatten_ty> {
+          self.#field_name.as_mut()
+        }
 
-    #[doc = #set_fn_doc]
-    #[inline]
-    #vis #constable fn #with_fn(mut self, value: #ty) -> Self {
-      self.#field_name = value;
-      self
+        #[doc = #set_fn_doc]
+        #[inline]
+        #vis #constable fn #set_fn(&mut self, value: #flatten_ty) -> &mut Self {
+          self.#field_name =::core::option::Option::Some(value);
+          self
+        }
+
+        #[doc = #set_fn_doc]
+        #[inline]
+        #vis #constable fn #with_fn(mut self, value: #flatten_ty) -> Self {
+          self.#field_name = ::core::option::Option::Some(value);
+          self
+        }
+
+        #[doc = #unwrap_ref_fn_doc]
+        ///
+        /// ## Panics
+        ///
+        #[doc = #panic_msg_doc]
+        #[inline]
+        #vis const fn #unwrap_ref_fn(&self) -> &#flatten_ty {
+          match self.#field_name.as_ref() {
+            ::core::option::Option::Some(value) => value,
+            ::core::option::Option::None => panic!(#panic_msg),
+          }
+        }
+
+        #[doc = #unwrap_mut_fn_doc]
+        ///
+        /// ## Panics
+        ///
+        #[doc = #panic_msg_doc]
+        #[inline]
+        #vis const fn #unwrap_mut_fn(&mut self) -> &mut #flatten_ty {
+          match self.#field_name.as_mut() {
+            ::core::option::Option::Some(value) => value,
+            ::core::option::Option::None => panic!(#panic_msg),
+          }
+        }
+
+        #[doc = #take_fn_doc]
+        #[inline]
+        #vis const fn #take_fn(&mut self) -> #ty {
+          self.#field_name.take()
+        }
+
+        #[doc = #clear_fn_doc]
+        #[inline]
+        #vis #constable fn #clear_fn(&mut self) -> &mut Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+
+        #[doc = #update_fn_doc]
+        #[inline]
+        #vis #constable fn #update_fn(&mut self, value: #ty) -> &mut Self {
+          self.#field_name = value;
+          self
+        }
+
+        #[doc = #clear_fn_doc]
+        #[inline]
+        #vis #constable fn #without_fn(mut self) -> Self {
+          self.#field_name = ::core::option::Option::None;
+          self
+        }
+
+        #[doc = #update_fn_doc]
+        #[inline]
+        #vis #constable fn #maybe_fn(mut self, value: #ty) -> Self {
+          self.#field_name = value;
+          self
+        }
+      }
     }
-  }
+    _ => {
+      quote! {
+        #[doc = #ref_fn_doc]
+        #[inline]
+        #vis const fn #ref_fn(&self) -> &#ty {
+          &self.#field_name
+        }
+
+        #[doc = #ref_mut_fn_doc]
+        #[inline]
+        #vis const fn #ref_mut_fn(&mut self) -> &mut #ty {
+          &mut self.#field_name
+        }
+
+        #[doc = #set_fn_doc]
+        #[inline]
+        #vis #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+          self.#field_name = value;
+          self
+        }
+
+        #[doc = #set_fn_doc]
+        #[inline]
+        #vis #constable fn #with_fn(mut self, value: #ty) -> Self {
+          self.#field_name = value;
+          self
+        }
+      }
+    }
+  })
 }
 
 fn optional_accessors(
+  path_to_grost: &Path,
   field_name: &Ident,
   vis: &Visibility,
   ty: &Type,
+  label: &Label,
   copy: bool,
-) -> proc_macro2::TokenStream {
+) -> darling::Result<proc_macro2::TokenStream> {
   let ref_fn = format_ident!("{}_ref", field_name);
   let ref_fn_doc = format!(" Returns a reference to the `{field_name}`");
   let ref_mut_fn = format_ident!("{}_mut", field_name);
@@ -355,16 +473,34 @@ fn optional_accessors(
   let maybe_fn = format_ident!("maybe_{}", field_name);
   let constable = copy.then(|| quote! { const });
 
-  quote! {
+  let optional = label.is_optional();
+
+  let (optional_mut_ty, optional_ref_ty, optional_ty, flatten_ty): (Type, Type, Type, Type) =
+    if optional {
+      let flatten_ty = syn::parse2(quote! {
+        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
+      })?;
+      let optional_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #flatten_ty> })?;
+      let optional_ref_ty = syn::parse2(quote! { ::core::option::Option<&#flatten_ty> })?;
+      let optional_ty = syn::parse2(quote! { #ty })?;
+      (optional_mut_ty, optional_ref_ty, optional_ty, flatten_ty)
+    } else {
+      let optional_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #ty> })?;
+      let optional_ref_ty = syn::parse2(quote! { ::core::option::Option<&#ty> })?;
+      let optional_ty = syn::parse2(quote! { ::core::option::Option<#ty> })?;
+      (optional_mut_ty, optional_ref_ty, optional_ty, ty.clone())
+    };
+
+  Ok(quote! {
     #[doc = #ref_fn_doc]
     #[inline]
-    #vis const fn #ref_fn(&self) -> ::core::option::Option<&#ty> {
+    #vis const fn #ref_fn(&self) -> #optional_ref_ty {
       self.#field_name.as_ref()
     }
 
     #[doc = #ref_mut_fn_doc]
     #[inline]
-    #vis const fn #ref_mut_fn(&mut self) -> ::core::option::Option<&mut #ty> {
+    #vis const fn #ref_mut_fn(&mut self) -> #optional_mut_ty {
       self.#field_name.as_mut()
     }
 
@@ -374,7 +510,7 @@ fn optional_accessors(
     ///
     #[doc = #panic_msg_doc]
     #[inline]
-    #vis const fn #unwrap_ref_fn(&self) -> &#ty {
+    #vis const fn #unwrap_ref_fn(&self) -> &#flatten_ty {
       match self.#field_name.as_ref() {
         ::core::option::Option::Some(value) => value,
         ::core::option::Option::None => panic!(#panic_msg),
@@ -387,7 +523,7 @@ fn optional_accessors(
     ///
     #[doc = #panic_msg_doc]
     #[inline]
-    #vis const fn #unwrap_mut_fn(&mut self) -> &mut #ty {
+    #vis const fn #unwrap_mut_fn(&mut self) -> &mut #flatten_ty {
       match self.#field_name.as_mut() {
         ::core::option::Option::Some(value) => value,
         ::core::option::Option::None => panic!(#panic_msg),
@@ -396,7 +532,7 @@ fn optional_accessors(
 
     #[doc = #take_fn_doc]
     #[inline]
-    #vis const fn #take_fn(&mut self) -> ::core::option::Option<#ty> {
+    #vis const fn #take_fn(&mut self) -> #optional_ty {
       self.#field_name.take()
     }
 
@@ -409,21 +545,21 @@ fn optional_accessors(
 
     #[doc = #set_fn_doc]
     #[inline]
-    #vis #constable fn #set_fn(&mut self, value: #ty) -> &mut Self {
+    #vis #constable fn #set_fn(&mut self, value: #flatten_ty) -> &mut Self {
       self.#field_name = ::core::option::Option::Some(value);
       self
     }
 
     #[doc = #update_fn_doc]
     #[inline]
-    #vis #constable fn #update_fn(&mut self, value: ::core::option::Option<#ty>) -> &mut Self {
+    #vis #constable fn #update_fn(&mut self, value: #optional_ty) -> &mut Self {
       self.#field_name = value;
       self
     }
 
     #[doc = #set_fn_doc]
     #[inline]
-    #vis #constable fn #with_fn(mut self, value: #ty) -> Self {
+    #vis #constable fn #with_fn(mut self, value: #flatten_ty) -> Self {
       self.#field_name = ::core::option::Option::Some(value);
       self
     }
@@ -437,11 +573,11 @@ fn optional_accessors(
 
     #[doc = #update_fn_doc]
     #[inline]
-    #vis #constable fn #maybe_fn(mut self, value: ::core::option::Option<#ty>) -> Self {
+    #vis #constable fn #maybe_fn(mut self, value: #optional_ty) -> Self {
       self.#field_name = value;
       self
     }
-  }
+  })
 }
 
 fn derive_flatten_state(

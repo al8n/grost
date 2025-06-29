@@ -70,24 +70,44 @@ fn derive_partial_object_decode<T, S, M>(
       }
 
       fields_partial_transform.push({
+        let optional = f.label().is_optional();
         let call = match partial_transform_options.convert_operation() {
           None => {
-            quote! {
-              <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<
-                #partial_field_ty,
-                ::core::option::Option<#partial_field_ty>,
-                #field_wf,
-                #flavor_ty,
-              >>::partial_transform(value, selector.#field_selector())?
+            if optional {
+              quote! {
+                <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<
+                  #partial_field_ty,
+                  #partial_field_ty,
+                  #field_wf,
+                  #flavor_ty,
+                >>::partial_transform(this.#field_name, selector.#field_selector())?
+              }
+            } else {
+              quote! {
+                <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<
+                  #partial_field_ty,
+                  ::core::option::Option<#partial_field_ty>,
+                  #field_wf,
+                  #flavor_ty,
+                >>::partial_transform(value, selector.#field_selector())?
+              }
             }
           }
           Some(transform) => transform.call(&[quote!(value), quote!(selector.#field_selector())]),
         };
 
-        quote! {
-          if let ::core::option::Option::Some(value) = input.#field_name {
+        if f.label().is_optional() {
+          quote! {
             if selector.#is_field_selected() {
               this.#field_name = #call;
+            }
+          }
+        } else {
+          quote! {
+            if let ::core::option::Option::Some(value) = input.#field_name {
+              if selector.#is_field_selected() {
+                this.#field_name = #call;
+              }
             }
           }
         }
@@ -310,8 +330,14 @@ fn derive_partial_ref_object_decode<T, S, M>(
         pptpr.push({
           let call = match partial_transform_ref_options.convert_operation() {
             None => {
-              quote! {
-                <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, ::core::option::Option<#partial_field_ty>, #field_wf, #flavor_ty>>::partial_transform(value, selector.#field_selector())?
+              if optional {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::partial_transform(input.#field_name, selector.#field_selector())?
+                }
+              } else {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, ::core::option::Option<#partial_field_ty>, #field_wf, #flavor_ty>>::partial_transform(value, selector.#field_selector())?
+                }
               }
             }
             Some(transform) => {
@@ -319,10 +345,18 @@ fn derive_partial_ref_object_decode<T, S, M>(
             }
           };
 
-          quote! {
-            if let ::core::option::Option::Some(value) = input.#field_name {
+          if optional {
+            quote! {
               if selector.#is_field_selected() {
                 this.#field_name = #call;
+              }
+            }
+          } else {
+            quote! {
+              if let ::core::option::Option::Some(value) = input.#field_name {
+                if selector.#is_field_selected() {
+                  this.#field_name = #call;
+                }
               }
             }
           }
@@ -343,8 +377,14 @@ fn derive_partial_ref_object_decode<T, S, M>(
         ptpr.push({
           let call = match transform_ref_options.convert_operation() {
             None => {
-              quote! {
-                <#partial_field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(value)?
+              if optional {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(input.#field_name)?
+                }
+              } else {
+                quote! {
+                  <#partial_field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(value)?
+                }
               }
             }
             Some(transform) => {
@@ -352,9 +392,15 @@ fn derive_partial_ref_object_decode<T, S, M>(
             }
           };
 
-          quote! {
-            if let ::core::option::Option::Some(value) = input.#field_name {
-              this.#field_name = ::core::option::Option::Some(#call);
+          if optional {
+            quote! {
+              this.#field_name = #call;
+            }
+          } else {
+            quote! {
+              if let ::core::option::Option::Some(value) = input.#field_name {
+                this.#field_name = ::core::option::Option::Some(#call);
+              }
             }
           }
         });
@@ -383,6 +429,17 @@ fn derive_partial_ref_object_decode<T, S, M>(
           }
         });
       }
+
+      let set_value = if optional {
+        quote! {
+          this.#field_name = value;
+        }
+      } else {
+        quote! {
+          this.#field_name = ::core::option::Option::Some(value);
+        }
+      };
+
       field_decode_branches.push(quote! {
         <#field_identifier as #object_reflectable>::REFLECTION => {
           if offset >= buf_len {
@@ -403,7 +460,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
 
           let (read, value) = (#decode_fn)(context, src.slice(offset..))?;
           #value
-          this.#field_name = ::core::option::Option::Some(value);
+          #set_value
           offset += read;
         },
       });

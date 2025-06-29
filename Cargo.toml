@@ -2,10 +2,10 @@
 members = [
   "grost",
   "grost-codegen",
-  "grost-codegen-test",
   "grost-darling",
-  "grost-mir",
   "grost-derive",
+  "grost-derive-test",
+  "grost-mir",
   "grost-parser",
   "grost-proto",
 ]

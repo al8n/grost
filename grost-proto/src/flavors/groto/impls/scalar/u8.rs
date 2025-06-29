@@ -11,7 +11,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Groto: u8 as Fixed8);
+default_wire_format!(Groto: u8 as Fixed8; NonZeroU8 as Fixed8);
 selectable!(@scalar Groto: u8, NonZeroU8);
 partial_ref_state!(@scalar &'a Groto:
   u8 as Fixed8,

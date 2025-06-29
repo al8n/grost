@@ -25,23 +25,21 @@ macro_rules! identity_partial_transform {
         }
       }
 
-      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$flavor, $wf, ::core::option::Option<Self>, $crate::__private::convert::Partial<$flavor>> for $ty {
-      //   fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<<Self as $crate::__private::convert::State<$crate::__private::convert::Partial<$flavor>>>::Output, <$flavor as $crate::__private::flavors::Flavor>::Error>
-      //   where
-      //     Self: Sized,
-      //   {
-      //     match input {
-      //       ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
-      //       ::core::option::Option::Some(input) => {
-      //         if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-      //           return ::core::result::Result::Ok(::core::option::Option::None);
-      //         }
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::groto::Optional<$wf>, $flavor,> for $ty {
+        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        {
+          match input {
+            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
+            ::core::option::Option::Some(input) => {
+              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+                return ::core::result::Result::Ok(::core::option::Option::None);
+              }
 
-      //         ::core::result::Result::Ok(::core::option::Option::Some(input))
-      //       }
-      //     }
-      //   }
-      // }
+              ::core::result::Result::Ok(::core::option::Option::Some(input))
+            }
+          }
+        }
+      }
     )*
   };
 }
@@ -84,7 +82,7 @@ where
 {
 }
 
-impl<'de, W, O, B, UB, T> Decode<'de, Groto, W, O, B, UB> for Option<T>
+impl<'de, W, O, B, UB, T> Decode<'de, Groto, Optional<W>, Option<O>, B, UB> for Option<T>
 where
   T: Decode<'de, Groto, W, O, B, UB>,
   W: WireFormat<Groto>,
@@ -92,13 +90,13 @@ where
   fn decode(
     context: &'de <Groto as Flavor>::Context,
     src: B,
-  ) -> Result<(usize, O), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Option<O>), <Groto as Flavor>::Error>
   where
     O: Sized + 'de,
     B: ReadBuf + 'de,
     UB: Buffer<<Groto as Flavor>::Unknown<B>> + 'de,
   {
-    T::decode(context, src)
+    T::decode(context, src).map(|(read, val)| (read, Some(val)))
   }
 }
 

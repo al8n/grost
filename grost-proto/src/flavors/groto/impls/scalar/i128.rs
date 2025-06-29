@@ -11,7 +11,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Groto: i128 as Varint);
+default_wire_format!(Groto: i128 as Varint; NonZeroI128 as Varint);
 selectable!(@scalar Groto: i128, NonZeroI128);
 partial_ref_state!(@scalar &'a Groto:
   i128 as Varint,

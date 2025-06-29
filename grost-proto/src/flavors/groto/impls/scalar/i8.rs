@@ -5,7 +5,7 @@ use crate::{
 };
 use core::num::NonZeroI8;
 
-default_wire_format!(Groto: i8 as Fixed8);
+default_wire_format!(Groto: i8 as Fixed8; NonZeroI8 as Fixed8);
 selectable!(@scalar Groto:i8, NonZeroI8);
 partial_ref_state!(@scalar &'a Groto:
   i8 as Fixed8,
