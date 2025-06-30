@@ -53,6 +53,7 @@ fn derive_partial_object_decode<T, S, M>(
     .filter_map(|f| f.try_unwrap_tagged_ref().ok())
     .for_each(|f| {
       let field_name = f.name();
+      let field_ty = f.ty();
       let field_wf = f.wire_format();
       let partial_transform_options = f.partial().partial_transform();
       let partial_field_ty = f.partial().ty();
@@ -75,7 +76,7 @@ fn derive_partial_object_decode<T, S, M>(
           None => {
             if optional {
               quote! {
-                <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<
+                <#field_ty as #path_to_grost::__private::convert::PartialTransform<
                   #partial_field_ty,
                   #partial_field_ty,
                   #field_wf,
@@ -84,7 +85,7 @@ fn derive_partial_object_decode<T, S, M>(
               }
             } else {
               quote! {
-                <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<
+                <#field_ty as #path_to_grost::__private::convert::PartialTransform<
                   #partial_field_ty,
                   ::core::option::Option<#partial_field_ty>,
                   #field_wf,
@@ -332,11 +333,11 @@ fn derive_partial_ref_object_decode<T, S, M>(
             None => {
               if optional {
                 quote! {
-                  <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::partial_transform(input.#field_name, selector.#field_selector())?
+                  <#field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::partial_transform(input.#field_name, selector.#field_selector())?
                 }
               } else {
                 quote! {
-                  <#partial_field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, ::core::option::Option<#partial_field_ty>, #field_wf, #flavor_ty>>::partial_transform(value, selector.#field_selector())?
+                  <#field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, ::core::option::Option<#partial_field_ty>, #field_wf, #flavor_ty>>::partial_transform(value, selector.#field_selector())?
                 }
               }
             }
@@ -379,11 +380,11 @@ fn derive_partial_ref_object_decode<T, S, M>(
             None => {
               if optional {
                 quote! {
-                  <#partial_field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(input.#field_name)?
+                  <#field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(input.#field_name)?
                 }
               } else {
                 quote! {
-                  <#partial_field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(value)?
+                  <#field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(value)?
                 }
               }
             }

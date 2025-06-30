@@ -68,10 +68,8 @@ macro_rules! try_str_bridge {
         }
       );
 
-      $crate::identity_transform!(
-        $flavor {
-          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
-        }
+      $crate::groto_identity_transform!(
+        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
       );
 
       impl $crate::__private::convert::Transform<&str, Self, LengthDelimited, Groto> for $ty {

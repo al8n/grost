@@ -1,117 +1,117 @@
-mod optional_list {
+mod list {
     use grost::{Object, flavors::groto::*};
     use std::vec::Vec;
-    struct OptionalVec {
-        #[grost(tag = 3, optional(list(optional(scalar))))]
-        optional_vec_optional: Option<Vec<Option<u16>>>,
+    struct VecCombinations {
+        #[grost(tag = 4, optional(list(optional(list(scalar)))))]
+        optional_vec_optional_vec: Option<Vec<Option<Vec<u16>>>>,
     }
-    /// Field indexer for the struct [`OptionalVec`]
+    /// Field indexer for the struct [`VecCombinations`]
     #[repr(u32)]
-    enum OptionalVecIndex {
-        /// The field indexer for the field `optional_vec_optional`
-        OptionalVecOptional = 3u32,
+    enum VecCombinationsIndex {
+        /// The field indexer for the field `optional_vec_optional_vec`
+        OptionalVecOptionalVec = 4u32,
     }
     #[automatically_derived]
-    impl ::core::clone::Clone for OptionalVecIndex {
+    impl ::core::clone::Clone for VecCombinationsIndex {
         #[inline]
-        fn clone(&self) -> OptionalVecIndex {
+        fn clone(&self) -> VecCombinationsIndex {
             *self
         }
     }
     #[automatically_derived]
-    impl ::core::marker::Copy for OptionalVecIndex {}
+    impl ::core::marker::Copy for VecCombinationsIndex {}
     #[automatically_derived]
-    impl ::core::marker::StructuralPartialEq for OptionalVecIndex {}
+    impl ::core::marker::StructuralPartialEq for VecCombinationsIndex {}
     #[automatically_derived]
-    impl ::core::cmp::PartialEq for OptionalVecIndex {
+    impl ::core::cmp::PartialEq for VecCombinationsIndex {
         #[inline]
-        fn eq(&self, other: &OptionalVecIndex) -> bool {
+        fn eq(&self, other: &VecCombinationsIndex) -> bool {
             true
         }
     }
     #[automatically_derived]
-    impl ::core::cmp::Eq for OptionalVecIndex {
+    impl ::core::cmp::Eq for VecCombinationsIndex {
         #[inline]
         #[doc(hidden)]
         #[coverage(off)]
         fn assert_receiver_is_total_eq(&self) -> () {}
     }
     #[automatically_derived]
-    impl ::core::cmp::PartialOrd for OptionalVecIndex {
+    impl ::core::cmp::PartialOrd for VecCombinationsIndex {
         #[inline]
         fn partial_cmp(
             &self,
-            other: &OptionalVecIndex,
+            other: &VecCombinationsIndex,
         ) -> ::core::option::Option<::core::cmp::Ordering> {
             ::core::option::Option::Some(::core::cmp::Ordering::Equal)
         }
     }
     #[automatically_derived]
-    impl ::core::cmp::Ord for OptionalVecIndex {
+    impl ::core::cmp::Ord for VecCombinationsIndex {
         #[inline]
-        fn cmp(&self, other: &OptionalVecIndex) -> ::core::cmp::Ordering {
+        fn cmp(&self, other: &VecCombinationsIndex) -> ::core::cmp::Ordering {
             ::core::cmp::Ordering::Equal
         }
     }
     #[automatically_derived]
-    impl ::core::hash::Hash for OptionalVecIndex {
+    impl ::core::hash::Hash for VecCombinationsIndex {
         #[inline]
         fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {}
     }
     #[automatically_derived]
-    impl ::core::fmt::Debug for OptionalVecIndex {
+    impl ::core::fmt::Debug for VecCombinationsIndex {
         #[inline]
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::write_str(f, "OptionalVecOptional")
+            ::core::fmt::Formatter::write_str(f, "OptionalVecOptionalVec")
         }
     }
-    /// The selection type for [`OptionalVec`]
+    /// The selection type for [`VecCombinations`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct OptionalVecSelector {
-        optional_vec_optional: <Option<
-            Vec<Option<u16>>,
+    struct VecCombinationsSelector {
+        optional_vec_optional_vec: <Option<
+            Vec<Option<Vec<u16>>>,
         > as ::grost::__private::selection::Selectable<
             ::grost::__private::flavors::Groto,
         >>::Selector,
     }
-    /// An iterator over the selected fields of the [`OptionalVecSelector`]
+    /// An iterator over the selected fields of the [`VecCombinationsSelector`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct OptionalVecSelectorIter<
+    struct VecCombinationsSelectorIter<
         '__grost_lifetime__,
         const __GROST_SELECTED__: ::core::primitive::bool = true,
     > {
-        selector: &'__grost_lifetime__ OptionalVecSelector,
-        index: ::core::option::Option<OptionalVecIndex>,
+        selector: &'__grost_lifetime__ VecCombinationsSelector,
+        index: ::core::option::Option<VecCombinationsIndex>,
         num: ::core::primitive::usize,
         yielded: ::core::primitive::usize,
     }
-    /// Partial struct for the [`PartialOptionalVec`]
+    /// Partial struct for the [`PartialVecCombinations`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct PartialOptionalVec {
-        optional_vec_optional: <Option<
-            Vec<Option<u16>>,
+    struct PartialVecCombinations {
+        optional_vec_optional_vec: <Option<
+            Vec<Option<Vec<u16>>>,
         > as ::grost::__private::convert::State<
             ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
         >>::Output,
     }
-    /// Partial reference struct for the struct [`OptionalVec`]
+    /// Partial reference struct for the struct [`VecCombinations`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct PartialOptionalVecRef<
+    struct PartialVecCombinationsRef<
         '__grost_lifetime__,
         __GROST_READ_BUFFER__,
         __GROST_UNKNOWN_BUFFER__,
     > {
         __grost_unknown_buffer__: ::core::option::Option<__GROST_UNKNOWN_BUFFER__>,
         __grost_read_buffer__: ::core::option::Option<__GROST_READ_BUFFER__>,
-        optional_vec_optional: <Option<
-            Vec<Option<u16>>,
+        optional_vec_optional_vec: <Option<
+            Vec<Option<Vec<u16>>>,
         > as ::grost::__private::convert::State<
             ::grost::__private::convert::PartialRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
                 <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Groto,
                 >>::Format,
@@ -120,136 +120,138 @@ mod optional_list {
         >>::Output,
     }
     const _: () = {
-        impl OptionalVec {
-            /// Returns a reference to the `optional_vec_optional`
+        impl VecCombinations {
+            /// Returns a reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_ref(
+            const fn optional_vec_optional_vec_ref(
                 &self,
             ) -> ::core::option::Option<
                 &<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_ref()
+                self.optional_vec_optional_vec.as_ref()
             }
-            /// Returns a mutable reference to the `optional_vec_optional`
+            /// Returns a mutable reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_mut(
+            const fn optional_vec_optional_vec_mut(
                 &mut self,
             ) -> ::core::option::Option<
                 &mut <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_mut()
+                self.optional_vec_optional_vec.as_mut()
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn set_optional_vec_optional(
+            fn set_optional_vec_optional_vec(
                 &mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn with_optional_vec_optional(
+            fn with_optional_vec_optional_vec(
                 mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Returns a reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_ref(
+            const fn unwrap_optional_vec_optional_vec_ref(
                 &self,
             ) -> &<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_ref() {
+                match self.optional_vec_optional_vec.as_ref() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Returns a mutable reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a mutable reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_mut(
+            const fn unwrap_optional_vec_optional_vec_mut(
                 &mut self,
             ) -> &mut <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_mut() {
+                match self.optional_vec_optional_vec.as_mut() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Takes the value of `optional_vec_optional` out if it is not `None`
+            /// Takes the value of `optional_vec_optional_vec` out if it is not `None`
             #[inline]
-            const fn take_optional_vec_optional(&mut self) -> Option<Vec<Option<u16>>> {
-                self.optional_vec_optional.take()
-            }
-            /// Clear the value of `optional_vec_optional`
-            #[inline]
-            fn clear_optional_vec_optional(&mut self) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::None;
-                self
-            }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
-            #[inline]
-            fn update_optional_vec_optional(
+            const fn take_optional_vec_optional_vec(
                 &mut self,
-                value: Option<Vec<Option<u16>>>,
+            ) -> Option<Vec<Option<Vec<u16>>>> {
+                self.optional_vec_optional_vec.take()
+            }
+            /// Clear the value of `optional_vec_optional_vec`
+            #[inline]
+            fn clear_optional_vec_optional_vec(&mut self) -> &mut Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
+                self
+            }
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
+            #[inline]
+            fn update_optional_vec_optional_vec(
+                &mut self,
+                value: Option<Vec<Option<Vec<u16>>>>,
             ) -> &mut Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
-            /// Clear the value of `optional_vec_optional`
+            /// Clear the value of `optional_vec_optional_vec`
             #[inline]
-            fn without_optional_vec_optional(mut self) -> Self {
-                self.optional_vec_optional = ::core::option::Option::None;
+            fn without_optional_vec_optional_vec(mut self) -> Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
                 self
             }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
             #[inline]
-            fn maybe_optional_vec_optional(
+            fn maybe_optional_vec_optional_vec(
                 mut self,
-                value: Option<Vec<Option<u16>>>,
+                value: Option<Vec<Option<Vec<u16>>>>,
             ) -> Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
         }
@@ -259,21 +261,21 @@ mod optional_list {
             __GROST_FLATTEN_STATE__: ?::core::marker::Sized,
         > ::grost::__private::convert::State<
             ::grost::__private::convert::Flattened<__GROST_FLATTEN_STATE__>,
-        > for OptionalVec {
+        > for VecCombinations {
             type Output = Self;
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl ::grost::__private::convert::State<
             ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
-        > for OptionalVec {
-            type Output = PartialOptionalVec;
+        > for VecCombinations {
+            type Output = PartialVecCombinations;
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl ::grost::__private::convert::State<
             ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
-        > for PartialOptionalVec {
+        > for PartialVecCombinations {
             type Output = Self;
         }
         #[automatically_derived]
@@ -285,7 +287,7 @@ mod optional_list {
         > ::grost::__private::convert::State<
             ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
         >
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -306,8 +308,8 @@ mod optional_list {
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
-        > for OptionalVec {
-            type Output = PartialOptionalVecRef<
+        > for VecCombinations {
+            type Output = PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
@@ -327,8 +329,8 @@ mod optional_list {
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
-        > for PartialOptionalVec {
-            type Output = PartialOptionalVecRef<
+        > for PartialVecCombinations {
+            type Output = PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
@@ -349,7 +351,7 @@ mod optional_list {
                 __GROST_UNKNOWN_BUFFER__,
             >,
         >
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -358,7 +360,7 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::default::Default for PartialOptionalVec {
+        impl ::core::default::Default for PartialVecCombinations {
             fn default() -> Self {
                 Self::new()
             }
@@ -369,31 +371,31 @@ mod optional_list {
             __GROST_FLATTEN_STATE__: ?::core::marker::Sized,
         > ::grost::__private::convert::State<
             ::grost::__private::convert::Flattened<__GROST_FLATTEN_STATE__>,
-        > for PartialOptionalVec {
+        > for PartialVecCombinations {
             type Output = Self;
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl PartialOptionalVec {
+        impl PartialVecCombinations {
             /// Creates an empty partial struct.
             #[inline]
             pub const fn new() -> Self {
                 Self {
-                    optional_vec_optional: ::core::option::Option::None,
+                    optional_vec_optional_vec: ::core::option::Option::None,
                 }
             }
             /// Returns `true` if the partial object is empty.
             #[inline]
             pub const fn is_empty(&self) -> bool {
-                self.optional_vec_optional.is_none()
+                self.optional_vec_optional_vec.is_none()
             }
-            /// Returns a reference to the `optional_vec_optional`
+            /// Returns a reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_ref(
+            const fn optional_vec_optional_vec_ref(
                 &self,
             ) -> ::core::option::Option<
                 &<<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
@@ -402,15 +404,15 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_ref()
+                self.optional_vec_optional_vec.as_ref()
             }
-            /// Returns a mutable reference to the `optional_vec_optional`
+            /// Returns a mutable reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_mut(
+            const fn optional_vec_optional_vec_mut(
                 &mut self,
             ) -> ::core::option::Option<
                 &mut <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
@@ -419,79 +421,79 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_mut()
+                self.optional_vec_optional_vec.as_mut()
             }
-            /// Returns a reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_ref(
+            const fn unwrap_optional_vec_optional_vec_ref(
                 &self,
             ) -> &<<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
             >>::Output as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_ref() {
+                match self.optional_vec_optional_vec.as_ref() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Returns a mutable reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a mutable reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_mut(
+            const fn unwrap_optional_vec_optional_vec_mut(
                 &mut self,
             ) -> &mut <<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
             >>::Output as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_mut() {
+                match self.optional_vec_optional_vec.as_mut() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Takes the value of `optional_vec_optional` out if it is not `None`
+            /// Takes the value of `optional_vec_optional_vec` out if it is not `None`
             #[inline]
-            const fn take_optional_vec_optional(
+            const fn take_optional_vec_optional_vec(
                 &mut self,
             ) -> <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
             >>::Output {
-                self.optional_vec_optional.take()
+                self.optional_vec_optional_vec.take()
             }
-            /// Clear the value of `optional_vec_optional`
+            /// Clear the value of `optional_vec_optional_vec`
             #[inline]
-            fn clear_optional_vec_optional(&mut self) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::None;
+            fn clear_optional_vec_optional_vec(&mut self) -> &mut Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
                 self
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn set_optional_vec_optional(
+            fn set_optional_vec_optional_vec(
                 &mut self,
                 value: <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
@@ -500,30 +502,30 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
             #[inline]
-            fn update_optional_vec_optional(
+            fn update_optional_vec_optional_vec(
                 &mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
                     >,
                 >>::Output,
             ) -> &mut Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn with_optional_vec_optional(
+            fn with_optional_vec_optional_vec(
                 mut self,
                 value: <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
@@ -532,28 +534,28 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Clear the value of `optional_vec_optional`
+            /// Clear the value of `optional_vec_optional_vec`
             #[inline]
-            fn without_optional_vec_optional(mut self) -> Self {
-                self.optional_vec_optional = ::core::option::Option::None;
+            fn without_optional_vec_optional_vec(mut self) -> Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
                 self
             }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
             #[inline]
-            fn maybe_optional_vec_optional(
+            fn maybe_optional_vec_optional_vec(
                 mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::Partial<
                         ::grost::__private::flavors::Groto,
                     >,
                 >>::Output,
             ) -> Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
         }
@@ -564,7 +566,7 @@ mod optional_list {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         > ::core::default::Default
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -583,7 +585,7 @@ mod optional_list {
         > ::grost::__private::convert::State<
             ::grost::__private::convert::Flattened<__GROST_FLATTEN_STATE__>,
         >
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -596,7 +598,7 @@ mod optional_list {
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
-        > PartialOptionalVecRef<
+        > PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -605,7 +607,7 @@ mod optional_list {
             #[inline]
             pub const fn new() -> Self {
                 Self {
-                    optional_vec_optional: ::core::option::Option::None,
+                    optional_vec_optional_vec: ::core::option::Option::None,
                     __grost_unknown_buffer__: ::core::option::Option::None,
                     __grost_read_buffer__: ::core::option::Option::None,
                 }
@@ -614,7 +616,7 @@ mod optional_list {
             #[inline]
             pub const fn is_empty(&self) -> bool {
                 self.__grost_unknown_buffer__.is_none()
-                    && self.optional_vec_optional.is_none()
+                    && self.optional_vec_optional_vec.is_none()
             }
             /// Returns the original encoded type of the partial decoded object.
             #[inline]
@@ -672,20 +674,20 @@ mod optional_list {
                 self.__grost_unknown_buffer__ = ::core::option::Option::None;
                 self
             }
-            /// Returns a reference to the `optional_vec_optional`
+            /// Returns a reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_ref(
+            const fn optional_vec_optional_vec_ref(
                 &self,
             ) -> ::core::option::Option<
                 &<<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -695,22 +697,22 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_ref()
+                self.optional_vec_optional_vec.as_ref()
             }
-            /// Returns a mutable reference to the `optional_vec_optional`
+            /// Returns a mutable reference to the `optional_vec_optional_vec`
             #[inline]
-            const fn optional_vec_optional_mut(
+            const fn optional_vec_optional_vec_mut(
                 &mut self,
             ) -> ::core::option::Option<
                 &mut <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -720,25 +722,25 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             > {
-                self.optional_vec_optional.as_mut()
+                self.optional_vec_optional_vec.as_mut()
             }
-            /// Returns a reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_ref(
+            const fn unwrap_optional_vec_optional_vec_ref(
                 &self,
             ) -> &<<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::PartialRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::Format,
@@ -747,32 +749,32 @@ mod optional_list {
             >>::Output as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_ref() {
+                match self.optional_vec_optional_vec.as_ref() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Returns a mutable reference to the `optional_vec_optional` if it is not `None`
+            /// Returns a mutable reference to the `optional_vec_optional_vec` if it is not `None`
             ///
             /// ## Panics
             ///
-            /// - Panics if the `optional_vec_optional` is `None`
+            /// - Panics if the `optional_vec_optional_vec` is `None`
             #[inline]
-            const fn unwrap_optional_vec_optional_mut(
+            const fn unwrap_optional_vec_optional_vec_mut(
                 &mut self,
             ) -> &mut <<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::PartialRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::Format,
@@ -781,55 +783,55 @@ mod optional_list {
             >>::Output as ::grost::__private::convert::State<
                 ::grost::__private::convert::Flattened,
             >>::Output {
-                match self.optional_vec_optional.as_mut() {
+                match self.optional_vec_optional_vec.as_mut() {
                     ::core::option::Option::Some(value) => value,
                     ::core::option::Option::None => {
                         ::core::panicking::panic_fmt(
-                            format_args!("`optional_vec_optional` is `None`"),
+                            format_args!("`optional_vec_optional_vec` is `None`"),
                         );
                     }
                 }
             }
-            /// Takes the value of `optional_vec_optional` out if it is not `None`
+            /// Takes the value of `optional_vec_optional_vec` out if it is not `None`
             #[inline]
-            const fn take_optional_vec_optional(
+            const fn take_optional_vec_optional_vec(
                 &mut self,
             ) -> <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::convert::State<
                 ::grost::__private::convert::PartialRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::Format,
                     ::grost::__private::flavors::Groto,
                 >,
             >>::Output {
-                self.optional_vec_optional.take()
+                self.optional_vec_optional_vec.take()
             }
-            /// Clear the value of `optional_vec_optional`
+            /// Clear the value of `optional_vec_optional_vec`
             #[inline]
-            fn clear_optional_vec_optional(&mut self) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::None;
+            fn clear_optional_vec_optional_vec(&mut self) -> &mut Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
                 self
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn set_optional_vec_optional(
+            fn set_optional_vec_optional_vec(
                 &mut self,
                 value: <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -839,22 +841,22 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> &mut Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
             #[inline]
-            fn update_optional_vec_optional(
+            fn update_optional_vec_optional_vec(
                 &mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -862,22 +864,22 @@ mod optional_list {
                     >,
                 >>::Output,
             ) -> &mut Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
-            /// Set the `optional_vec_optional` to the given value
+            /// Set the `optional_vec_optional_vec` to the given value
             #[inline]
-            fn with_optional_vec_optional(
+            fn with_optional_vec_optional_vec(
                 mut self,
                 value: <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -887,28 +889,28 @@ mod optional_list {
                     ::grost::__private::convert::Flattened,
                 >>::Output,
             ) -> Self {
-                self.optional_vec_optional = ::core::option::Option::Some(value);
+                self.optional_vec_optional_vec = ::core::option::Option::Some(value);
                 self
             }
-            /// Clear the value of `optional_vec_optional`
+            /// Clear the value of `optional_vec_optional_vec`
             #[inline]
-            fn without_optional_vec_optional(mut self) -> Self {
-                self.optional_vec_optional = ::core::option::Option::None;
+            fn without_optional_vec_optional_vec(mut self) -> Self {
+                self.optional_vec_optional_vec = ::core::option::Option::None;
                 self
             }
-            /// Update the `optional_vec_optional` to the given value or clear the `optional_vec_optional`
+            /// Update the `optional_vec_optional_vec` to the given value or clear the `optional_vec_optional_vec`
             #[inline]
-            fn maybe_optional_vec_optional(
+            fn maybe_optional_vec_optional_vec(
                 mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::convert::State<
                     ::grost::__private::convert::PartialRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
@@ -916,28 +918,28 @@ mod optional_list {
                     >,
                 >>::Output,
             ) -> Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
         }
         #[automatically_derived]
         #[allow(clippy::type_complexity, non_camel_case_types)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::ObjectFieldReflection<
-            OptionalVec,
+            VecCombinations,
             ::grost::__private::reflection::ObjectField,
             ::grost::__private::flavors::Groto,
-            3u32,
+            4u32,
         > {
             type Reflection = ::grost::__private::reflection::ObjectField;
             const REFLECTION: &'static Self::Reflection = &{
                 ::grost::__private::reflection::ObjectFieldBuilder {
-                    name: "optional_vec_optional",
+                    name: "optional_vec_optional_vec",
                     description: "",
                     ty: <::grost::__private::reflection::SchemaTypeReflection<
-                        Option<Vec<Option<u16>>>,
+                        Option<Vec<Option<Vec<u16>>>>,
                     > as ::grost::__private::reflection::Reflectable<
-                        Option<Vec<Option<u16>>>,
+                        Option<Vec<Option<Vec<u16>>>>,
                     >>::REFLECTION,
                 }
                     .build()
@@ -945,20 +947,20 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::WireFormatReflection<
-            OptionalVec,
+            VecCombinations,
             ::grost::__private::flavors::Groto,
-            3u32,
+            4u32,
         > {
             type Reflection = <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::flavors::DefaultWireFormat<
                 ::grost::__private::flavors::Groto,
             >>::Format;
             const REFLECTION: &'static Self::Reflection = &{
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Groto,
                 >>::Format as ::grost::__private::flavors::WireFormat<
@@ -968,39 +970,39 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::IdentifierReflection<
             ::grost::__private::reflection::ObjectFieldReflection<
-                OptionalVec,
+                VecCombinations,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                 ::grost::__private::flavors::Groto,
-                3u32,
+                4u32,
             >,
         > {
             type Reflection = <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier;
             const REFLECTION: &Self::Reflection = &{
                 (::grost::__private::flavors::groto::Identifier::new)(
                     <<Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::Format as ::grost::__private::flavors::WireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::WIRE_TYPE,
-                    (::grost::__private::flavors::groto::Tag::new)(3u32),
+                    (::grost::__private::flavors::groto::Tag::new)(4u32),
                 )
             };
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::EncodeReflection<
             ::grost::__private::reflection::IdentifierReflection<
                 ::grost::__private::reflection::ObjectFieldReflection<
-                    OptionalVec,
+                    VecCombinations,
                     <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                     ::grost::__private::flavors::Groto,
-                    3u32,
+                    4u32,
                 >,
             >,
         > {
@@ -1009,13 +1011,13 @@ mod optional_list {
                 (::grost::__private::flavors::groto::Identifier::encode)(
                         <::grost::__private::reflection::IdentifierReflection<
                             ::grost::__private::reflection::ObjectFieldReflection<
-                                OptionalVec,
+                                VecCombinations,
                                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                                 ::grost::__private::flavors::Groto,
-                                3u32,
+                                4u32,
                             >,
                         > as ::grost::__private::reflection::Reflectable<
-                            OptionalVec,
+                            VecCombinations,
                         >>::REFLECTION,
                     )
                     .as_slice()
@@ -1023,15 +1025,15 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::Len<
             ::grost::__private::reflection::EncodeReflection<
                 ::grost::__private::reflection::IdentifierReflection<
                     ::grost::__private::reflection::ObjectFieldReflection<
-                        OptionalVec,
+                        VecCombinations,
                         <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                         ::grost::__private::flavors::Groto,
-                        3u32,
+                        4u32,
                     >,
                 >,
             >,
@@ -1041,44 +1043,44 @@ mod optional_list {
                 &<::grost::__private::reflection::EncodeReflection<
                     ::grost::__private::reflection::IdentifierReflection<
                         ::grost::__private::reflection::ObjectFieldReflection<
-                            OptionalVec,
+                            VecCombinations,
                             <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                             ::grost::__private::flavors::Groto,
-                            3u32,
+                            4u32,
                         >,
                     >,
                 > as ::grost::__private::reflection::Reflectable<
-                    OptionalVec,
+                    VecCombinations,
                 >>::REFLECTION
                     .len()
             };
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::TagReflection<
             ::grost::__private::reflection::ObjectFieldReflection<
-                OptionalVec,
+                VecCombinations,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag,
                 ::grost::__private::flavors::Groto,
-                3u32,
+                4u32,
             >,
         > {
             type Reflection = <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag;
             const REFLECTION: &Self::Reflection = &{
-                (::grost::__private::flavors::groto::Tag::new)(3u32)
+                (::grost::__private::flavors::groto::Tag::new)(4u32)
             };
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::EncodeReflection<
             ::grost::__private::reflection::TagReflection<
                 ::grost::__private::reflection::ObjectFieldReflection<
-                    OptionalVec,
+                    VecCombinations,
                     <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag,
                     ::grost::__private::flavors::Groto,
-                    3u32,
+                    4u32,
                 >,
             >,
         > {
@@ -1087,13 +1089,13 @@ mod optional_list {
                 (::grost::__private::flavors::groto::Tag::encode)(
                         <::grost::__private::reflection::TagReflection<
                             ::grost::__private::reflection::ObjectFieldReflection<
-                                OptionalVec,
+                                VecCombinations,
                                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag,
                                 ::grost::__private::flavors::Groto,
-                                3u32,
+                                4u32,
                             >,
                         > as ::grost::__private::reflection::Reflectable<
-                            OptionalVec,
+                            VecCombinations,
                         >>::REFLECTION,
                     )
                     .as_slice()
@@ -1101,15 +1103,15 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::Len<
             ::grost::__private::reflection::EncodeReflection<
                 ::grost::__private::reflection::TagReflection<
                     ::grost::__private::reflection::ObjectFieldReflection<
-                        OptionalVec,
+                        VecCombinations,
                         <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag,
                         ::grost::__private::flavors::Groto,
-                        3u32,
+                        4u32,
                     >,
                 >,
             >,
@@ -1119,33 +1121,33 @@ mod optional_list {
                 &<::grost::__private::reflection::EncodeReflection<
                     ::grost::__private::reflection::TagReflection<
                         ::grost::__private::reflection::ObjectFieldReflection<
-                            OptionalVec,
+                            VecCombinations,
                             <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Tag,
                             ::grost::__private::flavors::Groto,
-                            3u32,
+                            4u32,
                         >,
                     >,
                 > as ::grost::__private::reflection::Reflectable<
-                    OptionalVec,
+                    VecCombinations,
                 >>::REFLECTION
                     .len()
             };
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::WireSchemaTypeReflection<
             ::grost::__private::reflection::ObjectFieldReflection<
-                OptionalVec,
+                VecCombinations,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::WireType,
                 ::grost::__private::flavors::Groto,
-                3u32,
+                4u32,
             >,
         > {
             type Reflection = <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::WireType;
             const REFLECTION: &Self::Reflection = &{
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Groto,
                 >>::Format as ::grost::__private::flavors::WireFormat<
@@ -1155,21 +1157,22 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec> for OptionalVec {
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
+        for VecCombinations {
             type Reflection = ::grost::__private::reflection::SchemaType;
             const REFLECTION: &'static Self::Reflection = &{
                 ::grost::__private::reflection::SchemaType::Object(
                     &::grost::__private::reflection::ObjectBuilder {
-                        name: "OptionalVec",
+                        name: "VecCombinations",
                         description: "",
                         fields: &[
                             &::grost::__private::reflection::ObjectFieldBuilder {
-                                name: "optional_vec_optional",
+                                name: "optional_vec_optional_vec",
                                 description: "",
                                 ty: <::grost::__private::reflection::SchemaTypeReflection<
-                                    Option<Vec<Option<u16>>>,
+                                    Option<Vec<Option<Vec<u16>>>>,
                                 > as ::grost::__private::reflection::Reflectable<
-                                    Option<Vec<Option<u16>>>,
+                                    Option<Vec<Option<Vec<u16>>>>,
                                 >>::REFLECTION,
                             }
                                 .build(),
@@ -1181,25 +1184,25 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl ::grost::__private::reflection::Reflectable<OptionalVec>
+        impl ::grost::__private::reflection::Reflectable<VecCombinations>
         for ::grost::__private::reflection::Reflection<
-            OptionalVec,
+            VecCombinations,
             ::grost::__private::reflection::Object,
             ::grost::__private::flavors::Groto,
         > {
             type Reflection = ::grost::__private::reflection::Object;
             const REFLECTION: &'static Self::Reflection = &{
                 ::grost::__private::reflection::ObjectBuilder {
-                    name: "OptionalVec",
+                    name: "VecCombinations",
                     description: "",
                     fields: &[
                         &::grost::__private::reflection::ObjectFieldBuilder {
-                            name: "optional_vec_optional",
+                            name: "optional_vec_optional_vec",
                             description: "",
                             ty: <::grost::__private::reflection::SchemaTypeReflection<
-                                Option<Vec<Option<u16>>>,
+                                Option<Vec<Option<Vec<u16>>>>,
                             > as ::grost::__private::reflection::Reflectable<
-                                Option<Vec<Option<u16>>>,
+                                Option<Vec<Option<Vec<u16>>>>,
                             >>::REFLECTION,
                         }
                             .build(),
@@ -1210,7 +1213,7 @@ mod optional_list {
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl OptionalVec {
+        impl VecCombinations {
             /// Returns the reflection of the struct.
             #[inline]
             pub const fn reflection() -> ::grost::__private::reflection::Reflection<
@@ -1223,13 +1226,13 @@ mod optional_list {
             {
                 ::grost::__private::reflection::Reflection::new()
             }
-            /// Returns the field reflection of the field `OptionalVec.optional_vec_optional`.
+            /// Returns the field reflection of the field `VecCombinations.optional_vec_optional_vec`.
             #[inline]
-            const fn optional_vec_optional_reflection() -> ::grost::__private::reflection::ObjectFieldReflection<
-                OptionalVec,
+            const fn optional_vec_optional_vec_reflection() -> ::grost::__private::reflection::ObjectFieldReflection<
+                VecCombinations,
                 ::grost::__private::reflection::ObjectField,
                 ::grost::__private::flavors::Groto,
-                3u32,
+                4u32,
             >
             where
                 ::grost::__private::flavors::Groto: ::grost::__private::flavors::Flavor,
@@ -1240,12 +1243,12 @@ mod optional_list {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         impl ::grost::__private::indexer::Indexable<::grost::__private::flavors::Groto>
-        for OptionalVec {
-            type Indexer = OptionalVecIndex;
+        for VecCombinations {
+            type Indexer = VecCombinationsIndex;
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl OptionalVecIndex {
+        impl VecCombinationsIndex {
             /// Returns the field reflection of the corresponding field.
             #[allow(non_camel_case_types, clippy::type_complexity)]
             #[inline]
@@ -1253,34 +1256,34 @@ mod optional_list {
                 &self,
             ) -> &'static ::grost::__private::reflection::ObjectField {
                 match self {
-                    Self::OptionalVecOptional => {
+                    Self::OptionalVecOptionalVec => {
                         <::grost::__private::reflection::ObjectFieldReflection<
-                            OptionalVec,
+                            VecCombinations,
                             ::grost::__private::reflection::ObjectField,
                             ::grost::__private::flavors::Groto,
-                            3u32,
+                            4u32,
                         > as ::grost::__private::reflection::Reflectable<
-                            OptionalVec,
+                            VecCombinations,
                         >>::REFLECTION
                     }
                 }
             }
         }
         #[automatically_derived]
-        impl OptionalVecIndex {
+        impl VecCombinationsIndex {
             /// The number of variants of this field indexer.
             pub const VARIANTS: ::core::primitive::usize = 1usize;
             /// The first field indexer.
-            pub const FIRST: Self = Self::OptionalVecOptional;
+            pub const FIRST: Self = Self::OptionalVecOptionalVec;
             /// The last field indexer.
-            pub const LAST: Self = Self::OptionalVecOptional;
+            pub const LAST: Self = Self::OptionalVecOptionalVec;
             /// Returns the next field indexer.
             ///
             /// Returns `None` if there are no more fields.
             #[inline]
             pub const fn next(&self) -> ::core::option::Option<Self> {
                 match self {
-                    Self::OptionalVecOptional => ::core::option::Option::None,
+                    Self::OptionalVecOptionalVec => ::core::option::Option::None,
                 }
             }
             /// Returns the previous field indexer.
@@ -1289,7 +1292,7 @@ mod optional_list {
             #[inline]
             pub const fn prev(&self) -> ::core::option::Option<Self> {
                 match self {
-                    Self::OptionalVecOptional => ::core::option::Option::None,
+                    Self::OptionalVecOptionalVec => ::core::option::Option::None,
                 }
             }
             /// Returns the remaining number of fields.
@@ -1299,12 +1302,12 @@ mod optional_list {
             }
             const fn index(&self) -> ::core::primitive::usize {
                 match self {
-                    Self::OptionalVecOptional => 0usize,
+                    Self::OptionalVecOptionalVec => 0usize,
                 }
             }
         }
         #[automatically_derived]
-        impl ::core::iter::Iterator for OptionalVecIndex {
+        impl ::core::iter::Iterator for VecCombinationsIndex {
             type Item = Self;
             fn next(&mut self) -> ::core::option::Option<Self> {
                 Self::next(self)
@@ -1320,15 +1323,15 @@ mod optional_list {
             }
         }
         #[automatically_derived]
-        impl ::core::iter::DoubleEndedIterator for OptionalVecIndex {
+        impl ::core::iter::DoubleEndedIterator for VecCombinationsIndex {
             fn next_back(&mut self) -> ::core::option::Option<Self> {
                 Self::prev(self)
             }
         }
         #[automatically_derived]
-        impl ::core::iter::FusedIterator for OptionalVecIndex {}
+        impl ::core::iter::FusedIterator for VecCombinationsIndex {}
         #[automatically_derived]
-        impl ::core::iter::ExactSizeIterator for OptionalVecIndex {
+        impl ::core::iter::ExactSizeIterator for VecCombinationsIndex {
             fn len(&self) -> ::core::primitive::usize {
                 self.remaining()
             }
@@ -1337,8 +1340,8 @@ mod optional_list {
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl ::grost::__private::selection::Selectable<
             ::grost::__private::flavors::Groto,
-        > for OptionalVec {
-            type Selector = OptionalVecSelector;
+        > for VecCombinations {
+            type Selector = VecCombinationsSelector;
             fn is_empty(&self) -> ::core::primitive::bool {
                 false
             }
@@ -1347,8 +1350,8 @@ mod optional_list {
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl ::grost::__private::selection::Selectable<
             ::grost::__private::flavors::Groto,
-        > for PartialOptionalVec {
-            type Selector = OptionalVecSelector;
+        > for PartialVecCombinations {
+            type Selector = VecCombinationsSelector;
             fn is_empty(&self) -> ::core::primitive::bool {
                 Self::is_empty(self)
             }
@@ -1360,62 +1363,62 @@ mod optional_list {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         > ::grost::__private::selection::Selectable<::grost::__private::flavors::Groto>
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         > {
-            type Selector = OptionalVecSelector;
+            type Selector = VecCombinationsSelector;
             fn is_empty(&self) -> ::core::primitive::bool {
                 Self::is_empty(self)
             }
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::fmt::Debug for OptionalVecSelector {
+        impl ::core::fmt::Debug for VecCombinationsSelector {
             fn fmt(
                 &self,
                 f: &mut ::core::fmt::Formatter<'_>,
             ) -> ::core::result::Result<(), ::core::fmt::Error> {
-                f.debug_struct("OptionalVecSelector")
-                    .field("optional_vec_optional", &self.optional_vec_optional)
+                f.debug_struct("VecCombinationsSelector")
+                    .field("optional_vec_optional_vec", &self.optional_vec_optional_vec)
                     .finish()
             }
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::cmp::PartialEq for OptionalVecSelector {
+        impl ::core::cmp::PartialEq for VecCombinationsSelector {
             fn eq(&self, other: &Self) -> ::core::primitive::bool {
-                self.optional_vec_optional == other.optional_vec_optional
+                self.optional_vec_optional_vec == other.optional_vec_optional_vec
             }
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::cmp::Eq for OptionalVecSelector {}
+        impl ::core::cmp::Eq for VecCombinationsSelector {}
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::hash::Hash for OptionalVecSelector {
+        impl ::core::hash::Hash for VecCombinationsSelector {
             fn hash<H: ::core::hash::Hasher>(&self, state: &mut H) {
-                self.optional_vec_optional.hash(state);
+                self.optional_vec_optional_vec.hash(state);
             }
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::clone::Clone for OptionalVecSelector {
+        impl ::core::clone::Clone for VecCombinationsSelector {
             fn clone(&self) -> Self {
                 Self {
-                    optional_vec_optional: ::core::clone::Clone::clone(
-                        &self.optional_vec_optional,
+                    optional_vec_optional_vec: ::core::clone::Clone::clone(
+                        &self.optional_vec_optional_vec,
                     ),
                 }
             }
         }
         #[automatically_derived]
         #[allow(non_camel_case_types)]
-        impl ::core::marker::Copy for OptionalVecSelector
+        impl ::core::marker::Copy for VecCombinationsSelector
         where
             <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Groto,
             >>::Selector: ::core::marker::Copy,
@@ -1423,7 +1426,7 @@ mod optional_list {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         impl ::grost::__private::selection::Selector<::grost::__private::flavors::Groto>
-        for OptionalVecSelector {
+        for VecCombinationsSelector {
             const ALL: Self = Self::all();
             const DEFAULT: Self = Self::new();
             const NONE: Self = Self::empty();
@@ -1435,33 +1438,36 @@ mod optional_list {
             }
             fn flip(&mut self) -> &mut Self {
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::flip(&mut self.optional_vec_optional);
+                >>::flip(&mut self.optional_vec_optional_vec);
                 self
             }
             fn merge(&mut self, other: Self) -> &mut Self {
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::merge(&mut self.optional_vec_optional, other.optional_vec_optional);
+                >>::merge(
+                    &mut self.optional_vec_optional_vec,
+                    other.optional_vec_optional_vec,
+                );
                 self
             }
         }
         #[automatically_derived]
-        impl OptionalVecSelector {
+        impl VecCombinationsSelector {
             /// Returns a selector with the default values.
             #[inline]
             pub const fn new() -> Self {
                 Self {
-                    optional_vec_optional: <<Option<
-                        Vec<Option<u16>>,
+                    optional_vec_optional_vec: <<Option<
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::selection::Selectable<
                         ::grost::__private::flavors::Groto,
                     >>::Selector as ::grost::__private::selection::Selector<
@@ -1473,8 +1479,8 @@ mod optional_list {
             #[inline]
             pub const fn empty() -> Self {
                 Self {
-                    optional_vec_optional: <<Option<
-                        Vec<Option<u16>>,
+                    optional_vec_optional_vec: <<Option<
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::selection::Selectable<
                         ::grost::__private::flavors::Groto,
                     >>::Selector as ::grost::__private::selection::Selector<
@@ -1486,8 +1492,8 @@ mod optional_list {
             #[inline]
             pub const fn all() -> Self {
                 Self {
-                    optional_vec_optional: <<Option<
-                        Vec<Option<u16>>,
+                    optional_vec_optional_vec: <<Option<
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::selection::Selectable<
                         ::grost::__private::flavors::Groto,
                     >>::Selector as ::grost::__private::selection::Selector<
@@ -1499,29 +1505,29 @@ mod optional_list {
             #[inline]
             pub fn is_empty(&self) -> ::core::primitive::bool {
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::is_empty(&self.optional_vec_optional)
+                >>::is_empty(&self.optional_vec_optional_vec)
             }
             /// Returns `true` if the selector selects all.
             #[inline]
             pub fn is_all(&self) -> ::core::primitive::bool {
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::is_all(&self.optional_vec_optional)
+                >>::is_all(&self.optional_vec_optional_vec)
             }
             /// Returns the number of selected fields.
             #[inline]
             pub fn selected(&self) -> ::core::primitive::usize {
                 let mut num = 0;
-                if self.is_optional_vec_optional_selected() {
+                if self.is_optional_vec_optional_vec_selected() {
                     num += 1;
                 }
                 num
@@ -1530,7 +1536,7 @@ mod optional_list {
             #[inline]
             pub fn unselected(&self) -> ::core::primitive::usize {
                 let mut num = 0;
-                if self.is_optional_vec_optional_unselected() {
+                if self.is_optional_vec_optional_vec_unselected() {
                     num += 1;
                 }
                 num
@@ -1539,22 +1545,25 @@ mod optional_list {
             #[inline]
             pub fn iter_selected<'__grost_lifetime__>(
                 &'__grost_lifetime__ self,
-            ) -> OptionalVecSelectorIter<'__grost_lifetime__, true> {
-                OptionalVecSelectorIter::new(self, self.selected())
+            ) -> VecCombinationsSelectorIter<'__grost_lifetime__, true> {
+                VecCombinationsSelectorIter::new(self, self.selected())
             }
             /// Returns an iterator over the unselected fields.
             #[inline]
             pub fn iter_unselected<'__grost_lifetime__>(
                 &'__grost_lifetime__ self,
-            ) -> OptionalVecSelectorIter<'__grost_lifetime__, false> {
-                OptionalVecSelectorIter::new(self, self.unselected())
+            ) -> VecCombinationsSelectorIter<'__grost_lifetime__, false> {
+                VecCombinationsSelectorIter::new(self, self.unselected())
             }
             /// Returns `true` if such field is selected.
             #[inline]
-            pub fn is_selected(&self, idx: OptionalVecIndex) -> ::core::primitive::bool {
+            pub fn is_selected(
+                &self,
+                idx: VecCombinationsIndex,
+            ) -> ::core::primitive::bool {
                 match idx {
-                    OptionalVecIndex::OptionalVecOptional => {
-                        self.is_optional_vec_optional_selected()
+                    VecCombinationsIndex::OptionalVecOptionalVec => {
+                        self.is_optional_vec_optional_vec_selected()
                     }
                 }
             }
@@ -1562,20 +1571,20 @@ mod optional_list {
             #[inline]
             pub fn is_unselected(
                 &self,
-                idx: OptionalVecIndex,
+                idx: VecCombinationsIndex,
             ) -> ::core::primitive::bool {
                 match idx {
-                    OptionalVecIndex::OptionalVecOptional => {
-                        self.is_optional_vec_optional_unselected()
+                    VecCombinationsIndex::OptionalVecOptionalVec => {
+                        self.is_optional_vec_optional_vec_unselected()
                     }
                 }
             }
-            /// Select the `OptionalVec.optional_vec_optional` field
+            /// Select the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn select_optional_vec_optional(&mut self) -> &mut Self {
+            pub fn select_optional_vec_optional_vec(&mut self) -> &mut Self {
                 self
-                    .optional_vec_optional = <<Option<
-                    Vec<Option<u16>>,
+                    .optional_vec_optional_vec = <<Option<
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
@@ -1583,12 +1592,12 @@ mod optional_list {
                 >>::DEFAULT;
                 self
             }
-            /// Unselect the `OptionalVec.optional_vec_optional` field
+            /// Unselect the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn unselect_optional_vec_optional(&mut self) -> &mut Self {
+            pub fn unselect_optional_vec_optional_vec(&mut self) -> &mut Self {
                 self
-                    .optional_vec_optional = <<Option<
-                    Vec<Option<u16>>,
+                    .optional_vec_optional_vec = <<Option<
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
@@ -1596,60 +1605,60 @@ mod optional_list {
                 >>::NONE;
                 self
             }
-            /// Update the `OptionalVec.optional_vec_optional` field
+            /// Update the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn update_optional_vec_optional(
+            pub fn update_optional_vec_optional_vec(
                 &mut self,
                 value: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector,
             ) -> &mut Self {
-                self.optional_vec_optional = value;
+                self.optional_vec_optional_vec = value;
                 self
             }
-            /// Set or unset the `OptionalVec.optional_vec_optional` field
+            /// Set or unset the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn maybe_optional_vec_optional(
+            pub fn maybe_optional_vec_optional_vec(
                 mut self,
                 val: <Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector,
             ) -> Self {
-                self.optional_vec_optional = val;
+                self.optional_vec_optional_vec = val;
                 self
             }
-            /// Get a reference to the selector of `OptionalVec.optional_vec_optional` field
+            /// Get a reference to the selector of `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub const fn optional_vec_optional_ref(
+            pub const fn optional_vec_optional_vec_ref(
                 &self,
             ) -> &<Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Groto,
             >>::Selector {
-                &self.optional_vec_optional
+                &self.optional_vec_optional_vec
             }
-            /// Get a mutable reference to the selector of `OptionalVec.optional_vec_optional` field
+            /// Get a mutable reference to the selector of `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub const fn optional_vec_optional_mut(
+            pub const fn optional_vec_optional_vec_mut(
                 &mut self,
             ) -> &mut <Option<
-                Vec<Option<u16>>,
+                Vec<Option<Vec<u16>>>,
             > as ::grost::__private::selection::Selectable<
                 ::grost::__private::flavors::Groto,
             >>::Selector {
-                &mut self.optional_vec_optional
+                &mut self.optional_vec_optional_vec
             }
-            /// Set the `OptionalVec.optional_vec_optional` field
+            /// Set the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn with_optional_vec_optional(mut self) -> Self {
+            pub fn with_optional_vec_optional_vec(mut self) -> Self {
                 self
-                    .optional_vec_optional = <<Option<
-                    Vec<Option<u16>>,
+                    .optional_vec_optional_vec = <<Option<
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
@@ -1657,12 +1666,12 @@ mod optional_list {
                 >>::DEFAULT;
                 self
             }
-            /// Unset the `OptionalVec.optional_vec_optional` field
+            /// Unset the `VecCombinations.optional_vec_optional_vec` field
             #[inline]
-            pub fn without_optional_vec_optional(mut self) -> Self {
+            pub fn without_optional_vec_optional_vec(mut self) -> Self {
                 self
-                    .optional_vec_optional = <<Option<
-                    Vec<Option<u16>>,
+                    .optional_vec_optional_vec = <<Option<
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
@@ -1670,29 +1679,31 @@ mod optional_list {
                 >>::NONE;
                 self
             }
-            /// Returns `true` if the `OptionalVec.optional_vec_optional` field is selected
+            /// Returns `true` if the `VecCombinations.optional_vec_optional_vec` field is selected
             #[inline]
-            pub fn is_optional_vec_optional_selected(&self) -> ::core::primitive::bool {
+            pub fn is_optional_vec_optional_vec_selected(
+                &self,
+            ) -> ::core::primitive::bool {
                 !<<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::is_empty(&self.optional_vec_optional)
+                >>::is_empty(&self.optional_vec_optional_vec)
             }
-            /// Returns `true` if the `OptionalVec.optional_vec_optional` field is unselected
+            /// Returns `true` if the `VecCombinations.optional_vec_optional_vec` field is unselected
             #[inline]
-            pub fn is_optional_vec_optional_unselected(
+            pub fn is_optional_vec_optional_vec_unselected(
                 &self,
             ) -> ::core::primitive::bool {
                 <<Option<
-                    Vec<Option<u16>>,
+                    Vec<Option<Vec<u16>>>,
                 > as ::grost::__private::selection::Selectable<
                     ::grost::__private::flavors::Groto,
                 >>::Selector as ::grost::__private::selection::Selector<
                     ::grost::__private::flavors::Groto,
-                >>::is_empty(&self.optional_vec_optional)
+                >>::is_empty(&self.optional_vec_optional_vec)
             }
         }
         #[automatically_derived]
@@ -1700,15 +1711,15 @@ mod optional_list {
         impl<
             '__grost_lifetime__,
             const __GROST_SELECTED__: ::core::primitive::bool,
-        > OptionalVecSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
+        > VecCombinationsSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
             #[inline]
             const fn new(
-                selector: &'__grost_lifetime__ OptionalVecSelector,
+                selector: &'__grost_lifetime__ VecCombinationsSelector,
                 num: ::core::primitive::usize,
             ) -> Self {
                 Self {
                     selector,
-                    index: ::core::option::Option::Some(OptionalVecIndex::FIRST),
+                    index: ::core::option::Option::Some(VecCombinationsIndex::FIRST),
                     num,
                     yielded: 0,
                 }
@@ -1730,7 +1741,7 @@ mod optional_list {
             '__grost_lifetime__,
             const __GROST_SELECTED__: ::core::primitive::bool,
         > ::core::iter::Iterator
-        for OptionalVecSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
+        for VecCombinationsSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
             type Item = &'static ::grost::__private::reflection::ObjectField;
             fn next(&mut self) -> ::core::option::Option<Self::Item> {
                 if self.yielded >= self.num {
@@ -1769,14 +1780,14 @@ mod optional_list {
             '__grost_lifetime__,
             const __GROST_SELECTED__: ::core::primitive::bool,
         > ::core::iter::FusedIterator
-        for OptionalVecSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {}
+        for VecCombinationsSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {}
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl<
             '__grost_lifetime__,
             const __GROST_SELECTED__: ::core::primitive::bool,
         > ::core::iter::ExactSizeIterator
-        for OptionalVecSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
+        for VecCombinationsSelectorIter<'__grost_lifetime__, __GROST_SELECTED__> {
             fn len(&self) -> ::core::primitive::usize {
                 self.remaining()
             }
@@ -1788,7 +1799,7 @@ mod optional_list {
             Self,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for OptionalVec {
+        > for VecCombinations {
             fn transform(
                 input: Self,
             ) -> ::core::result::Result<
@@ -1811,7 +1822,7 @@ mod optional_list {
             Self,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
-        > for PartialOptionalVec {
+        > for PartialVecCombinations {
             fn decode(
                 context: &'__grost_lifetime__ <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Context,
                 src: __GROST_READ_BUFFER__,
@@ -1829,11 +1840,11 @@ mod optional_list {
                         >,
                     > + '__grost_lifetime__,
             {
-                <PartialOptionalVec as ::grost::__private::decode::Decode<
+                <PartialVecCombinations as ::grost::__private::decode::Decode<
                     '__grost_lifetime__,
                     ::grost::__private::flavors::Groto,
                     ::grost::__private::flavors::groto::LengthDelimited,
-                    PartialOptionalVecRef<
+                    PartialVecCombinationsRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
@@ -1842,13 +1853,13 @@ mod optional_list {
                     __GROST_UNKNOWN_BUFFER__,
                 >>::decode(context, src)
                     .and_then(|(read, input)| {
-                        <PartialOptionalVec as ::grost::__private::convert::Transform<
-                            PartialOptionalVecRef<
+                        <PartialVecCombinations as ::grost::__private::convert::Transform<
+                            PartialVecCombinationsRef<
                                 '__grost_lifetime__,
                                 __GROST_READ_BUFFER__,
                                 __GROST_UNKNOWN_BUFFER__,
                             >,
-                            PartialOptionalVec,
+                            PartialVecCombinations,
                             ::grost::__private::flavors::groto::LengthDelimited,
                             ::grost::__private::flavors::Groto,
                         >>::transform(input)
@@ -1869,7 +1880,7 @@ mod optional_list {
             Self,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
-        > for OptionalVec {
+        > for VecCombinations {
             fn decode(
                 context: &'__grost_lifetime__ <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Context,
                 src: __GROST_READ_BUFFER__,
@@ -1887,18 +1898,18 @@ mod optional_list {
                         >,
                     > + '__grost_lifetime__,
             {
-                <PartialOptionalVec as ::grost::__private::decode::Decode<
+                <PartialVecCombinations as ::grost::__private::decode::Decode<
                     '__grost_lifetime__,
                     ::grost::__private::flavors::Groto,
                     ::grost::__private::flavors::groto::LengthDelimited,
-                    PartialOptionalVec,
+                    PartialVecCombinations,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
                 >>::decode(context, src)
                     .and_then(|(read, input)| {
-                        <OptionalVec as ::grost::__private::convert::Transform<
-                            PartialOptionalVec,
-                            OptionalVec,
+                        <VecCombinations as ::grost::__private::convert::Transform<
+                            PartialVecCombinations,
+                            VecCombinations,
                             ::grost::__private::flavors::groto::LengthDelimited,
                             ::grost::__private::flavors::Groto,
                         >>::transform(input)
@@ -1913,7 +1924,7 @@ mod optional_list {
             Self,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for PartialOptionalVec {
+        > for PartialVecCombinations {
             fn transform(
                 input: Self,
             ) -> ::core::result::Result<
@@ -1926,19 +1937,19 @@ mod optional_list {
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
         impl ::grost::__private::convert::Transform<
-            PartialOptionalVec,
-            OptionalVec,
+            PartialVecCombinations,
+            VecCombinations,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for OptionalVec {
+        > for VecCombinations {
             fn transform(
-                input: PartialOptionalVec,
+                input: PartialVecCombinations,
             ) -> ::core::result::Result<
-                OptionalVec,
+                VecCombinations,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Error,
             > {
                 ::core::result::Result::Ok(Self {
-                    optional_vec_optional: input.optional_vec_optional,
+                    optional_vec_optional_vec: input.optional_vec_optional_vec,
                 })
             }
         }
@@ -1949,47 +1960,43 @@ mod optional_list {
             ::core::option::Option<Self>,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for PartialOptionalVec {
+        > for PartialVecCombinations {
             fn partial_transform(
-                input: PartialOptionalVec,
-                selector: &OptionalVecSelector,
+                input: PartialVecCombinations,
+                selector: &VecCombinationsSelector,
             ) -> ::core::result::Result<
-                ::core::option::Option<PartialOptionalVec>,
+                ::core::option::Option<PartialVecCombinations>,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Error,
             > {
                 let mut this = Self::new();
-                if selector.is_optional_vec_optional_selected() {
+                if selector.is_optional_vec_optional_vec_selected() {
                     this
-                        .optional_vec_optional = <<Option<
-                        Vec<Option<u16>>,
-                    > as ::grost::__private::convert::State<
-                        ::grost::__private::convert::Partial<
-                            ::grost::__private::flavors::Groto,
-                        >,
-                    >>::Output as ::grost::__private::convert::PartialTransform<
+                        .optional_vec_optional_vec = <Option<
+                        Vec<Option<Vec<u16>>>,
+                    > as ::grost::__private::convert::PartialTransform<
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::convert::State<
                             ::grost::__private::convert::Partial<
                                 ::grost::__private::flavors::Groto,
                             >,
                         >>::Output,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::convert::State<
                             ::grost::__private::convert::Partial<
                                 ::grost::__private::flavors::Groto,
                             >,
                         >>::Output,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
                         ::grost::__private::flavors::Groto,
                     >>::partial_transform(
-                        this.optional_vec_optional,
-                        selector.optional_vec_optional_ref(),
+                        this.optional_vec_optional_vec,
+                        selector.optional_vec_optional_vec_ref(),
                     )?;
                 }
                 ::core::result::Result::Ok((!this.is_empty()).then_some(this))
@@ -2007,7 +2014,7 @@ mod optional_list {
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
         >
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -2036,7 +2043,7 @@ mod optional_list {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         >
-        for PartialOptionalVecRef<
+        for PartialVecCombinationsRef<
             '__grost_lifetime__,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
@@ -2073,13 +2080,13 @@ mod optional_list {
                     match &identifier {
                         <::grost::__private::reflection::IdentifierReflection<
                             ::grost::__private::reflection::ObjectFieldReflection<
-                                OptionalVec,
+                                VecCombinations,
                                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                                 ::grost::__private::flavors::Groto,
-                                3u32,
+                                4u32,
                             >,
                         > as ::grost::__private::reflection::Reflectable<
-                            OptionalVec,
+                            VecCombinations,
                         >>::REFLECTION => {
                             if offset >= buf_len {
                                 return ::core::result::Result::Err(
@@ -2088,45 +2095,45 @@ mod optional_list {
                                     ),
                                 );
                             }
-                            if this.optional_vec_optional.is_some() {
+                            if this.optional_vec_optional_vec.is_some() {
                                 return ::core::result::Result::Err(
                                     ::core::convert::Into::into(
                                         ::grost::__private::error::Error::duplicated_field(
-                                            "optional_vec_optional",
-                                            ::core::any::type_name::<Option<Vec<Option<u16>>>>(),
+                                            "optional_vec_optional_vec",
+                                            ::core::any::type_name::<Option<Vec<Option<Vec<u16>>>>>(),
                                             *<::grost::__private::reflection::IdentifierReflection<
                                                 ::grost::__private::reflection::ObjectFieldReflection<
-                                                    OptionalVec,
+                                                    VecCombinations,
                                                     <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Identifier,
                                                     ::grost::__private::flavors::Groto,
-                                                    3u32,
+                                                    4u32,
                                                 >,
                                             > as ::grost::__private::reflection::Reflectable<
-                                                OptionalVec,
+                                                VecCombinations,
                                             >>::REFLECTION,
                                         ),
                                     ),
                                 );
                             }
                             let (read, value) = (<Option<
-                                Vec<Option<u16>>,
+                                Vec<Option<Vec<u16>>>,
                             > as ::grost::__private::decode::Decode<
                                 '__grost_decode_lifetime__,
                                 ::grost::__private::flavors::Groto,
                                 <Option<
-                                    Vec<Option<u16>>,
+                                    Vec<Option<Vec<u16>>>,
                                 > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Groto,
                                 >>::Format,
                                 <Option<
-                                    Vec<Option<u16>>,
+                                    Vec<Option<Vec<u16>>>,
                                 > as ::grost::__private::convert::State<
                                     ::grost::__private::convert::PartialRef<
                                         '__grost_lifetime__,
                                         __GROST_READ_BUFFER__,
                                         __GROST_UNKNOWN_BUFFER__,
                                         <Option<
-                                            Vec<Option<u16>>,
+                                            Vec<Option<Vec<u16>>>,
                                         > as ::grost::__private::flavors::DefaultWireFormat<
                                             ::grost::__private::flavors::Groto,
                                         >>::Format,
@@ -2136,7 +2143,7 @@ mod optional_list {
                                 __GROST_READ_BUFFER__,
                                 __GROST_UNKNOWN_BUFFER__,
                             >>::decode)(context, src.slice(offset..))?;
-                            this.optional_vec_optional = value;
+                            this.optional_vec_optional_vec = value;
                             offset += read;
                         }
                         _ => {
@@ -2144,7 +2151,7 @@ mod optional_list {
                                 return ::core::result::Result::Err(
                                     ::core::convert::Into::into(
                                         ::grost::__private::error::Error::unknown_identifier(
-                                            ::core::any::type_name::<OptionalVec>(),
+                                            ::core::any::type_name::<VecCombinations>(),
                                             identifier,
                                         ),
                                     ),
@@ -2207,14 +2214,14 @@ mod optional_list {
             '__grost_decode_lifetime__,
             ::grost::__private::flavors::Groto,
             ::grost::__private::flavors::groto::LengthDelimited,
-            PartialOptionalVecRef<
+            PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
-        > for OptionalVec
+        > for VecCombinations
         where
             '__grost_decode_lifetime__: '__grost_lifetime__,
         {
@@ -2224,7 +2231,7 @@ mod optional_list {
             ) -> ::core::result::Result<
                 (
                     ::core::primitive::usize,
-                    PartialOptionalVecRef<
+                    PartialVecCombinationsRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
@@ -2233,7 +2240,7 @@ mod optional_list {
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Error,
             >
             where
-                PartialOptionalVecRef<
+                PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
@@ -2246,7 +2253,7 @@ mod optional_list {
                         >,
                     > + '__grost_decode_lifetime__,
             {
-                <PartialOptionalVecRef<
+                <PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
@@ -2254,7 +2261,7 @@ mod optional_list {
                     '__grost_decode_lifetime__,
                     ::grost::__private::flavors::Groto,
                     ::grost::__private::flavors::groto::LengthDelimited,
-                    PartialOptionalVecRef<
+                    PartialVecCombinationsRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
@@ -2275,14 +2282,14 @@ mod optional_list {
             '__grost_decode_lifetime__,
             ::grost::__private::flavors::Groto,
             ::grost::__private::flavors::groto::LengthDelimited,
-            PartialOptionalVecRef<
+            PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
-        > for PartialOptionalVec
+        > for PartialVecCombinations
         where
             '__grost_decode_lifetime__: '__grost_lifetime__,
         {
@@ -2292,7 +2299,7 @@ mod optional_list {
             ) -> ::core::result::Result<
                 (
                     ::core::primitive::usize,
-                    PartialOptionalVecRef<
+                    PartialVecCombinationsRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
@@ -2301,7 +2308,7 @@ mod optional_list {
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Error,
             >
             where
-                PartialOptionalVecRef<
+                PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
@@ -2314,7 +2321,7 @@ mod optional_list {
                         >,
                     > + '__grost_decode_lifetime__,
             {
-                <PartialOptionalVecRef<
+                <PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
@@ -2322,7 +2329,7 @@ mod optional_list {
                     '__grost_decode_lifetime__,
                     ::grost::__private::flavors::Groto,
                     ::grost::__private::flavors::groto::LengthDelimited,
-                    PartialOptionalVecRef<
+                    PartialVecCombinationsRef<
                         '__grost_lifetime__,
                         __GROST_READ_BUFFER__,
                         __GROST_UNKNOWN_BUFFER__,
@@ -2339,15 +2346,15 @@ mod optional_list {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         > ::grost::__private::convert::Transform<
-            PartialOptionalVecRef<
+            PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
-            PartialOptionalVec,
+            PartialVecCombinations,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for PartialOptionalVec
+        > for PartialVecCombinations
         where
             __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf
                 + '__grost_lifetime__,
@@ -2358,7 +2365,7 @@ mod optional_list {
                 > + '__grost_lifetime__,
         {
             fn transform(
-                input: PartialOptionalVecRef<
+                input: PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
@@ -2369,22 +2376,18 @@ mod optional_list {
             > {
                 let mut this = Self::new();
                 this
-                    .optional_vec_optional = <<Option<
-                    Vec<Option<u16>>,
-                > as ::grost::__private::convert::State<
-                    ::grost::__private::convert::Partial<
-                        ::grost::__private::flavors::Groto,
-                    >,
-                >>::Output as ::grost::__private::convert::Transform<
+                    .optional_vec_optional_vec = <Option<
+                    Vec<Option<Vec<u16>>>,
+                > as ::grost::__private::convert::Transform<
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::convert::State<
                         ::grost::__private::convert::PartialRef<
                             '__grost_lifetime__,
                             __GROST_READ_BUFFER__,
                             __GROST_UNKNOWN_BUFFER__,
                             <Option<
-                                Vec<Option<u16>>,
+                                Vec<Option<Vec<u16>>>,
                             > as ::grost::__private::flavors::DefaultWireFormat<
                                 ::grost::__private::flavors::Groto,
                             >>::Format,
@@ -2392,19 +2395,19 @@ mod optional_list {
                         >,
                     >>::Output,
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::convert::State<
                         ::grost::__private::convert::Partial<
                             ::grost::__private::flavors::Groto,
                         >,
                     >>::Output,
                     <Option<
-                        Vec<Option<u16>>,
+                        Vec<Option<Vec<u16>>>,
                     > as ::grost::__private::flavors::DefaultWireFormat<
                         ::grost::__private::flavors::Groto,
                     >>::Format,
                     ::grost::__private::flavors::Groto,
-                >>::transform(input.optional_vec_optional)?;
+                >>::transform(input.optional_vec_optional_vec)?;
                 ::core::result::Result::Ok(this)
             }
         }
@@ -2415,15 +2418,15 @@ mod optional_list {
             __GROST_READ_BUFFER__,
             __GROST_UNKNOWN_BUFFER__,
         > ::grost::__private::convert::PartialTransform<
-            PartialOptionalVecRef<
+            PartialVecCombinationsRef<
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_UNKNOWN_BUFFER__,
             >,
-            ::core::option::Option<PartialOptionalVec>,
+            ::core::option::Option<PartialVecCombinations>,
             ::grost::__private::flavors::groto::LengthDelimited,
             ::grost::__private::flavors::Groto,
-        > for PartialOptionalVec
+        > for PartialVecCombinations
         where
             __GROST_READ_BUFFER__: ::grost::__private::buffer::ReadBuf
                 + '__grost_lifetime__,
@@ -2434,35 +2437,31 @@ mod optional_list {
                 > + '__grost_lifetime__,
         {
             fn partial_transform(
-                input: PartialOptionalVecRef<
+                input: PartialVecCombinationsRef<
                     '__grost_lifetime__,
                     __GROST_READ_BUFFER__,
                     __GROST_UNKNOWN_BUFFER__,
                 >,
-                selector: &OptionalVecSelector,
+                selector: &VecCombinationsSelector,
             ) -> ::core::result::Result<
                 ::core::option::Option<Self>,
                 <::grost::__private::flavors::Groto as ::grost::__private::flavors::Flavor>::Error,
             > {
                 let mut this = Self::new();
-                if selector.is_optional_vec_optional_selected() {
+                if selector.is_optional_vec_optional_vec_selected() {
                     this
-                        .optional_vec_optional = <<Option<
-                        Vec<Option<u16>>,
-                    > as ::grost::__private::convert::State<
-                        ::grost::__private::convert::Partial<
-                            ::grost::__private::flavors::Groto,
-                        >,
-                    >>::Output as ::grost::__private::convert::PartialTransform<
+                        .optional_vec_optional_vec = <Option<
+                        Vec<Option<Vec<u16>>>,
+                    > as ::grost::__private::convert::PartialTransform<
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::convert::State<
                             ::grost::__private::convert::PartialRef<
                                 '__grost_lifetime__,
                                 __GROST_READ_BUFFER__,
                                 __GROST_UNKNOWN_BUFFER__,
                                 <Option<
-                                    Vec<Option<u16>>,
+                                    Vec<Option<Vec<u16>>>,
                                 > as ::grost::__private::flavors::DefaultWireFormat<
                                     ::grost::__private::flavors::Groto,
                                 >>::Format,
@@ -2470,21 +2469,21 @@ mod optional_list {
                             >,
                         >>::Output,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::convert::State<
                             ::grost::__private::convert::Partial<
                                 ::grost::__private::flavors::Groto,
                             >,
                         >>::Output,
                         <Option<
-                            Vec<Option<u16>>,
+                            Vec<Option<Vec<u16>>>,
                         > as ::grost::__private::flavors::DefaultWireFormat<
                             ::grost::__private::flavors::Groto,
                         >>::Format,
                         ::grost::__private::flavors::Groto,
                     >>::partial_transform(
-                        input.optional_vec_optional,
-                        selector.optional_vec_optional_ref(),
+                        input.optional_vec_optional_vec,
+                        selector.optional_vec_optional_vec_ref(),
                     )?;
                 }
                 ::core::result::Result::Ok((!this.is_empty()).then_some(this))

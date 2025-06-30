@@ -1,7 +1,7 @@
 use crate::{
   bridge, default_wire_format, flatten_state,
   flavors::groto::{Fixed32, Groto, Varint},
-  identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 
 default_wire_format!(Groto: f32 as Fixed32);
@@ -12,11 +12,9 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: f32);
 flatten_state!(f32);
-identity_transform!(
-  Groto {
-    f32 as Fixed32,
-    f32 as Varint,
-  }
+groto_identity_transform!(
+  f32 as Fixed32,
+  f32 as Varint,
 );
 identity_partial_transform!(
   Groto {

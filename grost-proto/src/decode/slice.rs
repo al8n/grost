@@ -1,6 +1,6 @@
 use crate::{
   buffer::ReadBuf,
-  convert::{Flatten, State},
+  convert::{Flattened, State},
   flavors::Flavor,
   selection::Selectable,
 };
@@ -24,7 +24,7 @@ impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for BytesSlice<RB> {
   }
 }
 
-impl<RB: ?Sized, O> State<Flatten<O>> for BytesSlice<RB> {
+impl<RB: ?Sized, O> State<Flattened<O>> for BytesSlice<RB> {
   type Output = Self;
 }
 

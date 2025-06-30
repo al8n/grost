@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed32, Groto, Unknown, Varint},
-  identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
   try_from_bridge,
 };
 
@@ -21,13 +21,11 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: u32, NonZeroU32);
 flatten_state!(u32, NonZeroU32);
-identity_transform!(
-  Groto {
-    u32 as Fixed32,
-    u32 as Varint,
-    NonZeroU32 as Fixed32,
-    NonZeroU32 as Varint,
-  }
+groto_identity_transform!(
+  u32 as Fixed32,
+  u32 as Varint,
+  NonZeroU32 as Fixed32,
+  NonZeroU32 as Varint,
 );
 identity_partial_transform!(
   Groto {

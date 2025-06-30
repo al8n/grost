@@ -1,7 +1,7 @@
 use crate::{
   bridge, default_wire_format, flatten_state,
   flavors::groto::{Error, Fixed8, Groto, Varint},
-  identity_transform, partial_ref_state, partial_state, selectable, try_from_bridge,
+  groto_identity_transform, partial_ref_state, partial_state, selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
 
@@ -15,13 +15,11 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: i8, NonZeroI8);
 flatten_state!(i8, NonZeroI8);
-identity_transform!(
-  Groto {
-    i8 as Fixed8,
-    i8 as Varint,
-    NonZeroI8 as Fixed8,
-    NonZeroI8 as Varint,
-  }
+groto_identity_transform!(
+  i8 as Fixed8,
+  i8 as Varint,
+  NonZeroI8 as Fixed8,
+  NonZeroI8 as Varint,
 );
 identity_partial_transform!(
   Groto {

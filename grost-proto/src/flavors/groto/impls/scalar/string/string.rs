@@ -4,7 +4,7 @@ use crate::{
   decode::Str,
   flatten_state,
   flavors::{Groto, groto::LengthDelimited},
-  identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 use std::string::String;
 
@@ -23,10 +23,8 @@ str_bridge!(Groto: String {
   as_str: AsRef::as_ref;
 },);
 
-identity_transform!(
-  Groto {
-    String as LengthDelimited,
-  }
+groto_identity_transform!(
+  String as LengthDelimited,
 );
 identity_partial_transform!(
   Groto {

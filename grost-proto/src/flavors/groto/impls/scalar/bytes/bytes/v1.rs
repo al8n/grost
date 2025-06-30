@@ -4,7 +4,7 @@ use crate::{
   decode::BytesSlice,
   decode_bridge, default_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Groto, LengthDelimited},
-  identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 use bytes_1::{Bytes, BytesMut};
 
@@ -50,11 +50,9 @@ flatten_state!(Bytes, BytesMut);
 bytes_bridge!(
   Groto: Bytes, BytesMut,
 );
-identity_transform!(
-  Groto {
-    Bytes as LengthDelimited,
-    BytesMut as LengthDelimited,
-  }
+groto_identity_transform!(
+  Bytes as LengthDelimited,
+  BytesMut as LengthDelimited,
 );
 identity_partial_transform!(
   Groto {

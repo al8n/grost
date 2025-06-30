@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{Buffer, ReadBuf},
-  convert::{Flatten, Partial, PartialRef, State},
+  convert::{Flattened, Partial, PartialRef, State},
   decode::Decode,
   encode::Encode,
   flavors::{
@@ -247,7 +247,7 @@ where
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<Flatten> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> State<Flattened> for PackedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,

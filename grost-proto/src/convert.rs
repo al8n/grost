@@ -128,6 +128,14 @@ where
   type Output = T::Output;
 }
 
+/// A sub-state of [`Flattened`] which means get the innermost type for flattening.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Innermost(());
+
+impl<T: ?Sized> State<Innermost> for T {
+  type Output = T;
+}
+
 impl<T> State<Option<Innermost>> for Option<T> {
   type Output = Self;
 }
@@ -146,34 +154,41 @@ where
   type Output = T::Output;
 }
 
-/// A sub-state of [`Flatten`] which means get the innermost type for flattening.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Innermost(());
-
-impl<T: ?Sized> State<Innermost> for T {
-  type Output = T;
-}
-
 /// A state which shows that the type is in its flatten state.
-pub struct Flatten<S: ?Sized = Option<Innermost>> {
+pub struct Flattened<S: ?Sized = Option<Innermost>> {
   _state: core::marker::PhantomData<S>,
 }
 
-impl<S, T> State<Flatten<S>> for &T
+impl<S, T> State<Flattened<S>> for &T
 where
   S: ?Sized,
-  T: State<Flatten<S>> + ?Sized,
+  T: State<Flattened<S>> + ?Sized,
 {
   type Output = T::Output;
 }
 
-impl<S, T> State<Flatten<S>> for &mut T
+impl<S, T> State<Flattened<S>> for &mut T
 where
   S: ?Sized,
-  T: State<Flatten<S>> + ?Sized,
+  T: State<Flattened<S>> + ?Sized,
 {
   type Output = T::Output;
 }
+
+// /// A trait for converting from its flattened form.
+// pub trait FromFlattened<S: ?Sized>: State<Flattened<S>> {
+//   /// Converts the state to its flattened form.
+//   fn from_flatten(input: Self::Output) -> Self;
+// }
+
+// impl<T> FromFlattened<Option<Innermost>> for Option<T>
+// where
+//   Option<T>: State<Flattened<Option<Innermost>>>,
+// {
+//   fn from_flatten(input: T) -> Self {
+//     Some(input)
+//   }
+// }
 
 macro_rules! wrapper_impl {
   (@partial_state $($ty:ty => $output:ty),+$(,)?) => {
@@ -205,9 +220,9 @@ macro_rules! wrapper_impl {
   };
   (@flatten $($ty:ty),+$(,)?) => {
     $(
-      impl<S, T> State<Flatten<S>> for $ty
+      impl<S, T> State<Flattened<S>> for $ty
       where
-        T: State<Flatten<S>> + ?Sized,
+        T: State<Flattened<S>> + ?Sized,
         S: ?Sized,
       {
         type Output = T::Output;
@@ -216,9 +231,9 @@ macro_rules! wrapper_impl {
   };
   (@flatten(Sized) $($ty:ty),+$(,)?) => {
     $(
-      impl<S, T> State<Flatten<S>> for $ty
+      impl<S, T> State<Flattened<S>> for $ty
       where
-        T: State<Flatten<S>>,
+        T: State<Flattened<S>>,
       {
         type Output = T::Output;
       }
@@ -226,16 +241,16 @@ macro_rules! wrapper_impl {
   };
   (@flatten(Sized, ?Optional) $($ty:ty),+$(,)?) => {
     $(
-      impl<T> State<Flatten> for $ty
+      impl<T> State<Flattened> for $ty
       where
-        T: State<Flatten>,
+        T: State<Flattened>,
       {
         type Output = Self;
       }
 
-      impl<T> State<Flatten<Innermost>> for $ty
+      impl<T> State<Flattened<Innermost>> for $ty
       where
-        T: State<Flatten<Innermost>>,
+        T: State<Flattened<Innermost>>,
       {
         type Output = T::Output;
       }
@@ -243,16 +258,16 @@ macro_rules! wrapper_impl {
   };
 }
 
-impl<T> State<Flatten> for Option<T>
+impl<T> State<Flattened> for Option<T>
 where
-  T: State<Flatten>,
+  T: State<Flattened>,
 {
   type Output = T::Output;
 }
 
-impl<T> State<Flatten<Innermost>> for Option<T>
+impl<T> State<Flattened<Innermost>> for Option<T>
 where
-  T: State<Flatten<Innermost>>,
+  T: State<Flattened<Innermost>>,
 {
   type Output = T::Output;
 }

@@ -317,7 +317,7 @@ fn accessors(
       let without_fn = format_ident!("without_{}", field_name);
       let maybe_fn = format_ident!("maybe_{}", field_name);
       let flatten_ty = quote! {
-        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
+        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output
       };
 
       quote! {
@@ -478,7 +478,7 @@ fn optional_accessors(
   let (optional_mut_ty, optional_ref_ty, optional_ty, flatten_ty): (Type, Type, Type, Type) =
     if optional {
       let flatten_ty = syn::parse2(quote! {
-        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten>>::Output
+        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output
       })?;
       let optional_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #flatten_ty> })?;
       let optional_ref_ty = syn::parse2(quote! { ::core::option::Option<&#flatten_ty> })?;
@@ -599,7 +599,7 @@ fn derive_flatten_state(
   quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>> for #name #tg #w {
+    impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened<__GROST_FLATTEN_STATE__>> for #name #tg #w {
       type Output = Self;
     }
   }

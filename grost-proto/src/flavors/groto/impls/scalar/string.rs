@@ -141,10 +141,8 @@ macro_rules! array_str {
 
     $crate::flatten_state!($ty [const N: usize]);
 
-    $crate::identity_transform!(
-      $crate::__private::flavors::Groto {
-        $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited
-      }
+    $crate::groto_identity_transform!(
+      $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited
     );
 
     identity_partial_transform!(

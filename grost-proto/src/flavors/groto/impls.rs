@@ -6,7 +6,7 @@ use crate::{
   convert::{Partial, PartialRef, PartialTransform, State, Transform},
   decode::Decode,
   flavors::{DefaultWireFormat, Flavor, Groto, WireFormat, groto::Optional},
-  selection::{Selectable, Selector},
+  selection::Selectable,
 };
 
 macro_rules! identity_partial_transform {

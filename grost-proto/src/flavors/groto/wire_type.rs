@@ -175,26 +175,26 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
 /// this crate.
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
 #[display("flatten")]
-pub struct Flatten<W: ?Sized, I: ?Sized> {
+pub struct Flattened<W: ?Sized, I: ?Sized> {
   _w: PhantomData<W>,
   _i: PhantomData<I>,
 }
 
-impl<W: ?Sized, I: ?Sized> Clone for Flatten<W, I> {
+impl<W: ?Sized, I: ?Sized> Clone for Flattened<W, I> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized, I: ?Sized> Copy for Flatten<W, I> {}
+impl<W: ?Sized, I: ?Sized> Copy for Flattened<W, I> {}
 
-impl<W: WireFormat<Groto>, I: WireFormat<Groto>> From<Flatten<W, I>> for WireType {
-  fn from(_: Flatten<W, I>) -> Self {
+impl<W: WireFormat<Groto>, I: WireFormat<Groto>> From<Flattened<W, I>> for WireType {
+  fn from(_: Flattened<W, I>) -> Self {
     W::WIRE_TYPE
   }
 }
 
-impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<W, I> {
+impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flattened<W, I> {
   const NAME: &'static str = "flatten";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Self {
