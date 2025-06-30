@@ -1,5 +1,1 @@
-impl_reflectable!(
-  char(
-    char
-  ),
-);
+impl_reflectable!(char(char),);

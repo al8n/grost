@@ -27,8 +27,8 @@ macro_rules! impl_reflectable_with_variant {
 }
 
 mod boolean;
-mod char;
 mod bytes;
+mod char;
 mod net;
 mod numbers;
 mod regex;

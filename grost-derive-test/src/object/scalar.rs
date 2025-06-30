@@ -1,8 +1,7 @@
 #![allow(warnings)]
 
-use grost::{Object, flavors::groto::*};
 use core::num::*;
-
+use grost::{Object, flavors::groto::*};
 
 #[derive(Object)]
 struct Uints {
@@ -16,7 +15,6 @@ struct Uints {
   field4: u64,
   #[grost(tag = 5, scalar)]
   field5: u128,
-
 
   #[grost(tag = 6, scalar, wire_format = "Varint")]
   field6: u8,

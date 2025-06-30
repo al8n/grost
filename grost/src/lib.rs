@@ -12,9 +12,8 @@ pub use grost_proto::{
   buffer, convert,
   decode::{self, Decode, DecodeOwned},
   encode::{self, Encode, PartialEncode},
-  reflection, selection, flavors,
+  flavors, reflection, selection,
 };
-
 
 #[cfg(feature = "bytes")]
 pub use grost_proto::bytes;

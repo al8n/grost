@@ -27,8 +27,7 @@ impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for Str<RB> {
   }
 }
 
-impl<RB: ?Sized, O> State<Flatten<O>> for Str<RB>
-{
+impl<RB: ?Sized, O> State<Flatten<O>> for Str<RB> {
   type Output = Self;
 }
 

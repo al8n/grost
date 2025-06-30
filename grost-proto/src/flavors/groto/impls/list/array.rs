@@ -5,7 +5,8 @@ use crate::{
   convert::{PartialRef, PartialTransform, State, Transform},
   decode::Decode,
   flavors::{
-    groto::{Error, Fixed8, LengthDelimited, PackedDecoder, Unknown}, Groto, WireFormat
+    Groto, WireFormat,
+    groto::{Error, Fixed8, LengthDelimited, PackedDecoder, Unknown},
   },
 };
 
@@ -33,9 +34,7 @@ where
       let (_, item) = res?;
       if index >= N {
         #[cfg(any(feature = "alloc", feature = "std"))]
-        let err_msg = ::std::format!(
-          "expected array of length {N}, but got more elements"
-        );
+        let err_msg = ::std::format!("expected array of length {N}, but got more elements");
         #[cfg(not(any(feature = "alloc", feature = "std")))]
         let err_msg = "got more elements than array capacity";
         return Err(Error::custom(err_msg));
@@ -50,13 +49,18 @@ where
   }
 }
 
-impl<'a, B, UB> PartialTransform<PackedDecoder<'a, u8, B, UB, Fixed8>, Option<Self>, LengthDelimited, Groto>
+#[cfg(feature = "std")]
+impl<'a, B, UB>
+  PartialTransform<PackedDecoder<'a, u8, B, UB, Fixed8>, Option<Self>, LengthDelimited, Groto>
   for Vec<u8>
 where
   UB: Buffer<Unknown<B>> + 'a,
   B: ReadBuf + 'a,
 {
-  fn partial_transform(input: PackedDecoder<'a, u8, B, UB, Fixed8>, selector: &Self::Selector) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error> {
+  fn partial_transform(
+    input: PackedDecoder<'a, u8, B, UB, Fixed8>,
+    selector: &Self::Selector,
+  ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error> {
     if *selector {
       Ok(Some(Vec::from(input.as_slice())))
     } else {

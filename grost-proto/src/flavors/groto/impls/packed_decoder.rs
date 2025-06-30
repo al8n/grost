@@ -6,7 +6,8 @@ use crate::{
   decode::Decode,
   encode::Encode,
   flavors::{
-    groto::{Context, Error, Fixed8, LengthDelimited, Unknown}, Groto, WireFormat
+    Groto, WireFormat,
+    groto::{Context, Error, Fixed8, LengthDelimited, Unknown},
   },
   selection::Selectable,
 };

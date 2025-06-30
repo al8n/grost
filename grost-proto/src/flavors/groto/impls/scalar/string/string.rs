@@ -3,7 +3,7 @@ use crate::{
   convert::{PartialTransform, Transform},
   decode::Str,
   flatten_state,
-  flavors::{groto::LengthDelimited, Groto},
+  flavors::{Groto, groto::LengthDelimited},
   identity_transform, partial_ref_state, partial_state, selectable,
 };
 use std::string::String;
@@ -42,7 +42,6 @@ impl Transform<&str, Self, LengthDelimited, Groto> for String {
     Ok(String::from(input))
   }
 }
-
 
 impl PartialTransform<&str, Option<Self>, LengthDelimited, Groto> for String {
   fn partial_transform(

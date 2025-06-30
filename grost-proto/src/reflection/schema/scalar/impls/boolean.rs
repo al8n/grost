@@ -1,3 +1,1 @@
-impl_reflectable!(
-  bool(bool),
-);
+impl_reflectable!(bool(bool),);

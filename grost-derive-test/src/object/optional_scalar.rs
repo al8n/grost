@@ -1,8 +1,7 @@
 #![allow(warnings)]
 
-use grost::{Object, flavors::groto::*};
 use core::num::*;
-
+use grost::{Object, flavors::groto::*};
 
 #[derive(Object)]
 struct OptionalUints {
