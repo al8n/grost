@@ -158,7 +158,7 @@ macro_rules! list {
   (@partial_state $($(:< $($tg:ident: $t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])? => $output:ty),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Partial< $crate::__private::flavors::Groto>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>> for $ty
       where
         T: $crate::__private::convert::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>,
         T::Output: Sized,
@@ -236,40 +236,9 @@ macro_rules! list {
       }
     )*
   };
-  // (@identity_partial_transform $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
-  //   $(
-  //     impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<Self, Option<Self>, $crate::__private::flavors::Groto, W> for $ty
-  //     where
-  //       W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
-  //       T: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, W>
-  //         + $crate::__private::convert::PartialTransform<$crate::__private::flavors::Groto, W, Self>,
-  //       Self: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, W, Selector = T::Selector>,
-  //     {
-  //       fn partial_transform(input: Self, selector: &T::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
-  //         if $crate::__private::selection::Selector::is_empty(selector) {
-  //           return ::core::result::Result::Ok(::core::option::Option::None);
-  //         }
-
-  //         input.into_iter()
-  //           .filter_map(|val| {
-  //             match T::partial_transform(val, selector) {
-  //               ::core::result::Result::Ok(val) => val.map(|val| ::core::result::Result::Ok(val)),
-  //               ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
-  //             }
-  //           })
-  //           .collect::<::core::result::Result<$ty, _>>()
-  //           .map(|val| if val.is_empty() {
-  //             ::core::option::Option::None
-  //           } else {
-  //             ::core::option::Option::Some(val)
-  //           })
-  //       }
-  //     }
-  //   )*
-  // };
   (@identity_partial_transform(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<$($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<Self, Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
+      impl<$($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<Self, ::core::option::Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
       {
         fn partial_transform(input: Self, selector: &Self::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
           if <Self::Selector as $crate::__private::selection::Selector<$crate::__private::flavors::Groto>>::is_empty(selector) {
@@ -303,7 +272,7 @@ macro_rules! list {
   };
   (@partial_transform(from_bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<B: $crate::__private::buffer::ReadBuf, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<$crate::__private::decode::BytesSlice<B>, Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
+      impl<B: $crate::__private::buffer::ReadBuf, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<$crate::__private::decode::BytesSlice<B>, ::core::option::Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
       {
         fn partial_transform(input: $crate::__private::decode::BytesSlice<B>, selector: &Self::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
           if <Self::Selector as $crate::__private::selection::Selector<$crate::__private::flavors::Groto>>::is_empty(selector) {
@@ -317,7 +286,7 @@ macro_rules! list {
   };
   (@partial_transform(try_from_bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])? { $try_from:expr }),+$(,)?) => {
     $(
-      impl<B: $crate::__private::buffer::ReadBuf, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<$crate::__private::decode::BytesSlice<B>, Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
+      impl<B: $crate::__private::buffer::ReadBuf, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<$crate::__private::decode::BytesSlice<B>, ::core::option::Option<Self>, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
       {
         fn partial_transform(input: $crate::__private::decode::BytesSlice<B>, selector: &Self::Selector) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
           if <Self::Selector as $crate::__private::selection::Selector<$crate::__private::flavors::Groto>>::is_empty(selector) {
@@ -327,6 +296,58 @@ macro_rules! list {
           ($try_from)(input.as_slice())
             .map(::core::option::Option::Some)
             .map_err(|e| $crate::__private::flavors::groto::Error::from(e))
+        }
+      }
+    )*
+  };
+  (@partial_transform(identity) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<
+        Self,
+        ::core::option::Option<Self>,
+        $crate::__private::flavors::groto::Packed<W>,
+        $crate::__private::flavors::Groto,
+      > for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
+        T: $crate::__private::convert::PartialTransform<
+            T,
+            ::core::option::Option<T>,
+            W,
+            $crate::__private::flavors::Groto,
+          >
+          + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>
+          + $crate::__private::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>,
+        T::Output: Sized +  $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
+      {
+        fn partial_transform(
+          input: Self,
+          selector: &T::Selector,
+        ) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error>
+        {
+          if $crate::__private::selection::Selector::is_empty(selector) {
+            return ::core::result::Result::Ok(::core::option::Option::None);
+          }
+
+          input.into_iter()
+            .filter_map(|res| {
+              match T::partial_transform(res, selector) {
+                ::core::result::Result::Ok(val) => {
+                  val.and_then(|val| if $crate::__private::selection::Selectable::is_empty(&val) {
+                    ::core::option::Option::None
+                  } else {
+                    ::core::option::Option::Some(::core::result::Result::Ok(val))
+                  })
+                },
+                ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
+              }
+            })
+            .collect::<::core::result::Result<$ty, _>>()
+            .map(|val| if val.is_empty() {
+              ::core::option::Option::None
+            } else {
+              ::core::option::Option::Some(val)
+            })
         }
       }
     )*
@@ -364,7 +385,12 @@ macro_rules! list {
         T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>
           + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>
           + $crate::__private::decode::Decode<'a, $crate::__private::flavors::Groto, TW, T::Output, B, UB>
-          + $crate::__private::convert::PartialTransform<<T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>>::Output, T, TW, $crate::__private::flavors::Groto>
+          + $crate::__private::convert::PartialTransform<
+            <T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>>::Output,
+            ::core::option::Option<T>,
+            TW,
+            $crate::__private::flavors::Groto
+          >
           + 'a,
         <T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
         B: $crate::__private::buffer::ReadBuf + 'a,
@@ -378,61 +404,13 @@ macro_rules! list {
           input.into_iter()
             .filter_map(|res| {
               match res.and_then(|(_, inp)| <
-                T as $crate::__private::convert::PartialTransform<<T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>>::Output, T, TW, $crate::__private::flavors::Groto>
+                T as $crate::__private::convert::PartialTransform<<T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, B, UB, TW, $crate::__private::flavors::Groto>>>::Output, ::core::option::Option<T>, TW, $crate::__private::flavors::Groto>
               >::partial_transform(inp, selector)) {
-                ::core::result::Result::Ok(val) => if $crate::__private::selection::Selectable::is_empty(&val) {
-                  None
-                } else {
-                  Some(Ok(val))
+                ::core::result::Result::Ok(val) => match val {
+                  ::core::option::Option::Some(val) => ::core::option::Option::Some(::core::result::Result::Ok(val)),
+                  ::core::option::Option::None => ::core::option::Option::None,
                 },
                 ::core::result::Result::Err(e) => ::core::option::Option::Some(::core::result::Result::Err(e)),
-              }
-            })
-            .collect::<::core::result::Result<$ty, _>>()
-            .map(|val| if val.is_empty() {
-              ::core::option::Option::None
-            } else {
-              ::core::option::Option::Some(val)
-            })
-        }
-      }
-
-      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<
-        Self,
-        ::core::option::Option<Self>,
-        $crate::__private::flavors::groto::Packed<W>,
-        $crate::__private::flavors::Groto,
-      > for $ty
-      where
-        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
-        T: $crate::__private::convert::IdentityPartialTransform<
-            W,
-            $crate::__private::flavors::Groto,
-          >
-          + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>
-          + $crate::__private::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>, Output = ::core::option::Option<T>>,
-        T::Output: Sized +  $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
-      {
-        fn partial_transform(
-          input: Self,
-          selector: &T::Selector,
-        ) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error>
-        {
-          if $crate::__private::selection::Selector::is_empty(selector) {
-            return ::core::result::Result::Ok(::core::option::Option::None);
-          }
-
-          input.into_iter()
-            .filter_map(|res| {
-              match T::partial_transform(res, selector) {
-                ::core::result::Result::Ok(val) => {
-                  val.and_then(|val| if $crate::__private::selection::Selectable::is_empty(&val) {
-                    ::core::option::Option::None
-                  } else {
-                    ::core::option::Option::Some(::core::result::Result::Ok(val))
-                  })
-                },
-                ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
               }
             })
             .collect::<::core::result::Result<$ty, _>>()
@@ -614,31 +592,6 @@ macro_rules! list {
     )*
   };
 }
-
-list!(@flatten_state [T; N] [const N: usize], [T]);
-list!(@partial_state [T; N] [const N: usize] => [T::Output; N], [T] => [T::Output]);
-list!(@partial_ref_state(bytes) [u8; N] [const N: usize], [u8]);
-list!(@partial_ref_state(packed) [T; N] [const N: usize], [T]);
-list!(@partial_ref_state(borrow) [T; N] [const N: usize], [T]);
-list!(@identity_transform [T; N] [const N: usize]);
-list!(@identity_partial_transform(bytes) [u8; N] [const N: usize]);
-list!(@transform(try_from_bytes) [u8; N] [const N: usize] {
-  |s: &[u8]| {
-    <[u8; N]>::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>().into())
-  }
-});
-list!(@partial_transform(try_from_bytes) [u8; N] [const N: usize] {
-  |s: &[u8]| {
-    <[u8; N]>::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>())
-  }
-});
-list!(@default_wire_format [T; N] [const N: usize], [T]);
-list!(@selectable [T; N] [const N: usize], [T]);
-list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
-list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>()) });
-list!(
-  @encode_as_slice [T; N] [const N: usize]
-);
 
 impl<'a, T, W> Encode<Groto, Borrowed<'a, Packed<W>>> for [&'a T]
 where
@@ -825,6 +778,31 @@ impl PartialEncode<Groto, LengthDelimited> for [u8] {
 //   }
 // }
 
+list!(@flatten_state [T; N] [const N: usize], [T]);
+list!(@partial_state [T; N] [const N: usize] => [T::Output; N], [T] => [T::Output]);
+list!(@partial_ref_state(bytes) [u8; N] [const N: usize], [u8]);
+list!(@partial_ref_state(packed) [T; N] [const N: usize], [T]);
+list!(@partial_ref_state(borrow) [T; N] [const N: usize], [T]);
+list!(@identity_transform [T; N] [const N: usize]);
+list!(@identity_partial_transform(bytes) [u8; N] [const N: usize]);
+list!(@transform(try_from_bytes) [u8; N] [const N: usize] {
+  |s: &[u8]| {
+    <[u8; N]>::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>().into())
+  }
+});
+list!(@partial_transform(try_from_bytes) [u8; N] [const N: usize] {
+  |s: &[u8]| {
+    <[u8; N]>::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>())
+  }
+});
+list!(@default_wire_format [T; N] [const N: usize], [T]);
+list!(@selectable [T; N] [const N: usize], [T]);
+list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
+list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>()) });
+list!(
+  @encode_as_slice [T; N] [const N: usize]
+);
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
   use std::vec::Vec;
@@ -840,6 +818,7 @@ const _: () = {
   list!(@transform(from_bytes) Vec<u8>);
   list!(@partial_transform(from_bytes) Vec<u8>);
   list!(@partial_transform(packed) Vec<T>);
+  list!(@partial_transform(identity) Vec<T>);
   list!(@selectable Vec<T>);
   list!(@decode_to_packed_decoder Vec<T>);
   list!(@decode_to_packed_decoder(from_bytes) Vec<u8> {
@@ -868,6 +847,7 @@ const _: () = {
   list!(@transform(from_bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@partial_transform(from_bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@partial_transform(packed) SmallVec<[T; N]> [const N: usize]);
+  list!(@partial_transform(identity) SmallVec<[T; N]> [const N: usize]);
   list!(@selectable SmallVec<[T; N]> [const N: usize]);
   list!(
     @decode_to_packed_decoder SmallVec<[T; N]> [const N: usize]
@@ -907,6 +887,7 @@ const _: () = {
       ArrayVec::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>())
     }
   });
+  list!(@partial_transform(identity) ArrayVec<T, N> [const N: usize]);
   list!(@partial_transform(packed) ArrayVec<T, N> [const N: usize]);
   list!(@selectable ArrayVec<T, N> [const N: usize]);
   list!(
@@ -968,6 +949,7 @@ const _: () = {
     }
   });
   list!(@partial_transform(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@partial_transform(identity):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@selectable:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(
     @decode_to_packed_decoder:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
@@ -1005,6 +987,7 @@ const _: () = {
     list!(@identity_partial_transform(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@transform(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@partial_transform(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
+    list!(@partial_transform(identity):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@partial_transform(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(
