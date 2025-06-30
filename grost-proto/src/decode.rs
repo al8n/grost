@@ -1,8 +1,3 @@
-use crate::{
-  convert::{PartialTransform, Transform},
-  selection::Selectable,
-};
-
 use super::{
   buffer::{Buffer, ReadBuf},
   error::Error,
@@ -148,24 +143,24 @@ macro_rules! deref_decode_impl {
         }
       }
 
-      impl<F, W, I, O, T> Transform<I, O, W, F> for $ty
+      impl<F, W, I, O, T> $crate::__private::convert::Transform<I, O, W, F> for $ty
       where
         F: Flavor + ?Sized,
         W: WireFormat<F>,
-        T: Transform<I, O, W, F> + Sized,
+        T: $crate::__private::convert::Transform<I, O, W, F> + Sized,
       {
         fn transform(input: I) -> Result<O, F::Error> {
           T::transform(input)
         }
       }
 
-      impl<F, W, I, O, T> PartialTransform<I, O, W, F> for $ty
+      impl<F, W, I, O, T> $crate::__private::convert::PartialTransform<I, O, W, F> for $ty
       where
         F: Flavor + ?Sized,
         W: WireFormat<F>,
-        I: Selectable<F, Selector = T::Selector>,
-        O: Selectable<F, Selector = T::Selector>,
-        T: PartialTransform<I, O, W, F> + Selectable<F>,
+        I: $crate::__private::selection::Selectable<F, Selector = T::Selector>,
+        O: $crate::__private::selection::Selectable<F, Selector = T::Selector>,
+        T: $crate::__private::convert::PartialTransform<I, O, W, F> + $crate::__private::selection::Selectable<F>,
       {
         fn partial_transform(input: I, selector: &Self::Selector) -> Result<O, F::Error> {
           T::partial_transform(input, selector)

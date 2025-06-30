@@ -46,7 +46,6 @@ macro_rules! identity_partial_transform {
 
 mod list;
 mod packed_decoder;
-mod repeated;
 mod scalar;
 mod tuple;
 

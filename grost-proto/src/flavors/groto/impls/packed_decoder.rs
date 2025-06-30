@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flavors::{
     Groto, WireFormat,
-    groto::{Context, Error, Fixed8, LengthDelimited, Unknown},
+    groto::{Context, Error, Fixed8, Unknown},
   },
   selection::Selectable,
 };
@@ -247,11 +247,12 @@ where
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<Flattened> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W, S> State<Flattened<S>> for PackedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,
   UB: ?Sized,
+  S: ?Sized,
 {
   type Output = Self;
 }

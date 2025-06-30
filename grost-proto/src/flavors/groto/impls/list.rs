@@ -234,6 +234,24 @@ macro_rules! list {
           ::core::result::Result::Ok(input)
         }
       }
+
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::Transform<Self, ::core::option::Option<Self>, W, $crate::__private::flavors::Groto> for $ty
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
+      {
+        fn transform(input: Self) -> ::core::result::Result<::core::option::Option<Self>, $crate::__private::flavors::groto::Error> {
+          ::core::result::Result::Ok(::core::option::Option::Some(input))
+        }
+      }
+
+      impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, W, $crate::__private::flavors::Groto> for ::core::option::Option<$ty>
+      where
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
+      {
+        fn transform(input: $ty) -> ::core::result::Result<Self, $crate::__private::flavors::groto::Error> {
+          ::core::result::Result::Ok(::core::option::Option::Some(input))
+        }
+      }
     )*
   };
   (@identity_partial_transform(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {

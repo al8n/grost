@@ -7,6 +7,5 @@ mod optional_string;
 mod string;
 
 mod list;
-mod list_generated;
 mod optional_list;
 // mod optional_list_generated;

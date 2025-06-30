@@ -175,21 +175,7 @@ where
   type Output = T::Output;
 }
 
-// /// A trait for converting from its flattened form.
-// pub trait FromFlattened<S: ?Sized>: State<Flattened<S>> {
-//   /// Converts the state to its flattened form.
-//   fn from_flatten(input: Self::Output) -> Self;
-// }
-
-// impl<T> FromFlattened<Option<Innermost>> for Option<T>
-// where
-//   Option<T>: State<Flattened<Option<Innermost>>>,
-// {
-//   fn from_flatten(input: T) -> Self {
-//     Some(input)
-//   }
-// }
-
+#[allow(dead_code)]
 macro_rules! wrapper_impl {
   (@partial_state $($ty:ty => $output:ty),+$(,)?) => {
     $(

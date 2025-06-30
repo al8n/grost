@@ -14,11 +14,11 @@ macro_rules! groto_varint {
     );
 
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Optional<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
-        fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
+      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Optional<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
+      //   fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
+      //     ::core::result::Result::Ok(::core::option::Option::Some(input))
+      //   }
+      // }
 
       impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Optional<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for $ty {
         fn transform(input: $ty) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
