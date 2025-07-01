@@ -305,7 +305,7 @@ impl<F> ConcreteTaggedField<F> {
     let flavor_ty = object.flavor().ty();
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #read_buffer, #buffer>
+      #path_to_grost::__private::decode::Decode<#decode_lt, #partial_ref_ty, #wf, #read_buffer, #buffer, #flavor_ty>
     })?;
 
     let optional_partial_ref_type = syn::parse2(quote! {

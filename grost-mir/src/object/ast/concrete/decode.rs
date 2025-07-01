@@ -181,7 +181,7 @@ fn derive_partial_object_decode<T, S, M>(
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         <#partial_object_ty as
-          #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_object_ty, #read_buffer_ident, #ubg>
+          #path_to_grost::__private::decode::Decode<#lt, #partial_ref_object_ty, #wf, #read_buffer_ident, #ubg, #flavor_ty>
         >::decode(context, src)
           .and_then(|(read, input)| {
             <#partial_object_ty as #path_to_grost::__private::convert::Transform::<

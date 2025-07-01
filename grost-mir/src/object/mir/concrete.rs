@@ -318,10 +318,10 @@ impl<M, F> ConcreteObject<M, F> {
           decode_constraints.push(syn::parse2(quote! {
             #field_ty: #path_to_grost::__private::decode::Decode<
               #lt,
-              #flavor_ty,
-              #wf,
               #field_ty,
-              #ub
+              #wf,
+              #ub,
+              #flavor_ty,
             >
           })?);
         }
@@ -359,7 +359,7 @@ impl<M, F> ConcreteObject<M, F> {
         let rb = rb.clone();
         Arc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #ty, #wf, #rb, #ub, #flavor_ty>
           })
         })
       },

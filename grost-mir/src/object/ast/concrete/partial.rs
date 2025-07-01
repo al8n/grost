@@ -155,7 +155,7 @@ impl PartialObject {
 
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
-            #ty: #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
+            #ty: #path_to_grost::__private::decode::Decode<#lt, #partial_ref_ty, #wf, #rb, #ub, #flavor_ty>
           })?);
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
             #ty: #path_to_grost::__private::convert::Transform<#partial_ref_ty, #partial_ty, #wf, #flavor_ty>
@@ -182,7 +182,7 @@ impl PartialObject {
         let rb = rb.clone();
         Rc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #ty, #wf, #rb, #ub, #flavor_ty>
           })
         })
       },

@@ -172,7 +172,7 @@ impl PartialRefObject {
         let wf = field.wire_format();
 
         decode_constraints.push(syn::parse2(quote! {
-          #ty: #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_ty, #wf, #partial_ref_ty, #rb, #ub>
+          #ty: #path_to_grost::__private::decode::Decode<#decode_lt, #partial_ref_ty, #wf, #rb, #ub, #flavor_ty>
         })?);
         transform_constraints.push(syn::parse2(quote! {
           #ty: #path_to_grost::__private::convert::Transform<#partial_ref_ty, #partial_ref_ty, #wf, #flavor_ty>
@@ -311,7 +311,7 @@ impl PartialRefObject {
         let rb = rb.clone();
         Rc::new(move |ty| {
           syn::parse2(quote! {
-            #path_to_grost::__private::decode::Decode<#lt, #flavor_ty, #wf, #ty, #rb, #ub>
+            #path_to_grost::__private::decode::Decode<#lt, #ty, #wf, #rb, #ub, #flavor_ty>
           })
         })
       },

@@ -166,7 +166,7 @@ impl PartialRefField {
 
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_type, #wf, #ty, #read_buffer, #buffer>
+      #path_to_grost::__private::decode::Decode<#decode_lt, #ty, #wf, #read_buffer, #buffer, #flavor_type>
     })?;
 
     Ok(Self {
