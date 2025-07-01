@@ -24,12 +24,12 @@ encode_bridge!(
 );
 
 decode_bridge!(
-  Groto: &'de [u8] => BytesSlice<B> {
+  Groto: &'de [u8] => BytesSlice<RB> {
     Bytes as LengthDelimited {
-      convert: |src: BytesSlice<B>| Bytes::copy_from_slice(src.as_ref());
+      convert: |src: BytesSlice<RB>| Bytes::copy_from_slice(src.as_ref());
     },
     BytesMut as LengthDelimited {
-      convert: |src: BytesSlice<B>| {
+      convert: |src: BytesSlice<RB>| {
         BytesMut::from(src.as_ref())
       };
     },
@@ -50,10 +50,7 @@ flatten_state!(Bytes, BytesMut);
 bytes_bridge!(
   Groto: Bytes, BytesMut,
 );
-groto_identity_transform!(
-  Bytes as LengthDelimited,
-  BytesMut as LengthDelimited,
-);
+groto_identity_transform!(Bytes as LengthDelimited, BytesMut as LengthDelimited,);
 identity_partial_transform!(
   Groto {
     Bytes as LengthDelimited,
@@ -79,11 +76,11 @@ impl Transform<&[u8], Self, LengthDelimited, Groto> for BytesMut {
   }
 }
 
-impl<B> Transform<BytesSlice<B>, Self, LengthDelimited, Groto> for Bytes
+impl<RB> Transform<BytesSlice<RB>, Self, LengthDelimited, Groto> for Bytes
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
-  fn transform(input: BytesSlice<B>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
+  fn transform(input: BytesSlice<RB>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
@@ -91,11 +88,11 @@ where
   }
 }
 
-impl<B> Transform<BytesSlice<B>, Self, LengthDelimited, Groto> for BytesMut
+impl<RB> Transform<BytesSlice<RB>, Self, LengthDelimited, Groto> for BytesMut
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
-  fn transform(input: BytesSlice<B>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
+  fn transform(input: BytesSlice<RB>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
@@ -103,38 +100,38 @@ where
   }
 }
 
-impl<B> PartialTransform<BytesSlice<B>, Option<Self>, LengthDelimited, Groto> for Bytes
+impl<RB> PartialTransform<BytesSlice<RB>, Option<Self>, LengthDelimited, Groto> for Bytes
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
   fn partial_transform(
-    input: BytesSlice<B>,
+    input: BytesSlice<RB>,
     selector: &bool,
   ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
     if *selector {
-      <Self as Transform<BytesSlice<B>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
+      <Self as Transform<BytesSlice<RB>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
     } else {
       Ok(None)
     }
   }
 }
 
-impl<B> PartialTransform<BytesSlice<B>, Option<Self>, LengthDelimited, Groto> for BytesMut
+impl<RB> PartialTransform<BytesSlice<RB>, Option<Self>, LengthDelimited, Groto> for BytesMut
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
   fn partial_transform(
-    input: BytesSlice<B>,
+    input: BytesSlice<RB>,
     selector: &bool,
   ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
     if *selector {
-      <Self as Transform<BytesSlice<B>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
+      <Self as Transform<BytesSlice<RB>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
     } else {
       Ok(None)
     }

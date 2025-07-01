@@ -200,9 +200,7 @@ impl PartialObject {
         output
           .params
           .push(GenericParam::Type(read_buffer_param.clone()));
-        output
-          .params
-          .push(GenericParam::Type(buffer_param.clone()));
+        output.params.push(GenericParam::Type(buffer_param.clone()));
         output
           .params
           .extend(generics.const_params().cloned().map(GenericParam::from));
@@ -235,9 +233,7 @@ impl PartialObject {
         output
           .params
           .push(GenericParam::Type(read_buffer_param.clone()));
-        output
-          .params
-          .push(GenericParam::Type(buffer_param.clone()));
+        output.params.push(GenericParam::Type(buffer_param.clone()));
         output
           .params
           .extend(generics.const_params().cloned().map(GenericParam::from));
@@ -275,9 +271,7 @@ impl PartialObject {
         output
           .params
           .push(GenericParam::Type(read_buffer_param.clone()));
-        output
-          .params
-          .push(GenericParam::Type(buffer_param.clone()));
+        output.params.push(GenericParam::Type(buffer_param.clone()));
         output
           .params
           .extend(generics.const_params().cloned().map(GenericParam::from));

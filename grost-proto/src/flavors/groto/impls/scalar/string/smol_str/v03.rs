@@ -21,9 +21,9 @@ encode_bridge!(
 );
 
 decode_bridge!(
-  Groto: &'de str => Str<B> {
+  Groto: &'de str => Str<RB> {
     SmolStr as LengthDelimited {
-      convert: |src: Str<B>| SmolStr::new(src.as_ref());
+      convert: |src: Str<RB>| SmolStr::new(src.as_ref());
     },
   },
 );
@@ -36,9 +36,7 @@ partial_ref_state!(
 partial_state!(
   Groto: SmolStr => SmolStr
 );
-groto_identity_transform!(
-  SmolStr as LengthDelimited,
-);
+groto_identity_transform!(SmolStr as LengthDelimited,);
 identity_partial_transform!(
   Groto {
     SmolStr as LengthDelimited,
@@ -70,41 +68,41 @@ impl PartialTransform<&str, Option<Self>, LengthDelimited, Groto> for SmolStr {
   }
 }
 
-impl<B> Transform<Str<B>, Self, LengthDelimited, Groto> for SmolStr
+impl<RB> Transform<Str<RB>, Self, LengthDelimited, Groto> for SmolStr
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
-  fn transform(input: Str<B>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error> {
+  fn transform(input: Str<RB>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error> {
     Ok(SmolStr::new(input))
   }
 }
 
-impl<B> PartialTransform<Str<B>, Option<Self>, LengthDelimited, Groto> for SmolStr
+impl<RB> PartialTransform<Str<RB>, Option<Self>, LengthDelimited, Groto> for SmolStr
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
   fn partial_transform(
-    input: Str<B>,
+    input: Str<RB>,
     selector: &bool,
   ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error> {
     if *selector {
-      <Self as Transform<Str<B>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
+      <Self as Transform<Str<RB>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
     } else {
       Ok(None)
     }
   }
 }
 
-impl<'a, B, UB> Decode<'a, Groto, LengthDelimited, Str<B>, B, UB> for SmolStr {
+impl<'a, RB, B> Decode<'a, Str<RB>, LengthDelimited, RB, B, Groto> for SmolStr {
   fn decode(
     context: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: B,
-  ) -> Result<(usize, Str<B>), <Groto as crate::flavors::Flavor>::Error>
+    src: RB,
+  ) -> Result<(usize, Str<RB>), <Groto as crate::flavors::Flavor>::Error>
   where
-    Str<B>: Sized + 'a,
-    B: crate::buffer::ReadBuf,
-    UB: crate::buffer::Buffer<<Groto as crate::flavors::Flavor>::Unknown<B>> + 'a,
+    Str<RB>: Sized + 'a,
+    RB: crate::buffer::ReadBuf,
+    B: crate::buffer::Buffer<<Groto as crate::flavors::Flavor>::Unknown<RB>> + 'a,
   {
-    <&str as Decode<'a, Groto, LengthDelimited, Str<B>, B, UB>>::decode(context, src)
+    <&str as Decode<'a, Str<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
   }
 }

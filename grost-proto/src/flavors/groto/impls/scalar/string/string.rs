@@ -23,9 +23,7 @@ str_bridge!(Groto: String {
   as_str: AsRef::as_ref;
 },);
 
-groto_identity_transform!(
-  String as LengthDelimited,
-);
+groto_identity_transform!(String as LengthDelimited,);
 identity_partial_transform!(
   Groto {
     String as LengthDelimited,
@@ -57,11 +55,11 @@ impl PartialTransform<&str, Option<Self>, LengthDelimited, Groto> for String {
   }
 }
 
-impl<B> Transform<Str<B>, Self, LengthDelimited, Groto> for String
+impl<RB> Transform<Str<RB>, Self, LengthDelimited, Groto> for String
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
-  fn transform(input: Str<B>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
+  fn transform(input: Str<RB>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
@@ -69,19 +67,19 @@ where
   }
 }
 
-impl<B> PartialTransform<Str<B>, Option<Self>, LengthDelimited, Groto> for String
+impl<RB> PartialTransform<Str<RB>, Option<Self>, LengthDelimited, Groto> for String
 where
-  B: ReadBuf,
+  RB: ReadBuf,
 {
   fn partial_transform(
-    input: Str<B>,
+    input: Str<RB>,
     selector: &bool,
   ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
   {
     if *selector {
-      <Self as Transform<Str<B>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
+      <Self as Transform<Str<RB>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
     } else {
       Ok(None)
     }
@@ -90,7 +88,7 @@ where
 
 // impl<B> PartialTransform<Groto, LengthDelimited, Str<B>> for Option<String>
 // where
-//   B: ReadBuf,
+//   RB: ReadBuf,
 // {
 //   fn partial_transform(
 //     input: Str<B>,

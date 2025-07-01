@@ -27,24 +27,24 @@ macro_rules! try_str_bridge {
       );
 
       $crate::try_decode_bridge!(
-        $flavor: &'de str => $crate::__private::decode::Str<B> {
+        $flavor: &'de str => $crate::__private::decode::Str<RB> {
           $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited {
-            convert: |s: $crate::__private::decode::Str<B>| $from_str(s.as_ref());
+            convert: |s: $crate::__private::decode::Str<RB>| $from_str(s.as_ref());
           },
         },
       );
 
-      impl<'a, B, UB> $crate::__private::decode::Decode<'a,  $crate::__private::flavors::Groto,  $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB> for $ty {
+      impl<'a, RB, B> $crate::__private::decode::Decode<'a, $crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto> for $ty {
         fn decode(
           context: &'a <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Context,
-          src: B,
-        ) -> ::core::result::Result<(usize, $crate::__private::decode::Str<B>), <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Error>
+          src: RB,
+        ) -> ::core::result::Result<(usize, $crate::__private::decode::Str<RB>), <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Error>
         where
           $crate::__private::decode::Str<B>: Sized + 'a,
-          B: $crate::buffer::ReadBuf,
-          UB: $crate::buffer::Buffer<<$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Unknown<B>> + 'a,
+          RB: $crate::buffer::ReadBuf + 'a,
+          B: $crate::buffer::Buffer<<$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Unknown<RB>> + 'a,
         {
-          <&str as $crate::__private::decode::Decode<'a, $crate::__private::flavors::Groto, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::decode::Str<B>, B, UB>>::decode(context, src)
+          <&str as $crate::__private::decode::Decode<'a, $crate::__private::decode::Str<RB>,$crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
         }
       }
 

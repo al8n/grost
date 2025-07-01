@@ -9,10 +9,7 @@ selectable!(@scalar Groto:char);
 partial_ref_state!(@scalar &'a Groto: char as Fixed32, char as Varint);
 partial_state!(@scalar Groto: char);
 flatten_state!(char);
-groto_identity_transform!(
-  char as Fixed32,
-  char as Varint,
-);
+groto_identity_transform!(char as Fixed32, char as Varint,);
 identity_partial_transform!(
   Groto {
     char as Fixed32,

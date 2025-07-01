@@ -3,7 +3,7 @@ use darling::FromMeta;
 use syn::{LifetimeParam, TypeParam};
 
 use crate::utils::{
-  grost_flavor_param, grost_lifetime, grost_read_buffer_param, grost_buffer_param,
+  grost_buffer_param, grost_flavor_param, grost_lifetime, grost_read_buffer_param,
   grost_wire_format_param, grost_write_buffer_param,
 };
 

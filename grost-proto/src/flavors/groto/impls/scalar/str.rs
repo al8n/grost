@@ -22,14 +22,14 @@ encode_bridge!(
   },
 );
 
-impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Str<B>, B, UB> for str {
-  fn decode(context: &'de Context, src: B) -> Result<(usize, Str<B>), Error>
+impl<'de, RB, B> Decode<'de, Str<RB>, LengthDelimited, RB, B, Groto> for str {
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, Str<RB>), Error>
   where
     Str<B>: Sized + 'de,
-    B: crate::buffer::ReadBuf + 'de,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+    RB: crate::buffer::ReadBuf + 'de,
+    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
   {
-    <[u8] as Decode<'de, Groto, LengthDelimited, BytesSlice<B>, B, UB>>::decode(context, src)
+    <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
       .and_then(|(read, val)| {
         Str::try_new(val.into_inner())
           .map_err(|_| Error::custom("invalid UTF-8"))
@@ -41,17 +41,17 @@ impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Str<B>, B, UB> for str {
 macro_rules! impl_ {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Str<B>, B, UB> for $ty {
+      impl<'de, RB, B> Decode<'de, Str<RB>, LengthDelimited, RB, B, Groto> for $ty {
         fn decode(
           context: &'de Context,
-          src: B,
-        ) -> Result<(usize, Str<B>), Error>
+          src: RB,
+        ) -> Result<(usize, Str<RB>), Error>
         where
           Str<B>: Sized + 'de,
-          B: crate::buffer::ReadBuf + 'de,
-          UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+          RB: crate::buffer::ReadBuf + 'de,
+          B: crate::buffer::Buffer<Unknown<RB>> + 'de,
         {
-          <str as Decode<'de, Groto, LengthDelimited, Str<B>, B, UB>>::decode(context, src)
+          <str as Decode<'de, Str<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
         }
       }
     )*

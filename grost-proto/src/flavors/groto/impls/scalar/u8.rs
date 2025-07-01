@@ -22,7 +22,7 @@ partial_ref_state!(@scalar &'a Groto:
 partial_state!(@scalar Groto: u8, NonZeroU8);
 flatten_state!(u8, NonZeroU8);
 
-impl Encode<Groto, Fixed8> for u8 {
+impl Encode<Fixed8, Groto> for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.is_empty() {
       return Err(Error::insufficient_buffer(1, buf.len()));
@@ -37,15 +37,15 @@ impl Encode<Groto, Fixed8> for u8 {
   }
 
   fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Groto, Fixed8>>::encoded_len(self, context)
+    <Self as Encode<Fixed8, Groto>>::encoded_len(self, context)
   }
 
   fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Groto, Fixed8>>::encode(self, context, buf)
+    <Self as Encode<Fixed8, Groto>>::encode(self, context, buf)
   }
 }
 
-impl Encode<Groto, Varint> for u8 {
+impl Encode<Varint, Groto> for u8 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u8_varint_to(*self, buf).map_err(Into::into)
   }
@@ -55,11 +55,11 @@ impl Encode<Groto, Varint> for u8 {
   }
 
   fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Groto, Varint>>::encoded_len(self, context)
+    <Self as Encode<Varint, Groto>>::encoded_len(self, context)
   }
 
   fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Groto, Varint>>::encode(self, context, buf)
+    <Self as Encode<Varint, Groto>>::encode(self, context, buf)
   }
 }
 
@@ -78,12 +78,12 @@ identity_partial_transform!(Groto {
   NonZeroU8 as Varint,
 });
 
-impl<'de, B, UB> Decode<'de, Groto, Fixed8, Self, B, UB> for u8 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Fixed8, RB, B, Groto> for u8 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     if src.is_empty() {
       return Err(Error::buffer_underflow());
@@ -94,12 +94,12 @@ impl<'de, B, UB> Decode<'de, Groto, Fixed8, Self, B, UB> for u8 {
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, Varint, Self, B, UB> for u8 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u8 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     varing::decode_u8_varint(src.as_bytes()).map_err(Into::into)
   }

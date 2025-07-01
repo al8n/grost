@@ -10,7 +10,7 @@ use std::vec::Vec;
 struct OptionalVecCombinations {
   #[grost(tag = 1, optional(list(scalar)))]
   optional_vec_list: Option<Vec<u16>>,
-  
+
   #[grost(tag = 2, optional(list(list(scalar))))]
   optional_vec_vec: Option<Vec<Vec<u16>>>,
 
@@ -34,9 +34,11 @@ struct OptionalSmallVecCombinations {
   #[grost(tag = 3, optional(list(optional(scalar))))]
   optional_smallvec_optional: Option<smallvec_1::SmallVec<[Option<u16>; 16]>>,
   #[grost(tag = 4, optional(list(optional(list(scalar)))))]
-  optional_smallvec_optional_vec: Option<smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[u16; 16]>>; 16]>>,
+  optional_smallvec_optional_vec:
+    Option<smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[u16; 16]>>; 16]>>,
   #[grost(tag = 5, optional(list(optional(list(optional(scalar))))))]
-  optional_smallvec_optional_vec_optional: Option<smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[Option<u16>; 16]>>; 16]>>,
+  optional_smallvec_optional_vec_optional:
+    Option<smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[Option<u16>; 16]>>; 16]>>,
 }
 
 #[derive(Object)]
@@ -49,12 +51,11 @@ struct OptionalArrayVecCombinations {
   #[grost(tag = 3, optional(list(optional(scalar))))]
   optional_arrayvec_optional: Option<arrayvec_0_7::ArrayVec<Option<u16>, 16>>,
   #[grost(tag = 4, optional(list(optional(list(scalar)))))]
-  optional_arrayvec_optional_vec: Option<arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<u16, 16>>, 16>>,
+  optional_arrayvec_optional_vec:
+    Option<arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<u16, 16>>, 16>>,
   #[grost(tag = 5, optional(list(optional(list(optional(scalar))))))]
-  optional_arrayvec_optional_vec_optional: Option<arrayvec_0_7::ArrayVec<
-    Option<arrayvec_0_7::ArrayVec<Option<u16>, 16>>,
-    16,
-  >>,
+  optional_arrayvec_optional_vec_optional:
+    Option<arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<Option<u16>, 16>>, 16>>,
 }
 
 #[derive(Object)]
@@ -67,10 +68,11 @@ struct OptionalTinyVecCombinations {
   #[grost(tag = 3, optional(list(optional(scalar))))]
   optional_tinyvec_optional: Option<tinyvec_1::TinyVec<[Option<u16>; 16]>>,
   #[grost(tag = 4, optional(list(optional(list(scalar)))))]
-  optional_tinyvec_optional_vec: Option<
-    tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[u16; 16]>>; 16]>>,
+  optional_tinyvec_optional_vec:
+    Option<tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[u16; 16]>>; 16]>>,
   #[grost(tag = 5, optional(list(optional(list(optional(scalar))))))]
-  optional_tinyvec_optional_vec_optional: Option<tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[Option<u16>; 16]>>; 16]>>,
+  optional_tinyvec_optional_vec_optional:
+    Option<tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[Option<u16>; 16]>>; 16]>>,
 }
 
 #[derive(Object)]
@@ -83,12 +85,12 @@ struct OptionalTinyVecArrayCombinations {
   #[grost(tag = 3, optional(list(optional(scalar))))]
   optional_tinyvec_array_optional: Option<tinyvec_1::ArrayVec<[Option<u16>; 16]>>,
   #[grost(tag = 4, optional(list(optional(list(scalar)))))]
-  optional_tinyvec_array_optional_vec: Option<
-    tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[u16; 16]>>; 16]>>,
+  optional_tinyvec_array_optional_vec:
+    Option<tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[u16; 16]>>; 16]>>,
   #[grost(tag = 5, optional(list(optional(list(optional(scalar))))))]
-  optional_tinyvec_array_optional_vec_optional: Option<tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[Option<u16>; 16]>>; 16]>>,
+  optional_tinyvec_array_optional_vec_optional:
+    Option<tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[Option<u16>; 16]>>; 16]>>,
 }
-
 
 #[test]
 fn compile() {}

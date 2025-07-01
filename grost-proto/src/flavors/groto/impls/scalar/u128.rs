@@ -7,7 +7,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed128, Groto, Unknown, Varint},
-  partial_encode_scalar, partial_ref_state, partial_state, selectable, groto_identity_transform,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
   try_from_bridge,
 };
 
@@ -36,7 +36,7 @@ identity_partial_transform!(
   }
 );
 
-impl Encode<Groto, Fixed128> for u128 {
+impl Encode<Fixed128, Groto> for u128 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 16 {
       return Err(Error::insufficient_buffer(16, buf.len()));
@@ -51,7 +51,7 @@ impl Encode<Groto, Fixed128> for u128 {
   }
 }
 
-impl Encode<Groto, Varint> for u128 {
+impl Encode<Varint, Groto> for u128 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u128_varint_to(*self, buf).map_err(Into::into)
   }
@@ -63,12 +63,12 @@ impl Encode<Groto, Varint> for u128 {
 
 partial_encode_scalar!(Groto: u128 as Fixed128, u128 as Varint);
 
-impl<'de, B, UB> Decode<'de, Groto, Fixed128, Self, B, UB> for u128 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Fixed128, RB, B, Groto> for u128 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     let src = src.as_bytes();
     if src.len() < 16 {
@@ -79,12 +79,12 @@ impl<'de, B, UB> Decode<'de, Groto, Fixed128, Self, B, UB> for u128 {
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, Varint, Self, B, UB> for u128 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u128 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     varing::decode_u128_varint(src.as_bytes()).map_err(Into::into)
   }

@@ -171,7 +171,7 @@ const _: () = {
   where
     T: DefaultWireFormat<F>,
     F: Flavor + ?Sized,
-    Box<T>: super::encode::Encode<F, T::Format>,
+    Box<T>: super::encode::Encode<T::Format, F>,
   {
     type Format = T::Format;
   }
@@ -180,7 +180,7 @@ const _: () = {
   where
     T: DefaultWireFormat<F>,
     F: Flavor + ?Sized,
-    Rc<T>: super::encode::Encode<F, T::Format>,
+    Rc<T>: super::encode::Encode<T::Format, F>,
   {
     type Format = T::Format;
   }
@@ -189,7 +189,7 @@ const _: () = {
   where
     T: DefaultWireFormat<F>,
     F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<F, T::Format>,
+    Arc<T>: super::encode::Encode<T::Format, F>,
   {
     type Format = T::Format;
   }
@@ -203,7 +203,7 @@ const _: () = {
   where
     T: DefaultWireFormat<F>,
     F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<F, T::Format>,
+    Arc<T>: super::encode::Encode<T::Format, F>,
   {
     type Format = T::Format;
   }

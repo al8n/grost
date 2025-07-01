@@ -23,7 +23,7 @@ mod str;
 /// - `O`: The output type resulting from decoding.
 /// - `RB`: The type of the read buffer used for decoding, which must implement [`ReadBuf`].
 /// - `B`: The buffer implementation used to store the unknown data during decoding, which must implement [`Buffer`].
-pub trait Decode<'de, F, W, O, RB, B>
+pub trait Decode<'de, O, W, RB, B, F>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
@@ -64,18 +64,18 @@ where
 }
 
 /// A data structure that can be deserialized without borrowing any data from the source buffer.
-pub trait DecodeOwned<F, W, O, RB, B>: for<'de> Decode<'de, F, W, O, RB, B>
+pub trait DecodeOwned<O, W, RB, B, F>: for<'de> Decode<'de, O, W, RB, B, F>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
 }
 
-impl<F, W, O, RB, B, T> DecodeOwned<F, W, O, RB, B> for T
+impl<O, W, RB, B, F, T> DecodeOwned<O, W, RB, B, F> for T
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  T: for<'de> Decode<'de, F, W, O, RB, B>,
+  T: for<'de> Decode<'de, O, W, RB, B, F>,
 {
 }
 
@@ -116,29 +116,29 @@ where
 macro_rules! deref_decode_impl {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de, F, W, O, B, UB, T> Decode<'de, F, W, O, B, UB> for $ty
+      impl<'de, O, W, RB, B, F, T> Decode<'de, O, W, RB, B, F> for $ty
       where
         F: Flavor + ?Sized,
         W: WireFormat<F>,
-        T: Decode<'de, F, W, O, B, UB> + ?Sized,
+        T: Decode<'de, O, W, RB, B, F> + ?Sized,
       {
-        fn decode(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
+        fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: ReadBuf + 'de,
-          UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
+          RB: ReadBuf + 'de,
+          B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
         {
           T::decode(context, src)
         }
 
         fn decode_length_delimited(
           context: &'de <F as Flavor>::Context,
-          src: B,
+          src: RB,
         ) -> Result<(usize, O), <F as Flavor>::Error>
         where
           O: Sized + 'de,
-          B: ReadBuf + 'de,
-          UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
+          RB: ReadBuf + 'de,
+          B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
         {
           T::decode_length_delimited(context, src)
         }

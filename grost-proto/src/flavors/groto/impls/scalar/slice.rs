@@ -4,12 +4,12 @@ use crate::{
   flavors::groto::{Context, Error, Groto, LengthDelimited, Unknown},
 };
 
-impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, BytesSlice<B>, B, UB> for [u8] {
-  fn decode(_: &'de Context, src: B) -> Result<(usize, BytesSlice<B>), Error>
+impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for [u8] {
+  fn decode(_: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>
   where
     BytesSlice<B>: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     let bytes = src.as_bytes();
     let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
@@ -29,13 +29,13 @@ impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, BytesSlice<B>, B, UB> for [
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, BytesSlice<B>, B, UB> for &'de [u8] {
-  fn decode(context: &'de Context, src: B) -> Result<(usize, BytesSlice<B>), Error>
+impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for &'de [u8] {
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf + 'de,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf + 'de,
+    B: Buffer<Unknown<RB>> + 'de,
   {
-    <[u8] as Decode<'de, Groto, LengthDelimited, BytesSlice<B>, B, UB>>::decode(context, src)
+    <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
   }
 }

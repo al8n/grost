@@ -4,9 +4,8 @@ use syn::{Attribute, Ident, LifetimeParam, TypeParam};
 use crate::{
   flavor::GenericFlavorFromMeta,
   utils::{
-    Attributes, Invokable, SchemaFromMeta, grost_flavor_param, grost_lifetime,
-    grost_read_buffer_param, grost_buffer_param, grost_wire_format_param,
-    grost_write_buffer_param,
+    Attributes, Invokable, SchemaFromMeta, grost_buffer_param, grost_flavor_param, grost_lifetime,
+    grost_read_buffer_param, grost_wire_format_param, grost_write_buffer_param,
   },
 };
 

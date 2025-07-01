@@ -54,14 +54,14 @@ fixed_size!(
 ///
 /// ```ignore
 /// // We cannot write this code, as `T` must be `Sized`
-/// impl<T: ?Sized> Encode<Groto, LengthDelimited> for [T] { ... }
+/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [T] { ... }
 /// ```
 ///
 /// We cannot write another impl for `[&T]`, it will reports conflicting implementations.
 ///
 /// ```ignore
 /// // This implementation will conflict with the above one.
-/// impl<T: ?Sized> Encode<Groto, LengthDelimited> for [&T] { ... }
+/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [&T] { ... }
 /// ```
 ///
 /// Hence, we need this wrapper type to indicate that the data is in borrowed state,
@@ -131,14 +131,14 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
 ///
 /// ```ignore
 /// // We cannot write this code, as `T` must be `Sized`
-/// impl<T: ?Sized> Encode<Groto, LengthDelimited> for [T] { ... }
+/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [T] { ... }
 /// ```
 ///
 /// We cannot write another impl for `[&T]`, it will reports conflicting implementations.
 ///
 /// ```ignore
 /// // This implementation will conflict with the above one.
-/// impl<T: ?Sized> Encode<Groto, LengthDelimited> for [&T] { ... }
+/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [&T] { ... }
 /// ```
 ///
 /// Hence, we need this wrapper type to indicate that the data is in borrowed state,

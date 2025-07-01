@@ -597,14 +597,7 @@ fn applied_partial_ref_state(
   wf: impl ToTokens,
   flavor_type: impl ToTokens,
 ) -> proc_macro2::TokenStream {
-  let ty = applied_partial_ref(
-    path_to_grost,
-    lt,
-    read_buffer,
-    buffer,
-    wf,
-    flavor_type,
-  );
+  let ty = applied_partial_ref(path_to_grost, lt, read_buffer, buffer, wf, flavor_type);
   quote! {
     #path_to_grost::__private::convert::State<#ty>
   }

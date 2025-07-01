@@ -28,10 +28,7 @@ bridge!(
 );
 
 default_wire_format!(Groto: Uuid as Fixed128);
-groto_identity_transform!(
-  Uuid as Fixed128,
-  Uuid as Varint,
-);
+groto_identity_transform!(Uuid as Fixed128, Uuid as Varint,);
 identity_partial_transform!(
   Groto {
     Uuid as Fixed128,

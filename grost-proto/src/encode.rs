@@ -11,7 +11,7 @@ use super::{
 /// commonly used in framed transport protocols (e.g., Protobuf messages).
 ///
 /// Types implementing this trait should ensure consistency between `encoded_len` and `encode`.
-pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
+pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -114,7 +114,7 @@ pub trait Encode<F: Flavor + ?Sized, W: WireFormat<F>> {
 /// or field projections in protocols with optional fields.
 ///
 /// This trait complements [`Encode`] by offering more control over which fields are included.
-pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F> {
+pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   /// Encodes the message into the provided buffer.
   ///
   /// Returns the number of bytes written to the buffer or an error if the operation fails.
@@ -240,9 +240,9 @@ pub trait PartialEncode<F: Flavor + ?Sized, W: WireFormat<F>>: Selectable<F> {
   }
 }
 
-impl<F, W, T> Encode<F, W> for &T
+impl<F, W, T> Encode<W, F> for &T
 where
-  T: Encode<F, W> + ?Sized,
+  T: Encode<W, F> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -267,9 +267,9 @@ where
   }
 }
 
-impl<F, W, T> Encode<F, W> for Option<T>
+impl<F, W, T> Encode<W, F> for Option<T>
 where
-  T: Encode<F, W>,
+  T: Encode<W, F>,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -310,9 +310,9 @@ where
   }
 }
 
-impl<F, W, T> PartialEncode<F, W> for &T
+impl<F, W, T> PartialEncode<W, F> for &T
 where
-  T: PartialEncode<F, W> + ?Sized,
+  T: PartialEncode<W, F> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -347,9 +347,9 @@ where
   }
 }
 
-impl<F, W, T> PartialEncode<F, W> for Option<T>
+impl<F, W, T> PartialEncode<W, F> for Option<T>
 where
-  T: PartialEncode<F, W>,
+  T: PartialEncode<W, F>,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
@@ -404,9 +404,9 @@ where
 macro_rules! deref_encode_impl {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<F, W, T> Encode<F, W> for $ty
+      impl<F, W, T> Encode<W, F> for $ty
       where
-        T: Encode<F, W> + ?Sized,
+        T: Encode<W, F> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
@@ -450,9 +450,9 @@ macro_rules! deref_partial_encode_impl {
         }
       }
 
-      impl<F, W, T> PartialEncode<F, W> for $ty
+      impl<F, W, T> PartialEncode<W, F> for $ty
       where
-        T: PartialEncode<F, W> + Selectable<F> + ?Sized,
+        T: PartialEncode<W, F> + Selectable<F> + ?Sized,
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {

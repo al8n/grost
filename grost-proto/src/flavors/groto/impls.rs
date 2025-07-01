@@ -81,19 +81,19 @@ where
 {
 }
 
-impl<'de, W, O, B, UB, T> Decode<'de, Groto, Optional<W>, Option<O>, B, UB> for Option<T>
+impl<'de, W, O, RB, B, T> Decode<'de, Option<O>, Optional<W>, RB, B, Groto> for Option<T>
 where
-  T: Decode<'de, Groto, W, O, B, UB>,
+  T: Decode<'de, O, W, RB, B, Groto>,
   W: WireFormat<Groto>,
 {
   fn decode(
     context: &'de <Groto as Flavor>::Context,
-    src: B,
+    src: RB,
   ) -> Result<(usize, Option<O>), <Groto as Flavor>::Error>
   where
     O: Sized + 'de,
-    B: ReadBuf + 'de,
-    UB: Buffer<<Groto as Flavor>::Unknown<B>> + 'de,
+    RB: ReadBuf + 'de,
+    B: Buffer<<Groto as Flavor>::Unknown<RB>> + 'de,
   {
     T::decode(context, src).map(|(read, val)| (read, Some(val)))
   }

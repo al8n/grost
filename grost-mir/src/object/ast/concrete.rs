@@ -33,6 +33,7 @@ pub use partial::*;
 pub use partial_ref::*;
 
 mod decode;
+mod encode;
 mod field;
 mod indexer;
 mod partial;

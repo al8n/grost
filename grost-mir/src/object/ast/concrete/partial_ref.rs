@@ -93,11 +93,7 @@ impl PartialRefObject {
     (self.applied_decode_trait)(quote! { #ty })
   }
 
-  pub(super) fn type_with<L, U>(
-    &self,
-    lifetime: Option<L>,
-    buffer: Option<U>,
-  ) -> syn::Result<Type>
+  pub(super) fn type_with<L, U>(&self, lifetime: Option<L>, buffer: Option<U>) -> syn::Result<Type>
   where
     L: ToTokens,
     U: ToTokens,
@@ -292,9 +288,7 @@ impl PartialRefObject {
               .cloned()
               .map(GenericParam::Type),
           );
-          output
-            .params
-            .push(GenericParam::Type(syn::parse2(buffer)?));
+          output.params.push(GenericParam::Type(syn::parse2(buffer)?));
           output.params.extend(
             original_generics
               .const_params()

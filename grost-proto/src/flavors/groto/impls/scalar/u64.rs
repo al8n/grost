@@ -36,7 +36,7 @@ identity_partial_transform!(
   }
 );
 
-impl Encode<Groto, Fixed64> for u64 {
+impl Encode<Fixed64, Groto> for u64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 8 {
       return Err(Error::insufficient_buffer(8, buf.len()));
@@ -51,7 +51,7 @@ impl Encode<Groto, Fixed64> for u64 {
   }
 }
 
-impl Encode<Groto, Varint> for u64 {
+impl Encode<Varint, Groto> for u64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u64_varint_to(*self, buf).map_err(Into::into)
   }
@@ -63,12 +63,12 @@ impl Encode<Groto, Varint> for u64 {
 
 partial_encode_scalar!(Groto: u64 as Fixed64, u64 as Varint);
 
-impl<'de, B, UB> Decode<'de, Groto, Fixed64, Self, B, UB> for u64 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Fixed64, RB, B, Groto> for u64 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     let src = src.as_bytes();
     if src.len() < 8 {
@@ -79,12 +79,12 @@ impl<'de, B, UB> Decode<'de, Groto, Fixed64, Self, B, UB> for u64 {
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, Varint, Self, B, UB> for u64 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u64 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     varing::decode_u64_varint(src.as_bytes()).map_err(Into::into)
   }

@@ -34,7 +34,7 @@ identity_partial_transform!(Groto {
   NonZeroU16 as Varint,
 });
 
-impl Encode<Groto, Fixed16> for u16 {
+impl Encode<Fixed16, Groto> for u16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 2 {
       return Err(Error::insufficient_buffer(2, buf.len()));
@@ -49,7 +49,7 @@ impl Encode<Groto, Fixed16> for u16 {
   }
 }
 
-impl Encode<Groto, Varint> for u16 {
+impl Encode<Varint, Groto> for u16 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u16_varint_to(*self, buf).map_err(Into::into)
   }
@@ -61,12 +61,12 @@ impl Encode<Groto, Varint> for u16 {
 
 partial_encode_scalar!(Groto: u16 as Fixed16, u16 as Varint);
 
-impl<'de, B, UB> Decode<'de, Groto, Fixed16, Self, B, UB> for u16 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Fixed16, RB, B, Groto> for u16 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     let src = src.as_bytes();
     if src.len() < 2 {
@@ -77,12 +77,12 @@ impl<'de, B, UB> Decode<'de, Groto, Fixed16, Self, B, UB> for u16 {
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, Varint, Self, B, UB> for u16 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u16 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     varing::decode_u16_varint(src.as_bytes()).map_err(Into::into)
   }

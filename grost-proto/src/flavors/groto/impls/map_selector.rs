@@ -30,7 +30,7 @@
 //   type Selector = ();
 // }
 
-// impl<K, V> Encode<Groto, LengthDelimited> for MapSelector<K, V>
+// impl<K, V> Encode<LengthDelimited, Groto> for MapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + Encode<Groto, K::Format>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + Encode<Groto, V::Format>,
@@ -87,7 +87,7 @@
 //   }
 // }
 
-// impl<K, V> PartialEncode<Groto, LengthDelimited> for MapSelector<K, V>
+// impl<K, V> PartialEncode<LengthDelimited, Groto> for MapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + PartialEncode<Groto, K::Format>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + PartialEncode<Groto, V::Format>,
@@ -98,15 +98,15 @@
 //     buf: &mut [u8],
 //     _: &Self::Selector,
 //   ) -> Result<usize, EncodeError> {
-//     <Self as Encode<Groto, LengthDelimited>>::encode(self, context, buf)
+//     <Self as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
 //   }
 
 //   fn partial_encoded_len(&self, context: &Context, _: &Self::Selector) -> usize {
-//     <Self as Encode<Groto, LengthDelimited>>::encoded_len(self, context)
+//     <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context)
 //   }
 
 //   fn partial_encoded_length_delimited_len(&self, context: &Context, _: &Self::Selector) -> usize {
-//     <Self as Encode<Groto, LengthDelimited>>::encoded_length_delimited_len(self, context)
+//     <Self as Encode<LengthDelimited, Groto>>::encoded_length_delimited_len(self, context)
 //   }
 
 //   fn partial_encode_length_delimited(
@@ -115,7 +115,7 @@
 //     buf: &mut [u8],
 //     _: &Self::Selector,
 //   ) -> Result<usize, EncodeError> {
-//     <Self as Encode<Groto, LengthDelimited>>::encode_length_delimited(self, context, buf)
+//     <Self as Encode<LengthDelimited, Groto>>::encode_length_delimited(self, context, buf)
 //   }
 // }
 

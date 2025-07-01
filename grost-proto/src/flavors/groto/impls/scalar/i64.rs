@@ -36,7 +36,7 @@ identity_partial_transform!(
   }
 );
 
-impl Encode<Groto, Fixed64> for i64 {
+impl Encode<Fixed64, Groto> for i64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 8 {
       return Err(Error::insufficient_buffer(8, buf.len()));
@@ -51,15 +51,15 @@ impl Encode<Groto, Fixed64> for i64 {
   }
 
   fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Groto, Fixed64>>::encoded_len(self, context)
+    <Self as Encode<Fixed64, Groto>>::encoded_len(self, context)
   }
 
   fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Groto, Fixed64>>::encode(self, context, buf)
+    <Self as Encode<Fixed64, Groto>>::encode(self, context, buf)
   }
 }
 
-impl Encode<Groto, Varint> for i64 {
+impl Encode<Varint, Groto> for i64 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_i64_varint_to(*self, buf).map_err(Into::into)
   }
@@ -69,22 +69,22 @@ impl Encode<Groto, Varint> for i64 {
   }
 
   fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Groto, Varint>>::encoded_len(self, context)
+    <Self as Encode<Varint, Groto>>::encoded_len(self, context)
   }
 
   fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Groto, Varint>>::encode(self, context, buf)
+    <Self as Encode<Varint, Groto>>::encode(self, context, buf)
   }
 }
 
 partial_encode_scalar!(Groto: i64 as Fixed64, i64 as Varint);
 
-impl<'de, B, UB> Decode<'de, Groto, Fixed64, Self, B, UB> for i64 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Fixed64, RB, B, Groto> for i64 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     let src = src.as_bytes();
     if src.len() < 8 {
@@ -95,12 +95,12 @@ impl<'de, B, UB> Decode<'de, Groto, Fixed64, Self, B, UB> for i64 {
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, Varint, Self, B, UB> for i64 {
-  fn decode(_: &Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for i64 {
+  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: ReadBuf,
-    UB: Buffer<Unknown<B>> + 'de,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>> + 'de,
   {
     varing::decode_i64_varint(src.as_bytes()).map_err(Into::into)
   }

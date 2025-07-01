@@ -11,20 +11,20 @@ use crate::{
   selection::{Selectable, Selector},
 };
 
-impl<'a, T, W, TW, B, UB, const N: usize> Transform<PackedDecoder<'a, T, B, UB, TW>, Self, W, Groto>
+impl<'a, T, W, TW, RB, B, const N: usize> Transform<PackedDecoder<'a, T, RB, B, TW>, Self, W, Groto>
   for [T; N]
 where
   W: WireFormat<Groto> + 'a,
   TW: WireFormat<Groto> + 'a,
-  T: State<PartialRef<'a, B, UB, TW, Groto>>
-    + Decode<'a, Groto, TW, T::Output, B, UB>
+  T: State<PartialRef<'a, RB, B, TW, Groto>>
+    + Decode<'a, T::Output, TW, RB, B, Groto>
     + Transform<T::Output, T, TW, Groto>
     + 'a,
   T::Output: Sized,
-  UB: Buffer<Unknown<B>> + 'a,
-  B: ReadBuf + 'a,
+  B: Buffer<Unknown<RB>> + 'a,
+  RB: ReadBuf + 'a,
 {
-  fn transform(input: PackedDecoder<'a, T, B, UB, TW>) -> Result<Self, <Groto as Flavor>::Error>
+  fn transform(input: PackedDecoder<'a, T, RB, B, TW>) -> Result<Self, <Groto as Flavor>::Error>
   where
     Self: Sized,
   {
@@ -48,27 +48,27 @@ where
   }
 }
 
-impl<'a, T, W, TW, B, UB, const N: usize>
-  PartialTransform<PackedDecoder<'a, T, B, UB, TW>, Option<[Option<T>; N]>, W, Groto> for [T; N]
+impl<'a, T, W, TW, RB, B, const N: usize>
+  PartialTransform<PackedDecoder<'a, T, RB, B, TW>, Option<[Option<T>; N]>, W, Groto> for [T; N]
 where
   W: WireFormat<Groto> + 'a,
   TW: WireFormat<Groto> + 'a,
-  T: State<PartialRef<'a, B, UB, TW, Groto>>
+  T: State<PartialRef<'a, RB, B, TW, Groto>>
     + Selectable<Groto>
-    + Decode<'a, Groto, TW, T::Output, B, UB>
+    + Decode<'a, T::Output, TW, RB, B, Groto>
     + PartialTransform<
-      <T as State<PartialRef<'a, B, UB, TW, Groto>>>::Output,
+      <T as State<PartialRef<'a, RB, B, TW, Groto>>>::Output,
       ::core::option::Option<T>,
       TW,
       Groto,
     > + 'a,
-  <T as State<PartialRef<'a, B, UB, TW, Groto>>>::Output:
+  <T as State<PartialRef<'a, RB, B, TW, Groto>>>::Output:
     Sized + Selectable<Groto, Selector = T::Selector>,
-  B: ReadBuf + 'a,
-  UB: Buffer<Unknown<B>> + 'a,
+  RB: ReadBuf + 'a,
+  B: Buffer<Unknown<RB>> + 'a,
 {
   fn partial_transform(
-    input: PackedDecoder<'a, T, B, UB, TW>,
+    input: PackedDecoder<'a, T, RB, B, TW>,
     selector: &Self::Selector,
   ) -> Result<Option<[Option<T>; N]>, <Groto as Flavor>::Error> {
     if selector.is_empty() {

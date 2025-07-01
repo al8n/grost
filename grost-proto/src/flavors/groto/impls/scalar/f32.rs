@@ -12,10 +12,7 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: f32);
 flatten_state!(f32);
-groto_identity_transform!(
-  f32 as Fixed32,
-  f32 as Varint,
-);
+groto_identity_transform!(f32 as Fixed32, f32 as Varint,);
 identity_partial_transform!(
   Groto {
     f32 as Fixed32,

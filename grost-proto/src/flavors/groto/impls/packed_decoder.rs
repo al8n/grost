@@ -55,10 +55,10 @@ impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a,
 
 impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, T, B, UB, W> {}
 
-impl<'a, B, UB> PackedDecoder<'a, u8, B, UB, Fixed8>
+impl<'a, RB, B> PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  UB: ?Sized,
-  B: ReadBuf,
+  B: ?Sized,
+  RB: ReadBuf,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
@@ -81,10 +81,10 @@ where
   }
 }
 
-impl<'a, B, UB> core::ops::Deref for PackedDecoder<'a, u8, B, UB, Fixed8>
+impl<'a, RB, B> core::ops::Deref for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  UB: ?Sized,
-  B: ReadBuf,
+  B: ?Sized,
+  RB: ReadBuf,
 {
   type Target = [u8];
 
@@ -94,10 +94,10 @@ where
   }
 }
 
-impl<'a, B, UB> AsRef<[u8]> for PackedDecoder<'a, u8, B, UB, Fixed8>
+impl<'a, RB, B> AsRef<[u8]> for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  UB: ?Sized,
-  B: ReadBuf,
+  B: ?Sized,
+  RB: ReadBuf,
 {
   #[inline]
   fn as_ref(&self) -> &[u8] {
@@ -130,13 +130,13 @@ where
   }
 }
 
-impl<'a, B, UB, W, T> Iterator for PackedDecoder<'a, T, B, UB, W>
+impl<'a, RB, B, W, T> Iterator for PackedDecoder<'a, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'a,
-  T: State<PartialRef<'a, B, UB, W, Groto>> + Decode<'a, Groto, W, T::Output, B, UB> + 'a,
+  T: State<PartialRef<'a, RB, B, W, Groto>> + Decode<'a, T::Output, W, RB, B, Groto> + 'a,
   T::Output: Sized,
-  UB: Buffer<Unknown<B>> + 'a,
-  B: ReadBuf + 'a,
+  B: Buffer<Unknown<RB>> + 'a,
+  RB: ReadBuf + 'a,
 {
   type Item = Result<(usize, T::Output), Error>;
 
@@ -171,12 +171,12 @@ where
   }
 }
 
-impl<'a, T, B, UB, W> Encode<Groto, W> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, RB, B, W> Encode<W, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   T: ?Sized,
   W: WireFormat<Groto> + 'a,
-  UB: ?Sized,
-  B: ReadBuf,
+  B: ?Sized,
+  RB: ReadBuf,
 {
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     let src = &self.src;
@@ -196,20 +196,20 @@ where
   }
 }
 
-impl<'a, T, B, UB, W, PW> Decode<'a, Groto, PW, Self, B, UB> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, RB, B, W, PW> Decode<'a, Self, PW, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'a,
   PW: WireFormat<Groto> + 'a,
-  B: ReadBuf,
+  RB: ReadBuf,
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: B,
+    src: RB,
   ) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    B: crate::buffer::ReadBuf,
-    UB: Buffer<<Groto as crate::flavors::Flavor>::Unknown<B>> + 'a,
+    RB: crate::buffer::ReadBuf,
+    B: Buffer<<Groto as crate::flavors::Flavor>::Unknown<RB>> + 'a,
   {
     let buf = src.as_bytes();
     let buf_len = buf.len();

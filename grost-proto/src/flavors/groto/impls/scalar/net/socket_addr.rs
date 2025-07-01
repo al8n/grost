@@ -32,7 +32,7 @@ macro_rules! socket_addr_impl {
   ($($bridge:ident($variant:literal)), +$(,)?) => {
     $(
       paste::paste! {
-        impl Encode<Groto, LengthDelimited> for [< SocketAddrV $variant >] {
+        impl Encode<LengthDelimited, Groto> for [< SocketAddrV $variant >] {
           fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
             if buf.len() < [< SOCKET_ADDR_V $variant _LEN >] {
               return Err(Error::insufficient_buffer([< SOCKET_ADDR_V $variant _LEN >], buf.len()));
@@ -68,7 +68,7 @@ macro_rules! socket_addr_impl {
             buf[offset..[< SOCKET_ADDR_V $variant _LENGTH_DELIMITED_LEN >]]
               .copy_from_slice([< ENCODED_SOCKET_ADDR_V $variant _LENGTH_DELIMITED >]);
             offset += [< SOCKET_ADDR_V $variant _LENGTH_DELIMITED_LEN >];
-            offset += <Self as Encode<Groto, LengthDelimited>>::encode(self, ctx, &mut buf[offset..])?;
+            offset += <Self as Encode<LengthDelimited, Groto>>::encode(self, ctx, &mut buf[offset..])?;
 
             #[cfg(debug_assertions)]
             crate::debug_assert_write_eq::<Self>(offset, [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]);
@@ -77,12 +77,12 @@ macro_rules! socket_addr_impl {
           }
         }
 
-        impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Self, B, UB> for [< SocketAddrV $variant >] {
-          fn decode(_: &'de Context, src: B) -> Result<(usize, Self), Error>
+        impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for [< SocketAddrV $variant >] {
+          fn decode(_: &'de Context, src: RB) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
-            B: crate::buffer::ReadBuf,
-            UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+            RB: crate::buffer::ReadBuf,
+            B: crate::buffer::Buffer<Unknown<RB>> + 'de,
           {
             let src = src.as_bytes();
             if src.len() < [< SOCKET_ADDR_V $variant _LEN >] {
@@ -97,12 +97,12 @@ macro_rules! socket_addr_impl {
 
           fn decode_length_delimited(
             context: &'de Context,
-            src: B,
+            src: RB,
           ) -> Result<(usize, Self), Error>
           where
             Self: Sized + 'de,
-            B: crate::buffer::ReadBuf,
-            UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+            RB: crate::buffer::ReadBuf,
+            B: crate::buffer::Buffer<Unknown<RB>> + 'de,
           {
             if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::buffer_underflow());
@@ -113,7 +113,7 @@ macro_rules! socket_addr_impl {
               return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
             }
 
-            let (len, socket_addr) = <Self as Decode<'_, Groto, LengthDelimited, Self, B, UB>>::decode(context, src.slice(read..))?;
+            let (len, socket_addr) = <Self as Decode<'_, Self, LengthDelimited, RB, B, Groto>>::decode(context, src.slice(read..))?;
 
             #[cfg(debug_assertions)]
             crate::debug_assert_read_eq::<Self>(len + read, [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]);
@@ -160,7 +160,7 @@ identity_partial_transform!(
   }
 );
 
-impl Encode<Groto, LengthDelimited> for SocketAddr {
+impl Encode<LengthDelimited, Groto> for SocketAddr {
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     macro_rules! encode_addr {
       ($addr:ident, $variant:literal) => {{
@@ -172,7 +172,7 @@ impl Encode<Groto, LengthDelimited> for SocketAddr {
             ));
           }
           buf[0] = $variant;
-          <[< SocketAddrV $variant >] as Encode<Groto, LengthDelimited>>::encode($addr, context, &mut buf[1..])
+          <[< SocketAddrV $variant >] as Encode<LengthDelimited, Groto>>::encode($addr, context, &mut buf[1..])
             .map(|val| 1 + val)
         }
       }};
@@ -186,10 +186,10 @@ impl Encode<Groto, LengthDelimited> for SocketAddr {
   fn encoded_len(&self, context: &Context) -> usize {
     1 + match self {
       Self::V4(addr) => {
-        <SocketAddrV4 as Encode<Groto, LengthDelimited>>::encoded_len(addr, context)
+        <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encoded_len(addr, context)
       }
       Self::V6(addr) => {
-        <SocketAddrV6 as Encode<Groto, LengthDelimited>>::encoded_len(addr, context)
+        <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encoded_len(addr, context)
       }
     }
   }
@@ -203,22 +203,22 @@ impl Encode<Groto, LengthDelimited> for SocketAddr {
 
   fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     match self {
-      Self::V4(addr) => <SocketAddrV4 as Encode<Groto, LengthDelimited>>::encode_length_delimited(
+      Self::V4(addr) => <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encode_length_delimited(
         addr, context, buf,
       ),
-      Self::V6(addr) => <SocketAddrV6 as Encode<Groto, LengthDelimited>>::encode_length_delimited(
+      Self::V6(addr) => <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encode_length_delimited(
         addr, context, buf,
       ),
     }
   }
 }
 
-impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Self, B, UB> for SocketAddr {
-  fn decode(context: &'de Context, src: B) -> Result<(usize, Self), Error>
+impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for SocketAddr {
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: crate::buffer::ReadBuf + 'de,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+    RB: crate::buffer::ReadBuf + 'de,
+    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
   {
     let len = src.len();
     if len == 0 {
@@ -231,7 +231,7 @@ impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Self, B, UB> for SocketAddr
     macro_rules! decode_addr {
       ($variant:literal, $src:ident) => {{
         paste::paste! {
-          let (read, addr) = <[<SocketAddrV $variant >] as Decode<'de, Groto, LengthDelimited, [<SocketAddrV $variant >], B, UB>>::decode(context, $src.slice(1..))?;
+          let (read, addr) = <[<SocketAddrV $variant >] as Decode<'de, [<SocketAddrV $variant >], LengthDelimited, RB, B, Groto>>::decode(context, $src.slice(1..))?;
           #[cfg(debug_assertions)]
           crate::debug_assert_read_eq::<Self>(read + 1, 1 + [< SOCKET_ADDR_V $variant _LEN >]);
 
@@ -247,16 +247,16 @@ impl<'de, B, UB> Decode<'de, Groto, LengthDelimited, Self, B, UB> for SocketAddr
     }
   }
 
-  fn decode_length_delimited(context: &'de Context, src: B) -> Result<(usize, Self), Error>
+  fn decode_length_delimited(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
-    B: crate::buffer::ReadBuf + 'de,
-    UB: crate::buffer::Buffer<Unknown<B>> + 'de,
+    RB: crate::buffer::ReadBuf + 'de,
+    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
   {
     macro_rules! decode_addr {
       ($read:ident, $variant:literal) => {{
         paste::paste! {
-          <[< SocketAddrV $variant >] as Decode<'de, Groto, LengthDelimited, [< SocketAddrV $variant >], B, UB>>::decode(context, src.slice($read..))
+          <[< SocketAddrV $variant >] as Decode<'de, [< SocketAddrV $variant >], LengthDelimited, RB, B, Groto>>::decode(context, src.slice($read..))
           .map(|(len, addr)| (len + $read, addr.into()))
         }
       }};
@@ -279,11 +279,11 @@ mod tests {
   quickcheck::quickcheck! {
     fn fuzzy_socket_v4_round_trip(addr: SocketAddrV4) -> bool {
       let mut buf = [0u8; 128];
-      let len = <SocketAddrV4 as Encode<Groto, LengthDelimited>>::encode_length_delimited(&addr, &Context::default(), &mut buf).unwrap();
-      let encoded_len = <SocketAddrV4 as Encode<Groto, LengthDelimited>>::encoded_length_delimited_len(&addr, &Context::default());
+      let len = <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encode_length_delimited(&addr, &Context::default(), &mut buf).unwrap();
+      let encoded_len = <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encoded_length_delimited_len(&addr, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddrV4 as Decode<Groto, LengthDelimited, SocketAddrV4, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddrV4 as Decode<SocketAddrV4, LengthDelimited, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, addr);
 
@@ -292,11 +292,11 @@ mod tests {
 
     fn fuzzy_socket_v6_round_trip(addr: SocketAddrV6) -> bool {
       let mut buf = [0u8; 128];
-      let len = <SocketAddrV6 as Encode<Groto, LengthDelimited>>::encode_length_delimited(&addr, &Context::default(), &mut buf).unwrap();
-      let encoded_len = <SocketAddrV6 as Encode<Groto, LengthDelimited>>::encoded_length_delimited_len(&addr, &Context::default());
+      let len = <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encode_length_delimited(&addr, &Context::default(), &mut buf).unwrap();
+      let encoded_len = <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encoded_length_delimited_len(&addr, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddrV6 as Decode<Groto, LengthDelimited, SocketAddrV6, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddrV6 as Decode<SocketAddrV6, LengthDelimited, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded.ip(), addr.ip());
       assert_eq!(decoded.port(), addr.port());
@@ -310,7 +310,7 @@ mod tests {
       let encoded_len = addr.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddr as Decode<SocketAddr, LengthDelimited, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, addr);
 
@@ -318,7 +318,7 @@ mod tests {
       let encoded_len = addr.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr, &[u8], Vec<_>>>::decode(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddr as Decode<SocketAddr, LengthDelimited, &[u8], Vec<_>, Groto>>::decode(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       match (decoded, addr) {
         (SocketAddr::V4(decoded), SocketAddr::V4(original)) => assert_eq!(decoded, original),
