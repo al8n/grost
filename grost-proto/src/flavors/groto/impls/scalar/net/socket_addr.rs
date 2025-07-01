@@ -283,7 +283,7 @@ mod tests {
       let encoded_len = <SocketAddrV4 as Encode<Groto, LengthDelimited>>::encoded_length_delimited_len(&addr, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddrV4 as Decode<Groto, LengthDelimited, SocketAddrV4>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddrV4 as Decode<Groto, LengthDelimited, SocketAddrV4, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, addr);
 
@@ -296,7 +296,7 @@ mod tests {
       let encoded_len = <SocketAddrV6 as Encode<Groto, LengthDelimited>>::encoded_length_delimited_len(&addr, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddrV6 as Decode<Groto, LengthDelimited, SocketAddrV6>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddrV6 as Decode<Groto, LengthDelimited, SocketAddrV6, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded.ip(), addr.ip());
       assert_eq!(decoded.port(), addr.port());
@@ -310,7 +310,7 @@ mod tests {
       let encoded_len = addr.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, addr);
 
@@ -318,7 +318,7 @@ mod tests {
       let encoded_len = addr.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr>>::decode(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <SocketAddr as Decode<Groto, LengthDelimited, SocketAddr, &[u8], Vec<_>>>::decode(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       match (decoded, addr) {
         (SocketAddr::V4(decoded), SocketAddr::V4(original)) => assert_eq!(decoded, original),

@@ -886,7 +886,7 @@ fn encoded_tag_len_reflection(
 //   indexer: IndexerOptions,
 //   copy: bool,
 //   flavor_param: Option<TypeParam>,
-//   unknown_buffer_param: TypeParam,
+//   buffer_param: TypeParam,
 //   lifetime_param: LifetimeParam,
 //   wire_format_param: TypeParam,
 //   read_buffer_type_param: TypeParam,
@@ -922,7 +922,7 @@ fn encoded_tag_len_reflection(
 //       indexer: meta.indexer.into(),
 //       copy: meta.copy,
 //       flavor_param: meta.generic.flavor,
-//       unknown_buffer_param: meta.generic.unknown_buffer,
+//       buffer_param: meta.generic.buffer,
 //       lifetime_param: meta.generic.lifetime,
 //       wire_format_param: meta.generic.wire_format,
 //       read_buffer_type_param: meta.generic.read_buffer,
@@ -987,8 +987,8 @@ fn encoded_tag_len_reflection(
 //   }
 
 //   /// Returns the generic unknown buffer type parameter
-//   pub const fn unknown_buffer_type_param(&self) -> &TypeParam {
-//     &self.unknown_buffer_param
+//   pub const fn buffer_type_param(&self) -> &TypeParam {
+//     &self.buffer_param
 //   }
 
 //   /// Returns the generic lifetime parameter

@@ -30,7 +30,7 @@ impl GenericPartialObject {
 
   /// Returns the type of the partial object
   ///
-  /// e.g. if the name is `PartialUserObject`, and the `unknown_buffer` returns the `UB`  this will return `PartialUserObject<UB>`
+  /// e.g. if the name is `PartialUserObject`, and the `buffer` returns the `UB`  this will return `PartialUserObject<UB>`
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
@@ -53,12 +53,12 @@ impl GenericPartialObject {
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
-    let unknown_buffer_param = object.unknown_buffer_param();
+    let buffer_param = object.buffer_param();
 
     let mut generics = object.generics().clone();
     generics
       .params
-      .push(GenericParam::Type(unknown_buffer_param.clone()));
+      .push(GenericParam::Type(buffer_param.clone()));
 
     fields
       .iter()

@@ -13,7 +13,7 @@ pub struct GenericPartialRefObject {
   attrs: Vec<Attribute>,
   generics: Generics,
   copy: bool,
-  unknown_buffer_field_name: Ident,
+  buffer_field_name: Ident,
 }
 
 impl GenericPartialRefObject {
@@ -49,7 +49,7 @@ impl GenericPartialRefObject {
     let partial_ref_object = &object.partial_ref;
     let partial_ref_object_name = partial_ref_object.name().clone();
     let flavor_param = &object.flavor_param;
-    let unknown_buffer_param = &object.unknown_buffer_param;
+    let buffer_param = &object.buffer_param;
     let lifetime_param = &object.lifetime_param;
     let copy = partial_ref_object.copy();
     let original_generics = &object.generics;
@@ -84,7 +84,7 @@ impl GenericPartialRefObject {
 
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
 
     // push the original const generic parameters last
     generics.params.extend(
@@ -118,7 +118,7 @@ impl GenericPartialRefObject {
       name: partial_ref_object_name,
       attrs: partial_ref_object.attrs().to_vec(),
       generics,
-      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      buffer_field_name: format_ident!("__grost_buffer__"),
       copy,
     })
   }
@@ -171,8 +171,8 @@ impl<M, F> super::GenericObject<M, F> {
     } else {
       quote! {}
     };
-    let ubfn = &partial_ref_object.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_param().ident;
+    let ubfn = &partial_ref_object.buffer_field_name;
+    let ubg = &self.buffer_param().ident;
 
     quote! {
       #(#attrs)*
@@ -232,8 +232,8 @@ impl<M, F> super::GenericObject<M, F> {
       });
 
     let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
-    let ubfn = &partial_ref_object.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_param().ident;
+    let ubfn = &partial_ref_object.buffer_field_name;
+    let ubg = &self.buffer_param().ident;
     let flatten_state = derive_flatten_state(
       &self.path_to_grost,
       partial_ref_object.generics(),
@@ -273,47 +273,47 @@ impl<M, F> super::GenericObject<M, F> {
 
         /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+        pub const fn buffer(&self) -> ::core::option::Option<&#ubg> {
           self.#ubfn.as_ref()
         }
 
-        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is buffer
         /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        pub const fn buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
          self.#ubfn.as_mut()
         }
 
         /// Takes the unknown buffer out if the unknown buffer is not `None`.
         #[inline]
-        pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
+        pub const fn take_buffer(&mut self) -> ::core::option::Option<#ubg> {
           self.#ubfn.take()
         }
 
         /// Set the value of unknown buffer
         #[inline]
-        pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
+        pub fn set_buffer(&mut self, buffer: #ubg) -> &mut Self {
           self.#ubfn = ::core::option::Option::Some(buffer);
           self
         }
 
         /// Clears the unknown buffer.
         #[inline]
-        pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+        pub fn clear_buffer(&mut self) -> &mut Self {
           self.#ubfn = ::core::option::Option::None;
           self
         }
 
         /// Set the value of unknown buffer
         #[inline]
-        pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
+        pub fn with_buffer(mut self, buffer: #ubg) -> Self {
           self.#ubfn = ::core::option::Option::Some(buffer);
           self
         }
 
         /// Clears the unknown buffer.
         #[inline]
-        pub fn without_unknown_buffer(mut self) -> Self {
+        pub fn without_buffer(mut self) -> Self {
           self.#ubfn = ::core::option::Option::None;
           self
         }

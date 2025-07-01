@@ -103,7 +103,7 @@ struct RawObject<T = (), S = (), O = ()> {
   selector_iter: SelectorIterOptions,
   indexer: IndexerOptions,
   copy: bool,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   read_buffer_param: TypeParam,
   write_buffer_param: TypeParam,
@@ -186,7 +186,7 @@ impl<T, S, O> RawObject<T, S, O> {
       indexer: meta.indexer.into(),
       transform: meta.transform.into(),
       copy: meta.copy,
-      unknown_buffer_param: meta.generic.unknown_buffer,
+      buffer_param: meta.generic.buffer,
       lifetime_param: meta.generic.lifetime,
       read_buffer_param: meta.generic.read_buffer,
       write_buffer_param: meta.generic.write_buffer,
@@ -268,7 +268,7 @@ impl<T, S, O> RawObject<T, S, O> {
       selector_iter,
       indexer,
       copy,
-      unknown_buffer_param,
+      buffer_param,
       lifetime_param,
       read_buffer_param,
       write_buffer_param,
@@ -308,7 +308,7 @@ impl<T, S, O> RawObject<T, S, O> {
         selector_iter,
         indexer,
         copy,
-        unknown_buffer_param,
+        buffer_param,
         lifetime_param,
         read_buffer_param,
         write_buffer_param,
@@ -342,7 +342,7 @@ pub struct Object<T = (), S = (), M = ()> {
   wire_format: Type,
   tag_options: TagOptions,
   identifier_options: IdentifierOptions,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   read_buffer_param: TypeParam,
   write_buffer_param: TypeParam,
@@ -430,8 +430,8 @@ impl<T, S, M> Object<T, S, M> {
 
   /// Returns the generic unknown buffer type parameter.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns the generic read buffer type parameter.
@@ -586,7 +586,7 @@ impl<T, S, M> Object<T, S, M> {
     let wf = object.wire_format;
     let lp = object.lifetime_param;
     let lt = &lp.lifetime;
-    let ubp = object.unknown_buffer_param;
+    let ubp = object.buffer_param;
     let ub = &ubp.ident;
     let rbp = object.read_buffer_param;
     let rb = &rbp.ident;
@@ -644,7 +644,7 @@ impl<T, S, M> Object<T, S, M> {
       selector,
       selector_iter,
       meta: extra,
-      unknown_buffer_param: ubp,
+      buffer_param: ubp,
       lifetime_param: lp,
       read_buffer_param: rbp,
       write_buffer_param: object.write_buffer_param,

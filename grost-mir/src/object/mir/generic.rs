@@ -38,7 +38,7 @@ pub struct GenericObject<M, F> {
   fields: Vec<GenericField<F>>,
   indexer: Indexer,
   flavor_param: TypeParam,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: syn::LifetimeParam,
   wire_format_param: TypeParam,
   generics: Generics,
@@ -177,8 +177,8 @@ impl<M, F> GenericObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns the generic lifetime parameter, which will be used in generated structs or impls.
@@ -261,7 +261,7 @@ impl<M, F> GenericObject<M, F> {
       selector,
       selector_iter,
       flavors,
-      unknown_buffer_param: object.unknown_buffer_param,
+      buffer_param: object.buffer_param,
       lifetime_param: object.lifetime_param,
       wire_format_param: object.wire_format_param,
     })

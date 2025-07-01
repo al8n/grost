@@ -8,17 +8,17 @@
 // pub struct SelectionSet<S, UT, UB> {
 //   selector: S,
 //   unknown_tags: Option<UT>,
-//   unknown_buffer: Option<UB>,
+//   buffer: Option<UB>,
 // }
 
 // impl<S, UT, UB> SelectionSet<S, UT, UB> {
 //   /// Creates a new selection set with the given selection and unknown buffer.
 //   #[inline]
-//   pub const fn new(selector: S, unknown_tags: Option<UT>, unknown_buffer: Option<UB>) -> Self {
+//   pub const fn new(selector: S, unknown_tags: Option<UT>, buffer: Option<UB>) -> Self {
 //     Self {
 //       selector,
 //       unknown_tags,
-//       unknown_buffer,
+//       buffer,
 //     }
 //   }
 
@@ -36,13 +36,13 @@
 
 //   /// Returns the unknown buffer.
 //   #[inline]
-//   pub const fn unknown_buffer(&self) -> Option<&UB> {
-//     self.unknown_buffer.as_ref()
+//   pub const fn buffer(&self) -> Option<&UB> {
+//     self.buffer.as_ref()
 //   }
 
 //   /// Consumes the selection set and returns the components.
 //   #[inline]
 //   pub fn into_components(self) -> (S, Option<UT>, Option<UB>) {
-//     (self.selection, self.unknown_tags, self.unknown_buffer)
+//     (self.selection, self.unknown_tags, self.buffer)
 //   }
 // }

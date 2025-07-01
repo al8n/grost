@@ -28,7 +28,7 @@ fn derive_partial_object_decode<T, S, M>(
 
   let path_to_grost = object.path_to_grost();
   let lt = &object.lifetime_param().lifetime;
-  let ubg = &object.unknown_buffer_param().ident;
+  let ubg = &object.buffer_param().ident;
   let read_buffer_ident = &object.read_buffer_param().ident;
   let flavor_ty = object.flavor_type();
   let wf = object.wire_format();
@@ -283,7 +283,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
   let (decode_ig, _, decode_where_clauses) = partial_ref_object.decode_generics().split_for_impl();
 
   let path_to_grost = object.path_to_grost();
-  let ubg = &object.unknown_buffer_param().ident;
+  let ubg = &object.buffer_param().ident;
   let read_buffer_ident = &object.read_buffer_param().ident;
   let flavor_ty = object.flavor_type();
   let decode_to_self_trait = partial_ref_object.applied_decode_trait(quote! { Self })?;
@@ -291,7 +291,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
     partial_ref_object.applied_decode_trait(quote! { #partial_ref_object_ty })?;
   let lt = grost_decode_trait_lifetime();
 
-  let unknown_buffer_field_name = &partial_ref_object.unknown_buffer_field_name;
+  let buffer_field_name = &partial_ref_object.buffer_field_name;
   let mut on_missing = vec![];
   let mut ptpr_on_missing = vec![];
   let mut ptpr = vec![];
@@ -551,7 +551,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
                 let encoded_len = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::flavors::Identifier<#flavor_ty>>::encoded_len(&identifier);
                 let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.slice(offset - encoded_len..))?;
                 offset += read;
-                let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubg::new());
+                let unknowns_mut = this.#buffer_field_name.get_or_insert_with(|| #ubg::new());
 
                 if let ::core::option::Option::Some(unknown) = unknowns_mut.push(unknown) {
                   let len = #path_to_grost::__private::Buffer::len(unknowns_mut);

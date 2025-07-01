@@ -180,7 +180,7 @@ impl PartialField {
           let lt = &ltp.lifetime;
           let rbp = &object.read_buffer_param;
           let rb = &rbp.ident;
-          let ubp = &object.unknown_buffer_param;
+          let ubp = &object.buffer_param;
           let ub = &ubp.ident;
 
           let ref_state_type: Type = syn::parse2(quote! {

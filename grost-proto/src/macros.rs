@@ -253,7 +253,7 @@ macro_rules! partial_ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_UNKNOWN_BUFFER__, $wf, $flavor>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
         type Output = $target;
       }
     )*

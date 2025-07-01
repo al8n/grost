@@ -208,8 +208,7 @@ impl MissingOperation {
   pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
     fn duplicate_error(old_op: &MissingOperation, new_op: &str) -> darling::Error {
       darling::Error::custom(format!(
-        "Cannot specify both `{}` and `{}` at the same time.",
-        old_op, new_op,
+        "Cannot specify both `{old_op}` and `{new_op}` at the same time.",
       ))
     }
 
@@ -655,11 +654,11 @@ pub fn grost_wire_format_param() -> TypeParam {
   syn::parse_quote!(__GROST_WIRE_FORMAT__: ?::core::marker::Sized)
 }
 
-/// Returns a generic parameter `__GROST_UNKNOWN_BUFFER__`, which is used to represent
+/// Returns a generic parameter `__GROST_BUFFER__`, which is used to represent
 /// the unknown buffer generic parameter in the generated code, which is used to store unknown data.
 /// This is used to avoid conflicts with other generic parameters in the code.
-pub fn grost_unknown_buffer_param() -> TypeParam {
-  quote::format_ident!("__GROST_UNKNOWN_BUFFER__").into()
+pub fn grost_buffer_param() -> TypeParam {
+  quote::format_ident!("__GROST_BUFFER__").into()
 }
 
 /// Returns a generic parameter `__GROST_READ_BUFFER__`, which is used to represent

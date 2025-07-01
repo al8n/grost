@@ -184,8 +184,8 @@ impl<F> GenericTaggedField<F> {
     let object_reflectable = &object.reflectable;
     let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let unknown_buffer = &unknown_buffer_param.ident;
+    let buffer_param = &object.buffer_param;
+    let buffer = &buffer_param.ident;
     let read_buffer_param = &object.read_buffer_param;
     let read_buffer = &read_buffer_param.ident;
 
@@ -245,7 +245,7 @@ impl<F> GenericTaggedField<F> {
             #flavor_ident,
             <#wfr as #object_reflectable>::Reflection,
             #read_buffer,
-            #unknown_buffer,
+            #buffer,
           >
         >
       })?;

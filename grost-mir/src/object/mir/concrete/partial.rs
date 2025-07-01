@@ -41,7 +41,7 @@ impl ConcretePartialObject {
 
   /// Returns the type of the partial object
   ///
-  /// e.g. if the name is `PartialUserObject`, and the `unknown_buffer` returns the `UB`  this will return `PartialUserObject<UB>`
+  /// e.g. if the name is `PartialUserObject`, and the `buffer` returns the `UB`  this will return `PartialUserObject<UB>`
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
@@ -74,7 +74,7 @@ impl ConcretePartialObject {
     fields: &[ConcreteField<F>],
   ) -> darling::Result<Self> {
     let partial_object = object.partial();
-    let unknown_buffer_param = object.unknown_buffer_param();
+    let buffer_param = object.buffer_param();
     let read_buffer_param = object.read_buffer_param();
 
     let mut generics = object.generics().clone();
@@ -83,7 +83,7 @@ impl ConcretePartialObject {
     let flavor_ty = object.flavor().ty();
     let path_to_grost = object.path_to_grost();
     let wf = object.flavor().wire_format();
-    let ub = &unknown_buffer_param.ident;
+    let ub = &buffer_param.ident;
     let rb = &read_buffer_param.ident;
     let lt = &object.lifetime_param().lifetime;
 
@@ -151,7 +151,7 @@ impl ConcretePartialObject {
           .push(GenericParam::Type(read_buffer_param.clone()));
         output
           .params
-          .push(GenericParam::Type(unknown_buffer_param.clone()));
+          .push(GenericParam::Type(buffer_param.clone()));
         output
           .params
           .extend(generics.const_params().cloned().map(GenericParam::from));

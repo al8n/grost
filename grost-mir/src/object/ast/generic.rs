@@ -24,7 +24,7 @@ pub(in crate::object) struct GenericObject<M = (), F = ()> {
   pub(in crate::object) schema_name: String,
   pub(in crate::object) schema_description: String,
   pub(in crate::object) flavor_param: TypeParam,
-  pub(in crate::object) unknown_buffer_param: TypeParam,
+  pub(in crate::object) buffer_param: TypeParam,
   pub(in crate::object) lifetime_param: LifetimeParam,
   pub(in crate::object) wire_format_param: TypeParam,
   pub(in crate::object) read_buffer_param: TypeParam,
@@ -83,8 +83,8 @@ impl<M, F> GenericObject<M, F> {
   }
 
   /// Returns the generic unknown buffer type parameter
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns `true` if the object is copyable, `false` otherwise.
@@ -218,7 +218,7 @@ impl<M, F> GenericObject<M, F> {
       ty,
       flavor_param,
       lifetime_param: object.lifetime_param().clone(),
-      unknown_buffer_param: object.unknown_buffer_type_param().clone(),
+      buffer_param: object.buffer_type_param().clone(),
       wire_format_param: object.wire_format_type_param().clone(),
       read_buffer_param: object.read_buffer_type_param().clone(),
       write_buffer_param: object.write_buffer_type_param().clone(),

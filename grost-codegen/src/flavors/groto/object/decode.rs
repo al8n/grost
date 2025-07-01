@@ -9,7 +9,7 @@ impl Groto {
   ) -> syn::Result<proc_macro2::TokenStream> {
     let path_to_grost = object.path();
     let partial_ref = object.partial_ref();
-    let ubp = partial_ref.unknown_buffer_param();
+    let ubp = partial_ref.buffer_param();
     let ubi = &ubp.ident;
     let ltg = partial_ref.lifetime();
     let partial_decode_ty = partial_ref.type_with(None, Some(&self.ty), None)?;
@@ -31,7 +31,7 @@ impl Groto {
       }
     }
 
-    let unknown_buffer_field_name = partial_ref.unknown_buffer_field_name();
+    let buffer_field_name = partial_ref.buffer_field_name();
 
     let object_name = object.name();
     let object_name_str = object_name.to_string();
@@ -241,7 +241,7 @@ impl Groto {
                 } else {
                   let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
                   offset += read;
-                  let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubi::new());
+                  let unknowns_mut = this.#buffer_field_name.get_or_insert_with(|| #ubi::new());
 
                   if let ::core::option::Option::Some(unknown) = unknowns_mut.push(unknown) {
                     let len = #path_to_grost::__private::Buffer::len(unknowns_mut);
@@ -300,7 +300,7 @@ impl Groto {
                 } else {
                   let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(ctx, buf.slice(offset - encoded_identifier_len..))?;
                   offset += read;
-                  let unknowns_mut = this.#unknown_buffer_field_name.get_or_insert_with(|| #ubi::new());
+                  let unknowns_mut = this.#buffer_field_name.get_or_insert_with(|| #ubi::new());
 
                   if let ::core::option::Option::Some(unknown) = unknowns_mut.push(unknown) {
                     let len = #path_to_grost::__private::Buffer::len(unknowns_mut);

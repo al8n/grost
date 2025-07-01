@@ -93,7 +93,7 @@ pub struct PartialRef<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized> {
   _wf: core::marker::PhantomData<&'a W>,
   _flavor: core::marker::PhantomData<&'a F>,
   _read_buf: core::marker::PhantomData<RB>,
-  _unknown_buffer: core::marker::PhantomData<UB>,
+  _buffer: core::marker::PhantomData<UB>,
 }
 
 impl<'a, RB, UB, W, F> Clone for PartialRef<'a, RB, UB, W, F>

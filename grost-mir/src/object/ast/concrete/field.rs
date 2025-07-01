@@ -593,7 +593,7 @@ fn applied_partial_ref_state(
   path_to_grost: &Path,
   lt: impl ToTokens,
   read_buffer: impl ToTokens,
-  unknown_buffer: impl ToTokens,
+  buffer: impl ToTokens,
   wf: impl ToTokens,
   flavor_type: impl ToTokens,
 ) -> proc_macro2::TokenStream {
@@ -601,7 +601,7 @@ fn applied_partial_ref_state(
     path_to_grost,
     lt,
     read_buffer,
-    unknown_buffer,
+    buffer,
     wf,
     flavor_type,
   );
@@ -614,7 +614,7 @@ fn applied_partial_ref(
   path_to_grost: &Path,
   lt: impl ToTokens,
   read_buffer: impl ToTokens,
-  unknown_buffer: impl ToTokens,
+  buffer: impl ToTokens,
   wf: impl ToTokens,
   flavor_type: impl ToTokens,
 ) -> proc_macro2::TokenStream {
@@ -622,7 +622,7 @@ fn applied_partial_ref(
     #path_to_grost::__private::convert::PartialRef<
       #lt,
       #read_buffer,
-      #unknown_buffer,
+      #buffer,
       #wf,
       #flavor_type,
     >

@@ -43,7 +43,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   #[debug(skip)]
   applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   flavor: FlavorAttribute,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   read_buffer_param: TypeParam,
   write_buffer_param: TypeParam,
@@ -162,8 +162,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns the lifetime generic parameter, which will be used in generated structs or impls
@@ -312,7 +312,7 @@ impl<M, F> ConcreteObject<M, F> {
         if !f.type_params_usages().is_empty() || !f.lifetime_params_usages().is_empty() {
           let field_ty = f.ty();
           let lt = &object.lifetime_param().lifetime;
-          let ub = &object.unknown_buffer_param().ident;
+          let ub = &object.buffer_param().ident;
           let flavor_ty = object.flavor().ty();
           let wf = f.wire_format();
           decode_constraints.push(syn::parse2(quote! {
@@ -336,7 +336,7 @@ impl<M, F> ConcreteObject<M, F> {
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
     let path_to_grost = object.path_to_grost();
     let lt = &object.lifetime_param().lifetime;
-    let ub = &object.unknown_buffer_param().ident;
+    let ub = &object.buffer_param().ident;
     let rb = &object.read_buffer_param().ident;
     let flavor_ty = object.flavor().ty();
     let wf = object.flavor().wire_format();
@@ -378,7 +378,7 @@ impl<M, F> ConcreteObject<M, F> {
           .push(GenericParam::Type(object.read_buffer_param().clone()));
         output
           .params
-          .push(GenericParam::Type(object.unknown_buffer_param().clone()));
+          .push(GenericParam::Type(object.buffer_param().clone()));
         output
           .params
           .extend(generics.const_params().cloned().map(GenericParam::from));
@@ -406,7 +406,7 @@ impl<M, F> ConcreteObject<M, F> {
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
-      unknown_buffer_param: object.unknown_buffer_param,
+      buffer_param: object.buffer_param,
       lifetime_param: object.lifetime_param,
       read_buffer_param: object.read_buffer_param,
       write_buffer_param: object.write_buffer_param,

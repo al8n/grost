@@ -113,8 +113,8 @@ impl PartialRefField {
     let path_to_grost = &object.path_to_grost;
     let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let unknown_buffer = &unknown_buffer_param.ident;
+    let buffer_param = &object.buffer_param;
+    let buffer = &buffer_param.ident;
     let read_buffer_param = &object.read_buffer_param;
     let read_buffer = &read_buffer_param.ident;
 
@@ -133,7 +133,7 @@ impl PartialRefField {
           path_to_grost,
           lifetime,
           read_buffer,
-          unknown_buffer,
+          buffer,
           wf,
           flavor_type,
         ))?;
@@ -166,7 +166,7 @@ impl PartialRefField {
 
     let decode_lt = grost_decode_trait_lifetime();
     let decode_trait_type = syn::parse2(quote! {
-      #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_type, #wf, #ty, #read_buffer, #unknown_buffer>
+      #path_to_grost::__private::decode::Decode<#decode_lt, #flavor_type, #wf, #ty, #read_buffer, #buffer>
     })?;
 
     Ok(Self {

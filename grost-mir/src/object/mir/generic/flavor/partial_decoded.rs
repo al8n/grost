@@ -28,7 +28,7 @@ impl PartialRefObjectFlavor {
   ) -> darling::Result<Self> {
     let partial_ref_object = &object.partial_ref;
     let partial_ref_object_name = partial_ref_object.name().clone();
-    let unknown_buffer_param = &object.unknown_buffer_param;
+    let buffer_param = &object.buffer_param;
     let lifetime_param = &object.lifetime_param;
     let original_generics = &object.generics;
     let mut generics = Generics::default();
@@ -69,9 +69,9 @@ impl PartialRefObjectFlavor {
 
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
     ty_params.push({
-      let ident = &unknown_buffer_param.ident;
+      let ident = &buffer_param.ident;
       quote! { #ident }
     });
 

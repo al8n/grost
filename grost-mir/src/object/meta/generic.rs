@@ -5,7 +5,7 @@ use crate::{
   flavor::GenericFlavorFromMeta,
   utils::{
     Attributes, Invokable, SchemaFromMeta, grost_flavor_param, grost_lifetime,
-    grost_read_buffer_param, grost_unknown_buffer_param, grost_wire_format_param,
+    grost_read_buffer_param, grost_buffer_param, grost_wire_format_param,
     grost_write_buffer_param,
   },
 };
@@ -25,8 +25,8 @@ pub(in crate::object) struct Generic {
   pub(in crate::object) lifetime: LifetimeParam,
   #[darling(default = grost_flavor_param)]
   pub(in crate::object) flavor: TypeParam,
-  #[darling(default = grost_unknown_buffer_param)]
-  pub(in crate::object) unknown_buffer: TypeParam,
+  #[darling(default = grost_buffer_param)]
+  pub(in crate::object) buffer: TypeParam,
   #[darling(default = grost_read_buffer_param)]
   pub(in crate::object) read_buffer: TypeParam,
   #[darling(default = grost_write_buffer_param)]
@@ -40,7 +40,7 @@ impl Default for Generic {
     Self {
       lifetime: grost_lifetime(),
       flavor: grost_flavor_param(),
-      unknown_buffer: grost_unknown_buffer_param(),
+      buffer: grost_buffer_param(),
       read_buffer: grost_read_buffer_param(),
       write_buffer: grost_write_buffer_param(),
       wire_format: grost_wire_format_param(),

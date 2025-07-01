@@ -7,7 +7,7 @@ use syn::{
 };
 
 use crate::ast::{
-  grost_flavor_param, grost_lifetime, grost_unknown_buffer_param,
+  grost_flavor_param, grost_lifetime, grost_buffer_param,
   object::{RawField as _, RawObjectExt as _},
 };
 
@@ -86,7 +86,7 @@ impl PartialRefField {
 struct PartialRefObjectGenerics {
   generics: Generics,
   lifetime: syn::Lifetime,
-  unknown_buffer_generic: TypeParam,
+  buffer_generic: TypeParam,
   flavor_generic: TypeParam,
 }
 
@@ -103,14 +103,14 @@ impl PartialRefObjectGenerics {
   const fn new(
     lifetime: syn::Lifetime,
     flavor_generic: TypeParam,
-    unknown_buffer_generic: TypeParam,
+    buffer_generic: TypeParam,
     generics: Generics,
   ) -> Self {
     Self {
       generics,
       lifetime,
       flavor_generic,
-      unknown_buffer_generic,
+      buffer_generic,
     }
   }
 
@@ -122,8 +122,8 @@ impl PartialRefObjectGenerics {
 
   /// Returns the unknown buffer generic parameter of the partial object.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_generic
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_generic
   }
 
   /// Returns the flavor generic parameter of the partial object.
@@ -145,7 +145,7 @@ pub struct PartialRefObject {
   fields: Vec<PartialRefField>,
   skipped_fields: Vec<syn::Field>,
   attrs: Vec<Attribute>,
-  unknown_buffer_field_name: Ident,
+  buffer_field_name: Ident,
   copy: bool,
 }
 
@@ -158,7 +158,7 @@ impl PartialRefObject {
 
   /// Returns the type of the partial object.
   ///
-  /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`, the type will be `PartialRefUser<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_UNKNOWN_BUFFER__>`.
+  /// e.g. if the [`name`](PartialRefObject::name) returns `PartialRefUser`, the type will be `PartialRefUser<'__grost_lifetime__, __GROST_FLAVOR__, __GROST_BUFFER__>`.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
@@ -173,7 +173,7 @@ impl PartialRefObject {
     &self,
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
-    unknown_buffer: Option<&Type>,
+    buffer: Option<&Type>,
   ) -> syn::Result<Type> {
     let iter = self.generics.params.iter().map(|param| match param {
       GenericParam::Lifetime(lt) if lt.lifetime.eq(self.lifetime()) && lifetime.is_some() => {
@@ -189,9 +189,9 @@ impl PartialRefObject {
         quote! { #flavor }
       }
       GenericParam::Type(tp)
-        if tp.ident == self.generics.unknown_buffer_param().ident && unknown_buffer.is_some() =>
+        if tp.ident == self.generics.buffer_param().ident && buffer.is_some() =>
       {
-        quote! { #unknown_buffer }
+        quote! { #buffer }
       }
       GenericParam::Type(tp) => {
         let ident = &tp.ident;
@@ -218,7 +218,7 @@ impl PartialRefObject {
     &self,
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
-    unknown_buffer: Option<&Type>,
+    buffer: Option<&Type>,
   ) -> syn::Result<Generics> {
     let mut generics = Generics::default();
     self.generics.params.iter().for_each(|param| match param {
@@ -232,7 +232,7 @@ impl PartialRefObject {
       GenericParam::Type(tp)
         if tp.ident == self.generics.flavor_param().ident && flavor.is_some() => {}
       GenericParam::Type(tp)
-        if tp.ident == self.generics.unknown_buffer_param().ident && unknown_buffer.is_some() => {}
+        if tp.ident == self.generics.buffer_param().ident && buffer.is_some() => {}
       _ => {
         generics.params.push(param.clone());
       }
@@ -265,7 +265,7 @@ impl PartialRefObject {
         .extend(where_clause.predicates.iter().cloned());
     }
 
-    for p in self.constraints_with(lifetime, flavor, unknown_buffer)? {
+    for p in self.constraints_with(lifetime, flavor, buffer)? {
       generics.make_where_clause().predicates.push(p);
     }
 
@@ -278,7 +278,7 @@ impl PartialRefObject {
     &self,
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
-    unknown_buffer: Option<&Type>,
+    buffer: Option<&Type>,
   ) -> syn::Result<Vec<PartialRefField>> {
     let path_to_grost = &self.path_to_grost;
     self
@@ -292,9 +292,9 @@ impl PartialRefObject {
           let ident = &flavor_param.ident;
           quote!(#ident)
         });
-        let unknown_buffer = unknown_buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
-          let unknown_buffer_param = self.unknown_buffer_param();
-          let ident = &unknown_buffer_param.ident;
+        let buffer = buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
+          let buffer_param = self.buffer_param();
+          let ident = &buffer_param.ident;
           quote!(#ident)
         });
         let wf = wire_format_reflection_ty(
@@ -311,7 +311,7 @@ impl PartialRefObject {
           &wf,
           &flavor,
           lifetime.unwrap_or_else(|| self.lifetime()),
-          &unknown_buffer,
+          &buffer,
         );
         let vis = &f.field.vis;
         let name = f.name();
@@ -351,7 +351,7 @@ impl PartialRefObject {
     &self,
     lifetime: Option<&syn::Lifetime>,
     flavor: Option<&Type>,
-    unknown_buffer: Option<&Type>,
+    buffer: Option<&Type>,
   ) -> syn::Result<Punctuated<WherePredicate, Comma>> {
     let object_name = &self.parent_name;
     let object_type_generics = self.object_generics.split_for_impl().1;
@@ -361,9 +361,9 @@ impl PartialRefObject {
       let ident = &flavor_param.ident;
       quote!(#ident)
     });
-    let unknown_buffer = unknown_buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
-      let unknown_buffer_param = self.unknown_buffer_param();
-      let ident = &unknown_buffer_param.ident;
+    let buffer = buffer.map(|t| quote!(#t)).unwrap_or_else(|| {
+      let buffer_param = self.buffer_param();
+      let ident = &buffer_param.ident;
       quote!(#ident)
     });
     let path_to_grost = &self.path_to_grost;
@@ -385,7 +385,7 @@ impl PartialRefObject {
         &wf,
         &flavor,
         lt,
-        &unknown_buffer,
+        &buffer,
       );
 
       for p in constraints(
@@ -447,14 +447,14 @@ impl PartialRefObject {
 
   /// Returns unknown buffer generic parameter of the partial object.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    self.generics.unknown_buffer_param()
+  pub const fn buffer_param(&self) -> &TypeParam {
+    self.generics.buffer_param()
   }
 
   /// Returns the field name of the unknown buffer.
   #[inline]
-  pub const fn unknown_buffer_field_name(&self) -> &Ident {
-    &self.unknown_buffer_field_name
+  pub const fn buffer_field_name(&self) -> &Ident {
+    &self.buffer_field_name
   }
 
   /// Returns the flavor generic parameter of the partial object.
@@ -479,7 +479,7 @@ impl PartialRefObject {
     let mut generics = Generics::default();
     let lt = grost_lifetime();
     let flavor_param = grost_flavor_param();
-    let unknown_buffer_param = grost_unknown_buffer_param();
+    let buffer_param = grost_buffer_param();
     let original_generics = input.generics();
 
     // push the lifetime generic parameter first
@@ -513,7 +513,7 @@ impl PartialRefObject {
 
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
 
     // push the original const generic parameters last
     generics.params.extend(
@@ -539,12 +539,12 @@ impl PartialRefObject {
       fields.iter().filter(|f| !f.skip()).copied(),
       &flavor_param,
       &lt.lifetime,
-      &unknown_buffer_param,
+      &buffer_param,
       copyable,
     )?;
 
     let generics =
-      PartialRefObjectGenerics::new(lt.lifetime, flavor_param, unknown_buffer_param, generics);
+      PartialRefObjectGenerics::new(lt.lifetime, flavor_param, buffer_param, generics);
 
     let (_, object_tg, _) = input.generics().split_for_impl();
     let mut partial_ref_fields = vec![];
@@ -580,7 +580,7 @@ impl PartialRefObject {
         &wf,
         &generics.flavor_param().ident,
         generics.lifetime(),
-        &generics.unknown_buffer_param().ident,
+        &generics.buffer_param().ident,
       );
       let vis = f.vis();
       let name = f.name();
@@ -622,7 +622,7 @@ impl PartialRefObject {
       ty: syn::parse2(quote! {
         #name #tg
       })?,
-      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      buffer_field_name: format_ident!("__grost_buffer__"),
       path_to_grost: path_to_grost.clone(),
       name,
       vis: input.vis().clone(),
@@ -658,8 +658,8 @@ impl PartialRefObject {
     } else {
       quote! {}
     };
-    let ubfn = &self.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_param().ident;
+    let ubfn = &self.buffer_field_name;
+    let ubg = &self.buffer_param().ident;
 
     quote! {
       #(#attrs)*
@@ -711,8 +711,8 @@ where
     });
 
     let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
-    let ubfn = &partial_ref_object.unknown_buffer_field_name;
-    let ubg = &partial_ref_object.unknown_buffer_param().ident;
+    let ubfn = &partial_ref_object.buffer_field_name;
+    let ubg = &partial_ref_object.buffer_param().ident;
     let flatten_state = super::derive_flatten_state(
       &self.path_to_grost,
       partial_ref_object.generics(),
@@ -752,47 +752,47 @@ where
 
         /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+        pub const fn buffer(&self) -> ::core::option::Option<&#ubg> {
           self.#ubfn.as_ref()
         }
 
-        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is buffer
         // /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
         // #[inline]
-        // pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        // pub const fn buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
         //  self.#ubfn.as_mut()
         // }
 
         // /// Takes the unknown buffer out if the unknown buffer is not `None`.
         // #[inline]
-        // pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
+        // pub const fn take_buffer(&mut self) -> ::core::option::Option<#ubg> {
         //   self.#ubfn.take()
         // }
 
         // /// Set the value of unknown buffer
         // #[inline]
-        // pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
+        // pub fn set_buffer(&mut self, buffer: #ubg) -> &mut Self {
         //   self.#ubfn = ::core::option::Option::Some(buffer);
         //   self
         // }
 
         // /// Clears the unknown buffer.
         // #[inline]
-        // pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+        // pub fn clear_buffer(&mut self) -> &mut Self {
         //   self.#ubfn = ::core::option::Option::None;
         //   self
         // }
 
         // /// Set the value of unknown buffer
         // #[inline]
-        // pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
+        // pub fn with_buffer(mut self, buffer: #ubg) -> Self {
         //   self.#ubfn = ::core::option::Option::Some(buffer);
         //   self
         // }
 
         // /// Clears the unknown buffer.
         // #[inline]
-        // pub fn without_unknown_buffer(mut self) -> Self {
+        // pub fn without_buffer(mut self) -> Self {
         //   self.#ubfn = ::core::option::Option::None;
         //   self
         // }
@@ -810,7 +810,7 @@ fn partial_ref_state_ty(
   wf: &syn::Type,
   flavor: impl ToTokens,
   lifetime: &syn::Lifetime,
-  unknown_buffer: impl ToTokens,
+  buffer: impl ToTokens,
 ) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::convert::State<
@@ -818,7 +818,7 @@ fn partial_ref_state_ty(
         #lifetime,
         #flavor,
         <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>>::Reflection,
-        #unknown_buffer,
+        #buffer,
       >
     >
   }
@@ -866,7 +866,7 @@ fn add_partial_ref_constraints<'a, I>(
   mut fields: impl Iterator<Item = &'a I>,
   flavor_param: &syn::TypeParam,
   lifetime: &syn::Lifetime,
-  unknown_buffer: &syn::TypeParam,
+  buffer: &syn::TypeParam,
   copy: bool,
 ) -> darling::Result<()>
 where
@@ -889,7 +889,7 @@ where
       &wf,
       &flavor_param.ident,
       lifetime,
-      &unknown_buffer.ident,
+      &buffer.ident,
     );
 
     generics.make_where_clause().predicates.extend(constraints(

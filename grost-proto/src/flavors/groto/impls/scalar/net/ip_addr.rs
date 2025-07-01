@@ -306,7 +306,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Groto, Fixed32>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<Groto, Fixed32, Ipv4Addr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<Groto, Fixed32, Ipv4Addr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -314,7 +314,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Groto, Varint>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<'_, Groto, Varint, Ipv4Addr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<'_, Groto, Varint, Ipv4Addr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -327,7 +327,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Groto, Fixed128>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<Groto, Fixed128, Ipv6Addr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<Groto, Fixed128, Ipv6Addr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -335,7 +335,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Groto, Varint>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<'_, Groto, Varint, Ipv6Addr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<'_, Groto, Varint, Ipv6Addr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -348,7 +348,7 @@ mod tests {
       let encoded_len = ip.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <IpAddr as Decode<Groto, LengthDelimited, IpAddr>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <IpAddr as Decode<Groto, LengthDelimited, IpAddr, &[u8], Vec<_>>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -356,7 +356,7 @@ mod tests {
       let encoded_len = ip.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <IpAddr as Decode<Groto, LengthDelimited, IpAddr>>::decode(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <IpAddr as Decode<Groto, LengthDelimited, IpAddr, &[u8], Vec<_>>>::decode(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 

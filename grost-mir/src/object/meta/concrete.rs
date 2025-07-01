@@ -7,7 +7,7 @@ use crate::{
   object::meta::ObjectConvertFromMeta,
   utils::{
     Attributes, Invokable, NestedMeta, NoopFromMeta, SchemaFromMeta, grost_lifetime,
-    grost_read_buffer_param, grost_unknown_buffer_param, grost_write_buffer_param,
+    grost_read_buffer_param, grost_buffer_param, grost_write_buffer_param,
   },
 };
 
@@ -24,8 +24,8 @@ fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
 pub(in crate::object) struct Generic {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
   pub(in crate::object) lifetime: LifetimeParam,
-  #[darling(default = grost_unknown_buffer_param)]
-  pub(in crate::object) unknown_buffer: TypeParam,
+  #[darling(default = grost_buffer_param)]
+  pub(in crate::object) buffer: TypeParam,
   #[darling(default = grost_read_buffer_param)]
   pub(in crate::object) read_buffer: TypeParam,
   #[darling(default = grost_write_buffer_param)]
@@ -36,7 +36,7 @@ impl Default for Generic {
   fn default() -> Self {
     Self {
       lifetime: grost_lifetime(),
-      unknown_buffer: grost_unknown_buffer_param(),
+      buffer: grost_buffer_param(),
       read_buffer: grost_read_buffer_param(),
       write_buffer: grost_write_buffer_param(),
     }

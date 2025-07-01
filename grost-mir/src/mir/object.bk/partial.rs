@@ -4,7 +4,7 @@ use quote::{format_ident, quote};
 use syn::{Attribute, Generics, Ident, Type, TypeParam, Visibility, parse::Parser};
 
 use crate::ast::{
-  grost_unknown_buffer_param,
+  grost_buffer_param,
   object::{Label, RawField, RawObjectExt as _},
 };
 
@@ -14,7 +14,7 @@ use super::Object;
 #[derive(Debug, Clone)]
 struct PartialObjectGenerics {
   generics: Generics,
-  unknown_buffer_generic: TypeParam,
+  buffer_generic: TypeParam,
 }
 
 impl core::ops::Deref for PartialObjectGenerics {
@@ -27,17 +27,17 @@ impl core::ops::Deref for PartialObjectGenerics {
 }
 
 impl PartialObjectGenerics {
-  const fn new(unknown_buffer_generic: TypeParam, generics: Generics) -> Self {
+  const fn new(buffer_generic: TypeParam, generics: Generics) -> Self {
     Self {
       generics,
-      unknown_buffer_generic,
+      buffer_generic,
     }
   }
 
   /// Returns the unknown buffer generic parameter of the partial object.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_generic
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_generic
   }
 }
 
@@ -148,7 +148,7 @@ pub struct PartialObject {
   fields: Vec<PartialField>,
   skipped_fields: Vec<syn::Field>,
   attrs: Vec<Attribute>,
-  unknown_buffer_field_name: Ident,
+  buffer_field_name: Ident,
   copy: bool,
 }
 
@@ -179,14 +179,14 @@ impl PartialObject {
 
   /// Returns unknown buffer generic parameter of the partial object.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    self.generics.unknown_buffer_param()
+  pub const fn buffer_param(&self) -> &TypeParam {
+    self.generics.buffer_param()
   }
 
   /// Returns the field name of the unknown buffer.
   #[inline]
-  pub const fn unknown_buffer_field_name(&self) -> &Ident {
-    &self.unknown_buffer_field_name
+  pub const fn buffer_field_name(&self) -> &Ident {
+    &self.buffer_field_name
   }
 
   /// Returns the fields of the partial object.
@@ -253,20 +253,20 @@ impl PartialObject {
           where_clause.predicates.push(c);
         })
     })?;
-    let unknown_buffer_param = grost_unknown_buffer_param();
+    let buffer_param = grost_buffer_param();
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
 
     Ok(Self {
       path_to_grost: path_to_grost.clone(),
       name: input.partial_name(),
       vis: input.vis().clone(),
-      generics: PartialObjectGenerics::new(unknown_buffer_param, generics),
+      generics: PartialObjectGenerics::new(buffer_param, generics),
       fields,
       skipped_fields,
       attrs: meta.partial().attrs().to_vec(),
-      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      buffer_field_name: format_ident!("__grost_buffer__"),
       copy: meta.copy(),
     })
   }
@@ -282,13 +282,13 @@ impl PartialObject {
     let attrs = self.attrs();
     let generics = self.generics();
     let where_clause = generics.where_clause.as_ref();
-    let unknown_buffer_field_name = self.unknown_buffer_field_name();
-    let unknown_buffer_param = &self.unknown_buffer_param().ident;
+    let buffer_field_name = self.buffer_field_name();
+    let buffer_param = &self.buffer_param().ident;
     quote! {
       #(#attrs)*
       #[allow(non_camel_case_types, clippy::type_complexity)]
       #visibility struct #name #generics #where_clause {
-        #unknown_buffer_field_name: ::core::option::Option<#unknown_buffer_param>,
+        #buffer_field_name: ::core::option::Option<#buffer_param>,
         #(#fields),*
       }
     }
@@ -339,8 +339,8 @@ where
         self.#field_name.is_none()
       }
     });
-    let ubfn = self.partial().unknown_buffer_field_name();
-    let ubg = &self.partial().unknown_buffer_param().ident;
+    let ubfn = self.partial().buffer_field_name();
+    let ubg = &self.partial().buffer_param().ident;
 
     quote! {
       #[automatically_derived]
@@ -373,13 +373,13 @@ where
 
         /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+        pub const fn buffer(&self) -> ::core::option::Option<&#ubg> {
           self.#ubfn.as_ref()
         }
 
         // /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
         // #[inline]
-        // pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        // pub const fn buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
         //   self.#ubfn.as_mut()
         // }
 

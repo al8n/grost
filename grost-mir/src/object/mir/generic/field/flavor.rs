@@ -237,8 +237,8 @@ impl FieldFlavor {
     let object_reflectable = &object.reflectable;
     let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let unknown_buffer = &unknown_buffer_param.ident;
+    let buffer_param = &object.buffer_param;
+    let buffer = &buffer_param.ident;
     let field_ty = field.ty();
     let tag = field.tag();
     let wire_format = match ast.format() {
@@ -308,7 +308,7 @@ impl FieldFlavor {
           #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::PartialRef<
               #lifetime,
-              #unknown_buffer,
+              #buffer,
               <#wfr as #object_reflectable>::Reflection,
               #flavor_type,
             >
