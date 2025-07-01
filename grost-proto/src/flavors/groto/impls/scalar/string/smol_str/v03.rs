@@ -42,6 +42,8 @@ identity_partial_transform!(
     SmolStr as LengthDelimited,
   }
 );
+bidi_equivalent!(impl <str, LengthDelimited> for <SmolStr, LengthDelimited>);
+bidi_equivalent!(:<RB: ReadBuf>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 impl Transform<&str, Self, LengthDelimited, Groto> for SmolStr {
   fn transform(input: &str) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>

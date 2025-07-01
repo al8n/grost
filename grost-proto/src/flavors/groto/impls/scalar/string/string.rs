@@ -86,21 +86,5 @@ where
   }
 }
 
-// impl<B> PartialTransform<Groto, LengthDelimited, Str<B>> for Option<String>
-// where
-//   RB: ReadBuf,
-// {
-//   fn partial_transform(
-//     input: Str<B>,
-//     selector: &bool,
-//   ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
-//   where
-//     Self: Sized,
-//   {
-//     if *selector {
-//       <Self as Transform<Groto, LengthDelimited, Str<B>>>::transform(input).map(Some)
-//     } else {
-//       Ok(None)
-//     }
-//   }
-// }
+bidi_equivalent!(:<RB: ReadBuf>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(impl <String, LengthDelimited> for <str, LengthDelimited>);

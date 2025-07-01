@@ -1,4 +1,6 @@
 use crate::{
+  buffer::ReadBuf,
+  decode::BytesSlice,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
@@ -873,6 +875,11 @@ list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |byte
 list!(
   @encode_as_slice [T; N] [const N: usize]
 );
+list!(
+  @encode_as_bytes [u8; N] [const N: usize]
+);
+bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<[u8; N], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!([const N: usize] impl <[u8; N], LengthDelimited> for <[u8], LengthDelimited>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
@@ -902,6 +909,8 @@ const _: () = {
   list!(
     @encode_as_bytes Vec<u8>
   );
+  bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+  bidi_equivalent!(impl <Vec<u8>, LengthDelimited> for <[u8], LengthDelimited>);
 };
 
 #[cfg(feature = "smallvec_1")]
@@ -936,6 +945,8 @@ const _: () = {
   list!(
     @encode_as_bytes SmallVec<[u8; N]> [const N: usize]
   );
+  bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<SmallVec<[u8; N]>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+  bidi_equivalent!([const N: usize] impl <SmallVec<[u8; N]>, LengthDelimited> for <[u8], LengthDelimited>);
 };
 
 #[cfg(feature = "arrayvec_0_7")]
@@ -978,6 +989,8 @@ const _: () = {
   list!(
     @encode_as_bytes ArrayVec<u8, N> [const N: usize]
   );
+  bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<ArrayVec<u8, N>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+  bidi_equivalent!([const N: usize] impl <ArrayVec<u8, N>, LengthDelimited> for <[u8], LengthDelimited>);
 };
 
 #[cfg(feature = "tinyvec_1")]
@@ -1040,6 +1053,8 @@ const _: () = {
   list!(
     @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>
   );
+  bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<ArrayVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+  bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <ArrayVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
 
   impl<T, const N: usize> State<Partial<Groto>> for ArrayVec<[T; N]>
   where
@@ -1080,6 +1095,8 @@ const _: () = {
     list!(
       @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>
     );
+    bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+    bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <TinyVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
 
     impl<T, const N: usize> State<Partial<Groto>> for TinyVec<[T; N]>
     where

@@ -151,6 +151,9 @@ macro_rules! array_str {
       }
     );
 
+    bidi_equivalent!([const N: usize] impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
+    bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: [const N: usize] impl <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
+
     impl<const $g: ::core::primitive::usize> $crate::__private::convert::Transform<&str, Self, $crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
       fn transform(input: &str) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as crate::flavors::Flavor>::Error>
       where

@@ -4,6 +4,138 @@ use super::{
   selection::Selectable,
 };
 
+/// A marker trait indicating that two types produce equivalent encoded output
+/// despite potentially having different wire formats or internal representations.
+///
+/// ## Safety
+///
+/// This trait is unsafe because incorrect implementation can lead to data corruption
+/// or incorrect behavior in systems that rely on encoding equivalence. Implementers
+/// must ensure that:
+///
+/// 1. all methods of `Encode` for `Self` and `O` produce the same results for equivalent values
+/// 2. The equivalence holds across all possible contexts (both `F::Context` and `<Self::Flavor as Flavor>::Context`)
+///
+/// # Example
+///
+/// ```ignore
+/// struct MyStr(str);
+///
+/// unsafe impl EquivalentEncode<MyStr, LengthDelimited, Groto> for str {
+///   type Flavor = Groto;
+///   type WireFormat = LengthDelimited;
+/// }
+/// ```
+pub unsafe trait EquivalentEncode<O, W, F>
+where
+  Self: Encode<Self::WireFormat, Self::Flavor>,
+  O: Encode<W, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  /// The wire format for Self
+  type WireFormat: WireFormat<Self::Flavor>;
+
+  /// The flavor for Self
+  type Flavor: Flavor + ?Sized;
+}
+
+unsafe impl<W, F, T> EquivalentEncode<T, W, F> for T
+where
+  T: Encode<W, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<W, F, T> EquivalentEncode<&T, W, F> for T
+where
+  T: Encode<W, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<W, F, T> EquivalentEncode<T, W, F> for &T
+where
+  T: Encode<W, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+/// A marker trait indicating that two types produce equivalent partial encoded output
+/// despite potentially having different wire formats or internal representations.
+///
+/// ## Safety
+///
+/// This trait is unsafe because incorrect implementation can lead to data corruption
+/// or incorrect behavior in systems that rely on encoding equivalence. Implementers
+/// must ensure that:
+///
+/// 1. all methods of `PartialEncode` for `Self` and `O` produce the same results for equivalent values
+/// 2. The equivalence holds across all possible contexts (both `F::Context` and `<Self::Flavor as Flavor>::Context`)
+///
+/// ## Example
+///
+/// ```ignore
+/// struct MyStr(str);
+///
+/// unsafe impl EquivalentPartialEncode<MyStr, LengthDelimited, Groto> for str {
+///   type Flavor = Groto;
+///   type WireFormat = LengthDelimited;
+/// }
+/// ```
+pub unsafe trait EquivalentPartialEncode<O, W, F>
+where
+  Self: PartialEncode<Self::WireFormat, Self::Flavor> + Selectable<Self::Flavor>,
+  O: PartialEncode<W, F> + Selectable<F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  /// The wire format for Self
+  type WireFormat: WireFormat<Self::Flavor>;
+
+  /// The flavor for Self
+  type Flavor: Flavor + ?Sized;
+}
+
+unsafe impl<W, F, T> EquivalentPartialEncode<T, W, F> for T
+where
+  T: PartialEncode<W, F> + Selectable<F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<W, F, T> EquivalentPartialEncode<&T, W, F> for T
+where
+  T: PartialEncode<W, F> + Selectable<F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<W, F, T> EquivalentPartialEncode<T, W, F> for &T
+where
+  T: PartialEncode<W, F> + Selectable<F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
 /// A trait for serializing data into a binary format using a specified [`Flavor`] and [`WireFormat`].
 ///
 /// This trait provides methods for encoding a value into a byte buffer or into heap-allocated

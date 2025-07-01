@@ -68,6 +68,9 @@ macro_rules! try_str_bridge {
         }
       );
 
+      bidi_equivalent!(impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
+      bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
+
       $crate::groto_identity_transform!(
         $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
       );

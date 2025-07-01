@@ -684,6 +684,7 @@ impl<T, S, M> Object<T, S, M> {
     let selector_iter_def = self.derive_selector_iter_defination();
     let selector_iter_impl = self.derive_selector_iter();
 
+    let encode_impl = self.derive_encode()?;
     let decode_impl = self.derive_decode()?;
     let flatten_state_impl =
       derive_flatten_state(self.path_to_grost(), self.generics(), self.name());
@@ -717,6 +718,8 @@ impl<T, S, M> Object<T, S, M> {
         #selector_impl
 
         #selector_iter_impl
+
+        #encode_impl
 
         #decode_impl
       };

@@ -137,3 +137,9 @@ where
     }
   }
 }
+
+bidi_equivalent!(:<RB: ReadBuf>: impl<Bytes, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(impl <Bytes, LengthDelimited> for <[u8], LengthDelimited>);
+
+bidi_equivalent!(:<RB: ReadBuf>: impl<BytesMut, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(impl <BytesMut, LengthDelimited> for <[u8], LengthDelimited>);

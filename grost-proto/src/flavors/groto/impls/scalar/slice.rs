@@ -39,3 +39,5 @@ impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for 
     <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
   }
 }
+
+bidi_equivalent!(:<RB: ReadBuf>: impl<[u8], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);

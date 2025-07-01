@@ -44,6 +44,108 @@ macro_rules! identity_partial_transform {
   };
 }
 
+macro_rules! bidi_equivalent {
+  ($($(:< $($tg:ident:$t:path),+$(,)? >:)? $([$(const $g:ident: usize), +$(,)?])? impl<$other:ty, $wf:ty> for <$this:ty, $this_wf:ty>),+$(,)?) => {
+    $(
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<$other, $wf, $crate::__private::flavors::Groto> for $this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<$other, $wf, $crate::__private::flavors::Groto> for $this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<$this, $this_wf, $crate::__private::flavors::Groto> for $other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<$this, $this_wf, $crate::__private::flavors::Groto> for $other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<&$other, $wf, $crate::__private::flavors::Groto> for &$this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<&$other, $wf, $crate::__private::flavors::Groto> for &$this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for &$other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for &$other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<&$other, $wf, $crate::__private::flavors::Groto> for $this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<&$other, $wf, $crate::__private::flavors::Groto> for $this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for $other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for $other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<$other, $wf, $crate::__private::flavors::Groto> for &$this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<$other, $wf, $crate::__private::flavors::Groto> for &$this
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $this_wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentEncode<$this, $this_wf, $crate::__private::flavors::Groto> for &$other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+
+      unsafe impl<$($($tg:$t),*,)? $($(const $g: usize),*)?> $crate::__private::encode::EquivalentPartialEncode<$this, $this_wf, $crate::__private::flavors::Groto> for &$other
+      {
+        type Flavor = $crate::__private::flavors::Groto;
+        type WireFormat = $wf;
+      }
+    )*
+  };
+}
+
 mod list;
 mod packed_decoder;
 mod scalar;
