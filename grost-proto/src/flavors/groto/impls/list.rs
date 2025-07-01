@@ -590,7 +590,7 @@ macro_rules! list {
       }
     )*
   };
-  (@encode_as_slice $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@encode_as_slice(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto> for $ty
       where
@@ -630,6 +630,31 @@ macro_rules! list {
       }
     )*
   };
+  (@encode_as_slice(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<
+        $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>,
+        $crate::__private::flavors::Groto
+      > for $ty
+      where
+        T: $crate::__private::Encode<W, $crate::__private::flavors::Groto>,
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
+      {
+        encode!(@encode_methods($crate::__private::flavors::groto::Borrowed<'a, $crate::__private::flavors::groto::Packed<W>>));
+      }
+
+      impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<
+        $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>,
+        $crate::__private::flavors::Groto
+      > for $ty
+      where
+        T: $crate::__private::PartialEncode<W, $crate::__private::flavors::Groto>,
+        W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
+      {
+        encode!(@partial_encode_methods($crate::__private::flavors::groto::Borrowed<'a, $crate::__private::flavors::groto::Packed<W>>)); 
+      }
+    )*
+  };
   (@encode_as_bytes $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<$($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
@@ -664,22 +689,6 @@ macro_rules! list {
       }
     )*
   };
-}
-
-impl<'a, T, W> Encode<Borrowed<'a, Packed<W>>, Groto> for [&'a T]
-where
-  T: Encode<W, Groto> + ?Sized,
-  W: WireFormat<Groto>,
-{
-  encode!(@encode_methods(Borrowed<'a, Packed<W>>));
-}
-
-impl<'a, T, W> PartialEncode<Borrowed<'a, Packed<W>>, Groto> for [&'a T]
-where
-  T: PartialEncode<W, Groto> + ?Sized,
-  W: WireFormat<Groto>,
-{
-  encode!(@partial_encode_methods(Borrowed<'a, Packed<W>>));
 }
 
 impl<T, W> Encode<Packed<W>, Groto> for [T]
@@ -873,13 +882,27 @@ list!(@selectable [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>()) });
 list!(
-  @encode_as_slice [T; N] [const N: usize]
+  @encode_as_slice(packed) [T; N] [const N: usize]
+);
+list!(
+  @encode_as_slice(borrow) [&'b T; N] [const N: usize]
+);
+list!(
+  @encode_as_slice(borrow) [&'b T]
 );
 list!(
   @encode_as_bytes [u8; N] [const N: usize]
 );
+
+// TODO(al8n): change this to single direction equivalent
 bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<[u8; N], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!([const N: usize] impl <[u8; N], LengthDelimited> for <[u8], LengthDelimited>);
+
+bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <[T; N], Packed<W>> for <[T], Packed<W>>);
+bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <[T; N], Packed<W>> for <[T], Packed<W>>);
+
+bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T; N], Borrowed<'a, Packed<W>>> for <[T], Packed<W>>);
+bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T; N], Borrowed<'a, Packed<W>>> for <[T], Packed<W>>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 const _: () = {
@@ -904,13 +927,30 @@ const _: () = {
     Vec::from
   });
   list!(
-    @encode_as_slice Vec<T>
+    @encode_as_slice(packed) Vec<T>
+  );
+  list!(
+    @encode_as_slice(borrow) Vec<&'b T>
   );
   list!(
     @encode_as_bytes Vec<u8>
   );
+  // Vec<u8> is the same as encode BytesSlice<RB>
   bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+  // Vec<u8> is the same as encode [u8]
   bidi_equivalent!(impl <Vec<u8>, LengthDelimited> for <[u8], LengthDelimited>);
+
+  // Vec<T> is the same as encode [T]
+  bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
+  bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
+
+  // Vec<T> is the same as encode [&'a T]
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+
+  // Vec<T> is the same as encode Vec<&'a T>
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
 };
 
 #[cfg(feature = "smallvec_1")]
@@ -940,13 +980,25 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice SmallVec<[T; N]> [const N: usize]
+    @encode_as_slice(packed) SmallVec<[T; N]> [const N: usize]
+  );
+  list!(
+    @encode_as_slice(borrow) SmallVec<[&'b T; N]> [const N: usize]
   );
   list!(
     @encode_as_bytes SmallVec<[u8; N]> [const N: usize]
   );
   bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<SmallVec<[u8; N]>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!([const N: usize] impl <SmallVec<[u8; N]>, LengthDelimited> for <[u8], LengthDelimited>);
+
+  bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <SmallVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+  bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <SmallVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
+
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <SmallVec<[&'a T; N]>, Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <SmallVec<[&'a T; N]>, Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
 };
 
 #[cfg(feature = "arrayvec_0_7")]
@@ -984,13 +1036,25 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice ArrayVec<T, N> [const N: usize]
+    @encode_as_slice(packed) ArrayVec<T, N> [const N: usize]
+  );
+  list!(
+    @encode_as_slice(borrow) ArrayVec<&'b T, N> [const N: usize]
   );
   list!(
     @encode_as_bytes ArrayVec<u8, N> [const N: usize]
   );
   bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<ArrayVec<u8, N>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!([const N: usize] impl <ArrayVec<u8, N>, LengthDelimited> for <[u8], LengthDelimited>);
+
+  bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <ArrayVec<T, N>, Packed<W>> for <[T], Packed<W>>);
+  bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <ArrayVec<T, N>, Packed<W>> for <[T], Packed<W>>);
+
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <ArrayVec<T, N>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <ArrayVec<T, N>, Packed<W>>);
+
+  bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <ArrayVec<&'a T, N>, Borrowed<'a, Packed<W>>> for <ArrayVec<T, N>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <ArrayVec<&'a T, N>, Borrowed<'a, Packed<W>>> for <ArrayVec<T, N>, Packed<W>>);
 };
 
 #[cfg(feature = "tinyvec_1")]
@@ -1017,6 +1081,25 @@ const _: () = {
       A::CAPACITY
     ))
   }
+
+  trait DefaultEncode<W: WireFormat<Groto>>: Encode<W, Groto> + Default {}
+
+  impl<T, W> DefaultEncode<W> for T
+  where
+    T: Encode<W, Groto> + Default,
+    W: WireFormat<Groto>,
+  {}
+
+  trait DefaultPartialEncode<W: WireFormat<Groto>>:
+    PartialEncode<W, Groto> + Default
+  {
+  }
+
+  impl<T, W> DefaultPartialEncode<W> for T
+  where
+    T: PartialEncode<W, Groto> + Default,
+    W: WireFormat<Groto>,
+  {}
 
   list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@partial_ref_state(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
@@ -1048,13 +1131,22 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
+    @encode_as_slice(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
+  );
+  list!(
+    @encode_as_slice(borrow):<A: tinyvec_1::Array<Item = &'b T>>: ArrayVec<A>
   );
   list!(
     @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>
   );
   bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<ArrayVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <ArrayVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
+  
+  bidi_equivalent!(@encode :<T: DefaultEncode<W>, W: WireFormat<Groto>>:[const N: usize] impl <ArrayVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+  bidi_equivalent!(@partial_encode :<T: DefaultPartialEncode<W>, W: WireFormat<Groto>>:[const N: usize] impl <ArrayVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+
+  bidi_equivalent!(@encode 'a:<T: DefaultEncode<W>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <ArrayVec<[T; N]>, Packed<W>>);
+  bidi_equivalent!(@partial_encode 'a:<T: DefaultPartialEncode<W>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <ArrayVec<[T; N]>, Packed<W>>);
 
   impl<T, const N: usize> State<Partial<Groto>> for ArrayVec<[T; N]>
   where
@@ -1090,13 +1182,22 @@ const _: () = {
       }
     );
     list!(
-      @encode_as_slice:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
+      @encode_as_slice(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
+    );
+    list!(
+      @encode_as_slice(borrow):<A: tinyvec_1::Array<Item = &'b T>>: TinyVec<A>
     );
     list!(
       @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>
     );
     bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
     bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <TinyVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
+    
+    bidi_equivalent!(@encode :<T: DefaultEncode<W>, W: WireFormat<Groto>>:[const N: usize] impl <TinyVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+    bidi_equivalent!(@partial_encode :<T: DefaultPartialEncode<W>, W: WireFormat<Groto>>:[const N: usize] impl <TinyVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+
+    bidi_equivalent!(@encode 'a:<T: DefaultEncode<W>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <TinyVec<[T; N]>, Packed<W>>);
+    bidi_equivalent!(@partial_encode 'a:<T: DefaultPartialEncode<W>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <TinyVec<[T; N]>, Packed<W>>);
 
     impl<T, const N: usize> State<Partial<Groto>> for TinyVec<[T; N]>
     where
