@@ -48,6 +48,25 @@ macro_rules! array_str {
     }
   ) => {
     impl<const $g: ::core::primitive::usize> $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
+      fn encode_raw(
+        &self,
+        context: &$crate::__private::flavors::groto::Context,
+        buf: &mut [::core::primitive::u8],
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error> {
+        <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_raw(
+          self.as_str(),
+          context,
+          buf,
+        )
+      }
+
+      fn encoded_raw_len(&self, context: &$crate::__private::flavors::groto::Context) -> ::core::primitive::usize {
+        <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encoded_raw_len(
+          self.as_str(),
+          context,
+        )
+      }
+
       fn encode(
         &self,
         context: &$crate::__private::flavors::groto::Context,

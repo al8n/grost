@@ -5,7 +5,11 @@ use crate::{
   buffer::{Buffer, ReadBuf},
   convert::{Partial, PartialRef, PartialTransform, State, Transform},
   decode::Decode,
-  flavors::{DefaultWireFormat, Flavor, Groto, WireFormat, groto::Optional},
+  encode::{Encode, PartialEncode},
+  flavors::{
+    DefaultWireFormat, Flavor, Groto, WireFormat,
+    groto::{Context, Error, Optional},
+  },
   selection::Selectable,
 };
 
@@ -252,6 +256,137 @@ where
   type Output = Option<T::Output>;
 }
 
+impl<W, T> Encode<Optional<W>, Groto> for Option<T>
+where
+  T: Encode<W, Groto>,
+  W: WireFormat<Groto>,
+{
+  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    if let Some(value) = self {
+      value.encode_raw(context, buf)
+    } else {
+      Ok(0)
+    }
+  }
+
+  fn encoded_raw_len(&self, context: &Context) -> usize {
+    if let Some(value) = self {
+      value.encoded_raw_len(context)
+    } else {
+      0
+    }
+  }
+
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    if let Some(value) = self {
+      value.encode(context, buf)
+    } else {
+      Ok(0)
+    }
+  }
+
+  fn encoded_len(&self, context: &Context) -> usize {
+    if let Some(value) = self {
+      value.encoded_len(context)
+    } else {
+      0
+    }
+  }
+
+  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    if let Some(value) = self {
+      value.encode_length_delimited(context, buf)
+    } else {
+      Ok(0)
+    }
+  }
+
+  fn encoded_length_delimited_len(&self, context: &Context) -> usize {
+    if let Some(value) = self {
+      value.encoded_length_delimited_len(context)
+    } else {
+      0
+    }
+  }
+}
+
+impl<W, T> PartialEncode<W, Groto> for Option<T>
+where
+  T: PartialEncode<W, Groto>,
+  W: WireFormat<Groto>,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    if let Some(value) = self {
+      value.partial_encode_raw(context, buf, selector)
+    } else {
+      Ok(0)
+    }
+  }
+
+  fn partial_encoded_raw_len(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    if let Some(value) = self {
+      value.partial_encoded_raw_len(context, selector)
+    } else {
+      0
+    }
+  }
+
+  fn partial_encode(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    if let Some(value) = self {
+      value.partial_encode(context, buf, selector)
+    } else {
+      Ok(0)
+    }
+  }
+
+  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if let Some(value) = self {
+      value.partial_encoded_len(context, selector)
+    } else {
+      0
+    }
+  }
+
+  fn partial_encoded_length_delimited_len(
+    &self,
+    context: &Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    if let Some(value) = self {
+      value.partial_encoded_length_delimited_len(context, selector)
+    } else {
+      0
+    }
+  }
+
+  fn partial_encode_length_delimited(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    if let Some(value) = self {
+      value.partial_encode_length_delimited(context, buf, selector)
+    } else {
+      Ok(0)
+    }
+  }
+}
+
 impl<T> State<Partial<Groto>> for Option<T>
 where
   T: State<Partial<Groto>>,
@@ -272,4 +407,18 @@ where
   T: DefaultWireFormat<Groto> + ?Sized,
 {
   type Format = T::Format;
+}
+
+impl<T> Selectable<Groto> for Option<T>
+where
+  T: Selectable<Groto>,
+{
+  type Selector = T::Selector;
+
+  fn is_empty(&self) -> bool {
+    match self {
+      Some(value) => value.is_empty(),
+      None => true,
+    }
+  }
 }

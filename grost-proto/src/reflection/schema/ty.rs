@@ -313,4 +313,19 @@ impl SchemaType {
       _ => false,
     }
   }
+
+  /// Returns `true` if this type is list
+  pub const fn is_list(self) -> bool {
+    matches!(self, Self::List(_))
+  }
+
+  /// Returns `true` if this type is set
+  pub const fn is_set(self) -> bool {
+    matches!(self, Self::Set(_))
+  }
+
+  /// Returns `true` if this type is map
+  pub const fn is_map(self) -> bool {
+    matches!(self, Self::Map { .. })
+  }
 }

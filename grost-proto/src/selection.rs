@@ -139,18 +139,3 @@ where
     (*self).is_empty()
   }
 }
-
-impl<T, F> Selectable<F> for Option<T>
-where
-  T: Selectable<F>,
-  F: ?Sized,
-{
-  type Selector = T::Selector;
-
-  fn is_empty(&self) -> bool {
-    match self {
-      Some(value) => value.is_empty(),
-      None => true,
-    }
-  }
-}

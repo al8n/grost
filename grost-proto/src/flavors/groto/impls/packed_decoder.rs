@@ -178,6 +178,21 @@ where
   B: ?Sized,
   RB: ReadBuf,
 {
+  fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    let buf_len = buf.len();
+    let src_len = self.encoded_raw_len(ctx);
+    if buf_len < src_len {
+      return Err(Error::insufficient_buffer(src_len, buf_len));
+    }
+
+    buf[..src_len].copy_from_slice(&self.src.as_bytes()[self.data_offset..]);
+    Ok(src_len)
+  }
+
+  fn encoded_raw_len(&self, _: &Context) -> usize {
+    self.src.len() - self.data_offset
+  }
+
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     let src = &self.src;
 

@@ -232,27 +232,6 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   /// `encode` will write for the same context and data.
   fn encoded_len(&self, context: &F::Context) -> usize;
 
-  /// Returns the number of bytes needed for length-delimited encoding.
-  ///
-  /// Length-delimited encoding prepends a varint-encoded length prefix to the
-  /// standard encoded message. This format is commonly used in framed transport
-  /// protocols like Protobuf wire format.
-  ///
-  /// ## Format
-  ///
-  /// ```text
-  /// [varint_length][encoded_message]
-  /// ```
-  ///
-  /// Where:
-  /// - `varint_length` is the length of `encoded_message` encoded as a varint
-  /// - `encoded_message` is the output of the `encode` method
-  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
-    let encoded_len = self.encoded_len(context);
-    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
-    len_size + encoded_len
-  }
-
   /// Encodes the message with a length prefix for framed protocols.
   ///
   /// This method creates a length-delimited message by:
@@ -314,6 +293,27 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
         e.update_insufficient_buffer(required, buf_len);
         e
       })
+  }
+
+  /// Returns the number of bytes needed for length-delimited encoding.
+  ///
+  /// Length-delimited encoding prepends a varint-encoded length prefix to the
+  /// standard encoded message. This format is commonly used in framed transport
+  /// protocols like Protobuf wire format.
+  ///
+  /// ## Format
+  ///
+  /// ```text
+  /// [varint_length][encoded_message]
+  /// ```
+  ///
+  /// Where:
+  /// - `varint_length` is the length of `encoded_message` encoded as a varint
+  /// - `encoded_message` is the output of the `encode` method
+  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
+    let encoded_len = self.encoded_len(context);
+    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
+    len_size + encoded_len
   }
 
   /// Encodes the raw message into a [`Vec`](std::vec::Vec).
@@ -512,31 +512,6 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   /// `partial_encode` will write for the same context, data, and selector.
   fn partial_encoded_len(&self, context: &F::Context, selector: &Self::Selector) -> usize;
 
-  /// Returns the number of bytes needed for length-delimited encoding of selected fields.
-  ///
-  /// Length-delimited partial encoding prepends a varint-encoded length prefix to the
-  /// partial encoded message. This format is commonly used in framed transport protocols
-  /// where you need to transmit only selected fields with clear message boundaries.
-  ///
-  /// ## Format
-  ///
-  /// ```text
-  /// [varint_length][partial_encoded_message]
-  /// ```
-  ///
-  /// Where:
-  /// - `varint_length` is the length of `partial_encoded_message` encoded as a varint
-  /// - `partial_encoded_message` is the output of the `partial_encode` method for the selected fields
-  fn partial_encoded_length_delimited_len(
-    &self,
-    context: &F::Context,
-    selector: &Self::Selector,
-  ) -> usize {
-    let encoded_len = self.partial_encoded_len(context, selector);
-    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
-    len_size + encoded_len
-  }
-
   /// Encodes selected fields with a length prefix for framed protocols.
   ///
   /// This method creates a length-delimited partial message by:
@@ -604,6 +579,31 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
         e.update_insufficient_buffer(required, buf_len);
         e
       })
+  }
+
+  /// Returns the number of bytes needed for length-delimited encoding of selected fields.
+  ///
+  /// Length-delimited partial encoding prepends a varint-encoded length prefix to the
+  /// partial encoded message. This format is commonly used in framed transport protocols
+  /// where you need to transmit only selected fields with clear message boundaries.
+  ///
+  /// ## Format
+  ///
+  /// ```text
+  /// [varint_length][partial_encoded_message]
+  /// ```
+  ///
+  /// Where:
+  /// - `varint_length` is the length of `partial_encoded_message` encoded as a varint
+  /// - `partial_encoded_message` is the output of the `partial_encode` method for the selected fields
+  fn partial_encoded_length_delimited_len(
+    &self,
+    context: &F::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    let encoded_len = self.partial_encoded_len(context, selector);
+    let len_size = varing::encoded_u32_varint_len(encoded_len as u32);
+    len_size + encoded_len
   }
 
   /// Encodes selected fields in raw binary into [`Vec`](std::vec::Vec).
@@ -700,6 +700,18 @@ where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
+  fn encode_raw(
+    &self,
+    context: &<F as Flavor>::Context,
+    buf: &mut [u8],
+  ) -> Result<usize, <F as Flavor>::Error> {
+    (*self).encode_raw(context, buf)
+  }
+
+  fn encoded_raw_len(&self, context: &<F as Flavor>::Context) -> usize {
+    (*self).encoded_raw_len(context)
+  }
+
   fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
     (*self).encode(context, buf)
   }
@@ -721,55 +733,29 @@ where
   }
 }
 
-impl<F, W, T> Encode<W, F> for Option<T>
-where
-  T: Encode<W, F>,
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
-    if let Some(value) = self {
-      value.encode(context, buf)
-    } else {
-      Ok(0)
-    }
-  }
-
-  fn encoded_len(&self, context: &F::Context) -> usize {
-    if let Some(value) = self {
-      value.encoded_len(context)
-    } else {
-      0
-    }
-  }
-
-  fn encode_length_delimited(
-    &self,
-    context: &F::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, F::Error> {
-    if let Some(value) = self {
-      value.encode_length_delimited(context, buf)
-    } else {
-      Ok(0)
-    }
-  }
-
-  fn encoded_length_delimited_len(&self, context: &F::Context) -> usize {
-    if let Some(value) = self {
-      value.encoded_length_delimited_len(context)
-    } else {
-      0
-    }
-  }
-}
-
 impl<F, W, T> PartialEncode<W, F> for &T
 where
   T: PartialEncode<W, F> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
+  fn partial_encode_raw(
+    &self,
+    context: &<F as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <F as Flavor>::Error> {
+    (*self).partial_encode_raw(context, buf, selector)
+  }
+
+  fn partial_encoded_raw_len(
+    &self,
+    context: &<F as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    (*self).partial_encoded_raw_len(context, selector)
+  }
+
   fn partial_encode(
     &self,
     context: &F::Context,
@@ -801,59 +787,6 @@ where
   }
 }
 
-impl<F, W, T> PartialEncode<W, F> for Option<T>
-where
-  T: PartialEncode<W, F>,
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  fn partial_encode(
-    &self,
-    context: &F::Context,
-    buf: &mut [u8],
-    selector: &Self::Selector,
-  ) -> Result<usize, F::Error> {
-    if let Some(value) = self {
-      value.partial_encode(context, buf, selector)
-    } else {
-      Ok(0)
-    }
-  }
-
-  fn partial_encoded_len(&self, context: &F::Context, selector: &Self::Selector) -> usize {
-    if let Some(value) = self {
-      value.partial_encoded_len(context, selector)
-    } else {
-      0
-    }
-  }
-
-  fn partial_encode_length_delimited(
-    &self,
-    context: &F::Context,
-    buf: &mut [u8],
-    selector: &Self::Selector,
-  ) -> Result<usize, F::Error> {
-    if let Some(value) = self {
-      value.partial_encode_length_delimited(context, buf, selector)
-    } else {
-      Ok(0)
-    }
-  }
-
-  fn partial_encoded_length_delimited_len(
-    &self,
-    context: &F::Context,
-    selector: &Self::Selector,
-  ) -> usize {
-    if let Some(value) = self {
-      value.partial_encoded_length_delimited_len(context, selector)
-    } else {
-      0
-    }
-  }
-}
-
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_encode_impl {
   ($($ty:ty),+$(,)?) => {
@@ -864,6 +797,14 @@ macro_rules! deref_encode_impl {
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
+        fn encode_raw(&self, context: &<F as Flavor>::Context, buf: &mut [u8]) -> Result<usize, <F as Flavor>::Error> {
+          (**self).encode_raw(context, buf)
+        }
+
+        fn encoded_raw_len(&self, context: &<F as Flavor>::Context) -> usize {
+          (**self).encoded_raw_len(context)
+        }
+
         fn encode(&self, context: &F::Context, buf: &mut [u8]) -> Result<usize, F::Error> {
           (**self).encode(context, buf)
         }
@@ -910,6 +851,23 @@ macro_rules! deref_partial_encode_impl {
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
+        fn partial_encode_raw(
+          &self,
+          context: &<F as Flavor>::Context,
+          buf: &mut [u8],
+          selector: &Self::Selector,
+        ) -> Result<usize, <F as Flavor>::Error> {
+          (**self).partial_encode_raw(context, buf, selector)
+        }
+
+        fn partial_encoded_raw_len(
+          &self,
+          context: &<F as Flavor>::Context,
+          selector: &Self::Selector,
+        ) -> usize {
+          (**self).partial_encoded_raw_len(context, selector)
+        }
+
         fn partial_encode(
           &self,
           context: &F::Context,

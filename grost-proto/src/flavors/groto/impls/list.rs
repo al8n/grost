@@ -9,65 +9,43 @@ use crate::{
       Borrowed, Context, Error, Flatten, LengthDelimited, Packed, PackedDecoder, Varint, WireType,
     },
   },
+  selection::Selectable,
 };
 
-mod array;
-
-macro_rules! encode {
-  (@encode_methods($ty:ty)) => {
-    fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-      let mut offset = 0;
-      let buf_len = buf.len();
-      let body_size = match W::WIRE_TYPE {
-        WireType::Varint | WireType::LengthDelimited => {
-          self.iter().map(|v| v.encoded_len(context)).sum()
-        }
-        WireType::Fixed8 => self.len(),
-        WireType::Fixed16 => self.len() * 2,
-        WireType::Fixed32 => self.len() * 4,
-        WireType::Fixed64 => self.len() * 8,
-        WireType::Fixed128 => self.len() * 16,
-        WireType::Fixed256 => self.len() * 32,
-      };
-      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
-      let encoded_len = body_size_len + body_size;
-
-      if buf_len < encoded_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      offset += varing::encode_u32_varint_to(body_size as u32, buf)
-        .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
-
-      for value in self.iter() {
-        if offset >= buf_len {
-          return Err(Error::insufficient_buffer(encoded_len, buf_len));
-        }
-
-        offset += value
-          .encode(context, &mut buf[offset..])
-          .map_err(|e| e.update(encoded_len, buf_len))?;
-      }
-      Ok(offset)
+macro_rules! partial_encode {
+  (@bridge($ty:ty as $wf:ty)) => {
+    fn partial_encode_raw(
+      &self,
+      context: &$crate::__private::flavors::groto::Context,
+      buf: &mut [u8],
+      selector: &Self::Selector,
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
+      <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode_raw(self.as_ref(), context, buf, selector)
     }
 
-    fn encoded_len(&self, context: &Context) -> usize {
-      let len = match W::WIRE_TYPE {
-        WireType::Varint | WireType::LengthDelimited => {
-          self.iter().map(|v| v.encoded_len(context)).sum()
-        }
-        WireType::Fixed8 => self.len(),
-        WireType::Fixed16 => self.len() * 2,
-        WireType::Fixed32 => self.len() * 4,
-        WireType::Fixed64 => self.len() * 8,
-        WireType::Fixed128 => self.len() * 16,
-        WireType::Fixed256 => self.len() * 32,
-      };
-      varing::encoded_u32_varint_len(len as u32) + len
+    fn partial_encoded_raw_len(&self, context: &$crate::__private::flavors::groto::Context, selector: &Self::Selector) -> usize {
+      <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encoded_raw_len(self.as_ref(), context, selector)
+    }
+
+    fn partial_encode(
+      &self,
+      context: &$crate::__private::flavors::groto::Context,
+      buf: &mut [u8],
+      selector: &Self::Selector,
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
+      <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode(self.as_ref(), context, buf, selector)
+    }
+
+    fn partial_encoded_len(
+      &self,
+      context: &$crate::__private::flavors::groto::Context,
+      selector: &Self::Selector,
+    ) -> usize {
+      <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encoded_len(self.as_ref(), context, selector)
     }
   };
-  (@partial_encode_methods($ty:ty)) => {
-    fn partial_encode(
+  (@impl($wf:ty)) => {
+    fn partial_encode_raw(
       &self,
       context: &<Groto as crate::flavors::Flavor>::Context,
       buf: &mut [u8],
@@ -75,19 +53,52 @@ macro_rules! encode {
     ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
       let mut offset = 0;
       let buf_len = buf.len();
-      let body_size = self
-        .iter()
-        .map(|v| v.partial_encoded_len(context, selector))
-        .sum::<usize>();
-      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
-      let encoded_len = body_size_len + body_size;
+      let encoded_len =
+        <Self as PartialEncode<$wf, Groto>>::partial_encoded_raw_len(self, context, selector);
 
       if buf_len < encoded_len {
         return Err(Error::insufficient_buffer(encoded_len, buf_len));
       }
 
-      offset += varing::encode_u32_varint_to(body_size as u32, buf)
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(encoded_len, buf_len));
+        }
+
+        offset += value
+          .partial_encode(context, &mut buf[offset..], selector)
+          .map_err(|e| e.update(encoded_len, buf_len))?;
+      }
+      Ok(offset)
+    }
+
+    fn partial_encoded_raw_len(
+      &self,
+      context: &<Groto as crate::flavors::Flavor>::Context,
+      selector: &Self::Selector,
+    ) -> usize {
+      self
+        .iter()
+        .map(|v| v.partial_encoded_len(context, selector))
+        .sum::<usize>()
+    }
+
+    fn partial_encode(
+      &self,
+      context: &<Groto as crate::flavors::Flavor>::Context,
+      buf: &mut [u8],
+      selector: &Self::Selector,
+    ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
+      let buf_len = buf.len();
+      let body_size =
+        <Self as PartialEncode<$wf, Groto>>::partial_encoded_raw_len(self, context, selector);
+      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
+      let encoded_len = body_size_len + body_size;
+      let mut offset = varing::encode_u32_varint_to(body_size as u32, buf)
         .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
+      if buf_len < encoded_len {
+        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      }
 
       for value in self.iter() {
         if offset >= buf_len {
@@ -106,10 +117,118 @@ macro_rules! encode {
       context: &<Groto as crate::flavors::Flavor>::Context,
       selector: &Self::Selector,
     ) -> usize {
-      let len = self
-        .iter()
-        .map(|v| v.partial_encoded_len(context, selector))
-        .sum::<usize>();
+      let len =
+        <Self as PartialEncode<$wf, Groto>>::partial_encoded_raw_len(self, context, selector);
+      varing::encoded_u32_varint_len(len as u32) + len
+    }
+  };
+}
+
+macro_rules! encode {
+  (@bridge($ty:ty as $wf:ty)) => {
+    fn encode_raw(
+      &self,
+      context: &$crate::__private::flavors::groto::Context,
+      buf: &mut [u8],
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
+      <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode_raw(
+        self.as_ref(),
+        context,
+        buf,
+      )
+    }
+
+    fn encoded_raw_len(&self, context: &$crate::__private::flavors::groto::Context) -> usize {
+      <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encoded_raw_len(
+        self.as_ref(),
+        context,
+      )
+    }
+
+    fn encode(
+      &self,
+      context: &$crate::__private::flavors::groto::Context,
+      buf: &mut [u8],
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
+      <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode(
+        self.as_ref(),
+        context,
+        buf,
+      )
+    }
+
+    fn encoded_len(&self, context: &$crate::__private::flavors::groto::Context) -> usize {
+      <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encoded_len(
+        self.as_ref(),
+        context,
+      )
+    }
+  };
+  (@impl($wf:ty)) => {
+    fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+      let mut offset = 0;
+      let buf_len = buf.len();
+
+      let encoded_len = <Self as Encode<$wf, Groto>>::encoded_raw_len(self, context);
+      if buf_len < encoded_len {
+        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      }
+
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(encoded_len, buf_len));
+        }
+
+        offset += value
+          .encode(context, &mut buf[offset..])
+          .map_err(|e| e.update(encoded_len, buf_len))?;
+      }
+      Ok(offset)
+    }
+
+    fn encoded_raw_len(&self, context: &Context) -> usize {
+      use $crate::__private::flavors::groto::WireType;
+
+      match W::WIRE_TYPE {
+        WireType::Varint | WireType::LengthDelimited => {
+          self.iter().map(|v| v.encoded_len(context)).sum()
+        }
+        WireType::Fixed8 => self.len(),
+        WireType::Fixed16 => self.len() * 2,
+        WireType::Fixed32 => self.len() * 4,
+        WireType::Fixed64 => self.len() * 8,
+        WireType::Fixed128 => self.len() * 16,
+        WireType::Fixed256 => self.len() * 32,
+      }
+    }
+
+    fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+      let buf_len = buf.len();
+      let body_size = <Self as Encode<$wf, Groto>>::encoded_raw_len(self, context);
+      let body_size_len = varing::encoded_u32_varint_len(body_size as u32);
+      let encoded_len = body_size_len + body_size;
+
+      if buf_len < encoded_len {
+        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      }
+
+      let mut offset = varing::encode_u32_varint_to(body_size as u32, buf)
+        .map_err(|e| Error::from_varint_encode_error(e).update(encoded_len, buf_len))?;
+
+      for value in self.iter() {
+        if offset >= buf_len {
+          return Err(Error::insufficient_buffer(encoded_len, buf_len));
+        }
+
+        offset += value
+          .encode(context, &mut buf[offset..])
+          .map_err(|e| e.update(encoded_len, buf_len))?;
+      }
+      Ok(offset)
+    }
+
+    fn encoded_len(&self, ctx: &Context) -> usize {
+      let len = <Self as Encode<$wf, Groto>>::encoded_raw_len(self, ctx);
       varing::encoded_u32_varint_len(len as u32) + len
     }
   };
@@ -593,20 +712,27 @@ macro_rules! list {
       }
     )*
   };
-  (@encode_as_slice(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@encode(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<$($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
+      {
+        encode!(@bridge([u8] as $crate::__private::flavors::groto::LengthDelimited));
+      }
+
+      impl<$($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
+      {
+        partial_encode!(@bridge([u8] as $crate::__private::flavors::groto::LengthDelimited));
+      }
+    )*
+  };
+  (@encode(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto> for $ty
       where
         T: $crate::__private::Encode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        fn encode(&self, context: &$crate::__private::flavors::groto::Context, buf: &mut [u8]) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
-          <[T] as $crate::__private::Encode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto>>::encode(self.as_ref(), context, buf)
-        }
-
-        fn encoded_len(&self, context: &$crate::__private::flavors::groto::Context) -> usize {
-          <[T] as $crate::__private::Encode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto>>::encoded_len(self.as_ref(), context)
-        }
+        encode!(@bridge([T] as $crate::__private::flavors::groto::Packed<W>));
       }
 
       impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto> for $ty
@@ -614,26 +740,11 @@ macro_rules! list {
         T: $crate::__private::PartialEncode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        fn partial_encode(
-          &self,
-          context: &$crate::__private::flavors::groto::Context,
-          buf: &mut [u8],
-          selector: &Self::Selector,
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
-          <[T] as $crate::__private::PartialEncode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto>>::partial_encode(self.as_ref(), context, buf, selector)
-        }
-
-        fn partial_encoded_len(
-          &self,
-          context: &$crate::__private::flavors::groto::Context,
-          selector: &Self::Selector,
-        ) -> usize {
-          <[T] as $crate::__private::PartialEncode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto>>::partial_encoded_len(self.as_ref(), context, selector)
-        }
+        partial_encode!(@bridge([T] as $crate::__private::flavors::groto::Packed<W>));
       }
     )*
   };
-  (@encode_as_slice(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@encode(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<
         $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>,
@@ -643,7 +754,7 @@ macro_rules! list {
         T: $crate::__private::Encode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        encode!(@encode_methods($crate::__private::flavors::groto::Borrowed<'a, $crate::__private::flavors::groto::Packed<W>>));
+        encode!(@bridge([&'b T] as $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>));
       }
 
       impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<
@@ -654,276 +765,11 @@ macro_rules! list {
         T: $crate::__private::PartialEncode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        encode!(@partial_encode_methods($crate::__private::flavors::groto::Borrowed<'a, $crate::__private::flavors::groto::Packed<W>>));
-      }
-    )*
-  };
-  (@encode_as_bytes $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
-    $(
-      impl<$($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
-      {
-        fn encode(&self, context: &$crate::__private::flavors::groto::Context, buf: &mut [u8]) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
-          <[u8] as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode(self.as_ref(), context, buf)
-        }
-
-        fn encoded_len(&self, context: &$crate::__private::flavors::groto::Context) -> usize {
-          <[u8] as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encoded_len(self.as_ref(), context)
-        }
-      }
-
-      impl<$($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty
-      {
-        fn partial_encode(
-          &self,
-          context: &$crate::__private::flavors::groto::Context,
-          buf: &mut [u8],
-          selector: &Self::Selector,
-        ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error> {
-          <[u8] as $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::partial_encode(self.as_ref(), context, buf, selector)
-        }
-
-        fn partial_encoded_len(
-          &self,
-          context: &$crate::__private::flavors::groto::Context,
-          selector: &Self::Selector,
-        ) -> usize {
-          <[u8] as $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::partial_encoded_len(self.as_ref(), context, selector)
-        }
+        partial_encode!(@bridge([&'b T] as $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>));
       }
     )*
   };
 }
-
-impl<T, W> Encode<Packed<W>, Groto> for [T]
-where
-  T: Encode<W, Groto>,
-  W: WireFormat<Groto>,
-{
-  encode!(@encode_methods(Packed<W>));
-}
-
-impl<T, W> PartialEncode<Packed<W>, Groto> for [T]
-where
-  T: PartialEncode<W, Groto>,
-  W: WireFormat<Groto>,
-{
-  encode!(@partial_encode_methods(Packed<W>));
-}
-
-impl Encode<LengthDelimited, Groto> for [u8] {
-  #[inline]
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let this_len = self.len();
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(
-        <Self as crate::encode::Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-        buf_len,
-      ));
-    }
-
-    let len_size = varing::encode_u32_varint_to(this_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-        buf_len,
-      )
-    })?;
-
-    let total = len_size + this_len;
-    if total > buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
-    }
-
-    buf[len_size..total].copy_from_slice(self);
-    Ok(total)
-  }
-
-  #[inline]
-  fn encoded_len(&self, _: &Context) -> usize {
-    let len = self.len();
-    let len_size = varing::encoded_u32_varint_len(len as u32);
-    len_size + len
-  }
-}
-
-impl PartialEncode<LengthDelimited, Groto> for [u8] {
-  #[inline]
-  fn partial_encode(
-    &self,
-    context: &Context,
-    buf: &mut [u8],
-    _: &Self::Selector,
-  ) -> Result<usize, Error> {
-    <Self as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
-  }
-
-  #[inline]
-  fn partial_encoded_len(&self, context: &Context, _: &Self::Selector) -> usize {
-    <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context)
-  }
-}
-
-impl<N> Encode<Flatten<LengthDelimited, LengthDelimited>, Groto> for [N]
-where
-  N: AsRef<[u8]>,
-{
-  fn encode(
-    &self,
-    context: &<Groto as crate::flavors::Flavor>::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
-    let buf_len = buf.len();
-    let data_len = self.iter().map(|n| n.as_ref().len()).sum::<usize>();
-    let this_len = varing::encoded_u32_varint_len(data_len as u32) + data_len;
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(this_len, buf_len));
-    }
-
-    let mut offset = varing::encode_u32_varint_to(data_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        <Self as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(
-          self, context,
-        ),
-        buf_len,
-      )
-    })?;
-
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(this_len, buf_len));
-      }
-      let bytes = value.as_ref();
-      buf[offset..offset + bytes.len()].copy_from_slice(bytes);
-      offset += bytes.len();
-    }
-
-    #[cfg(debug_assertions)]
-    crate::__private::debug_assert_write_eq::<[u8]>(offset, this_len);
-    Ok(offset)
-  }
-
-  fn encoded_len(&self, _: &<Groto as crate::flavors::Flavor>::Context) -> usize {
-    let data_len = self.iter().map(|n| n.as_ref().len()).sum::<usize>();
-    varing::encoded_u32_varint_len(data_len as u32) + data_len
-  }
-}
-
-impl<T, N, W> Encode<Flatten<Packed<W>, W>, Groto> for [N]
-where
-  W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Encode<Packed<W>, Groto> + AsRef<[T]>,
-  T: Encode<W, Groto> + Sized,
-{
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let data_len = self
-      .iter()
-      .map(|n| {
-        n.as_ref()
-          .iter()
-          .map(|t| t.encoded_len(context))
-          .sum::<usize>()
-      })
-      .sum::<usize>();
-    let this_len = varing::encoded_u32_varint_len(data_len as u32) + data_len;
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(this_len, buf_len));
-    }
-
-    let mut offset = varing::encode_u32_varint_to(data_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        <Self as Encode<Flatten<Packed<W>, W>, Groto>>::encoded_len(self, context),
-        buf_len,
-      )
-    })?;
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(this_len, buf_len));
-      }
-
-      for item in value.as_ref().iter() {
-        offset += item.encode(context, &mut buf[offset..])?;
-      }
-    }
-
-    #[cfg(debug_assertions)]
-    crate::__private::debug_assert_write_eq::<[T]>(offset, this_len);
-    Ok(offset)
-  }
-
-  fn encoded_len(&self, context: &Context) -> usize {
-    let encoded_len = self
-      .iter()
-      .map(|n| {
-        n.as_ref()
-          .iter()
-          .map(|t| t.encoded_len(context))
-          .sum::<usize>()
-      })
-      .sum::<usize>();
-    varing::encoded_u32_varint_len(encoded_len as u32) + encoded_len
-  }
-}
-
-// impl<T, N, W, I> Selectable<Groto, Flattened<W, I>> for [N]
-// where
-//   W: WireFormat<Groto>,
-//   I: WireFormat<Groto>,
-//   N: State<crate::convert::Flattened<Innermost>, Output = T>,
-//   T: Selectable<Groto, I> + ?Sized,
-// {
-//   type Selector = T::Selector;
-// }
-
-// // TODO: fix encode impl
-// impl<T, N, W, I> PartialEncode<Groto, Flattened<W, I>> for [N]
-// where
-//   W: WireFormat<Groto>,
-//   I: WireFormat<Groto>,
-//   N: State<crate::convert::Flattened<Innermost>, Output = T>
-//     + PartialEncode<Groto, W, Selector = T::Selector>,
-//   T: PartialEncode<Groto, I> + ?Sized,
-// {
-//   fn partial_encode(
-//     &self,
-//     context: &Context,
-//     buf: &mut [u8],
-//     selector: &Self::Selector,
-//   ) -> Result<usize, Error> {
-//     let buf_len = buf.len();
-//     let this_len = self.len();
-//     if buf_len < this_len {
-//       return Err(Error::insufficient_buffer(
-//         <Self as PartialEncode<Groto, Flattened<W, I>>>::partial_encoded_len(
-//           self, context, selector,
-//         ),
-//         buf_len,
-//       ));
-//     }
-
-//     let mut offset = 0;
-//     for value in self.iter() {
-//       if offset >= buf_len {
-//         return Err(Error::insufficient_buffer(
-//           <Self as PartialEncode<Groto, Flattened<W, I>>>::partial_encoded_len(
-//             self, context, selector,
-//           ),
-//           buf_len,
-//         ));
-//       }
-
-//       offset += value.partial_encode(context, &mut buf[offset..], selector)?;
-//     }
-//     Ok(offset)
-//   }
-
-//   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-//     self
-//       .iter()
-//       .map(|n| <N as PartialEncode<W, Groto>>::partial_encoded_len(n, context, selector))
-//       .sum()
-//   }
-// }
 
 list!(@flatten_state [T; N] [const N: usize], [T]);
 list!(@partial_state [T; N] [const N: usize] => [T::Output; N], [T] => [T::Output]);
@@ -947,16 +793,13 @@ list!(@selectable [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>()) });
 list!(
-  @encode_as_slice(packed) [T; N] [const N: usize]
+  @encode(packed) [T; N] [const N: usize]
 );
 list!(
-  @encode_as_slice(borrow) [&'b T; N] [const N: usize]
+  @encode(borrow) [&'b T; N] [const N: usize]
 );
 list!(
-  @encode_as_slice(borrow) [&'b T]
-);
-list!(
-  @encode_as_bytes [u8; N] [const N: usize]
+  @encode(bytes) [u8; N] [const N: usize]
 );
 
 // TODO(al8n): change this to single direction equivalent
@@ -992,13 +835,13 @@ const _: () = {
     Vec::from
   });
   list!(
-    @encode_as_slice(packed) Vec<T>
+    @encode(packed) Vec<T>
   );
   list!(
-    @encode_as_slice(borrow) Vec<&'b T>
+    @encode(borrow) Vec<&'b T>
   );
   list!(
-    @encode_as_bytes Vec<u8>
+    @encode(bytes) Vec<u8>
   );
   // Vec<u8> is the same as encode BytesSlice<RB>
   bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
@@ -1045,13 +888,13 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice(packed) SmallVec<[T; N]> [const N: usize]
+    @encode(packed) SmallVec<[T; N]> [const N: usize]
   );
   list!(
-    @encode_as_slice(borrow) SmallVec<[&'b T; N]> [const N: usize]
+    @encode(borrow) SmallVec<[&'b T; N]> [const N: usize]
   );
   list!(
-    @encode_as_bytes SmallVec<[u8; N]> [const N: usize]
+    @encode(bytes) SmallVec<[u8; N]> [const N: usize]
   );
   bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<SmallVec<[u8; N]>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!([const N: usize] impl <SmallVec<[u8; N]>, LengthDelimited> for <[u8], LengthDelimited>);
@@ -1101,13 +944,13 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice(packed) ArrayVec<T, N> [const N: usize]
+    @encode(packed) ArrayVec<T, N> [const N: usize]
   );
   list!(
-    @encode_as_slice(borrow) ArrayVec<&'b T, N> [const N: usize]
+    @encode(borrow) ArrayVec<&'b T, N> [const N: usize]
   );
   list!(
-    @encode_as_bytes ArrayVec<u8, N> [const N: usize]
+    @encode(bytes) ArrayVec<u8, N> [const N: usize]
   );
   bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<ArrayVec<u8, N>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!([const N: usize] impl <ArrayVec<u8, N>, LengthDelimited> for <[u8], LengthDelimited>);
@@ -1195,13 +1038,13 @@ const _: () = {
     }
   );
   list!(
-    @encode_as_slice(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
+    @encode(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>
   );
   list!(
-    @encode_as_slice(borrow):<A: tinyvec_1::Array<Item = &'b T>>: ArrayVec<A>
+    @encode(borrow):<A: tinyvec_1::Array<Item = &'b T>>: ArrayVec<A>
   );
   list!(
-    @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>
+    @encode(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>
   );
   bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<ArrayVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
   bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <ArrayVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
@@ -1246,13 +1089,13 @@ const _: () = {
       }
     );
     list!(
-      @encode_as_slice(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
+      @encode(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>
     );
     list!(
-      @encode_as_slice(borrow):<A: tinyvec_1::Array<Item = &'b T>>: TinyVec<A>
+      @encode(borrow):<A: tinyvec_1::Array<Item = &'b T>>: TinyVec<A>
     );
     list!(
-      @encode_as_bytes:<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>
+      @encode(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>
     );
     bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
     bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <TinyVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
@@ -1280,7 +1123,7 @@ fn t() {
 
   let context = Context::default();
   let encoded_len =
-    <[&[u16]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
+    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(a, &context);
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
   assert_eq!(encoded_len, flatten_encoded_len);
@@ -1289,7 +1132,32 @@ fn t() {
   let mut flatten_buf = [0u8; 100];
 
   let encoded_len =
-    <[&[u16]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
+    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(a, &context, &mut buf)
+      .unwrap();
+  let flatten_encoded_len =
+    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+      .unwrap();
+  assert_eq!(encoded_len, flatten_encoded_len);
+  assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+}
+
+#[test]
+fn t11() {
+  let a: &[&[&u16]] = &[&[&1u16, &2, &3], &[&4, &5, &6]];
+  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
+
+  let context = Context::default();
+  let encoded_len =
+    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(a, &context);
+  let flatten_encoded_len =
+    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
+  assert_eq!(encoded_len, flatten_encoded_len);
+
+  let mut buf = [0u8; 100];
+  let mut flatten_buf = [0u8; 100];
+
+  let encoded_len =
+    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(a, &context, &mut buf)
       .unwrap();
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
@@ -1300,25 +1168,24 @@ fn t() {
 
 #[test]
 fn t1() {
-  let a: &[&[u8]] = &[&[1u8, 2, 3], &[4, 5, 6]];
-  let flatten_a: &[u8] = &[1u8, 2, 3, 4, 5, 6];
+  let a: &[[u16; 3]] = &[[1u16, 2, 3], [4, 5, 6]];
+  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
   let context = Context::default();
   let encoded_len =
-    <[&[u8]] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(a, &context);
+    <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
   let flatten_encoded_len =
-    <[u8] as Encode<LengthDelimited, Groto>>::encoded_len(flatten_a, &context);
+    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
   assert_eq!(encoded_len, flatten_encoded_len);
 
   let mut buf = [0u8; 100];
   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len = <[&[u8]] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encode(
-    a, &context, &mut buf,
-  )
-  .unwrap();
+  let encoded_len =
+    <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
+      .unwrap();
   let flatten_encoded_len =
-    <[u8] as Encode<LengthDelimited, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
       .unwrap();
   assert_eq!(encoded_len, flatten_encoded_len);
   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
@@ -1326,25 +1193,79 @@ fn t1() {
 
 #[test]
 fn t2() {
-  let a: &[&str] = &["hello", " world"];
-  let flatten_a: &str = "hello world";
+  let a: &[[&u16; 3]] = &[[&1u16, &2, &3], [&4, &5, &6]];
+  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
   let context = Context::default();
   let encoded_len =
-    <[&str] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(a, &context);
+    <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
   let flatten_encoded_len =
-    <str as Encode<LengthDelimited, Groto>>::encoded_len(flatten_a, &context);
+    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
   assert_eq!(encoded_len, flatten_encoded_len);
 
   let mut buf = [0u8; 100];
   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len = <[&str] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encode(
-    a, &context, &mut buf,
-  )
-  .unwrap();
+  let encoded_len =
+    <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
+      .unwrap();
   let flatten_encoded_len =
-    <str as Encode<LengthDelimited, Groto>>::encode(flatten_a, &context, &mut flatten_buf).unwrap();
+    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+      .unwrap();
   assert_eq!(encoded_len, flatten_encoded_len);
   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
 }
+
+// #[test]
+// fn t1() {
+//   let a: &[&[u8]] = &[&[1u8, 2, 3], &[4, 5, 6]];
+//   let flatten_a: &[u8] = &[1u8, 2, 3, 4, 5, 6];
+
+//   let context = Context::default();
+//   let encoded_len =
+//     <[&[u8]] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(a, &context);
+//   let flatten_encoded_len =
+//     <[u8] as Encode<LengthDelimited, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
+
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
+
+//   let encoded_len = <[&[u8]] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encode(
+//     a, &context, &mut buf,
+//   )
+//   .unwrap();
+//   let flatten_encoded_len =
+//     <[u8] as Encode<LengthDelimited, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+//       .unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
+
+// #[test]
+// fn t2() {
+//   let a: &[&str] = &["hello", " world"];
+//   let flatten_a: &str = "hello world";
+
+//   let context = Context::default();
+//   let encoded_len =
+//     <[&str] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(a, &context);
+//   let flatten_encoded_len =
+//     <str as Encode<LengthDelimited, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
+
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
+
+//   let encoded_len = <[&str] as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encode(
+//     a, &context, &mut buf,
+//   )
+//   .unwrap();
+//   let flatten_encoded_len =
+//     <str as Encode<LengthDelimited, Groto>>::encode(flatten_a, &context, &mut flatten_buf).unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
+
+mod array;
+mod slice;

@@ -99,6 +99,14 @@ macro_rules! varint {
     }
   };
   (@encode_impl $flavor:ty:$wf:ty) => {
+    fn encode_raw(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
+    }
+
+    fn encoded_raw_len(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context,) -> ::core::primitive::usize {
+      $crate::__private::varing::Varint::encoded_len(self)
+    }
+
     fn encode(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
     }
@@ -136,6 +144,22 @@ macro_rules! varint {
 #[macro_export]
 macro_rules! partial_encode_scalar {
   (@impl $flavor:ty as $format:ty) => {
+    fn partial_encode_raw(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      if *s {
+        <Self as $crate::__private::Encode<$format, $flavor>>::encode_raw(self, context, buf)
+      } else {
+        ::core::result::Result::Ok(0)
+      }
+    }
+
+    fn partial_encoded_raw_len(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, s: &Self::Selector) -> ::core::primitive::usize {
+      if *s {
+        <Self as $crate::__private::Encode<$format, $flavor>>::encoded_raw_len(self, context)
+      } else {
+        0
+      }
+    }
+
     fn partial_encode(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode(self, context, buf)
@@ -515,6 +539,18 @@ macro_rules! encode_bridge {
     )*
   };
   (@encode_impl $flavor:ty: $bridge:ty as $format:ty => $to:expr) => {
+    fn encode_raw(
+      &self,
+      context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
+      buf: &mut [::core::primitive::u8],
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      <$bridge as $crate::__private::Encode<$format, $flavor>>::encode_raw(&$to(self), context, buf)
+    }
+
+    fn encoded_raw_len(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context,) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::Encode<$format, $flavor>>::encoded_raw_len(&$to(self), context)
+    }
+
     fn encode(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
@@ -555,6 +591,23 @@ macro_rules! encode_bridge {
     )*
   };
   (@partial_encode_impl $flavor:ty: $bridge:ty as $format:ty => $to:expr) => {
+    fn partial_encode_raw(
+      &self,
+      context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
+      buf: &mut [::core::primitive::u8],
+      selector: &Self::Selector,
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode_raw(&$to(self), context, buf, selector)
+    }
+
+    fn partial_encoded_raw_len(
+      &self,
+      context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
+      selector: &Self::Selector,
+    ) -> ::core::primitive::usize {
+      <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encoded_raw_len(&$to(self), context, selector)
+    }
+
     fn partial_encode(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,

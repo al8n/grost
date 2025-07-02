@@ -141,6 +141,23 @@ impl Reflection {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
+      impl #object_reflection_ig #object_reflectable for #path_to_grost::__private::reflection::SchemaTypeReflection<#object_reflection_ty> #object_reflection_wc
+      {
+        type Reflection = #path_to_grost::__private::reflection::Object;
+
+        const REFLECTION: &'static Self::Reflection = &{
+          #path_to_grost::__private::reflection::ObjectBuilder {
+            name: #schema_name,
+            description: #schema_description,
+            fields: &[
+              #(&#field_reflections),*
+            ],
+          }.build()
+        };
+      }
+
+      #[automatically_derived]
+      #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #ig #name #tg #wc {
         /// Returns the reflection of the struct.
         #[inline]

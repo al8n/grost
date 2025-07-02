@@ -18,6 +18,25 @@ macro_rules! ip_addr {
     default_wire_format!(Groto: $addr as $variant);
 
     impl Encode<$variant, Groto> for $addr {
+      fn encode_raw(
+        &self,
+        context: &Context,
+        buf: &mut [u8],
+      ) -> Result<usize, Error> {
+        <$convert as Encode<$variant, Groto>>::encode_raw(
+          &self.to_bits(),
+          context,
+          buf,
+        )
+      }
+
+      fn encoded_raw_len(&self, _: &Context) -> usize {
+        <$convert as Encode<$variant, Groto>>::encoded_raw_len(
+          &self.to_bits(),
+          &Context::default(),
+        )
+      }
+
       fn encode(
         &self,
         context: &Context,
@@ -36,24 +55,28 @@ macro_rules! ip_addr {
           &Context::default(),
         )
       }
+    }
 
-      fn encoded_length_delimited_len(
-        &self,
-        context: &Context,
-      ) -> usize {
-        <Self as Encode<$variant, Groto>>::encoded_len(self, context)
-      }
-
-      fn encode_length_delimited(
+    impl Encode<Varint, Groto> for $addr {
+      fn encode_raw(
         &self,
         context: &Context,
         buf: &mut [u8],
       ) -> Result<usize, Error> {
-        <Self as Encode<$variant, Groto>>::encode(self, context, buf)
+        <$convert as Encode<Varint, Groto>>::encode_raw(
+          &self.to_bits(),
+          context,
+          buf,
+        )
       }
-    }
 
-    impl Encode<Varint, Groto> for $addr {
+      fn encoded_raw_len(&self, ctx: &Context) -> usize {
+        <$convert as Encode<Varint, Groto>>::encoded_raw_len(
+          &self.to_bits(),
+          ctx,
+        )
+      }
+
       fn encode(
         &self,
         context: &Context,
@@ -71,21 +94,6 @@ macro_rules! ip_addr {
           &self.to_bits(),
           ctx,
         )
-      }
-
-      fn encoded_length_delimited_len(
-        &self,
-        context: &Context,
-      ) -> usize {
-        <Self as Encode<Varint, Groto>>::encoded_len(self, context)
-      }
-
-      fn encode_length_delimited(
-        &self,
-        context: &Context,
-        buf: &mut [u8],
-      ) -> Result<usize, Error> {
-        <Self as Encode<Varint, Groto>>::encode(self, context, buf)
       }
     }
 
@@ -161,6 +169,32 @@ const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
 default_wire_format!(Groto: IpAddr as LengthDelimited);
 
 impl Encode<LengthDelimited, Groto> for IpAddr {
+  fn encode_raw(
+    &self,
+    context: &<Groto as crate::flavors::Flavor>::Context,
+    buf: &mut [u8],
+  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
+    match self {
+      Self::V4(ipv4_addr) => {
+        <Ipv4Addr as Encode<Fixed32, Groto>>::encode_raw(ipv4_addr, context, buf)
+      }
+      Self::V6(ipv6_addr) => {
+        <Ipv6Addr as Encode<Fixed128, Groto>>::encode_raw(ipv6_addr, context, buf)
+      }
+    }
+  }
+
+  fn encoded_raw_len(&self, context: &<Groto as crate::flavors::Flavor>::Context) -> usize {
+    match self {
+      Self::V4(ipv4_addr) => {
+        <Ipv4Addr as Encode<Fixed32, Groto>>::encoded_raw_len(ipv4_addr, context)
+      }
+      Self::V6(ipv6_addr) => {
+        <Ipv6Addr as Encode<Fixed128, Groto>>::encoded_raw_len(ipv6_addr, context)
+      }
+    }
+  }
+
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     macro_rules! encode_ip_variant {
       ($variant:ident::$wt:ident($buf:ident, $ip:ident)) => {{
@@ -172,12 +206,11 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
             ));
           }
 
-          buf[0] = [< $variant:upper _TAG >];
-          <[< $variant:camel Addr>] as Encode<$wt, Groto>>::encode(
+          <[< $variant:camel Addr>] as Encode<$wt, Groto>>::encode_length_delimited(
             $ip,
             context,
-            &mut buf[1..],
-          ).map(|_| 1 + [< $variant:upper _LEN >])
+            buf,
+          )
         }
       }};
     }
@@ -189,42 +222,13 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
-    1 + match self {
+    let len = match self {
       Self::V4(_) => IPV4_LEN,
       Self::V6(_) => IPV6_LEN,
-    }
-  }
+    };
 
-  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
-    match self {
-      Self::V4(_) => IPV4_ENCODED_LENGTH_DELIMITED_LEN,
-      Self::V6(_) => IPV6_ENCODED_LENGTH_DELIMITED_LEN,
-    }
-  }
-
-  fn encode_length_delimited(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    macro_rules! encode_ip_variant {
-      ($variant:ident($buf:ident, $ip:ident)) => {{
-        paste::paste! {
-          if buf.len() < [< $variant:upper _ENCODED_LENGTH_DELIMITED_LEN >] {
-            return Err(Error::insufficient_buffer(
-              [< $variant:upper _ENCODED_LENGTH_DELIMITED_LEN >],
-              buf.len(),
-            ));
-          }
-          const LEN_END: usize = [< $variant:upper _ENCODED_LENGTH_DELIMITED_LEN_BYTES >].len();
-          buf[..LEN_END]
-            .copy_from_slice([< $variant:upper _ENCODED_LENGTH_DELIMITED_LEN_BYTES >]);
-          buf[LEN_END..LEN_END + [< $variant _LEN >]].copy_from_slice(&$ip.to_bits().to_le_bytes());
-          Ok([< $variant:upper _ENCODED_LENGTH_DELIMITED_LEN >])
-        }
-      }};
-    }
-
-    match self {
-      Self::V4(ip) => encode_ip_variant!(IPV4(buf, ip)),
-      Self::V6(ip) => encode_ip_variant!(IPV6(buf, ip)),
-    }
+    // encoded_u32_varint_len for `4` and `6` will always be 1 byte,
+    1 + len
   }
 }
 

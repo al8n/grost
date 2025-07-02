@@ -23,7 +23,7 @@ partial_state!(@scalar Groto: u8, NonZeroU8);
 flatten_state!(u8, NonZeroU8);
 
 impl Encode<Fixed8, Groto> for u8 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.is_empty() {
       return Err(Error::insufficient_buffer(1, buf.len()));
     }
@@ -32,34 +32,34 @@ impl Encode<Fixed8, Groto> for u8 {
     Ok(1)
   }
 
-  fn encoded_len(&self, _: &Context) -> usize {
+  fn encoded_raw_len(&self, _: &Context) -> usize {
     1
   }
 
-  fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Fixed8, Groto>>::encoded_len(self, context)
+  fn encoded_len(&self, context: &Context) -> usize {
+    <Self as Encode<Fixed8, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Fixed8, Groto>>::encode(self, context, buf)
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <Self as Encode<Fixed8, Groto>>::encode_raw(self, context, buf)
   }
 }
 
 impl Encode<Varint, Groto> for u8 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u8_varint_to(*self, buf).map_err(Into::into)
   }
 
-  fn encoded_len(&self, _: &Context) -> usize {
+  fn encoded_raw_len(&self, _: &Context) -> usize {
     varing::encoded_u8_varint_len(*self)
   }
 
-  fn encoded_length_delimited_len(&self, context: &Context) -> usize {
-    <Self as Encode<Varint, Groto>>::encoded_len(self, context)
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <Self as Encode<Varint, Groto>>::encode_raw(self, context, buf)
   }
 
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <Self as Encode<Varint, Groto>>::encode(self, context, buf)
+  fn encoded_len(&self, context: &Context) -> usize {
+    <Self as Encode<Varint, Groto>>::encoded_raw_len(self, context)
   }
 }
 

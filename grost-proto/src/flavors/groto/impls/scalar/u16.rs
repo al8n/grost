@@ -35,7 +35,7 @@ identity_partial_transform!(Groto {
 });
 
 impl Encode<Fixed16, Groto> for u16 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     if buf.len() < 2 {
       return Err(Error::insufficient_buffer(2, buf.len()));
     }
@@ -44,18 +44,34 @@ impl Encode<Fixed16, Groto> for u16 {
     Ok(2)
   }
 
-  fn encoded_len(&self, _: &Context) -> usize {
+  fn encoded_raw_len(&self, _: &Context) -> usize {
     2
+  }
+
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <Self as Encode<Fixed16, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn encoded_len(&self, context: &Context) -> usize {
+    <Self as Encode<Fixed16, Groto>>::encoded_raw_len(self, context)
   }
 }
 
 impl Encode<Varint, Groto> for u16 {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     varing::encode_u16_varint_to(*self, buf).map_err(Into::into)
   }
 
-  fn encoded_len(&self, _: &Context) -> usize {
+  fn encoded_raw_len(&self, _: &Context) -> usize {
     varing::encoded_u16_varint_len(*self)
+  }
+
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <Self as Encode<Varint, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn encoded_len(&self, context: &Context) -> usize {
+    <Self as Encode<Varint, Groto>>::encoded_raw_len(self, context)
   }
 }
 

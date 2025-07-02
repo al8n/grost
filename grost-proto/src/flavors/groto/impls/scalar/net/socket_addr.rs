@@ -33,7 +33,11 @@ macro_rules! socket_addr_impl {
     $(
       paste::paste! {
         impl Encode<LengthDelimited, Groto> for [< SocketAddrV $variant >] {
-          fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+          fn encode_raw(
+            &self,
+            _: &Context,
+            buf: &mut [u8],
+          ) -> Result<usize, Error> {
             if buf.len() < [< SOCKET_ADDR_V $variant _LEN >] {
               return Err(Error::insufficient_buffer([< SOCKET_ADDR_V $variant _LEN >], buf.len()));
             }
@@ -44,19 +48,11 @@ macro_rules! socket_addr_impl {
             Ok([< SOCKET_ADDR_V $variant _LEN >])
           }
 
-          fn encoded_len(&self, _: &Context) -> usize {
+          fn encoded_raw_len(&self, _: &Context) -> usize {
             [< SOCKET_ADDR_V $variant _LEN >]
           }
 
-          fn encoded_length_delimited_len(&self, _: &Context) -> usize {
-            [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]
-          }
-
-          fn encode_length_delimited(
-            &self,
-            ctx: &Context,
-            buf: &mut [u8],
-          ) -> Result<usize, Error> {
+          fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
             if buf.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::insufficient_buffer(
                 [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >],
@@ -75,6 +71,10 @@ macro_rules! socket_addr_impl {
 
             Ok(offset)
           }
+
+          fn encoded_len(&self, _: &Context) -> usize {
+            [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]
+          }
         }
 
         impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for [< SocketAddrV $variant >] {
@@ -84,40 +84,19 @@ macro_rules! socket_addr_impl {
             RB: crate::buffer::ReadBuf,
             B: crate::buffer::Buffer<Unknown<RB>> + 'de,
           {
-            let src = src.as_bytes();
-            if src.len() < [< SOCKET_ADDR_V $variant _LEN >] {
-              return Err(Error::buffer_underflow());
-            }
-
-            let ip = <$bridge>::from_le_bytes(src[0.. [< IPV $variant _LEN >]].try_into().unwrap());
-            let port = u16::from_le_bytes(src[[< IPV $variant _LEN >]..[< SOCKET_ADDR_V $variant _LEN >]].try_into().unwrap());
-            let socket_addr = [< new_socket_v $variant >](ip.into(), port);
-            Ok(([< SOCKET_ADDR_V $variant _LEN >], socket_addr))
-          }
-
-          fn decode_length_delimited(
-            context: &'de Context,
-            src: RB,
-          ) -> Result<(usize, Self), Error>
-          where
-            Self: Sized + 'de,
-            RB: crate::buffer::ReadBuf,
-            B: crate::buffer::Buffer<Unknown<RB>> + 'de,
-          {
             if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::buffer_underflow());
             }
 
-            let (read, remaining) = varing::decode_u32_varint(src.as_bytes()).map_err(|_| Error::buffer_underflow())?;
+            let buf = src.as_bytes();
+            let (offset, remaining) = varing::decode_u32_varint(buf).map_err(|_| Error::buffer_underflow())?;
             if remaining != [< SOCKET_ADDR_V $variant _LEN >] as u32 {
               return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
             }
 
-            let (len, socket_addr) = <Self as Decode<'_, Self, LengthDelimited, RB, B, Groto>>::decode(context, src.slice(read..))?;
-
-            #[cfg(debug_assertions)]
-            crate::debug_assert_read_eq::<Self>(len + read, [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >]);
-
+            let ip = <$bridge>::from_le_bytes(buf[offset..offset + [< IPV $variant _LEN >]].try_into().unwrap());
+            let port = u16::from_le_bytes(buf[offset + [< IPV $variant _LEN >]..offset + [< SOCKET_ADDR_V $variant _LEN >]].try_into().unwrap());
+            let socket_addr = [< new_socket_v $variant >](ip.into(), port);
             Ok(([< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >], socket_addr))
           }
         }
@@ -161,6 +140,28 @@ identity_partial_transform!(
 );
 
 impl Encode<LengthDelimited, Groto> for SocketAddr {
+  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    match self {
+      Self::V4(addr) => {
+        <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encode_raw(addr, context, buf)
+      }
+      Self::V6(addr) => {
+        <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encode_raw(addr, context, buf)
+      }
+    }
+  }
+
+  fn encoded_raw_len(&self, context: &Context) -> usize {
+    match self {
+      Self::V4(addr) => {
+        <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encoded_raw_len(addr, context)
+      }
+      Self::V6(addr) => {
+        <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encoded_raw_len(addr, context)
+      }
+    }
+  }
+
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     macro_rules! encode_addr {
       ($addr:ident, $variant:literal) => {{
@@ -171,8 +172,8 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
               buf.len(),
             ));
           }
-          buf[0] = $variant;
-          <[< SocketAddrV $variant >] as Encode<LengthDelimited, Groto>>::encode($addr, context, &mut buf[1..])
+          buf[0] = [< SOCKET_ADDR_V $variant _LEN>] as u8;
+          <[< SocketAddrV $variant >] as Encode<LengthDelimited, Groto>>::encode_raw($addr, context, &mut buf[1..])
             .map(|val| 1 + val)
         }
       }};
@@ -183,38 +184,16 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
     }
   }
 
-  fn encoded_len(&self, context: &Context) -> usize {
-    1 + match self {
-      Self::V4(addr) => {
-        <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encoded_len(addr, context)
-      }
-      Self::V6(addr) => {
-        <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encoded_len(addr, context)
-      }
-    }
-  }
-
-  fn encoded_length_delimited_len(&self, _: &Context) -> usize {
+  fn encoded_len(&self, _: &Context) -> usize {
     match self {
       Self::V4(_) => SOCKET_ADDR_V4_ENCODED_LENGTH_DELIMITED_LEN,
       Self::V6(_) => SOCKET_ADDR_V6_ENCODED_LENGTH_DELIMITED_LEN,
     }
   }
-
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    match self {
-      Self::V4(addr) => <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encode_length_delimited(
-        addr, context, buf,
-      ),
-      Self::V6(addr) => <SocketAddrV6 as Encode<LengthDelimited, Groto>>::encode_length_delimited(
-        addr, context, buf,
-      ),
-    }
-  }
 }
 
 impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for SocketAddr {
-  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(_: &'de Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: crate::buffer::ReadBuf + 'de,
@@ -225,49 +204,29 @@ impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for SocketAddr
       return Err(Error::buffer_underflow());
     }
 
-    let as_bytes = src.as_bytes();
-    let tag = as_bytes[0];
+    let buf = src.as_bytes();
+    let remaining = buf[0];
 
     macro_rules! decode_addr {
-      ($variant:literal, $src:ident) => {{
+      ($bridge:ident($variant:literal, $src:ident)) => {{
         paste::paste! {
-          let (read, addr) = <[<SocketAddrV $variant >] as Decode<'de, [<SocketAddrV $variant >], LengthDelimited, RB, B, Groto>>::decode(context, $src.slice(1..))?;
-          #[cfg(debug_assertions)]
-          crate::debug_assert_read_eq::<Self>(read + 1, 1 + [< SOCKET_ADDR_V $variant _LEN >]);
+          if len < 1 + [< SOCKET_ADDR_V $variant _LEN >] {
+            return Err(Error::buffer_underflow());
+          }
 
-          Ok((read + 1, addr.into()))
+          let ip_bytes: [u8; [< IPV $variant _LEN>]] = buf[1..1 + [< IPV $variant _LEN >]].try_into().unwrap();
+          let ip = [<Ipv $variant Addr>]::from_bits(<$bridge>::from_le_bytes(ip_bytes));
+          let port = u16::from_le_bytes(buf[1 + [< IPV $variant _LEN >]..1 + [< SOCKET_ADDR_V $variant _LEN >]].try_into().unwrap());
+
+          Ok(([< SOCKET_ADDR_V $variant _LEN >] + 1, (ip, port).into()))
         }
       }};
     }
 
-    match tag {
-      4 => decode_addr!(4, src),
-      6 => decode_addr!(6, src),
+    match remaining as usize {
+      SOCKET_ADDR_V4_LEN => decode_addr!(u32(4, src)),
+      SOCKET_ADDR_V6_LEN => decode_addr!(u128(6, src)),
       _ => Err(Error::custom("invalid socket address variant")),
-    }
-  }
-
-  fn decode_length_delimited(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
-  where
-    Self: Sized + 'de,
-    RB: crate::buffer::ReadBuf + 'de,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
-  {
-    macro_rules! decode_addr {
-      ($read:ident, $variant:literal) => {{
-        paste::paste! {
-          <[< SocketAddrV $variant >] as Decode<'de, [< SocketAddrV $variant >], LengthDelimited, RB, B, Groto>>::decode(context, src.slice($read..))
-          .map(|(len, addr)| (len + $read, addr.into()))
-        }
-      }};
-    }
-
-    let (read, len) =
-      varing::decode_u32_varint(src.as_bytes()).map_err(|_| Error::buffer_underflow())?;
-    match len as usize {
-      SOCKET_ADDR_V4_LEN => decode_addr!(read, 4),
-      SOCKET_ADDR_V6_LEN => decode_addr!(read, 6),
-      _ => Err(Error::custom("invalid socket address length")),
     }
   }
 }
