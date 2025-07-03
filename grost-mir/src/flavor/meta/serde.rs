@@ -345,7 +345,7 @@ pub(super) mod serde_path {
   }
 }
 
-pub(super) mod serde_optional_path {
+pub(super) mod serde_nullable_path {
   use super::*;
 
   pub fn serialize<S>(val: &Option<syn::Path>, serializer: S) -> Result<S::Ok, S::Error>

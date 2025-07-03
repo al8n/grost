@@ -700,7 +700,7 @@ where
     let fields_accessors = partial_ref_object.fields().iter().map(|f| {
       let field_name = f.name();
       let ty = &f.output_type;
-      super::optional_accessors(field_name, ty, f.copy())
+      super::nullable_accessors(field_name, ty, f.copy())
     });
 
     let is_empty = partial_ref_object.fields().iter().map(|f| {

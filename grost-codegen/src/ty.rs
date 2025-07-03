@@ -201,10 +201,10 @@ impl Ty {
     }
   }
 
-  /// Creates a new optional [`Ty`].
-  pub fn optional(mut typ: Self) -> Self {
+  /// Creates a new nullable [`Ty`].
+  pub fn nullable(mut typ: Self) -> Self {
     match typ.repr {
-      // nested optional type is not allowed
+      // nested nullable type is not allowed
       TyRepr::Optional(ty) => *ty,
       _ => {
         typ.schema_type = typ.schema_type.trim_end_matches("!").into();

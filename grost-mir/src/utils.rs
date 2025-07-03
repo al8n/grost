@@ -203,7 +203,7 @@ impl MissingOperation {
     &["or_else", "or_default", "ok_or_else"]
   }
 
-  /// Parsing an optional missing operation from a meta list
+  /// Parsing an nullable missing operation from a meta list
   #[inline]
   pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
     fn duplicate_error(old_op: &MissingOperation, new_op: &str) -> darling::Error {
@@ -291,7 +291,7 @@ impl ConvertOperation {
     &["from", "try_from"]
   }
 
-  /// Parses an optional convert operation from a meta list
+  /// Parses an nullable convert operation from a meta list
   #[inline]
   pub fn parse_from_meta_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Option<Self>> {
     fn duplicate_error(old_op: &ConvertOperation, new_op: &str) -> darling::Error {

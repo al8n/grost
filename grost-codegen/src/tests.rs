@@ -54,7 +54,7 @@
 //     ),
 //     Field::new(
 //       SafeIdent::new("email"),
-//       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+//       Ty::nullable(Ty::primitive(parse_quote!(::std::string::String), "String")),
 //       3,
 //     ),
 //   ];
@@ -72,7 +72,7 @@
 //     ),
 //     Field::new(
 //       SafeIdent::new("replyer"),
-//       Ty::optional(Ty::struct_(parse_quote!(User), "User")),
+//       Ty::nullable(Ty::struct_(parse_quote!(User), "User")),
 //       2,
 //     ),
 //     Field::new(
@@ -82,7 +82,7 @@
 //     ),
 //     Field::new(
 //       SafeIdent::new("content"),
-//       Ty::optional(Ty::primitive(parse_quote!(::std::string::String), "String")),
+//       Ty::nullable(Ty::primitive(parse_quote!(::std::string::String), "String")),
 //       4,
 //     ),
 //   ];

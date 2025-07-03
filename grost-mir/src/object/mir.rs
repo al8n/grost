@@ -204,7 +204,7 @@ fn accessors(
   }
 }
 
-fn optional_accessors(
+fn nullable_accessors(
   field_name: &Ident,
   vis: &Visibility,
   ty: &Type,

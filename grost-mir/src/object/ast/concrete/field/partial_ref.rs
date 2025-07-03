@@ -33,7 +33,7 @@ pub(super) struct PartialRefFieldOptions {
 #[derive(Debug, Clone)]
 pub struct PartialRefField {
   pub(super) ty: Type,
-  pub(super) optional_type: Type,
+  pub(super) nullable_type: Type,
   pub(super) state_type: Option<Type>,
   pub(super) decode_trait_type: Type,
   pub(super) attrs: Vec<Attribute>,
@@ -50,10 +50,10 @@ impl PartialRefField {
     &self.ty
   }
 
-  /// Returns the optional type of the partial ref field, which is `Option<_>`.
+  /// Returns the nullable type of the partial ref field, which is `Option<_>`.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the decoded state type of the partial ref field.
@@ -156,7 +156,7 @@ impl PartialRefField {
       }
     };
 
-    let optional_type = if label.is_optional() {
+    let nullable_type = if label.is_nullable() {
       ty.clone()
     } else {
       syn::parse2(quote! {
@@ -171,7 +171,7 @@ impl PartialRefField {
 
     Ok(Self {
       ty,
-      optional_type,
+      nullable_type,
       state_type,
       decode_trait_type,
       attrs: opts.attrs,

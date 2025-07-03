@@ -2,7 +2,7 @@ use syn::{Attribute, GenericParam, Generics, Ident, Type};
 
 use quote::quote;
 
-use crate::object::mir::{derive_flatten_state, optional_accessors};
+use crate::object::mir::{derive_flatten_state, nullable_accessors};
 
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
 
@@ -129,7 +129,7 @@ impl<M, F> super::GenericObject<M, F> {
         }
         GenericField::Tagged(concrete_tagged_field) => {
           let vis = concrete_tagged_field.vis();
-          let field_ty = concrete_tagged_field.partial().optional_type();
+          let field_ty = concrete_tagged_field.partial().nullable_type();
           Some(quote! {
             #(#attrs)*
             #vis #field_name: #field_ty
@@ -183,7 +183,7 @@ impl<M, F> super::GenericObject<M, F> {
         let ty = f.partial().ty();
         let copy = f.copy();
 
-        optional_accessors(field_name, f.vis(), ty, copy)
+        nullable_accessors(field_name, f.vis(), ty, copy)
       });
 
     let (ig, tg, where_clauses) = generics.split_for_impl();

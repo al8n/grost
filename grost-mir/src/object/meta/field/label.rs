@@ -41,9 +41,9 @@ pub enum Label {
   /// A list type label
   #[display("list({_0})")]
   List(Arc<Label>),
-  /// An optional type label
-  #[display("optional({_0})")]
-  Optional(Arc<Label>),
+  /// An nullable type label
+  #[display("nullable({_0})")]
+  Nullable(Arc<Label>),
 }
 
 impl Label {
@@ -61,7 +61,7 @@ impl Label {
       "map",
       "set",
       "list",
-      "optional",
+      "nullable",
     ]
   }
 }
@@ -100,7 +100,7 @@ impl Label {
         () if ident.eq("map") => true,
         () if ident.eq("set") => true,
         () if ident.eq("list") => true,
-        () if ident.eq("optional") => true,
+        () if ident.eq("nullable") => true,
         _ => false,
       });
     }
@@ -144,16 +144,16 @@ impl syn::parse::Parse for Label {
             "`list` requires a type, e.g. `list(...)`",
           ));
         }
-        () if ident.eq("optional") => {
+        () if ident.eq("nullable") => {
           return Err(syn::Error::new(
             ident.span(),
-            "`optional` requires a type, e.g. `optional(...)`",
+            "`nullable` requires a type, e.g. `nullable(...)`",
           ));
         }
         _ => {
           return Err(syn::Error::new(
             ident.span(),
-            "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
+            "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, nullable]",
           ));
         }
       });
@@ -286,28 +286,28 @@ impl syn::parse::Parse for Label {
           Self::Set(Arc::new(ty))
         }
         () if ident.eq("list") => Self::List(Arc::new(Label::parse(&content)?)),
-        () if ident.eq("optional") => {
+        () if ident.eq("nullable") => {
           let ty = Label::parse(&content)?;
-          if ty.is_optional() {
+          if ty.is_nullable() {
             return Err(syn::Error::new(
               content.span(),
-              "`optional(optional(...))` is not allowed",
+              "`nullable(nullable(...))` is not allowed",
             ));
           }
 
-          Self::Optional(Arc::new(ty))
+          Self::Nullable(Arc::new(ty))
         }
         _ => {
           return Err(syn::Error::new(
             content.span(),
-            "Expected one of [map, set, list, optional]",
+            "Expected one of [map, set, list, nullable]",
           ));
         }
       });
     }
     Err(syn::Error::new(
       input.span(),
-      "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
+      "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, nullable]",
     ))
   }
 }
@@ -439,13 +439,13 @@ mod tests {
   }
 
   #[test]
-  fn test_optional() {
-    let optional = quote! {
-      optional(string)
+  fn test_nullable() {
+    let nullable = quote! {
+      nullable(string)
     };
 
-    let ty = syn::parse2::<Label>(optional).unwrap();
-    assert!(matches!(ty, Label::Optional(inner) if inner.is_string()));
+    let ty = syn::parse2::<Label>(nullable).unwrap();
+    assert!(matches!(ty, Label::Nullable(inner) if inner.is_string()));
   }
 
   #[test]
@@ -540,9 +540,9 @@ mod tests {
   }
 
   #[test]
-  fn test_invalid_optional() {
+  fn test_invalid_nullable() {
     let invalid_set = quote! {
-      optional(optional(string))
+      nullable(nullable(string))
     };
 
     let result = syn::parse2::<Label>(invalid_set);
@@ -551,7 +551,7 @@ mod tests {
       result
         .unwrap_err()
         .to_string()
-        .contains("`optional(optional(...))` is not allowed")
+        .contains("`nullable(nullable(...))` is not allowed")
     );
   }
 }

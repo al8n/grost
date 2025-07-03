@@ -118,9 +118,10 @@ const fn new_socket_v6(ip: Ipv6Addr, port: u16) -> SocketAddrV6 {
 socket_addr_impl!(u32(4), u128(6));
 partial_encode_scalar!(Groto: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 default_wire_format!(
-  Groto: SocketAddrV4 as LengthDelimited;
-  SocketAddrV6 as LengthDelimited;
-  SocketAddr as LengthDelimited;
+  Groto:
+    SocketAddrV4 as LengthDelimited;
+    SocketAddrV6 as LengthDelimited;
+    SocketAddr as LengthDelimited;
 );
 selectable!(@scalar Groto: SocketAddrV4, SocketAddrV6, SocketAddr);
 partial_ref_state!(@scalar &'a Groto: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);

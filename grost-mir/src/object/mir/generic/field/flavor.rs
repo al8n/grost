@@ -18,7 +18,7 @@ use crate::object::{
 #[derive(Debug, Clone)]
 pub struct PartialRefFieldFlavor {
   ty: Type,
-  optional_type: Type,
+  nullable_type: Type,
   constraints: Punctuated<WherePredicate, Comma>,
 }
 
@@ -29,10 +29,10 @@ impl PartialRefFieldFlavor {
     &self.ty
   }
 
-  /// Returns the optional type of the partial decoded field for this flavor.
+  /// Returns the nullable type of the partial decoded field for this flavor.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the type constraints for the partial decoded field for this flavor.
@@ -330,7 +330,7 @@ impl FieldFlavor {
       }
     };
 
-    let optional_partial_ref_type = syn::parse2(quote! {
+    let nullable_partial_ref_type = syn::parse2(quote! {
       ::core::option::Option<#partial_ref_ty>
     })?;
 
@@ -375,7 +375,7 @@ impl FieldFlavor {
       decode: ast.decode().clone(),
       partial_ref: PartialRefFieldFlavor {
         ty: partial_ref_ty,
-        optional_type: optional_partial_ref_type,
+        nullable_type: nullable_partial_ref_type,
         constraints: partial_ref_constraints,
       },
       selector: SelectorFieldFlavor {

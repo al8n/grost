@@ -10,7 +10,7 @@ use quote::{ToTokens, quote};
 
 use crate::object::{
   ObjectConvertOptions,
-  ast::{derive_flatten_state, optional_accessors},
+  ast::{derive_flatten_state, nullable_accessors},
   meta::concrete::PartialObjectFromMeta,
 };
 
@@ -347,7 +347,7 @@ impl PartialObject {
         }
         Field::Tagged(concrete_tagged_field) => {
           let vis = concrete_tagged_field.vis();
-          let field_ty = concrete_tagged_field.partial().optional_type();
+          let field_ty = concrete_tagged_field.partial().nullable_type();
           Some(quote! {
             #(#attrs)*
             #vis #field_name: #field_ty
@@ -401,7 +401,7 @@ impl PartialObject {
         let ty = f.partial().ty();
         let copy = f.copy();
 
-        optional_accessors(
+        nullable_accessors(
           object.path_to_grost(),
           field_name,
           f.vis(),

@@ -369,7 +369,7 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
 ///
 /// `PartialEncode` extends the concept of encoding by allowing selective serialization of
 /// message fields at runtime. This is particularly useful for filtering, patch updates,
-/// field projections, or implementing protocols with optional fields.
+/// field projections, or implementing protocols with nullable fields.
 ///
 /// ## Encoding Method Comparison
 ///

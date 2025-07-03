@@ -202,7 +202,7 @@ where
   type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &SchemaType::Optional(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
 impl<T> Reflectable<T> for SchemaTypeReflection<Option<T>>
@@ -212,7 +212,7 @@ where
   type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &SchemaType::Optional(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
 impl<T> Reflectable<Option<T>> for SchemaTypeReflection<T>
@@ -222,7 +222,7 @@ where
   type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &SchemaType::Optional(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
 impl<T> Reflectable<&T> for SchemaTypeReflection<&T>
@@ -256,7 +256,7 @@ where
 }
 
 /// The type in the Graph protocol schema
-#[derive(Debug)]
+#[derive(Debug, derive_more::IsVariant)]
 pub enum SchemaType {
   Scalar(Scalar),
   List(&'static SchemaType),
@@ -265,7 +265,7 @@ pub enum SchemaType {
     key: &'static SchemaType,
     value: &'static SchemaType,
   },
-  Optional(&'static SchemaType),
+  Nullable(&'static SchemaType),
   Object(&'static Object),
   Enum(&'static Enum),
   Union(),
@@ -312,20 +312,5 @@ impl SchemaType {
       Self::Scalar(scalar) => scalar.is_byte(),
       _ => false,
     }
-  }
-
-  /// Returns `true` if this type is list
-  pub const fn is_list(self) -> bool {
-    matches!(self, Self::List(_))
-  }
-
-  /// Returns `true` if this type is set
-  pub const fn is_set(self) -> bool {
-    matches!(self, Self::Set(_))
-  }
-
-  /// Returns `true` if this type is map
-  pub const fn is_map(self) -> bool {
-    matches!(self, Self::Map { .. })
   }
 }

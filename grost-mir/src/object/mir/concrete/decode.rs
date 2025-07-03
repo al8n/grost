@@ -104,7 +104,7 @@ fn derive_partial_object_decode<M, F>(
     .map(|f| {
       let name = f.name();
       let variable_name = format_ident!("__grost_partial_object_{}", name);
-      let optional = f.label().is_optional();
+      let nullable = f.label().is_nullable();
       let default = f.default();
       match f.label() {
         Label::Bytes => todo!(),

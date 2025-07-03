@@ -16,17 +16,17 @@ struct VecCombinations {
   #[cfg(any(feature = "std", feature = "alloc"))]
   vec_vec: Vec<Vec<u16>>,
 
-  #[grost(tag = 3, list(optional(scalar)))]
+  #[grost(tag = 3, list(nullable(scalar)))]
   #[cfg(any(feature = "std", feature = "alloc"))]
-  vec_optional: Vec<Option<u16>>,
+  vec_nullable: Vec<Option<u16>>,
 
-  #[grost(tag = 4, list(optional(list(scalar))))]
+  #[grost(tag = 4, list(nullable(list(scalar))))]
   #[cfg(any(feature = "std", feature = "alloc"))]
-  vec_optional_vec: Vec<Option<Vec<u16>>>,
+  vec_nullable_vec: Vec<Option<Vec<u16>>>,
 
-  #[grost(tag = 5, list(optional(list(optional(scalar)))))]
+  #[grost(tag = 5, list(nullable(list(nullable(scalar)))))]
   #[cfg(any(feature = "std", feature = "alloc"))]
-  vec_optional_vec_optional: Vec<Option<Vec<Option<u16>>>>,
+  vec_nullable_vec_nullable: Vec<Option<Vec<Option<u16>>>>,
 }
 
 #[derive(Object)]
@@ -36,13 +36,13 @@ struct SmallVecCombinations {
   smallvec: smallvec_1::SmallVec<[u16; 16]>,
   #[grost(tag = 2, list(list(scalar)))]
   smallvec_smallvec: smallvec_1::SmallVec<[smallvec_1::SmallVec<[u16; 16]>; 16]>,
-  #[grost(tag = 3, list(optional(scalar)))]
-  smallvec_optional: smallvec_1::SmallVec<[Option<u16>; 16]>,
-  #[grost(tag = 4, list(optional(list(scalar))))]
-  smallvec_vec_optional_smallvec:
+  #[grost(tag = 3, list(nullable(scalar)))]
+  smallvec_nullable: smallvec_1::SmallVec<[Option<u16>; 16]>,
+  #[grost(tag = 4, list(nullable(list(scalar))))]
+  smallvec_vec_nullable_smallvec:
     smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[u16; 16]>>; 16]>,
-  #[grost(tag = 5, list(optional(list(optional(scalar)))))]
-  smallvec_optional_smallvec_optional:
+  #[grost(tag = 5, list(nullable(list(nullable(scalar)))))]
+  smallvec_nullable_smallvec_nullable:
     smallvec_1::SmallVec<[Option<smallvec_1::SmallVec<[Option<u16>; 16]>>; 16]>,
 }
 
@@ -53,12 +53,12 @@ struct ArrayVecCombinations {
   arrayvec: arrayvec_0_7::ArrayVec<u16, 16>,
   #[grost(tag = 2, list(list(scalar)))]
   arrayvec_arrayvec: arrayvec_0_7::ArrayVec<arrayvec_0_7::ArrayVec<u16, 16>, 16>,
-  #[grost(tag = 3, list(optional(scalar)))]
-  arrayvec_optional: arrayvec_0_7::ArrayVec<Option<u16>, 16>,
-  #[grost(tag = 4, list(optional(list(scalar))))]
-  arrayvec_optional_vec: arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<u16, 16>>, 16>,
-  #[grost(tag = 5, list(optional(list(optional(scalar)))))]
-  arrayvec_optional_vec_optional:
+  #[grost(tag = 3, list(nullable(scalar)))]
+  arrayvec_nullable: arrayvec_0_7::ArrayVec<Option<u16>, 16>,
+  #[grost(tag = 4, list(nullable(list(scalar))))]
+  arrayvec_nullable_vec: arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<u16, 16>>, 16>,
+  #[grost(tag = 5, list(nullable(list(nullable(scalar)))))]
+  arrayvec_nullable_vec_nullable:
     arrayvec_0_7::ArrayVec<Option<arrayvec_0_7::ArrayVec<Option<u16>, 16>>, 16>,
 }
 
@@ -69,12 +69,12 @@ struct TinyVecCombinations {
   tinyvec: tinyvec_1::TinyVec<[u16; 16]>,
   #[grost(tag = 2, list(list(scalar)))]
   tinyvec_tinyvec: tinyvec_1::TinyVec<[tinyvec_1::TinyVec<[u16; 16]>; 16]>,
-  #[grost(tag = 3, list(optional(scalar)))]
-  tinyvec_optional: tinyvec_1::TinyVec<[Option<u16>; 16]>,
-  #[grost(tag = 4, list(optional(list(scalar))))]
-  tinyvec_optional_vec: tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[u16; 16]>>; 16]>,
-  #[grost(tag = 5, list(optional(list(optional(scalar)))))]
-  tinyvec_optional_vec_optional:
+  #[grost(tag = 3, list(nullable(scalar)))]
+  tinyvec_nullable: tinyvec_1::TinyVec<[Option<u16>; 16]>,
+  #[grost(tag = 4, list(nullable(list(scalar))))]
+  tinyvec_nullable_vec: tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[u16; 16]>>; 16]>,
+  #[grost(tag = 5, list(nullable(list(nullable(scalar)))))]
+  tinyvec_nullable_vec_nullable:
     tinyvec_1::TinyVec<[Option<tinyvec_1::TinyVec<[Option<u16>; 16]>>; 16]>,
 }
 
@@ -85,12 +85,12 @@ struct TinyVecArrayCombinations {
   tinyvec_array: tinyvec_1::ArrayVec<[u16; 16]>,
   #[grost(tag = 2, list(list(scalar)))]
   tinyvec_array_vec: tinyvec_1::ArrayVec<[tinyvec_1::ArrayVec<[u16; 16]>; 16]>,
-  #[grost(tag = 3, list(optional(scalar)))]
-  tinyvec_array_optional: tinyvec_1::ArrayVec<[Option<u16>; 16]>,
-  #[grost(tag = 4, list(optional(list(scalar))))]
-  tinyvec_array_optional_vec: tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[u16; 16]>>; 16]>,
-  #[grost(tag = 5, list(optional(list(optional(scalar)))))]
-  tinyvec_array_optional_vec_optional:
+  #[grost(tag = 3, list(nullable(scalar)))]
+  tinyvec_array_nullable: tinyvec_1::ArrayVec<[Option<u16>; 16]>,
+  #[grost(tag = 4, list(nullable(list(scalar))))]
+  tinyvec_array_nullable_vec: tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[u16; 16]>>; 16]>,
+  #[grost(tag = 5, list(nullable(list(nullable(scalar)))))]
+  tinyvec_array_nullable_vec_nullable:
     tinyvec_1::ArrayVec<[Option<tinyvec_1::ArrayVec<[Option<u16>; 16]>>; 16]>,
 }
 

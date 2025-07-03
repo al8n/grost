@@ -35,7 +35,7 @@ pub(super) struct PartialFieldOptions {
 #[derive(Debug, Clone)]
 pub struct PartialField {
   pub(super) ty: Type,
-  pub(super) optional_type: Type,
+  pub(super) nullable_type: Type,
   pub(super) state_type: Option<Type>,
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
@@ -54,10 +54,10 @@ impl PartialField {
     &self.ty
   }
 
-  /// Returns the optional type of the partial field, which is `Option<_>`.
+  /// Returns the nullable type of the partial field, which is `Option<_>`.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the partial state type of the partial field, if any.
@@ -246,7 +246,7 @@ impl PartialField {
       }
     };
 
-    let optional_type = if label.is_optional() {
+    let nullable_type = if label.is_nullable() {
       ty.clone()
     } else {
       syn::parse2(quote! {
@@ -256,7 +256,7 @@ impl PartialField {
 
     Ok(Self {
       ty,
-      optional_type,
+      nullable_type,
       state_type,
       attrs: opts.attrs,
       constraints: type_constraints,

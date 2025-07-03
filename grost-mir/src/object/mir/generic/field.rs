@@ -262,7 +262,7 @@ impl<F> GenericTaggedField<F> {
       })?
     };
 
-    let optional_partial_ref_type = syn::parse2(quote! {
+    let nullable_partial_ref_type = syn::parse2(quote! {
       ::core::option::Option<#partial_ref_ty>
     })?;
 
@@ -295,7 +295,7 @@ impl<F> GenericTaggedField<F> {
       partial,
       partial_ref: GenericPartialRefField {
         ty: partial_ref_ty,
-        optional_type: optional_partial_ref_type,
+        nullable_type: nullable_partial_ref_type,
         attrs: field.partial_ref_attrs().to_vec(),
         constraints: partial_ref_constraints,
         copy: partial_ref_copyable,

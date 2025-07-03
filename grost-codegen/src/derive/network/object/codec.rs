@@ -139,7 +139,7 @@ impl Groto {
     let reflection = quote! {
       fn(&#ty, &#path_to_grost::__private::flavors::groto::Context, &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::groto::Error>
     };
-    let fn_impl = if ty.repr().is_optional() {
+    let fn_impl = if ty.repr().is_nullable() {
       let atomic_ty = ty.repr().encode_atomic_ty();
       quote! {
         fn encode(
@@ -302,7 +302,7 @@ impl Groto {
       ) -> ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::groto::Error>
     };
 
-    let fn_impl = if ty.repr().is_optional() {
+    let fn_impl = if ty.repr().is_nullable() {
       let atomic_ty = ty.repr().encode_atomic_ty();
       quote! {
         fn encode(
@@ -439,8 +439,8 @@ impl Groto {
     let struct_name = struct_.name();
     let field_name = f.name();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
-    let atomic_ty = if optional {
+    let nullable = ty.repr().is_nullable();
+    let atomic_ty = if nullable {
       ty.repr().encode_atomic_ty()
     } else {
       ty.ty()
@@ -456,7 +456,7 @@ impl Groto {
           )
     };
 
-    let fn_impl = if ty.repr().is_optional() {
+    let fn_impl = if ty.repr().is_nullable() {
       quote! {
         fn encoded_len(
           f: &#ty,
@@ -522,8 +522,8 @@ impl Groto {
     let struct_name = struct_.name();
     let field_name = f.name();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
-    let atomic_ty = if optional {
+    let nullable = ty.repr().is_nullable();
+    let atomic_ty = if nullable {
       ty.repr().encode_atomic_ty()
     } else {
       ty.ty()
@@ -539,7 +539,7 @@ impl Groto {
             selector,
           )
     };
-    let fn_impl = if optional {
+    let fn_impl = if nullable {
       quote! {
         fn encoded_len(
           f: &#ty,
@@ -613,7 +613,7 @@ impl Groto {
     let field_reflection = struct_.field_reflection_name();
     let tag = f.tag();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
+    let nullable = ty.repr().is_nullable();
     let ret = quote! {
       ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::groto::Error>
     };
@@ -634,7 +634,7 @@ impl Groto {
       > = <#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().partial_encoded_ref_len();
     };
 
-    let fn_impl = if optional {
+    let fn_impl = if nullable {
       quote! {
         fn encode(
           field: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -765,7 +765,7 @@ impl Groto {
     let tag = f.tag();
     let wf = f.get_wire_format_or_default(path_to_grost, self);
 
-    let reflection = if optional {
+    let reflection = if nullable {
       quote! {
         fn(
           &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -831,9 +831,9 @@ impl Groto {
     let struct_name = struct_.name();
     let field_name = f.name();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
+    let nullable = ty.repr().is_nullable();
 
-    let fn_impl = if optional {
+    let fn_impl = if nullable {
       quote! {
         fn encoded_len(
           f: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -904,7 +904,7 @@ impl Groto {
     let tag = f.tag();
     let wf = f.get_wire_format_or_default(path_to_grost, self);
 
-    let reflection = if optional {
+    let reflection = if nullable {
       quote! {
         fn(
           &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -970,7 +970,7 @@ impl Groto {
     let field_reflection = struct_.field_reflection_name();
     let tag = f.tag();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
+    let nullable = ty.repr().is_nullable();
     let ret = quote! {
       ::core::result::Result<::core::primitive::usize, #path_to_grost::__private::flavors::groto::Error>
     };
@@ -991,7 +991,7 @@ impl Groto {
       > = <#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_ref_len();
     };
 
-    let fn_impl = if optional {
+    let fn_impl = if nullable {
       quote! {
         fn encode(
           field: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -1118,7 +1118,7 @@ impl Groto {
     let tag = f.tag();
     let wf = f.get_wire_format_or_default(path_to_grost, self);
 
-    let reflection = if optional {
+    let reflection = if nullable {
       quote! {
         fn(
           &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -1182,9 +1182,9 @@ impl Groto {
     let struct_name = struct_.name();
     let field_name = f.name();
     let ty = f.ty();
-    let optional = ty.repr().is_optional();
+    let nullable = ty.repr().is_nullable();
 
-    let fn_impl = if optional {
+    let fn_impl = if nullable {
       quote! {
         fn encoded_len(
           f: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
@@ -1251,7 +1251,7 @@ impl Groto {
     let tag = f.tag();
     let wf = f.get_wire_format_or_default(path_to_grost, self);
 
-    let reflection = if optional {
+    let reflection = if nullable {
       quote! {
         fn(
           &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<

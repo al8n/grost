@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{Attribute, GenericParam, Generics, Ident};
 
 use crate::object::mir::derive_flatten_state;
-use crate::object::mir::optional_accessors;
+use crate::object::mir::nullable_accessors;
 
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
 
@@ -145,7 +145,7 @@ impl<M, F> super::GenericObject<M, F> {
           }
         }
         GenericField::Tagged(generic_tagged_field) => {
-          let ty = generic_tagged_field.partial_ref().optional_type();
+          let ty = generic_tagged_field.partial_ref().nullable_type();
           let vis = generic_tagged_field.vis();
           let attrs = generic_tagged_field.partial_ref().attrs();
 
@@ -220,7 +220,7 @@ impl<M, F> super::GenericObject<M, F> {
         let field_name = f.name();
         let ty = &f.partial_ref().ty();
         let vis = f.vis();
-        fields_accessors.push(optional_accessors(
+        fields_accessors.push(nullable_accessors(
           field_name,
           vis,
           ty,

@@ -5,7 +5,7 @@ use crate::object::ConvertAttribute;
 #[derive(Debug, Clone)]
 pub struct ConcretePartialRefField {
   pub(super) ty: Type,
-  pub(super) optional_type: Type,
+  pub(super) nullable_type: Type,
   pub(super) partial_ref_state_type: Option<Type>,
   pub(super) decode_trait_type: Type,
   pub(super) attrs: Vec<Attribute>,
@@ -21,10 +21,10 @@ impl ConcretePartialRefField {
     &self.ty
   }
 
-  /// Returns the optional type of the partial decoded field, which is `Option<_>`.
+  /// Returns the nullable type of the partial decoded field, which is `Option<_>`.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the decoded state type of the partial decoded field.

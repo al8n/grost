@@ -49,7 +49,7 @@ impl DecodeOptions {
       Label::Map { .. } => self.map.or_default.is_yes(),
       Label::Set(_) => self.set.or_default.is_yes(),
       Label::List(_) => self.list.or_default.is_yes(),
-      Label::Optional(_) => false,
+      Label::Nullable(_) => false,
     }
   }
 

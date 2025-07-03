@@ -173,7 +173,7 @@ impl Groto {
       let field_name = f.name();
       let ty = f.ty();
 
-      if ty.repr().is_optional() {
+      if ty.repr().is_nullable() {
         quote! {
           len += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_len())(
             &self.#field_name,
@@ -195,7 +195,7 @@ impl Groto {
       let field_name = f.name();
       let ty = f.ty();
 
-      if ty.repr().is_optional() {
+      if ty.repr().is_nullable() {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
@@ -354,7 +354,7 @@ impl Groto {
       let field_name = f.name();
       let ty = f.ty();
 
-      if ty.repr().is_optional() {
+      if ty.repr().is_nullable() {
         quote! {
           len += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_ref_len())(
             &self.#field_name,
@@ -376,7 +376,7 @@ impl Groto {
       let field_name = f.name();
       let ty = f.ty();
 
-      if ty.repr().is_optional() {
+      if ty.repr().is_nullable() {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(

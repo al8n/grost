@@ -5,7 +5,7 @@ use quote::quote;
 #[derive(Debug, Clone)]
 pub struct ConcretePartialField {
   ty: Type,
-  optional_type: Type,
+  nullable_type: Type,
   attrs: Vec<Attribute>, 
   // convert: ConvertAttribute,
 }
@@ -17,10 +17,10 @@ impl ConcretePartialField {
     &self.ty
   }
 
-  /// Returns the optional type of the partial field, which is `Option<_>`.
+  /// Returns the nullable type of the partial field, which is `Option<_>`.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the attributes of the partial field.
@@ -40,13 +40,13 @@ impl ConcretePartialField {
       None => ty.clone(),
     };
 
-    let optional_type = syn::parse2(quote! {
+    let nullable_type = syn::parse2(quote! {
       ::core::option::Option<#ty>
     })?;
 
     Ok(Self {
       ty,
-      optional_type,
+      nullable_type,
       constraints,
       attrs: attrs.to_vec(),
     })

@@ -1,6 +1,5 @@
 use crate::reflection::{Reflectable, SchemaType, SchemaTypeReflection};
 
-
 impl<T> Reflectable<Self> for SchemaTypeReflection<[T]>
 where
   T: Reflectable<T, Reflection = SchemaType>,

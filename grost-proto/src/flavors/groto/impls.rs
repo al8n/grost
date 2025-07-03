@@ -8,7 +8,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultWireFormat, Flavor, Groto, WireFormat,
-    groto::{Context, Error, Optional},
+    groto::{Context, Error, Nullable},
   },
   selection::Selectable,
 };
@@ -29,7 +29,7 @@ macro_rules! identity_partial_transform {
         }
       }
 
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::groto::Optional<$wf>, $flavor,> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::groto::Nullable<$wf>, $flavor,> for $ty {
         fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
         {
           match input {
@@ -194,7 +194,7 @@ where
 {
 }
 
-impl<'de, W, O, RB, B, T> Decode<'de, Option<O>, Optional<W>, RB, B, Groto> for Option<T>
+impl<'de, W, O, RB, B, T> Decode<'de, Option<O>, Nullable<W>, RB, B, Groto> for Option<T>
 where
   T: Decode<'de, O, W, RB, B, Groto>,
   W: WireFormat<Groto>,
@@ -212,7 +212,7 @@ where
   }
 }
 
-impl<W, I, O, T> Transform<Option<I>, Option<O>, Optional<W>, Groto> for Option<T>
+impl<W, I, O, T> Transform<Option<I>, Option<O>, Nullable<W>, Groto> for Option<T>
 where
   W: WireFormat<Groto>,
   T: Transform<I, O, W, Groto>,
@@ -225,7 +225,7 @@ where
   }
 }
 
-impl<I, O, W, T> PartialTransform<Option<I>, Option<O>, Optional<W>, Groto> for Option<T>
+impl<I, O, W, T> PartialTransform<Option<I>, Option<O>, Nullable<W>, Groto> for Option<T>
 where
   W: WireFormat<Groto>,
   T: PartialTransform<I, Option<O>, W, Groto> + Sized + Selectable<Groto>,
@@ -245,7 +245,7 @@ where
   }
 }
 
-impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Optional<W>, Groto>> for Option<T>
+impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Nullable<W>, Groto>> for Option<T>
 where
   T: State<PartialRef<'a, RB, UB, W, Groto>>,
   T::Output: Sized,
@@ -256,7 +256,7 @@ where
   type Output = Option<T::Output>;
 }
 
-impl<W, T> Encode<Optional<W>, Groto> for Option<T>
+impl<W, T> Encode<Nullable<W>, Groto> for Option<T>
 where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
@@ -399,7 +399,7 @@ impl<T> DefaultWireFormat<Groto> for Option<T>
 where
   T: DefaultWireFormat<Groto>,
 {
-  type Format = Optional<T::Format>;
+  type Format = Nullable<T::Format>;
 }
 
 impl<T> DefaultWireFormat<Groto> for &T

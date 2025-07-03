@@ -196,7 +196,7 @@ impl Groto {
 
     let partial_struct_encoded_len = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      if f.ty().repr().is_optional() {
+      if f.ty().repr().is_nullable() {
         quote! {
           len += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().partial_encoded_len())(
             &self.#field_name,
@@ -219,7 +219,7 @@ impl Groto {
 
     let partial_struct_encode = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      if f.ty().repr().is_optional() {
+      if f.ty().repr().is_nullable() {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
@@ -397,7 +397,7 @@ impl Groto {
     let struct_name = struct_.name();
     let partial_struct_encoded_len = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      if f.ty().repr().is_optional() {
+      if f.ty().repr().is_nullable() {
         quote! {
           len += (<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().partial_encoded_ref_len())(
             &self.#field_name,
@@ -420,7 +420,7 @@ impl Groto {
 
     let partial_struct_encode = struct_.fields().iter().map(|f| {
       let field_name = f.name();
-      if f.ty().repr().is_optional() {
+      if f.ty().repr().is_nullable() {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(

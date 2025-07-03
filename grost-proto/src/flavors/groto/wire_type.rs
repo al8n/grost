@@ -88,14 +88,13 @@ fixed_size!(
 /// let bob_from_peer2 = peer2_subscriber.next().await;
 /// let charlie_from_peer3 = peer3_subscriber.next().await;
 ///
-/// let borrowed_friends: &[&str] = &[alice_from_peer1, bob_from_peer2, charlie_from_peer3];
+/// let borrowed_friends: &[&[&str]] = &[&alice_from_peer1, &bob_from_peer2, &charlie_from_peer3];
 /// ```
 ///
 /// Tranditional serialization frameworks would require you to create a new `Vec<String>`
-/// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `[&String]`
+/// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `&[String]`
 /// to encode it, you can just encode the borrowed slice directly as there is a blanket
-/// implementation `impl<'a, T> Encode<Groto, Borrowed<'a, LengthDelimited>> for [&'a T]` in
-/// this crate.
+/// implementation in this crate.
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
 #[display("borrowed")]
 pub struct Borrowed<'a, W: ?Sized>(PhantomData<&'a W>);
@@ -121,58 +120,11 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
   const REPEATED: bool = W::REPEATED;
 }
 
-/// A wire format for borrowed data.
+/// A wire format for nested data to encode it as a flattened structure.
 ///
-/// ## Why we need `Borrowed` wire format wrapper?
+/// ## Why we need `Flatten` wire format wrapper?
 ///
-/// e.g. when implementing `Encode` for `[T]`, we know that if `[T]` is encodable,
-/// then `[&T]` must be encodable. But we cannot write the following code,
-/// as `T` must be `Sized`, requried by `[T]`:
-///
-/// ```ignore
-/// // We cannot write this code, as `T` must be `Sized`
-/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [T] { ... }
-/// ```
-///
-/// We cannot write another impl for `[&T]`, it will reports conflicting implementations.
-///
-/// ```ignore
-/// // This implementation will conflict with the above one.
-/// impl<T: ?Sized> Encode<LengthDelimited, Groto> for [&T] { ... }
-/// ```
-///
-/// Hence, we need this wrapper type to indicate that the data is in borrowed state,
-/// and we can implement `Encode` for `[&T]` like this:
-///
-/// ```ignore
-/// impl<'a, T: ?Sized> Encode<Groto, Borrowed<'a, LengthDelimited>> for [&'a T] { ... }
-/// ```
-///
-/// This is quite useful, when you have the following struct:
-///
-/// ```ignore
-/// struct Friends(Vec<String>);
-/// ```
-///
-/// And somehow, in a gossip groto, you receive three friends names from different peers.
-///
-/// ```ignore
-/// let peer1_subscriber = subscribe_peer(1);
-/// let peer2_subscriber = subscribe_peer(2);
-/// let peer3_subscriber = subscribe_peer(3);
-///
-/// let alice_from_peer1 = peer1_subscriber.next().await;
-/// let bob_from_peer2 = peer2_subscriber.next().await;
-/// let charlie_from_peer3 = peer3_subscriber.next().await;
-///
-/// let borrowed_friends: &[&str] = &[alice_from_peer1, bob_from_peer2, charlie_from_peer3];
-/// ```
-///
-/// Tranditional serialization frameworks would require you to create a new `Vec<String>`
-/// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `[&String]`
-/// to encode it, you can just encode the borrowed slice directly as there is a blanket
-/// implementation `impl<'a, T> Encode<Groto, Borrowed<'a, LengthDelimited>> for [&'a T]` in
-/// this crate.
+/// e.g. when implementing `Encode` for `Vec<Vec<T>>`, in some case, we want it to be encoded as `Vec<T>`:
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
 #[display("flatten")]
 pub struct Flatten<W: ?Sized, I: ?Sized> {
@@ -203,6 +155,16 @@ impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<W
   };
 }
 
+/// A wire format for packed repeated fields.
+///
+/// This is used to encode repeated fields in a more compact form,
+/// a length prefix is used to indicate the number of bytes that the total packed data occupies.
+///
+/// For example, if you have a repeated field of integers, the packed format will encode them as:
+///
+/// ```text
+/// | identifier | total_length | elem1 | elem2 | elem3 | ...
+/// ```
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
 #[display("packed")]
 pub struct Packed<W: ?Sized>(PhantomData<W>);
@@ -227,26 +189,33 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
   const SELF: Self = Self(PhantomData);
 }
 
+/// A wire format for nullable fields, in Rust it is used to represent `Option<T>` fields,
+/// in schema, it corresponds to fields without `!`.
+///
+/// This wire format will make it have different encoding behavior for repeated fields.
+/// For non-repeated fields, its encoding behavior just the same as inner wire format.
+///
+/// But, for `Packed<Nullable<W>>`, or `Repeated<Nullable<W>>`, it will be encoded differently.
 #[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("optional")]
-pub struct Optional<W: ?Sized>(PhantomData<W>);
+#[display("nullable")]
+pub struct Nullable<W: ?Sized>(PhantomData<W>);
 
-impl<W: ?Sized> Clone for Optional<W> {
+impl<W: ?Sized> Clone for Nullable<W> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized> Copy for Optional<W> {}
+impl<W: ?Sized> Copy for Nullable<W> {}
 
-impl<W: WireFormat<Groto>> From<Optional<W>> for WireType {
-  fn from(_: Optional<W>) -> Self {
+impl<W: WireFormat<Groto>> From<Nullable<W>> for WireType {
+  fn from(_: Nullable<W>) -> Self {
     W::WIRE_TYPE
   }
 }
 
-impl<W: WireFormat<Groto>> WireFormat<Groto> for Optional<W> {
-  const NAME: &'static str = "packed";
+impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
+  const NAME: &'static str = "nullable";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Self(PhantomData);
   const REPEATED: bool = W::REPEATED;

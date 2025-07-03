@@ -1123,7 +1123,9 @@ fn t() {
 
   let context = Context::default();
   let encoded_len =
-    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(a, &context);
+    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
+      a, &context,
+    );
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
   assert_eq!(encoded_len, flatten_encoded_len);
@@ -1132,8 +1134,10 @@ fn t() {
   let mut flatten_buf = [0u8; 100];
 
   let encoded_len =
-    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(a, &context, &mut buf)
-      .unwrap();
+    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
+      a, &context, &mut buf,
+    )
+    .unwrap();
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
       .unwrap();
@@ -1148,7 +1152,9 @@ fn t11() {
 
   let context = Context::default();
   let encoded_len =
-    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(a, &context);
+    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
+      a, &context,
+    );
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
   assert_eq!(encoded_len, flatten_encoded_len);
@@ -1157,8 +1163,10 @@ fn t11() {
   let mut flatten_buf = [0u8; 100];
 
   let encoded_len =
-    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(a, &context, &mut buf)
-      .unwrap();
+    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
+      a, &context, &mut buf,
+    )
+    .unwrap();
   let flatten_encoded_len =
     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
       .unwrap();

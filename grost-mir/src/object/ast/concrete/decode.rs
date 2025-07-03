@@ -71,10 +71,10 @@ fn derive_partial_object_decode<T, S, M>(
       }
 
       fields_partial_transform.push({
-        let optional = f.label().is_optional();
+        let nullable = f.label().is_nullable();
         let call = match partial_transform_options.convert_operation() {
           None => {
-            if optional {
+            if nullable {
               quote! {
                 <#field_ty as #path_to_grost::__private::convert::PartialTransform<
                   #partial_field_ty,
@@ -97,7 +97,7 @@ fn derive_partial_object_decode<T, S, M>(
           Some(transform) => transform.call(&[quote!(value), quote!(selector.#field_selector())]),
         };
 
-        if f.label().is_optional() {
+        if f.label().is_nullable() {
           quote! {
             if selector.#is_field_selected() {
               this.#field_name = #call;
@@ -152,7 +152,7 @@ fn derive_partial_object_decode<T, S, M>(
         },
       };
 
-      if f.label().is_optional() {
+      if f.label().is_nullable() {
         quote! {
           #name: input.#name
         }
@@ -312,7 +312,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
       let is_field_selected = format_ident!("is_{}_selected", field_name);
       let field_selector = format_ident!("{}_ref", field_name);
       let partial_ref_field_ty = f.partial_ref().ty();
-      let optional = f.label().is_optional();
+      let nullable = f.label().is_nullable();
 
       {
         let partial_transform_ref_options = f.partial().partial_transform_ref();
@@ -331,7 +331,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
         pptpr.push({
           let call = match partial_transform_ref_options.convert_operation() {
             None => {
-              if optional {
+              if nullable {
                 quote! {
                   <#field_ty as #path_to_grost::__private::convert::PartialTransform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::partial_transform(input.#field_name, selector.#field_selector())?
                 }
@@ -346,7 +346,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
             }
           };
 
-          if optional {
+          if nullable {
             quote! {
               if selector.#is_field_selected() {
                 this.#field_name = #call;
@@ -378,7 +378,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
         ptpr.push({
           let call = match transform_ref_options.convert_operation() {
             None => {
-              if optional {
+              if nullable {
                 quote! {
                   <#field_ty as #path_to_grost::__private::convert::Transform<#partial_ref_field_ty, #partial_field_ty, #field_wf, #flavor_ty>>::transform(input.#field_name)?
                 }
@@ -393,7 +393,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
             }
           };
 
-          if optional {
+          if nullable {
             quote! {
               this.#field_name = #call;
             }
@@ -431,7 +431,7 @@ fn derive_partial_ref_object_decode<T, S, M>(
         });
       }
 
-      let set_value = if optional {
+      let set_value = if nullable {
         quote! {
           this.#field_name = value;
         }

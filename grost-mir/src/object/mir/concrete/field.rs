@@ -308,7 +308,7 @@ impl<F> ConcreteTaggedField<F> {
       #path_to_grost::__private::decode::Decode<#decode_lt, #partial_ref_ty, #wf, #read_buffer, #buffer, #flavor_ty>
     })?;
 
-    let optional_partial_ref_type = syn::parse2(quote! {
+    let nullable_partial_ref_type = syn::parse2(quote! {
       ::core::option::Option<#partial_ref_ty>
     })?;
 
@@ -322,7 +322,7 @@ impl<F> ConcreteTaggedField<F> {
     let partial = ConcretePartialField::from_ast(&field_ty, partial.ty(), partial.attrs())?;
     let partial_ref = ConcretePartialRefField {
       ty: partial_ref_ty,
-      optional_type: optional_partial_ref_type,
+      nullable_type: nullable_partial_ref_type,
       partial_ref_state_type,
       decode_trait_type,
       attrs: field.partial_ref.attrs,

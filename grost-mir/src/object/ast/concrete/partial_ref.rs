@@ -10,7 +10,7 @@ use syn::{
 use super::{Field, Object};
 
 use crate::{
-  object::ast::{derive_flatten_state, optional_accessors},
+  object::ast::{derive_flatten_state, nullable_accessors},
   utils::grost_decode_trait_lifetime,
 };
 
@@ -366,7 +366,7 @@ impl<T, S, M> Object<T, S, M> {
         let attrs = concrete_tagged_field.attrs();
         let vis = concrete_tagged_field.vis();
         let name = concrete_tagged_field.name();
-        let ty = concrete_tagged_field.partial_ref().optional_type();
+        let ty = concrete_tagged_field.partial_ref().nullable_type();
         Some(quote! {
           #(#attrs)*
           #vis #name: #ty
@@ -423,7 +423,7 @@ impl<T, S, M> Object<T, S, M> {
         let field_name = f.name();
         let ty = &f.partial_ref().ty();
         let vis = f.vis();
-        fields_accessors.push(optional_accessors(
+        fields_accessors.push(nullable_accessors(
           &self.path_to_grost,
           field_name,
           vis,

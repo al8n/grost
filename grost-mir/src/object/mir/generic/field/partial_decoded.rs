@@ -3,7 +3,7 @@ use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma}
 #[derive(Debug, Clone)]
 pub struct GenericPartialRefField {
   pub(super) ty: Type,
-  pub(super) optional_type: Type,
+  pub(super) nullable_type: Type,
   pub(super) attrs: Vec<Attribute>,
   pub(super) constraints: Punctuated<WherePredicate, Comma>,
   pub(super) copy: bool,
@@ -16,10 +16,10 @@ impl GenericPartialRefField {
     &self.ty
   }
 
-  /// Returns the optional type of the partial decoded field, which is `Option<_>`.
+  /// Returns the nullable type of the partial decoded field, which is `Option<_>`.
   #[inline]
-  pub const fn optional_type(&self) -> &Type {
-    &self.optional_type
+  pub const fn nullable_type(&self) -> &Type {
+    &self.nullable_type
   }
 
   /// Returns the constraints of the partial decoded field.

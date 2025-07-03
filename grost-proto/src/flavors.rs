@@ -165,48 +165,38 @@ pub trait DefaultWireFormat<F: Flavor + ?Sized> {
 
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
+  use super::*;
   use std::{boxed::Box, rc::Rc, sync::Arc};
 
-  impl<T, F> DefaultWireFormat<F> for Box<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Box<T>: super::encode::Encode<T::Format, F>,
-  {
-    type Format = T::Format;
+  macro_rules! default_wire_format {
+    ($($ty:ty),+$(,)?) => {
+      $(
+        impl<T, F> DefaultWireFormat<F> for $ty
+        where
+          T: DefaultWireFormat<F> + ?Sized,
+          F: Flavor + ?Sized,
+        {
+          type Format = T::Format;
+        }
+      )*
+    };
+    (@builtins) => {
+      default_wire_format!(
+        Box<T>,
+        Rc<T>,
+        Arc<T>,
+      );
+
+      #[cfg(feature = "triomphe_0_1")]
+      default_wire_format!(
+        triomphe_0_1::Arc<T>,
+      );
+    };
   }
 
-  impl<T, F> DefaultWireFormat<F> for Rc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Rc<T>: super::encode::Encode<T::Format, F>,
-  {
-    type Format = T::Format;
-  }
-
-  impl<T, F> DefaultWireFormat<F> for Arc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<T::Format, F>,
-  {
-    type Format = T::Format;
-  }
-};
-
-#[cfg(feature = "triomphe_0_1")]
-const _: () = {
-  use triomphe_0_1::Arc;
-
-  impl<T, F> DefaultWireFormat<F> for Arc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<T::Format, F>,
-  {
-    type Format = T::Format;
-  }
+  default_wire_format!(
+    @builtins
+  );
 };
 
 /// The error for the flavor.

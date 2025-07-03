@@ -104,7 +104,7 @@ impl ObjectConvertOptions {
       Label::Map { .. } => self.or_default_map(),
       Label::Set(_) => self.or_default_set(),
       Label::List(_) => self.or_default_list(),
-      Label::Optional(_) => false,
+      Label::Nullable(_) => false,
     }
   }
 
@@ -298,7 +298,7 @@ fn accessors(
   let constable = copy.then(|| quote! { const });
 
   Ok(match label {
-    Label::Optional(_) => {
+    Label::Nullable(_) => {
       let unwrap_ref_fn = format_ident!("unwrap_{}_ref", field_name);
       let unwrap_ref_fn_doc =
         format!(" Returns a reference to the `{field_name}` if it is not `None`");
@@ -440,7 +440,7 @@ fn accessors(
   })
 }
 
-fn optional_accessors(
+fn nullable_accessors(
   path_to_grost: &Path,
   field_name: &Ident,
   vis: &Visibility,
@@ -473,34 +473,34 @@ fn optional_accessors(
   let maybe_fn = format_ident!("maybe_{}", field_name);
   let constable = copy.then(|| quote! { const });
 
-  let optional = label.is_optional();
+  let nullable = label.is_nullable();
 
-  let (optional_mut_ty, optional_ref_ty, optional_ty, flatten_ty): (Type, Type, Type, Type) =
-    if optional {
+  let (nullable_mut_ty, nullable_ref_ty, nullable_ty, flatten_ty): (Type, Type, Type, Type) =
+    if nullable {
       let flatten_ty = syn::parse2(quote! {
         <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output
       })?;
-      let optional_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #flatten_ty> })?;
-      let optional_ref_ty = syn::parse2(quote! { ::core::option::Option<&#flatten_ty> })?;
-      let optional_ty = syn::parse2(quote! { #ty })?;
-      (optional_mut_ty, optional_ref_ty, optional_ty, flatten_ty)
+      let nullable_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #flatten_ty> })?;
+      let nullable_ref_ty = syn::parse2(quote! { ::core::option::Option<&#flatten_ty> })?;
+      let nullable_ty = syn::parse2(quote! { #ty })?;
+      (nullable_mut_ty, nullable_ref_ty, nullable_ty, flatten_ty)
     } else {
-      let optional_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #ty> })?;
-      let optional_ref_ty = syn::parse2(quote! { ::core::option::Option<&#ty> })?;
-      let optional_ty = syn::parse2(quote! { ::core::option::Option<#ty> })?;
-      (optional_mut_ty, optional_ref_ty, optional_ty, ty.clone())
+      let nullable_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #ty> })?;
+      let nullable_ref_ty = syn::parse2(quote! { ::core::option::Option<&#ty> })?;
+      let nullable_ty = syn::parse2(quote! { ::core::option::Option<#ty> })?;
+      (nullable_mut_ty, nullable_ref_ty, nullable_ty, ty.clone())
     };
 
   Ok(quote! {
     #[doc = #ref_fn_doc]
     #[inline]
-    #vis const fn #ref_fn(&self) -> #optional_ref_ty {
+    #vis const fn #ref_fn(&self) -> #nullable_ref_ty {
       self.#field_name.as_ref()
     }
 
     #[doc = #ref_mut_fn_doc]
     #[inline]
-    #vis const fn #ref_mut_fn(&mut self) -> #optional_mut_ty {
+    #vis const fn #ref_mut_fn(&mut self) -> #nullable_mut_ty {
       self.#field_name.as_mut()
     }
 
@@ -532,7 +532,7 @@ fn optional_accessors(
 
     #[doc = #take_fn_doc]
     #[inline]
-    #vis const fn #take_fn(&mut self) -> #optional_ty {
+    #vis const fn #take_fn(&mut self) -> #nullable_ty {
       self.#field_name.take()
     }
 
@@ -552,7 +552,7 @@ fn optional_accessors(
 
     #[doc = #update_fn_doc]
     #[inline]
-    #vis #constable fn #update_fn(&mut self, value: #optional_ty) -> &mut Self {
+    #vis #constable fn #update_fn(&mut self, value: #nullable_ty) -> &mut Self {
       self.#field_name = value;
       self
     }
@@ -573,7 +573,7 @@ fn optional_accessors(
 
     #[doc = #update_fn_doc]
     #[inline]
-    #vis #constable fn #maybe_fn(mut self, value: #optional_ty) -> Self {
+    #vis #constable fn #maybe_fn(mut self, value: #nullable_ty) -> Self {
       self.#field_name = value;
       self
     }
