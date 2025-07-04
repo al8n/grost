@@ -1,4 +1,5 @@
 use core::marker::PhantomData;
+use ghost::phantom;
 
 use crate::flavors::WireFormat;
 
@@ -165,17 +166,15 @@ impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<W
 /// ```text
 /// | identifier | total_length | elem1 | elem2 | elem3 | ...
 /// ```
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("packed")]
-pub struct Packed<W: ?Sized>(PhantomData<W>);
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[phantom]
+pub struct Packed<W: ?Sized>;
 
-impl<W: ?Sized> Clone for Packed<W> {
-  fn clone(&self) -> Self {
-    *self
+impl<W: ?Sized> core::fmt::Display for Packed<W> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("packed")
   }
 }
-
-impl<W: ?Sized> Copy for Packed<W> {}
 
 impl<W: WireFormat<Groto>> From<Packed<W>> for WireType {
   fn from(_: Packed<W>) -> Self {
@@ -186,7 +185,7 @@ impl<W: WireFormat<Groto>> From<Packed<W>> for WireType {
 impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
   const NAME: &'static str = "packed";
   const WIRE_TYPE: WireType = WireType::LengthDelimited;
-  const SELF: Self = Self(PhantomData);
+  const SELF: Self = Packed;
 }
 
 /// A wire format for packed entry repeated fields.
@@ -199,20 +198,15 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
 /// ```text
 /// | identifier | total_length | ent1 | ent2 | ent3 | ...
 /// ```
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("packed_entry")]
-pub struct PackedEntry<KW: ?Sized, VW: ?Sized> {
-  _k: PhantomData<KW>,
-  _v: PhantomData<VW>,
-}
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[phantom]
+pub struct PackedEntry<KW: ?Sized, VW: ?Sized>;
 
-impl<KW: ?Sized, VW: ?Sized> Clone for PackedEntry<KW, VW> {
-  fn clone(&self) -> Self {
-    *self
+impl<KW: ?Sized, VW: ?Sized> core::fmt::Display for PackedEntry<KW, VW> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("packed_entry")
   }
 }
-
-impl<KW: ?Sized, VW: ?Sized> Copy for PackedEntry<KW, VW> {}
 
 impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> From<PackedEntry<KW, VW>> for WireType {
   fn from(_: PackedEntry<KW, VW>) -> Self {
@@ -223,10 +217,7 @@ impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> From<PackedEntry<KW, VW>> for
 impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> WireFormat<Groto> for PackedEntry<KW, VW> {
   const NAME: &'static str = "packed_entry";
   const WIRE_TYPE: WireType = WireType::LengthDelimited;
-  const SELF: Self = Self {
-    _k: PhantomData,
-    _v: PhantomData,
-  };
+  const SELF: Self = PackedEntry;
 }
 
 /// A wire format for nullable fields, in Rust it is used to represent `Option<T>` fields,
@@ -236,17 +227,15 @@ impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> WireFormat<Groto> for PackedE
 /// For non-repeated fields, its encoding behavior just the same as inner wire format.
 ///
 /// But, for `Packed<Nullable<W>>`, or `Repeated<Nullable<W>>`, it will be encoded differently.
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("nullable")]
-pub struct Nullable<W: ?Sized>(PhantomData<W>);
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[phantom]
+pub struct Nullable<W: ?Sized>;
 
-impl<W: ?Sized> Clone for Nullable<W> {
-  fn clone(&self) -> Self {
-    *self
+impl<W: ?Sized> core::fmt::Display for Nullable<W> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("nullable")
   }
 }
-
-impl<W: ?Sized> Copy for Nullable<W> {}
 
 impl<W: WireFormat<Groto>> From<Nullable<W>> for WireType {
   fn from(_: Nullable<W>) -> Self {
@@ -257,9 +246,10 @@ impl<W: WireFormat<Groto>> From<Nullable<W>> for WireType {
 impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
   const NAME: &'static str = "nullable";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self(PhantomData);
+  const SELF: Self = Nullable;
   const REPEATED: bool = W::REPEATED;
 }
+
 
 /// The stream wire format for element encoding within repeated fields.
 ///

@@ -42,20 +42,20 @@ fn checks() {
 
   let _: <BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
   let _: <ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format =
-    Packed::<LengthDelimited>(PhantomData);
-  let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<LengthDelimited>>(PhantomData);
+    Packed::<LengthDelimited>;
+  let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<LengthDelimited>>;
   let _: <ListMarker<Vec<u16>, ScalarMarker<u16>> as DefaultWireFormat<Groto>>::Format =
-    Packed::<Varint>(PhantomData);
-  let _: <ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>(PhantomData);
+    Packed::<Varint>;
+  let _: <ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
   let _: <ListMarker<
     Vec<Vec<Vec<u16>>>,
     ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>>,
-  > as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Packed<Varint>>>(PhantomData);
+  > as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Packed<Varint>>>;
 
   let _: <ScalarMarker<u16> as DefaultWireFormat<Groto>>::Format = Varint;
   let _: <ScalarMarker<u32> as DefaultWireFormat<Groto>>::Format = Varint;
 
-  let _: <ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>(PhantomData);
+  let _: <ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
 
   // let _: <MapMarker<
   //     HashMap<u16, Vec<Vec<u32>>>,
