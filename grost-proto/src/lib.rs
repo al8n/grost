@@ -42,6 +42,9 @@ pub mod selection;
 /// Traits for conversions between types.
 pub mod convert;
 
+/// Marker types
+pub mod marker;
+
 #[macro_use]
 mod macros;
 mod map;

@@ -179,14 +179,54 @@ impl<W: ?Sized> Copy for Packed<W> {}
 
 impl<W: WireFormat<Groto>> From<Packed<W>> for WireType {
   fn from(_: Packed<W>) -> Self {
-    W::WIRE_TYPE
+    WireType::LengthDelimited
   }
 }
 
 impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
   const NAME: &'static str = "packed";
-  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const WIRE_TYPE: WireType = WireType::LengthDelimited;
   const SELF: Self = Self(PhantomData);
+}
+
+/// A wire format for packed entry repeated fields.
+///
+/// This is used to encode repeated fields in a more compact form,
+/// a length prefix is used to indicate the number of bytes that the total packed data occupies.
+///
+/// For example, if you have a repeated field of integers, the packed format will encode them as:
+///
+/// ```text
+/// | identifier | total_length | ent1 | ent2 | ent3 | ...
+/// ```
+#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
+#[display("packed_entry")]
+pub struct PackedEntry<KW: ?Sized, VW: ?Sized> {
+  _k: PhantomData<KW>,
+  _v: PhantomData<VW>,
+}
+
+impl<KW: ?Sized, VW: ?Sized> Clone for PackedEntry<KW, VW> {
+  fn clone(&self) -> Self {
+    *self
+  }
+}
+
+impl<KW: ?Sized, VW: ?Sized> Copy for PackedEntry<KW, VW> {}
+
+impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> From<PackedEntry<KW, VW>> for WireType {
+  fn from(_: PackedEntry<KW, VW>) -> Self {
+    WireType::LengthDelimited
+  }
+}
+
+impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> WireFormat<Groto> for PackedEntry<KW, VW> {
+  const NAME: &'static str = "packed_entry";
+  const WIRE_TYPE: WireType = WireType::LengthDelimited;
+  const SELF: Self = Self {
+    _k: PhantomData,
+    _v: PhantomData,
+  };
 }
 
 /// A wire format for nullable fields, in Rust it is used to represent `Option<T>` fields,

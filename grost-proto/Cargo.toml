@@ -108,6 +108,8 @@ ref-cast = { version = "1", default-features = false }
 seq-macro = "0.3"
 paste.workspace = true
 simdutf8 = { version = "0.1", default-features = false, optional = true }
+typenum = { version = "1", default-features = false }
+
 
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
 bitflags = { version = "2", default-features = false }

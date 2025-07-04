@@ -3,6 +3,9 @@ use super::buffer::ReadBuf;
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
 pub use groto::Groto;
+pub use wire_format::*;
+
+mod wire_format;
 
 macro_rules! wire_type {
   (enum $name:ident<$flavor:ty> {
@@ -141,26 +144,6 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   where
     B: ReadBuf + Sized + 'de,
     Self: Sized;
-}
-
-/// The wire format used for encoding and decoding.
-pub trait WireFormat<F: Flavor + ?Sized>:
-  Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType>
-{
-  /// The cooresponding value to the wire type.
-  const WIRE_TYPE: F::WireType;
-  /// The name of the wire format.
-  const NAME: &'static str;
-  /// The self.
-  const SELF: Self;
-  /// `true` if the wire format is repeated.
-  const REPEATED: bool = false;
-}
-
-/// The default wire format for a type on flavor `F`.
-pub trait DefaultWireFormat<F: Flavor + ?Sized> {
-  /// The default wire format of the type for this flavor.
-  type Format: WireFormat<F>;
 }
 
 #[cfg(any(feature = "alloc", feature = "std"))]

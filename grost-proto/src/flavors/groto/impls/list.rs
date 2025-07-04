@@ -277,6 +277,10 @@ macro_rules! list {
       {
         type Output = T::Output;
       }
+
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::State<$crate::__private::convert::Flattened<$crate::__private::convert::Inner>> for $ty {
+        type Output = T;
+      }
     )*
   };
   (@partial_state $($(:< $($tg:ident: $t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])? => $output:ty),+$(,)?) => {

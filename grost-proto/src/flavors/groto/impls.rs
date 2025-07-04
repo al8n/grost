@@ -160,6 +160,8 @@ macro_rules! bidi_equivalent {
 mod list;
 mod packed_decoder;
 mod scalar;
+mod set;
+mod map;
 mod tuple;
 
 pub trait GrotoTransform<I, O, W>: Transform<I, O, W, Groto>
