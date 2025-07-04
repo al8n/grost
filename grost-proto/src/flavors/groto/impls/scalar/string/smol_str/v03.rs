@@ -2,13 +2,13 @@ use crate::{
   buffer::ReadBuf,
   convert::{PartialTransform, Transform},
   decode::{Decode, Str},
-  decode_bridge, default_wire_format, encode_bridge, flatten_state,
+  decode_bridge, default_string_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Groto, LengthDelimited},
   groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 use smol_str_0_3::SmolStr;
 
-default_wire_format!(Groto: SmolStr as LengthDelimited);
+default_string_wire_format!(Groto: SmolStr as LengthDelimited);
 
 selectable!(@scalar Groto:SmolStr);
 

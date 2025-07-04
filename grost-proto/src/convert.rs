@@ -130,7 +130,6 @@ where
   type Output = T::Output;
 }
 
-
 #[allow(dead_code)]
 macro_rules! wrapper_impl {
   (@partial_state $($ty:ty => $output:ty),+$(,)?) => {

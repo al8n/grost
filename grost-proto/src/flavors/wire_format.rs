@@ -1,13 +1,15 @@
 use core::marker::PhantomData;
 
-use crate::{convert::{Flattened, Inner, State}, marker::{MapMarker, Marker}};
+use crate::{
+  convert::{Flattened, Inner, State},
+  marker::{MapMarker, Marker},
+};
 
 use super::Flavor;
 
 pub use default_wire_format::*;
 
 mod default_wire_format;
-
 
 /// The wire format used for encoding and decoding.
 pub trait WireFormat<F: Flavor + ?Sized>:
@@ -22,4 +24,3 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   /// `true` if the wire format is repeated.
   const REPEATED: bool = false;
 }
-

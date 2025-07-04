@@ -1,11 +1,11 @@
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! groto_varint {
-  ($(
+  (@scalar $(
     $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
   ),+$(,)?) => {
     $crate::varint!(
-      $crate::__private::flavors::Groto:
+      @scalar $crate::__private::flavors::Groto:
         $crate::__private::flavors::groto::Varint {
           $(
             $ty $([ $(const $g: usize),* ])?
@@ -32,7 +32,41 @@ macro_rules! groto_varint {
 /// A macro emits traits implementations for primitive types that implements [`varing::Varint`](varing::Varint) and [`Copy`](::core::marker::Copy).
 #[macro_export]
 macro_rules! varint {
-  ($flavor:ty:$wf:ty {
+  (@scalar $flavor:ty:$wf:ty {
+    $(
+      $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
+    ),+$(,)?
+  }) => {
+    $(
+      $crate::__default_wire_format__!(@impl scalar<$flavor>: $ty $([$(const $g: usize),*])? as $wf);
+    )*
+
+    $crate::varint!(
+      @common $flavor:$wf {
+        $(
+          $ty $([$(const $g: usize),*])?
+        ),*
+      }
+    );
+  };
+  (@enum $flavor:ty:$wf:ty {
+    $(
+      $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
+    ),+$(,)?
+  }) => {
+    $(
+      $crate::__default_wire_format__!(@impl enum<$flavor>: $ty $([$(const $g: usize),*])? as $wf);
+    )*
+
+    $crate::varint!(
+      @common $flavor:$wf {
+        $(
+          $ty $([$(const $g: usize),*])?
+        ),*
+      }
+    );
+  };
+  (@common $flavor:ty:$wf:ty {
     $(
       $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
     ),+$(,)?
@@ -41,7 +75,7 @@ macro_rules! varint {
     $($crate::partial_ref_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::partial_state!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
     $($crate::flatten_state!($ty $([ $(const $g: usize),* ])?);)*
-    $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
+
     $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
@@ -77,21 +111,6 @@ macro_rules! varint {
         }
       }
     )*
-  };
-  (@without_flatten_state $flavor:ty:$wf:ty {
-    $(
-      $ty:ty $([ $( const $g:ident: usize), +$(,)? ])?
-    ),+$(,)?
-  }) => {
-    $($crate::selectable!(@scalar $flavor: $ty $([ $(const $g: usize),* ])?);)*
-    $($crate::partial_ref_state!(@scalar &'a $flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::default_wire_format!($flavor: $ty $([$(const $g: usize),*])? as $wf);)*
-    $($crate::partial_encode_scalar!($flavor: $ty $([ $(const $g: usize),* ])? as $wf);)*
-    $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
-    $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
-    $($crate::identity_transform!($flavor {
-      $ty $([ $(const $g: usize),* ])? as $wf,
-    });)*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$wf, $flavor> for $ty {
@@ -336,18 +355,102 @@ macro_rules! flatten_state {
   };
 }
 
-/// A macro emits [`DefaultWireFormat`](crate::flavors::DefaultWireFormat) implementations.
+#[doc(hidden)]
 #[macro_export]
-macro_rules! default_wire_format {
+macro_rules! __default_wire_format__ {
+  (@impl $(
+    $t:ident<$flavor:ty $(, $($p:ident),+$(,)?)?>: $ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty
+  ),+$(,)?) => {
+    $crate::__private::paste::paste! {
+      $(
+        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::flavors::[< Default $t:camel WireFormat >]<$flavor> for $ty {
+          type Format $(< $($p),* >)? = $format $(where $($p: $crate::__private::flavors::WireFormat<$flavor>),*)?;
+        }
+      )*
+    }
+  };
+}
+
+/// A macro emits [`DefaultScalarWireFormat`](crate::flavors::DefaultScalarWireFormat) implementations.
+#[macro_export]
+macro_rules! default_scalar_wire_format {
   ($(
     $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
   ),+$(,)?) => {
     $(
-      $(
-        impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::flavors::DefaultWireFormat<$flavor> for $ty {
-          type Format = $format;
-        }
-      )*
+      $crate::__default_wire_format__!(@impl $(
+        scalar<$flavor>: $ty $( $(const $g: usize),* )? as $format
+      ),*);
+    )*
+  };
+}
+
+/// A macro emits [`DefaultStringWireFormat`](crate::flavors::DefaultStringWireFormat) implementations.
+#[macro_export]
+macro_rules! default_string_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        string<$flavor>: $ty $( [$( const $g: usize),* ])? as $format
+      ),*);
+    )*
+  };
+}
+
+/// A macro emits [`DefaultBytesWireFormat`](crate::flavors::DefaultBytesWireFormat) implementations.
+#[macro_export]
+macro_rules! default_bytes_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        bytes<$flavor>: $ty $( [$(const $g: usize),* ])? as $format
+      ),*);
+    )*
+  };
+}
+
+/// A macro emits [`DefaultEnumWireFormat`](crate::flavors::DefaultEnumWireFormat) implementations.
+#[macro_export]
+macro_rules! default_enum_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        enum<$flavor>: $ty $( $(const $g: usize),* )? as $format
+      ),*);
+    )*
+  };
+}
+
+/// A macro emits [`DefaultObjectWireFormat`](crate::flavors::DefaultObjectWireFormat) implementations.
+#[macro_export]
+macro_rules! default_object_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        object<$flavor>: $ty $( $(const $g: usize),* )? as $format
+      ),*);
+    )*
+  };
+}
+
+/// A macro emits [`DefaultUnionWireFormat`](crate::flavors::DefaultUnionWireFormat) implementations.
+#[macro_export]
+macro_rules! default_union_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        union<$flavor>: $ty $( $(const $g: usize),* )? as $format
+      ),*);
     )*
   };
 }

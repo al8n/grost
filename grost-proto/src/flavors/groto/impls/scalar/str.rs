@@ -1,12 +1,12 @@
 use crate::{
   buffer::ReadBuf,
   decode::{BytesSlice, Decode, Str},
-  default_wire_format, encode_bridge, flatten_state,
+  default_string_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Context, Error, Groto, LengthDelimited, Unknown},
   partial_ref_state, selectable,
 };
 
-default_wire_format!(
+default_string_wire_format!(
   Groto: str as LengthDelimited
 );
 selectable!(@scalar Groto:str);

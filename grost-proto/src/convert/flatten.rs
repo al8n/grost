@@ -1,7 +1,7 @@
 use super::State;
 
 /// A sub-state of [`Flattened`] which means get the inner type for flattening.
-/// 
+///
 /// e.g.
 /// - `Option<T>`, the inner type is `T`.
 /// - `Vec<T>`, the inner type is `T`.
@@ -137,4 +137,3 @@ const _: () = {
     HashSet<T>,
   );
 };
-

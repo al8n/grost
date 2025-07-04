@@ -158,10 +158,10 @@ macro_rules! bidi_equivalent {
 }
 
 mod list;
+mod map;
 mod packed_decoder;
 mod scalar;
 mod set;
-mod map;
 mod tuple;
 
 pub trait GrotoTransform<I, O, W>: Transform<I, O, W, Groto>
@@ -397,19 +397,19 @@ where
   type Output = Option<T::Output>;
 }
 
-impl<T> DefaultWireFormat<Groto> for Option<T>
-where
-  T: DefaultWireFormat<Groto>,
-{
-  type Format = Nullable<T::Format>;
-}
+// impl<T> DefaultWireFormat<Groto> for Option<T>
+// where
+//   T: DefaultWireFormat<Groto>,
+// {
+//   type Format = Nullable<T::Format>;
+// }
 
-impl<T> DefaultWireFormat<Groto> for &T
-where
-  T: DefaultWireFormat<Groto> + ?Sized,
-{
-  type Format = T::Format;
-}
+// impl<T> DefaultWireFormat<Groto> for &T
+// where
+//   T: DefaultWireFormat<Groto> + ?Sized,
+// {
+//   type Format = T::Format;
+// }
 
 impl<T> Selectable<Groto> for Option<T>
 where

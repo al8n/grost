@@ -3,7 +3,7 @@ use core::num::NonZeroI64;
 use crate::{
   buffer::{Buffer, ReadBuf},
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed64, Groto, Unknown, Varint},
@@ -11,7 +11,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Groto: i64 as Varint; NonZeroI64 as Varint);
+default_scalar_wire_format!(Groto: i64 as Varint; NonZeroI64 as Varint);
 selectable!(@scalar Groto: i64, NonZeroI64);
 partial_ref_state!(@scalar &'a Groto:
   i64 as Fixed64,

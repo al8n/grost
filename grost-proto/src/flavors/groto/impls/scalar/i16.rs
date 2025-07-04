@@ -1,7 +1,7 @@
 use crate::{
   buffer::{Buffer, ReadBuf},
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Unknown, Varint},
@@ -10,7 +10,7 @@ use crate::{
 };
 use core::num::NonZeroI16;
 
-default_wire_format!(Groto: i16 as Varint; NonZeroI16 as Varint);
+default_scalar_wire_format!(Groto: i16 as Varint; NonZeroI16 as Varint);
 selectable!(@scalar Groto: i16, NonZeroI16);
 partial_ref_state!(@scalar &'a Groto:
   i16 as Fixed16,

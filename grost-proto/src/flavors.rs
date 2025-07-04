@@ -152,33 +152,46 @@ const _: () = {
   use std::{boxed::Box, rc::Rc, sync::Arc};
 
   macro_rules! default_wire_format {
-    ($($ty:ty),+$(,)?) => {
-      $(
-        impl<T, F> DefaultWireFormat<F> for $ty
-        where
-          T: DefaultWireFormat<F> + ?Sized,
-          F: Flavor + ?Sized,
-        {
-          type Format = T::Format;
-        }
-      )*
+    (impl $trait:ident $(< $($g:ident),+$(,)? >)? for $ty:ty) => {
+      impl<T, F> $crate::__private::flavors::$trait<F> for $ty
+      where
+        T: $trait<F> + ?Sized,
+        F: Flavor + ?Sized,
+      {
+        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: WireFormat<F>),* )?;
+      }
     };
-    (@builtins) => {
-      default_wire_format!(
-        Box<T>,
-        Rc<T>,
-        Arc<T>,
-      );
+    (@builtins $($t:ident $(< $($g:ident),+$(,)? >)?),+$(,)?) => {
+      $(
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Box<T>
+        );
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Rc<T>
+        );
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Arc<T>
+        );
 
-      #[cfg(feature = "triomphe_0_1")]
-      default_wire_format!(
-        triomphe_0_1::Arc<T>,
-      );
+        #[cfg(feature = "triomphe_0_1")]
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for triomphe_0_1::Arc<T>
+        );
+      )*
     };
   }
 
   default_wire_format!(
     @builtins
+    DefaultScalarWireFormat,
+    DefaultBytesWireFormat,
+    DefaultObjectWireFormat,
+    DefaultListWireFormat<V>,
+    DefaultSetWireFormat<V>,
+    DefaultMapWireFormat<K, V>,
+    DefaultNullableWireFormat<V>,
+    DefaultEnumWireFormat,
+    DefaultUnionWireFormat,
   );
 };
 
@@ -254,8 +267,3 @@ pub trait Flavor: core::fmt::Debug + 'static {
   where
     B: ReadBuf + 'de;
 }
-
-/// A raw tag for a field.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
-#[display("{}", T)]
-pub struct RawTag<const T: u32>;

@@ -3,7 +3,7 @@ use core::num::NonZeroU16;
 use crate::{
   buffer::{Buffer, ReadBuf},
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Unknown, Varint},
@@ -11,7 +11,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Groto: u16 as Varint; NonZeroU16 as Varint);
+default_scalar_wire_format!(Groto: u16 as Varint; NonZeroU16 as Varint);
 selectable!(@scalar Groto: u16, NonZeroU16);
 partial_ref_state!(@scalar &'a Groto:
   u16 as Fixed16,

@@ -3,7 +3,7 @@ use core::num::NonZeroI128;
 use crate::{
   buffer::{Buffer, ReadBuf},
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed128, Groto, Unknown, Varint},
@@ -11,7 +11,7 @@ use crate::{
   try_from_bridge,
 };
 
-default_wire_format!(Groto: i128 as Varint; NonZeroI128 as Varint);
+default_scalar_wire_format!(Groto: i128 as Varint; NonZeroI128 as Varint);
 selectable!(@scalar Groto: i128, NonZeroI128);
 partial_ref_state!(@scalar &'a Groto:
   i128 as Varint,

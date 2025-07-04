@@ -82,13 +82,13 @@ pub mod __private {
     convert::{self, *},
     debug_assert_read_eq, debug_assert_write_eq,
     decode::{self, *},
-    default_wire_format,
     encode::{self, *},
     error::{self, *},
-    flavors::{self, RawTag},
-    groto_varint, indexer, partial_encode_scalar, partial_ref_state, reflection, selectable,
+    flavors, groto_varint, indexer, marker, partial_encode_scalar, partial_ref_state, reflection,
+    selectable,
     selection::{self, *},
   };
+  pub use paste;
   pub use varing;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]

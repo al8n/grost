@@ -1,6 +1,6 @@
 use crate::marker::ObjectMarker;
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for an object type on flavor `F`.
 pub trait DefaultObjectWireFormat<F: Flavor + ?Sized> {

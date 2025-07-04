@@ -2,7 +2,7 @@ use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
 use crate::{
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::{
@@ -117,7 +117,7 @@ const fn new_socket_v6(ip: Ipv6Addr, port: u16) -> SocketAddrV6 {
 
 socket_addr_impl!(u32(4), u128(6));
 partial_encode_scalar!(Groto: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
-default_wire_format!(
+default_scalar_wire_format!(
   Groto:
     SocketAddrV4 as LengthDelimited;
     SocketAddrV6 as LengthDelimited;

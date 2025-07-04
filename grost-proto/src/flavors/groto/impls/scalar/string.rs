@@ -20,7 +20,7 @@ macro_rules! str_bridge {
           },
         },
       );
-      $crate::default_wire_format!(Groto: $ty as $crate::__private::flavors::groto::LengthDelimited);
+      $crate::default_string_wire_format!(Groto: $ty as $crate::__private::flavors::groto::LengthDelimited);
 
       impl<'a, RB, B, $( $(const $g: usize),* )?> $crate::decode::Decode<'a, $crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto,> for $ty {
         fn decode(context: &'a $crate::__private::flavors::groto::Context, src: RB) -> Result<(usize, $crate::__private::decode::Str<RB>), $crate::__private::flavors::groto::Error>
@@ -143,7 +143,7 @@ macro_rules! array_str {
       }
     }
 
-    $crate::default_wire_format!(
+    $crate::default_string_wire_format!(
       $crate::__private::flavors::Groto:
         $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited;
     );

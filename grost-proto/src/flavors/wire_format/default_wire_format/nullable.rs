@@ -1,11 +1,16 @@
-use crate::{convert::{Flattened, Inner, State}, marker::{Marker, NullableMarker}};
+use crate::{
+  convert::{Flattened, Inner, State},
+  marker::{Marker, NullableMarker},
+};
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a nullable type on flavor `F`.
 pub trait DefaultNullableWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
-  type Format<V>: WireFormat<F> where V: WireFormat<F>;
+  type Format<V>: WireFormat<F>
+  where
+    V: WireFormat<F>;
 }
 
 impl<T, VM, F> DefaultWireFormat<F> for NullableMarker<T, VM>

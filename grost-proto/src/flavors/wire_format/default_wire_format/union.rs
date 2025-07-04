@@ -1,7 +1,6 @@
 use crate::marker::UnionMarker;
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
-
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a union type on flavor `F`.
 pub trait DefaultUnionWireFormat<F: Flavor + ?Sized> {

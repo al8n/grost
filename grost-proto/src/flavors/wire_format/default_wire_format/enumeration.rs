@@ -1,7 +1,6 @@
 use crate::marker::EnumMarker;
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
-
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for an enum type on flavor `F`.
 pub trait DefaultEnumWireFormat<F: Flavor + ?Sized> {

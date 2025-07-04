@@ -4,7 +4,7 @@ macro_rules! impl_arbitrary_int {
   ($($start:literal..=$end:literal), +$(,)?) => {
     $(
       seq_macro::seq!(N in $start..=$end {
-        $crate::groto_varint!(#(u~N,)*);
+        $crate::groto_varint!(@scalar #(u~N,)*);
       });
     )*
   };

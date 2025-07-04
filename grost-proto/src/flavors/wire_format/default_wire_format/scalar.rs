@@ -1,7 +1,6 @@
 use crate::marker::ScalarMarker;
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
-
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a scalar type on flavor `F`.
 pub trait DefaultScalarWireFormat<F: Flavor + ?Sized> {

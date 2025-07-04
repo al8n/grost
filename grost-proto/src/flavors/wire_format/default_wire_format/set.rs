@@ -1,11 +1,16 @@
-use crate::{convert::{Flattened, Inner, State}, marker::{Marker, SetMarker}};
+use crate::{
+  convert::{Flattened, Inner, State},
+  marker::{Marker, SetMarker},
+};
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a set type on flavor `F`.
 pub trait DefaultSetWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
-  type Format<V>: WireFormat<F> where V: WireFormat<F>;
+  type Format<V>: WireFormat<F>
+  where
+    V: WireFormat<F>;
 }
 
 impl<T, VM, F> DefaultWireFormat<F> for SetMarker<T, VM>

@@ -1,1 +1,1 @@
-crate::groto_varint!(core::time::Duration);
+crate::groto_varint!(@scalar core::time::Duration);

@@ -1,10 +1,10 @@
 use crate::{
-  bridge, default_wire_format, flatten_state,
+  bridge, default_scalar_wire_format, flatten_state,
   flavors::groto::{Fixed8, Groto, Varint},
   groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 
-default_wire_format!(Groto: bool as Fixed8);
+default_scalar_wire_format!(Groto: bool as Fixed8);
 
 selectable!(@scalar Groto:bool);
 partial_ref_state!(@scalar &'a Groto:

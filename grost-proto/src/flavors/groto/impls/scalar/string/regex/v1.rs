@@ -3,7 +3,7 @@ use regex_1::{Regex, bytes::Regex as BytesRegex};
 use crate::{
   buffer::ReadBuf,
   decode::Str,
-  default_wire_format,
+  default_string_wire_format,
   flavors::{
     Groto,
     groto::{Error, LengthDelimited},
@@ -140,7 +140,7 @@ try_str_bridge!(
     },
 );
 
-default_wire_format!(Groto:
+default_string_wire_format!(Groto:
   Regex as LengthDelimited;
   BytesRegex as LengthDelimited;
 );

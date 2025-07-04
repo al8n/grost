@@ -2,13 +2,13 @@ use crate::{
   buffer::ReadBuf,
   convert::{PartialTransform, Transform},
   decode::BytesSlice,
-  decode_bridge, default_wire_format, encode_bridge, flatten_state,
+  decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Groto, LengthDelimited},
   groto_identity_transform, partial_ref_state, partial_state, selectable,
 };
 use bytes_1::{Bytes, BytesMut};
 
-default_wire_format!(Groto: Bytes as LengthDelimited; BytesMut as LengthDelimited);
+default_bytes_wire_format!(Groto: Bytes as LengthDelimited; BytesMut as LengthDelimited);
 
 selectable!(@scalar Groto: Bytes, BytesMut);
 

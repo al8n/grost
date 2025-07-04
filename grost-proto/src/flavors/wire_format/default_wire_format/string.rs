@@ -1,6 +1,6 @@
 use crate::marker::StringMarker;
 
-use super::{Flavor, WireFormat, DefaultWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a string type on flavor `F`.
 pub trait DefaultStringWireFormat<F: Flavor + ?Sized> {

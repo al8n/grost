@@ -3,7 +3,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use crate::{
   buffer::ReadBuf,
   decode::Decode,
-  default_wire_format,
+  default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::{
@@ -15,7 +15,7 @@ use crate::{
 
 macro_rules! ip_addr {
   ($addr:ident::$variant:ident($convert:ident)) => {
-    default_wire_format!(Groto: $addr as $variant);
+    default_scalar_wire_format!(Groto: $addr as $variant);
 
     impl Encode<$variant, Groto> for $addr {
       fn encode_raw(
@@ -166,7 +166,7 @@ const IPV4_ENCODED_LENGTH_DELIMITED_LEN: usize =
 const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
   IPV6_ENCODED_LENGTH_DELIMITED_LEN_BYTES.len() + IPV6_LEN;
 
-default_wire_format!(Groto: IpAddr as LengthDelimited);
+default_scalar_wire_format!(Groto: IpAddr as LengthDelimited);
 
 impl Encode<LengthDelimited, Groto> for IpAddr {
   fn encode_raw(

@@ -344,11 +344,8 @@ macro_rules! list {
   };
   (@default_wire_format $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultWireFormat<$crate::__private::flavors::Groto> for $ty
-      where
-        T: $crate::__private::flavors::DefaultWireFormat<$crate::__private::flavors::Groto>,
-      {
-        type Format = $crate::__private::flavors::groto::Packed<T::Format>;
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultListWireFormat<$crate::__private::flavors::Groto> for $ty {
+        type Format<V> = $crate::__private::flavors::groto::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
       }
     )*
   };
