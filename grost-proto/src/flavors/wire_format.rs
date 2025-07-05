@@ -1,10 +1,3 @@
-use core::marker::PhantomData;
-
-use crate::{
-  convert::{Flattened, Inner, State},
-  marker::{MapMarker, Marker},
-};
-
 use super::Flavor;
 
 pub use default_wire_format::*;

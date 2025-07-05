@@ -1,3 +1,5 @@
+use ghost::phantom;
+
 pub use flatten::*;
 pub use partial_transform::*;
 pub use transform::*;
@@ -41,20 +43,9 @@ impl<T> State<Identity> for T {
 /// ```
 ///
 /// See also [`PartialRef`] state.
-pub struct Partial<F: ?Sized> {
-  _flavor: core::marker::PhantomData<F>,
-}
-
-impl<F> Clone for Partial<F>
-where
-  F: ?Sized,
-{
-  fn clone(&self) -> Self {
-    *self
-  }
-}
-
-impl<F> Copy for Partial<F> where F: ?Sized {}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[phantom]
+pub struct Partial<F: ?Sized>;
 
 impl<F, T> State<Partial<F>> for &T
 where
@@ -91,33 +82,9 @@ where
 ///   age: Option<u8>,
 /// }
 /// ```
-pub struct PartialRef<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized> {
-  _wf: core::marker::PhantomData<&'a W>,
-  _flavor: core::marker::PhantomData<&'a F>,
-  _read_buf: core::marker::PhantomData<RB>,
-  _buffer: core::marker::PhantomData<UB>,
-}
-
-impl<'a, RB, UB, W, F> Clone for PartialRef<'a, RB, UB, W, F>
-where
-  F: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
-  RB: ?Sized,
-{
-  fn clone(&self) -> Self {
-    *self
-  }
-}
-
-impl<'a, RB, UB, W, F> Copy for PartialRef<'a, RB, UB, W, F>
-where
-  F: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
-  RB: ?Sized,
-{
-}
+#[phantom]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartialRef<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized>;
 
 impl<'a, RB, UB, W, F, T> State<PartialRef<'a, RB, UB, W, F>> for &'a T
 where

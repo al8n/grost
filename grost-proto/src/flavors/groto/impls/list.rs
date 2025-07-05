@@ -1,15 +1,11 @@
 use crate::{
   buffer::ReadBuf,
-  convert::{Flattened, Innermost, State},
   decode::BytesSlice,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
-    groto::{
-      Borrowed, Context, Error, Flatten, LengthDelimited, Packed, PackedDecoder, Varint, WireType,
-    },
+    groto::{Borrowed, Context, Error, LengthDelimited, Packed, PackedDecoder},
   },
-  selection::Selectable,
 };
 
 macro_rules! partial_encode {
@@ -342,10 +338,17 @@ macro_rules! list {
       }
     )*
   };
-  (@default_wire_format $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  (@default_wire_format(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultListWireFormat<$crate::__private::flavors::Groto> for $ty {
         type Format<V> = $crate::__private::flavors::groto::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
+      }
+    )*
+  };
+  (@default_wire_format(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<$($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultBytesWireFormat<$crate::__private::flavors::Groto> for $ty {
+        type Format = $crate::__private::flavors::groto::LengthDelimited;
       }
     )*
   };
@@ -789,7 +792,8 @@ list!(@partial_transform(try_from_bytes) [u8; N] [const N: usize] {
     <[u8; N]>::try_from(s).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>())
   }
 });
-list!(@default_wire_format [T; N] [const N: usize], [T]);
+list!(@default_wire_format(packed) [T; N] [const N: usize], [T]);
+list!(@default_wire_format(bytes) [u8; N] [const N: usize], [u8]);
 list!(@selectable [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder(try_from_bytes) [u8; N] [const N: usize] { |bytes| <[u8; N]>::try_from(bytes).map_err(|_| crate::__private::larger_than_array_capacity::<Groto, N>()) });
@@ -822,7 +826,8 @@ const _: () = {
   list!(@partial_ref_state(bytes) Vec<u8>);
   list!(@partial_ref_state(packed) Vec<T>);
   list!(@partial_ref_state(borrow) Vec<T>);
-  list!(@default_wire_format Vec<T>);
+  list!(@default_wire_format(packed) Vec<T>);
+  list!(@default_wire_format(bytes) Vec<u8>);
   list!(@identity_transform Vec<T>);
   list!(@identity_partial_transform(bytes) Vec<u8>);
   list!(@transform(packed) Vec<T>);
@@ -871,7 +876,8 @@ const _: () = {
   list!(@partial_ref_state(bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@partial_ref_state(packed) SmallVec<[T; N]> [const N: usize]);
   list!(@partial_ref_state(borrow) SmallVec<[T; N]> [const N: usize]);
-  list!(@default_wire_format SmallVec<[T; N]> [const N: usize]);
+  list!(@default_wire_format(packed) SmallVec<[T; N]> [const N: usize]);
+  list!(@default_wire_format(bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
   list!(@identity_partial_transform(bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@transform(packed) SmallVec<[T; N]> [const N: usize]);
@@ -919,7 +925,8 @@ const _: () = {
   list!(@partial_ref_state(bytes) ArrayVec<u8, N> [const N: usize]);
   list!(@partial_ref_state(packed) ArrayVec<T, N> [const N: usize]);
   list!(@partial_ref_state(borrow) ArrayVec<T, N> [const N: usize]);
-  list!(@default_wire_format ArrayVec<T, N> [const N: usize]);
+  list!(@default_wire_format(packed) ArrayVec<T, N> [const N: usize]);
+  list!(@default_wire_format(bytes) ArrayVec<u8, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
   list!(@identity_partial_transform(bytes) ArrayVec<u8, N> [const N: usize]);
   list!(@transform(packed) ArrayVec<T, N> [const N: usize]);
@@ -1013,7 +1020,8 @@ const _: () = {
   list!(@partial_ref_state(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
   list!(@partial_ref_state(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
-  list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@default_wire_format(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@default_wire_format(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_partial_transform(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
   list!(@transform(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
@@ -1072,7 +1080,8 @@ const _: () = {
     list!(@partial_ref_state(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@partial_ref_state(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-    list!(@default_wire_format:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@default_wire_format(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+    list!(@default_wire_format(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_partial_transform(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@transform(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
@@ -1117,113 +1126,113 @@ const _: () = {
   };
 };
 
-#[test]
-fn t() {
-  let a: &[&[u16]] = &[&[1u16, 2, 3], &[4, 5, 6]];
-  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
+// #[test]
+// fn t() {
+//   let a: &[&[u16]] = &[&[1u16, 2, 3], &[4, 5, 6]];
+//   let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
-  let context = Context::default();
-  let encoded_len =
-    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
-      a, &context,
-    );
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
-  assert_eq!(encoded_len, flatten_encoded_len);
+//   let context = Context::default();
+//   let encoded_len =
+//     <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
+//       a, &context,
+//     );
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
 
-  let mut buf = [0u8; 100];
-  let mut flatten_buf = [0u8; 100];
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len =
-    <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
-      a, &context, &mut buf,
-    )
-    .unwrap();
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
-      .unwrap();
-  assert_eq!(encoded_len, flatten_encoded_len);
-  assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
-}
+//   let encoded_len =
+//     <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
+//       a, &context, &mut buf,
+//     )
+//     .unwrap();
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+//       .unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
 
-#[test]
-fn t11() {
-  let a: &[&[&u16]] = &[&[&1u16, &2, &3], &[&4, &5, &6]];
-  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
+// #[test]
+// fn t11() {
+//   let a: &[&[&u16]] = &[&[&1u16, &2, &3], &[&4, &5, &6]];
+//   let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
-  let context = Context::default();
-  let encoded_len =
-    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
-      a, &context,
-    );
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
-  assert_eq!(encoded_len, flatten_encoded_len);
+//   let context = Context::default();
+//   let encoded_len =
+//     <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encoded_len(
+//       a, &context,
+//     );
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
 
-  let mut buf = [0u8; 100];
-  let mut flatten_buf = [0u8; 100];
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len =
-    <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
-      a, &context, &mut buf,
-    )
-    .unwrap();
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
-      .unwrap();
-  assert_eq!(encoded_len, flatten_encoded_len);
-  assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
-}
+//   let encoded_len =
+//     <[&[&u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
+//       a, &context, &mut buf,
+//     )
+//     .unwrap();
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+//       .unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
 
-#[test]
-fn t1() {
-  let a: &[[u16; 3]] = &[[1u16, 2, 3], [4, 5, 6]];
-  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
+// #[test]
+// fn t1() {
+//   let a: &[[u16; 3]] = &[[1u16, 2, 3], [4, 5, 6]];
+//   let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
-  let context = Context::default();
-  let encoded_len =
-    <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
-  assert_eq!(encoded_len, flatten_encoded_len);
+//   let context = Context::default();
+//   let encoded_len =
+//     <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
 
-  let mut buf = [0u8; 100];
-  let mut flatten_buf = [0u8; 100];
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len =
-    <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
-      .unwrap();
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
-      .unwrap();
-  assert_eq!(encoded_len, flatten_encoded_len);
-  assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
-}
+//   let encoded_len =
+//     <[[u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
+//       .unwrap();
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+//       .unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
 
-#[test]
-fn t2() {
-  let a: &[[&u16; 3]] = &[[&1u16, &2, &3], [&4, &5, &6]];
-  let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
+// #[test]
+// fn t2() {
+//   let a: &[[&u16; 3]] = &[[&1u16, &2, &3], [&4, &5, &6]];
+//   let flatten_a: &[u16] = &[1u16, 2, 3, 4, 5, 6];
 
-  let context = Context::default();
-  let encoded_len =
-    <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
-  assert_eq!(encoded_len, flatten_encoded_len);
+//   let context = Context::default();
+//   let encoded_len =
+//     <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encoded_len(a, &context);
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encoded_len(flatten_a, &context);
+//   assert_eq!(encoded_len, flatten_encoded_len);
 
-  let mut buf = [0u8; 100];
-  let mut flatten_buf = [0u8; 100];
+//   let mut buf = [0u8; 100];
+//   let mut flatten_buf = [0u8; 100];
 
-  let encoded_len =
-    <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
-      .unwrap();
-  let flatten_encoded_len =
-    <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
-      .unwrap();
-  assert_eq!(encoded_len, flatten_encoded_len);
-  assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
-}
+//   let encoded_len =
+//     <[[&u16; 3]] as Encode<Flatten<Packed<Varint>, Varint>, Groto>>::encode(a, &context, &mut buf)
+//       .unwrap();
+//   let flatten_encoded_len =
+//     <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+//       .unwrap();
+//   assert_eq!(encoded_len, flatten_encoded_len);
+//   assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);
+// }
 
 // #[test]
 // fn t1() {

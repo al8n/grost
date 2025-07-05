@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use ghost::phantom;
 
 pub use schema::*;
 pub use wire_format::WireFormatReflection;
@@ -11,18 +11,12 @@ macro_rules! phantom {
     paste::paste! {
       $(
         $(#[$meta])*
-        #[repr(transparent)]
-        pub struct $name<R: ?::core::marker::Sized>(::core::marker::PhantomData<R>);
-
-        impl<R: ?::core::marker::Sized> ::core::clone::Clone for $name<R> {
-          fn clone(&self) -> Self {
-            *self
-          }
-        }
-
-        impl<R: ?::core::marker::Sized> ::core::marker::Copy for $name<R> {}
+        #[derive(Copy, Clone, PartialEq, Eq, Hash)]
+        #[phantom]
+        pub struct $name<R: ?::core::marker::Sized>;
 
         impl<R: ?::core::marker::Sized> ::core::default::Default for $name<R> {
+          #[inline]
           fn default() -> Self {
             Self::new()
           }
@@ -32,7 +26,7 @@ macro_rules! phantom {
           #[doc = "creates a new `" $name "`"]
           #[inline]
           pub const fn new() -> Self {
-            Self(::core::marker::PhantomData)
+            $name
           }
         }
       )*
@@ -49,7 +43,6 @@ macro_rules! zst {
     paste::paste! {
       $(
         $(#[$meta])*
-        #[repr(transparent)]
         #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
         pub struct $name;
       )*
@@ -90,23 +83,10 @@ pub trait Reflectable<F: ?Sized> {
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
-#[repr(transparent)]
-pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized> {
-  _r: PhantomData<R>,
-  _f: PhantomData<F>,
-  _t: PhantomData<T>,
-}
 
-impl<T, R, F> Default for Reflection<T, R, F>
-where
-  T: ?Sized,
-  R: ?Sized,
-  F: ?Sized,
-{
-  fn default() -> Self {
-    Self::new()
-  }
-}
+#[phantom]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized>;
 
 impl<T, R, F> Reflection<T, R, F>
 where
@@ -117,11 +97,7 @@ where
   /// Creates a new [`Reflection`].
   #[inline]
   pub const fn new() -> Self {
-    Self {
-      _r: PhantomData,
-      _f: PhantomData,
-      _t: PhantomData,
-    }
+    Reflection
   }
 }
 

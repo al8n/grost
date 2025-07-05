@@ -96,17 +96,15 @@ fixed_size!(
 /// and encode `&[String]`. With the `Borrowed` wrapper, you do not need to create a new `&[String]`
 /// to encode it, you can just encode the borrowed slice directly as there is a blanket
 /// implementation in this crate.
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("borrowed")]
-pub struct Borrowed<'a, W: ?Sized>(PhantomData<&'a W>);
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[phantom]
+pub struct Borrowed<'a, W: ?Sized>;
 
-impl<W: ?Sized> Clone for Borrowed<'_, W> {
-  fn clone(&self) -> Self {
-    *self
+impl<'a, W: ?Sized> core::fmt::Display for Borrowed<'a, W> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("borrowed")
   }
 }
-
-impl<W: ?Sized> Copy for Borrowed<'_, W> {}
 
 impl<'a, W: WireFormat<Groto>> From<Borrowed<'a, W>> for WireType {
   fn from(_: Borrowed<'a, W>) -> Self {
@@ -117,7 +115,7 @@ impl<'a, W: WireFormat<Groto>> From<Borrowed<'a, W>> for WireType {
 impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
   const NAME: &'static str = "borrowed";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self(PhantomData);
+  const SELF: Self = Borrowed;
   const REPEATED: bool = W::REPEATED;
 }
 
@@ -126,20 +124,15 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
 /// ## Why we need `Flatten` wire format wrapper?
 ///
 /// e.g. when implementing `Encode` for `Vec<Vec<T>>`, in some case, we want it to be encoded as `Vec<T>`:
-#[derive(Debug, PartialEq, Eq, Hash, derive_more::Display)]
-#[display("flatten")]
-pub struct Flatten<W: ?Sized, I: ?Sized> {
-  _w: PhantomData<W>,
-  _i: PhantomData<I>,
-}
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[phantom]
+pub struct Flatten<W: ?Sized, I: ?Sized>;
 
-impl<W: ?Sized, I: ?Sized> Clone for Flatten<W, I> {
-  fn clone(&self) -> Self {
-    *self
+impl<W: ?Sized, I: ?Sized> core::fmt::Display for Flatten<W, I> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("flatten")
   }
 }
-
-impl<W: ?Sized, I: ?Sized> Copy for Flatten<W, I> {}
 
 impl<W: WireFormat<Groto>, I: WireFormat<Groto>> From<Flatten<W, I>> for WireType {
   fn from(_: Flatten<W, I>) -> Self {
@@ -150,10 +143,7 @@ impl<W: WireFormat<Groto>, I: WireFormat<Groto>> From<Flatten<W, I>> for WireTyp
 impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<W, I> {
   const NAME: &'static str = "flatten";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self {
-    _w: PhantomData,
-    _i: PhantomData,
-  };
+  const SELF: Self = Flatten;
 }
 
 /// A wire format for packed repeated fields.
@@ -249,7 +239,6 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
   const SELF: Self = Nullable;
   const REPEATED: bool = W::REPEATED;
 }
-
 
 /// The stream wire format for element encoding within repeated fields.
 ///

@@ -1,15 +1,14 @@
+use ghost::phantom;
+
 use super::super::Reflectable;
-use core::marker::PhantomData;
 
 pub use field::*;
 
 mod field;
 
-pub struct ObjectReflection<O: ?Sized, T: ?Sized, F: ?Sized> {
-  _object: PhantomData<O>,
-  _flavor: PhantomData<F>,
-  _target: PhantomData<T>,
-}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[phantom]
+pub struct ObjectReflection<O: ?Sized, T: ?Sized, F: ?Sized>;
 
 impl<O, T, F> Default for ObjectReflection<O, T, F>
 where
@@ -31,11 +30,7 @@ where
   /// Creates a new [`ObjectReflection`].
   #[inline]
   pub const fn new() -> Self {
-    Self {
-      _object: PhantomData,
-      _flavor: PhantomData,
-      _target: PhantomData,
-    }
+    ObjectReflection
   }
 }
 

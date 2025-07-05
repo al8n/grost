@@ -36,13 +36,15 @@ mod sealed {
   impl<F: ?Sized, T: ?Sized> Sealed<F> for T where T: Marker {}
 }
 
-fn checks() {
+#[allow(clippy::type_complexity)]
+const fn static_checks() {
   use crate::{flavors::groto::*, marker::*};
-  use core::marker::PhantomData;
 
   let _: <BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
   let _: <ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format =
     Packed::<LengthDelimited>;
+  let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format =
+    Packed::<Packed<LengthDelimited>>;
   let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<LengthDelimited>>;
   let _: <ListMarker<Vec<u16>, ScalarMarker<u16>> as DefaultWireFormat<Groto>>::Format =
     Packed::<Varint>;
@@ -57,27 +59,30 @@ fn checks() {
 
   let _: <ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
 
-  // let _: <MapMarker<
-  //     HashMap<u16, Vec<Vec<u32>>>,
-  //     ScalarMarker<u16>,
-  //     ListMarker<
-  //         Vec<Vec<u32>>,
-  //         ListMarker<Vec<u32>, ScalarMarker<u32>>>
-  //     > as DefaultWireFormat<Groto>
-  // >::Format = PackedEntry::<Fixed16, Packed<Packed<Fixed32>>> {
-  //     _k: PhantomData,
-  //     _v: PhantomData,
-  // };
+  #[cfg(feature = "std")]
+  {
+    use std::collections::HashMap;
 
-  // let _: <MapMarker<
-  //     HashMap<u16, Vec<HashMap<u32, Vec<u32>>>>,
-  //     ScalarMarker<u16>,
-  //     ListMarker<
-  //         Vec<HashMap<u32, Vec<u32>>>,
-  //         MapMarker<HashMap<u32, Vec<u32>>, ScalarMarker<u32>, ListMarker<Vec<u32>, ScalarMarker<u32>>>>
-  //     > as DefaultWireFormat<Groto>
-  // >::Format = PackedEntry::<Fixed16, Packed<PackedEntry<Fixed32, Packed<Fixed32>>>> {
-  //     _k: PhantomData,
-  //     _v: PhantomData,
-  // };
+    let _: <MapMarker<
+      HashMap<u16, Vec<Vec<u32>>>,
+      ScalarMarker<u16>,
+      ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>>,
+    > as DefaultWireFormat<Groto>>::Format = PackedEntry::<Varint, Packed<Packed<Varint>>>;
+
+    let _: <MapMarker<
+      HashMap<u16, Vec<HashMap<u32, Vec<u32>>>>,
+      ScalarMarker<u16>,
+      ListMarker<
+        Vec<HashMap<u32, Vec<u32>>>,
+        MapMarker<
+          HashMap<u32, Vec<u32>>,
+          ScalarMarker<u32>,
+          ListMarker<Vec<u32>, ScalarMarker<u32>>,
+        >,
+      >,
+    > as DefaultWireFormat<Groto>>::Format =
+      PackedEntry::<Varint, Packed<PackedEntry<Varint, Packed<Varint>>>>;
+  }
 }
+
+const _: () = static_checks();

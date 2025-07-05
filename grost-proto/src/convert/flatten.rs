@@ -1,3 +1,5 @@
+use ghost::phantom;
+
 use super::State;
 
 /// A sub-state of [`Flattened`] which means get the inner type for flattening.
@@ -7,11 +9,11 @@ use super::State;
 /// - `Vec<T>`, the inner type is `T`.
 /// - `HashMap<K, V>`, the inner type is `(K, V)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Inner(());
+pub struct Inner;
 
 /// A sub-state of [`Flattened`] which means get the innermost type for flattening.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Innermost(());
+pub struct Innermost;
 
 impl<T: ?Sized> State<Innermost> for T {
   type Output = T;
@@ -36,9 +38,9 @@ where
 }
 
 /// A state which shows that the type is in its flatten state.
-pub struct Flattened<S: ?Sized = Option<Innermost>> {
-  _state: core::marker::PhantomData<S>,
-}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[phantom]
+pub struct Flattened<S: ?Sized = Option<Innermost>>;
 
 impl<S, T> State<Flattened<S>> for &T
 where

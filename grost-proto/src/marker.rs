@@ -1,4 +1,3 @@
-use core::marker::PhantomData;
 use ghost::phantom;
 
 mod sealed {
