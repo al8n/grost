@@ -110,6 +110,15 @@ impl Label {
 
   /// Construct a mark type for the type based on the label.
   pub fn mark(&self, path_to_grost: &syn::Path, ty: &syn::Type) -> syn::Result<syn::Type> {
+    self.mark_helper(path_to_grost, ty, true)
+  }
+
+  fn mark_helper(
+    &self,
+    path_to_grost: &syn::Path,
+    ty: &syn::Type,
+    outermost: bool,
+  ) -> syn::Result<syn::Type> {
     Ok(match self {
       Self::Scalar => syn::parse2(quote! {
         #path_to_grost::__private::marker::ScalarMarker<#ty>
@@ -143,8 +152,8 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
           >>::Output
         })?;
-        let km = key.mark(path_to_grost, &k)?;
-        let vm = value.mark(path_to_grost, &v)?;
+        let km = key.mark_helper(path_to_grost, &k, false)?;
+        let vm = value.mark_helper(path_to_grost, &v, false)?;
 
         syn::parse2(quote! {
           #path_to_grost::__private::marker::MapMarker<#ty, #km, #vm>
@@ -156,7 +165,7 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark(path_to_grost, &inner_ty)?;
+        let inner = label.mark_helper(path_to_grost, &inner_ty, false)?;
         syn::parse2(quote! {
           #path_to_grost::__private::marker::SetMarker<#ty, #inner>
         })?
@@ -167,7 +176,7 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark(path_to_grost, &inner_ty)?;
+        let inner = label.mark_helper(path_to_grost, &inner_ty, false)?;
         syn::parse2(quote! {
           #path_to_grost::__private::marker::ListMarker<#ty, #inner>
         })?
@@ -178,10 +187,30 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark(path_to_grost, &inner_ty)?;
-        syn::parse2(quote! {
-          #path_to_grost::__private::marker::NullableMarker<#ty, #inner>
-        })?
+        let inner = label.mark_helper(path_to_grost, &inner_ty, false)?;
+
+        // if the option is the outermost, we should use the inner type wire format.
+        //
+        // e.g.
+        //
+        // ```rust
+        // struct User {
+        //   name: Option<String>,
+        // }
+        // ```
+        //
+        // In this case, there is no outer wrapper over the `Option<String>`,
+        // the default should be the default wire format of String, encode name as nullable
+        // will waste at least 2 bytes space.
+        if outermost {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::FlattenMarker<#ty, #inner>
+          })?
+        } else {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::NullableMarker<#ty, #inner>
+          })?
+        }
       }
     })
   }

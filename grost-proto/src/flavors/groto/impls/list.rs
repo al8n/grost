@@ -186,7 +186,7 @@ macro_rules! encode {
       use $crate::__private::flavors::groto::WireType;
 
       match W::WIRE_TYPE {
-        WireType::Varint | WireType::LengthDelimited => {
+        WireType::Varint | WireType::LengthDelimited | WireType::Nullable => {
           self.iter().map(|v| v.encoded_len(context)).sum()
         }
         WireType::Fixed8 => self.len(),
@@ -194,7 +194,6 @@ macro_rules! encode {
         WireType::Fixed32 => self.len() * 4,
         WireType::Fixed64 => self.len() * 8,
         WireType::Fixed128 => self.len() * 16,
-        WireType::Fixed256 => self.len() * 32,
       }
     }
 

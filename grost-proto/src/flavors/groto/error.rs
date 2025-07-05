@@ -1,7 +1,7 @@
 use super::{Groto, Identifier, Tag, WireType};
 use crate::{
   error::Error as BaseError,
-  flavors::{Flavor, FlavorError},
+  flavors::{Flavor, FlavorError, groto::ParseWireTypeError},
 };
 use core::num::NonZeroUsize;
 
@@ -103,6 +103,9 @@ pub enum Error {
     /// The identifier of the field.
     identifier: Identifier,
   },
+  /// Returned when there is a unknown wire type value
+  #[error("unknown wire type value ({0}) of `{flavor}` flavor", flavor = Groto::NAME)]
+  UnknownWireTypeValue(u8),
   /// Returned when fail to decode the length-delimited
   #[error("length-delimited overflow the maximum value of u32")]
   LengthDelimitedOverflow,
@@ -128,6 +131,13 @@ impl FlavorError<Groto> for Error {
       *r = required;
       *rem = remaining;
     }
+  }
+}
+
+impl From<ParseWireTypeError> for Error {
+  #[inline]
+  fn from(e: ParseWireTypeError) -> Self {
+    Self::UnknownWireTypeValue(e.value())
   }
 }
 

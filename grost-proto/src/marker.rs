@@ -16,6 +16,7 @@ mod sealed {
   impl<T: ?Sized> Sealed for EnumMarker<T> {}
   impl<T: ?Sized> Sealed for UnionMarker<T> {}
   impl<T: ?Sized> Sealed for ObjectMarker<T> {}
+  impl<T: ?Sized, M: ?Sized> Sealed for FlattenMarker<T, M> {}
 }
 
 /// A marker trait that associates to the type being marked.
@@ -37,6 +38,10 @@ impl<T: ?Sized> Marker for BytesMarker<T> {
 }
 
 impl<T: ?Sized> Marker for InterfaceMarker<T> {
+  type Marked = T;
+}
+
+impl<T: ?Sized, M: ?Sized> Marker for FlattenMarker<T, M> {
   type Marked = T;
 }
 
@@ -102,6 +107,21 @@ pub struct InterfaceMarker<T: ?Sized>;
 /// and the second type parameter `V` is the value type of the nullable.
 #[phantom]
 pub struct NullableMarker<T: ?Sized, V: ?Sized>;
+
+/// A marker for flatten a nested type.
+///
+/// This marker is mostly used in the below situation:
+///
+/// ```rust,ignore
+/// struct User {
+///   email: Option<String>,
+/// }
+/// ```
+///
+/// For email field, encoding it as a nullable makes no sense,
+/// as `Grost` already natively support nullable field in encoding/decoding layer.
+#[phantom]
+pub struct FlattenMarker<T: ?Sized, V: ?Sized>;
 
 /// A marker for a list type.
 ///

@@ -1,6 +1,5 @@
 #![allow(clippy::type_complexity)]
-
-use core::marker::PhantomData;
+use ghost::phantom;
 
 use crate::{
   flavors::Flavor,
@@ -15,11 +14,8 @@ use super::{
   Object, ObjectReflection,
 };
 
-pub struct ObjectFieldReflection<O: ?Sized, T: ?Sized, F: ?Sized, const TAG: u32> {
-  _object: PhantomData<O>,
-  _flavor: PhantomData<F>,
-  _target: PhantomData<T>,
-}
+#[phantom]
+pub struct ObjectFieldReflection<O: ?Sized, T: ?Sized, F: ?Sized, const TAG: u32>;
 
 impl<O, T, F, const TAG: u32> Default for ObjectFieldReflection<O, T, F, TAG>
 where
@@ -41,11 +37,7 @@ where
   /// Creates a new [`ObjectFieldReflection`].
   #[inline]
   pub const fn new() -> Self {
-    Self {
-      _object: PhantomData,
-      _flavor: PhantomData,
-      _target: PhantomData,
-    }
+    ObjectFieldReflection
   }
 }
 

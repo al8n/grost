@@ -14,6 +14,4 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const NAME: &'static str;
   /// The self.
   const SELF: Self;
-  /// `true` if the wire format is repeated.
-  const REPEATED: bool = false;
 }

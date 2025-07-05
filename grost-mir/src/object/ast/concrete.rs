@@ -690,6 +690,7 @@ impl<T, S, M> Object<T, S, M> {
       derive_flatten_state(self.path_to_grost(), self.generics(), self.name());
     let partial_state_impl = self.derive_partial_state();
     let partial_ref_state_impl = self.derive_partial_ref_state()?;
+    let default_wire_format_impl = self.derive_default_wire_format()?;
 
     Ok(quote! {
       #indexer_defination
@@ -700,6 +701,8 @@ impl<T, S, M> Object<T, S, M> {
 
       const _: () = {
         #accessors
+
+        #default_wire_format_impl
 
         #flatten_state_impl
 
@@ -790,6 +793,36 @@ impl<T, S, M> Object<T, S, M> {
         type Output = Self;
       }
     }
+  }
+
+  fn derive_default_wire_format(&self) -> darling::Result<proc_macro2::TokenStream> {
+    let path_to_grost = self.path_to_grost();
+    let flavor_type = &self.flavor_type;
+    let wire_format = &self.wire_format;
+
+    let object_type = self.ty();
+    let (object_ig, _, object_wc) = self.generics().split_for_impl();
+
+    let partial_object_type = self.partial().ty();
+    let (partial_object_ig, _, partial_object_wc) = self.partial().generics().split_for_impl();
+
+    let partial_ref_object_type = self.partial_ref().ty();
+    let (partial_ref_object_ig, _, partial_ref_object_wc) =
+      self.partial_ref().generics().split_for_impl();
+
+    Ok(quote! {
+      impl #object_ig #path_to_grost::__private::flavors::DefaultObjectWireFormat<#flavor_type> for #object_type #object_wc {
+        type Format = #wire_format;
+      }
+
+      impl #partial_object_ig #path_to_grost::__private::flavors::DefaultObjectWireFormat<#flavor_type> for #partial_object_type #partial_object_wc {
+        type Format = #wire_format;
+      }
+
+      impl #partial_ref_object_ig #path_to_grost::__private::flavors::DefaultObjectWireFormat<#flavor_type> for #partial_ref_object_type #partial_ref_object_wc {
+        type Format = #wire_format;
+      }
+    })
   }
 
   fn derive_partial_ref_state(&self) -> darling::Result<proc_macro2::TokenStream> {

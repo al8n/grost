@@ -7,13 +7,11 @@ pub use wire_format::*;
 
 mod wire_format;
 
-macro_rules! wire_type {
-  (enum $name:ident<$flavor:ty> {
-    $(
-      $(#[$meta:meta])*
-      $ty:literal = $value:literal
-    ),+$(,)?
-  }) => {
+macro_rules! wire_format {
+  ($name:ident<$flavor:ty> $(
+    $(#[$meta:meta])*
+    $ty:literal
+  ),+$(,)?) => {
     paste::paste! {
       $(
         $(
@@ -35,7 +33,18 @@ macro_rules! wire_type {
           }
         }
       )*
+    }
+  };
+}
 
+macro_rules! wire_type {
+  (enum $name:ident<$flavor:ty> {
+    $(
+      $(#[$meta:meta])*
+      $ty:literal = $value:literal
+    ),+$(,)?
+  }) => {
+    paste::paste! {
       #[doc = "The error when parsing a [`" $name "`]"]
       #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
       #[error("invalid selector wire type value: {0}")]
@@ -190,6 +199,7 @@ const _: () = {
     DefaultSetWireFormat<V>,
     DefaultMapWireFormat<K, V>,
     DefaultNullableWireFormat<V>,
+    DefaultFlattenWireFormat<V>,
     DefaultEnumWireFormat,
     DefaultUnionWireFormat,
   );

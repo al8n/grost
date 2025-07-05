@@ -43,8 +43,7 @@ impl FromMeta for FieldSelection {
               _ => {
                 if let Some(ident) = path.get_ident() {
                   return Err(darling::Error::custom(format!(
-                    "unknown `{}`, {HINTS}",
-                    ident
+                    "unknown `{ident}`, {HINTS}"
                   )));
                 } else {
                   return Err(darling::Error::custom(format!("missing ident, {HINTS}")));

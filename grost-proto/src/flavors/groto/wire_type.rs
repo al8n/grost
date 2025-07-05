@@ -1,28 +1,45 @@
-use core::marker::PhantomData;
 use ghost::phantom;
 
 use crate::flavors::WireFormat;
 
 use super::Groto;
 
+wire_format!(
+  WireType<Groto>
+  /// The varint encoding/decoding wire format
+  "varint",
+  /// The length-delimited encoding/decoding wire format
+  "length-delimited",
+  /// The fixed 8-bit length encoding/decoding wire format
+  "fixed8",
+  /// The fixed 16-bit length encoding/decoding wire format
+  "fixed16",
+  /// The fixed 32-bit length encoding/decoding wire format
+  "fixed32",
+  /// The fixed 64-bit length encoding/decoding wire format
+  "fixed64",
+  /// The fixed 128-bit length encoding/decoding wire format
+  "fixed128",
+);
+
 wire_type!(
   enum WireType<Groto> {
+    /// The nullable encoding/decoding wire format
+    "nullable" = 0,
     /// The varint encoding/decoding wire format
-    "varint" = 0,
+    "varint" = 1,
     /// The length-delimited encoding/decoding wire format
-    "length-delimited" = 1,
+    "length-delimited" = 2,
     /// The fixed 8-bit length encoding/decoding wire format
-    "fixed8" = 2,
+    "fixed8" = 3,
     /// The fixed 16-bit length encoding/decoding wire format
-    "fixed16" = 3,
+    "fixed16" = 4,
     /// The fixed 32-bit length encoding/decoding wire format
-    "fixed32" = 4,
+    "fixed32" = 5,
     /// The fixed 64-bit length encoding/decoding wire format
-    "fixed64" = 5,
+    "fixed64" = 6,
     /// The fixed 128-bit length encoding/decoding wire format
-    "fixed128" = 6,
-    /// The fixed 256-bit length encoding/decoding wire format
-    "fixed256" = 7,
+    "fixed128" = 7,
   }
 );
 
@@ -116,7 +133,6 @@ impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, W> {
   const NAME: &'static str = "borrowed";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Borrowed;
-  const REPEATED: bool = W::REPEATED;
 }
 
 /// A wire format for nested data to encode it as a flattened structure.
@@ -237,12 +253,11 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
   const NAME: &'static str = "nullable";
   const WIRE_TYPE: WireType = W::WIRE_TYPE;
   const SELF: Self = Nullable;
-  const REPEATED: bool = W::REPEATED;
 }
 
-/// The stream wire format for element encoding within repeated fields.
+/// The repeated wire format for element encoding within repeated fields.
 ///
-/// When used as `Repeated<Stream>`, this changes the encoding strategy
+/// When used as `Repeated<Repeated>`, this changes the encoding strategy
 /// to a more stream-friendly format where each element is individually tagged.
 /// This is similar to how Protocol Buffers encodes repeated fields when the `packed=false`
 /// option is used.
@@ -253,7 +268,7 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
 /// | identifier | total_length | elem1 | elem2 | elem3 | ... |
 /// ```
 ///
-/// `Stream` encoding repeats the field identifier for each element:
+/// `Repeated` encoding repeats the field identifier for each element:
 ///
 /// ```text
 /// | identifier | elem1 | identifier | elem2 | identifier | elem3 | ... |
@@ -263,64 +278,61 @@ impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
 /// - Streaming scenarios where you need to process elements before receiving the entire collection
 /// - Compatibility with Protocol Buffer's default repeated field encoding
 /// - Cases where elements may be added incrementally
-#[derive(derive_more::Display)]
-#[display("stream")]
-// TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
-pub struct Stream<W: ?Sized, B: ?Sized, const I: u32> {
-  _w: PhantomData<W>,
-  _b: PhantomData<B>,
-}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Clone for Stream<W, B, I> {
+// TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
+#[phantom]
+pub struct Repeated<W: ?Sized, B: ?Sized, const I: u32>;
+
+impl<W: ?Sized, B: ?Sized, const I: u32> Clone for Repeated<W, B, I> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Copy for Stream<W, B, I> {}
+impl<W: ?Sized, B: ?Sized, const I: u32> Copy for Repeated<W, B, I> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> PartialEq for Stream<W, B, I> {
+impl<W: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for Repeated<W, B, I> {
+  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+    I.hash(state);
+  }
+}
+
+impl<W: ?Sized, B: ?Sized, const I: u32> PartialEq for Repeated<W, B, I> {
   fn eq(&self, _: &Self) -> bool {
     true
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Eq for Stream<W, B, I> {}
+impl<W: ?Sized, B: ?Sized, const I: u32> Eq for Repeated<W, B, I> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for Stream<W, B, I> {
-  fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-    self._w.hash(state);
-    self._b.hash(state);
-    I.hash(state);
-  }
-}
-
-impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Stream<W, B, I> {
+impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Display for Repeated<W, B, I> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    f.debug_struct("Stream").finish()
+    f.write_str("repeated")
   }
 }
 
-impl<W, B, const I: u32> WireFormat<Groto> for Stream<W, B, I>
-where
-  W: WireFormat<Groto>,
-  B: ?Sized,
-{
-  const NAME: &'static str = "stream";
-  const WIRE_TYPE: WireType = W::WIRE_TYPE;
-  const SELF: Self = Self {
-    _w: PhantomData,
-    _b: PhantomData,
-  };
-  const REPEATED: bool = true;
+impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Repeated<W, B, I> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_str("Repeated")
+  }
 }
 
-impl<const I: u32, W, B> From<Stream<W, B, I>> for WireType
+impl<W, B, const I: u32> WireFormat<Groto> for Repeated<W, B, I>
+where
+  W: WireFormat<Groto>,
+  B: ?Sized + core::hash::Hash + Eq,
+{
+  const NAME: &'static str = "repeated";
+  const WIRE_TYPE: WireType = W::WIRE_TYPE;
+  const SELF: Self = Repeated;
+}
+
+impl<const I: u32, W, B> From<Repeated<W, B, I>> for WireType
 where
   W: WireFormat<Groto>,
   B: ?Sized,
 {
-  fn from(_: Stream<W, B, I>) -> Self {
+  fn from(_: Repeated<W, B, I>) -> Self {
     W::WIRE_TYPE
   }
 }
