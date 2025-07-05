@@ -107,6 +107,84 @@ impl Label {
 
     Ok(false)
   }
+
+  /// Construct a mark type for the type based on the label.
+  pub fn mark(&self, path_to_grost: &syn::Path, ty: &syn::Type) -> syn::Result<syn::Type> {
+    Ok(match self {
+      Self::Scalar => syn::parse2(quote! {
+        #path_to_grost::__private::marker::ScalarMarker<#ty>
+      })?,
+      Self::Bytes => syn::parse2(quote! {
+        #path_to_grost::__private::marker::BytesMarker<#ty>
+      })?,
+      Self::String => syn::parse2(quote! {
+        #path_to_grost::__private::marker::StringMarker<#ty>
+      })?,
+      Self::Object => syn::parse2(quote! {
+        #path_to_grost::__private::marker::ObjectMarker<#ty>
+      })?,
+      Self::Enum => syn::parse2(quote! {
+        #path_to_grost::__private::marker::EnumMarker<#ty>
+      })?,
+      Self::Union => syn::parse2(quote! {
+        #path_to_grost::__private::marker::UnionMarker<#ty>
+      })?,
+      Self::Interface => syn::parse2(quote! {
+        #path_to_grost::__private::marker::InterfaceMarker<#ty>
+      })?,
+      Self::Map { key, value } => {
+        let k: syn::Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapKey>,
+          >>::Output
+        })?;
+        let v: syn::Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
+          >>::Output
+        })?;
+        let km = key.mark(path_to_grost, &k)?;
+        let vm = value.mark(path_to_grost, &v)?;
+
+        syn::parse2(quote! {
+          #path_to_grost::__private::marker::MapMarker<#ty, #km, #vm>
+        })?
+      }
+      Self::Set(label) => {
+        let inner_ty: syn::Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+        let inner = label.mark(path_to_grost, &inner_ty)?;
+        syn::parse2(quote! {
+          #path_to_grost::__private::marker::SetMarker<#ty, #inner>
+        })?
+      }
+      Self::List(label) => {
+        let inner_ty: syn::Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+        let inner = label.mark(path_to_grost, &inner_ty)?;
+        syn::parse2(quote! {
+          #path_to_grost::__private::marker::ListMarker<#ty, #inner>
+        })?
+      }
+      Self::Nullable(label) => {
+        let inner_ty: syn::Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+        let inner = label.mark(path_to_grost, &inner_ty)?;
+        syn::parse2(quote! {
+          #path_to_grost::__private::marker::NullableMarker<#ty, #inner>
+        })?
+      }
+    })
+  }
 }
 
 impl syn::parse::Parse for Label {
@@ -192,8 +270,7 @@ impl syn::parse::Parse for Label {
               return Err(syn::Error::new(
                 param_name.span(),
                 format!(
-                  "Unexpected format `map({}{content})`, expected `map(key(...), value(...))`",
-                  param_name
+                  "Unexpected format `map({param_name}{content})`, expected `map(key(...), value(...))`"
                 ),
               ));
             }
@@ -234,8 +311,7 @@ impl syn::parse::Parse for Label {
                 return Err(syn::Error::new(
                   param_name.span(),
                   format!(
-                    "Unexpected `{}` in `map(...)`, expected `key(...)` or `value(...)`",
-                    param_name
+                    "Unexpected `{param_name}` in `map(...)`, expected `key(...)` or `value(...)`"
                   ),
                 ));
               }

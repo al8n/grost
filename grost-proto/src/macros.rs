@@ -455,6 +455,20 @@ macro_rules! default_union_wire_format {
   };
 }
 
+/// A macro emits [`DefaultInterfaceWireFormat`](crate::flavors::DefaultInterfaceWireFormat) implementations.
+#[macro_export]
+macro_rules! default_interface_wire_format {
+  ($(
+    $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $format:ty); +$(;)?
+  ),+$(,)?) => {
+    $(
+      $crate::__default_wire_format__!(@impl $(
+        interface<$flavor>: $ty $( $(const $g: usize),* )? as $format
+      ),*);
+    )*
+  };
+}
+
 /// A macro emits traits implementations for a type that through a bridge to another type.
 ///
 /// ## Example

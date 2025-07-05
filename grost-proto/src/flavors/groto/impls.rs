@@ -7,7 +7,7 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultWireFormat, Flavor, Groto, WireFormat,
+    DefaultNullableWireFormat, Flavor, Groto, WireFormat,
     groto::{Context, Error, Nullable},
   },
   selection::Selectable,
@@ -397,19 +397,12 @@ where
   type Output = Option<T::Output>;
 }
 
-// impl<T> DefaultWireFormat<Groto> for Option<T>
-// where
-//   T: DefaultWireFormat<Groto>,
-// {
-//   type Format = Nullable<T::Format>;
-// }
-
-// impl<T> DefaultWireFormat<Groto> for &T
-// where
-//   T: DefaultWireFormat<Groto> + ?Sized,
-// {
-//   type Format = T::Format;
-// }
+impl<T> DefaultNullableWireFormat<Groto> for Option<T> {
+  type Format<V>
+    = Nullable<V>
+  where
+    V: WireFormat<Groto>;
+}
 
 impl<T> Selectable<Groto> for Option<T>
 where
@@ -424,3 +417,29 @@ where
     }
   }
 }
+
+macro_rules! default_wire_format_ref {
+  ($($t:ident $(< $($p:ident),+$(,)? >)?),+$(,)?) => {
+    $(
+      impl<T> $crate::__private::flavors::$t<Groto> for &T
+      where
+        T: $crate::__private::flavors::$t<Groto> + ?Sized,
+      {
+        type Format $(< $($p),* >)? = T::Format $(< $($p),* > where $($p: $crate::__private::flavors::WireFormat<Groto>),*)?;
+      }
+    )*
+  };
+}
+
+default_wire_format_ref!(
+  DefaultBytesWireFormat,
+  DefaultStringWireFormat,
+  DefaultScalarWireFormat,
+  DefaultObjectWireFormat,
+  DefaultEnumWireFormat,
+  DefaultUnionWireFormat,
+  DefaultNullableWireFormat<V>,
+  DefaultListWireFormat<V>,
+  DefaultSetWireFormat<K>,
+  DefaultMapWireFormat<K, V>,
+);

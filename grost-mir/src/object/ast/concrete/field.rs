@@ -377,10 +377,12 @@ impl TaggedField {
       Some(wf) => wf,
       None => {
         let dwf = default_wire_format(path_to_grost, flavor_type);
-        let format = default_wire_format_associated(path_to_grost, flavor_type, field_ty);
+        let field_marked_type = field.label.mark(path_to_grost, field_ty)?;
+        let format = default_wire_format_associated(path_to_grost, flavor_type, &field_marked_type);
+
         if use_generics {
           let pred: WherePredicate = syn::parse2(quote! {
-            #field_ty: #dwf
+            #field_marked_type: #dwf
           })?;
           selector_constraints.push(pred.clone());
           partial_ref_constraints.extend([
@@ -581,11 +583,11 @@ fn default_wire_format(
 fn default_wire_format_associated(
   path_to_grost: &Path,
   flavor_type: impl ToTokens,
-  field_type: impl ToTokens,
+  field_marked_type: impl ToTokens,
 ) -> proc_macro2::TokenStream {
   let dwf = default_wire_format(path_to_grost, flavor_type);
   quote! {
-    <#field_type as #dwf>::Format
+    <#field_marked_type as #dwf>::Format
   }
 }
 

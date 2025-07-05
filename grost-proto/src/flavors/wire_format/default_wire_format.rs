@@ -2,6 +2,7 @@ use super::{Flavor, WireFormat};
 
 pub use bytes::*;
 pub use enumeration::*;
+pub use interface::*;
 pub use list::*;
 pub use map::*;
 pub use nullable::*;
@@ -13,6 +14,7 @@ pub use union::*;
 
 mod bytes;
 mod enumeration;
+mod interface;
 mod list;
 mod map;
 mod nullable;
@@ -40,28 +42,32 @@ mod sealed {
 const fn static_checks() {
   use crate::{flavors::groto::*, marker::*};
 
-  let _: <BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
-  let _: <ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format =
-    Packed::<LengthDelimited>;
-  let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format =
-    Packed::<Packed<LengthDelimited>>;
-  let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<LengthDelimited>>;
-  let _: <ListMarker<Vec<u16>, ScalarMarker<u16>> as DefaultWireFormat<Groto>>::Format =
-    Packed::<Varint>;
-  let _: <ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
-  let _: <ListMarker<
-    Vec<Vec<Vec<u16>>>,
-    ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>>,
-  > as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Packed<Varint>>>;
-
-  let _: <ScalarMarker<u16> as DefaultWireFormat<Groto>>::Format = Varint;
-  let _: <ScalarMarker<u32> as DefaultWireFormat<Groto>>::Format = Varint;
-
-  let _: <ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
-
   #[cfg(feature = "std")]
   {
     use std::collections::HashMap;
+
+    let _: <BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
+    let _: <NullableMarker<Option<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format = Nullable::<LengthDelimited>;
+    let _: <StringMarker<str> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
+    let _: <ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format =
+      Packed::<LengthDelimited>;
+    let _: <ListMarker<Vec<&str>, StringMarker<&str>> as DefaultWireFormat<Groto>>::Format =
+      Packed::<LengthDelimited>;
+    let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format =
+      Packed::<Packed<LengthDelimited>>;
+    let _: <ListMarker<Vec<Vec<Vec<u8>>>, ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<LengthDelimited>>;
+    let _: <ListMarker<Vec<u16>, ScalarMarker<u16>> as DefaultWireFormat<Groto>>::Format =
+      Packed::<Varint>;
+    let _: <ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
+    let _: <ListMarker<
+      Vec<Vec<Vec<u16>>>,
+      ListMarker<Vec<Vec<u16>>, ListMarker<Vec<u16>, ScalarMarker<u16>>>,
+    > as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Packed<Varint>>>;
+
+    let _: <ScalarMarker<u16> as DefaultWireFormat<Groto>>::Format = Varint;
+    let _: <ScalarMarker<u32> as DefaultWireFormat<Groto>>::Format = Varint;
+
+    let _: <ListMarker<Vec<Vec<u32>>, ListMarker<Vec<u32>, ScalarMarker<u32>>> as DefaultWireFormat<Groto>>::Format = Packed::<Packed<Varint>>;
 
     let _: <MapMarker<
       HashMap<u16, Vec<Vec<u32>>>,

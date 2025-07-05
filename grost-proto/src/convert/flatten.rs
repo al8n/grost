@@ -2,6 +2,20 @@ use ghost::phantom;
 
 use super::State;
 
+/// A sub-state of [`Flattened`] which means get the key type for flattening.
+///
+/// e.g.
+/// - `HashMap<K, V>`, the key type is `K`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MapKey;
+
+/// A sub-state of [`Flattened`] which means get the value type for flattening.
+///
+/// e.g.
+/// - `HashMap<K, V>`, the key type is `V`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MapValue;
+
 /// A sub-state of [`Flattened`] which means get the inner type for flattening.
 ///
 /// e.g.

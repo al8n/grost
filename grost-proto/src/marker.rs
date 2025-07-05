@@ -8,6 +8,7 @@ mod sealed {
   impl<T: ?Sized> Sealed for ScalarMarker<T> {}
   impl<T: ?Sized> Sealed for StringMarker<T> {}
   impl<T: ?Sized> Sealed for BytesMarker<T> {}
+  impl<T: ?Sized> Sealed for InterfaceMarker<T> {}
   impl<T: ?Sized, M: ?Sized> Sealed for NullableMarker<T, M> {}
   impl<T: ?Sized, M: ?Sized> Sealed for ListMarker<T, M> {}
   impl<T: ?Sized, M: ?Sized> Sealed for SetMarker<T, M> {}
@@ -32,6 +33,10 @@ impl<T: ?Sized> Marker for StringMarker<T> {
 }
 
 impl<T: ?Sized> Marker for BytesMarker<T> {
+  type Marked = T;
+}
+
+impl<T: ?Sized> Marker for InterfaceMarker<T> {
   type Marked = T;
 }
 
@@ -86,6 +91,10 @@ pub struct UnionMarker<T: ?Sized>;
 /// A marker for an object type.
 #[phantom]
 pub struct ObjectMarker<T: ?Sized>;
+
+/// A marker for an interface type.
+#[phantom]
+pub struct InterfaceMarker<T: ?Sized>;
 
 /// A marker for a nullable type.
 ///

@@ -109,7 +109,7 @@ impl Reflection {
       impl #type_reflection_ig #object_reflectable for #object_type #type_reflection_wc {
         type Reflection = #path_to_grost::__private::reflection::SchemaType;
 
-        const REFLECTION: &'static Self::Reflection = &{
+        const REFLECTION: &'static #path_to_grost::__private::reflection::SchemaType = &{
           #path_to_grost::__private::reflection::SchemaType::Object(
             &#path_to_grost::__private::reflection::ObjectBuilder {
               name: #schema_name,
@@ -128,7 +128,7 @@ impl Reflection {
       {
         type Reflection = #path_to_grost::__private::reflection::Object;
 
-        const REFLECTION: &'static Self::Reflection = &{
+        const REFLECTION: &'static #path_to_grost::__private::reflection::Object = &{
           #path_to_grost::__private::reflection::ObjectBuilder {
             name: #schema_name,
             description: #schema_description,
@@ -145,7 +145,7 @@ impl Reflection {
       {
         type Reflection = #path_to_grost::__private::reflection::Object;
 
-        const REFLECTION: &'static Self::Reflection = &{
+        const REFLECTION: &'static #path_to_grost::__private::reflection::Object = &{
           #path_to_grost::__private::reflection::ObjectBuilder {
             name: #schema_name,
             description: #schema_description,
