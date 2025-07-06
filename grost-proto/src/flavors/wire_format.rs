@@ -264,15 +264,42 @@ pub(super) mod sealed {
 }
 
 seq_macro::seq!(N in 0..=63 {
-  /// A wire format for joining up to 64 ASCII bytes between elements.
+  /// A wire format for joining collections with ASCII byte separators.
   ///
-  /// e.g.
+  /// `JoinAscii` allows you to encode collections (like `&[&[u8]]`) by joining their elements
+  /// with up to 64 ASCII bytes as separators. This is useful for creating delimited formats
+  /// where you need specific ASCII characters between elements.
   ///
-  /// 1. `&[&[u8]]` can be encoded as `JoinAscii<LengthDelimited, 128>`,
-  ///   the output result will be the same as encoding `&[u8]` as `LengthDelimited`
-  /// 2. `&[&[u8]]` can be encoded as `JoinAscii2<LengthDelimited, b','>`,
-  ///   the output result will be the same as encoding `&[u8]` as `LengthDelimited` but with a comma `,` between elements.
-  /// 3. and etc.
+  /// ## Type Parameters
+  /// - `W`: The underlying wire format used to encode individual elements
+  /// - `A~N`: Up to 64 ASCII byte constants (0-127) used as separators
+  ///
+  /// ## Separator Behavior
+  /// - ASCII bytes with values 0-127 are included as separators
+  /// - The special value `128` (default) is ignored and produces no separator
+  /// - Separators are concatenated in the order they appear in the type parameters
+  ///
+  /// ## Examples
+  ///
+  /// ```rust
+  /// // No separator - equivalent to directly encoding with the underlying format
+  /// type NoSeparator = JoinAscii<LengthDelimited>; // Uses default 128 (ignored)
+  ///
+  /// // Single comma separator
+  /// type CommaSeparated = JoinAscii<LengthDelimited, b','>;
+  ///
+  /// // Multiple separators: ", " (comma + space)
+  /// type CommaSpaceSeparated = JoinAscii<LengthDelimited, b',', b' '>;
+  ///
+  /// // Custom delimiter sequence
+  /// type PipeSeparated = JoinAscii<LengthDelimited, b'|'>;
+  /// ```
+  ///
+  /// ## Use Cases
+  /// - CSV-like formats with custom delimiters
+  /// - Creating human-readable serialized data
+  /// - Protocol formats that require specific ASCII separators
+  /// - Converting nested collections to flat, delimited representations
   #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
   #[phantom]
   pub struct JoinAscii<W: ?Sized, #(const A~N: u8 = 128,)*>;
@@ -299,9 +326,15 @@ seq_macro::seq!(N in 0..=63 {
     };
 
     /// The ASCII bytes used for joining elements.
+    /// 
+    /// This contains only the valid ASCII bytes (0-127) from the type parameters,
+    /// in the order they were specified, with sentinel values (128) filtered out.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
-    /// The ASCII str used for joining elements.
+    /// The ASCII string used for joining elements.
+    /// 
+    /// This is the UTF-8 representation of [`BYTES`](Self::BYTES). Since all bytes
+    /// are guaranteed to be valid ASCII (0-127), this conversion is always safe.
     pub const STR: &str = unsafe {
       // SAFETY: The bytes are guaranteed to be valid UTF-8 as they are ASCII characters.
       core::str::from_utf8_unchecked(Self::BYTES)
@@ -312,17 +345,52 @@ seq_macro::seq!(N in 0..=63 {
 const SENTINEL_CHAR: char = '\u{FFFF}';
 
 seq_macro::seq!(N in 0..=63 {
-  /// A wire format for joining up to 64 chars between elements.
+  /// A wire format for joining collections with Unicode character separators.
   ///
-  /// The `u32::MAX` is used as a sentinel value to indicate that no character is used for joining elements,
+  /// `JoinChar` allows you to encode collections (like `&[&[u8]]`) by joining their elements
+  /// with up to 64 Unicode characters as separators. This provides more flexibility than
+  /// `JoinAscii` by supporting the full Unicode character set.
   ///
-  /// e.g.
+  /// ## Type Parameters
+  /// - `W`: The underlying wire format used to encode individual elements  
+  /// - `C~N`: Up to 64 Unicode character constants used as separators
   ///
-  /// 1. `&[&[u8]]` can be encoded as `JoinChar<LengthDelimited, u32::MAX>`,
-  ///   the output result will be the same as encoding `&[u8]` as `LengthDelimited`
-  /// 2. `&[&[u8]]` can be encoded as `JoinChar<LengthDelimited, ','>`,
-  ///   the output result will be the same as encoding `&[u8]` as `LengthDelimited` but with a comma `,` between elements.
-  /// 3. and etc.
+  /// ## Separator Behavior
+  /// - Any valid Unicode character can be used as a separator
+  /// - The sentinel value `'\u{FFFF}'` (default) is ignored and produces no separator
+  /// - Separators are concatenated in the order they appear in the type parameters
+  /// - Characters are encoded as UTF-8 bytes in the final output
+  ///
+  /// ## Examples
+  ///
+  /// ```rust
+  /// // No separator - equivalent to directly encoding with the underlying format
+  /// type NoSeparator = JoinChar<LengthDelimited>; // Uses default sentinel (ignored)
+  ///
+  /// // Single comma separator
+  /// type CommaSeparated = JoinChar<LengthDelimited, ','>;
+  ///
+  /// // Unicode separators
+  /// type UnicodeArrow = JoinChar<LengthDelimited, '→'>;
+  /// type EmojiBullet = JoinChar<LengthDelimited, '•'>;
+  ///
+  /// // Multiple characters: " -> " (space + arrow + space)
+  /// type ArrowSeparated = JoinChar<LengthDelimited, ' ', '→', ' '>;
+  ///
+  /// // Mixed ASCII and Unicode
+  /// type FancySeparated = JoinChar<LengthDelimited, ' ', '|', ' ', '★', ' '>;
+  /// ```
+  ///
+  /// ## Use Cases
+  /// - Internationalized data formats
+  /// - Human-readable output with Unicode symbols
+  /// - Creating visually appealing delimited data
+  /// - Protocols that need to support non-ASCII separators
+  /// - Converting nested collections with custom Unicode delimiters
+  ///
+  /// ## Performance Notes
+  /// - Characters are encoded to UTF-8 at compile time
+  /// - Multi-byte Unicode characters will use more space than ASCII equivalents
   #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
   #[phantom]
   pub struct JoinChar<W: ?Sized, #(const C~N: char = SENTINEL_CHAR,)*>;
@@ -347,12 +415,20 @@ seq_macro::seq!(N in 0..=63 {
       crate::utils::InlinedBytes::<{ 64 * 4 }>::from_slice(buf.split_at(i).0).unwrap()
     };
 
-    /// The bytes used for joining elements.
+    /// The UTF-8 encoded bytes used for joining elements.
+    /// 
+    /// This contains the UTF-8 representation of all non-sentinel characters
+    /// from the type parameters, concatenated in the order they were specified.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
-    /// The str used for joining elements.
+    /// The Unicode string used for joining elements.
+    /// 
+    /// This is the UTF-8 string representation of all the separator characters.
+    /// Characters are concatenated in the order they appear in the type parameters,
+    /// with sentinel values filtered out.
     pub const STR: &str = unsafe {
-      // SAFETY: The bytes are guaranteed to be valid UTF-8
+      // SAFETY: The bytes are guaranteed to be valid UTF-8 since they come from
+      // char::encode_utf8, which always produces valid UTF-8 sequences.
       core::str::from_utf8_unchecked(Self::BYTES)
     };
   }
