@@ -83,8 +83,6 @@ const _: () = {
     }
 
     impl<W: WireFormat<Groto>, #(const A~N: char,)*> From<JoinChar<W, #(A~N,)*>> for WireType
-    // where
-    //   #((): JoinableAscii<A~N>,)*
     {
       fn from(_: JoinChar<W, #(A~N,)*>) -> Self {
         W::WIRE_TYPE
@@ -92,8 +90,6 @@ const _: () = {
     }
 
     impl<W: WireFormat<Groto>, #(const A~N: char,)*> WireFormat<Groto> for JoinChar<W, #(A~N,)*>
-    // where
-    //   #((): JoinableAscii<A~N>,)*
     {
       const WIRE_TYPE: WireType = W::WIRE_TYPE;
       const SELF: Self = JoinChar;

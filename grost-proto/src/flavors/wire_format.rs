@@ -393,6 +393,7 @@ seq_macro::seq!(N in 0..=63 {
   /// - Multi-byte Unicode characters will use more space than ASCII equivalents
   #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
   #[phantom]
+  // TODO(al8n): change const `C: char` to `C: Option<char>` when `feature(adt_const_params)` is stable
   pub struct JoinChar<W: ?Sized, #(const C~N: char = SENTINEL_CHAR,)*>;
 
   impl<W: ?Sized, #(const C~N: char,)*> core::fmt::Display for JoinChar<W, #(C~N,)*> {
