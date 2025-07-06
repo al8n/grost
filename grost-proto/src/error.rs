@@ -50,12 +50,20 @@ pub enum Error<F: Flavor + ?Sized> {
   },
 
   /// Returned when the expect identifier for encoding is mismatch the actual identifier for encoding.
-  #[display("identifier mismatch: expect {expect}, actual {actual}")]
-  IdentifierMismatch {
+  #[display("unexpected identifier {actual}, expected {expected}")]
+  UnexpectedIdentifier {
     /// The expected identifier for encoding.
-    expect: F::Identifier,
+    expected: F::Identifier,
     /// The actual identifier for encoding.
     actual: F::Identifier,
+  },
+  /// Returned when the wire type is unexpected for the given type.
+  #[display("unexpected wire type {actual}, expected {expected}")]
+  UnexpectedWireType {
+    /// The expected wire type.
+    expected: F::WireType,
+    /// The actual wire type.
+    actual: F::WireType,
   },
 
   /// Returned when the buffer does not have enough data to decode the message.
@@ -153,10 +161,16 @@ impl<F: Flavor + ?Sized> Error<F> {
     Self::UnsupportedIdentifier { ty, identifier }
   }
 
-  /// Creates an identifier mismatch error.
+  /// Creates an unexpected identifier error.
   #[inline]
-  pub const fn identifier_mismatch(expect: F::Identifier, actual: F::Identifier) -> Self {
-    Self::IdentifierMismatch { expect, actual }
+  pub const fn unexpected_identifier(expected: F::Identifier, actual: F::Identifier) -> Self {
+    Self::UnexpectedIdentifier { expected, actual }
+  }
+
+  /// Creates an unexpected wire type error.
+  #[inline]
+  pub const fn unexpected_wire_type(expected: F::WireType, actual: F::WireType) -> Self {
+    Self::UnexpectedWireType { expected, actual }
   }
 
   /// Creates a new duplicated field error.

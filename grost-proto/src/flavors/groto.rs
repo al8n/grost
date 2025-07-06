@@ -135,6 +135,19 @@ impl Flavor for Groto {
           return Err(Error::buffer_underflow());
         }
 
+        let marker = src[offset];
+        offset += 1;
+        if marker == 0 {
+          // This is a zero byte indicating absence, so we skip it
+          return Ok((
+            offset,
+            Unknown::new(tag, wire_type, offset, slice!(offset, buf_len, buf)),
+          ));
+        }
+        if offset + 1 >= buf_len {
+          return Err(Error::buffer_underflow());
+        }
+
         let wire_type = WireType::try_from_u8(src[offset])?;
         offset += 1;
 
@@ -215,11 +228,20 @@ fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
       if buf_len <= 1 {
         return Err(Error::buffer_underflow());
       }
-      let wire_type = WireType::try_from_u8(buf[0])?;
+      let marker = buf[0];
+      if marker == 0 {
+        // This is a zero byte indicating absence, so we skip it
+        return Ok(1);
+      }
+
+      if buf_len <= 2 {
+        return Err(Error::buffer_underflow());
+      }
+      let wire_type = WireType::try_from_u8(buf[1])?;
       if wire_type.is_nullable() {
         return Err(Error::custom("unexpected nested nullable wire type"));
       }
-      return skip_helper(wire_type, &buf[1..]).map(|len| len + 1);
+      return skip_helper(wire_type, &buf[2..]).map(|len| len + 2);
     }
     WireType::Fixed8 => try_skip_fixed!(1),
     WireType::Fixed16 => try_skip_fixed!(2),

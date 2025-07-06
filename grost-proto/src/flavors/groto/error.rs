@@ -54,12 +54,20 @@ pub enum Error {
     identifier: Identifier,
   },
   /// Returned when the expect identifier for encoding is mismatch the actual identifier for encoding.
-  #[error("identifier mismatch: expect {expect}, actual {actual}")]
-  IdentifierMismatch {
+  #[error("unexpected identifier {actual}, expected {expected}")]
+  UnexpectedIdentifier {
     /// The expected identifier for encoding.
-    expect: Identifier,
+    expected: Identifier,
     /// The actual identifier for encoding.
     actual: Identifier,
+  },
+  /// Returned when the wire type is unexpected for the given type.
+  #[error("unexpected wire type {actual}, expected {expected}")]
+  UnexpectedWireType {
+    /// The expected wire type.
+    expected: WireType,
+    /// The actual wire type.
+    actual: WireType,
   },
   /// Returned when the buffer does not have enough data to decode the message.
   #[error("buffer underflow")]
@@ -215,10 +223,16 @@ impl Error {
     Self::UnsupportedIdentifier { ty, identifier }
   }
 
-  /// Creates an identifier mismatch error.
+  /// Creates an unexpected identifier error.
   #[inline]
-  pub const fn identifier_mismatch(expect: Identifier, actual: Identifier) -> Self {
-    Self::IdentifierMismatch { expect, actual }
+  pub const fn unexpected_identifier(expected: Identifier, actual: Identifier) -> Self {
+    Self::UnexpectedIdentifier { expected, actual }
+  }
+
+  /// Creates an unexpected wire type error.
+  #[inline]
+  pub const fn unexpected_wire_type(expected: WireType, actual: WireType) -> Self {
+    Self::UnexpectedWireType { expected, actual }
   }
 
   /// Creates a new encoding error from a [`varing::EncodeError`].
@@ -357,7 +371,12 @@ impl From<BaseError<Groto>> for Error {
       BaseError::UnsupportedIdentifier { ty, identifier } => {
         Self::unsupported_identifier(ty, identifier)
       }
-      BaseError::IdentifierMismatch { expect, actual } => Self::identifier_mismatch(expect, actual),
+      BaseError::UnexpectedIdentifier { expected, actual } => {
+        Self::unexpected_identifier(expected, actual)
+      }
+      BaseError::UnexpectedWireType { expected, actual } => {
+        Self::unexpected_wire_type(expected, actual)
+      }
       BaseError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
       BaseError::BufferOverflow {
         available,
