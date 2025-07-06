@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::{
   convert::{Flattened, Inner, MapKey, MapValue, State},
-  flavors::{DefaultMapWireFormat, Groto, WireFormat, groto::PackedEntry},
+  flavors::{DefaultMapWireFormat, Groto, PackedEntry, WireFormat},
 };
 
 impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {

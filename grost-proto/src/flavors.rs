@@ -23,7 +23,6 @@ macro_rules! wire_format {
 
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
-          const NAME: &'static str = $ty;
           const SELF: Self = [< $ty: camel >];
         }
 

@@ -14,13 +14,13 @@ macro_rules! groto_varint {
     );
 
     $(
-      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
+      // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
       //   fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
       //     ::core::result::Result::Ok(::core::option::Option::Some(input))
       //   }
       // }
 
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for $ty {
         fn transform(input: $ty) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
           ::core::result::Result::Ok(::core::option::Option::Some(input))
         }
@@ -95,7 +95,7 @@ macro_rules! varint {
         }
       }
 
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::groto::Nullable<$wf>, $flavor,> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::Nullable<$wf>, $flavor,> for $ty {
         fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
         {
           match input {
@@ -245,13 +245,13 @@ macro_rules! groto_identity_transform {
     });)*
 
     $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Nullable<$wf>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$wf>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
         fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
           ::core::result::Result::Ok(::core::option::Option::Some(input))
         }
       }
 
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::groto::Nullable<$wf>, $crate::__private::flavors::Groto> for $ty {
+      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$wf>, $crate::__private::flavors::Groto> for $ty {
         fn transform(input: $ty) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
           ::core::result::Result::Ok(::core::option::Option::Some(input))
         }

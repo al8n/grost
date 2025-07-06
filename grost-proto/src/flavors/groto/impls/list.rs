@@ -3,8 +3,8 @@ use crate::{
   decode::BytesSlice,
   encode::{Encode, PartialEncode},
   flavors::{
-    Groto, WireFormat,
-    groto::{Borrowed, Context, Error, LengthDelimited, Packed, PackedDecoder},
+    Borrowed, Groto, Packed, WireFormat,
+    groto::{Context, Error, LengthDelimited, PackedDecoder},
   },
 };
 
@@ -340,7 +340,7 @@ macro_rules! list {
   (@default_wire_format(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultListWireFormat<$crate::__private::flavors::Groto> for $ty {
-        type Format<V> = $crate::__private::flavors::groto::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
+        type Format<V> = $crate::__private::flavors::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
       }
     )*
   };
@@ -477,7 +477,7 @@ macro_rules! list {
       impl<T, W, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTransform<
         Self,
         ::core::option::Option<Self>,
-        $crate::__private::flavors::groto::Packed<W>,
+        $crate::__private::flavors::Packed<W>,
         $crate::__private::flavors::Groto,
       > for $ty
       where
@@ -730,45 +730,45 @@ macro_rules! list {
   };
   (@encode(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto> for $ty
+      impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<$crate::__private::flavors::Packed<W>, $crate::__private::flavors::Groto> for $ty
       where
         T: $crate::__private::Encode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        encode!(@bridge([T] as $crate::__private::flavors::groto::Packed<W>));
+        encode!(@bridge([T] as $crate::__private::flavors::Packed<W>));
       }
 
-      impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::groto::Packed<W>, $crate::__private::flavors::Groto> for $ty
+      impl<T, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<$crate::__private::flavors::Packed<W>, $crate::__private::flavors::Groto> for $ty
       where
         T: $crate::__private::PartialEncode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        partial_encode!(@bridge([T] as $crate::__private::flavors::groto::Packed<W>));
+        partial_encode!(@bridge([T] as $crate::__private::flavors::Packed<W>));
       }
     )*
   };
   (@encode(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::Encode<
-        $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>,
+        $crate::__private::flavors::Borrowed<'b, $crate::__private::flavors::Packed<W>>,
         $crate::__private::flavors::Groto
       > for $ty
       where
         T: $crate::__private::Encode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        encode!(@bridge([&'b T] as $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>));
+        encode!(@bridge([&'b T] as $crate::__private::flavors::Borrowed<'b, $crate::__private::flavors::Packed<W>>));
       }
 
       impl<'b, T: 'b, W, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::PartialEncode<
-        $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>,
+        $crate::__private::flavors::Borrowed<'b, $crate::__private::flavors::Packed<W>>,
         $crate::__private::flavors::Groto
       > for $ty
       where
         T: $crate::__private::PartialEncode<W, $crate::__private::flavors::Groto>,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
       {
-        partial_encode!(@bridge([&'b T] as $crate::__private::flavors::groto::Borrowed<'b, $crate::__private::flavors::groto::Packed<W>>));
+        partial_encode!(@bridge([&'b T] as $crate::__private::flavors::Borrowed<'b, $crate::__private::flavors::Packed<W>>));
       }
     )*
   };

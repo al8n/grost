@@ -2,11 +2,13 @@ use crate::{
   convert::{Flattened, Innermost, State},
   encode::{Encode, EquivalentEncode, PartialEncode},
   flavors::{
-    Groto, WireFormat,
-    groto::{Borrowed, Context, Error, Flatten, LengthDelimited, Packed},
+    Borrowed, Flatten, Groto, Packed, WireFormat,
+    groto::{Context, Error, LengthDelimited},
   },
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
 };
+
+mod join;
 
 impl<T, W> Encode<Packed<W>, Groto> for [T]
 where
@@ -142,81 +144,6 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
     } else {
       0
     }
-  }
-}
-
-impl<N> Encode<Flatten<LengthDelimited, LengthDelimited>, Groto> for [N]
-where
-  N: AsRef<[u8]>,
-{
-  fn encode_raw(
-    &self,
-    ctx: &<Groto as crate::flavors::Flavor>::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
-    let buf_len = buf.len();
-    let data_len =
-      <Self as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_raw_len(
-        self, ctx,
-      );
-
-    let mut offset = 0;
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(data_len, buf_len));
-      }
-      let bytes = value.as_ref();
-      buf[offset..offset + bytes.len()].copy_from_slice(bytes);
-      offset += bytes.len();
-    }
-
-    #[cfg(debug_assertions)]
-    crate::__private::debug_assert_write_eq::<[u8]>(offset, data_len);
-    Ok(offset)
-  }
-
-  fn encoded_raw_len(&self, _: &<Groto as crate::flavors::Flavor>::Context) -> usize {
-    self.iter().map(|n| n.as_ref().len()).sum::<usize>()
-  }
-
-  fn encode(
-    &self,
-    context: &<Groto as crate::flavors::Flavor>::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
-    let buf_len = buf.len();
-    let data_len = self.iter().map(|n| n.as_ref().len()).sum::<usize>();
-    let this_len = varing::encoded_u32_varint_len(data_len as u32) + data_len;
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(this_len, buf_len));
-    }
-
-    let mut offset = varing::encode_u32_varint_to(data_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        <Self as Encode<Flatten<LengthDelimited, LengthDelimited>, Groto>>::encoded_len(
-          self, context,
-        ),
-        buf_len,
-      )
-    })?;
-
-    for value in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(this_len, buf_len));
-      }
-      let bytes = value.as_ref();
-      buf[offset..offset + bytes.len()].copy_from_slice(bytes);
-      offset += bytes.len();
-    }
-
-    #[cfg(debug_assertions)]
-    crate::__private::debug_assert_write_eq::<[u8]>(offset, this_len);
-    Ok(offset)
-  }
-
-  fn encoded_len(&self, _: &<Groto as crate::flavors::Flavor>::Context) -> usize {
-    let data_len = self.iter().map(|n| n.as_ref().len()).sum::<usize>();
-    varing::encoded_u32_varint_len(data_len as u32) + data_len
   }
 }
 

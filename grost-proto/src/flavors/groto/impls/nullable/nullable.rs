@@ -4,8 +4,8 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultNullableWireFormat, Flavor, Groto, WireFormat,
-    groto::{Context, Error, Nullable, WireType},
+    DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
+    groto::{Context, Error, WireType},
   },
   selection::Selectable,
 };

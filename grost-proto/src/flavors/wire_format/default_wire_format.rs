@@ -43,7 +43,10 @@ mod sealed {
 #[allow(clippy::type_complexity)]
 const _: () = {
   const fn static_checks() {
-    use crate::{flavors::groto::*, marker::*};
+    use crate::{
+      flavors::{groto::*, *},
+      marker::*,
+    };
 
     #[cfg(feature = "std")]
     {

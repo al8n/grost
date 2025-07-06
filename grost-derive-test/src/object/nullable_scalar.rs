@@ -1,7 +1,10 @@
 #![allow(warnings)]
 
 use core::num::*;
-use grost::{Object, flavors::groto::*};
+use grost::{
+  Object,
+  flavors::{Nullable, groto::*},
+};
 
 #[derive(Object)]
 struct NullableUints {
