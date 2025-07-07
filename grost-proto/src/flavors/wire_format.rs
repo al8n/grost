@@ -326,13 +326,13 @@ seq_macro::seq!(N in 0..=63 {
     };
 
     /// The ASCII bytes used for joining elements.
-    /// 
+    ///
     /// This contains only the valid ASCII bytes (0-127) from the type parameters,
     /// in the order they were specified, with sentinel values (128) filtered out.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
     /// The ASCII string used for joining elements.
-    /// 
+    ///
     /// This is the UTF-8 representation of [`BYTES`](Self::BYTES). Since all bytes
     /// are guaranteed to be valid ASCII (0-127), this conversion is always safe.
     pub const STR: &str = unsafe {
@@ -352,7 +352,7 @@ seq_macro::seq!(N in 0..=63 {
   /// `JoinAscii` by supporting the full Unicode character set.
   ///
   /// ## Type Parameters
-  /// - `W`: The underlying wire format used to encode individual elements  
+  /// - `W`: The underlying wire format used to encode individual elements
   /// - `C~N`: Up to 64 Unicode character constants used as separators
   ///
   /// ## Separator Behavior
@@ -417,13 +417,13 @@ seq_macro::seq!(N in 0..=63 {
     };
 
     /// The UTF-8 encoded bytes used for joining elements.
-    /// 
+    ///
     /// This contains the UTF-8 representation of all non-sentinel characters
     /// from the type parameters, concatenated in the order they were specified.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
     /// The Unicode string used for joining elements.
-    /// 
+    ///
     /// This is the UTF-8 string representation of all the separator characters.
     /// Characters are concatenated in the order they appear in the type parameters,
     /// with sentinel values filtered out.

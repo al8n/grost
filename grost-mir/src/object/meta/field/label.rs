@@ -1,6 +1,56 @@
+use either::Either;
 use quote::quote;
 use std::sync::Arc;
-use syn::{Meta, ext::IdentExt, parse::ParseStream};
+use syn::{
+  Ident, Meta, Token, Type,
+  ext::IdentExt,
+  parse::{Parse, ParseStream},
+  token::Paren,
+};
+
+const WIRE_FORMAT: &str = "as";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListLikeLabel {
+  pub(crate) label: Arc<Label>,
+  pub(crate) repeated: bool,
+}
+
+impl ListLikeLabel {
+  /// Returns the label of the list-like type.
+  pub fn label(&self) -> &Label {
+    &self.label
+  }
+
+  /// Returns whether the list-like type is marked as repeated.
+  pub fn is_repeated(&self) -> bool {
+    self.repeated
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MapLabel {
+  pub(crate) key: Arc<Label>,
+  pub(crate) value: Arc<Label>,
+  pub(crate) repeated: bool,
+}
+
+impl MapLabel {
+  /// Returns the key label of the map.
+  pub fn key(&self) -> &Label {
+    &self.key
+  }
+
+  /// Returns the value label of the map.
+  pub fn value(&self) -> &Label {
+    &self.value
+  }
+
+  /// Returns whether the map is marked as repeated.
+  pub fn is_repeated(&self) -> bool {
+    self.repeated
+  }
+}
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -8,39 +58,37 @@ use syn::{Meta, ext::IdentExt, parse::ParseStream};
 pub enum Label {
   /// A scalar type label, e.g. `i32`, `f64`, etc.
   #[display("scalar")]
-  Scalar,
+  Scalar(Option<Type>),
   /// A byte array type label, e.g. `Vec<u8>`, `bytes`, etc.
   #[display("bytes")]
-  Bytes,
+  Bytes(Option<Type>),
   /// A string type label, e.g. `String`, `&str`, etc.
   #[display("string")]
-  String,
+  String(Option<Type>),
   /// An object type label
   #[display("object")]
-  Object,
+  Object(Option<Type>),
   /// An enum type label
   #[display("enum")]
-  Enum,
+  Enum(Option<Type>),
   /// A union type label
   #[display("union")]
-  Union,
+  Union(Option<Type>),
   /// An interface type label
   #[display("interface")]
-  Interface,
+  Interface(Option<Type>),
+  /// A generic type label, which means the type of this field is generic param
+  #[display("union")]
+  Generic(Option<Type>),
   /// A map type label
-  #[display("map(key({key}), value({value}))")]
-  Map {
-    /// The key type label of the map
-    key: Arc<Label>,
-    /// The value type label of the map
-    value: Arc<Label>,
-  },
+  #[display("map")]
+  Map(Either<MapLabel, Type>),
   /// A set type label
-  #[display("set({_0})")]
-  Set(Arc<Label>),
+  #[display("set")]
+  Set(Either<ListLikeLabel, Type>),
   /// A list type label
-  #[display("list({_0})")]
-  List(Arc<Label>),
+  #[display("list")]
+  List(Either<ListLikeLabel, Type>),
   /// An nullable type label
   #[display("nullable({_0})")]
   Nullable(Arc<Label>),
@@ -58,6 +106,7 @@ impl Label {
       "enum",
       "union",
       "interface",
+      "generic",
       "map",
       "set",
       "list",
@@ -101,6 +150,7 @@ impl Label {
         () if ident.eq("set") => true,
         () if ident.eq("list") => true,
         () if ident.eq("nullable") => true,
+        () if ident.eq("generic") => true,
         _ => false,
       });
     }
@@ -120,27 +170,48 @@ impl Label {
     outermost: bool,
   ) -> syn::Result<syn::Type> {
     Ok(match self {
-      Self::Scalar => syn::parse2(quote! {
-        #path_to_grost::__private::marker::ScalarMarker<#ty>
-      })?,
-      Self::Bytes => syn::parse2(quote! {
-        #path_to_grost::__private::marker::BytesMarker<#ty>
-      })?,
-      Self::String => syn::parse2(quote! {
-        #path_to_grost::__private::marker::StringMarker<#ty>
-      })?,
-      Self::Object => syn::parse2(quote! {
-        #path_to_grost::__private::marker::ObjectMarker<#ty>
-      })?,
-      Self::Enum => syn::parse2(quote! {
-        #path_to_grost::__private::marker::EnumMarker<#ty>
-      })?,
-      Self::Union => syn::parse2(quote! {
-        #path_to_grost::__private::marker::UnionMarker<#ty>
-      })?,
-      Self::Interface => syn::parse2(quote! {
-        #path_to_grost::__private::marker::InterfaceMarker<#ty>
-      })?,
+      Self::Scalar(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::ScalarMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::Bytes(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::BytesMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::String(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::StringMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::Object(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::ObjectMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::Enum(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::EnumMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::Union(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::UnionMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
+      Self::Interface(ty) => match ty {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::InterfaceMarker<#ty>
+        })?,
+        Some(ty) => ty.clone(),
+      },
       Self::Map { key, value } => {
         let k: syn::Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
@@ -216,204 +287,434 @@ impl Label {
   }
 }
 
-impl syn::parse::Parse for Label {
+fn parse_maybe_as(input: ParseStream, name: &str) -> syn::Result<Option<Type>> {
+  if input.is_empty() {
+    return Ok(None);
+  }
+
+  if input.peek(Paren) {
+    let content;
+    syn::parenthesized!(content in input);
+
+    if content.is_empty() {
+      return Ok(None);
+    }
+
+    if content.peek(Token![as]) && content.peek2(Token![=]) {
+      let _: Token![as] = content.parse()?;
+      let _: Token![=] = content.parse()?;
+      let ty: Type = content.parse()?;
+
+      return Ok(Some(ty));
+    }
+  }
+
+  Err(syn::Error::new(
+    input.span(),
+    format!("Expected `{name}`, `{name}()`, or `{name}(as = \"...\")`"),
+  ))
+}
+
+fn unexpected_eos_error(ident: Ident) -> syn::Result<Label> {
+  match () {
+    () if ident.eq("map") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`map` requires a key and value, e.g. `map(key(...), value(...))`, `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
+      ));
+    }
+    () if ident.eq("set") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`set` requires a type, e.g. `set(...)` or `set(..., repeated)`",
+      ));
+    }
+    () if ident.eq("list") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`list` requires a type, e.g. `list(...)` or `list(..., repeated)`",
+      ));
+    }
+    () if ident.eq("nullable") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`nullable` requires a type, e.g. `nullable(...)`",
+      ));
+    }
+    () if ident.eq("key") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`key` can only be used in `map(...)`",
+      ));
+    }
+    () if ident.eq("value") => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "`value` can only be used in `map(...)`",
+      ));
+    }
+    _ => {
+      return Err(syn::Error::new(
+        ident.span(),
+        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
+      ));
+    }
+  }
+}
+
+struct ListLikeLabelParser<const TAG: u8>(Either<ListLikeLabel, Type>);
+
+impl<const TAG: u8> ListLikeLabelParser<TAG> {
+  fn is_set(&self) -> bool {
+    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_set())
+  }
+
+  fn is_map(&self) -> bool {
+    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_map())
+  }
+}
+
+enum ListLikeLabelParserHelper<const TAG: u8> {
+  Label(Label),
+  Repeated,
+  As(Type),
+}
+
+impl<const TAG: u8> Parse for ListLikeLabelParserHelper<TAG> {
+  fn parse(input: ParseStream) -> syn::Result<Self> {
+    if input.peek(Token![enum]) {
+      return Ok(Self::Label(Label::parse(input)?));
+    }
+
+    if input.peek(Token![as]) {
+      let _: Token![as] = input.parse()?;
+      if !input.peek(Token![=]) {
+        return Err(syn::Error::new(input.span(), "Expected `=` after `as`"));
+      }
+      let _: Token![=] = input.parse()?;
+      let ty: Type = input.parse()?;
+      return Ok(Self::As(ty));
+    }
+
+    if !input.peek(Ident) {
+      return Err(syn::Error::new(
+        input.span(),
+        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as]",
+      ));
+    }
+
+    let ident: Ident = input.fork().parse()?;
+    match () {
+      () if Label::possible_idents().iter().any(|label| ident.eq(label)) => {
+        Label::parse(input).map(Self::Label)
+      }
+      () if ident.eq("repeated") => Ok(Self::Repeated),
+      _ => Err(syn::Error::new(
+        ident.span(),
+        format!(
+          "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as], found `{}`",
+          ident
+        ),
+      )),
+    }
+  }
+}
+
+impl<const TAG: u8> Parse for ListLikeLabelParser<TAG> {
+  fn parse(input: ParseStream) -> syn::Result<Self> {
+    let mut label = None;
+    let mut repeated = None;
+    let mut as_type = None;
+    let items = input.parse_terminated(ListLikeLabelParserHelper::<TAG>::parse, Token![,])?;
+
+    for item in items {
+      match item {
+        ListLikeLabelParserHelper::Label(l) => {
+          if let Some(ref old) = label {
+            return Err(syn::Error::new(
+              input.span(),
+              format!(
+                "Duplicate label found, expected only one label, found `{}` and `{}`",
+                old, l
+              ),
+            ));
+          }
+          label = Some(l);
+        }
+        ListLikeLabelParserHelper::Repeated => {
+          if repeated.is_some() {
+            return Err(syn::Error::new(
+              input.span(),
+              "Duplicate `repeated` found, only one `repeated` is allowed",
+            ));
+          }
+          repeated = Some(true);
+        }
+        ListLikeLabelParserHelper::As(ty) => {
+          if as_type.is_some() {
+            return Err(syn::Error::new(
+              input.span(),
+              format!("Duplicate `as` found, expected only one `as`"),
+            ));
+          }
+          as_type = Some(ty);
+        }
+      }
+    }
+    let repeated = repeated.unwrap_or(false);
+
+    let key = if TAG == 0 { "list" } else { "set" };
+
+    Ok(match (label, repeated, as_type) {
+      (Some(label), true, None) => Self(Either::Left(ListLikeLabel {
+        label: Arc::new(label),
+        repeated: true,
+      })),
+      (Some(label), false, None) => Self(Either::Left(ListLikeLabel {
+        label: Arc::new(label),
+        repeated: false,
+      })),
+      (None, false, Some(ty)) => Self(Either::Right(ty)),
+      _ => {
+        return Err(syn::Error::new(
+          input.span(),
+          format!("Expected `{key}(...)`, or `{key}(..., repeated)` or `{key}(as = \"...\")`",),
+        ));
+      }
+    })
+  }
+}
+
+enum MapLabelParserHelper {
+  Key(Label),
+  Value(Label),
+  Repeated,
+  As(Type),
+}
+
+impl Parse for MapLabelParserHelper {
+  fn parse(input: ParseStream) -> syn::Result<Self> {
+    if input.peek(Token![as]) {
+      let _: Token![as] = input.parse()?;
+      if !input.peek(Token![=]) {
+        return Err(syn::Error::new(input.span(), "Expected `as = \"...\"`"));
+      }
+      let _: Token![=] = input.parse()?;
+      let ty: Type = input.parse()?;
+      return Ok(Self::As(ty));
+    }
+
+    if !input.peek(Ident) {
+      return Err(syn::Error::new(
+        input.span(),
+        "Expected one of [key, value, repeated, as]",
+      ));
+    }
+
+    let ident: Ident = input.parse()?;
+    match () {
+      () if ident.eq("key") || ident.eq("value") => {
+        if !input.peek(Paren) {
+          return Err(syn::Error::new(
+            ident.span(),
+            format!("Expected `(...)` after `{ident}`"),
+          ));
+        }
+
+        let content;
+        syn::parenthesized!(content in input);
+        if content.is_empty() {
+          return Err(syn::Error::new(
+            ident.span(),
+            format!("Expected `{ident}(...)`, `{ident}(..., repeated)` or `{ident}(as = \"...\")`"),
+          ));
+        }
+
+        let label = Label::parse(&content)?;
+        if ident.eq("key") {
+          Ok(Self::Key(label))
+        } else {
+          Ok(Self::Value(label))
+        }
+      }
+      () if ident.eq("repeated") => Ok(Self::Repeated),
+      _ => Err(syn::Error::new(
+        ident.span(),
+        format!(
+          "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as], found `{}`",
+          ident
+        ),
+      )),
+    }
+  }
+}
+
+struct MapLabelParser(Either<MapLabel, Type>);
+
+impl Parse for MapLabelParser {
+  fn parse(input: ParseStream) -> syn::Result<Self> {
+    let mut key = None;
+    let mut value = None;
+    let mut repeated = None;
+    let mut as_type = None;
+    let items = input.parse_terminated(MapLabelParserHelper::parse, Token![,])?;
+
+    for item in items {
+      match item {
+        MapLabelParserHelper::Key(l) => {
+          if let Some(ref old) = key {
+            return Err(syn::Error::new(
+              input.span(),
+              format!(
+                "Duplicate key found, expected only one key, found `key({})` and `key({})`",
+                old, l
+              ),
+            ));
+          }
+          key = Some(l);
+        }
+        MapLabelParserHelper::Value(l) => {
+          if let Some(ref old) = value {
+            return Err(syn::Error::new(
+              input.span(),
+              format!(
+                "Duplicate value found, expected only one value, found `value({})` and `value({})`",
+                old, l
+              ),
+            ));
+          }
+          value = Some(l);
+        }
+        MapLabelParserHelper::Repeated => {
+          if repeated.is_some() {
+            return Err(syn::Error::new(
+              input.span(),
+              "Duplicate `repeated` found, only one `repeated` is allowed",
+            ));
+          }
+          repeated = Some(true);
+        }
+        MapLabelParserHelper::As(ty) => {
+          if as_type.is_some() {
+            return Err(syn::Error::new(
+              input.span(),
+              format!("Duplicate `as` found, expected only one `as`"),
+            ));
+          }
+          as_type = Some(ty);
+        }
+      }
+    }
+    let repeated = repeated.unwrap_or(false);
+
+    Ok(match (key, value, repeated, as_type) {
+      (Some(key), Some(value), true, None) => Self(Either::Left(MapLabel {
+        key: Arc::new(key),
+        value: Arc::new(value),
+        repeated: true,
+      })),
+      (Some(key), Some(value), false, None) => Self(Either::Left(MapLabel {
+        key: Arc::new(key),
+        value: Arc::new(value),
+        repeated: false,
+      })),
+      (None, None, false, Some(ty)) => Self(Either::Right(ty)),
+      _ => {
+        return Err(syn::Error::new(
+          input.span(),
+          "Expected `map(key(...), value(...))`, or `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
+        ));
+      }
+    })
+  }
+}
+
+impl Parse for Label {
   fn parse(input: ParseStream) -> syn::Result<Self> {
     if input.peek(syn::Token![enum]) {
       let _: syn::Token![enum] = input.parse()?;
-      return Ok(Self::Enum);
+
+      return parse_maybe_as(input, "enum").map(Self::Enum);
     }
 
-    if input.peek(syn::Ident::peek_any) && !input.peek2(syn::token::Paren) {
-      let ident: syn::Ident = input.parse()?;
-      return Ok(match () {
-        () if ident.eq("scalar") => Self::Scalar,
-        () if ident.eq("bytes") => Self::Bytes,
-        () if ident.eq("string") => Self::String,
-        () if ident.eq("object") => Self::Object,
-        () if ident.eq("enum") => Self::Enum,
-        () if ident.eq("union") => Self::Union,
-        () if ident.eq("interface") => Self::Interface,
-        () if ident.eq("map") => {
-          return Err(syn::Error::new(
-            ident.span(),
-            "`map` requires a key and value, e.g. `map(key(...), value(...))`",
-          ));
-        }
-        () if ident.eq("set") => {
-          return Err(syn::Error::new(
-            ident.span(),
-            "`set` requires a type, e.g. `set(...)`",
-          ));
-        }
-        () if ident.eq("list") => {
-          return Err(syn::Error::new(
-            ident.span(),
-            "`list` requires a type, e.g. `list(...)`",
-          ));
-        }
-        () if ident.eq("nullable") => {
-          return Err(syn::Error::new(
-            ident.span(),
-            "`nullable` requires a type, e.g. `nullable(...)`",
-          ));
-        }
-        _ => {
-          return Err(syn::Error::new(
-            ident.span(),
-            "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, nullable]",
-          ));
-        }
-      });
+    if !input.peek(syn::Ident::peek_any) {
+      return Err(syn::Error::new(
+        input.span(),
+        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
+      ));
     }
 
-    if input.peek(syn::Ident::peek_any) && input.peek2(syn::token::Paren) {
-      let ident: syn::Ident = input.parse()?;
-      let content;
-      syn::parenthesized!(content in input);
+    let ident: syn::Ident = input.parse()?;
+    Ok(match () {
+      () if ident.eq("scalar") => parse_maybe_as(input, "scalar").map(Self::Scalar)?,
+      () if ident.eq("bytes") => parse_maybe_as(input, "bytes").map(Self::Bytes)?,
+      () if ident.eq("string") => parse_maybe_as(input, "string").map(Self::String)?,
+      () if ident.eq("generic") => parse_maybe_as(input, "generic").map(Self::Generic)?,
+      () if ident.eq("object") => parse_maybe_as(input, "object").map(Self::Object)?,
+      () if ident.eq("enum") => parse_maybe_as(input, "enum").map(Self::Enum)?,
+      () if ident.eq("union") => parse_maybe_as(input, "union").map(Self::Union)?,
+      () if ident.eq("interface") => parse_maybe_as(input, "interface").map(Self::Interface)?,
+      _ => {
+        if input.is_empty() {
+          return unexpected_eos_error(ident);
+        }
 
-      if content.is_empty() {
-        return Err(syn::Error::new(
-          content.span(),
-          "Unexpected format `map()`, expected `map(key(...), value(...))`",
-        ));
+        if !input.peek(Paren) {
+          return Err(syn::Error::new(
+            ident.span(),
+            format!("Expected `(...)` after the {ident}"),
+          ));
+        }
+
+        let content;
+        syn::parenthesized!(content in input);
+
+        if content.is_empty() {
+          return unexpected_eos_error(ident);
+        }
+
+        return Ok(match () {
+          () if ident.eq("nullable") => {
+            let ty = Label::parse(&content)?;
+            if ty.is_nullable() {
+              return Err(syn::Error::new(
+                content.span(),
+                "`nullable(nullable(...))` is not allowed",
+              ));
+            }
+
+            Self::Nullable(Arc::new(ty))
+          }
+          () if ident.eq("set") => {
+            ListLikeLabelParser::<1>::parse(&content).map(|label| Self::Set(label.0))?
+          }
+          () if ident.eq("list") => {
+            ListLikeLabelParser::<0>::parse(&content).map(|label| Self::List(label.0))?
+          }
+          () if ident.eq("key") => {
+            return Err(syn::Error::new(
+              content.span(),
+              "`key` can only be used in `map(...)`",
+            ));
+          }
+          () if ident.eq("value") => {
+            return Err(syn::Error::new(
+              content.span(),
+              "`value` can only be used in `map(...)`",
+            ));
+          }
+          () if ident.eq("map") => {
+            MapLabelParser::parse(&content).map(|label| Self::Map(label.0))?
+          }
+          _ => {
+            return Err(syn::Error::new(
+              content.span(),
+              "Expected one of [map, set, list, nullable]",
+            ));
+          }
+        });
       }
-
-      return Ok(match () {
-        () if ident.eq("map") => {
-          let mut key_ty = None;
-          let mut value_ty = None;
-
-          while !content.is_empty() {
-            let require_comma = key_ty.is_none() && value_ty.is_none();
-
-            let param_name: syn::Ident = content.parse()?;
-
-            if !(param_name.eq("key") || param_name.eq("value")) {
-              return Err(syn::Error::new(
-                param_name.span(),
-                format!("Unknown `{param_name}`, possible attributes in map are: `key` or `value`"),
-              ));
-            }
-
-            if !content.peek(syn::token::Paren) {
-              return Err(syn::Error::new(
-                param_name.span(),
-                format!(
-                  "Unexpected format `map({param_name}{content})`, expected `map(key(...), value(...))`"
-                ),
-              ));
-            }
-
-            let param_content;
-            syn::parenthesized!(param_content in content);
-            match () {
-              () if param_name.eq("key") => {
-                if key_ty.is_some() {
-                  return Err(syn::Error::new(
-                    param_name.span(),
-                    "Duplicate `key` found in `map(...)`",
-                  ));
-                }
-
-                if param_content.peek(syn::Ident::peek_any) {
-                  let next_ident: syn::Ident = param_content.fork().parse()?;
-                  if next_ident.eq("map") {
-                    return Err(syn::Error::new(
-                      param_name.span(),
-                      "`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`",
-                    ));
-                  }
-                }
-
-                key_ty = Some(Arc::new(Label::parse(&param_content)?));
-              }
-              () if param_name.eq("value") => {
-                if value_ty.is_some() {
-                  return Err(syn::Error::new(
-                    param_name.span(),
-                    "Duplicate `value` found in `map(...)`",
-                  ));
-                }
-                value_ty = Some(Arc::new(Label::parse(&param_content)?));
-              }
-              _ => {
-                return Err(syn::Error::new(
-                  param_name.span(),
-                  format!(
-                    "Unexpected `{param_name}` in `map(...)`, expected `key(...)` or `value(...)`"
-                  ),
-                ));
-              }
-            }
-
-            if require_comma || content.peek(syn::Token![,]) {
-              let _: syn::Token![,] = content.parse()?;
-            }
-          }
-
-          // Ensure both key and value were provided
-          let key = key_ty
-            .ok_or_else(|| syn::Error::new(content.span(), "Missing `key(...)` in `map(...)`"))?;
-
-          let value = value_ty
-            .ok_or_else(|| syn::Error::new(content.span(), "Missing `value(...)` in `map(...)`"))?;
-
-          Self::Map { key, value }
-        }
-        () if ident.eq("key") => {
-          return Err(syn::Error::new(
-            content.span(),
-            "`key` can only be used in `map(...)`",
-          ));
-        }
-        () if ident.eq("value") => {
-          return Err(syn::Error::new(
-            content.span(),
-            "`value` can only be used in `map(...)`",
-          ));
-        }
-        () if ident.eq("set") => {
-          let ty = Label::parse(&content)?;
-          if ty.is_set() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`set(set(...))` is not allowed",
-            ));
-          }
-
-          if ty.is_map() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`set(map(...))` is not allowed",
-            ));
-          }
-
-          Self::Set(Arc::new(ty))
-        }
-        () if ident.eq("list") => Self::List(Arc::new(Label::parse(&content)?)),
-        () if ident.eq("nullable") => {
-          let ty = Label::parse(&content)?;
-          if ty.is_nullable() {
-            return Err(syn::Error::new(
-              content.span(),
-              "`nullable(nullable(...))` is not allowed",
-            ));
-          }
-
-          Self::Nullable(Arc::new(ty))
-        }
-        _ => {
-          return Err(syn::Error::new(
-            content.span(),
-            "Expected one of [map, set, list, nullable]",
-          ));
-        }
-      });
-    }
-    Err(syn::Error::new(
-      input.span(),
-      "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, nullable]",
-    ))
+    })
   }
 }
 
@@ -430,7 +731,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(scalar).unwrap();
-    assert_eq!(ty, Label::Scalar);
+    assert_eq!(ty, Label::Scalar(None));
   }
 
   #[test]
@@ -440,7 +741,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(bytes).unwrap();
-    assert_eq!(ty, Label::Bytes);
+    assert_eq!(ty, Label::Bytes(None));
   }
 
   #[test]
@@ -450,7 +751,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(string).unwrap();
-    assert_eq!(ty, Label::String);
+    assert_eq!(ty, Label::String(None));
   }
 
   #[test]
@@ -460,7 +761,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(object).unwrap();
-    assert_eq!(ty, Label::Object);
+    assert_eq!(ty, Label::Object(None));
   }
 
   #[test]
@@ -470,7 +771,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(enum_ty).unwrap();
-    assert_eq!(ty, Label::Enum);
+    assert_eq!(ty, Label::Enum(None));
   }
 
   #[test]
@@ -480,7 +781,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(union).unwrap();
-    assert_eq!(ty, Label::Union);
+    assert_eq!(ty, Label::Union(None));
   }
 
   #[test]
@@ -490,7 +791,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(interface).unwrap();
-    assert_eq!(ty, Label::Interface);
+    assert_eq!(ty, Label::Interface(None));
   }
 
   #[test]
@@ -500,7 +801,9 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_scalar() && value.is_string()));
+    assert!(
+      matches!(ty, Label::Map { key, value, repeated: false, } if key.is_scalar() && value.is_string())
+    );
   }
 
   #[test]
@@ -510,7 +813,9 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_string()));
+    assert!(
+      matches!(ty, Label::Map { key, value, repeated: false, } if key.is_list() && value.is_string())
+    );
   }
 
   #[test]
@@ -520,7 +825,9 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_map()));
+    assert!(
+      matches!(ty, Label::Map { key, value, repeated: false } if key.is_list() && value.is_map())
+    );
   }
 
   #[test]
@@ -530,7 +837,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(set).unwrap();
-    assert!(matches!(ty, Label::Set(inner) if inner.is_string()));
+    assert!(matches!(ty, Label::Set { key: inner, repeated: false } if inner.is_string()));
   }
 
   #[test]
@@ -540,7 +847,7 @@ mod tests {
     };
 
     let ty = syn::parse2::<Label>(list).unwrap();
-    assert!(matches!(ty, Label::List(inner) if inner.is_object()));
+    assert!(matches!(ty, Label::List { item: inner, repeated: false} if inner.is_object()));
   }
 
   #[test]
