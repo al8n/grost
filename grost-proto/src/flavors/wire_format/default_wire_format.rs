@@ -12,6 +12,7 @@ pub use scalar::*;
 pub use set::*;
 pub use string::*;
 pub use union::*;
+pub use repeated::*;
 
 mod bytes;
 mod enumeration;
@@ -25,6 +26,7 @@ mod scalar;
 mod set;
 mod string;
 mod union;
+mod repeated;
 
 /// The default wire format for a type on flavor `F`.
 pub trait DefaultWireFormat<F: Flavor + ?Sized>: sealed::Sealed<F> {

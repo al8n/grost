@@ -5,8 +5,7 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, State},
-  flavors::{DefaultMapWireFormat, Groto, PackedEntry, WireFormat},
+  buffer::DefaultBuffer, convert::{Flattened, Inner, MapKey, MapValue, State}, flavors::{groto::impls::RepeatedDecoder, DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry, RepeatedEntry, WireFormat}
 };
 
 impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {
@@ -34,3 +33,12 @@ impl<K, V, S> DefaultMapWireFormat<Groto> for HashMap<K, V, S> {
     KM: WireFormat<Groto>,
     VM: WireFormat<Groto>;
 }
+
+impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for HashMap<K, V, S> {
+  type Format<KM, VM, const TAG: u32> = RepeatedEntry<KM, VM, TAG>
+  where
+    KM: WireFormat<Groto>,
+    VM: WireFormat<Groto>,
+    MergedWireFormat<KM, VM>: WireFormat<Groto>;
+}
+

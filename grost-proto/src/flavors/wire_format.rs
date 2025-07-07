@@ -16,6 +16,10 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const SELF: Self;
 }
 
+/// A marker type for merging two wire formats to a single wire format.
+#[phantom]
+pub struct MergedWireFormat<W1: ?Sized, W2: ?Sized>;
+
 /// A wire format for packed repeated fields.
 ///
 /// This is used to encode repeated fields in a more compact form,
@@ -80,39 +84,39 @@ impl<KW: ?Sized, VW: ?Sized> core::fmt::Display for PackedEntry<KW, VW> {
 /// - Compatibility with Protocol Buffer's default repeated field encoding
 /// - Cases where elements may be added incrementally
 
-// TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
+// TODO(al8n): change const `TAG: u32` to `TAG: Tag` wihen `feature(adt_const_params)` is stable
 #[phantom]
-pub struct Repeated<W: ?Sized, B: ?Sized, const I: u32>;
+pub struct Repeated<W: ?Sized, const TAG: u32>;
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Clone for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> Clone for Repeated<W, TAG> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Copy for Repeated<W, B, I> {}
+impl<W: ?Sized, const TAG: u32> Copy for Repeated<W, TAG> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::hash::Hash for Repeated<W, TAG> {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-    I.hash(state);
+    TAG.hash(state);
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> PartialEq for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> PartialEq for Repeated<W, TAG> {
   fn eq(&self, _: &Self) -> bool {
     true
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Eq for Repeated<W, B, I> {}
+impl<W: ?Sized, const TAG: u32> Eq for Repeated<W, TAG> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Display for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::fmt::Display for Repeated<W, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("repeated")
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::fmt::Debug for Repeated<W, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("Repeated")
   }
@@ -120,39 +124,39 @@ impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Repeated<W, B, I> 
 
 /// Similar to [`Repeated`], but used for repeated entries, like map entries and etc.
 #[phantom]
-pub struct RepeatedEntry<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32>;
+pub struct RepeatedEntry<K: ?Sized, V: ?Sized, const TAG: u32>;
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Clone for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Clone for RepeatedEntry<K, V, TAG> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Copy for RepeatedEntry<K, V, B, I> {}
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Copy for RepeatedEntry<K, V, TAG> {}
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::hash::Hash for RepeatedEntry<K, V, TAG> {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-    I.hash(state);
+    TAG.hash(state);
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> PartialEq for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> PartialEq for RepeatedEntry<K, V, TAG> {
   fn eq(&self, _: &Self) -> bool {
     true
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Eq for RepeatedEntry<K, V, B, I> {}
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Eq for RepeatedEntry<K, V, TAG> {}
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::fmt::Display
-  for RepeatedEntry<K, V, B, I>
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Display
+  for RepeatedEntry<K, V, TAG>
 {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("repeated-entry")
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Debug for RepeatedEntry<K, V, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("RepeatedEntry")
   }

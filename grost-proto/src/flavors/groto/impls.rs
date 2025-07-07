@@ -1,5 +1,6 @@
 // mod map_selector;
 pub use packed_decoder::PackedDecoder;
+pub use repeated_decoder::RepeatedDecoder;
 
 use crate::{
   convert::{PartialTransform, Transform},
@@ -155,6 +156,7 @@ mod list;
 mod map;
 mod nullable;
 mod packed_decoder;
+mod repeated_decoder;
 mod scalar;
 mod set;
 mod tuple;

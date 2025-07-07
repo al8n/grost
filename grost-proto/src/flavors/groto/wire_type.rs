@@ -1,7 +1,6 @@
 use super::Groto;
 use crate::flavors::{
-  Borrowed, Flatten, JoinAscii, JoinChar, Nullable, Packed, PackedEntry, Repeated, WireFormat,
-  sealed::JoinableAscii,
+  sealed::JoinableAscii, Borrowed, Flatten, JoinAscii, JoinChar, MergedWireFormat, Nullable, Packed, PackedEntry, Repeated, RepeatedEntry, WireFormat
 };
 
 wire_format!(
@@ -246,22 +245,44 @@ const _: () = {
 
 // Repeated
 const _: () = {
-  impl<W, B, const I: u32> WireFormat<Groto> for Repeated<W, B, I>
+  impl<W, const I: u32> WireFormat<Groto> for Repeated<W, I>
   where
     W: WireFormat<Groto>,
-    B: ?Sized,
   {
     const WIRE_TYPE: WireType = W::WIRE_TYPE;
     const SELF: Self = Repeated;
   }
 
-  impl<const I: u32, W, B> From<Repeated<W, B, I>> for WireType
+  impl<const I: u32, W> From<Repeated<W, I>> for WireType
   where
     W: WireFormat<Groto>,
-    B: ?Sized,
   {
-    fn from(_: Repeated<W, B, I>) -> Self {
+    fn from(_: Repeated<W, I>) -> Self {
       W::WIRE_TYPE
+    }
+  }
+};
+
+// RepeatedEntry
+const _: () = {
+  impl<KW, VW, const I: u32> WireFormat<Groto> for RepeatedEntry<KW, VW, I>
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    MergedWireFormat<KW, VW>: WireFormat<Groto>,
+  {
+    const WIRE_TYPE: WireType = MergedWireFormat::<KW, VW>::WIRE_TYPE;
+    const SELF: Self = RepeatedEntry;
+  }
+
+  impl<KW, VW, const I: u32> From<RepeatedEntry<KW, VW, I>> for WireType
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    MergedWireFormat<KW, VW>: WireFormat<Groto>,
+  {
+    fn from(_: RepeatedEntry<KW, VW, I>) -> Self {
+      MergedWireFormat::<KW, VW>::WIRE_TYPE
     }
   }
 };
