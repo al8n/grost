@@ -340,14 +340,14 @@ macro_rules! list {
   (@default_wire_format(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultListWireFormat<$crate::__private::flavors::Groto> for $ty {
-        type Format<V> = $crate::__private::flavors::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
+        type Format<V> = $crate::__private::flavors::Packed<V> where V: $crate::__private::flavors::StaticWireFormat<$crate::__private::flavors::Groto>;
       }
     )*
   };
   (@default_wire_format(repeated) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultRepeatedWireFormat<$crate::__private::flavors::Groto> for $ty {
-        type Format<V, const TAG: u32> = $crate::__private::flavors::Repeated<V, TAG> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
+        type Format<V, const TAG: u32> = $crate::__private::flavors::Repeated<V, TAG> where V: $crate::__private::flavors::StaticWireFormat<$crate::__private::flavors::Groto>;
       }
     )*
   };
@@ -520,16 +520,12 @@ macro_rules! list {
             .filter_map(|res| {
               match T::partial_transform(res, selector) {
                 ::core::result::Result::Ok(val) => {
-                  val.and_then(|val| if $crate::__private::selection::Selectable::is_empty(&val) {
-                    ::core::option::Option::None
-                  } else {
-                    ::core::option::Option::Some(<T as $crate::__private::convert::Transform<
-                      <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
-                      T,
-                      W,
-                      $crate::__private::flavors::Groto
-                    >>::transform(val))
-                  })
+                  val.and_then(|val| ::core::option::Option::Some(<T as $crate::__private::convert::Transform<
+                    <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+                    T,
+                    W,
+                    $crate::__private::flavors::Groto
+                  >>::transform(val)))
                 },
                 ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
               }
@@ -635,11 +631,6 @@ macro_rules! list {
         T: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>,
       {
         type Selector = T::Selector;
-
-        fn is_empty(&self) -> bool {
-          let this: &[T] = self.as_ref();
-          this.is_empty()
-        }
       }
     )*
   };

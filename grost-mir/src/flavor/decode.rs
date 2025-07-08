@@ -16,6 +16,7 @@ impl From<DecodeFromMeta> for DecodeOptions {
       map: value.map,
       set: value.set,
       list: value.list,
+      generic: value.generic,
     }
   }
 }
@@ -33,22 +34,24 @@ pub struct DecodeOptions {
   pub(super) map: DecodeValue,
   pub(super) set: DecodeValue,
   pub(super) list: DecodeValue,
+  pub(super) generic: DecodeValue,
 }
 
 impl DecodeOptions {
   #[inline]
   pub const fn or_default_by_label(&self, label: &Label) -> bool {
     match label {
-      Label::Scalar => self.scalar.or_default.is_yes(),
-      Label::Bytes => self.bytes.or_default.is_yes(),
-      Label::String => self.string.or_default.is_yes(),
-      Label::Object => self.object.or_default.is_yes(),
-      Label::Enum => self.enumeration.or_default.is_yes(),
-      Label::Interface => self.interface.or_default.is_yes(),
-      Label::Union => self.union.or_default.is_yes(),
+      Label::Scalar(_) => self.scalar.or_default.is_yes(),
+      Label::Bytes(_) => self.bytes.or_default.is_yes(),
+      Label::String(_) => self.string.or_default.is_yes(),
+      Label::Object(_) => self.object.or_default.is_yes(),
+      Label::Enum(_) => self.enumeration.or_default.is_yes(),
+      Label::Interface(_) => self.interface.or_default.is_yes(),
+      Label::Union(_) => self.union.or_default.is_yes(),
       Label::Map { .. } => self.map.or_default.is_yes(),
       Label::Set(_) => self.set.or_default.is_yes(),
       Label::List(_) => self.list.or_default.is_yes(),
+      Label::Generic(_) => self.generic.or_default.is_yes(),
       Label::Nullable(_) => false,
     }
   }
@@ -83,6 +86,16 @@ impl DecodeOptions {
   #[inline]
   pub const fn or_default_string(&self) -> bool {
     if self.string.or_default.is_yes() {
+      true
+    } else {
+      self.or_default.is_yes()
+    }
+  }
+
+  /// Returns `true` if the encoding should skip default values for generics
+  #[inline]
+  pub const fn or_default_generic(&self) -> bool {
+    if self.generic.or_default.is_yes() {
       true
     } else {
       self.or_default.is_yes()

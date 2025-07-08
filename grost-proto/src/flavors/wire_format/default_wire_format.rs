@@ -1,4 +1,4 @@
-use super::{Flavor, WireFormat};
+use super::{Flavor, WireFormat, StaticWireFormat};
 
 pub use bytes::*;
 pub use enumeration::*;
@@ -8,11 +8,11 @@ pub use list::*;
 pub use map::*;
 pub use nullable::*;
 pub use object::*;
+pub use repeated::*;
 pub use scalar::*;
 pub use set::*;
 pub use string::*;
 pub use union::*;
-pub use repeated::*;
 
 mod bytes;
 mod enumeration;
@@ -22,16 +22,17 @@ mod list;
 mod map;
 mod nullable;
 mod object;
+mod repeated;
 mod scalar;
 mod set;
 mod string;
 mod union;
-mod repeated;
+mod generic;
 
 /// The default wire format for a type on flavor `F`.
 pub trait DefaultWireFormat<F: Flavor + ?Sized>: sealed::Sealed<F> {
   /// The default wire format of the type for this flavor.
-  type Format: WireFormat<F>;
+  type Format: StaticWireFormat<F>;
 }
 
 mod sealed {

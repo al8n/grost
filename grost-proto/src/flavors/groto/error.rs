@@ -1,11 +1,9 @@
 use super::{Groto, Identifier, Tag, WireType};
 use crate::{
   error::Error as BaseError,
-  flavors::{Flavor, FlavorError, groto::ParseWireTypeError},
+  flavors::{Flavor, FlavorError, ParseTagError, groto::ParseWireTypeError},
 };
 use core::num::NonZeroUsize;
-
-pub use super::tag::ParseTagError;
 
 /// An error when encoding or decoding a message.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, thiserror::Error)]

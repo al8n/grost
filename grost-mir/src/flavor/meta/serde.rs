@@ -151,6 +151,7 @@ pub(super) enum DecodeSerdeHelper {
     map: DecodeValue,
     set: DecodeValue,
     list: DecodeValue,
+    generic: DecodeValue,
   },
 }
 
@@ -171,6 +172,7 @@ impl TryFrom<DecodeSerdeHelper> for DecodeFromMeta {
         map,
         set,
         list,
+        generic,
       } => Ok(Self {
         or_default,
         scalar,
@@ -183,6 +185,7 @@ impl TryFrom<DecodeSerdeHelper> for DecodeFromMeta {
         map,
         set,
         list,
+        generic,
       }),
     }
   }
@@ -202,6 +205,7 @@ impl From<DecodeFromMeta> for DecodeSerdeHelper {
       map: value.map,
       set: value.set,
       list: value.list,
+      generic: value.generic,
     }
   }
 }

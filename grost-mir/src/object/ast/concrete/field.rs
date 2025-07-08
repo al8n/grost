@@ -377,7 +377,7 @@ impl TaggedField {
       Some(wf) => wf,
       None => {
         let dwf = default_wire_format(path_to_grost, flavor_type);
-        let field_marked_type = field.label.mark(path_to_grost, field_ty)?;
+        let field_marked_type = field.label.mark(path_to_grost, field_ty, tag)?;
         let format = default_wire_format_associated(path_to_grost, flavor_type, &field_marked_type);
 
         if use_generics {

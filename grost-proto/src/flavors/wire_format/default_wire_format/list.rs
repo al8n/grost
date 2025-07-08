@@ -3,14 +3,14 @@ use crate::{
   marker::{ListMarker, Marker},
 };
 
-use super::{DefaultWireFormat, Flavor, WireFormat};
+use super::{DefaultWireFormat, Flavor, StaticWireFormat};
 
 /// The default wire format for a list type on flavor `F`.
 pub trait DefaultListWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
-  type Format<V>: WireFormat<F>
+  type Format<V>: StaticWireFormat<F>
   where
-    V: WireFormat<F>;
+    V: StaticWireFormat<F>;
 }
 
 impl<T, VM, F> DefaultWireFormat<F> for ListMarker<T, VM>

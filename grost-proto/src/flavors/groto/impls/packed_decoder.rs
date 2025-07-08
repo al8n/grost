@@ -162,13 +162,6 @@ where
   UB: ?Sized,
 {
   type Selector = T::Selector;
-
-  fn is_empty(&self) -> bool {
-    // For PackedDecoder, if it contains data, then it must have a length delimiter,
-    // so the data offset should be greater than 0.
-    // If both offsets are zero, it means the decoder is empty.
-    self.offset == 0 && self.data_offset == 0
-  }
 }
 
 impl<'a, T, RB, B, W> Encode<W, Groto> for PackedDecoder<'a, T, RB, B, W>

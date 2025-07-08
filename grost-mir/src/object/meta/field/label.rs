@@ -2,55 +2,20 @@ use either::Either;
 use quote::quote;
 use std::sync::Arc;
 use syn::{
-  Ident, Meta, Token, Type,
-  ext::IdentExt,
-  parse::{Parse, ParseStream},
-  token::Paren,
+  ext::IdentExt, parse::{Parse, ParseStream}, spanned::Spanned, token::Paren, Ident, Meta, Token, Type
 };
 
+pub use list_like::*;
+pub use map::*;
+pub use generic::*;
+
+mod list_like;
+mod map;
+mod generic;
+
 const WIRE_FORMAT: &str = "as";
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ListLikeLabel {
-  pub(crate) label: Arc<Label>,
-  pub(crate) repeated: bool,
-}
-
-impl ListLikeLabel {
-  /// Returns the label of the list-like type.
-  pub fn label(&self) -> &Label {
-    &self.label
-  }
-
-  /// Returns whether the list-like type is marked as repeated.
-  pub fn is_repeated(&self) -> bool {
-    self.repeated
-  }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MapLabel {
-  pub(crate) key: Arc<Label>,
-  pub(crate) value: Arc<Label>,
-  pub(crate) repeated: bool,
-}
-
-impl MapLabel {
-  /// Returns the key label of the map.
-  pub fn key(&self) -> &Label {
-    &self.key
-  }
-
-  /// Returns the value label of the map.
-  pub fn value(&self) -> &Label {
-    &self.value
-  }
-
-  /// Returns whether the map is marked as repeated.
-  pub fn is_repeated(&self) -> bool {
-    self.repeated
-  }
-}
+const LIST_TAG: u8 = 0;
+const SET_TAG: u8 = 1;
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -78,8 +43,8 @@ pub enum Label {
   #[display("interface")]
   Interface(Option<Type>),
   /// A generic type label, which means the type of this field is generic param
-  #[display("union")]
-  Generic(Option<Type>),
+  #[display("generic")]
+  Generic(GenericLabelValue),
   /// A map type label
   #[display("map")]
   Map(Either<MapLabel, Type>),
@@ -159,7 +124,12 @@ impl Label {
   }
 
   /// Construct a mark type for the type based on the label.
-  pub fn mark(&self, path_to_grost: &syn::Path, ty: &syn::Type, tag: u32) -> syn::Result<syn::Type> {
+  pub fn mark(
+    &self,
+    path_to_grost: &syn::Path,
+    ty: &syn::Type,
+    tag: u32,
+  ) -> syn::Result<syn::Type> {
     self.mark_helper(path_to_grost, ty, tag, true)
   }
 
@@ -171,25 +141,25 @@ impl Label {
     outermost: bool,
   ) -> syn::Result<syn::Type> {
     /// The inner tag for repeating fields should always be 1.
-    /// 
+    ///
     /// e.g.
-    /// 
+    ///
     /// ```rust,ignore
     /// struct User {
     ///   #[grost(tag = 3, map(key(string), value(list(string, repeated)), repeated))]
     ///   media: HashMap<String, Vec<String>>,
     /// }
     /// ```
-    /// 
+    ///
     /// For the first repeated field, the tag will be 3,
     /// the inner tag for the repeated field will be 1, because it just like
-    /// 
+    ///
     /// ```rust,ignore
     /// struct Anonymous {
     ///   #[grost(tag = 1, list(string, repeated))]
     ///   links: Vec<String>
     /// }
-    /// 
+    ///
     /// struct User {
     ///   #[grost(tag = 3, map(key(string), value(object), repeated))]
     ///   media: HashMap<String, Anonymous>,
@@ -198,53 +168,53 @@ impl Label {
     const INNER_TAG: u32 = 1;
 
     Ok(match self {
-      Self::Scalar(ty) => match ty {
+      Self::Scalar(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ScalarMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Bytes(ty) => match ty {
+      Self::Bytes(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::BytesMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::String(ty) => match ty {
+      Self::String(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::StringMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Object(ty) => match ty {
+      Self::Object(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ObjectMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Enum(ty) => match ty {
+      Self::Enum(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::EnumMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Union(ty) => match ty {
+      Self::Union(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::UnionMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Interface(ty) => match ty {
+      Self::Interface(wf) => match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::InterfaceMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        Some(wf) => wf.clone(),
       },
-      Self::Generic(ty) => match ty {
-        None => syn::parse2(quote! {
+      Self::Generic(value) => match value {
+        GenericLabelValue::Marker(ty) => syn::parse2(quote! {
           #path_to_grost::__private::marker::GenericMarker<#ty>
         })?,
-        Some(ty) => ty.clone(),
+        GenericLabelValue::As(wf) => wf.clone(),
       },
       Self::Map(Either::Right(ty)) => ty.clone(),
       Self::Map(Either::Left(MapLabel {
@@ -267,7 +237,7 @@ impl Label {
 
         if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #km, #vm, #path_to_grost::__private::buffer::DefaultBuffer<>, #tag>
+            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #km, #vm, #tag>
           })?
         } else {
           syn::parse2(quote! {
@@ -285,7 +255,7 @@ impl Label {
         let inner = label.mark_helper(path_to_grost, &inner_ty, INNER_TAG, false)?;
         if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #path_to_grost::__private::buffer::DefaultBuffer<>, #tag>
+            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
           })?
         } else {
           syn::parse2(quote! {
@@ -304,7 +274,7 @@ impl Label {
 
         if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #path_to_grost::__private::buffer::DefaultBuffer<>, #tag>
+            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
           })?
         } else {
           syn::parse2(quote! {
@@ -363,7 +333,7 @@ fn parse_maybe_as(input: ParseStream, name: &str) -> syn::Result<Option<Type>> {
     if content.peek(Token![as]) && content.peek2(Token![=]) {
       let _: Token![as] = content.parse()?;
       let _: Token![=] = content.parse()?;
-      let ty: Type = content.parse()?;
+      let ty: Type = parse_type(&content)?;
 
       return Ok(Some(ty));
     }
@@ -378,314 +348,58 @@ fn parse_maybe_as(input: ParseStream, name: &str) -> syn::Result<Option<Type>> {
 fn unexpected_eos_error(ident: Ident) -> syn::Result<Label> {
   match () {
     () if ident.eq("map") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`map` requires a key and value, e.g. `map(key(...), value(...))`, `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
-      ));
+      ))
     }
     () if ident.eq("set") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`set` requires a type, e.g. `set(...)` or `set(..., repeated)`",
-      ));
+      ))
     }
     () if ident.eq("list") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`list` requires a type, e.g. `list(...)` or `list(..., repeated)`",
-      ));
+      ))
     }
     () if ident.eq("nullable") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`nullable` requires a type, e.g. `nullable(...)`",
-      ));
+      ))
     }
     () if ident.eq("key") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`key` can only be used in `map(...)`",
-      ));
+      ))
     }
     () if ident.eq("value") => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "`value` can only be used in `map(...)`",
-      ));
+      ))
     }
     _ => {
-      return Err(syn::Error::new(
+      Err(syn::Error::new(
         ident.span(),
         "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
-      ));
+      ))
     }
   }
 }
 
-struct ListLikeLabelParser<const TAG: u8>(Either<ListLikeLabel, Type>);
-
-impl<const TAG: u8> ListLikeLabelParser<TAG> {
-  fn is_set(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_set())
-  }
-
-  fn is_map(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_map())
-  }
-}
-
-enum ListLikeLabelParserHelper<const TAG: u8> {
-  Label(Label),
-  Repeated,
-  As(Type),
-}
-
-impl<const TAG: u8> Parse for ListLikeLabelParserHelper<TAG> {
-  fn parse(input: ParseStream) -> syn::Result<Self> {
-    if input.peek(Token![enum]) {
-      return Ok(Self::Label(Label::parse(input)?));
-    }
-
-    if input.peek(Token![as]) {
-      let _: Token![as] = input.parse()?;
-      if !input.peek(Token![=]) {
-        return Err(syn::Error::new(input.span(), "Expected `=` after `as`"));
-      }
-      let _: Token![=] = input.parse()?;
-      let ty: Type = input.parse()?;
-      return Ok(Self::As(ty));
-    }
-
-    if !input.peek(Ident) {
-      return Err(syn::Error::new(
-        input.span(),
-        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as]",
-      ));
-    }
-
-    let ident: Ident = input.fork().parse()?;
-    match () {
-      () if Label::possible_idents().iter().any(|label| ident.eq(label)) => {
-        Label::parse(input).map(Self::Label)
-      }
-      () if ident.eq("repeated") => Ok(Self::Repeated),
-      _ => Err(syn::Error::new(
-        ident.span(),
-        format!(
-          "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as], found `{}`",
-          ident
-        ),
-      )),
-    }
-  }
-}
-
-impl<const TAG: u8> Parse for ListLikeLabelParser<TAG> {
-  fn parse(input: ParseStream) -> syn::Result<Self> {
-    let mut label = None;
-    let mut repeated = None;
-    let mut as_type = None;
-    let items = input.parse_terminated(ListLikeLabelParserHelper::<TAG>::parse, Token![,])?;
-
-    for item in items {
-      match item {
-        ListLikeLabelParserHelper::Label(l) => {
-          if let Some(ref old) = label {
-            return Err(syn::Error::new(
-              input.span(),
-              format!(
-                "Duplicate label found, expected only one label, found `{}` and `{}`",
-                old, l
-              ),
-            ));
-          }
-          label = Some(l);
-        }
-        ListLikeLabelParserHelper::Repeated => {
-          if repeated.is_some() {
-            return Err(syn::Error::new(
-              input.span(),
-              "Duplicate `repeated` found, only one `repeated` is allowed",
-            ));
-          }
-          repeated = Some(true);
-        }
-        ListLikeLabelParserHelper::As(ty) => {
-          if as_type.is_some() {
-            return Err(syn::Error::new(
-              input.span(),
-              format!("Duplicate `as` found, expected only one `as`"),
-            ));
-          }
-          as_type = Some(ty);
-        }
-      }
-    }
-    let repeated = repeated.unwrap_or(false);
-
-    let key = if TAG == 0 { "list" } else { "set" };
-
-    Ok(match (label, repeated, as_type) {
-      (Some(label), true, None) => Self(Either::Left(ListLikeLabel {
-        label: Arc::new(label),
-        repeated: true,
-      })),
-      (Some(label), false, None) => Self(Either::Left(ListLikeLabel {
-        label: Arc::new(label),
-        repeated: false,
-      })),
-      (None, false, Some(ty)) => Self(Either::Right(ty)),
-      _ => {
-        return Err(syn::Error::new(
-          input.span(),
-          format!("Expected `{key}(...)`, or `{key}(..., repeated)` or `{key}(as = \"...\")`",),
-        ));
-      }
-    })
-  }
-}
-
-enum MapLabelParserHelper {
-  Key(Label),
-  Value(Label),
-  Repeated,
-  As(Type),
-}
-
-impl Parse for MapLabelParserHelper {
-  fn parse(input: ParseStream) -> syn::Result<Self> {
-    if input.peek(Token![as]) {
-      let _: Token![as] = input.parse()?;
-      if !input.peek(Token![=]) {
-        return Err(syn::Error::new(input.span(), "Expected `as = \"...\"`"));
-      }
-      let _: Token![=] = input.parse()?;
-      let ty: Type = input.parse()?;
-      return Ok(Self::As(ty));
-    }
-
-    if !input.peek(Ident) {
-      return Err(syn::Error::new(
-        input.span(),
-        "Expected one of [key, value, repeated, as]",
-      ));
-    }
-
-    let ident: Ident = input.parse()?;
-    match () {
-      () if ident.eq("key") || ident.eq("value") => {
-        if !input.peek(Paren) {
-          return Err(syn::Error::new(
-            ident.span(),
-            format!("Expected `(...)` after `{ident}`"),
-          ));
-        }
-
-        let content;
-        syn::parenthesized!(content in input);
-        if content.is_empty() {
-          return Err(syn::Error::new(
-            ident.span(),
-            format!("Expected `{ident}(...)`, `{ident}(..., repeated)` or `{ident}(as = \"...\")`"),
-          ));
-        }
-
-        let label = Label::parse(&content)?;
-        if ident.eq("key") {
-          Ok(Self::Key(label))
-        } else {
-          Ok(Self::Value(label))
-        }
-      }
-      () if ident.eq("repeated") => Ok(Self::Repeated),
-      _ => Err(syn::Error::new(
-        ident.span(),
-        format!(
-          "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable, repeated, as], found `{}`",
-          ident
-        ),
-      )),
-    }
-  }
-}
-
-struct MapLabelParser(Either<MapLabel, Type>);
-
-impl Parse for MapLabelParser {
-  fn parse(input: ParseStream) -> syn::Result<Self> {
-    let mut key = None;
-    let mut value = None;
-    let mut repeated = None;
-    let mut as_type = None;
-    let items = input.parse_terminated(MapLabelParserHelper::parse, Token![,])?;
-
-    for item in items {
-      match item {
-        MapLabelParserHelper::Key(l) => {
-          if let Some(ref old) = key {
-            return Err(syn::Error::new(
-              input.span(),
-              format!(
-                "Duplicate key found, expected only one key, found `key({})` and `key({})`",
-                old, l
-              ),
-            ));
-          }
-          key = Some(l);
-        }
-        MapLabelParserHelper::Value(l) => {
-          if let Some(ref old) = value {
-            return Err(syn::Error::new(
-              input.span(),
-              format!(
-                "Duplicate value found, expected only one value, found `value({})` and `value({})`",
-                old, l
-              ),
-            ));
-          }
-          value = Some(l);
-        }
-        MapLabelParserHelper::Repeated => {
-          if repeated.is_some() {
-            return Err(syn::Error::new(
-              input.span(),
-              "Duplicate `repeated` found, only one `repeated` is allowed",
-            ));
-          }
-          repeated = Some(true);
-        }
-        MapLabelParserHelper::As(ty) => {
-          if as_type.is_some() {
-            return Err(syn::Error::new(
-              input.span(),
-              format!("Duplicate `as` found, expected only one `as`"),
-            ));
-          }
-          as_type = Some(ty);
-        }
-      }
-    }
-    let repeated = repeated.unwrap_or(false);
-
-    Ok(match (key, value, repeated, as_type) {
-      (Some(key), Some(value), true, None) => Self(Either::Left(MapLabel {
-        key: Arc::new(key),
-        value: Arc::new(value),
-        repeated: true,
-      })),
-      (Some(key), Some(value), false, None) => Self(Either::Left(MapLabel {
-        key: Arc::new(key),
-        value: Arc::new(value),
-        repeated: false,
-      })),
-      (None, None, false, Some(ty)) => Self(Either::Right(ty)),
-      _ => {
-        return Err(syn::Error::new(
-          input.span(),
-          "Expected `map(key(...), value(...))`, or `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
-        ));
-      }
-    })
+fn parse_type(input: ParseStream) -> syn::Result<Type> {
+  let expr: syn::ExprLit = input.parse()?;
+  match expr.lit {
+    syn::Lit::Str(lit_str) => syn::parse_str(lit_str.value().as_str()),
+    _ => Err(syn::Error::new(
+      expr.span(),
+      "Expected a string literal for type",
+    )),
   }
 }
 
@@ -709,7 +423,6 @@ impl Parse for Label {
       () if ident.eq("scalar") => parse_maybe_as(input, "scalar").map(Self::Scalar)?,
       () if ident.eq("bytes") => parse_maybe_as(input, "bytes").map(Self::Bytes)?,
       () if ident.eq("string") => parse_maybe_as(input, "string").map(Self::String)?,
-      () if ident.eq("generic") => parse_maybe_as(input, "generic").map(Self::Generic)?,
       () if ident.eq("object") => parse_maybe_as(input, "object").map(Self::Object)?,
       () if ident.eq("enum") => parse_maybe_as(input, "enum").map(Self::Enum)?,
       () if ident.eq("union") => parse_maybe_as(input, "union").map(Self::Union)?,
@@ -734,6 +447,7 @@ impl Parse for Label {
         }
 
         return Ok(match () {
+          () if ident.eq("generic") => GenericLabelParser::parse(&content).map(|v| Self::Generic(v.0))?,
           () if ident.eq("nullable") => {
             let ty = Label::parse(&content)?;
             if ty.is_nullable() {
@@ -746,10 +460,10 @@ impl Parse for Label {
             Self::Nullable(Arc::new(ty))
           }
           () if ident.eq("set") => {
-            ListLikeLabelParser::<1>::parse(&content).map(|label| Self::Set(label.0))?
+            ListLikeLabelParser::<SET_TAG>::parse(&content).map(|label| Self::Set(label.0))?
           }
           () if ident.eq("list") => {
-            ListLikeLabelParser::<0>::parse(&content).map(|label| Self::List(label.0))?
+            ListLikeLabelParser::<LIST_TAG>::parse(&content).map(|label| Self::List(label.0))?
           }
           () if ident.eq("key") => {
             return Err(syn::Error::new(

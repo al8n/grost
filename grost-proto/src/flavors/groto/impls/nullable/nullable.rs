@@ -4,7 +4,7 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
+    DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat, StaticWireFormat,
     groto::{Context, Error, WireType},
   },
   selection::Selectable,
@@ -14,7 +14,7 @@ impl<T> DefaultNullableWireFormat<Groto> for Option<T> {
   type Format<V>
     = Nullable<V>
   where
-    V: WireFormat<Groto>;
+    V: StaticWireFormat<Groto>;
 }
 
 impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Nullable<W>, Groto>> for Option<T>

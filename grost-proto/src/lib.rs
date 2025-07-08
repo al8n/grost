@@ -45,9 +45,11 @@ pub mod convert;
 /// Marker types
 pub mod marker;
 
+/// Common types for map-like structures
+pub mod map;
+
 #[macro_use]
 mod macros;
-mod map;
 mod select_set;
 mod utils;
 

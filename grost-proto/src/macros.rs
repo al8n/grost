@@ -268,10 +268,6 @@ macro_rules! selectable {
       #[allow(non_camel_case_types)]
       impl$(< $(const $g: ::core::primitive::usize),* >)? $crate::__private::selection::Selectable<$flavor> for $ty {
         type Selector = ::core::primitive::bool;
-
-        fn is_empty(&self) -> bool {
-          false
-        }
       }
     )*
   };

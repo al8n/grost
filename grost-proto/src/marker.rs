@@ -18,7 +18,12 @@ mod sealed {
   impl<T: ?Sized> Sealed for ObjectMarker<T> {}
   impl<T: ?Sized, M: ?Sized> Sealed for FlattenMarker<T, M> {}
   impl<T: ?Sized, M: ?Sized, const TAG: u32> Sealed for RepeatedMarker<T, M, TAG> {}
-  impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Sealed for RepeatedEntryMarker<T, KM, VM, TAG> {}
+  impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Sealed
+    for RepeatedEntryMarker<T, KM, VM, TAG>
+  {
+  }
+
+  impl<M: ?Sized> Sealed for GenericMarker<M> {}
 }
 
 /// A marker trait that associates to the type being marked.
@@ -55,8 +60,14 @@ impl<T: ?Sized, M: ?Sized, const TAG: u32> Marker for RepeatedMarker<T, M, TAG> 
   type Marked = T;
 }
 
-impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Marker for RepeatedEntryMarker<T, KM, VM, TAG> {
+impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Marker
+  for RepeatedEntryMarker<T, KM, VM, TAG>
+{
   type Marked = T;
+}
+
+impl<M: ?Sized + Marker> Marker for GenericMarker<M> {
+  type Marked = M::Marked;
 }
 
 impl<T: ?Sized, M: ?Sized> Marker for ListMarker<T, M> {
@@ -112,7 +123,7 @@ pub struct ObjectMarker<T: ?Sized>;
 pub struct InterfaceMarker<T: ?Sized>;
 
 /// A marker for repeating.
-/// 
+///
 /// - `T` is the type being marked.
 /// - `VM` is the marked type of the value of the repeated value.
 /// - `O` is the default output type of the repeated value.
@@ -121,7 +132,7 @@ pub struct InterfaceMarker<T: ?Sized>;
 pub struct RepeatedMarker<T: ?Sized, VM: ?Sized, const TAG: u32>;
 
 /// A marker for repeating entry.
-/// 
+///
 /// - `T` is the type being marked.
 /// - `KM` is the marked type of the key of the repeated entry.
 /// - `VM` is the marked type of the value of the repeated entry.
@@ -173,3 +184,7 @@ pub struct SetMarker<T: ?Sized, V: ?Sized>;
 /// and the third type parameter `V` is the value type of the map.
 #[phantom]
 pub struct MapMarker<T: ?Sized, K: ?Sized, V: ?Sized>;
+
+/// A marker for a generic type
+#[phantom]
+pub struct GenericMarker<M: ?Sized>;

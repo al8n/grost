@@ -22,11 +22,4 @@ where
   T: Selectable<Groto>,
 {
   type Selector = T::Selector;
-
-  fn is_empty(&self) -> bool {
-    match self {
-      Some(value) => value.is_empty(),
-      None => true,
-    }
-  }
 }

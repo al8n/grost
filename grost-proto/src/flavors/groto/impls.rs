@@ -1,6 +1,7 @@
 // mod map_selector;
 pub use packed_decoder::PackedDecoder;
 pub use repeated_decoder::RepeatedDecoder;
+pub use map::PackedEntriesDecoder;
 
 use crate::{
   convert::{PartialTransform, Transform},
@@ -200,7 +201,7 @@ macro_rules! default_wire_format_ref {
       where
         T: $crate::__private::flavors::$t<Groto> + ?Sized,
       {
-        type Format $(< $($p),* >)? = T::Format $(< $($p),* > where $($p: $crate::__private::flavors::WireFormat<Groto>),*)?;
+        type Format $(< $($p),* >)? = T::Format $(< $($p),* > where $($p: $crate::__private::flavors::StaticWireFormat<Groto>),*)?;
       }
     )*
   };

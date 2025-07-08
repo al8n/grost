@@ -10,6 +10,72 @@ pub use str::Str;
 mod slice;
 mod str;
 
+/// A marker trait indicating that two types produce equivalent encoded output
+/// despite potentially having different wire formats or internal representations.
+///
+/// ## Safety
+///
+/// This trait is unsafe because incorrect implementation can lead to data corruption
+/// or incorrect behavior in systems that rely on encoding equivalence. Implementers
+/// must ensure that:
+///
+/// 1. all methods of `Encode` for `Self` and `O` produce the same results for equivalent values
+/// 2. The equivalence holds across all possible contexts (both `F::Context` and `<Self::Flavor as Flavor>::Context`)
+///
+/// # Example
+///
+/// ```ignore
+/// struct MyStr(str);
+///
+/// unsafe impl EquivalentDecode<MyStr, LengthDelimited, Groto> for str {
+///   type Flavor = Groto;
+///   type WireFormat = LengthDelimited;
+/// }
+/// ```
+pub unsafe trait EquivalentDecode<'a, O, Rhs, W, RB, B, F>
+where
+  Self: Decode<'a, O, Self::WireFormat, RB, B, Self::Flavor>,
+  Rhs: Decode<'a, O, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  /// The wire format for Self
+  type WireFormat: WireFormat<Self::Flavor>;
+
+  /// The flavor for Self
+  type Flavor: Flavor + ?Sized;
+}
+
+unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, T, W, RB, B, F> for T
+where
+  T: Decode<'a, O, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, &T, W, RB, B, F> for T
+where
+  T: Decode<'a, O, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, T, W, RB, B, F> for &T
+where
+  T: Decode<'a, O, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
 /// A trait for fully decoding types from a borrowed byte slice.
 ///
 /// `Decode` is intended for decoding entire data structures
@@ -63,6 +129,31 @@ where
   }
 }
 
+impl<'de, O, W, RB, B, F, T> Decode<'de, O, W, RB, B, F> for &T
+where
+  T: Decode<'de, O, W, RB, B, F> + ?Sized,
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+  fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, O), <F as Flavor>::Error>
+  where
+    O: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
+  {
+    <T as Decode<'de, O, W, RB, B, F>>::decode(context, src)
+  }
+
+  fn decode_length_delimited(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, O), <F as Flavor>::Error>
+  where
+    O: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de,
+  {
+    <T as Decode<'de, O, W, RB, B, F>>::decode_length_delimited(context, src)
+  }
+}
+
 /// A data structure that can be deserialized without borrowing any data from the source buffer.
 pub trait DecodeOwned<O, W, RB, B, F>: for<'de> Decode<'de, O, W, RB, B, F>
 where
@@ -77,39 +168,6 @@ where
   W: WireFormat<F>,
   T: for<'de> Decode<'de, O, W, RB, B, F>,
 {
-}
-
-/// A trait for merging the input type `I` into the current type `Self`.
-pub trait Merge<'de, F, W, I>: Default
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Merges the input type `I` into the current type `Self`.
-  fn merge(&mut self, other: I) -> Result<(), F::Error>;
-}
-
-impl<'de, F, W, I, T> Merge<'de, F, W, Option<I>> for Option<T>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  T: Merge<'de, F, W, I>,
-{
-  fn merge(&mut self, other: Option<I>) -> Result<(), <F as Flavor>::Error> {
-    match other {
-      Some(value) => {
-        if let Some(inner) = self {
-          inner.merge(value)
-        } else {
-          let mut this = T::default();
-          this.merge(value).map(|_| {
-            *self = Some(this);
-          })
-        }
-      }
-      None => Ok(()),
-    }
-  }
 }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]

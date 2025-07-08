@@ -1,6 +1,7 @@
 use varing::Varint;
 
-use super::{Tag, WireType, tag::ParseTagError};
+use super::{Tag, WireType};
+use crate::error::ParseTagError;
 
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
@@ -12,10 +13,6 @@ pub struct Identifier {
 
 impl Identifier {
   /// Creates a new identifier with the given wire type and tag.
-  ///
-  /// # Panics
-  ///
-  /// This function will panic if the wire type is not valid for the given tag.
   #[inline]
   pub const fn new(wire_type: WireType, tag: Tag) -> Self {
     Self { wire_type, tag }

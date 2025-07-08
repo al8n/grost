@@ -919,10 +919,6 @@ fn derive_selectable_impl<T, S, M>(object: &super::Object<T, S, M>) -> proc_macr
       impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
       {
         type Selector = #selector_ty;
-
-        fn is_empty(&self) -> ::core::primitive::bool {
-          false
-        }
       }
     }
   };
@@ -948,10 +944,6 @@ fn derive_selectable_impl<T, S, M>(object: &super::Object<T, S, M>) -> proc_macr
       impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #partial_object_ty #where_clauses
       {
         type Selector = #selector_ty;
-
-        fn is_empty(&self) -> ::core::primitive::bool {
-          Self::is_empty(self)
-        }
       }
     }
   };
@@ -978,10 +970,6 @@ fn derive_selectable_impl<T, S, M>(object: &super::Object<T, S, M>) -> proc_macr
       impl #ig #path_to_grost::__private::selection::Selectable<#flavor_ty> for #object_ty #where_clauses
       {
         type Selector = #selector_ty;
-
-        fn is_empty(&self) -> ::core::primitive::bool {
-          Self::is_empty(self)
-        }
       }
     }
   };

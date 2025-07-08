@@ -23,7 +23,7 @@ pub type DefaultBuffer<T> = arrayvec_0_7::ArrayVec<T, 16>;
 
 /// The default buffer type for storing unknown data or repeated values in decoding operations.
 #[cfg(all(any(feature = "std", feature = "alloc"), feature = "smallvec_1"))]
-pub type DefaultBuffer<T> = smallvec_1::SmallVec<[T; 4]>;
+pub type DefaultBuffer<T> = smallvec_1::SmallVec<[T; 2]>;
 
 /// A trait for implementing custom buffers that can store values of type `T`.
 ///

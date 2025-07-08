@@ -3,8 +3,10 @@ use super::Flavor;
 use ghost::phantom;
 
 pub use default_wire_format::*;
+pub use merged_wire_format::*;
 
 mod default_wire_format;
+mod merged_wire_format;
 
 /// The wire format used for encoding and decoding.
 pub trait WireFormat<F: Flavor + ?Sized>:
@@ -16,9 +18,11 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const SELF: Self;
 }
 
-/// A marker type for merging two wire formats to a single wire format.
-#[phantom]
-pub struct MergedWireFormat<W1: ?Sized, W2: ?Sized>;
+/// A static lifetime wire format, this is used to indicate that the wire format can be
+/// used as a default wire format for a type.
+pub trait StaticWireFormat<F: Flavor + ?Sized>: WireFormat<F> + 'static {
+  const REFERENCE: &'static Self;
+}
 
 /// A wire format for packed repeated fields.
 ///
@@ -148,9 +152,7 @@ impl<K: ?Sized, V: ?Sized, const TAG: u32> PartialEq for RepeatedEntry<K, V, TAG
 
 impl<K: ?Sized, V: ?Sized, const TAG: u32> Eq for RepeatedEntry<K, V, TAG> {}
 
-impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Display
-  for RepeatedEntry<K, V, TAG>
-{
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Display for RepeatedEntry<K, V, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("repeated-entry")
   }
