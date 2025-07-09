@@ -2,8 +2,6 @@ use crate::{error::ParseTagError, selectable};
 
 use super::{Error, Groto};
 
-
-
 /// Tag in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
 #[display("{_0}")]

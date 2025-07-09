@@ -8,42 +8,25 @@ use syn::{
 use super::{Label, parse_type};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ListLikeLabel {
+pub struct NullableLabel {
   pub(crate) label: Rc<Label>,
-  pub(crate) repeated: bool,
 }
 
-impl ListLikeLabel {
+impl NullableLabel {
   /// Returns the label of the list-like type.
   pub fn label(&self) -> &Label {
     &self.label
   }
-
-  /// Returns whether the list-like type is marked as repeated.
-  pub fn is_repeated(&self) -> bool {
-    self.repeated
-  }
 }
 
-pub(super) struct ListLikeLabelParser<const TAG: u8>(pub(super) Either<ListLikeLabel, Type>);
+pub(super) struct NullableLabelParser(pub(super) Either<NullableLabel, Type>);
 
-impl<const TAG: u8> ListLikeLabelParser<TAG> {
-  fn is_set(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_set())
-  }
-
-  fn is_map(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_map())
-  }
-}
-
-enum ListLikeLabelParserHelper<const TAG: u8> {
+enum NullableLabelParserHelper {
   Label(Label),
-  Repeated,
   As(Type),
 }
 
-impl<const TAG: u8> Parse for ListLikeLabelParserHelper<TAG> {
+impl Parse for NullableLabelParserHelper {
   fn parse(input: ParseStream) -> syn::Result<Self> {
     if input.peek(Token![enum]) {
       return Ok(Self::Label(Label::parse(input)?));
@@ -71,7 +54,6 @@ impl<const TAG: u8> Parse for ListLikeLabelParserHelper<TAG> {
       () if Label::possible_idents().iter().any(|label| ident.eq(label)) => {
         Label::parse(input).map(Self::Label)
       }
-      () if ident.eq("repeated") => Ok(Self::Repeated),
       _ => Err(syn::Error::new(
         ident.span(),
         format!(
@@ -82,16 +64,15 @@ impl<const TAG: u8> Parse for ListLikeLabelParserHelper<TAG> {
   }
 }
 
-impl<const TAG: u8> Parse for ListLikeLabelParser<TAG> {
+impl Parse for NullableLabelParser {
   fn parse(input: ParseStream) -> syn::Result<Self> {
     let mut label = None;
-    let mut repeated = None;
     let mut as_type = None;
-    let items = input.parse_terminated(ListLikeLabelParserHelper::<TAG>::parse, Token![,])?;
+    let items = input.parse_terminated(NullableLabelParserHelper::parse, Token![,])?;
 
     for item in items {
       match item {
-        ListLikeLabelParserHelper::Label(l) => {
+        NullableLabelParserHelper::Label(l) => {
           if let Some(ref old) = label {
             return Err(syn::Error::new(
               input.span(),
@@ -100,16 +81,7 @@ impl<const TAG: u8> Parse for ListLikeLabelParser<TAG> {
           }
           label = Some(l);
         }
-        ListLikeLabelParserHelper::Repeated => {
-          if repeated.is_some() {
-            return Err(syn::Error::new(
-              input.span(),
-              "Duplicate `repeated` found, only one `repeated` is allowed",
-            ));
-          }
-          repeated = Some(true);
-        }
-        ListLikeLabelParserHelper::As(ty) => {
+        NullableLabelParserHelper::As(ty) => {
           if as_type.is_some() {
             return Err(syn::Error::new(
               input.span(),
@@ -120,28 +92,16 @@ impl<const TAG: u8> Parse for ListLikeLabelParser<TAG> {
         }
       }
     }
-    let repeated = repeated.unwrap_or(false);
 
-    let key = if TAG == super::LIST_TAG {
-      "list"
-    } else {
-      "set"
-    };
-
-    Ok(match (label, repeated, as_type) {
-      (Some(label), true, None) => Self(Either::Left(ListLikeLabel {
+    Ok(match (label, as_type) {
+      (Some(label), None) => Self(Either::Left(NullableLabel {
         label: Rc::new(label),
-        repeated: true,
       })),
-      (Some(label), false, None) => Self(Either::Left(ListLikeLabel {
-        label: Rc::new(label),
-        repeated: false,
-      })),
-      (None, false, Some(ty)) => Self(Either::Right(ty)),
+      (None, Some(ty)) => Self(Either::Right(ty)),
       _ => {
         return Err(syn::Error::new(
           input.span(),
-          format!("Expected `{key}(...)`, or `{key}(..., repeated)` or `{key}(as = \"...\")`",),
+          "Expected `nullable(...)` or `nullable(as = \"...\")`",
         ));
       }
     })

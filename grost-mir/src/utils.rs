@@ -80,7 +80,7 @@ impl TryFrom<syn::Expr> for Invokable {
         ..
       }) => syn::parse_str::<syn::Path>(&s.value())
         .map_err(|e| {
-          darling::Error::custom(format!("expect a path in string literal: {}", e)).with_span(&s)
+          darling::Error::custom(format!("expect a path in string literal: {e}")).with_span(&s)
         })
         .map(Self::from),
       _ => Err(darling::Error::unexpected_expr_type(&expr)),

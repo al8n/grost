@@ -1,7 +1,7 @@
 // mod map_selector;
+pub use map::PackedEntriesDecoder;
 pub use packed_decoder::PackedDecoder;
 pub use repeated_decoder::RepeatedDecoder;
-pub use map::PackedEntriesDecoder;
 
 use crate::{
   convert::{PartialTransform, Transform},

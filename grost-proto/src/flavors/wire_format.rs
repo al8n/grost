@@ -16,7 +16,7 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   const WIRE_TYPE: F::WireType;
 
   /// A singleton instance of this wire format.
-  /// 
+  ///
   /// For ZSTs, this represents the canonical instance.
   const INSTANCE: Self;
 }

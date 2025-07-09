@@ -161,6 +161,7 @@ impl FieldReflection {
     schema_name: &str,
     schema_description: &str,
     use_generics: bool,
+    wire_format_constraints: Punctuated<WherePredicate, Comma>,
   ) -> darling::Result<Self> {
     let path_to_grost = &object.path_to_grost;
     let flavor_type = &object.flavor_type;
@@ -168,7 +169,13 @@ impl FieldReflection {
     let object_type = &object.ty;
 
     let mut field_reflection_generics = generics.clone();
-    let wire_format_reflection_generics = generics.clone();
+    let mut wire_format_reflection_generics = generics.clone();
+    if !wire_format_constraints.is_empty() {
+      wire_format_reflection_generics
+        .make_where_clause()
+        .predicates
+        .extend(wire_format_constraints);
+    }
 
     let mut field_reflection_constraints = Punctuated::new();
 
@@ -296,6 +303,7 @@ impl<T> super::TaggedField<T> {
       .wire_type_reflection_generics()
       .split_for_impl();
     let wire_type_reflection_type = self.reflection().wire_type_reflection();
+    let wfv = &self.wire_format_ref_value;
 
     quote! {
       #[automatically_derived]
@@ -317,9 +325,7 @@ impl<T> super::TaggedField<T> {
       impl #wire_format_reflection_ig #object_reflectable for #wire_format_reflection_type #wire_format_reflection_wc {
         type Reflection = #wf;
 
-        const REFLECTION: &'static Self::Reflection = &{
-          <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::INSTANCE
-        };
+        const REFLECTION: &'static Self::Reflection = #wfv;
       }
 
       #[automatically_derived]

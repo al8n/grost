@@ -1,7 +1,11 @@
 use crate::{
-  convert::{Flattened, Innermost, State}, encode::{Encode, EquivalentEncode, PartialEncode}, flavors::{
-    groto::{Context, Error, LengthDelimited}, Borrowed, Flatten, Groto, Packed, WireFormat
-  }, reflection::{Reflectable, SchemaType, SchemaTypeReflection}
+  convert::{Flattened, Innermost, State},
+  encode::{Encode, EquivalentEncode, PartialEncode},
+  flavors::{
+    Borrowed, Flatten, Groto, Packed, WireFormat,
+    groto::{Context, Error, LengthDelimited},
+  },
+  reflection::{Reflectable, SchemaType, SchemaTypeReflection},
 };
 
 mod join;

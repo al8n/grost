@@ -164,14 +164,16 @@ impl PartialField {
           })?;
           partial_transform_constraints.extend([
             syn::parse2::<WherePredicate>(quote! {
-              <#field_ty as #state_type>::Output: #path_to_grost::__private::convert::PartialTransform<
+              #field_ty: #path_to_grost::__private::convert::PartialTransform<
                 <#field_ty as #state_type>::Output,
                 ::core::option::Option<<#field_ty as #state_type>::Output>,
                 #wf,
                 #flavor_type,
               >
-              + #path_to_grost::__private::selection::Selectable<#flavor_type, Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector>
               + ::core::marker::Sized
+            })?,
+            syn::parse2(quote! {
+              <#field_ty as #state_type>::Output: #path_to_grost::__private::selection::Selectable<#flavor_type, Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector>
             })?,
             selectable_constraint.clone(),
           ]);
@@ -200,16 +202,21 @@ impl PartialField {
               #field_ty: #path_to_grost::__private::selection::Selectable<#flavor_type>
             })?,
             syn::parse2::<WherePredicate>(quote! {
-              <#field_ty as #state_type>::Output: #path_to_grost::__private::convert::PartialTransform<
+              #field_ty: #path_to_grost::__private::convert::PartialTransform<
                 <#field_ty as #ref_state_type>::Output,
                 ::core::option::Option<<#field_ty as #state_type>::Output>,
                 #wf,
                 #flavor_type,
-                Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector,
               >
             })?,
             syn::parse2::<WherePredicate>(quote! {
               #field_ty: #ref_state_type
+            })?,
+            syn::parse2::<WherePredicate>(quote! {
+              <#field_ty as #state_type>::Output: ::core::marker::Sized +  #path_to_grost::__private::selection::Selectable<
+                #flavor_type,
+                Selector = <#field_ty as #path_to_grost::__private::selection::Selectable<#flavor_type>>::Selector,
+              >
             })?,
             syn::parse2::<WherePredicate>(quote! {
               <#field_ty as #ref_state_type>::Output: ::core::marker::Sized +  #path_to_grost::__private::selection::Selectable<
@@ -221,7 +228,7 @@ impl PartialField {
 
           transform_ref_constraints.extend([
             syn::parse2::<WherePredicate>(quote! {
-              <#field_ty as #state_type>::Output: #path_to_grost::__private::convert::Transform<
+              #field_ty: #path_to_grost::__private::convert::Transform<
                 <#field_ty as #ref_state_type>::Output,
                 <#field_ty as #state_type>::Output,
                 #wf,

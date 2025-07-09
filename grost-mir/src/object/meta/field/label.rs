@@ -1,21 +1,61 @@
 use either::Either;
 use quote::quote;
-use std::sync::Arc;
 use syn::{
-  ext::IdentExt, parse::{Parse, ParseStream}, spanned::Spanned, token::Paren, Ident, Meta, Token, Type
+  Ident, Meta, Path, Token, Type, WherePredicate,
+  ext::IdentExt,
+  parse::{Parse, ParseStream},
+  punctuated::Punctuated,
+  spanned::Spanned,
+  token::{Comma, Paren},
 };
 
+pub use generic::*;
 pub use list_like::*;
 pub use map::*;
-pub use generic::*;
+pub use nullable::*;
 
+mod generic;
 mod list_like;
 mod map;
-mod generic;
+mod nullable;
 
-const WIRE_FORMAT: &str = "as";
 const LIST_TAG: u8 = 0;
 const SET_TAG: u8 = 1;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DefaultWireFormat {
+  ty: Type,
+  constraints: Punctuated<WherePredicate, Comma>,
+}
+
+impl DefaultWireFormat {
+  /// Creates a new `DefaultWireFormat` with the given type and constraints.
+  fn new(ty: Type) -> Self {
+    Self {
+      ty,
+      constraints: Punctuated::new(),
+    }
+  }
+
+  fn with_constraints(ty: Type, constraints: Punctuated<WherePredicate, Comma>) -> Self {
+    Self { ty, constraints }
+  }
+
+  /// Returns the type of the default wire format.
+  pub fn ty(&self) -> &Type {
+    &self.ty
+  }
+
+  /// Returns the constraints of the default wire format.
+  pub fn constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.constraints
+  }
+
+  /// Consumes the `DefaultWireFormat`
+  pub fn into_components(self) -> (Type, Punctuated<WherePredicate, Comma>) {
+    (self.ty, self.constraints)
+  }
+}
 
 /// A type specification for an object field.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
@@ -55,8 +95,8 @@ pub enum Label {
   #[display("list")]
   List(Either<ListLikeLabel, Type>),
   /// An nullable type label
-  #[display("nullable({_0})")]
-  Nullable(Arc<Label>),
+  #[display("nullable")]
+  Nullable(Either<NullableLabel, Type>),
 }
 
 impl Label {
@@ -123,23 +163,25 @@ impl Label {
     Ok(false)
   }
 
-  /// Construct a mark type for the type based on the label.
-  pub fn mark(
+  /// Returns the default wire format type for this label.
+  pub fn default_wire_format(
     &self,
-    path_to_grost: &syn::Path,
-    ty: &syn::Type,
+    path_to_grost: &Path,
+    flavor_type: &Type,
+    ty: &Type,
     tag: u32,
-  ) -> syn::Result<syn::Type> {
-    self.mark_helper(path_to_grost, ty, tag, true)
+  ) -> syn::Result<DefaultWireFormat> {
+    self.default_wire_format_helper(path_to_grost, flavor_type, ty, tag, true)
   }
 
-  fn mark_helper(
+  fn default_wire_format_helper(
     &self,
-    path_to_grost: &syn::Path,
-    ty: &syn::Type,
+    path_to_grost: &Path,
+    flavor_type: &Type,
+    ty: &Type,
     tag: u32,
     outermost: bool,
-  ) -> syn::Result<syn::Type> {
+  ) -> syn::Result<DefaultWireFormat> {
     /// The inner tag for repeating fields should always be 1.
     ///
     /// e.g.
@@ -168,92 +210,138 @@ impl Label {
     const INNER_TAG: u32 = 1;
 
     Ok(match self {
-      Self::Scalar(wf) => match wf {
+      Self::Scalar(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ScalarMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Bytes(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Bytes(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::BytesMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::String(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::String(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::StringMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Object(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Object(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ObjectMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Enum(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Enum(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::EnumMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Union(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Union(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::UnionMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Interface(wf) => match wf {
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Interface(wf) => DefaultWireFormat::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::InterfaceMarker<#ty>
         })?,
-        Some(wf) => wf.clone(),
-      },
-      Self::Generic(value) => match value {
-        GenericLabelValue::Marker(ty) => syn::parse2(quote! {
-          #path_to_grost::__private::marker::GenericMarker<#ty>
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
-        GenericLabelValue::As(wf) => wf.clone(),
+      }),
+      Self::Generic(value) => match value {
+        GenericLabelValue::Marker(marker) => {
+          let mut constraints = Punctuated::new();
+          constraints.push(syn::parse2(quote! {
+            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type> + #path_to_grost::__private::marker::Marker<Marked = #ty>
+          })?);
+
+          DefaultWireFormat::with_constraints(
+            syn::parse2(quote! {
+              #path_to_grost::__private::marker::GenericMarker<#ty, #marker>
+            })?,
+            constraints,
+          )
+        }
+        GenericLabelValue::As(wf) => {
+          let mut constraints = Punctuated::new();
+          let marker: Type = syn::parse2(quote! {
+            #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+          })?;
+          constraints.push(syn::parse2(quote! {
+            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+          })?);
+
+          DefaultWireFormat::with_constraints(marker, constraints)
+        }
       },
-      Self::Map(Either::Right(ty)) => ty.clone(),
+      Self::Map(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
       Self::Map(Either::Left(MapLabel {
         key,
         value,
         repeated,
       })) => {
-        let k: syn::Type = syn::parse2(quote! {
+        let k: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapKey>,
           >>::Output
         })?;
-        let v: syn::Type = syn::parse2(quote! {
+        let v: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
           >>::Output
         })?;
-        let km = key.mark_helper(path_to_grost, &k, INNER_TAG, false)?;
-        let vm = value.mark_helper(path_to_grost, &v, INNER_TAG, false)?;
+        let (k, kcs) = key
+          .default_wire_format_helper(path_to_grost, flavor_type, &k, INNER_TAG, false)?
+          .into_components();
+        let (v, vcs) = value
+          .default_wire_format_helper(path_to_grost, flavor_type, &v, INNER_TAG, false)?
+          .into_components();
 
-        if *repeated {
+        let ty = if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #km, #vm, #tag>
+            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #k, #v, #tag>
           })?
         } else {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::MapMarker<#ty, #km, #vm>
+            #path_to_grost::__private::marker::MapMarker<#ty, #k, #v>
           })?
-        }
+        };
+
+        DefaultWireFormat::with_constraints(ty, kcs.into_iter().chain(vcs).collect())
       }
-      Self::Set(Either::Right(ty)) => ty.clone(),
+      Self::Set(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
       Self::Set(Either::Left(ListLikeLabel { label, repeated })) => {
-        let inner_ty: syn::Type = syn::parse2(quote! {
+        let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark_helper(path_to_grost, &inner_ty, INNER_TAG, false)?;
-        if *repeated {
+        let (inner, c) = label
+          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?
+          .into_components();
+        let ty = if *repeated {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
           })?
@@ -261,18 +349,23 @@ impl Label {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::SetMarker<#ty, #inner>
           })?
-        }
+        };
+        DefaultWireFormat::with_constraints(ty, c)
       }
-      Self::List(Either::Right(ty)) => ty.clone(),
+      Self::List(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
       Self::List(Either::Left(ListLikeLabel { label, repeated })) => {
-        let inner_ty: syn::Type = syn::parse2(quote! {
+        let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark_helper(path_to_grost, &inner_ty, INNER_TAG, false)?;
+        let (inner, c) = label
+          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?
+          .into_components();
 
-        if *repeated {
+        let ty = if *repeated {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
           })?
@@ -280,15 +373,23 @@ impl Label {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::ListMarker<#ty, #inner>
           })?
-        }
+        };
+
+        DefaultWireFormat::with_constraints(ty, c)
       }
-      Self::Nullable(label) => {
-        let inner_ty: syn::Type = syn::parse2(quote! {
+      Self::Nullable(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
+      Self::Nullable(Either::Left(label)) => {
+        let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let inner = label.mark_helper(path_to_grost, &inner_ty, tag, false)?;
+        let (inner, c) = label
+          .label()
+          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, tag, false)?
+          .into_components();
 
         // if the option is the outermost, we should use the inner type wire format.
         //
@@ -303,7 +404,7 @@ impl Label {
         // In this case, there is no outer wrapper over the `Option<String>`,
         // the default should be the default wire format of String, encode name as nullable
         // will waste at least 2 bytes space.
-        if outermost {
+        let ty = if outermost {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::FlattenMarker<#ty, #inner>
           })?
@@ -311,7 +412,9 @@ impl Label {
           syn::parse2(quote! {
             #path_to_grost::__private::marker::NullableMarker<#ty, #inner>
           })?
-        }
+        };
+
+        DefaultWireFormat::with_constraints(ty, c)
       }
     })
   }
@@ -347,48 +450,34 @@ fn parse_maybe_as(input: ParseStream, name: &str) -> syn::Result<Option<Type>> {
 
 fn unexpected_eos_error(ident: Ident) -> syn::Result<Label> {
   match () {
-    () if ident.eq("map") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`map` requires a key and value, e.g. `map(key(...), value(...))`, `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
-      ))
-    }
-    () if ident.eq("set") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`set` requires a type, e.g. `set(...)` or `set(..., repeated)`",
-      ))
-    }
-    () if ident.eq("list") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`list` requires a type, e.g. `list(...)` or `list(..., repeated)`",
-      ))
-    }
-    () if ident.eq("nullable") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`nullable` requires a type, e.g. `nullable(...)`",
-      ))
-    }
-    () if ident.eq("key") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`key` can only be used in `map(...)`",
-      ))
-    }
-    () if ident.eq("value") => {
-      Err(syn::Error::new(
-        ident.span(),
-        "`value` can only be used in `map(...)`",
-      ))
-    }
-    _ => {
-      Err(syn::Error::new(
-        ident.span(),
-        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
-      ))
-    }
+    () if ident.eq("map") => Err(syn::Error::new(
+      ident.span(),
+      "`map` requires a key and value, e.g. `map(key(...), value(...))`, `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
+    )),
+    () if ident.eq("set") => Err(syn::Error::new(
+      ident.span(),
+      "`set` requires a type, e.g. `set(...)` or `set(..., repeated)`",
+    )),
+    () if ident.eq("list") => Err(syn::Error::new(
+      ident.span(),
+      "`list` requires a type, e.g. `list(...)` or `list(..., repeated)`",
+    )),
+    () if ident.eq("nullable") => Err(syn::Error::new(
+      ident.span(),
+      "`nullable` requires a type, e.g. `nullable(...)`",
+    )),
+    () if ident.eq("key") => Err(syn::Error::new(
+      ident.span(),
+      "`key` can only be used in `map(...)`",
+    )),
+    () if ident.eq("value") => Err(syn::Error::new(
+      ident.span(),
+      "`value` can only be used in `map(...)`",
+    )),
+    _ => Err(syn::Error::new(
+      ident.span(),
+      "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
+    )),
   }
 }
 
@@ -447,17 +536,11 @@ impl Parse for Label {
         }
 
         return Ok(match () {
-          () if ident.eq("generic") => GenericLabelParser::parse(&content).map(|v| Self::Generic(v.0))?,
+          () if ident.eq("generic") => {
+            GenericLabelParser::parse(&content).map(|v| Self::Generic(v.0))?
+          }
           () if ident.eq("nullable") => {
-            let ty = Label::parse(&content)?;
-            if ty.is_nullable() {
-              return Err(syn::Error::new(
-                content.span(),
-                "`nullable(nullable(...))` is not allowed",
-              ));
-            }
-
-            Self::Nullable(Arc::new(ty))
+            NullableLabelParser::parse(&content).map(|val| Self::Nullable(val.0))?
           }
           () if ident.eq("set") => {
             ListLikeLabelParser::<SET_TAG>::parse(&content).map(|label| Self::Set(label.0))?

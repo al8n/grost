@@ -1,4 +1,7 @@
-use syn::{parse::{Parse, ParseStream}, Ident, Token, Type};
+use syn::{
+  Ident, Token, Type,
+  parse::{Parse, ParseStream},
+};
 
 use super::parse_type;
 
@@ -19,14 +22,16 @@ impl Parse for GenericLabelValue {
         return Err(syn::Error::new(input.span(), "Expected `=` after `as`"));
       }
       let _: Token![=] = input.parse()?;
-      let ty: Type = input.parse()?;
+      let ty: Type = parse_type(input)?;
       return Ok(Self::As(ty));
     }
 
     if !input.peek(Ident) {
-      return Err(syn::Error::new(input.span(), "Expected a `marker = \"...\"` or `as = \"...\"`"));
+      return Err(syn::Error::new(
+        input.span(),
+        "Expected a `marker = \"...\"` or `as = \"...\"`",
+      ));
     }
-
 
     let ident: Ident = input.parse()?;
     if ident != "marker" {
@@ -51,24 +56,33 @@ impl Parse for GenericLabelParser {
       match value {
         GenericLabelValue::Marker(ty) => {
           if marker.is_some() {
-            return Err(syn::Error::new(input.span(), "Multiple `marker` values found"));
+            return Err(syn::Error::new(
+              input.span(),
+              "Multiple `marker` values found",
+            ));
           }
           marker = Some(ty);
-        },
+        }
         GenericLabelValue::As(ty) => {
           if as_type.is_some() {
             return Err(syn::Error::new(input.span(), "Multiple `as` values found"));
           }
           as_type = Some(ty);
-        },
+        }
       }
     }
 
     match (marker, as_type) {
       (Some(marker), None) => Ok(Self(GenericLabelValue::Marker(marker))),
       (None, Some(as_type)) => Ok(Self(GenericLabelValue::As(as_type))),
-      (Some(_), Some(_)) => Err(syn::Error::new(input.span(), "Cannot specify both `marker` and `as` at the same time")),
-      (None, None) => Err(syn::Error::new(input.span(), "Expected at least one of `marker = \"...\"` or `as = \"...\"`")),
+      (Some(_), Some(_)) => Err(syn::Error::new(
+        input.span(),
+        "Cannot specify both `marker` and `as` at the same time",
+      )),
+      (None, None) => Err(syn::Error::new(
+        input.span(),
+        "Expected at least one of `marker = \"...\"` or `as = \"...\"`",
+      )),
     }
   }
 }

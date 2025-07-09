@@ -218,7 +218,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
   type Identifier: Identifier<Self>;
 
   /// The tag used for this flavor.
-  type Tag: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + TryFrom<u32, Error = ParseTagError>;
+  type Tag: Copy
+    + Eq
+    + core::hash::Hash
+    + core::fmt::Debug
+    + core::fmt::Display
+    + TryFrom<u32, Error = ParseTagError>;
 
   /// The wire type used for this flavor.
   ///

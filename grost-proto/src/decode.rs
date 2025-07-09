@@ -135,16 +135,22 @@ where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, O), <F as Flavor>::Error>
+  fn decode(
+    context: &'de <F as Flavor>::Context,
+    src: RB,
+  ) -> Result<(usize, O), <F as Flavor>::Error>
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
+    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de,
   {
     <T as Decode<'de, O, W, RB, B, F>>::decode(context, src)
   }
 
-  fn decode_length_delimited(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, O), <F as Flavor>::Error>
+  fn decode_length_delimited(
+    context: &'de <F as Flavor>::Context,
+    src: RB,
+  ) -> Result<(usize, O), <F as Flavor>::Error>
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,

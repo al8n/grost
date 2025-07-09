@@ -1,6 +1,9 @@
 use core::{marker::PhantomData, mem};
 
-use crate::{flavors::Flavor, selection::{Selectable, Selector}};
+use crate::{
+  flavors::Flavor,
+  selection::{Selectable, Selector},
+};
 
 /// The selector for a map.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -86,45 +89,33 @@ where
       (MapSelector::Key(k), MapSelector::Entry { key: k2, value: v2 }) => {
         k.merge(k2);
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry {
-          key: k,
-          value: v2,
-        };
+        *self = MapSelector::Entry { key: k, value: v2 };
         self
       }
       (MapSelector::Key(k), MapSelector::Value(v)) => {
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry {
-          key: k,
-          value: v,
-        };
+        *self = MapSelector::Entry { key: k, value: v };
         self
-      },
+      }
       (MapSelector::Value(v), MapSelector::Key(k)) => {
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry {
-          key: k,
-          value: v,
-        };
+        *self = MapSelector::Entry { key: k, value: v };
         self
-      },
+      }
       (MapSelector::Value(v), MapSelector::Entry { key, value }) => {
         v.merge(value);
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry {
-          key,
-          value: v,
-        };
+        *self = MapSelector::Entry { key, value: v };
         self
-      },
+      }
       (MapSelector::Entry { key, .. }, MapSelector::Key(k)) => {
         key.merge(k);
         self
-      },
+      }
       (MapSelector::Entry { value, .. }, MapSelector::Value(v)) => {
         value.merge(v);
         self
-      },
+      }
     }
   }
 }
@@ -137,14 +128,11 @@ pub struct MapEntry<K, V> {
 
 impl<K, V> From<(K, V)> for MapEntry<K, V> {
   fn from((key, value): (K, V)) -> Self {
-    Self {
-      key,
-      value,
-    }
+    Self { key, value }
   }
 }
 
-impl<K, V> From<MapEntry<K, V>> for (K, V){
+impl<K, V> From<MapEntry<K, V>> for (K, V) {
   fn from(MapEntry { key, value }: MapEntry<K, V>) -> Self {
     (key, value)
   }
@@ -154,10 +142,7 @@ impl<K, V> MapEntry<K, V> {
   /// Creates a new map entry with the given key and value.
   #[inline]
   pub const fn new(key: K, value: V) -> Self {
-    Self {
-      key,
-      value,
-    }
+    Self { key, value }
   }
 
   /// Returns a reference to the key of the map entry.
@@ -201,10 +186,7 @@ impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> MapEntry<&'k K, &'v V> {
   /// Creates a new map entry with the given refernece key and value.
   #[inline]
   pub const fn from_ref(key: &'k K, value: &'v V) -> Self {
-    Self {
-      key,
-      value,
-    }
+    Self { key, value }
   }
 }
 
@@ -215,4 +197,3 @@ where
 {
   type Selector = V::Selector;
 }
-

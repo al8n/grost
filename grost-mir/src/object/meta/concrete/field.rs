@@ -187,7 +187,6 @@ pub struct TaggedFieldFromMeta<TO = NoopFromMeta> {
   pub(in crate::object) partial_ref: PartialRefFieldFromMeta,
   pub(in crate::object) selector: SelectorFieldFromMeta,
   pub(in crate::object) copy: bool,
-  pub(in crate::object) wire_format: Option<Type>,
   pub(in crate::object) extra: TO,
 }
 
@@ -233,8 +232,6 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       selector: SelectorFieldFromMeta,
       #[darling(default)]
       copy: bool,
-      #[darling(default)]
-      wire_format: Option<Type>,
       #[darling(flatten)]
       extra: TO,
     }
@@ -250,7 +247,6 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       })?,
       schema: helper.schema,
       tag: helper.tag,
-      wire_format: helper.wire_format,
       transform: helper.transform,
       partial: helper.partial,
       partial_ref: helper.partial_ref,

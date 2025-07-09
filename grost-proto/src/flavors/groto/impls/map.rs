@@ -1,7 +1,10 @@
 use core::{marker::PhantomData, mem};
 
 use crate::{
-  buffer::Buffer, convert::{Partial, State}, flavors::{groto::Context, Groto}, selection::{Selectable, Selector}
+  buffer::Buffer,
+  convert::{Partial, State},
+  flavors::{Groto, groto::Context},
+  selection::{Selectable, Selector},
 };
 
 pub use packed_entries_decoder::PackedEntriesDecoder;
@@ -10,4 +13,3 @@ pub use packed_entries_decoder::PackedEntriesDecoder;
 mod hashmap;
 
 mod packed_entries_decoder;
-

@@ -1,3 +1,5 @@
+use crate::marker::WireFormatMarker;
+
 use super::{Flavor, WireFormat};
 
 pub use bytes::*;
@@ -17,6 +19,7 @@ pub use union::*;
 mod bytes;
 mod enumeration;
 mod flatten;
+mod generic;
 mod interface;
 mod list;
 mod map;
@@ -27,11 +30,13 @@ mod scalar;
 mod set;
 mod string;
 mod union;
-mod generic;
 
 #[inline(always)]
 const fn assert_zst<T>() {
-  assert!(core::mem::size_of::<T>() == 0, "DefaultWireFormat requires the Format be zero-sized type (ZST)");
+  assert!(
+    core::mem::size_of::<T>() == 0,
+    "DefaultWireFormat requires the Format be zero-sized type (ZST)"
+  );
 }
 
 /// The default wire format for a type on flavor `F`.
@@ -40,7 +45,7 @@ pub trait DefaultWireFormat<F: Flavor + ?Sized>: sealed::Sealed<F> {
   type Format: WireFormat<F> + 'static;
 
   /// A singleton instance of the default wire format.
-  /// 
+  ///
   /// For ZSTs, this represents the canonical instance.
   const INSTANCE: Self::Format = {
     assert_zst::<Self::Format>();
@@ -55,10 +60,16 @@ pub trait DefaultWireFormat<F: Flavor + ?Sized>: sealed::Sealed<F> {
     // SAFETY: For Zero-Sized Types, we can safely create a reference from any properly
     // aligned non-null pointer since ZSTs have no actual memory representation.
     // NonNull::dangling() provides a well-aligned pointer that's safe to use for ZSTs.
-    unsafe { 
-      &*core::ptr::NonNull::<Self::Format>::dangling().as_ptr()
-    }
+    unsafe { &*core::ptr::NonNull::<Self::Format>::dangling().as_ptr() }
   };
+}
+
+impl<T: ?Sized, W, F> DefaultWireFormat<F> for WireFormatMarker<T, W>
+where
+  W: WireFormat<F> + 'static,
+  F: Flavor + ?Sized,
+{
+  type Format = W;
 }
 
 mod sealed {
@@ -87,6 +98,8 @@ const _: () = {
       let _: <NullableMarker<Option<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format = Nullable::<LengthDelimited>;
       let _: <StringMarker<str> as DefaultWireFormat<Groto>>::Format = LengthDelimited;
       let _: <ListMarker<Vec<Vec<u8>>, BytesMarker<Vec<u8>>> as DefaultWireFormat<Groto>>::Format =
+        Packed::<LengthDelimited>;
+      let _: <ListMarker<Vec<Vec<u8>>, WireFormatMarker<Vec<u8>, LengthDelimited>> as DefaultWireFormat<Groto>>::Format =
         Packed::<LengthDelimited>;
       let _: <ListMarker<Vec<&str>, StringMarker<&str>> as DefaultWireFormat<Groto>>::Format =
         Packed::<LengthDelimited>;
@@ -138,6 +151,9 @@ fn test_static_ref() {
     flavors::{groto::*, *},
     marker::*,
   };
-  
-  assert_eq!(<BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::STATIC_REF, &LengthDelimited);
+
+  assert_eq!(
+    <BytesMarker<Vec<u8>> as DefaultWireFormat<Groto>>::STATIC_REF,
+    &LengthDelimited
+  );
 }

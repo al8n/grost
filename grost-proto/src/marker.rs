@@ -23,7 +23,8 @@ mod sealed {
   {
   }
 
-  impl<M: ?Sized> Sealed for GenericMarker<M> {}
+  impl<T: ?Sized, M: ?Sized> Sealed for GenericMarker<T, M> {}
+  impl<T: ?Sized, W: ?Sized> Sealed for WireFormatMarker<T, W> {}
 }
 
 /// A marker trait that associates to the type being marked.
@@ -66,7 +67,7 @@ impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Marker
   type Marked = T;
 }
 
-impl<M: ?Sized + Marker> Marker for GenericMarker<M> {
+impl<T: ?Sized, M: ?Sized + Marker<Marked = T>> Marker for GenericMarker<T, M> {
   type Marked = M::Marked;
 }
 
@@ -91,6 +92,10 @@ impl<T: ?Sized> Marker for UnionMarker<T> {
 }
 
 impl<T: ?Sized> Marker for ObjectMarker<T> {
+  type Marked = T;
+}
+
+impl<T: ?Sized, W: ?Sized> Marker for WireFormatMarker<T, W> {
   type Marked = T;
 }
 
@@ -187,4 +192,8 @@ pub struct MapMarker<T: ?Sized, K: ?Sized, V: ?Sized>;
 
 /// A marker for a generic type
 #[phantom]
-pub struct GenericMarker<M: ?Sized>;
+pub struct GenericMarker<T: ?Sized, M: ?Sized>;
+
+/// A marker for wire format only.
+#[phantom]
+pub struct WireFormatMarker<T: ?Sized, W: ?Sized>;

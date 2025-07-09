@@ -16,15 +16,15 @@ struct Uints {
   #[grost(tag = 5, scalar)]
   field5: u128,
 
-  #[grost(tag = 6, scalar, wire_format = "Varint")]
+  #[grost(tag = 6, scalar(as = "Varint"))]
   field6: u8,
-  #[grost(tag = 7, scalar, wire_format = "Fixed16")]
+  #[grost(tag = 7, scalar(as = "Fixed16"))]
   field7: u16,
-  #[grost(tag = 8, scalar, wire_format = "Fixed32")]
+  #[grost(tag = 8, scalar(as = "Fixed32"))]
   field8: u32,
-  #[grost(tag = 9, scalar, wire_format = "Fixed64")]
+  #[grost(tag = 9, scalar(as = "Fixed64"))]
   field9: u64,
-  #[grost(tag = 10, scalar, wire_format = "Fixed128")]
+  #[grost(tag = 10, scalar(as = "Fixed128"))]
   field10: u128,
 }
 
@@ -41,15 +41,15 @@ struct NonZeroUints {
   #[grost(tag = 5, scalar)]
   field5: NonZeroU128,
 
-  #[grost(tag = 6, scalar, wire_format = "Varint")]
+  #[grost(tag = 6, scalar(as = "Varint"))]
   field6: NonZeroU8,
-  #[grost(tag = 7, scalar, wire_format = "Fixed16")]
+  #[grost(tag = 7, scalar(as = "Fixed16"))]
   field7: NonZeroU16,
-  #[grost(tag = 8, scalar, wire_format = "Fixed32")]
+  #[grost(tag = 8, scalar(as = "Fixed32"))]
   field8: NonZeroU32,
-  #[grost(tag = 9, scalar, wire_format = "Fixed64")]
+  #[grost(tag = 9, scalar(as = "Fixed64"))]
   field9: NonZeroU64,
-  #[grost(tag = 10, scalar, wire_format = "Fixed128")]
+  #[grost(tag = 10, scalar(as = "Fixed128"))]
   field10: NonZeroU128,
 }
 
@@ -66,15 +66,15 @@ struct Ints {
   #[grost(tag = 5, scalar)]
   field5: i128,
 
-  #[grost(tag = 6, scalar, wire_format = "Varint")]
+  #[grost(tag = 6, scalar(as = "Varint"))]
   field6: i8,
-  #[grost(tag = 7, scalar, wire_format = "Fixed16")]
+  #[grost(tag = 7, scalar(as = "Fixed16"))]
   field7: i16,
-  #[grost(tag = 8, scalar, wire_format = "Fixed32")]
+  #[grost(tag = 8, scalar(as = "Fixed32"))]
   field8: i32,
-  #[grost(tag = 9, scalar, wire_format = "Fixed64")]
+  #[grost(tag = 9, scalar(as = "Fixed64"))]
   field9: i64,
-  #[grost(tag = 10, scalar, wire_format = "Fixed128")]
+  #[grost(tag = 10, scalar(as = "Fixed128"))]
   field10: i128,
 }
 
@@ -91,15 +91,15 @@ struct NonZeroInts {
   #[grost(tag = 5, scalar)]
   field5: NonZeroI128,
 
-  #[grost(tag = 6, scalar, wire_format = "Varint")]
+  #[grost(tag = 6, scalar(as = "Varint"))]
   field6: NonZeroI8,
-  #[grost(tag = 7, scalar, wire_format = "Fixed16")]
+  #[grost(tag = 7, scalar(as = "Fixed16"))]
   field7: NonZeroI16,
-  #[grost(tag = 8, scalar, wire_format = "Fixed32")]
+  #[grost(tag = 8, scalar(as = "Fixed32"))]
   field8: NonZeroI32,
-  #[grost(tag = 9, scalar, wire_format = "Fixed64")]
+  #[grost(tag = 9, scalar(as = "Fixed64"))]
   field9: NonZeroI64,
-  #[grost(tag = 10, scalar, wire_format = "Fixed128")]
+  #[grost(tag = 10, scalar(as = "Fixed128"))]
   field10: NonZeroI128,
 }
 
@@ -108,7 +108,7 @@ struct Bool {
   #[grost(tag = 1, scalar)]
   field1: bool,
 
-  #[grost(tag = 2, scalar, wire_format = "Varint")]
+  #[grost(tag = 2, scalar(as = "Varint"))]
   field2: bool,
 }
 
@@ -117,7 +117,7 @@ struct Char {
   #[grost(tag = 1, scalar)]
   field1: char,
 
-  #[grost(tag = 2, scalar, wire_format = "Varint")]
+  #[grost(tag = 2, scalar(as = "Varint"))]
   field2: char,
 }
 
@@ -134,15 +134,15 @@ struct Floats {
   #[grost(tag = 4, scalar)]
   field4: rust_decimal_1::Decimal,
 
-  #[grost(tag = 5, scalar, wire_format = "Varint")]
+  #[grost(tag = 5, scalar(as = "Varint"))]
   field5: f32,
-  #[grost(tag = 6, scalar, wire_format = "Varint")]
+  #[grost(tag = 6, scalar(as = "Varint"))]
   field6: f64,
   #[cfg(feature = "half_2")]
-  #[grost(tag = 7, scalar, wire_format = "Varint")]
+  #[grost(tag = 7, scalar(as = "Varint"))]
   field7: half_2::f16,
   #[cfg(feature = "decimal_1")]
-  #[grost(tag = 8, scalar, wire_format = "Varint")]
+  #[grost(tag = 8, scalar(as = "Varint"))]
   field8: rust_decimal_1::Decimal,
 }
 
@@ -264,9 +264,9 @@ struct Net {
   #[grost(tag = 6, scalar)]
   socket_v4: core::net::SocketAddrV4,
 
-  #[grost(tag = 7, scalar, wire_format = "Varint")]
+  #[grost(tag = 7, scalar(as = "Varint"))]
   ipv4_varint: core::net::Ipv4Addr,
-  #[grost(tag = 8, scalar, wire_format = "Varint")]
+  #[grost(tag = 8, scalar(as = "Varint"))]
   ipv6_varint: core::net::Ipv6Addr,
 }
 

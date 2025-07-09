@@ -2,11 +2,6 @@ use core::marker::PhantomData;
 
 use crate::flavors::groto::Context;
 
-
-
-
-
-
 pub struct PackedEntriesDecoder<'a, K: ?Sized, V: ?Sized, B, UB: ?Sized, KW: ?Sized, VW: ?Sized> {
   /// the source buffer
   src: B,

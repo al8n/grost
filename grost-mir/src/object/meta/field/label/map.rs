@@ -1,14 +1,17 @@
-use std::sync::Arc;
 use either::Either;
-use syn::{parse::{Parse, ParseStream}, token::Paren, Ident, Token, Type};
+use std::rc::Rc;
+use syn::{
+  Ident, Token, Type,
+  parse::{Parse, ParseStream},
+  token::Paren,
+};
 
 use super::{Label, parse_type};
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MapLabel {
-  pub(crate) key: Arc<Label>,
-  pub(crate) value: Arc<Label>,
+  pub(crate) key: Rc<Label>,
+  pub(crate) value: Rc<Label>,
   pub(crate) repeated: bool,
 }
 
@@ -28,7 +31,6 @@ impl MapLabel {
     self.repeated
   }
 }
-
 
 enum MapLabelParserHelper {
   Key(Label),
@@ -151,13 +153,13 @@ impl Parse for MapLabelParser {
 
     Ok(match (key, value, repeated, as_type) {
       (Some(key), Some(value), true, None) => Self(Either::Left(MapLabel {
-        key: Arc::new(key),
-        value: Arc::new(value),
+        key: Rc::new(key),
+        value: Rc::new(value),
         repeated: true,
       })),
       (Some(key), Some(value), false, None) => Self(Either::Left(MapLabel {
-        key: Arc::new(key),
-        value: Arc::new(value),
+        key: Rc::new(key),
+        value: Rc::new(value),
         repeated: false,
       })),
       (None, None, false, Some(ty)) => Self(Either::Right(ty)),

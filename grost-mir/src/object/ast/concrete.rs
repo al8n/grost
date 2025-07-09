@@ -5,7 +5,10 @@ use either::Either;
 use indexmap::IndexSet;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
+use syn::{
+  Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility, WherePredicate,
+  punctuated::Punctuated, token::Comma,
+};
 
 use crate::{
   flavor::{DecodeOptions, IdentifierOptions, TagOptions},
@@ -336,6 +339,8 @@ pub struct Object<T = (), S = (), M = ()> {
   partial_ref_state_type: Type,
   reflectable: Type,
   generics: Generics,
+  transform_partial_generics: Generics,
+  decode_generics: Generics,
   /// The trait type which applies the cooresponding generics to the `Decode` trait.
   #[debug(skip)]
   applied_decode_trait: Rc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
@@ -560,12 +565,29 @@ impl<T, S, M> Object<T, S, M> {
       })?
     };
 
+    let mut transform_partial_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
+
     let fields = object
       .fields
       .iter()
       .cloned()
       .enumerate()
-      .map(|(idx, f)| Field::from_raw(&object, idx, f))
+      .map(|(idx, f)| Field::from_raw(&object, idx, f).and_then(|f| {
+        if let Ok(f) = f.try_unwrap_tagged_ref() {
+          if !f.default_wire_format_constraints().is_empty() {
+            let ty = f.ty();
+            let partial_ty = f.partial().ty();
+            let field_wf = f.wire_format();
+            let flavor_type = &object.flavor_type;
+            let path_to_grost = &object.path_to_grost;
+            transform_partial_constraints.push(syn::parse2(quote! {
+              #ty: #path_to_grost::__private::convert::Transform<#partial_ty, #ty, #field_wf, #flavor_type>
+            })?);
+            transform_partial_constraints.extend(f.default_wire_format_constraints().iter().cloned());
+          }
+        }
+        Ok(f)
+      }))
       .collect::<darling::Result<Vec<_>>>()?;
 
     let indexer_name = object.indexer_name();
@@ -613,6 +635,27 @@ impl<T, S, M> Object<T, S, M> {
         })
       })
     };
+    let transform_partial_generics = {
+      let mut output = partial.generics().clone();
+      if !transform_partial_constraints.is_empty() {
+        output
+          .make_where_clause()
+          .predicates
+          .extend(transform_partial_constraints.clone());
+      }
+      output
+    };
+    let decode_generics = {
+      let mut output = partial.decode_generics().clone();
+      if !transform_partial_constraints.is_empty() {
+        output
+          .make_where_clause()
+          .predicates
+          .extend(transform_partial_constraints);
+      }
+      output
+    };
+
     Ok(Self {
       path_to_grost,
       copy: object.copy,
@@ -631,6 +674,8 @@ impl<T, S, M> Object<T, S, M> {
       ty: object.ty,
       reflectable,
       generics: object.generics,
+      decode_generics,
+      transform_partial_generics,
       fields: fields
         .into_iter()
         .zip(fields_metas)

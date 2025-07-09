@@ -1,6 +1,7 @@
 use super::Groto;
 use crate::flavors::{
-  sealed::JoinableAscii, Borrowed, Flatten, JoinAscii, JoinChar, MergeableWireFormat, MergedWireFormat, Nullable, Packed, PackedEntry, Repeated, RepeatedEntry, WireFormat
+  Borrowed, Flatten, JoinAscii, JoinChar, MergeableWireFormat, MergedWireFormat, Nullable, Packed,
+  PackedEntry, Repeated, RepeatedEntry, WireFormat, sealed::JoinableAscii,
 };
 
 wire_format!(

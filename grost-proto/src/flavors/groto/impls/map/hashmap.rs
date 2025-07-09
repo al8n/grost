@@ -5,8 +5,10 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef, State}, flavors::{
-    groto::PackedEntriesDecoder, DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry, RepeatedEntry, WireFormat,
+  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef, State},
+  flavors::{
+    DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
+    RepeatedEntry, WireFormat, groto::PackedEntriesDecoder,
   },
 };
 
@@ -47,7 +49,8 @@ where
   type Output = HashMap<K, V::Output, S>;
 }
 
-impl<'a, K, V, KW, VW, S, RB, B,> State<PartialRef<'a, RB, B, PackedEntry<KW, VW>, Groto>> for HashMap<K, V, S>
+impl<'a, K, V, KW, VW, S, RB, B> State<PartialRef<'a, RB, B, PackedEntry<KW, VW>, Groto>>
+  for HashMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
