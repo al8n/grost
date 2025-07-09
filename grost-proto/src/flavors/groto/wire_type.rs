@@ -1,6 +1,6 @@
 use super::Groto;
 use crate::flavors::{
-  sealed::JoinableAscii, Borrowed, Flatten, JoinAscii, JoinChar, MergeableWireFormat, MergedWireFormat, Nullable, Packed, PackedEntry, Repeated, RepeatedEntry, StaticWireFormat, WireFormat
+  sealed::JoinableAscii, Borrowed, Flatten, JoinAscii, JoinChar, MergeableWireFormat, MergedWireFormat, Nullable, Packed, PackedEntry, Repeated, RepeatedEntry, WireFormat
 };
 
 wire_format!(
@@ -78,14 +78,7 @@ const _: () = {
       #((): JoinableAscii<A~N>,)*
     {
       const WIRE_TYPE: WireType = W::WIRE_TYPE;
-      const SELF: Self = JoinAscii;
-    }
-
-    impl<W: WireFormat<Groto> + 'static, #(const A~N: u8,)*> StaticWireFormat<Groto> for JoinAscii<W, #(A~N,)*>
-    where
-      #((): JoinableAscii<A~N>,)*
-    {
-      const REFERENCE: &'static Self = &JoinAscii;
+      const INSTANCE: Self = JoinAscii;
     }
 
     impl<W: WireFormat<Groto>, #(const A~N: char,)*> From<JoinChar<W, #(A~N,)*>> for WireType
@@ -98,7 +91,7 @@ const _: () = {
     impl<W: WireFormat<Groto>, #(const A~N: char,)*> WireFormat<Groto> for JoinChar<W, #(A~N,)*>
     {
       const WIRE_TYPE: WireType = W::WIRE_TYPE;
-      const SELF: Self = JoinChar;
+      const INSTANCE: Self = JoinChar;
     }
   });
 };
@@ -113,7 +106,7 @@ const _: () = {
 
   impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, Packed<W>> {
     const WIRE_TYPE: WireType = Packed::<W>::WIRE_TYPE;
-    const SELF: Self = Borrowed;
+    const INSTANCE: Self = Borrowed;
   }
 
   impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>> From<Borrowed<'a, PackedEntry<K, V>>>
@@ -128,7 +121,7 @@ const _: () = {
     for Borrowed<'a, PackedEntry<K, V>>
   {
     const WIRE_TYPE: WireType = PackedEntry::<K, V>::WIRE_TYPE;
-    const SELF: Self = Borrowed;
+    const INSTANCE: Self = Borrowed;
   }
 };
 
@@ -146,7 +139,7 @@ const _: () = {
     for Flatten<Borrowed<'a, Packed<W>>, I>
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
-    const SELF: Self = Flatten;
+    const INSTANCE: Self = Flatten;
   }
 
   impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>>
@@ -161,7 +154,7 @@ const _: () = {
     for Flatten<Borrowed<'a, PackedEntry<K, V>>, I>
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
-    const SELF: Self = Flatten;
+    const INSTANCE: Self = Flatten;
   }
 };
 
@@ -175,7 +168,7 @@ const _: () = {
 
   impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<Packed<W>, I> {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
-    const SELF: Self = Flatten;
+    const INSTANCE: Self = Flatten;
   }
 
   impl<K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>>
@@ -190,24 +183,7 @@ const _: () = {
     for Flatten<PackedEntry<K, V>, I>
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
-    const SELF: Self = Flatten;
-  }
-
-  impl<W, I> StaticWireFormat<Groto> for Flatten<Packed<W>, I>
-  where
-    W: WireFormat<Groto> + 'static,
-    I: WireFormat<Groto> + 'static,
-  {
-    const REFERENCE: &'static Self = &Flatten;
-  }
-
-  impl<K, V, I> StaticWireFormat<Groto> for Flatten<PackedEntry<K, V>, I>
-  where
-    K: WireFormat<Groto> + 'static,
-    V: WireFormat<Groto> + 'static,
-    I: WireFormat<Groto> + 'static,
-  {
-    const REFERENCE: &'static Self = &Flatten;
+    const INSTANCE: Self = Flatten;
   }
 };
 
@@ -221,15 +197,7 @@ const _: () = {
 
   impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<Nullable<W>, I> {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
-    const SELF: Self = Flatten;
-  }
-
-  impl<W, I> StaticWireFormat<Groto> for Flatten<Nullable<W>, I>
-  where
-    W: WireFormat<Groto> + 'static,
-    I: WireFormat<Groto> + 'static,
-  {
-    const REFERENCE: &'static Self = &Flatten;
+    const INSTANCE: Self = Flatten;
   }
 };
 
@@ -243,11 +211,7 @@ const _: () = {
 
   impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
     const WIRE_TYPE: WireType = WireType::LengthDelimited;
-    const SELF: Self = Packed;
-  }
-
-  impl<W: WireFormat<Groto> + 'static> StaticWireFormat<Groto> for Packed<W> {
-    const REFERENCE: &'static Self = &Packed;
+    const INSTANCE: Self = Packed;
   }
 };
 
@@ -261,13 +225,7 @@ const _: () = {
 
   impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> WireFormat<Groto> for PackedEntry<KW, VW> {
     const WIRE_TYPE: WireType = WireType::LengthDelimited;
-    const SELF: Self = PackedEntry;
-  }
-
-  impl<KW: WireFormat<Groto> + 'static, VW: WireFormat<Groto> + 'static>
-    StaticWireFormat<Groto> for PackedEntry<KW, VW>
-  {
-    const REFERENCE: &'static Self = &PackedEntry;
+    const INSTANCE: Self = PackedEntry;
   }
 };
 
@@ -281,11 +239,7 @@ const _: () = {
 
   impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
     const WIRE_TYPE: WireType = WireType::Nullable;
-    const SELF: Self = Nullable;
-  }
-
-  impl<W: WireFormat<Groto> + 'static> StaticWireFormat<Groto> for Nullable<W> {
-    const REFERENCE: &'static Self = &Nullable;
+    const INSTANCE: Self = Nullable;
   }
 };
 
@@ -296,14 +250,7 @@ const _: () = {
     W: WireFormat<Groto>,
   {
     const WIRE_TYPE: WireType = W::WIRE_TYPE;
-    const SELF: Self = Repeated;
-  }
-
-  impl<W, const I: u32> StaticWireFormat<Groto> for Repeated<W, I>
-  where
-    W: WireFormat<Groto> + 'static,
-  {
-    const REFERENCE: &'static Self = &Repeated;
+    const INSTANCE: Self = Repeated;
   }
 
   impl<const I: u32, W> From<Repeated<W, I>> for WireType
@@ -325,16 +272,7 @@ const _: () = {
     MergedWireFormat<KW, VW>: WireFormat<Groto>,
   {
     const WIRE_TYPE: WireType = MergedWireFormat::<KW, VW>::WIRE_TYPE;
-    const SELF: Self = RepeatedEntry;
-  }
-
-  impl<KW, VW, const I: u32> StaticWireFormat<Groto> for RepeatedEntry<KW, VW, I>
-  where
-    KW: WireFormat<Groto> + 'static,
-    VW: WireFormat<Groto> + 'static,
-    MergedWireFormat<KW, VW>: WireFormat<Groto>,
-  {
-    const REFERENCE: &'static Self = &RepeatedEntry;
+    const INSTANCE: Self = RepeatedEntry;
   }
 
   impl<KW, VW, const I: u32> From<RepeatedEntry<KW, VW, I>> for WireType
@@ -392,16 +330,7 @@ const _: () = {
     W1: MergeableWireFormat<Groto, W2>,
   {
     const WIRE_TYPE: WireType = <W1 as MergeableWireFormat<Groto, W2>>::Merged::WIRE_TYPE;
-    const SELF: Self = MergedWireFormat;
-  }
-
-  impl<W1, W2> StaticWireFormat<Groto> for MergedWireFormat<W1, W2>
-  where
-    W1: WireFormat<Groto> + 'static,
-    W2: WireFormat<Groto> + 'static,
-    W1: MergeableWireFormat<Groto, W2>,
-  {
-    const REFERENCE: &'static Self = &MergedWireFormat;
+    const INSTANCE: Self = MergedWireFormat;
   }
 
   impl<W1, W2> From<MergedWireFormat<W1, W2>> for WireType

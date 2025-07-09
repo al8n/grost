@@ -23,11 +23,7 @@ macro_rules! wire_format {
 
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
-          const SELF: Self = [< $ty: camel >];
-        }
-
-        impl $crate::flavors::StaticWireFormat<$flavor> for [< $ty: camel >] {
-          const REFERENCE: &'static Self = &[< $ty: camel >];
+          const INSTANCE: Self = [< $ty: camel >];
         }
 
         impl From<[< $ty: camel >]> for $name {
@@ -170,7 +166,7 @@ const _: () = {
         T: $trait<F> + ?Sized,
         F: Flavor + ?Sized,
       {
-        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: StaticWireFormat<F>),* )?;
+        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: WireFormat<F> + 'static),* )?;
       }
     };
     (@builtins $($t:ident $(< $($g:ident),+$(,)? >)?),+$(,)?) => {

@@ -323,7 +323,7 @@ impl<F> super::ConcreteTaggedField<F> {
         type Reflection = #wf;
 
         const REFLECTION: &'static Self::Reflection = &{
-          <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::SELF
+          <#wf as #path_to_grost::__private::flavors::WireFormat<#flavor_ty>>::INSTANCE
         };
       }
 

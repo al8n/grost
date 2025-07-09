@@ -3,15 +3,15 @@ use crate::{
   marker::{MapMarker, Marker},
 };
 
-use super::{DefaultWireFormat, Flavor, StaticWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a map type on flavor `F`.
 pub trait DefaultMapWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
-  type Format<K, V>: StaticWireFormat<F>
+  type Format<K, V>: WireFormat<F> + 'static
   where
-    K: StaticWireFormat<F>,
-    V: StaticWireFormat<F>;
+    K: WireFormat<F> + 'static,
+    V: WireFormat<F> + 'static;
 }
 
 impl<T, KM, VM, F> DefaultWireFormat<F> for MapMarker<T, KM, VM>

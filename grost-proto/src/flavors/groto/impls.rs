@@ -201,7 +201,7 @@ macro_rules! default_wire_format_ref {
       where
         T: $crate::__private::flavors::$t<Groto> + ?Sized,
       {
-        type Format $(< $($p),* >)? = T::Format $(< $($p),* > where $($p: $crate::__private::flavors::StaticWireFormat<Groto>),*)?;
+        type Format $(< $($p),* >)? = T::Format $(< $($p),* > where $($p: $crate::__private::flavors::WireFormat<Groto> + 'static),*)?;
       }
     )*
   };

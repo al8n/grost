@@ -5,7 +5,7 @@ use crate::{
   marker::{Marker, RepeatedEntryMarker, RepeatedMarker},
 };
 
-use super::{DefaultWireFormat, Flavor, StaticWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a repeated encoded list-like type on flavor `F`.
 pub trait DefaultRepeatedWireFormat<F: Flavor + ?Sized> {
@@ -14,9 +14,9 @@ pub trait DefaultRepeatedWireFormat<F: Flavor + ?Sized> {
   /// - `V` is the wire format of the value type.
   /// - `O` is the default output type of the repeated value.
   /// - `TAG` is the tag of the repeated value.
-  type Format<V, const TAG: u32>: StaticWireFormat<F>
+  type Format<V, const TAG: u32>: WireFormat<F> + 'static
   where
-    V: StaticWireFormat<F>;
+    V: WireFormat<F> + 'static;
 }
 
 impl<T, VM, F, const TAG: u32> DefaultWireFormat<F> for RepeatedMarker<T, VM, TAG>
@@ -36,11 +36,11 @@ pub trait DefaultRepeatedEntryWireFormat<F: Flavor + ?Sized> {
   /// - `V` is the wire format of the value type.
   /// - `O` is the default output type of the repeated entry.
   /// - `TAG` is the tag of the repeated entry.
-  type Format<K, V, const TAG: u32>: StaticWireFormat<F>
+  type Format<K, V, const TAG: u32>: WireFormat<F> + 'static
   where
-    K: StaticWireFormat<F>,
-    V: StaticWireFormat<F>,
-    MergedWireFormat<K, V>: StaticWireFormat<F>;
+    K: WireFormat<F> + 'static,
+    V: WireFormat<F> + 'static,
+    MergedWireFormat<K, V>: WireFormat<F> + 'static;
 }
 
 impl<T, KM, VM, F, const TAG: u32> DefaultWireFormat<F> for RepeatedEntryMarker<T, KM, VM, TAG>
@@ -49,7 +49,7 @@ where
   KM::Marked: Sized,
   VM: DefaultWireFormat<F> + Marker + ?Sized,
   VM::Marked: Sized,
-  MergedWireFormat<KM::Format, VM::Format>: StaticWireFormat<F>,
+  MergedWireFormat<KM::Format, VM::Format>: WireFormat<F> + 'static,
   T: ?Sized
     + State<Flattened<Inner>, Output = (KM::Marked, VM::Marked)>
     + DefaultRepeatedEntryWireFormat<F>,

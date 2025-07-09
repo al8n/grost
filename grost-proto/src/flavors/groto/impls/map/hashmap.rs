@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use crate::{
   convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef, State}, flavors::{
-    groto::PackedEntriesDecoder, DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry, RepeatedEntry, WireFormat, StaticWireFormat,
+    groto::PackedEntriesDecoder, DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry, RepeatedEntry, WireFormat,
   },
 };
 
@@ -26,17 +26,17 @@ impl<K, V, S> DefaultMapWireFormat<Groto> for HashMap<K, V, S> {
   type Format<KM, VM>
     = PackedEntry<KM, VM>
   where
-    KM: StaticWireFormat<Groto>,
-    VM: StaticWireFormat<Groto>;
+    KM: WireFormat<Groto> + 'static,
+    VM: WireFormat<Groto> + 'static;
 }
 
 impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for HashMap<K, V, S> {
   type Format<KM, VM, const TAG: u32>
     = RepeatedEntry<KM, VM, TAG>
   where
-    KM: StaticWireFormat<Groto>,
-    VM: StaticWireFormat<Groto>,
-    MergedWireFormat<KM, VM>: StaticWireFormat<Groto>;
+    KM: WireFormat<Groto> + 'static,
+    VM: WireFormat<Groto> + 'static,
+    MergedWireFormat<KM, VM>: WireFormat<Groto> + 'static;
 }
 
 impl<K, V, S> State<Partial<Groto>> for HashMap<K, V, S>

@@ -3,14 +3,14 @@ use crate::{
   marker::{Marker, SetMarker},
 };
 
-use super::{DefaultWireFormat, Flavor, StaticWireFormat};
+use super::{DefaultWireFormat, Flavor, WireFormat};
 
 /// The default wire format for a set type on flavor `F`.
 pub trait DefaultSetWireFormat<F: Flavor + ?Sized> {
   /// The default wire format of the type for this flavor.
-  type Format<K>: StaticWireFormat<F>
+  type Format<K>: WireFormat<F> + 'static
   where
-    K: StaticWireFormat<F>;
+    K: WireFormat<F> + 'static;
 }
 
 impl<T, KM, F> DefaultWireFormat<F> for SetMarker<T, KM>

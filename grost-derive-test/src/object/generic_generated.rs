@@ -1287,25 +1287,22 @@ mod generic {
             1u32,
         >
         where
-            M: ::grost::flavors::DefaultWireFormat<::grost::flavors::Groto> + ::grost::marker::Marker<Marked = I>,
-            M::Format: 'static,
+            ::grost::__private::marker::GenericMarker<
+                M,
+            >: ::grost::__private::flavors::DefaultWireFormat<
+                ::grost::__private::flavors::Groto,
+            >,
         {
             type Reflection = <::grost::__private::marker::GenericMarker<
                 M,
             > as ::grost::__private::flavors::DefaultWireFormat<
                 ::grost::__private::flavors::Groto,
             >>::Format;
-            const REFLECTION: &'static Self::Reflection = &{
-                static VAL: Self::Reflection = <<::grost::__private::marker::GenericMarker<
-                    M,
-                > as ::grost::__private::flavors::DefaultWireFormat<
-                    ::grost::__private::flavors::Groto,
-                >>::Format as ::grost::__private::flavors::WireFormat<
-                    ::grost::__private::flavors::Groto,
-                >>::SELF;
-
-                
-            };
+            const REFLECTION: &'static Self::Reflection = <::grost::__private::marker::GenericMarker<
+                M,
+            > as ::grost::__private::flavors::DefaultWireFormat<
+                ::grost::__private::flavors::Groto,
+            >>::STATIC_REF;
         }
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]

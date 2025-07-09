@@ -12,16 +12,13 @@ mod merged_wire_format;
 pub trait WireFormat<F: Flavor + ?Sized>:
   Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType>
 {
-  /// The cooresponding value to the wire type.
+  /// The corresponding wire type value (not "cooresponding")
   const WIRE_TYPE: F::WireType;
-  /// The self.
-  const SELF: Self;
-}
 
-/// A static lifetime wire format, this is used to indicate that the wire format can be
-/// used as a default wire format for a type.
-pub trait StaticWireFormat<F: Flavor + ?Sized>: WireFormat<F> + 'static {
-  const REFERENCE: &'static Self;
+  /// A singleton instance of this wire format.
+  /// 
+  /// For ZSTs, this represents the canonical instance.
+  const INSTANCE: Self;
 }
 
 /// A wire format for packed repeated fields.
