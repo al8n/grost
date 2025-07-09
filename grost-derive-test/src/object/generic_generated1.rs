@@ -1,17 +1,18 @@
+use grost::flavors::groto::LengthDelimited;
+
 mod generic {
     use core::marker::PhantomData;
-    use grost::{Object, flavors::groto::LengthDelimited};
-    struct GenericWithMarkerVec<I, M> {
+    use grost::{Object, flavors::groto::LengthDelimited, marker::BytesMarker};
+    struct GenericWithWireFormatVec<I> {
         id: Vec<I>,
-        _m: PhantomData<M>,
     }
-    /// The selection type for [`GenericWithMarkerVec`]
+    /// The selection type for [`GenericWithWireFormatVec`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct GenericWithMarkerVecSelector<I, M>
+    struct GenericWithWireFormatVecSelector<I>
     where
         ::grost::__private::marker::ListMarker<
             Vec<I>,
-            ::grost::__private::marker::GenericMarker<
+            ::grost::__private::marker::WireFormatMarker<
                 <Vec<
                     I,
                 > as ::grost::__private::convert::State<
@@ -19,7 +20,7 @@ mod generic {
                         ::grost::__private::convert::Inner,
                     >,
                 >>::Output,
-                M,
+                LengthDelimited,
             >,
         >: ::grost::__private::flavors::DefaultWireFormat<
             ::grost::__private::flavors::Groto,
@@ -33,11 +34,11 @@ mod generic {
         > as ::grost::__private::selection::Selectable<
             ::grost::__private::flavors::Groto,
         >>::Selector,
-        _m: ::core::marker::PhantomData<PhantomData<M>>,
     }
-    /// Partial struct for the [`PartialGenericWithMarkerVec`]
+
+    /// Partial struct for the [`PartialGenericWithWireFormatVec`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct PartialGenericWithMarkerVec<I, M>
+    struct PartialGenericWithWireFormatVec<I>
     where
         Vec<
             I,
@@ -57,45 +58,37 @@ mod generic {
                 ::grost::__private::convert::Partial<::grost::__private::flavors::Groto>,
             >>::Output,
         >,
-        _m: ::core::marker::PhantomData<PhantomData<M>>,
     }
-
-    type OutputType<I> = <Vec<I> as ::grost::__private::convert::State<
-        ::grost::__private::convert::Flattened<
-            ::grost::__private::convert::Inner,
-        >,
-    >>::Output;
-    /// Partial reference struct for the struct [`GenericWithMarkerVec`]
+    /// Partial reference struct for the struct [`GenericWithWireFormatVec`]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    struct PartialGenericWithMarkerVecRef<
+    struct PartialGenericWithWireFormatVecRef<
         '__grost_lifetime__,
         I,
-        M,
         __GROST_READ_BUFFER__,
         __GROST_BUFFER__,
     >
     where
         ::grost::__private::marker::ListMarker<
             Vec<I>,
-            ::grost::__private::marker::GenericMarker<
+            ::grost::__private::marker::WireFormatMarker<
                 I,
-                M,
+                LengthDelimited,
             >,
         >: ::grost::__private::flavors::DefaultWireFormat<
             ::grost::__private::flavors::Groto,
         >,
-        M: ::grost::__private::flavors::DefaultWireFormat<
-                ::grost::__private::flavors::Groto,
-            >
-            + ::grost::__private::marker::Marker<
-                Marked = <Vec<
-                    I,
-                > as ::grost::__private::convert::State<
-                    ::grost::__private::convert::Flattened<
-                        ::grost::__private::convert::Inner,
-                    >,
-                >>::Output,
-            >,
+        ::grost::__private::marker::WireFormatMarker<
+            <Vec<
+                I,
+            > as ::grost::__private::convert::State<
+                ::grost::__private::convert::Flattened<
+                    ::grost::__private::convert::Inner,
+                >,
+            >>::Output,
+            LengthDelimited,
+        >: ::grost::__private::flavors::DefaultWireFormat<
+            ::grost::__private::flavors::Groto,
+        >,
         Vec<
             I,
         >: ::grost::__private::convert::State<
@@ -105,9 +98,9 @@ mod generic {
                 __GROST_BUFFER__,
                 <::grost::__private::marker::ListMarker<
                     Vec<I>,
-                    ::grost::__private::marker::GenericMarker<
+                    ::grost::__private::marker::WireFormatMarker<
                         I,
-                        M,
+                        LengthDelimited,
                     >,
                 > as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Groto,
@@ -122,37 +115,9 @@ mod generic {
                 '__grost_lifetime__,
                 __GROST_READ_BUFFER__,
                 __GROST_BUFFER__,
-                <
-                    ::grost::__private::marker::ListMarker<
-                        Vec<I>,
-                        ::grost::__private::marker::GenericMarker<
-                            <Vec<
-                                I,
-                            > as ::grost::__private::convert::State<
-                                ::grost::__private::convert::Flattened<
-                                    ::grost::__private::convert::Inner,
-                                >,
-                            >>::Output,
-                            M,
-                        >,
-                    > as
-                    ::grost::__private::flavors::DefaultWireFormat<
-                        ::grost::__private::flavors::Groto,
-                    >
-                >::Format,
-                ::grost::__private::flavors::Groto,
-            >,
-        >>::Output: ::core::marker::Sized,
-         <Vec<
-                I,
-            > as ::grost::__private::convert::State<
-            ::grost::__private::convert::PartialRef<
-                '__grost_lifetime__,
-                __GROST_READ_BUFFER__,
-                __GROST_BUFFER__,
                 <::grost::__private::marker::ListMarker<
                     Vec<I>,
-                    ::grost::__private::marker::GenericMarker<
+                    ::grost::__private::marker::WireFormatMarker<
                         <Vec<
                             I,
                         > as ::grost::__private::convert::State<
@@ -160,15 +125,14 @@ mod generic {
                                 ::grost::__private::convert::Inner,
                             >,
                         >>::Output,
-                        M,
+                        LengthDelimited,
                     >,
                 > as ::grost::__private::flavors::DefaultWireFormat<
                     ::grost::__private::flavors::Groto,
                 >>::Format,
                 ::grost::__private::flavors::Groto,
             >,
-        >>::Output: Sized,
-        <std::vec::Vec<I> as grost::convert::State<grost::convert::PartialRef<'__grost_lifetime__, __GROST_READ_BUFFER__, __GROST_BUFFER__, grost::flavors::Packed<M::Format>, grost::flavors::Groto>>>::Output: Sized,
+        >>::Output: ::core::marker::Sized,
     {
         __grost_buffer__: ::core::option::Option<__GROST_BUFFER__>,
         __grost_read_buffer__: ::core::option::Option<__GROST_READ_BUFFER__>,
@@ -176,29 +140,35 @@ mod generic {
             <Vec<
                 I,
             > as ::grost::__private::convert::State<
-            ::grost::__private::convert::PartialRef<
-                '__grost_lifetime__,
-                __GROST_READ_BUFFER__,
-                __GROST_BUFFER__,
-                <::grost::__private::marker::ListMarker<
-                    Vec<I>,
-                    ::grost::__private::marker::GenericMarker<
-                        <Vec<
+                ::grost::__private::convert::PartialRef<
+                    '__grost_lifetime__,
+                    __GROST_READ_BUFFER__,
+                    __GROST_BUFFER__,
+                    <::grost::__private::marker::ListMarker<
+                        Vec<I>,
+                        ::grost::__private::marker::WireFormatMarker<
                             I,
-                        > as ::grost::__private::convert::State<
-                            ::grost::__private::convert::Flattened<
-                                ::grost::__private::convert::Inner,
-                            >,
-                        >>::Output,
-                        M,
-                    >,
-                > as ::grost::__private::flavors::DefaultWireFormat<
+                            LengthDelimited,
+                        >,
+                    > as ::grost::__private::flavors::DefaultWireFormat<
+                        ::grost::__private::flavors::Groto,
+                    >>::Format,
                     ::grost::__private::flavors::Groto,
-                >>::Format,
-                ::grost::__private::flavors::Groto,
-            >,
-        >>::Output,
+                >,
+            >>::Output,
         >,
-        _m: ::core::marker::PhantomData<PhantomData<M>>,
     }
+
 }
+
+const _: () = {
+        let a: <::grost::__private::marker::ListMarker<
+            Vec<Vec<u8>>,
+            ::grost::__private::marker::WireFormatMarker<
+                Vec<u8>,
+                LengthDelimited,
+            >,
+        > as ::grost::__private::flavors::DefaultWireFormat<
+            ::grost::__private::flavors::Groto,
+        >>::Format = grost::flavors::Packed::<LengthDelimited>;
+};
