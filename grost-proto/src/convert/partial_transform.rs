@@ -3,7 +3,7 @@ use crate::{
   selection::Selectable,
 };
 
-use super::{Partial, State};
+use super::{Partial, State, PartialRef};
 
 /// A trait for partially transforming the input type `I` to the `<Self as State<STATE>>::Output`.
 pub trait PartialTransform<I, O, W, F>
@@ -23,20 +23,36 @@ where
   fn partial_transform(input: I, selector: &Self::Selector) -> Result<O, F::Error>;
 }
 
-pub trait IdentityPartialTransform<W, F>: PartialTransform<Self, Self::Output, W, F>
+
+pub trait PartialTryFromRef<'a, RB, UB, W, F>
 where
-  W: WireFormat<F>,
   F: Flavor + ?Sized,
-  Self: Sized + Selectable<F> + State<Partial<F>>,
-  Self::Output: Sized + Selectable<F, Selector = Self::Selector>,
+  W: WireFormat<F>,
+  RB: ?Sized,
+  UB: ?Sized,
+  Self: Selectable<F> + State<PartialRef<'a, RB, UB, W, F>> + State<Partial<F>>,
+  <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Selectable<F, Selector = Self::Selector>,
+  <Self as State<Partial<F>>>::Output: Selectable<F, Selector = Self::Selector>,
 {
+  /// Partially transforms from the input type `PartialRef<'a, RB, UB, W, F>` into the current type `Self`.
+  fn partial_try_from_ref(
+    input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
+    selector: &Self::Selector,
+  ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
+  where
+    <Self as State<Partial<F>>>::Output: Sized,
+    <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized;
 }
 
-impl<W, F, T> IdentityPartialTransform<W, F> for T
+pub trait PartialIdentity<F>
 where
-  W: WireFormat<F>,
   F: Flavor + ?Sized,
-  T: Sized + Selectable<F> + State<Partial<F>> + PartialTransform<T, T::Output, W, F>,
-  T::Output: Sized + Selectable<F, Selector = T::Selector>,
+  Self: Selectable<F>, 
 {
+  fn partial_identity(
+    input: Self,
+    selector: &Self::Selector,
+  ) -> Self
+  where
+    Self: Sized;
 }

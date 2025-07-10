@@ -8,7 +8,7 @@ use syn::{
 
 use super::{Label, parse_type};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct MapLabel {
   pub(crate) key: Rc<Label>,
   pub(crate) value: Rc<Label>,

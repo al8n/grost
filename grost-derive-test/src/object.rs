@@ -10,5 +10,3 @@ mod list;
 mod nullable_list;
 
 mod generic;
-mod generic_generated;
-mod generic_generated1;

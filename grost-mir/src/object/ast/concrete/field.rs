@@ -381,23 +381,27 @@ impl TaggedField {
     ))?;
 
     let dwf = default_wire_format(path_to_grost, flavor_type);
-    let (wft, dwf_constraints) = field
+    let label_info = field
       .label
-      .default_wire_format(path_to_grost, flavor_type, field_ty, tag)?
-      .into_components();
+      .label_info(path_to_grost, flavor_type, field_ty, tag)?;
+    let dwf_constraints = label_info.wire_format_constraints;
+    let wft = label_info.wire_format;
     let wf = syn::parse2(default_wire_format_associated(
       path_to_grost,
       flavor_type,
       &wft,
     ))?;
     let wfv = default_wire_format_associated_value(path_to_grost, flavor_type, &wft);
-    if use_generics {
+    if !dwf_constraints.is_empty() {
+      partial_ref_constraints.extend(dwf_constraints.clone());
+    }
+
+    if field.label.is_generic() || field.label.is_inner_generic() {
       let pred: WherePredicate = syn::parse2(quote! {
         #wft: #dwf
       })?;
       selector_constraints.push(pred.clone());
       partial_ref_constraints.extend([pred]);
-      partial_ref_constraints.extend(dwf_constraints.clone());
     }
 
     let index = Index::new(index, &field.name, field.tag.get())?;
@@ -416,7 +420,6 @@ impl TaggedField {
 
     let partial_ref = PartialRefField::try_new(
       object,
-      use_generics,
       &field_ty,
       &wf,
       &field.label,

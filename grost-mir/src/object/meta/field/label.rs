@@ -23,43 +23,50 @@ const LIST_TAG: u8 = 0;
 const SET_TAG: u8 = 1;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DefaultWireFormat {
-  ty: Type,
-  constraints: Punctuated<WherePredicate, Comma>,
+pub struct LabelInformation {
+  pub(in crate::object) wire_format: Type,
+  pub(in crate::object) wire_format_constraints: Punctuated<WherePredicate, Comma>,
 }
 
-impl DefaultWireFormat {
-  /// Creates a new `DefaultWireFormat` with the given type and constraints.
-  fn new(ty: Type) -> Self {
+impl LabelInformation {
+  /// Creates a new `LabelInformation` with the given type and wire_format_constraints.
+  fn new(wire_format: Type) -> Self {
     Self {
-      ty,
-      constraints: Punctuated::new(),
+      wire_format,
+      wire_format_constraints: Punctuated::new(),
     }
   }
 
-  fn with_constraints(ty: Type, constraints: Punctuated<WherePredicate, Comma>) -> Self {
-    Self { ty, constraints }
+  fn with_wire_format_constraints(
+    wire_format: Type,
+    wire_format_constraints: Punctuated<WherePredicate, Comma>,
+  ) -> Self {
+    Self {
+      wire_format,
+      wire_format_constraints,
+    }
   }
 
   /// Returns the type of the default wire format.
-  pub fn ty(&self) -> &Type {
-    &self.ty
+  pub fn wire_format(&self) -> &Type {
+    &self.wire_format
   }
 
   /// Returns the constraints of the default wire format.
-  pub fn constraints(&self) -> &Punctuated<WherePredicate, Comma> {
-    &self.constraints
+  pub fn wire_format_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.wire_format_constraints
   }
 
-  /// Consumes the `DefaultWireFormat`
-  pub fn into_components(self) -> (Type, Punctuated<WherePredicate, Comma>) {
-    (self.ty, self.constraints)
+  /// Consumes the `LabelInformation`
+  pub fn into_wire_format_components(self) -> (Type, Punctuated<WherePredicate, Comma>) {
+    (self.wire_format, self.wire_format_constraints)
   }
 }
 
 /// A type specification for an object field.
-#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
+#[derive(Debug, Clone, derive_more::IsVariant, derive_more::Display)]
 #[non_exhaustive]
+#[allow(clippy::large_enum_variant)]
 pub enum Label {
   /// A scalar type label, e.g. `i32`, `f64`, etc.
   #[display("scalar")]
@@ -135,6 +142,24 @@ impl darling::FromMeta for Label {
 }
 
 impl Label {
+  /// Returns `true` if the inner type is generic.
+  /// 
+  /// e.g.
+  /// - `map(key(generic(...)), value(string)): true``
+  /// - `set(generic(...)): true`
+  /// - `list(generic(...)): true`
+  /// - `nullable(generic(...)): true`
+  /// - `generic(...): false`
+  pub fn is_inner_generic(&self) -> bool {
+    match self {
+      Label::Map(Either::Left(map_label)) => map_label.key().is_generic() || map_label.value().is_generic(),
+      Label::Set(Either::Left(label)) => label.label().is_generic(),
+      Label::List(Either::Left(label)) => label.label().is_generic(),
+      Label::Nullable(Either::Left(label)) => label.label().is_generic(),
+      _ => false,
+    }
+  }
+
   /// Check if the parse stream starts with a label that can be parsed as a `Label`.
   pub fn peek(input: &ParseStream) -> syn::Result<bool> {
     if input.peek(syn::Token![enum]) {
@@ -164,24 +189,24 @@ impl Label {
   }
 
   /// Returns the default wire format type for this label.
-  pub fn default_wire_format(
+  pub fn label_info(
     &self,
     path_to_grost: &Path,
     flavor_type: &Type,
     ty: &Type,
     tag: u32,
-  ) -> syn::Result<DefaultWireFormat> {
-    self.default_wire_format_helper(path_to_grost, flavor_type, ty, tag, true)
+  ) -> syn::Result<LabelInformation> {
+    self.label_info_helper(path_to_grost, flavor_type, ty, tag, true)
   }
 
-  fn default_wire_format_helper(
+  fn label_info_helper(
     &self,
     path_to_grost: &Path,
     flavor_type: &Type,
     ty: &Type,
     tag: u32,
     outermost: bool,
-  ) -> syn::Result<DefaultWireFormat> {
+  ) -> syn::Result<LabelInformation> {
     /// The inner tag for repeating fields should always be 1.
     ///
     /// e.g.
@@ -210,7 +235,7 @@ impl Label {
     const INNER_TAG: u32 = 1;
 
     Ok(match self {
-      Self::Scalar(wf) => DefaultWireFormat::new(match wf {
+      Self::Scalar(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ScalarMarker<#ty>
         })?,
@@ -218,7 +243,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Bytes(wf) => DefaultWireFormat::new(match wf {
+      Self::Bytes(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::BytesMarker<#ty>
         })?,
@@ -226,7 +251,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::String(wf) => DefaultWireFormat::new(match wf {
+      Self::String(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::StringMarker<#ty>
         })?,
@@ -234,7 +259,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Object(wf) => DefaultWireFormat::new(match wf {
+      Self::Object(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::ObjectMarker<#ty>
         })?,
@@ -242,7 +267,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Enum(wf) => DefaultWireFormat::new(match wf {
+      Self::Enum(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::EnumMarker<#ty>
         })?,
@@ -250,7 +275,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Union(wf) => DefaultWireFormat::new(match wf {
+      Self::Union(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::UnionMarker<#ty>
         })?,
@@ -258,7 +283,7 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Interface(wf) => DefaultWireFormat::new(match wf {
+      Self::Interface(wf) => LabelInformation::new(match wf {
         None => syn::parse2(quote! {
           #path_to_grost::__private::marker::InterfaceMarker<#ty>
         })?,
@@ -266,33 +291,40 @@ impl Label {
           #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
         })?,
       }),
-      Self::Generic(value) => match value {
-        GenericLabelValue::Marker(marker) => {
-          let mut constraints = Punctuated::new();
-          constraints.push(syn::parse2(quote! {
-            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type> + #path_to_grost::__private::marker::Marker<Marked = #ty>
+      Self::Generic(GenericLabelValue { value, .. }) => match value {
+        GenericLabelValueVariant::Marker { marker, marked } => {
+          let mut wire_format_constraints = Punctuated::new();
+
+          let marked = marked.as_ref().unwrap_or(ty);
+          wire_format_constraints.push(syn::parse2(quote! {
+            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type> + #path_to_grost::__private::marker::Marker<Marked = #marked>
           })?);
 
-          DefaultWireFormat::with_constraints(
+          LabelInformation::with_wire_format_constraints(
             syn::parse2(quote! {
-              #path_to_grost::__private::marker::GenericMarker<#ty, #marker>
+              #path_to_grost::__private::marker::GenericMarker<#marked, #marker>
             })?,
-            constraints,
+            wire_format_constraints,
           )
         }
-        GenericLabelValue::As(wf) => {
-          let mut constraints = Punctuated::new();
+        GenericLabelValueVariant::As {
+          wire_format: wf,
+          marked,
+        } => {
+          let mut wire_format_constraints = Punctuated::new();
+
+          let marked = marked.as_ref().unwrap_or(ty);
           let marker: Type = syn::parse2(quote! {
-            #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+            #path_to_grost::__private::marker::WireFormatMarker<#marked, #wf>
           })?;
-          constraints.push(syn::parse2(quote! {
+          wire_format_constraints.push(syn::parse2(quote! {
             #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
           })?);
 
-          DefaultWireFormat::with_constraints(marker, constraints)
+          LabelInformation::with_wire_format_constraints(marker, wire_format_constraints)
         }
       },
-      Self::Map(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+      Self::Map(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
       })?),
       Self::Map(Either::Left(MapLabel {
@@ -305,31 +337,38 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapKey>,
           >>::Output
         })?;
+
         let v: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::convert::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
           >>::Output
         })?;
-        let (k, kcs) = key
-          .default_wire_format_helper(path_to_grost, flavor_type, &k, INNER_TAG, false)?
-          .into_components();
-        let (v, vcs) = value
-          .default_wire_format_helper(path_to_grost, flavor_type, &v, INNER_TAG, false)?
-          .into_components();
+
+        let LabelInformation {
+          wire_format: kwf,
+          wire_format_constraints: kwfc,
+        } = key.label_info_helper(path_to_grost, flavor_type, &k, INNER_TAG, false)?;
+        let LabelInformation {
+          wire_format: vwf,
+          wire_format_constraints: vwfc,
+        } = value.label_info_helper(path_to_grost, flavor_type, &v, INNER_TAG, false)?;
 
         let ty = if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #k, #v, #tag>
+            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #kwf, #vwf, #tag>
           })?
         } else {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::MapMarker<#ty, #k, #v>
+            #path_to_grost::__private::marker::MapMarker<#ty, #kwf, #vwf>
           })?
         };
 
-        DefaultWireFormat::with_constraints(ty, kcs.into_iter().chain(vcs).collect())
+        LabelInformation::with_wire_format_constraints(
+          ty,
+          kwfc.into_iter().chain(vwfc).collect(),
+        )
       }
-      Self::Set(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+      Self::Set(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
       })?),
       Self::Set(Either::Left(ListLikeLabel { label, repeated })) => {
@@ -338,21 +377,26 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let (inner, c) = label
-          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?
-          .into_components();
+
+        let LabelInformation {
+          wire_format: inner_wf,
+          wire_format_constraints,
+        } = label.label_info_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?;
         let ty = if *repeated {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
+            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner_wf, #tag>
           })?
         } else {
           syn::parse2(quote! {
-            #path_to_grost::__private::marker::SetMarker<#ty, #inner>
+            #path_to_grost::__private::marker::SetMarker<#ty, #inner_wf>
           })?
         };
-        DefaultWireFormat::with_constraints(ty, c)
+        LabelInformation::with_wire_format_constraints(
+          ty,
+          wire_format_constraints,
+        )
       }
-      Self::List(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+      Self::List(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
       })?),
       Self::List(Either::Left(ListLikeLabel { label, repeated })) => {
@@ -361,9 +405,11 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let (inner, c) = label
-          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?
-          .into_components();
+
+        let LabelInformation {
+          wire_format: inner,
+          wire_format_constraints: c,
+        } = label.label_info_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?;
 
         let ty = if *repeated {
           syn::parse2(quote! {
@@ -375,9 +421,12 @@ impl Label {
           })?
         };
 
-        DefaultWireFormat::with_constraints(ty, c)
+        LabelInformation::with_wire_format_constraints(
+          ty,
+          c,
+        )
       }
-      Self::Nullable(Either::Right(wf)) => DefaultWireFormat::new(syn::parse2(quote! {
+      Self::Nullable(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
       })?),
       Self::Nullable(Either::Left(label)) => {
@@ -386,10 +435,13 @@ impl Label {
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
-        let (inner, c) = label
+
+        let LabelInformation {
+          wire_format: inner,
+          wire_format_constraints: c,
+        } = label
           .label()
-          .default_wire_format_helper(path_to_grost, flavor_type, &inner_ty, tag, false)?
-          .into_components();
+          .label_info_helper(path_to_grost, flavor_type, &inner_ty, tag, false)?;
 
         // if the option is the outermost, we should use the inner type wire format.
         //
@@ -414,7 +466,10 @@ impl Label {
           })?
         };
 
-        DefaultWireFormat::with_constraints(ty, c)
+        LabelInformation::with_wire_format_constraints(
+          ty,
+          c,
+        )
       }
     })
   }
@@ -536,17 +591,54 @@ impl Parse for Label {
         }
 
         return Ok(match () {
-          () if ident.eq("generic") => {
-            GenericLabelParser::parse(&content).map(|v| Self::Generic(v.0))?
-          }
+          () if ident.eq("generic") => GenericLabelValue::parse(&content).map(Self::Generic)?,
           () if ident.eq("nullable") => {
-            NullableLabelParser::parse(&content).map(|val| Self::Nullable(val.0))?
+            NullableLabelParser::parse(&content).and_then(|NullableLabelParser(val)| match val {
+              Either::Left(label) => {
+                if label.label().is_nullable() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`nullable(nullable(...))` is not supported",
+                  ));
+                }
+
+                if label.label().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`nullable(generic(...))` is not supported",
+                  ));
+                }
+
+                Ok(Self::Nullable(Either::Left(label)))
+              }
+              Either::Right(val) => Ok(Self::Nullable(Either::Right(val))),
+            })?
           }
           () if ident.eq("set") => {
-            ListLikeLabelParser::<SET_TAG>::parse(&content).map(|label| Self::Set(label.0))?
+            ListLikeLabelParser::<SET_TAG>::parse(&content).and_then(|label| {
+              if let Either::Left(label) = &label.0 {
+                if label.label().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`set(generic(...))` is not supported",
+                  ));
+                }
+              }
+              Ok(Self::Set(label.0))
+            })?
           }
           () if ident.eq("list") => {
-            ListLikeLabelParser::<LIST_TAG>::parse(&content).map(|label| Self::List(label.0))?
+            ListLikeLabelParser::<LIST_TAG>::parse(&content).and_then(|label| {
+              if let Either::Left(label) = &label.0 {
+                if label.label().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`list(generic(...))` is not supported",
+                  ));
+                }
+              }
+              Ok(Self::List(label.0))
+            })?
           }
           () if ident.eq("key") => {
             return Err(syn::Error::new(
@@ -561,7 +653,24 @@ impl Parse for Label {
             ));
           }
           () if ident.eq("map") => {
-            MapLabelParser::parse(&content).map(|label| Self::Map(label.0))?
+            MapLabelParser::parse(&content).and_then(|label| {
+              if let Either::Left(label) = &label.0 {
+                if label.key().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`key(generic(...))` is not supported",
+                  ));
+                }
+
+                if label.value().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`value(generic(...))` is not supported",
+                  ));
+                }
+              }
+              Ok(Self::Map(label.0))
+            })?
           }
           _ => {
             return Err(syn::Error::new(
@@ -574,253 +683,3 @@ impl Parse for Label {
     })
   }
 }
-
-// #[cfg(test)]
-// mod tests {
-//   use quote::quote;
-
-//   use super::*;
-
-//   #[test]
-//   fn test_scalar() {
-//     let scalar = quote! {
-//       scalar
-//     };
-
-//     let ty = syn::parse2::<Label>(scalar).unwrap();
-//     assert_eq!(ty, Label::Scalar(None));
-//   }
-
-//   #[test]
-//   fn test_bytes() {
-//     let bytes = quote! {
-//       bytes
-//     };
-
-//     let ty = syn::parse2::<Label>(bytes).unwrap();
-//     assert_eq!(ty, Label::Bytes(None));
-//   }
-
-//   #[test]
-//   fn test_string() {
-//     let string = quote! {
-//       string
-//     };
-
-//     let ty = syn::parse2::<Label>(string).unwrap();
-//     assert_eq!(ty, Label::String(None));
-//   }
-
-//   #[test]
-//   fn test_object() {
-//     let object = quote! {
-//       object
-//     };
-
-//     let ty = syn::parse2::<Label>(object).unwrap();
-//     assert_eq!(ty, Label::Object(None));
-//   }
-
-//   #[test]
-//   fn test_enum() {
-//     let enum_ty = quote! {
-//       enum
-//     };
-
-//     let ty = syn::parse2::<Label>(enum_ty).unwrap();
-//     assert_eq!(ty, Label::Enum(None));
-//   }
-
-//   #[test]
-//   fn test_union() {
-//     let union = quote! {
-//       union
-//     };
-
-//     let ty = syn::parse2::<Label>(union).unwrap();
-//     assert_eq!(ty, Label::Union(None));
-//   }
-
-//   #[test]
-//   fn test_interface() {
-//     let interface = quote! {
-//       interface
-//     };
-
-//     let ty = syn::parse2::<Label>(interface).unwrap();
-//     assert_eq!(ty, Label::Interface(None));
-//   }
-
-//   #[test]
-//   fn test_map() {
-//     let map = quote! {
-//       map(key(scalar), value(string))
-//     };
-
-//     let ty = syn::parse2::<Label>(map).unwrap();
-//     assert!(
-//       matches!(ty, Label::Map { key, value, repeated: false, } if key.is_scalar() && value.is_string())
-//     );
-//   }
-
-//   #[test]
-//   fn test_map_nested_key() {
-//     let map = quote! {
-//       map(key(list(scalar)), value(string))
-//     };
-
-//     let ty = syn::parse2::<Label>(map).unwrap();
-//     assert!(
-//       matches!(ty, Label::Map { key, value, repeated: false, } if key.is_list() && value.is_string())
-//     );
-//   }
-
-//   #[test]
-//   fn test_map_nested_value() {
-//     let map = quote! {
-//       map(key(list(scalar)), value(map(key(string), value(object))))
-//     };
-
-//     let ty = syn::parse2::<Label>(map).unwrap();
-//     assert!(
-//       matches!(ty, Label::Map { key, value, repeated: false } if key.is_list() && value.is_map())
-//     );
-//   }
-
-//   #[test]
-//   fn test_set() {
-//     let set = quote! {
-//       set(string)
-//     };
-
-//     let ty = syn::parse2::<Label>(set).unwrap();
-//     assert!(matches!(ty, Label::Set { key: inner, repeated: false } if inner.is_string()));
-//   }
-
-//   #[test]
-//   fn test_list() {
-//     let list = quote! {
-//       list(object)
-//     };
-
-//     let ty = syn::parse2::<Label>(list).unwrap();
-//     assert!(matches!(ty, Label::List { item: inner, repeated: false} if inner.is_object()));
-//   }
-
-//   #[test]
-//   fn test_nullable() {
-//     let nullable = quote! {
-//       nullable(string)
-//     };
-
-//     let ty = syn::parse2::<Label>(nullable).unwrap();
-//     assert!(matches!(ty, Label::Nullable(inner) if inner.is_string()));
-//   }
-
-//   #[test]
-//   fn test_invalid_set() {
-//     let invalid_set = quote! {
-//       set(map(key(scalar), value(string)))
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_set);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("`set(map(...))` is not allowed")
-//     );
-//   }
-
-//   #[test]
-//   fn test_invalid_set2() {
-//     let invalid_list = quote! {
-//       set(set(string))
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_list);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("`set(set(...))` is not allowed")
-//     );
-//   }
-
-//   #[test]
-//   fn test_invalid_map() {
-//     let invalid_map = quote! {
-//       map(scalar)
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_map);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("Unknown `scalar`, possible attributes in map are: `key` or `value`")
-//     );
-//   }
-
-//   #[test]
-//   fn test_invalid_map2() {
-//     let invalid_map = quote! {
-//       map()
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_map);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("Unexpected format `map()`, expected `map(key(...), value(...))`")
-//     );
-//   }
-
-//   #[test]
-//   fn test_invalid_map3() {
-//     let invalid_map = quote! {
-//       map(key)
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_map);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("Unexpected format `map(key)`, expected `map(key(...), value(...))`")
-//     );
-//   }
-
-//   #[test]
-//   fn test_invalid_map_key() {
-//     let invalid_map = quote! {
-//       map(key(map(key(scalar))))
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_map);
-//     assert!(result.is_err());
-//     assert!(result.unwrap_err().to_string().contains("`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`"));
-//   }
-
-//   #[test]
-//   fn test_invalid_nullable() {
-//     let invalid_set = quote! {
-//       nullable(nullable(string))
-//     };
-
-//     let result = syn::parse2::<Label>(invalid_set);
-//     assert!(result.is_err());
-//     assert!(
-//       result
-//         .unwrap_err()
-//         .to_string()
-//         .contains("`nullable(nullable(...))` is not allowed")
-//     );
-//   }
-// }

@@ -7,7 +7,7 @@ use syn::{
 
 use super::{Label, parse_type};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct NullableLabel {
   pub(crate) label: Rc<Label>,
 }

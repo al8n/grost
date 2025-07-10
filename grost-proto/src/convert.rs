@@ -97,6 +97,40 @@ where
   type Output = T::Output;
 }
 
+/// A state which shows the type in reference state.
+///
+/// A reference is a state that represents a type that contains the full information, but the fields in the type may or may not be owned.
+///
+/// e.g. The below example shows a reference of a user type, the reference type contains all fields of the user type, and the type are may or may not owned.
+///
+/// ```ignore
+/// struct User {
+///   name: String,
+///   email: String,
+///   age: u8,
+/// }
+///
+/// struct UserRef<'a> {
+///   name: &'a str,
+///   email: &'a str,
+///   age: u8,
+/// }
+/// ```
+#[phantom]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Ref<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized>;
+
+impl<'a, RB, UB, W, F, T> State<Ref<'a, RB, UB, W, F>> for &'a T
+where
+  F: ?Sized,
+  W: ?Sized,
+  T: State<Ref<'a, RB, UB, W, F>>,
+  RB: ?Sized,
+  UB: ?Sized,
+{
+  type Output = T::Output;
+}
+
 #[allow(dead_code)]
 macro_rules! wrapper_impl {
   (@partial_state $($ty:ty => $output:ty),+$(,)?) => {

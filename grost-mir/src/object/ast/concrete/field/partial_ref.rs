@@ -102,7 +102,6 @@ impl PartialRefField {
 
   pub(super) fn try_new<T, S, M>(
     object: &super::RawObject<T, S, M>,
-    use_generics: bool,
     field_ty: &Type,
     wf: &Type,
     label: &Label,
@@ -138,7 +137,7 @@ impl PartialRefField {
           flavor_type,
         ))?;
 
-        if use_generics {
+        if label.is_generic() {
           type_constraints.push(syn::parse2(quote! {
             #field_ty: #state_type
           })?);

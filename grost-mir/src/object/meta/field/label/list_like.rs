@@ -7,7 +7,7 @@ use syn::{
 
 use super::{Label, parse_type};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ListLikeLabel {
   pub(crate) label: Rc<Label>,
   pub(crate) repeated: bool,
@@ -26,16 +26,6 @@ impl ListLikeLabel {
 }
 
 pub(super) struct ListLikeLabelParser<const TAG: u8>(pub(super) Either<ListLikeLabel, Type>);
-
-impl<const TAG: u8> ListLikeLabelParser<TAG> {
-  fn is_set(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_set())
-  }
-
-  fn is_map(&self) -> bool {
-    matches!(&self.0, Either::Left(ListLikeLabel { label, .. }) if label.is_map())
-  }
-}
 
 enum ListLikeLabelParserHelper<const TAG: u8> {
   Label(Label),

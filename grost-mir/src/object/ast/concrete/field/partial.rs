@@ -149,10 +149,29 @@ impl PartialField {
           >
         })?;
 
+        let state_type_constraint = if label.is_nullable() {
+          quote! {
+            #path_to_grost::__private::convert::State<
+              #path_to_grost::__private::convert::Partial<
+                #flavor_type,
+              >,
+              Output = ::core::option::Option<<
+                  <#field_ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened<
+                    #path_to_grost::__private::convert::Inner
+                  >>
+                >::Output as
+                #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Partial<#flavor_type>>
+              >::Output>,
+            >
+          }
+        } else {
+          quote!(#state_type)
+        };
+
         if use_generics {
           type_constraints.extend([
             syn::parse2::<WherePredicate>(quote! {
-              #field_ty: #state_type
+              #field_ty: #state_type_constraint
             })?,
             syn::parse2(quote! {
               <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_copy_contraint
