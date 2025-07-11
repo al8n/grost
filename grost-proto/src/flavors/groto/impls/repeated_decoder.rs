@@ -15,7 +15,7 @@ use crate::{
 /// A lazy decoder for repeated types (e.g. `Vec<T>`, `[T]`, `HashSet<T>`, `HashMap<K, V>` and etc.) of data that
 /// iterates through the underlying buffer and decode elements on demand.
 ///
-/// `PackedDecoder` provides functionality to decode list-like structures from binary data.
+/// `RepeatedDecoder` provides functionality to decode list-like structures from binary data.
 /// It operates lazily, decoding elements only when requested through iteration.
 ///
 /// # Special Case
@@ -26,7 +26,7 @@ use crate::{
 ///
 /// For other types, the decoder will yield decoded elements one by one through iteration
 /// until it reaches the end of the source data.
-pub struct PackedDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
+pub struct RepeatedDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
   /// the source buffer
   src: B,
   /// the length of the length prefix
@@ -39,7 +39,7 @@ pub struct PackedDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
   _ub: PhantomData<UB>,
 }
 
-impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a, T, B, UB, W> {
+impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for RepeatedDecoder<'a, T, B, UB, W> {
   fn clone(&self) -> Self {
     Self {
       src: self.src.clone(),
@@ -53,9 +53,9 @@ impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a,
   }
 }
 
-impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, T, B, UB, W> {}
+impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for RepeatedDecoder<'a, T, B, UB, W> {}
 
-impl<'a, RB, B> PackedDecoder<'a, u8, RB, B, Fixed8>
+impl<'a, RB, B> RepeatedDecoder<'a, u8, RB, B, Fixed8>
 where
   B: ?Sized,
   RB: ReadBuf,
@@ -81,7 +81,7 @@ where
   }
 }
 
-impl<'a, RB, B> core::ops::Deref for PackedDecoder<'a, u8, RB, B, Fixed8>
+impl<'a, RB, B> core::ops::Deref for RepeatedDecoder<'a, u8, RB, B, Fixed8>
 where
   B: ?Sized,
   RB: ReadBuf,
@@ -94,7 +94,7 @@ where
   }
 }
 
-impl<'a, RB, B> AsRef<[u8]> for PackedDecoder<'a, u8, RB, B, Fixed8>
+impl<'a, RB, B> AsRef<[u8]> for RepeatedDecoder<'a, u8, RB, B, Fixed8>
 where
   B: ?Sized,
   RB: ReadBuf,
@@ -105,7 +105,7 @@ where
   }
 }
 
-impl<'a, T, B, UB, W> PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> RepeatedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   UB: ?Sized,
@@ -130,7 +130,7 @@ where
   }
 }
 
-impl<'a, RB, B, W, T> Iterator for PackedDecoder<'a, T, RB, B, W>
+impl<'a, RB, B, W, T> Iterator for RepeatedDecoder<'a, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'a,
   T: State<PartialRef<'a, RB, B, W, Groto>> + Decode<'a, T::Output, W, RB, B, Groto> + 'a,
@@ -155,7 +155,7 @@ where
   }
 }
 
-impl<'a, T, B, UB, W> Selectable<Groto> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> Selectable<Groto> for RepeatedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized + Selectable<Groto>,
   W: WireFormat<Groto> + 'a,
@@ -164,7 +164,7 @@ where
   type Selector = T::Selector;
 }
 
-impl<'a, T, RB, B, W> Encode<W, Groto> for PackedDecoder<'a, T, RB, B, W>
+impl<'a, T, RB, B, W> Encode<W, Groto> for RepeatedDecoder<'a, T, RB, B, W>
 where
   T: ?Sized,
   W: WireFormat<Groto> + 'a,
@@ -204,7 +204,7 @@ where
   }
 }
 
-impl<'a, T, RB, B, W, PW> Decode<'a, Self, PW, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
+impl<'a, T, RB, B, W, PW> Decode<'a, Self, PW, RB, B, Groto> for RepeatedDecoder<'a, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'a,
   PW: WireFormat<Groto> + 'a,
@@ -246,7 +246,7 @@ where
   }
 }
 
-impl<'a, T, B, UB, W> State<Partial<Groto>> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> State<Partial<Groto>> for RepeatedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,
@@ -255,7 +255,7 @@ where
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, S> State<Flattened<S>> for PackedDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W, S> State<Flattened<S>> for RepeatedDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,

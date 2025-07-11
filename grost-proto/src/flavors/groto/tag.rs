@@ -1,19 +1,6 @@
-use crate::selectable;
+use crate::{error::ParseTagError, selectable};
 
 use super::{Error, Groto};
-
-/// Invalid tag error
-#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-#[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
-pub struct ParseTagError(u32);
-
-impl ParseTagError {
-  /// Returns the invalid tag value.
-  #[inline]
-  pub const fn value(&self) -> u32 {
-    self.0
-  }
-}
 
 /// Tag in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
@@ -91,5 +78,13 @@ impl Tag {
 impl From<Tag> for u32 {
   fn from(tag: Tag) -> u32 {
     tag.0
+  }
+}
+
+impl TryFrom<u32> for Tag {
+  type Error = ParseTagError;
+
+  fn try_from(value: u32) -> Result<Self, Self::Error> {
+    Self::try_new(value)
   }
 }

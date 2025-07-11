@@ -14,7 +14,7 @@ impl<T> DefaultNullableWireFormat<Groto> for Option<T> {
   type Format<V>
     = Nullable<V>
   where
-    V: WireFormat<Groto>;
+    V: WireFormat<Groto> + 'static;
 }
 
 impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Nullable<W>, Groto>> for Option<T>

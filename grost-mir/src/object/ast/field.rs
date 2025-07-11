@@ -9,6 +9,8 @@ use syn::{
 pub use convert::*;
 pub use selector::SelectorFieldOptions;
 
+use crate::utils::Invokable;
+
 mod convert;
 mod selector;
 
@@ -54,6 +56,7 @@ pub struct SkippedField<M = ()> {
   pub(super) lifetimes_usages: LifetimeSet,
   pub(super) type_params_usages: IdentSet,
   pub(super) meta: M,
+  pub(super) default: Invokable,
 }
 
 impl<M> SkippedField<M> {
@@ -116,6 +119,7 @@ impl SkippedField {
       lifetimes_usages: self.lifetimes_usages,
       type_params_usages: self.type_params_usages,
       meta,
+      default: self.default,
     }
   }
 
@@ -134,6 +138,7 @@ impl SkippedField {
       lifetimes_usages,
       type_params_usages,
       meta: extra,
+      default: f.default,
     })
   }
 }
@@ -145,6 +150,7 @@ pub struct RawSkippedField<M = ()> {
   pub(super) name: Ident,
   pub(super) ty: Type,
   pub(super) extra: M,
+  pub(super) default: Invokable,
 }
 
 impl<M> RawSkippedField<M> {
@@ -155,6 +161,7 @@ impl<M> RawSkippedField<M> {
       name,
       ty,
       extra,
+      default,
     } = self;
     (
       RawSkippedField {
@@ -163,6 +170,7 @@ impl<M> RawSkippedField<M> {
         name,
         ty,
         extra: (),
+        default,
       },
       extra,
     )

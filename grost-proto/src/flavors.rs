@@ -1,4 +1,4 @@
-use super::buffer::ReadBuf;
+use super::{buffer::ReadBuf, error::ParseTagError};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -23,7 +23,7 @@ macro_rules! wire_format {
 
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
-          const SELF: Self = [< $ty: camel >];
+          const INSTANCE: Self = [< $ty: camel >];
         }
 
         impl From<[< $ty: camel >]> for $name {
@@ -166,7 +166,7 @@ const _: () = {
         T: $trait<F> + ?Sized,
         F: Flavor + ?Sized,
       {
-        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: WireFormat<F>),* )?;
+        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: WireFormat<F> + 'static),* )?;
       }
     };
     (@builtins $($t:ident $(< $($g:ident),+$(,)? >)?),+$(,)?) => {
@@ -218,7 +218,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
   type Identifier: Identifier<Self>;
 
   /// The tag used for this flavor.
-  type Tag: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display;
+  type Tag: Copy
+    + Eq
+    + core::hash::Hash
+    + core::fmt::Debug
+    + core::fmt::Display
+    + TryFrom<u32, Error = ParseTagError>;
 
   /// The wire type used for this flavor.
   ///

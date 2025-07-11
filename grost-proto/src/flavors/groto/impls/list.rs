@@ -340,7 +340,14 @@ macro_rules! list {
   (@default_wire_format(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultListWireFormat<$crate::__private::flavors::Groto> for $ty {
-        type Format<V> = $crate::__private::flavors::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>;
+        type Format<V> = $crate::__private::flavors::Packed<V> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'static;
+      }
+    )*
+  };
+  (@default_wire_format(repeated) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+    $(
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::flavors::DefaultRepeatedWireFormat<$crate::__private::flavors::Groto> for $ty {
+        type Format<V, const TAG: u32> = $crate::__private::flavors::Repeated<V, TAG> where V: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'static;
       }
     )*
   };
@@ -513,16 +520,12 @@ macro_rules! list {
             .filter_map(|res| {
               match T::partial_transform(res, selector) {
                 ::core::result::Result::Ok(val) => {
-                  val.and_then(|val| if $crate::__private::selection::Selectable::is_empty(&val) {
-                    ::core::option::Option::None
-                  } else {
-                    ::core::option::Option::Some(<T as $crate::__private::convert::Transform<
-                      <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
-                      T,
-                      W,
-                      $crate::__private::flavors::Groto
-                    >>::transform(val))
-                  })
+                  val.and_then(|val| ::core::option::Option::Some(<T as $crate::__private::convert::Transform<
+                    <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+                    T,
+                    W,
+                    $crate::__private::flavors::Groto
+                  >>::transform(val)))
                 },
                 ::core::result::Result::Err(e) => ::core::option::Option::Some(Err(e)),
               }
@@ -628,11 +631,6 @@ macro_rules! list {
         T: $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>,
       {
         type Selector = T::Selector;
-
-        fn is_empty(&self) -> bool {
-          let this: &[T] = self.as_ref();
-          this.is_empty()
-        }
       }
     )*
   };
@@ -792,6 +790,7 @@ list!(@partial_transform(try_from_bytes) [u8; N] [const N: usize] {
   }
 });
 list!(@default_wire_format(packed) [T; N] [const N: usize], [T]);
+list!(@default_wire_format(repeated) [T; N] [const N: usize], [T]);
 list!(@default_wire_format(bytes) [u8; N] [const N: usize], [u8]);
 list!(@selectable [T; N] [const N: usize], [T]);
 list!(@decode_to_packed_decoder [T; N] [const N: usize], [T]);
@@ -826,6 +825,7 @@ const _: () = {
   list!(@partial_ref_state(packed) Vec<T>);
   list!(@partial_ref_state(borrow) Vec<T>);
   list!(@default_wire_format(packed) Vec<T>);
+  list!(@default_wire_format(repeated) Vec<T>);
   list!(@default_wire_format(bytes) Vec<u8>);
   list!(@identity_transform Vec<T>);
   list!(@identity_partial_transform(bytes) Vec<u8>);
@@ -876,6 +876,7 @@ const _: () = {
   list!(@partial_ref_state(packed) SmallVec<[T; N]> [const N: usize]);
   list!(@partial_ref_state(borrow) SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format(packed) SmallVec<[T; N]> [const N: usize]);
+  list!(@default_wire_format(repeated) SmallVec<[T; N]> [const N: usize]);
   list!(@default_wire_format(bytes) SmallVec<[u8; N]> [const N: usize]);
   list!(@identity_transform SmallVec<[T; N]> [const N: usize]);
   list!(@identity_partial_transform(bytes) SmallVec<[u8; N]> [const N: usize]);
@@ -925,6 +926,7 @@ const _: () = {
   list!(@partial_ref_state(packed) ArrayVec<T, N> [const N: usize]);
   list!(@partial_ref_state(borrow) ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format(packed) ArrayVec<T, N> [const N: usize]);
+  list!(@default_wire_format(repeated) ArrayVec<T, N> [const N: usize]);
   list!(@default_wire_format(bytes) ArrayVec<u8, N> [const N: usize]);
   list!(@identity_transform ArrayVec<T, N> [const N: usize]);
   list!(@identity_partial_transform(bytes) ArrayVec<u8, N> [const N: usize]);
@@ -1020,6 +1022,7 @@ const _: () = {
   list!(@partial_ref_state(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format(packed):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
+  list!(@default_wire_format(repeated):<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@default_wire_format(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
   list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: ArrayVec<A>);
   list!(@identity_partial_transform(bytes):<A: tinyvec_1::Array<Item = u8>>: ArrayVec<A>);
@@ -1081,6 +1084,7 @@ const _: () = {
     list!(@partial_ref_state(borrow):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format(packed):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@default_wire_format(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
+    list!(@default_wire_format(repeated):<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_transform:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
     list!(@identity_partial_transform(bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
     list!(@transform(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);

@@ -148,10 +148,15 @@ impl PartialObject {
             .extend(partial.type_constraints().iter().cloned());
 
           transform_ref_constraints.extend(partial.transform_ref_constraints().iter().cloned());
+          transform_ref_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
+
           partial_transform_ref_constraints
             .extend(partial.partial_transform_ref_constraints().iter().cloned());
+          partial_transform_ref_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
+
           partial_transform_constraints
             .extend(partial.partial_transform_constraints().iter().cloned());
+          partial_transform_constraints.extend(f.default_wire_format_constraints().iter().cloned());
 
           decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {

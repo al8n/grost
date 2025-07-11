@@ -2,6 +2,19 @@ use core::num::NonZeroUsize;
 
 use crate::flavors::Flavor;
 
+/// Invalid tag error
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
+pub struct ParseTagError(pub(crate) u32);
+
+impl ParseTagError {
+  /// Returns the invalid tag value.
+  #[inline]
+  pub const fn value(&self) -> u32 {
+    self.0
+  }
+}
+
 /// A data encoding error
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
 pub enum Error<F: Flavor + ?Sized> {

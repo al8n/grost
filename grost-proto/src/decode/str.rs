@@ -22,10 +22,6 @@ where
 
 impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for Str<RB> {
   type Selector = bool;
-
-  fn is_empty(&self) -> bool {
-    false
-  }
 }
 
 impl<RB: ?Sized, O> State<Flattened<O>> for Str<RB> {

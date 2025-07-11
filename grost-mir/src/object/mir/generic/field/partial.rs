@@ -53,7 +53,7 @@ impl GenericPartialField {
             >
           })?);
           constraints.push(syn::parse2(quote! {
-            <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output: ::core::marker::Sized
+            <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>>>::Output: ::core::marker::Sized
           })?);
         }
 

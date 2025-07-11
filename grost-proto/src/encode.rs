@@ -26,10 +26,10 @@ use super::{
 ///   type WireFormat = LengthDelimited;
 /// }
 /// ```
-pub unsafe trait EquivalentEncode<O, W, F>
+pub unsafe trait EquivalentEncode<Rhs, W, F>
 where
   Self: Encode<Self::WireFormat, Self::Flavor>,
-  O: Encode<W, F> + ?Sized,
+  Rhs: Encode<W, F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
@@ -92,10 +92,10 @@ where
 ///   type WireFormat = LengthDelimited;
 /// }
 /// ```
-pub unsafe trait EquivalentPartialEncode<O, W, F>
+pub unsafe trait EquivalentPartialEncode<Rhs, W, F>
 where
   Self: PartialEncode<Self::WireFormat, Self::Flavor> + Selectable<Self::Flavor>,
-  O: PartialEncode<W, F> + Selectable<F> + ?Sized,
+  Rhs: PartialEncode<W, F> + Selectable<F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
@@ -839,10 +839,6 @@ macro_rules! deref_partial_encode_impl {
         F: Flavor + ?Sized,
       {
         type Selector = T::Selector;
-
-        fn is_empty(&self) -> bool {
-          (**self).is_empty()
-        }
       }
 
       impl<F, W, T> PartialEncode<W, F> for $ty

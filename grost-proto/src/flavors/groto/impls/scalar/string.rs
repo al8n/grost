@@ -116,10 +116,6 @@ macro_rules! array_str {
 
     impl<const $g: ::core::primitive::usize> $crate::__private::selection::Selectable<$crate::__private::flavors::Groto> for $ty {
       type Selector = ::core::primitive::bool;
-
-      fn is_empty(&self) -> bool {
-        false
-      }
     }
 
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {

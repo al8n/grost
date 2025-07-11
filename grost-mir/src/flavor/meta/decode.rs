@@ -68,6 +68,8 @@ pub(super) struct DecodeParser {
   set: DecodeValue,
   #[darling(default)]
   list: DecodeValue,
+  #[darling(default)]
+  generic: DecodeValue,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -91,6 +93,7 @@ pub struct DecodeFromMeta {
   pub(crate) map: DecodeValue,
   pub(crate) set: DecodeValue,
   pub(crate) list: DecodeValue,
+  pub(crate) generic: DecodeValue,
 }
 
 impl From<DecodeParser> for DecodeFromMeta {
@@ -107,6 +110,7 @@ impl From<DecodeParser> for DecodeFromMeta {
       map,
       set,
       list,
+      generic,
     }: DecodeParser,
   ) -> Self {
     Self {
@@ -121,6 +125,7 @@ impl From<DecodeParser> for DecodeFromMeta {
       map,
       set,
       list,
+      generic,
     }
   }
 }

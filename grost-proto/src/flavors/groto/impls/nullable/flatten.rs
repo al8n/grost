@@ -14,7 +14,7 @@ impl<T> DefaultFlattenWireFormat<Groto> for Option<T> {
   type Format<V>
     = Flatten<Nullable<V>, V>
   where
-    V: WireFormat<Groto>;
+    V: WireFormat<Groto> + 'static;
 }
 
 impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Flatten<Nullable<W>, W>, Groto>> for Option<T>

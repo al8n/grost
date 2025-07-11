@@ -3,17 +3,22 @@ use super::Flavor;
 use ghost::phantom;
 
 pub use default_wire_format::*;
+pub use merged_wire_format::*;
 
 mod default_wire_format;
+mod merged_wire_format;
 
 /// The wire format used for encoding and decoding.
 pub trait WireFormat<F: Flavor + ?Sized>:
   Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType>
 {
-  /// The cooresponding value to the wire type.
+  /// The corresponding wire type value (not "cooresponding")
   const WIRE_TYPE: F::WireType;
-  /// The self.
-  const SELF: Self;
+
+  /// A singleton instance of this wire format.
+  ///
+  /// For ZSTs, this represents the canonical instance.
+  const INSTANCE: Self;
 }
 
 /// A wire format for packed repeated fields.
@@ -80,39 +85,39 @@ impl<KW: ?Sized, VW: ?Sized> core::fmt::Display for PackedEntry<KW, VW> {
 /// - Compatibility with Protocol Buffer's default repeated field encoding
 /// - Cases where elements may be added incrementally
 
-// TODO(al8n): change const `I: u32` to `I: Identifier` wihen `feature(adt_const_params)` is stable
+// TODO(al8n): change const `TAG: u32` to `TAG: Tag` wihen `feature(adt_const_params)` is stable
 #[phantom]
-pub struct Repeated<W: ?Sized, B: ?Sized, const I: u32>;
+pub struct Repeated<W: ?Sized, const TAG: u32>;
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Clone for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> Clone for Repeated<W, TAG> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Copy for Repeated<W, B, I> {}
+impl<W: ?Sized, const TAG: u32> Copy for Repeated<W, TAG> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::hash::Hash for Repeated<W, TAG> {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-    I.hash(state);
+    TAG.hash(state);
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> PartialEq for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> PartialEq for Repeated<W, TAG> {
   fn eq(&self, _: &Self) -> bool {
     true
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> Eq for Repeated<W, B, I> {}
+impl<W: ?Sized, const TAG: u32> Eq for Repeated<W, TAG> {}
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Display for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::fmt::Display for Repeated<W, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("repeated")
   }
 }
 
-impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Repeated<W, B, I> {
+impl<W: ?Sized, const TAG: u32> core::fmt::Debug for Repeated<W, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("Repeated")
   }
@@ -120,39 +125,37 @@ impl<W: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for Repeated<W, B, I> 
 
 /// Similar to [`Repeated`], but used for repeated entries, like map entries and etc.
 #[phantom]
-pub struct RepeatedEntry<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32>;
+pub struct RepeatedEntry<K: ?Sized, V: ?Sized, const TAG: u32>;
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Clone for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Clone for RepeatedEntry<K, V, TAG> {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Copy for RepeatedEntry<K, V, B, I> {}
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Copy for RepeatedEntry<K, V, TAG> {}
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::hash::Hash for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::hash::Hash for RepeatedEntry<K, V, TAG> {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-    I.hash(state);
+    TAG.hash(state);
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> PartialEq for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> PartialEq for RepeatedEntry<K, V, TAG> {
   fn eq(&self, _: &Self) -> bool {
     true
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> Eq for RepeatedEntry<K, V, B, I> {}
+impl<K: ?Sized, V: ?Sized, const TAG: u32> Eq for RepeatedEntry<K, V, TAG> {}
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::fmt::Display
-  for RepeatedEntry<K, V, B, I>
-{
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Display for RepeatedEntry<K, V, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("repeated-entry")
   }
 }
 
-impl<K: ?Sized, V: ?Sized, B: ?Sized, const I: u32> core::fmt::Debug for RepeatedEntry<K, V, B, I> {
+impl<K: ?Sized, V: ?Sized, const TAG: u32> core::fmt::Debug for RepeatedEntry<K, V, TAG> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.write_str("RepeatedEntry")
   }
@@ -326,13 +329,13 @@ seq_macro::seq!(N in 0..=63 {
     };
 
     /// The ASCII bytes used for joining elements.
-    /// 
+    ///
     /// This contains only the valid ASCII bytes (0-127) from the type parameters,
     /// in the order they were specified, with sentinel values (128) filtered out.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
     /// The ASCII string used for joining elements.
-    /// 
+    ///
     /// This is the UTF-8 representation of [`BYTES`](Self::BYTES). Since all bytes
     /// are guaranteed to be valid ASCII (0-127), this conversion is always safe.
     pub const STR: &str = unsafe {
@@ -352,7 +355,7 @@ seq_macro::seq!(N in 0..=63 {
   /// `JoinAscii` by supporting the full Unicode character set.
   ///
   /// ## Type Parameters
-  /// - `W`: The underlying wire format used to encode individual elements  
+  /// - `W`: The underlying wire format used to encode individual elements
   /// - `C~N`: Up to 64 Unicode character constants used as separators
   ///
   /// ## Separator Behavior
@@ -417,13 +420,13 @@ seq_macro::seq!(N in 0..=63 {
     };
 
     /// The UTF-8 encoded bytes used for joining elements.
-    /// 
+    ///
     /// This contains the UTF-8 representation of all non-sentinel characters
     /// from the type parameters, concatenated in the order they were specified.
     pub const BYTES: &[u8] = Self::__BYTES__.as_bytes();
 
     /// The Unicode string used for joining elements.
-    /// 
+    ///
     /// This is the UTF-8 string representation of all the separator characters.
     /// Characters are concatenated in the order they appear in the type parameters,
     /// with sentinel values filtered out.

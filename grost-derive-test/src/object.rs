@@ -8,3 +8,5 @@ mod string;
 
 mod list;
 mod nullable_list;
+
+mod generic;

@@ -81,6 +81,7 @@ pub struct ObjectConvertOptions {
   pub(super) scalar: ObjectLabelConvertOptions,
   pub(super) bytes: ObjectLabelConvertOptions,
   pub(super) string: ObjectLabelConvertOptions,
+  pub(super) generic: ObjectLabelConvertOptions,
   pub(super) object: ObjectLabelConvertOptions,
   pub(super) enumeration: ObjectLabelConvertOptions,
   pub(super) interface: ObjectLabelConvertOptions,
@@ -94,13 +95,14 @@ impl ObjectConvertOptions {
   #[inline]
   pub const fn or_default_by_label(&self, label: &Label) -> bool {
     match label {
-      Label::Scalar => self.or_default_scalar(),
-      Label::Bytes => self.or_default_bytes(),
-      Label::String => self.or_default_string(),
-      Label::Object => self.or_default_object(),
-      Label::Enum => self.or_default_enumeration(),
-      Label::Interface => self.or_default_interface(),
-      Label::Union => self.or_default_union(),
+      Label::Scalar(_) => self.or_default_scalar(),
+      Label::Bytes(_) => self.or_default_bytes(),
+      Label::String(_) => self.or_default_string(),
+      Label::Object(_) => self.or_default_object(),
+      Label::Enum(_) => self.or_default_enumeration(),
+      Label::Interface(_) => self.or_default_interface(),
+      Label::Union(_) => self.or_default_union(),
+      Label::Generic(_) => self.or_default_generic(),
       Label::Map { .. } => self.or_default_map(),
       Label::Set(_) => self.or_default_set(),
       Label::List(_) => self.or_default_list(),
@@ -156,6 +158,20 @@ impl ObjectConvertOptions {
   pub const fn or_default_string(&self) -> bool {
     if self.string.or_default.is_some() {
       self.string.or_default()
+    } else {
+      self.or_default()
+    }
+  }
+
+  /// Returns the generic conversion options
+  #[inline]
+  pub const fn generic(&self) -> &ObjectLabelConvertOptions {
+    &self.generic
+  }
+
+  pub const fn or_default_generic(&self) -> bool {
+    if self.generic.or_default.is_some() {
+      self.generic.or_default()
     } else {
       self.or_default()
     }
@@ -276,6 +292,7 @@ impl From<ObjectConvertFromMeta> for ObjectConvertOptions {
       map: meta.map.into(),
       set: meta.set.into(),
       list: meta.list.into(),
+      generic: meta.generic.into(),
     }
   }
 }
@@ -317,7 +334,9 @@ fn accessors(
       let without_fn = format_ident!("without_{}", field_name);
       let maybe_fn = format_ident!("maybe_{}", field_name);
       let flatten_ty = quote! {
-        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output
+        <#ty as #path_to_grost::__private::convert::State<
+          #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>
+        >>::Output
       };
 
       quote! {
@@ -478,7 +497,9 @@ fn nullable_accessors(
   let (nullable_mut_ty, nullable_ref_ty, nullable_ty, flatten_ty): (Type, Type, Type, Type) =
     if nullable {
       let flatten_ty = syn::parse2(quote! {
-        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output
+        <#ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened<
+          #path_to_grost::__private::convert::Inner
+        >>>::Output
       })?;
       let nullable_mut_ty = syn::parse2(quote! { ::core::option::Option<&mut #flatten_ty> })?;
       let nullable_ref_ty = syn::parse2(quote! { ::core::option::Option<&#flatten_ty> })?;

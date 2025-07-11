@@ -3,7 +3,9 @@ use std::num::NonZeroU32;
 use darling::usage::{IdentSet, LifetimeSet, Purpose, UsesLifetimes, UsesTypeParams};
 use either::Either;
 use quote::{ToTokens, quote};
-use syn::{Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated};
+use syn::{
+  Attribute, Ident, Path, Type, Visibility, WherePredicate, punctuated::Punctuated, token::Comma,
+};
 
 use crate::{
   object::{
@@ -39,7 +41,6 @@ pub struct RawTaggedField<E = ()> {
   label: Label,
   schema: SchemaOptions,
   tag: NonZeroU32,
-  wire_format: Option<Type>,
   transform: FieldConvertOptions,
   partial: PartialFieldOptions,
   partial_ref: PartialRefFieldOptions,
@@ -62,7 +63,6 @@ impl<E> RawTaggedField<E> {
       label,
       schema,
       tag,
-      wire_format,
       transform,
       partial,
       partial_ref,
@@ -79,7 +79,6 @@ impl<E> RawTaggedField<E> {
         label,
         schema,
         tag,
-        wire_format,
         transform,
         partial,
         partial_ref,
@@ -116,6 +115,7 @@ impl<TM, SM> RawField<TM, SM> {
         vis,
         attrs,
         extra: meta.extra,
+        default: meta.default,
       }))),
       FieldFromMeta::Tagged(field) => {
         let field = *field;
@@ -124,7 +124,6 @@ impl<TM, SM> RawField<TM, SM> {
           schema,
           tag,
           transform,
-          wire_format,
           partial,
           partial_ref,
           selector,
@@ -140,7 +139,6 @@ impl<TM, SM> RawField<TM, SM> {
           label,
           schema: schema.into(),
           tag,
-          wire_format,
           transform: transform.finalize()?,
           partial: partial.finalize()?,
           partial_ref: partial_ref.finalize()?,
@@ -174,6 +172,7 @@ pub struct TaggedField<T = ()> {
   label: Label,
   attrs: Vec<Attribute>,
   wire_format: Type,
+  wire_format_ref_value: proc_macro2::TokenStream,
   wire_format_reflection: Type,
   type_params_usages: IdentSet,
   lifetimes_usages: LifetimeSet,
@@ -185,6 +184,7 @@ pub struct TaggedField<T = ()> {
   schema_name: String,
   schema_description: String,
   transform: FieldConvertOptions,
+  default_wire_format_constraints: Punctuated<WherePredicate, Comma>,
   tag: u32,
   copy: bool,
   meta: T,
@@ -275,6 +275,12 @@ impl<T> TaggedField<T> {
     &self.partial_ref
   }
 
+  /// Returns the default wire format constraints for the field.
+  #[inline]
+  pub const fn default_wire_format_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.default_wire_format_constraints
+  }
+
   /// Returns the selector field information
   #[inline]
   pub const fn selector(&self) -> &SelectorField {
@@ -327,6 +333,8 @@ impl TaggedField {
       label: self.label,
       attrs: self.attrs,
       wire_format: self.wire_format,
+      default_wire_format_constraints: self.default_wire_format_constraints,
+      wire_format_ref_value: self.wire_format_ref_value,
       wire_format_reflection: self.wire_format_reflection,
       type_params_usages: self.type_params_usages,
       lifetimes_usages: self.lifetimes_usages,
@@ -354,8 +362,6 @@ impl TaggedField {
     let flavor_type = &object.flavor_type;
     let tag = field.tag.get();
     let object_ty = &object.ty;
-    let lifetime_param = &object.lifetime_param;
-    let lifetime = &lifetime_param.lifetime;
 
     let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
@@ -373,29 +379,30 @@ impl TaggedField {
       flavor_type,
       tag,
     ))?;
-    let wf = match field.wire_format {
-      Some(wf) => wf,
-      None => {
-        let dwf = default_wire_format(path_to_grost, flavor_type);
-        let field_marked_type = field.label.mark(path_to_grost, field_ty)?;
-        let format = default_wire_format_associated(path_to_grost, flavor_type, &field_marked_type);
 
-        if use_generics {
-          let pred: WherePredicate = syn::parse2(quote! {
-            #field_marked_type: #dwf
-          })?;
-          selector_constraints.push(pred.clone());
-          partial_ref_constraints.extend([
-            pred,
-            syn::parse2(quote! {
-              #format: #lifetime
-            })?,
-          ]);
-        }
+    let dwf = default_wire_format(path_to_grost, flavor_type);
+    let label_info = field
+      .label
+      .label_info(path_to_grost, flavor_type, field_ty, tag)?;
+    let dwf_constraints = label_info.wire_format_constraints;
+    let wft = label_info.wire_format;
+    let wf = syn::parse2(default_wire_format_associated(
+      path_to_grost,
+      flavor_type,
+      &wft,
+    ))?;
+    let wfv = default_wire_format_associated_value(path_to_grost, flavor_type, &wft);
+    if !dwf_constraints.is_empty() {
+      partial_ref_constraints.extend(dwf_constraints.clone());
+    }
 
-        syn::parse2(format)?
-      }
-    };
+    if field.label.is_generic() || field.label.is_inner_generic() {
+      let pred: WherePredicate = syn::parse2(quote! {
+        #wft: #dwf
+      })?;
+      selector_constraints.push(pred.clone());
+      partial_ref_constraints.extend([pred]);
+    }
 
     let index = Index::new(index, &field.name, field.tag.get())?;
     let schema_name = field.schema.name.unwrap_or_else(|| field.name.to_string());
@@ -413,7 +420,6 @@ impl TaggedField {
 
     let partial_ref = PartialRefField::try_new(
       object,
-      use_generics,
       &field_ty,
       &wf,
       &field.label,
@@ -436,6 +442,7 @@ impl TaggedField {
       &schema_name,
       &schema_description,
       use_generics,
+      dwf_constraints.clone(),
     )?;
 
     Ok(Self {
@@ -448,8 +455,10 @@ impl TaggedField {
       schema_name,
       type_params_usages: field_type_params_usages,
       lifetimes_usages: field_lifetimes_usages,
+      wire_format_ref_value: wfv,
       wire_format: wf,
       wire_format_reflection: wfr,
+      default_wire_format_constraints: dwf_constraints,
       transform: {
         let mo = field.transform.missing_operation().cloned().or_else(|| {
           object
@@ -588,6 +597,17 @@ fn default_wire_format_associated(
   let dwf = default_wire_format(path_to_grost, flavor_type);
   quote! {
     <#field_marked_type as #dwf>::Format
+  }
+}
+
+fn default_wire_format_associated_value(
+  path_to_grost: &Path,
+  flavor_type: impl ToTokens,
+  field_marked_type: impl ToTokens,
+) -> proc_macro2::TokenStream {
+  let dwf = default_wire_format(path_to_grost, flavor_type);
+  quote! {
+    <#field_marked_type as #dwf>::STATIC_REF
   }
 }
 

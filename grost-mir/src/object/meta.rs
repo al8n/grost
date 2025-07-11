@@ -34,6 +34,7 @@ pub(crate) struct ObjectConvertFromMeta {
   pub(in crate::object) object: ObjectLabelConvertFromMeta,
   pub(in crate::object) enumeration: ObjectLabelConvertFromMeta,
   pub(in crate::object) interface: ObjectLabelConvertFromMeta,
+  pub(in crate::object) generic: ObjectLabelConvertFromMeta,
   pub(in crate::object) union: ObjectLabelConvertFromMeta,
   pub(in crate::object) map: ObjectLabelConvertFromMeta,
   pub(in crate::object) set: ObjectLabelConvertFromMeta,
@@ -70,6 +71,8 @@ impl FromMeta for ObjectConvertFromMeta {
           set: ObjectLabelConvertFromMeta,
           #[darling(default)]
           list: ObjectLabelConvertFromMeta,
+          #[darling(default)]
+          generic: ObjectLabelConvertFromMeta,
         }
 
         let Helper {
@@ -84,6 +87,7 @@ impl FromMeta for ObjectConvertFromMeta {
           map,
           set,
           list,
+          generic,
         } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
 
         Ok(Self {
@@ -98,6 +102,7 @@ impl FromMeta for ObjectConvertFromMeta {
           map,
           set,
           list,
+          generic,
         })
       }
     })

@@ -1,6 +1,6 @@
 use quote::{format_ident, quote};
 
-use crate::utils::grost_decode_trait_lifetime;
+use crate::{object::ast::concrete::Field, utils::grost_decode_trait_lifetime};
 
 impl<T, S, M> super::Object<T, S, M> {
   pub(super) fn derive_decode(&self) -> darling::Result<proc_macro2::TokenStream> {
@@ -24,7 +24,10 @@ fn derive_partial_object_decode<T, S, M>(
 
   let decode_generics = partial_object.decode_generics();
   let (ig, _, where_clauses) = partial_object.generics().split_for_impl();
+  let (transform_from_partial_ig, _, transform_from_partial_where_clauses) =
+    object.transform_partial_generics.split_for_impl();
   let (decode_ig, _, decode_where_clauses) = decode_generics.split_for_impl();
+  let (decode_object_ig, _, decode_object_where_clauses) = object.decode_generics.split_for_impl();
 
   let path_to_grost = object.path_to_grost();
   let lt = &object.lifetime_param().lifetime;
@@ -118,52 +121,70 @@ fn derive_partial_object_decode<T, S, M>(
   let fields_transform = object
     .fields()
     .iter()
-    .filter_map(|f| f.try_unwrap_tagged_ref().ok())
     .map(|f| {
-      let name = f.name();
-      let on_missing = match f.transform().missing_operation() {
-        Some(missing_operation) => {
-          let call = missing_operation.call();
+      match f {
+        Field::Skipped(f) => {
+          let name = f.name();
+          let default = &f.default;
           quote! {
-            else {
-              #call
-            }
+            #name: (#default)()
           }
-        }
-        None => {
-          if f.label().is_list() || f.label().is_set() || f.label().is_map() {
-            quote! {
-              else {
-                ::core::default::Default::default()
+        },
+        Field::Tagged(f) => {
+          let name = f.name();
+          let on_missing = match f.transform().missing_operation() {
+            Some(missing_operation) => {
+              let call = missing_operation.call();
+              quote! {
+                else {
+                  #call
+                }
               }
+            }
+            None => {
+              if f.label().is_list() || f.label().is_set() || f.label().is_map() {
+                quote! {
+                  else {
+                    ::core::default::Default::default()
+                  }
+                }
+              } else {
+                quote! {
+                  else {
+                    return ::core::result::Result::Err(
+                      ::core::convert::Into::into(#path_to_grost::__private::error::Error::field_not_found(
+                        ::core::stringify!(#object_name),
+                        ::core::stringify!(#name),
+                      ))
+                    );
+                  }
+                }
+              }
+            },
+          };
+          let ty = f.ty();
+          let partial_field_ty = f.partial().ty();
+          let field_wf = f.wire_format();
+
+          if f.label().is_nullable() {
+            quote! {
+              #name: input.#name
             }
           } else {
             quote! {
-              else {
-                return ::core::result::Result::Err(
-                  ::core::convert::Into::into(#path_to_grost::__private::error::Error::field_not_found(
-                    ::core::stringify!(#object_name),
-                    ::core::stringify!(#name),
-                  ))
-                );
+              #name: {
+                if let ::core::option::Option::Some(value) = input.#name {
+                  <#ty as #path_to_grost::__private::convert::Transform<
+                    #partial_field_ty,
+                    #ty,
+                    #field_wf,
+                    #flavor_ty,
+                  >>::transform(value)?
+                } #on_missing
               }
             }
           }
         },
-      };
-
-      if f.label().is_nullable() {
-        quote! {
-          #name: input.#name
-        }
-      } else {
-        quote! {
-          #name: {
-            if let ::core::option::Option::Some(value) = input.#name {
-              value
-            } #on_missing
-          }
-        }
       }
     });
 
@@ -197,7 +218,7 @@ fn derive_partial_object_decode<T, S, M>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #decode_ig #decode_to_object_trait for #object_ty #decode_where_clauses {
+    impl #decode_object_ig #decode_to_object_trait for #object_ty #decode_object_where_clauses {
       fn decode(
         context: &#lt <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Context,
         src: #read_buffer_ident,
@@ -225,7 +246,7 @@ fn derive_partial_object_decode<T, S, M>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::Transform<#partial_object_ty, #object_ty, #wf, #flavor_ty> for #object_ty #where_clauses {
+    impl #transform_from_partial_ig #path_to_grost::__private::convert::Transform<#partial_object_ty, #object_ty, #wf, #flavor_ty> for #object_ty #transform_from_partial_where_clauses {
       fn transform(input: #partial_object_ty) -> ::core::result::Result<#object_ty, <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error> {
         ::core::result::Result::Ok(Self {
           #(#fields_transform),*
@@ -441,8 +462,14 @@ fn derive_partial_ref_object_decode<T, S, M>(
         }
       };
 
+      let branch = if f.default_wire_format_constraints().is_empty() {
+        quote! { <#field_identifier as #object_reflectable>::REFLECTION }
+      } else {
+        quote! { _ if identifier.eq(<#field_identifier as #object_reflectable>::REFLECTION) }
+      };
+
       field_decode_branches.push(quote! {
-        <#field_identifier as #object_reflectable>::REFLECTION => {
+        #branch => {
           if offset >= buf_len {
             return ::core::result::Result::Err(
               ::core::convert::Into::into(#path_to_grost::__private::error::Error::buffer_underflow())

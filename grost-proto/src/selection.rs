@@ -123,9 +123,6 @@ impl<F: ?Sized> Selector<F> for bool {
 pub trait Selectable<F: ?Sized> {
   /// The corresponding selector for this type.
   type Selector: Selector<F>;
-
-  /// Returns `true` if the type is empty, which also means it selects nothing
-  fn is_empty(&self) -> bool;
 }
 
 impl<T, F> Selectable<F> for &T
@@ -134,8 +131,4 @@ where
   F: ?Sized,
 {
   type Selector = T::Selector;
-
-  fn is_empty(&self) -> bool {
-    (*self).is_empty()
-  }
 }

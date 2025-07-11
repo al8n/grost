@@ -59,5 +59,5 @@ macro_rules! impl_ {
   };
 }
 
-impl_!(&'de str, [u8], &'de [u8]);
+impl_!([u8]);
 bidi_equivalent!(:<RB: ReadBuf>: impl<str, LengthDelimited> for <Str<RB>, LengthDelimited>);

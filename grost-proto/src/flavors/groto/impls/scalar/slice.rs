@@ -29,15 +29,15 @@ impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for 
   }
 }
 
-impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for &'de [u8] {
-  fn decode(context: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>
-  where
-    Self: Sized + 'de,
-    RB: ReadBuf + 'de,
-    B: Buffer<Unknown<RB>> + 'de,
-  {
-    <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
-  }
-}
+// impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for &'de [u8] {
+//   fn decode(context: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>
+//   where
+//     Self: Sized + 'de,
+//     RB: ReadBuf + 'de,
+//     B: Buffer<Unknown<RB>> + 'de,
+//   {
+//     <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
+//   }
+// }
 
 bidi_equivalent!(:<RB: ReadBuf>: impl<[u8], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);

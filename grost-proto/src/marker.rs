@@ -17,6 +17,14 @@ mod sealed {
   impl<T: ?Sized> Sealed for UnionMarker<T> {}
   impl<T: ?Sized> Sealed for ObjectMarker<T> {}
   impl<T: ?Sized, M: ?Sized> Sealed for FlattenMarker<T, M> {}
+  impl<T: ?Sized, M: ?Sized, const TAG: u32> Sealed for RepeatedMarker<T, M, TAG> {}
+  impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Sealed
+    for RepeatedEntryMarker<T, KM, VM, TAG>
+  {
+  }
+
+  impl<T: ?Sized, M: ?Sized> Sealed for GenericMarker<T, M> {}
+  impl<T: ?Sized, W: ?Sized> Sealed for WireFormatMarker<T, W> {}
 }
 
 /// A marker trait that associates to the type being marked.
@@ -49,6 +57,20 @@ impl<T: ?Sized, M: ?Sized> Marker for NullableMarker<T, M> {
   type Marked = T;
 }
 
+impl<T: ?Sized, M: ?Sized, const TAG: u32> Marker for RepeatedMarker<T, M, TAG> {
+  type Marked = T;
+}
+
+impl<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32> Marker
+  for RepeatedEntryMarker<T, KM, VM, TAG>
+{
+  type Marked = T;
+}
+
+impl<T: ?Sized, M: ?Sized + Marker<Marked = T>> Marker for GenericMarker<T, M> {
+  type Marked = M::Marked;
+}
+
 impl<T: ?Sized, M: ?Sized> Marker for ListMarker<T, M> {
   type Marked = T;
 }
@@ -70,6 +92,10 @@ impl<T: ?Sized> Marker for UnionMarker<T> {
 }
 
 impl<T: ?Sized> Marker for ObjectMarker<T> {
+  type Marked = T;
+}
+
+impl<T: ?Sized, W: ?Sized> Marker for WireFormatMarker<T, W> {
   type Marked = T;
 }
 
@@ -100,6 +126,25 @@ pub struct ObjectMarker<T: ?Sized>;
 /// A marker for an interface type.
 #[phantom]
 pub struct InterfaceMarker<T: ?Sized>;
+
+/// A marker for repeating.
+///
+/// - `T` is the type being marked.
+/// - `VM` is the marked type of the value of the repeated value.
+/// - `O` is the default output type of the repeated value.
+/// - `TAG` is the tag of the repeated value.
+#[phantom]
+pub struct RepeatedMarker<T: ?Sized, VM: ?Sized, const TAG: u32>;
+
+/// A marker for repeating entry.
+///
+/// - `T` is the type being marked.
+/// - `KM` is the marked type of the key of the repeated entry.
+/// - `VM` is the marked type of the value of the repeated entry.
+/// - `O` is the default output type of the repeated entry.
+/// - `TAG` is the tag of the repeated entry.
+#[phantom]
+pub struct RepeatedEntryMarker<T: ?Sized, KM: ?Sized, VM: ?Sized, const TAG: u32>;
 
 /// A marker for a nullable type.
 ///
@@ -144,3 +189,11 @@ pub struct SetMarker<T: ?Sized, V: ?Sized>;
 /// and the third type parameter `V` is the value type of the map.
 #[phantom]
 pub struct MapMarker<T: ?Sized, K: ?Sized, V: ?Sized>;
+
+/// A marker for a generic type
+#[phantom]
+pub struct GenericMarker<T: ?Sized, M: ?Sized>;
+
+/// A marker for wire format only.
+#[phantom]
+pub struct WireFormatMarker<T: ?Sized, W: ?Sized>;

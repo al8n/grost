@@ -1,7 +1,7 @@
 pub use context::Context;
-pub use error::{Error, ParseTagError};
+pub use error::Error;
 pub use identifier::Identifier;
-pub use impls::PackedDecoder;
+pub use impls::{PackedDecoder, PackedEntriesDecoder, RepeatedDecoder};
 pub use tag::Tag;
 pub use unknown::Unknown;
 pub use wire_type::*;

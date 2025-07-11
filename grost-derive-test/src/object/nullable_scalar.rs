@@ -19,15 +19,15 @@ struct NullableUints {
   #[grost(tag = 5, nullable(scalar))]
   field5: Option<u128>,
 
-  #[grost(tag = 6, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 6, nullable(scalar(as = "Varint")))]
   field6: Option<u8>,
-  #[grost(tag = 7, nullable(scalar), wire_format = "Nullable<Fixed16>")]
+  #[grost(tag = 7, nullable(scalar(as = "Fixed16")))]
   field7: Option<u16>,
-  #[grost(tag = 8, nullable(scalar), wire_format = "Nullable<Fixed32>")]
+  #[grost(tag = 8, nullable(scalar(as = "Fixed32")))]
   field8: Option<u32>,
-  #[grost(tag = 9, nullable(scalar), wire_format = "Nullable<Fixed64>")]
+  #[grost(tag = 9, nullable(scalar(as = "Fixed64")))]
   field9: Option<u64>,
-  #[grost(tag = 10, nullable(scalar), wire_format = "Nullable<Fixed128>")]
+  #[grost(tag = 10, nullable(scalar(as = "Fixed128")))]
   field10: Option<u128>,
 }
 
@@ -44,15 +44,15 @@ struct NullableNonZeroUints {
   #[grost(tag = 5, nullable(scalar))]
   field5: Option<NonZeroU128>,
 
-  #[grost(tag = 6, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 6, nullable(scalar(as = "Varint")))]
   field6: Option<NonZeroU8>,
-  #[grost(tag = 7, nullable(scalar), wire_format = "Nullable<Fixed16>")]
+  #[grost(tag = 7, nullable(scalar(as = "Fixed16")))]
   field7: Option<NonZeroU16>,
-  #[grost(tag = 8, nullable(scalar), wire_format = "Nullable<Fixed32>")]
+  #[grost(tag = 8, nullable(scalar(as = "Fixed32")))]
   field8: Option<NonZeroU32>,
-  #[grost(tag = 9, nullable(scalar), wire_format = "Nullable<Fixed64>")]
+  #[grost(tag = 9, nullable(scalar(as = "Fixed64")))]
   field9: Option<NonZeroU64>,
-  #[grost(tag = 10, nullable(scalar), wire_format = "Nullable<Fixed128>")]
+  #[grost(tag = 10, nullable(scalar(as = "Fixed128")))]
   field10: Option<NonZeroU128>,
 }
 
@@ -69,15 +69,15 @@ struct NullableInts {
   #[grost(tag = 5, nullable(scalar))]
   field5: Option<i128>,
 
-  #[grost(tag = 6, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 6, nullable(scalar(as = "Varint")))]
   field6: Option<i8>,
-  #[grost(tag = 7, nullable(scalar), wire_format = "Nullable<Fixed16>")]
+  #[grost(tag = 7, nullable(scalar(as = "Fixed16")))]
   field7: Option<i16>,
-  #[grost(tag = 8, nullable(scalar), wire_format = "Nullable<Fixed32>")]
+  #[grost(tag = 8, nullable(scalar(as = "Fixed32")))]
   field8: Option<i32>,
-  #[grost(tag = 9, nullable(scalar), wire_format = "Nullable<Fixed64>")]
+  #[grost(tag = 9, nullable(scalar(as = "Fixed64")))]
   field9: Option<i64>,
-  #[grost(tag = 10, nullable(scalar), wire_format = "Nullable<Fixed128>")]
+  #[grost(tag = 10, nullable(scalar(as = "Fixed128")))]
   field10: Option<i128>,
 }
 
@@ -94,15 +94,15 @@ struct NullableNonZeroInts {
   #[grost(tag = 5, nullable(scalar))]
   field5: Option<NonZeroI128>,
 
-  #[grost(tag = 6, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 6, nullable(scalar(as = "Varint")))]
   field6: Option<NonZeroI8>,
-  #[grost(tag = 7, nullable(scalar), wire_format = "Nullable<Fixed16>")]
+  #[grost(tag = 7, nullable(scalar(as = "Fixed16")))]
   field7: Option<NonZeroI16>,
-  #[grost(tag = 8, nullable(scalar), wire_format = "Nullable<Fixed32>")]
+  #[grost(tag = 8, nullable(scalar(as = "Fixed32")))]
   field8: Option<NonZeroI32>,
-  #[grost(tag = 9, nullable(scalar), wire_format = "Nullable<Fixed64>")]
+  #[grost(tag = 9, nullable(scalar(as = "Fixed64")))]
   field9: Option<NonZeroI64>,
-  #[grost(tag = 10, nullable(scalar), wire_format = "Nullable<Fixed128>")]
+  #[grost(tag = 10, nullable(scalar(as = "Fixed128")))]
   field10: Option<NonZeroI128>,
 }
 
@@ -250,9 +250,9 @@ struct Net {
   #[grost(tag = 6, nullable(scalar))]
   socket_v4: Option<core::net::SocketAddrV4>,
 
-  #[grost(tag = 7, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 7, nullable(scalar(as = "Varint")))]
   ipv4_varint: Option<core::net::Ipv4Addr>,
-  #[grost(tag = 8, nullable(scalar), wire_format = "Nullable<Varint>")]
+  #[grost(tag = 8, nullable(scalar(as = "Varint")))]
   ipv6_varint: Option<core::net::Ipv6Addr>,
 }
 
