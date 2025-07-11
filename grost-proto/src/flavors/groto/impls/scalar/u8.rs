@@ -7,12 +7,18 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed8, Groto, Unknown, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
-  try_from_bridge,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
+  selectable, try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: u8 as Fixed8; NonZeroU8 as Fixed8);
 selectable!(@scalar Groto: u8, NonZeroU8);
+ref_state!(@scalar &'a Groto:
+  u8 as Fixed8,
+  NonZeroU8 as Fixed8,
+  u8 as Varint,
+  NonZeroU8 as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   u8 as Fixed8,
   NonZeroU8 as Fixed8,
@@ -21,6 +27,21 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: u8, NonZeroU8);
 flatten_state!(u8, NonZeroU8);
+
+partial_encode_scalar!(Groto: u8 as Fixed8, u8 as Varint);
+
+groto_identity_transform!(
+  u8 as Fixed8,
+  u8 as Varint,
+  NonZeroU8 as Fixed8,
+  NonZeroU8 as Varint,
+);
+identity_partial_transform!(Groto {
+  u8 as Fixed8,
+  u8 as Varint,
+  NonZeroU8 as Fixed8,
+  NonZeroU8 as Varint,
+});
 
 impl Encode<Fixed8, Groto> for u8 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -62,21 +83,6 @@ impl Encode<Varint, Groto> for u8 {
     <Self as Encode<Varint, Groto>>::encoded_raw_len(self, context)
   }
 }
-
-partial_encode_scalar!(Groto: u8 as Fixed8, u8 as Varint);
-
-groto_identity_transform!(
-  u8 as Fixed8,
-  u8 as Varint,
-  NonZeroU8 as Fixed8,
-  NonZeroU8 as Varint,
-);
-identity_partial_transform!(Groto {
-  u8 as Fixed8,
-  u8 as Varint,
-  NonZeroU8 as Fixed8,
-  NonZeroU8 as Varint,
-});
 
 impl<'de, RB, B> Decode<'de, Self, Fixed8, RB, B, Groto> for u8 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>

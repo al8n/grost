@@ -1,8 +1,84 @@
 use crate::{
   buffer::{Buffer, ReadBuf},
   decode::{BytesSlice, Decode},
-  flavors::groto::{Context, Error, Groto, LengthDelimited, Unknown},
+  encode::{Encode, PartialEncode},
+  flavors::{
+    Flavor,
+    groto::{Context, Error, Groto, LengthDelimited, Unknown},
+  },
 };
+
+impl<RB> Encode<LengthDelimited, Groto> for BytesSlice<RB>
+where
+  RB: ReadBuf,
+{
+  fn encode_raw(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    <[u8] as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn encoded_raw_len(&self, context: &<Groto as Flavor>::Context) -> usize {
+    <[u8] as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
+  }
+
+  fn encode(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    <[u8] as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
+  }
+
+  fn encoded_len(&self, context: &<Groto as Flavor>::Context) -> usize {
+    <[u8] as Encode<LengthDelimited, Groto>>::encoded_len(self, context)
+  }
+}
+
+impl<RB> PartialEncode<LengthDelimited, Groto> for BytesSlice<RB>
+where
+  RB: ReadBuf,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(
+      self, context, buf, selector,
+    )
+  }
+
+  fn partial_encoded_raw_len(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encoded_raw_len(
+      self, context, selector,
+    )
+  }
+
+  fn partial_encode(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
+  }
+
+  fn partial_encoded_len(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encoded_len(self, context, selector)
+  }
+}
 
 impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for [u8] {
   fn decode(_: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>

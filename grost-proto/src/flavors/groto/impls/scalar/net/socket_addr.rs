@@ -9,7 +9,8 @@ use crate::{
     Groto,
     groto::{Context, Error, LengthDelimited, Unknown},
   },
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
+  selectable,
 };
 
 const PORT_SIZE: usize = 2;
@@ -124,6 +125,7 @@ default_scalar_wire_format!(
     SocketAddr as LengthDelimited;
 );
 selectable!(@scalar Groto: SocketAddrV4, SocketAddrV6, SocketAddr);
+ref_state!(@scalar &'a Groto: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 partial_ref_state!(@scalar &'a Groto: SocketAddrV4 as LengthDelimited, SocketAddrV6 as LengthDelimited, SocketAddr as LengthDelimited);
 partial_state!(@scalar Groto: SocketAddrV4, SocketAddrV6, SocketAddr);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);

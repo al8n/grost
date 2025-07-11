@@ -3,7 +3,7 @@ use crate::{
   selection::Selectable,
 };
 
-use super::{Partial, State, PartialRef};
+use super::{Partial, PartialRef, State};
 
 /// A trait for partially transforming the input type `I` to the `<Self as State<STATE>>::Output`.
 pub trait PartialTransform<I, O, W, F>
@@ -22,7 +22,6 @@ where
   ///   according the the fields' selector.
   fn partial_transform(input: I, selector: &Self::Selector) -> Result<O, F::Error>;
 }
-
 
 pub trait PartialTryFromRef<'a, RB, UB, W, F>
 where
@@ -44,15 +43,13 @@ where
     <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized;
 }
 
-pub trait PartialIdentity<F>
+pub trait PartialIdentity<W, F>
 where
   F: Flavor + ?Sized,
-  Self: Selectable<F>, 
+  W: WireFormat<F>,
+  Self: Selectable<F>,
 {
-  fn partial_identity(
-    input: Self,
-    selector: &Self::Selector,
-  ) -> Self
+  fn partial_identity(input: Self, selector: &Self::Selector) -> Self
   where
     Self: Sized;
 }

@@ -1,11 +1,13 @@
 use crate::{
   default_scalar_wire_format, flatten_state,
   flavors::groto::{Error, Fixed32, Groto, Varint},
-  groto_identity_transform, partial_ref_state, partial_state, selectable, try_from_bridge,
+  groto_identity_transform, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: char as Fixed32);
 selectable!(@scalar Groto:char);
+ref_state!(@scalar &'a Groto: char as Fixed32, char as Varint);
 partial_ref_state!(@scalar &'a Groto: char as Fixed32, char as Varint);
 partial_state!(@scalar Groto: char);
 flatten_state!(char);

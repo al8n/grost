@@ -143,7 +143,7 @@ impl darling::FromMeta for Label {
 
 impl Label {
   /// Returns `true` if the inner type is generic.
-  /// 
+  ///
   /// e.g.
   /// - `map(key(generic(...)), value(string)): true``
   /// - `set(generic(...)): true`
@@ -152,7 +152,9 @@ impl Label {
   /// - `generic(...): false`
   pub fn is_inner_generic(&self) -> bool {
     match self {
-      Label::Map(Either::Left(map_label)) => map_label.key().is_generic() || map_label.value().is_generic(),
+      Label::Map(Either::Left(map_label)) => {
+        map_label.key().is_generic() || map_label.value().is_generic()
+      }
       Label::Set(Either::Left(label)) => label.label().is_generic(),
       Label::List(Either::Left(label)) => label.label().is_generic(),
       Label::Nullable(Either::Left(label)) => label.label().is_generic(),
@@ -363,10 +365,7 @@ impl Label {
           })?
         };
 
-        LabelInformation::with_wire_format_constraints(
-          ty,
-          kwfc.into_iter().chain(vwfc).collect(),
-        )
+        LabelInformation::with_wire_format_constraints(ty, kwfc.into_iter().chain(vwfc).collect())
       }
       Self::Set(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
@@ -391,10 +390,7 @@ impl Label {
             #path_to_grost::__private::marker::SetMarker<#ty, #inner_wf>
           })?
         };
-        LabelInformation::with_wire_format_constraints(
-          ty,
-          wire_format_constraints,
-        )
+        LabelInformation::with_wire_format_constraints(ty, wire_format_constraints)
       }
       Self::List(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
@@ -421,10 +417,7 @@ impl Label {
           })?
         };
 
-        LabelInformation::with_wire_format_constraints(
-          ty,
-          c,
-        )
+        LabelInformation::with_wire_format_constraints(ty, c)
       }
       Self::Nullable(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
         #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
@@ -466,10 +459,7 @@ impl Label {
           })?
         };
 
-        LabelInformation::with_wire_format_constraints(
-          ty,
-          c,
-        )
+        LabelInformation::with_wire_format_constraints(ty, c)
       }
     })
   }
@@ -652,26 +642,24 @@ impl Parse for Label {
               "`value` can only be used in `map(...)`",
             ));
           }
-          () if ident.eq("map") => {
-            MapLabelParser::parse(&content).and_then(|label| {
-              if let Either::Left(label) = &label.0 {
-                if label.key().is_generic() {
-                  return Err(syn::Error::new(
-                    content.span(),
-                    "`key(generic(...))` is not supported",
-                  ));
-                }
-
-                if label.value().is_generic() {
-                  return Err(syn::Error::new(
-                    content.span(),
-                    "`value(generic(...))` is not supported",
-                  ));
-                }
+          () if ident.eq("map") => MapLabelParser::parse(&content).and_then(|label| {
+            if let Either::Left(label) = &label.0 {
+              if label.key().is_generic() {
+                return Err(syn::Error::new(
+                  content.span(),
+                  "`key(generic(...))` is not supported",
+                ));
               }
-              Ok(Self::Map(label.0))
-            })?
-          }
+
+              if label.value().is_generic() {
+                return Err(syn::Error::new(
+                  content.span(),
+                  "`value(generic(...))` is not supported",
+                ));
+              }
+            }
+            Ok(Self::Map(label.0))
+          })?,
           _ => {
             return Err(syn::Error::new(
               content.span(),

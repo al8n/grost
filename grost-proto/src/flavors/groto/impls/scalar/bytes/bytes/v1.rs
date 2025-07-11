@@ -1,10 +1,13 @@
 use crate::{
-  buffer::ReadBuf,
-  convert::{PartialTransform, Transform},
+  buffer::{Buffer, ReadBuf},
+  convert::{
+    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, State,
+    Transform, TryFromPartial, TryFromPartialRef, TryFromRef,
+  },
   decode::BytesSlice,
   decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
-  flavors::groto::{Groto, LengthDelimited},
-  groto_identity_transform, partial_ref_state, partial_state, selectable,
+  flavors::groto::{Error, Groto, LengthDelimited, Unknown},
+  partial_ref_state, partial_state, ref_state, selectable,
 };
 use bytes_1::{Bytes, BytesMut};
 
@@ -36,6 +39,11 @@ decode_bridge!(
   },
 );
 
+ref_state!(
+  &'a Groto:
+    Bytes as LengthDelimited => BytesSlice<__GROST_READ_BUF__>,
+    BytesMut as LengthDelimited => BytesSlice<__GROST_READ_BUF__>,
+);
 partial_ref_state!(
   &'a Groto:
     Bytes as LengthDelimited => BytesSlice<__GROST_READ_BUF__>,
@@ -50,13 +58,134 @@ flatten_state!(Bytes, BytesMut);
 bytes_bridge!(
   Groto: Bytes, BytesMut,
 );
-groto_identity_transform!(Bytes as LengthDelimited, BytesMut as LengthDelimited,);
 identity_partial_transform!(
   Groto {
     Bytes as LengthDelimited,
     BytesMut as LengthDelimited,
   }
 );
+
+impl TryFromPartial<LengthDelimited, Groto> for Bytes {
+  fn try_from_partial(input: <Self as State<Partial<Groto>>>::Output) -> Result<Self, Error>
+  where
+    Self: Sized,
+  {
+    Ok(input)
+  }
+}
+
+impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
+  fn try_from_partial_ref(
+    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>>,
+  {
+    Ok(input.into_inner().to_bytes())
+  }
+}
+
+impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
+  fn try_from_ref(
+    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+    RB: ReadBuf + 'de,
+    B: Buffer<Unknown<RB>>,
+  {
+    Ok(input.into_inner().to_bytes())
+  }
+}
+
+impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes
+where
+  RB: ReadBuf,
+  B: Buffer<Unknown<RB>> + 'de,
+{
+  fn partial_try_from_ref(
+    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    _: &bool,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+  {
+    Ok(input.into_inner().to_bytes())
+  }
+}
+
+impl PartialIdentity<LengthDelimited, Groto> for Bytes {
+  fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
+  where
+    Self: Sized,
+  {
+    input
+  }
+}
+
+impl TryFromPartial<LengthDelimited, Groto> for BytesMut {
+  fn try_from_partial(input: <Self as State<Partial<Groto>>>::Output) -> Result<Self, Error>
+  where
+    Self: Sized,
+  {
+    Ok(input)
+  }
+}
+
+impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for BytesMut {
+  fn try_from_partial_ref(
+    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+    RB: ReadBuf,
+    B: Buffer<Unknown<RB>>,
+  {
+    Ok(BytesMut::from(input.into_inner().to_bytes()))
+  }
+}
+
+impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut
+where
+  RB: ReadBuf,
+  B: Buffer<Unknown<RB>> + 'de,
+{
+  fn try_from_ref(
+    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+  {
+    Ok(BytesMut::from(input.into_inner().to_bytes()))
+  }
+}
+
+impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut
+where
+  RB: ReadBuf,
+  B: Buffer<Unknown<RB>> + 'de,
+{
+  fn partial_try_from_ref(
+    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    _: &bool,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+  {
+    Ok(BytesMut::from(input.into_inner().to_bytes()))
+  }
+}
+
+impl PartialIdentity<LengthDelimited, Groto> for BytesMut {
+  fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
+  where
+    Self: Sized,
+  {
+    input
+  }
+}
 
 impl Transform<&[u8], Self, LengthDelimited, Groto> for Bytes {
   fn transform(input: &[u8]) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>

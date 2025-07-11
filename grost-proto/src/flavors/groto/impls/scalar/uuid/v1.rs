@@ -3,10 +3,14 @@ use uuid_1::Uuid;
 use crate::{
   bridge, default_scalar_wire_format, flatten_state,
   flavors::groto::{Fixed128, Groto, Varint},
-  groto_identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, ref_state, selectable,
 };
 
 selectable!(@scalar Groto:Uuid);
+ref_state!(@scalar &'a Groto:
+  Uuid as Fixed128,
+  Uuid as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   Uuid as Fixed128,
   Uuid as Varint,

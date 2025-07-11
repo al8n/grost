@@ -4,7 +4,7 @@ use crate::{
   decode::{Decode, Str},
   decode_bridge, default_string_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Groto, LengthDelimited},
-  groto_identity_transform, partial_ref_state, partial_state, selectable,
+  partial_ref_state, partial_state, ref_state, selectable,
 };
 use smol_str_0_3::SmolStr;
 
@@ -29,6 +29,10 @@ decode_bridge!(
 );
 
 flatten_state!(SmolStr);
+ref_state!(
+  &'a Groto:
+    SmolStr as LengthDelimited => Str<__GROST_READ_BUF__>,
+);
 partial_ref_state!(
   &'a Groto:
     SmolStr as LengthDelimited => Str<__GROST_READ_BUF__>,
@@ -36,7 +40,6 @@ partial_ref_state!(
 partial_state!(
   Groto: SmolStr => SmolStr
 );
-groto_identity_transform!(SmolStr as LengthDelimited,);
 identity_partial_transform!(
   Groto {
     SmolStr as LengthDelimited,

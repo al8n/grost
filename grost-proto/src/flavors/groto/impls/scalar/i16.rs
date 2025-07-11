@@ -5,13 +5,19 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Unknown, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
-  try_from_bridge,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
+  selectable, try_from_bridge,
 };
 use core::num::NonZeroI16;
 
 default_scalar_wire_format!(Groto: i16 as Varint; NonZeroI16 as Varint);
 selectable!(@scalar Groto: i16, NonZeroI16);
+ref_state!(@scalar &'a Groto:
+  i16 as Fixed16,
+  NonZeroI16 as Fixed16,
+  i16 as Varint,
+  NonZeroI16 as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   i16 as Fixed16,
   NonZeroI16 as Fixed16,

@@ -144,6 +144,11 @@ macro_rules! array_str {
         $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited;
     );
 
+    $crate::ref_state!(
+      @scalar &'a $crate::__private::flavors::Groto:
+        $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited
+    );
+
     $crate::partial_ref_state!(
       @scalar &'a $crate::__private::flavors::Groto:
         $ty [const N: usize] as $crate::__private::flavors::groto::LengthDelimited

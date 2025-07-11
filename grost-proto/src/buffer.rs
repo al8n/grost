@@ -348,6 +348,23 @@ pub trait ReadBuf {
 
   /// Returns the bytes of the buffer.
   fn as_bytes(&self) -> &[u8];
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  #[cfg_attr(docsrs, doc(cfg(any(feature = "std", feature = "alloc"))))]
+  /// Converts the read buffer to a `Vec<u8>` instance.
+  fn to_vec(&self) -> Vec<u8> {
+    self.as_bytes().to_vec()
+  }
+
+  #[cfg(all(feature = "bytes_1", any(feature = "std", feature = "alloc")))]
+  #[cfg_attr(
+    docsrs,
+    doc(cfg(all(feature = "bytes_1", any(feature = "std", feature = "alloc"))))
+  )]
+  /// Converts the read buffer to a `Bytes` instance.
+  fn to_bytes(&self) -> crate::bytes::Bytes {
+    crate::bytes::Bytes::copy_from_slice(self.as_bytes())
+  }
 }
 
 impl ReadBuf for &[u8] {
@@ -416,6 +433,11 @@ const _: () = {
 
     fn as_bytes(&self) -> &[u8] {
       self.as_ref()
+    }
+
+    #[cfg(all(feature = "bytes_1", any(feature = "std", feature = "alloc")))]
+    fn to_bytes(&self) -> crate::bytes::Bytes {
+      self.clone()
     }
   }
 };

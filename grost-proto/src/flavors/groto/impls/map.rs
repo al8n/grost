@@ -1,5 +1,3 @@
-use core::{marker::PhantomData, mem};
-
 use crate::{
   buffer::Buffer,
   convert::{Partial, State},

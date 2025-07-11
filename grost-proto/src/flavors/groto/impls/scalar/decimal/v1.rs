@@ -1,12 +1,16 @@
 use crate::{
   bridge, default_scalar_wire_format, flatten_state,
   flavors::groto::{Fixed128, Groto, Varint},
-  groto_identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, ref_state, selectable,
 };
 use rust_decimal_1::Decimal as f128;
 
 default_scalar_wire_format!(Groto: f128 as Fixed128);
 selectable!(@scalar Groto:f128);
+ref_state!(@scalar &'a Groto:
+  f128 as Fixed128,
+  f128 as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   f128 as Fixed128,
   f128 as Varint,

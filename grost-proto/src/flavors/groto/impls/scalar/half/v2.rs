@@ -1,13 +1,17 @@
 use crate::{
   bridge, default_scalar_wire_format, flatten_state,
   flavors::groto::{Fixed16, Groto, Varint},
-  groto_identity_transform, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_ref_state, partial_state, ref_state, selectable,
 };
 use half_2::f16;
 
 default_scalar_wire_format!(Groto: f16 as Fixed16);
 
 selectable!(@scalar Groto:f16);
+ref_state!(@scalar &'a Groto:
+  f16 as Fixed16,
+  f16 as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   f16 as Fixed16,
   f16 as Varint,

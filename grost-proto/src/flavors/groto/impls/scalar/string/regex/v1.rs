@@ -52,6 +52,10 @@ macro_rules! try_str_bridge {
         $ty $([ $(const $g: usize),* ])?
       );
 
+      $crate::ref_state!(&'a Groto:
+        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>,
+      );
+
       $crate::partial_ref_state!(&'a Groto:
         $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited => $crate::__private::decode::Str<__GROST_READ_BUF__>,
       );
@@ -71,9 +75,73 @@ macro_rules! try_str_bridge {
       bidi_equivalent!(impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
       bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
 
-      $crate::groto_identity_transform!(
-        $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
-      );
+      // $crate::groto_identity_transform!(
+      //   $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
+      // );
+
+      impl $crate::__private::convert::TryFromPartial<LengthDelimited, Groto> for $ty {
+        fn try_from_partial(input: <Self as $crate::__private::convert::State<$crate::__private::convert::Partial<Groto>>>::Output) -> Result<Self, Error>
+        where
+          Self: Sized,
+        {
+          Ok(input)
+        }
+      }
+
+      impl<'de, RB, B> $crate::__private::convert::TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      {
+        fn try_from_partial_ref(
+          input: <Self as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+        ) -> Result<Self, Error>
+        where
+          Self: Sized,
+          <Self as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+          RB: $crate::__private::buffer::ReadBuf,
+          B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>>,
+        {
+          <$ty>::new(input.as_ref()).map_err(|_| Error::custom(ERR_MSG))
+        }
+      }
+
+      impl<'de, RB, B> $crate::__private::convert::TryFromRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      where
+        RB: ReadBuf,
+        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+      {
+        fn try_from_ref(
+          input: <Self as $crate::__private::convert::State<$crate::__private::convert::Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+        ) -> Result<Self, Error>
+        where
+          Self: Sized,
+        {
+          <$ty>::new(input.as_ref()).map_err(|_| Error::custom(ERR_MSG))
+        }
+      }
+
+      impl<'de, RB, B> $crate::__private::convert::PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      where
+        RB: ReadBuf,
+        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+      {
+        fn partial_try_from_ref(
+          input: <Self as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+          _: &bool,
+        ) -> Result<Self, Error>
+        where
+          Self: Sized,
+        {
+          <$ty>::new(input.as_ref()).map_err(|_| Error::custom(ERR_MSG))
+        }
+      }
+
+      impl $crate::__private::convert::PartialIdentity<LengthDelimited, Groto> for $ty {
+        fn partial_identity(input: <Self as $crate::__private::convert::State<$crate::__private::convert::Partial<Groto>>>::Output, _: &bool) -> Self
+        where
+          Self: Sized,
+        {
+          input
+        }
+      }
 
       impl $crate::__private::convert::Transform<&str, Self, LengthDelimited, Groto> for $ty {
         fn transform(input: &str) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>

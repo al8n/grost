@@ -10,7 +10,8 @@ use crate::{
     Groto,
     groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Unknown, Varint},
   },
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
+  selectable,
 };
 
 macro_rules! ip_addr {
@@ -133,6 +134,7 @@ ip_addr!(Ipv4Addr::Fixed32(u32));
 ip_addr!(Ipv6Addr::Fixed128(u128));
 selectable!(@scalar Groto: Ipv4Addr, Ipv6Addr, IpAddr);
 partial_encode_scalar!(Groto: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
+ref_state!(@scalar &'a Groto: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 partial_ref_state!(@scalar &'a Groto: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 partial_state!(@scalar Groto: Ipv4Addr, Ipv6Addr, IpAddr);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);

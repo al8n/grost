@@ -7,12 +7,18 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Unknown, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, selectable,
-  try_from_bridge,
+  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
+  selectable, try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: u16 as Varint; NonZeroU16 as Varint);
 selectable!(@scalar Groto: u16, NonZeroU16);
+ref_state!(@scalar &'a Groto:
+  u16 as Fixed16,
+  NonZeroU16 as Fixed16,
+  u16 as Varint,
+  NonZeroU16 as Varint,
+);
 partial_ref_state!(@scalar &'a Groto:
   u16 as Fixed16,
   NonZeroU16 as Fixed16,
