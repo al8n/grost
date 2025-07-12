@@ -238,7 +238,7 @@ macro_rules! decode {
     where
       PackedDecoder<'de, T, RB, B, W>: Sized,
       RB: $crate::buffer::ReadBuf + 'de,
-      B: $crate::buffer::Buffer<<Groto as $crate::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::buffer::UnknownBuffer<RB, Groto> + 'de,
     {
       let buf = src.as_bytes();
       let buf_len = buf.len();
@@ -260,20 +260,20 @@ macro_rules! decode {
 macro_rules! list {
   (@flatten_state $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )? > $crate::__private::convert::State<
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )? > $crate::__private::state::State<
         $crate::__private::convert::Flattened
       > for $ty {
         type Output = $ty;
       }
 
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>> for $ty
       where
-        T: $crate::__private::convert::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>>,
+        T: $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>>,
       {
         type Output = T::Output;
       }
 
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::State<$crate::__private::convert::Flattened<$crate::__private::convert::Inner>> for $ty {
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Inner>> for $ty {
         type Output = T;
       }
     )*
@@ -281,9 +281,9 @@ macro_rules! list {
   (@partial_state $($(:< $($tg:ident: $t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])? => $output:ty),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>> for $ty
       where
-        T: $crate::__private::convert::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>,
+        T: $crate::__private::state::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>,
         T::Output: Sized,
       {
         type Output = $output;
@@ -293,7 +293,7 @@ macro_rules! list {
   (@partial_ref_state(bytes) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<'a, __GROST_READ_BUF__, __GROST_BUFFER__, LengthDelimited, $crate::__private::flavors::Groto>> for $ty
+      impl<'a, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, __GROST_READ_BUF__, __GROST_BUFFER__, LengthDelimited, $crate::__private::flavors::Groto>> for $ty
       {
         type Output = $crate::__private::decode::BytesSlice<__GROST_READ_BUF__>;
       }
@@ -302,7 +302,7 @@ macro_rules! list {
   (@partial_ref_state(packed) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, T, W, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+      impl<'a, T, W, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<
         $crate::__private::convert::PartialRef<
           'a,
           __GROST_READ_BUF__,
@@ -321,7 +321,7 @@ macro_rules! list {
   (@partial_ref_state(borrow) $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<'a, T, W, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+      impl<'a, T, W, __GROST_READ_BUF__, __GROST_BUFFER__, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<
         $crate::__private::convert::PartialRef<
           'a,
           __GROST_READ_BUF__,
@@ -428,12 +428,12 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
-        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>
+        T: $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>
           + $crate::__private::decode::Decode<'a, T::Output, TW, RB, B, $crate::__private::flavors::Groto>
           + $crate::__private::convert::Transform<T::Output, T, TW, $crate::__private::flavors::Groto>
           + 'a,
         T::Output: Sized,
-        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'a,
+        B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'a,
         RB: $crate::__private::buffer::ReadBuf + 'a,
       {
         fn transform(input: $crate::__private::flavors::groto::PackedDecoder<'a, T, RB, B, TW>) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error>
@@ -491,21 +491,21 @@ macro_rules! list {
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto>,
         T: $crate::__private::convert::PartialTransform<
             T,
-            ::core::option::Option<<T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output>,
+            ::core::option::Option<<T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output>,
             W,
             $crate::__private::flavors::Groto,
           >
-          + $crate::__private::convert::State<$crate::__private::convert::Flattened>
-          + $crate::__private::convert::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>
+          + $crate::__private::state::State<$crate::__private::convert::Flattened>
+          + $crate::__private::state::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>
           + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>
           + $crate::__private::convert::Transform<
-              <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+              <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
               T,
               W,
               $crate::__private::flavors::Groto
             >,
-        <T as $crate::__private::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>>::Output: Sized +  $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
-        <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
+        <T as $crate::__private::state::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>>::Output: Sized +  $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
+        <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
       {
         fn partial_transform(
           input: Self,
@@ -521,7 +521,7 @@ macro_rules! list {
               match T::partial_transform(res, selector) {
                 ::core::result::Result::Ok(val) => {
                   val.and_then(|val| ::core::option::Option::Some(<T as $crate::__private::convert::Transform<
-                    <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+                    <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
                     T,
                     W,
                     $crate::__private::flavors::Groto
@@ -546,11 +546,11 @@ macro_rules! list {
       where
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
         TW: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'a,
-        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>
-          + $crate::__private::convert::State<$crate::__private::convert::Flattened>
+        T: $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>
+          + $crate::__private::state::State<$crate::__private::convert::Flattened>
           + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>
           + $crate::__private::decode::Decode<'a,
-              <T as $crate::__private::convert::State<
+              <T as $crate::__private::state::State<
                 $crate::__private::convert::PartialRef<
                   'a,
                   RB,
@@ -565,7 +565,7 @@ macro_rules! list {
               $crate::__private::flavors::Groto,
             >
           + $crate::__private::convert::PartialTransform<
-              <T as $crate::__private::convert::State<
+              <T as $crate::__private::state::State<
                 $crate::__private::convert::PartialRef<
                   'a,
                   RB,
@@ -574,21 +574,21 @@ macro_rules! list {
                   $crate::__private::flavors::Groto
                 >
               >>::Output,
-              ::core::option::Option<<T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output>,
+              ::core::option::Option<<T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output>,
               TW,
               $crate::__private::flavors::Groto
             >
           + $crate::__private::convert::Transform<
-              <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+              <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
               T,
               TW,
               $crate::__private::flavors::Groto
             >
           + 'a,
-        <T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
-        <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
+        <T as $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
+        <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output: Sized + $crate::__private::selection::Selectable<$crate::__private::flavors::Groto, Selector = T::Selector>,
         RB: $crate::__private::buffer::ReadBuf + 'a,
-        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'a,
+        B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'a,
       {
         fn partial_transform(input: PackedDecoder<'a, T, RB, B, TW>, selector: &Self::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
           if $crate::__private::selection::Selector::is_empty(selector) {
@@ -598,12 +598,12 @@ macro_rules! list {
           input.into_iter()
             .filter_map(|res| {
               match res.and_then(|(_, inp)| <
-                T as $crate::__private::convert::PartialTransform<<T as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output, ::core::option::Option<<T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output>, TW, $crate::__private::flavors::Groto>
+                T as $crate::__private::convert::PartialTransform<<T as $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output, ::core::option::Option<<T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output>, TW, $crate::__private::flavors::Groto>
               >::partial_transform(inp, selector)) {
                 ::core::result::Result::Ok(val) => match val {
                   ::core::option::Option::Some(val) => ::core::option::Option::Some(
                     <T as $crate::__private::convert::Transform<
-                      <T as $crate::__private::convert::State<$crate::__private::convert::Flattened>>::Output,
+                      <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
                       T,
                       TW,
                       $crate::__private::flavors::Groto
@@ -638,7 +638,7 @@ macro_rules! list {
     $(
       impl<'de, T, W, RB, B, $($($tg:$t),*)? $($(const $g: usize),*)?> $crate::__private::decode::Decode<'de, PackedDecoder<'de, T, RB, B, W>, Packed<W>, RB, B, $crate::__private::flavors::Groto> for $ty
       where
-        T: $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, W, $crate::__private::flavors::Groto>>
+        T: $crate::__private::state::State<$crate::__private::convert::PartialRef<'de, RB, B, W, $crate::__private::flavors::Groto>>
           + $crate::__private::decode::Decode<'de, T::Output, W, RB, B, $crate::__private::flavors::Groto>,
         T::Output: ::core::marker::Sized,
         W: $crate::__private::flavors::WireFormat<$crate::__private::flavors::Groto> + 'de,
@@ -659,7 +659,7 @@ macro_rules! list {
         where
           Self: ::core::marker::Sized,
           RB: $crate::__private::buffer::ReadBuf + 'de,
-          B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+          B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
         {
           <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::decode::BytesSlice<RB>,  $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
             .and_then(|(read, bytes)| {
@@ -675,7 +675,7 @@ macro_rules! list {
         where
           $crate::__private::decode::BytesSlice<B>: ::core::marker::Sized,
           RB: $crate::__private::buffer::ReadBuf + 'de,
-          B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+          B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
         {
           <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::decode::BytesSlice<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
         }
@@ -694,7 +694,7 @@ macro_rules! list {
         where
           Self: ::core::marker::Sized,
           RB: $crate::__private::buffer::ReadBuf + 'de,
-          B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+          B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
         {
           <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::decode::BytesSlice<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
             .map(|(read, bytes)| (read, ($from)(bytes.as_ref())))
@@ -706,7 +706,7 @@ macro_rules! list {
         where
           $crate::__private::decode::BytesSlice<RB>: ::core::marker::Sized,
           RB: $crate::__private::buffer::ReadBuf + 'de,
-          B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+          B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
         {
           <[::core::primitive::u8] as $crate::__private::decode::Decode<'de, $crate::__private::decode::BytesSlice<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
         }
@@ -978,7 +978,7 @@ const _: () = {
 const _: () = {
   use tinyvec_1::ArrayVec;
 
-  use crate::convert::{Partial, State};
+  use crate::{convert::Partial, state::State};
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_array_capacity<A>() -> Error

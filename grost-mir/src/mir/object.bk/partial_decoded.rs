@@ -813,7 +813,7 @@ fn partial_ref_state_ty(
   buffer: impl ToTokens,
 ) -> syn::Type {
   parse_quote! {
-    #path_to_grost::__private::convert::State<
+    #path_to_grost::__private::state::State<
       #path_to_grost::__private::convert::PartialRef<
         #lifetime,
         #flavor,

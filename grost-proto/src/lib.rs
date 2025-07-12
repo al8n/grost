@@ -48,6 +48,15 @@ pub mod marker;
 /// Common types for map-like structures
 pub mod map;
 
+/// Common types for objects
+pub mod object;
+
+/// States
+pub mod state;
+
+/// The unknown data
+pub mod unknown;
+
 #[macro_use]
 mod macros;
 mod select_set;
@@ -89,9 +98,11 @@ pub mod __private {
     flavors, groto_varint, indexer, marker, partial_encode_scalar, partial_ref_state, reflection,
     selectable,
     selection::{self, *},
+    state,
   };
   pub use paste;
   pub use varing;
+  pub use either;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>

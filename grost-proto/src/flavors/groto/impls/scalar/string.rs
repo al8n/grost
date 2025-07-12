@@ -27,7 +27,7 @@ macro_rules! str_bridge {
         where
           $crate::__private::decode::Str<B>: Sized + 'a,
           RB: $crate::buffer::ReadBuf + 'a,
-          B: $crate::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'a
+          B: $crate::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'a
         {
           <str as $crate::decode::Decode<'a, $crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
         }
@@ -130,7 +130,7 @@ macro_rules! array_str {
       where
         Self: ::core::marker::Sized + 'de,
         RB: $crate::__private::ReadBuf + 'de,
-        B: $crate::__private::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+        B: $crate::__private::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         <::core::primitive::str as $crate::__private::decode::Decode<'de, $crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
           .and_then(|(len, bytes)| {

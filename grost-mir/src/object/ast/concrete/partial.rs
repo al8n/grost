@@ -109,8 +109,8 @@ impl PartialObject {
     (self.applied_decode_trait)(quote! { #ty })
   }
 
-  pub(super) fn from_options<T, S, M>(
-    object: &mut RawObject<T, S, M>,
+  pub(super) fn from_options(
+    object: &mut RawObject,
     fields: &[Field],
   ) -> darling::Result<Self> {
     let partial_object_name = object.partial_name();

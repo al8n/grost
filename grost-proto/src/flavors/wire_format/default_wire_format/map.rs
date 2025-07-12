@@ -1,6 +1,7 @@
 use crate::{
-  convert::{Flattened, MapKey, MapValue, State},
+  convert::{Flattened, MapKey, MapValue},
   marker::{MapMarker, Marker},
+  state::State,
 };
 
 use super::{DefaultWireFormat, Flavor, WireFormat};

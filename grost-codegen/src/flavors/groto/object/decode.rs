@@ -181,21 +181,21 @@ impl Groto {
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::state::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #object_name #object_tg #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_partial_ref_state_where_clause {
+      impl #replaced_ig #path_to_grost::__private::state::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_object_name #partial_object_tg #partial_object_partial_ref_state_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = #partial_decode_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
-      impl #replaced_ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
+      impl #replaced_ig #path_to_grost::__private::state::State<#path_to_grost::__private::convert::PartialRef<#ltg, #path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited, #ubi>> for #partial_decode_ty #replaced_where_clause {
         type Input = & #ltg [::core::primitive::u8];
         type Output = Self;
       }

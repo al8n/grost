@@ -1,6 +1,8 @@
 use core::ops::{Bound, RangeBounds};
 
 pub use stack_buffer::StackBuffer;
+
+use crate::{flavors::Flavor, unknown::Unknown};
 mod stack_buffer;
 
 /// The default buffer type for storing unknown data or repeated values in decoding operations.
@@ -81,6 +83,17 @@ pub trait Buffer<T> {
   fn is_empty(&self) -> bool {
     self.len() == 0
   }
+}
+
+/// A trait for implementing custom buffers that can store unknown data.
+pub trait UnknownBuffer<RB, F: Flavor + ?Sized>: Buffer<Unknown<RB, F>> {}
+
+impl<T, RB, F> UnknownBuffer<RB, F> for T
+where
+  T: Buffer<Unknown<RB, F>>,
+  RB: ReadBuf,
+  F: Flavor + ?Sized,
+{
 }
 
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -333,7 +346,7 @@ impl WriteBuf for &mut [u8] {
 }
 
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
-pub trait ReadBuf {
+pub trait ReadBuf: Clone {
   /// Returns an empty read buffer.
   fn empty() -> Self;
 

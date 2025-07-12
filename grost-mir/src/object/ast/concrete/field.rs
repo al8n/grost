@@ -521,6 +521,14 @@ impl<T, S> Field<T, S> {
       Self::Tagged(tagged) => tagged.vis(),
     }
   }
+
+  #[inline]
+  pub fn use_generics(&self) -> bool {
+    match self {
+      Self::Skipped(skipped) => skipped.use_generics(),
+      Self::Tagged(tagged) => tagged.uses_generics(),
+    }
+  }
 }
 
 impl Field {
@@ -621,7 +629,7 @@ fn applied_partial_ref_state(
 ) -> proc_macro2::TokenStream {
   let ty = applied_partial_ref(path_to_grost, lt, read_buffer, buffer, wf, flavor_type);
   quote! {
-    #path_to_grost::__private::convert::State<#ty>
+    #path_to_grost::__private::state::State<#ty>
   }
 }
 

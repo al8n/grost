@@ -34,9 +34,12 @@ use crate::{
 pub use field::*;
 pub use partial::*;
 pub use partial_ref::*;
+pub use decoder::*;
 
 mod decode;
+mod decoder;
 mod encode;
+mod encoder;
 mod field;
 mod indexer;
 mod partial;
@@ -354,6 +357,7 @@ pub struct Object<T = (), S = (), M = ()> {
   write_buffer_param: TypeParam,
   fields: Vec<Field<T, S>>,
   indexer: Indexer,
+  decoder: ObjectDecoder,
   partial: PartialObject,
   partial_ref: PartialRefObject,
   selector: Selector,
@@ -393,6 +397,12 @@ impl<T, S, M> Object<T, S, M> {
   #[inline]
   pub const fn vis(&self) -> &Visibility {
     &self.vis
+  }
+
+  /// Returns the decoder for the object
+  #[inline]
+  pub const fn decoder(&self) -> &ObjectDecoder {
+    &self.decoder
   }
 
   /// Returns the type of the object
@@ -597,6 +607,7 @@ impl<T, S, M> Object<T, S, M> {
     let reflection = Reflection::from_ast(&object, &fields)?;
     let partial_ref = PartialRefObject::from_options(&mut object, &fields)?;
     let partial = PartialObject::from_options(&mut object, &fields)?;
+    let decoder = ObjectDecoder::try_new(&object)?;
 
     let selector =
       Selector::from_options(&object.generics, selector_name, object.selector, &fields)?;
@@ -669,6 +680,7 @@ impl<T, S, M> Object<T, S, M> {
         .name
         .unwrap_or_else(|| object.name.to_string()),
       schema_description: object.schema.description.unwrap_or_default(),
+      decoder,
       name: object.name,
       vis: object.vis,
       ty: object.ty,
@@ -729,8 +741,10 @@ impl<T, S, M> Object<T, S, M> {
     let selector_iter_def = self.derive_selector_iter_defination();
     let selector_iter_impl = self.derive_selector_iter();
 
-    let encode_impl = self.derive_encode()?;
-    let decode_impl = self.derive_decode()?;
+    let decoder_defination = self.derive_decoder_defination()?;
+
+    // let encode_impl = self.derive_encode()?;
+    // let decode_impl = self.derive_decode()?;
     let flatten_state_impl =
       derive_flatten_state(self.path_to_grost(), self.generics(), self.name());
     let partial_state_impl = self.derive_partial_state();
@@ -743,6 +757,7 @@ impl<T, S, M> Object<T, S, M> {
       #selector_iter_def
       #partial_def
       #partial_ref_def
+      #decoder_defination
 
       const _: () = {
         #accessors
@@ -767,9 +782,9 @@ impl<T, S, M> Object<T, S, M> {
 
         #selector_iter_impl
 
-        #encode_impl
+        // #encode_impl
 
-        #decode_impl
+        // #decode_impl
       };
     })
   }
@@ -822,19 +837,19 @@ impl<T, S, M> Object<T, S, M> {
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #object_ty #partial_wc {
+      impl #partial_ig #path_to_grost::__private::state::State<#partial_state_type> for #object_ty #partial_wc {
         type Output = #partial_object_ty;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #partial_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_object_ty #partial_wc {
+      impl #partial_ig #path_to_grost::__private::state::State<#partial_state_type> for #partial_object_ty #partial_wc {
         type Output = Self;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #partial_ref_ig #path_to_grost::__private::convert::State<#partial_state_type> for #partial_ref_object_ty #partial_ref_wc {
+      impl #partial_ref_ig #path_to_grost::__private::state::State<#partial_state_type> for #partial_ref_object_ty #partial_ref_wc {
         type Output = Self;
       }
     }
@@ -898,7 +913,7 @@ impl<T, S, M> Object<T, S, M> {
       quote! {
         #[automatically_derived]
         #[allow(non_camel_case_types, clippy::type_complexity)]
-        impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ty #where_clauses {
+        impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ty #where_clauses {
           type Output = #partial_ref_object_ty;
         }
       }
@@ -907,7 +922,7 @@ impl<T, S, M> Object<T, S, M> {
     Ok(quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #ty #where_clauses {
+      impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #ty #where_clauses {
         type Output = #partial_ref_object_ty;
       }
 
@@ -915,7 +930,7 @@ impl<T, S, M> Object<T, S, M> {
 
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
+      impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
         type Output = Self;
       }
     })

@@ -167,7 +167,7 @@ macro_rules! varint {
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf,
-      B: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       $crate::__private::varing::Varint::decode(src.as_bytes()).map_err(::core::convert::Into::into)
     }
@@ -275,10 +275,10 @@ macro_rules! groto_identity_transform {
       impl<'de, RB, B, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::TryFromRef<'de, RB, B, $wf, $crate::__private::flavors::Groto> for $ty
       where
         RB: $crate::__private::buffer::ReadBuf,
-        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+        B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn try_from_ref(
-          input: <Self as $crate::__private::convert::State<$crate::__private::convert::Ref<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::convert::Ref<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
         ) -> ::core::result::Result<Self, $crate::__private::flavors::groto::Error>
         where
           Self: Sized + 'de,
@@ -290,10 +290,10 @@ macro_rules! groto_identity_transform {
       impl<'de, RB, B, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::TryFromPartialRef<'de, RB, B, $wf, $crate::__private::flavors::Groto> for $ty
       where
         RB: $crate::__private::buffer::ReadBuf,
-        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+        B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn try_from_partial_ref(
-          input: <Self as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::convert::PartialRef<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
         ) -> ::core::result::Result<Self, $crate::__private::flavors::groto::Error>
         where
           Self: Sized + 'de,
@@ -305,10 +305,10 @@ macro_rules! groto_identity_transform {
       impl<'de, RB, B, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::PartialTryFromRef<'de, RB, B, $wf, $crate::__private::flavors::Groto> for $ty
       where
         RB: $crate::__private::buffer::ReadBuf,
-        B: $crate::__private::buffer::Buffer<$crate::__private::flavors::groto::Unknown<RB>> + 'de,
+        B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn partial_try_from_ref(
-          input: <Self as $crate::__private::convert::State<$crate::__private::convert::PartialRef<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::convert::PartialRef<'de, RB, B, $wf, $crate::__private::flavors::Groto>>>::Output,
           _: &<Self as $crate::__private::selection::Selectable<$crate::__private::flavors::Groto>>::Selector,
         ) -> ::core::result::Result<Self, $crate::__private::flavors::groto::Error>
         where
@@ -332,7 +332,7 @@ macro_rules! groto_identity_transform {
       impl<$( $(const $g: ::core::primitive::usize),* )?> $crate::__private::convert::TryFromPartial<$wf, $crate::__private::flavors::Groto> for $ty
       {
         fn try_from_partial(
-          input: <Self as $crate::__private::convert::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::convert::Partial<$crate::__private::flavors::Groto>>>::Output,
         ) -> ::core::result::Result<Self, $crate::__private::flavors::groto::Error>
         {
           ::core::result::Result::Ok(input)
@@ -374,7 +374,7 @@ macro_rules! partial_ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -390,7 +390,7 @@ macro_rules! ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<$crate::__private::convert::Ref<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Ref<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -406,7 +406,7 @@ macro_rules! partial_state {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::State<$crate::__private::convert::Partial<$flavor>> for $ty {
+      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::state::State<$crate::__private::convert::Partial<$flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -437,7 +437,7 @@ macro_rules! type_reflection {
 macro_rules! flatten_state {
   ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])?),+$(,)?) => {
     $(
-      impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::State<
+      impl<S: ?::core::marker::Sized, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<
         $crate::__private::convert::Flattened<S>
       > for $ty {
         type Output = $ty;
@@ -925,7 +925,7 @@ macro_rules! decode_bridge {
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf + 'de,
-      B: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode(context, src).map(|(n, v)| (n, $from(v)))
     }
@@ -937,7 +937,7 @@ macro_rules! decode_bridge {
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf + 'de,
-      B: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode_length_delimited(context, src).map(|(n, v)| (n, $from(v)))
     }
@@ -985,7 +985,7 @@ macro_rules! try_decode_bridge {
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf + 'de,
-      B: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
@@ -997,7 +997,7 @@ macro_rules! try_decode_bridge {
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf + 'de,
-      B: $crate::__private::Buffer<<$flavor as $crate::__private::flavors::Flavor>::Unknown<RB>> + 'de,
+      B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<$output, $format, RB, B, $flavor>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }

@@ -119,7 +119,7 @@ impl PartialField {
     let vis = input.vis();
     let attrs = input.attrs();
     let output_type = syn::parse2(quote! {
-      <#ty as #path_to_grost::__private::convert::State<
+      <#ty as #path_to_grost::__private::state::State<
         #path_to_grost::__private::convert::Flattened
       >>::Output
     })?;
@@ -243,9 +243,9 @@ impl PartialObject {
     generics.type_params().map(|p| p.ident.clone()).collect::<Vec<_>>().into_iter().try_for_each(|ident| {
       let where_clause = generics.make_where_clause();
 
-      syn::parse2(quote!(#ident: #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>))
+      syn::parse2(quote!(#ident: #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Flattened>))
         .and_then(|s| {
-          syn::parse2(quote!(<#ident as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened>>::Output: ::core::marker::Sized))
+          syn::parse2(quote!(<#ident as #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Flattened>>::Output: ::core::marker::Sized))
           .map(|c| (s, c))
         })
         .map(|(s, c)| {

@@ -142,7 +142,7 @@ impl PartialField {
       Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
+          #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Partial<
               #flavor_type,
             >
@@ -151,16 +151,16 @@ impl PartialField {
 
         let state_type_constraint = if label.is_nullable() {
           quote! {
-            #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::state::State<
               #path_to_grost::__private::convert::Partial<
                 #flavor_type,
               >,
               Output = ::core::option::Option<<
-                  <#field_ty as #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flattened<
+                  <#field_ty as #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Flattened<
                     #path_to_grost::__private::convert::Inner
                   >>
                 >::Output as
-                #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Partial<#flavor_type>>
+                #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Partial<#flavor_type>>
               >::Output>,
             >
           }
@@ -205,7 +205,7 @@ impl PartialField {
           let ub = &ubp.ident;
 
           let ref_state_type: Type = syn::parse2(quote! {
-            #path_to_grost::__private::convert::State<
+            #path_to_grost::__private::state::State<
               #path_to_grost::__private::convert::PartialRef<
                 #lt,
                 #rb,

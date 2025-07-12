@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   decode::{BytesSlice, Decode},
   encode::{Encode, PartialEncode},
   flavors::{
     Flavor,
-    groto::{Context, Error, Groto, LengthDelimited, Unknown},
+    groto::{Context, Error, Groto, LengthDelimited},
   },
 };
 
@@ -85,7 +85,7 @@ impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for 
   where
     BytesSlice<B>: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     let bytes = src.as_bytes();
     let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
@@ -110,7 +110,7 @@ impl<'de, RB, B> Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto> for 
 //   where
 //     Self: Sized + 'de,
 //     RB: ReadBuf + 'de,
-//     B: Buffer<Unknown<RB>> + 'de,
+//     B: UnknownBuffer<RB, Groto>,
 //   {
 //     <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
 //   }

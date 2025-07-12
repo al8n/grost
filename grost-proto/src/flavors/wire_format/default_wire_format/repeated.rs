@@ -1,6 +1,7 @@
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf},
-  convert::{Flattened, Inner, State},
+  convert::{Flattened, Inner},
+  state::State,
   flavors::MergedWireFormat,
   marker::{Marker, RepeatedEntryMarker, RepeatedMarker},
 };

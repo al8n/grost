@@ -239,7 +239,7 @@ impl<F> GenericTaggedField<F> {
 
     let partial_ref_ty = {
       let state_type: Type = syn::parse2(quote! {
-        #path_to_grost::__private::convert::State<
+        #path_to_grost::__private::state::State<
           #path_to_grost::__private::convert::PartialRef<
             #lifetime,
             #flavor_ident,

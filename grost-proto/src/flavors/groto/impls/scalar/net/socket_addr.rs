@@ -7,7 +7,7 @@ use crate::{
   flatten_state,
   flavors::{
     Groto,
-    groto::{Context, Error, LengthDelimited, Unknown},
+    groto::{Context, Error, LengthDelimited},
   },
   groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
   selectable,
@@ -83,7 +83,7 @@ macro_rules! socket_addr_impl {
           where
             Self: Sized + 'de,
             RB: crate::buffer::ReadBuf,
-            B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+            B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
           {
             if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::buffer_underflow());
@@ -200,7 +200,7 @@ impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for SocketAddr
   where
     Self: Sized + 'de,
     RB: crate::buffer::ReadBuf + 'de,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     let len = src.len();
     if len == 0 {

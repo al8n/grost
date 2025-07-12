@@ -1,5 +1,6 @@
 use crate::{
-  convert::{Partial, State},
+  convert::Partial,
+  state::State,
   flavors::Groto,
   selection::Selectable,
 };

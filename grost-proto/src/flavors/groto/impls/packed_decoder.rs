@@ -1,13 +1,14 @@
 use core::marker::PhantomData;
 
 use crate::{
-  buffer::{Buffer, ReadBuf},
-  convert::{Flattened, Partial, PartialRef, State},
+  buffer::{UnknownBuffer, ReadBuf},
+  convert::{Flattened, Partial, PartialRef},
+  state::State,
   decode::Decode,
   encode::Encode,
   flavors::{
     Groto, WireFormat,
-    groto::{Context, Error, Fixed8, Unknown},
+    groto::{Context, Error, Fixed8},
   },
   selection::Selectable,
 };
@@ -135,7 +136,7 @@ where
   W: WireFormat<Groto> + 'a,
   T: State<PartialRef<'a, RB, B, W, Groto>> + Decode<'a, T::Output, W, RB, B, Groto> + 'a,
   T::Output: Sized,
-  B: Buffer<Unknown<RB>> + 'a,
+  B: UnknownBuffer<RB, Groto> + 'a,
   RB: ReadBuf + 'a,
 {
   type Item = Result<(usize, T::Output), Error>;
@@ -217,7 +218,7 @@ where
   where
     Self: Sized + 'a,
     RB: crate::buffer::ReadBuf,
-    B: Buffer<<Groto as crate::flavors::Flavor>::Unknown<RB>> + 'a,
+    B: UnknownBuffer<RB, Groto> + 'a,
   {
     let buf = src.as_bytes();
     let buf_len = buf.len();

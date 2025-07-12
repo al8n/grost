@@ -1,5 +1,5 @@
 use super::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   error::Error,
   flavors::{Flavor, WireFormat},
 };
@@ -32,10 +32,10 @@ mod str;
 ///   type WireFormat = LengthDelimited;
 /// }
 /// ```
-pub unsafe trait EquivalentDecode<'a, O, Rhs, W, RB, B, F>
+pub unsafe trait EquivalentDecode<'a, Rhs, W, RB, B, F>
 where
-  Self: Decode<'a, O, Self::WireFormat, RB, B, Self::Flavor>,
-  Rhs: Decode<'a, O, W, RB, B, F> + ?Sized,
+  Self: Decode1<'a, Self::WireFormat, RB, B, Self::Flavor>,
+  Rhs: Decode1<'a, W, RB, B, F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
@@ -46,9 +46,9 @@ where
   type Flavor: Flavor + ?Sized;
 }
 
-unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, T, W, RB, B, F> for T
+unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, T, W, RB, B, F> for T
 where
-  T: Decode<'a, O, W, RB, B, F> + ?Sized,
+  T: Decode1<'a, W, RB, B, F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
@@ -56,24 +56,76 @@ where
   type Flavor = F;
 }
 
-unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, &T, W, RB, B, F> for T
-where
-  T: Decode<'a, O, W, RB, B, F> + ?Sized,
-  W: WireFormat<F>,
-  F: Flavor + ?Sized,
-{
-  type WireFormat = W;
-  type Flavor = F;
-}
+// unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, &T, W, RB, B, F> for T
+// where
+//   T: Decode1<'a, W, RB, B, F> + ?Sized,
+//   W: WireFormat<F>,
+//   F: Flavor + ?Sized,
+// {
+//   type WireFormat = W;
+//   type Flavor = F;
+// }
 
-unsafe impl<'a, T, O, W, RB, B, F> EquivalentDecode<'a, O, T, W, RB, B, F> for &T
+// unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, T, W, RB, B, F> for &T
+// where
+//   T: Decode1<'a, W, RB, B, F> + ?Sized,
+//   W: WireFormat<F>,
+//   F: Flavor + ?Sized,
+// {
+//   type WireFormat = W;
+//   type Flavor = F;
+// }
+
+/// A trait for fully decoding types from a borrowed byte slice.
+///
+/// `Decode` is intended for decoding entire data structures
+/// from a buffer while borrowing the input data.
+///
+/// ## Type Parameters
+///
+/// - `'de`: Lifetime of the input data.
+/// - `F`: The decoding flavor (e.g., [`Groto`](crate::flavors::Groto) or other implementations) implementing the [`Flavor`] trait.
+/// - `W`: The wire format strategy of the flavor, which must implement [`WireFormat<F>`].
+/// - `RB`: The type of the read buffer used for decoding, which must implement [`ReadBuf`].
+/// - `B`: The buffer implementation used to store the unknown data during decoding, which must implement [`Buffer`].
+pub trait Decode1<'de, W, RB, B, F>
 where
-  T: Decode<'a, O, W, RB, B, F> + ?Sized,
-  W: WireFormat<F>,
   F: Flavor + ?Sized,
+  W: WireFormat<F>,
 {
-  type WireFormat = W;
-  type Flavor = F;
+  /// Decodes an instance from a raw byte slice.
+  ///
+  /// Returns a tuple with the number of bytes consumed and the decoded output.
+  fn decode(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
+  where
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de;
+
+  /// Decodes an instance of this type from a length-delimited byte buffer.
+  ///
+  /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
+  fn decode_length_delimited(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
+  where
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
+  {
+    let as_bytes = src.as_bytes();
+    let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
+    let src_len = src.len();
+    let len = len as usize;
+    let total = len_size + len;
+    if total > src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    if len_size >= src_len {
+      return Err(Error::buffer_underflow().into());
+    }
+
+    Self::decode(context, src.slice(len_size..total))
+  }
 }
 
 /// A trait for fully decoding types from a borrowed byte slice.
@@ -86,7 +138,6 @@ where
 /// - `'de`: Lifetime of the input data.
 /// - `F`: The decoding flavor (e.g., [`Groto`](crate::flavors::Groto) or other implementations) implementing the [`Flavor`] trait.
 /// - `W`: The wire format strategy of the flavor, which must implement [`WireFormat<F>`].
-/// - `O`: The output type resulting from decoding.
 /// - `RB`: The type of the read buffer used for decoding, which must implement [`ReadBuf`].
 /// - `B`: The buffer implementation used to store the unknown data during decoding, which must implement [`Buffer`].
 pub trait Decode<'de, O, W, RB, B, F>
@@ -101,7 +152,7 @@ where
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<F::Unknown<RB>> + 'de;
+    B: UnknownBuffer<RB, F> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
@@ -110,7 +161,7 @@ where
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<F::Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
   {
     let as_bytes = src.as_bytes();
     let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
@@ -142,7 +193,7 @@ where
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
   {
     <T as Decode<'de, O, W, RB, B, F>>::decode(context, src)
   }
@@ -154,7 +205,7 @@ where
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<<F as Flavor>::Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
   {
     <T as Decode<'de, O, W, RB, B, F>>::decode_length_delimited(context, src)
   }
@@ -190,7 +241,7 @@ macro_rules! deref_decode_impl {
         where
           O: Sized + 'de,
           RB: ReadBuf + 'de,
-          B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
+          B: UnknownBuffer<RB, F> + 'de
         {
           T::decode(context, src)
         }
@@ -202,7 +253,7 @@ macro_rules! deref_decode_impl {
         where
           O: Sized + 'de,
           RB: ReadBuf + 'de,
-          B: Buffer<<F as Flavor>::Unknown<RB>> + 'de
+          B: UnknownBuffer<RB, F> + 'de
         {
           T::decode_length_delimited(context, src)
         }

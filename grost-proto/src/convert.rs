@@ -1,4 +1,5 @@
 use ghost::phantom;
+use super::state::State;
 
 pub use flatten::*;
 pub use partial_transform::*;
@@ -7,12 +8,6 @@ pub use transform::*;
 mod flatten;
 mod partial_transform;
 mod transform;
-
-/// The generic `S` can be any type representing a state.
-pub trait State<S: ?Sized> {
-  /// The output state type.
-  type Output: ?Sized;
-}
 
 /// A state which yields the type itself.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]

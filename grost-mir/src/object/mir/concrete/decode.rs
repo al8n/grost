@@ -53,7 +53,7 @@ fn derive_partial_ref_state<M, F>(
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ty #where_clauses {
+      impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ty #where_clauses {
         type Output = #partial_ref_object_ty;
       }
     }
@@ -62,7 +62,7 @@ fn derive_partial_ref_state<M, F>(
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #ty #where_clauses {
+    impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #ty #where_clauses {
       type Output = #partial_ref_object_ty;
     }
 
@@ -70,7 +70,7 @@ fn derive_partial_ref_state<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
       type Output = Self;
     }
   })

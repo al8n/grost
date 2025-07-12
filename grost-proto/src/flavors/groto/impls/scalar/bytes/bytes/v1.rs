@@ -1,12 +1,13 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, State,
+    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref,
     Transform, TryFromPartial, TryFromPartialRef, TryFromRef,
   },
+  state::State,
   decode::BytesSlice,
   decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
-  flavors::groto::{Error, Groto, LengthDelimited, Unknown},
+  flavors::groto::{Error, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
 };
 use bytes_1::{Bytes, BytesMut};
@@ -81,7 +82,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
   where
     Self: Sized,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>>,
+    B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.into_inner().to_bytes())
   }
@@ -94,7 +95,7 @@ impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
   where
     Self: Sized,
     RB: ReadBuf + 'de,
-    B: Buffer<Unknown<RB>>,
+    B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.into_inner().to_bytes())
   }
@@ -103,7 +104,7 @@ impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
 impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes
 where
   RB: ReadBuf,
-  B: Buffer<Unknown<RB>> + 'de,
+  B: UnknownBuffer<RB, Groto>,
 {
   fn partial_try_from_ref(
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
@@ -141,7 +142,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
   where
     Self: Sized,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>>,
+    B: UnknownBuffer<RB, Groto>,
   {
     Ok(BytesMut::from(input.into_inner().to_bytes()))
   }
@@ -150,7 +151,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
 impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut
 where
   RB: ReadBuf,
-  B: Buffer<Unknown<RB>> + 'de,
+  B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
     input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
@@ -165,7 +166,7 @@ where
 impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut
 where
   RB: ReadBuf,
-  B: Buffer<Unknown<RB>> + 'de,
+  B: UnknownBuffer<RB, Groto>,
 {
   fn partial_try_from_ref(
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,

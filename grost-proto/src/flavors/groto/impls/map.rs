@@ -1,7 +1,8 @@
 use crate::{
   buffer::Buffer,
-  convert::{Partial, State},
+  convert::Partial,
   flavors::{Groto, groto::Context},
+  state::State,
   selection::{Selectable, Selector},
 };
 

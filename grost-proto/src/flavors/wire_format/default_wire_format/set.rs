@@ -1,5 +1,6 @@
 use crate::{
-  convert::{Flattened, Inner, State},
+  convert::{Flattened, Inner},
+  state::State,
   marker::{Marker, SetMarker},
 };
 

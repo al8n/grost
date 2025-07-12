@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   convert::{Partial, PartialRef, Ref, State},
   flavors::{Flavor, WireFormat},
 };
@@ -27,7 +27,7 @@ where
     Self: Sized,
     <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized,
     RB: ReadBuf,
-    UB: Buffer<F::Unknown<RB>>;
+    UB: UnknownBuffer<RB, F>;
 }
 
 pub trait TryFromPartial<W, F>: State<Partial<F>>
@@ -53,5 +53,5 @@ where
     Self: Sized,
     <Self as State<Ref<'a, RB, UB, W, F>>>::Output: Sized,
     RB: ReadBuf + 'a,
-    UB: Buffer<F::Unknown<RB>>;
+    UB: UnknownBuffer<RB, F>;
 }

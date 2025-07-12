@@ -1,13 +1,14 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-  buffer::{Buffer, ReadBuf},
-  convert::{Partial, PartialRef, PartialTransform, State, Transform},
+  buffer::{UnknownBuffer, ReadBuf},
+  convert::{Partial, PartialRef, PartialTransform, Transform},
   decode::Decode,
   flavors::{
     Flavor, Groto, WireFormat,
-    groto::{Error, PackedDecoder, Unknown},
+    groto::{Error, PackedDecoder},
   },
+  state::State,
   selection::{Selectable, Selector},
 };
 
@@ -21,7 +22,7 @@ where
     + Transform<T::Output, T, TW, Groto>
     + 'a,
   T::Output: Sized,
-  B: Buffer<Unknown<RB>> + 'a,
+  B: UnknownBuffer<RB, Groto> + 'a,
   RB: ReadBuf + 'a,
 {
   fn transform(input: PackedDecoder<'a, T, RB, B, TW>) -> Result<Self, <Groto as Flavor>::Error>
@@ -65,7 +66,7 @@ where
   <T as State<PartialRef<'a, RB, B, TW, Groto>>>::Output:
     Sized + Selectable<Groto, Selector = T::Selector>,
   RB: ReadBuf + 'a,
-  B: Buffer<Unknown<RB>> + 'a,
+  B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_transform(
     input: PackedDecoder<'a, T, RB, B, TW>,

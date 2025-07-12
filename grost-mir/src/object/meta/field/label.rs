@@ -162,6 +162,17 @@ impl Label {
     }
   }
 
+  /// Returns `true` if the label is marked as repeated.
+  pub fn is_repeated(&self) -> bool {
+    match self {
+      Label::Map(Either::Left(map_label)) => map_label.is_repeated(),
+      Label::Set(Either::Left(label)) => label.is_repeated(),
+      Label::List(Either::Left(label)) => label.is_repeated(),
+      Label::Nullable(Either::Left(label)) => label.label().is_repeated(),
+      _ => false,
+    }
+  }
+
   /// Check if the parse stream starts with a label that can be parsed as a `Label`.
   pub fn peek(input: &ParseStream) -> syn::Result<bool> {
     if input.peek(syn::Token![enum]) {
@@ -335,13 +346,13 @@ impl Label {
         repeated,
       })) => {
         let k: Type = syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
+          <#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapKey>,
           >>::Output
         })?;
 
         let v: Type = syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
+          <#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
           >>::Output
         })?;
@@ -372,7 +383,7 @@ impl Label {
       })?),
       Self::Set(Either::Left(ListLikeLabel { label, repeated })) => {
         let inner_ty: Type = syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
+          <#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
@@ -397,7 +408,7 @@ impl Label {
       })?),
       Self::List(Either::Left(ListLikeLabel { label, repeated })) => {
         let inner_ty: Type = syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
+          <#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
@@ -424,7 +435,7 @@ impl Label {
       })?),
       Self::Nullable(Either::Left(label)) => {
         let inner_ty: Type = syn::parse2(quote! {
-          <#ty as #path_to_grost::__private::convert::State<
+          <#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;

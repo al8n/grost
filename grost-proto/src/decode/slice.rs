@@ -1,6 +1,7 @@
 use crate::{
   buffer::ReadBuf,
-  convert::{Flattened, State},
+  convert::Flattened,
+  state::State,
   flavors::Flavor,
   selection::Selectable,
 };

@@ -4,7 +4,7 @@ use crate::{
   flavors::{
     Groto,
     groto::{
-      Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Unknown,
+      Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited,
     },
   },
 };

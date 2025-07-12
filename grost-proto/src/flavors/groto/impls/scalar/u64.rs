@@ -1,12 +1,12 @@
 use core::num::NonZeroU64;
 
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
   flatten_state,
-  flavors::groto::{Context, Error, Fixed64, Groto, Unknown, Varint},
+  flavors::groto::{Context, Error, Fixed64, Groto, Varint},
   groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
   selectable, try_from_bridge,
 };
@@ -90,7 +90,7 @@ impl<'de, RB, B> Decode<'de, Self, Fixed64, RB, B, Groto> for u64 {
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     let src = src.as_bytes();
     if src.len() < 8 {
@@ -106,7 +106,7 @@ impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u64 {
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     varing::decode_u64_varint(src.as_bytes()).map_err(Into::into)
   }

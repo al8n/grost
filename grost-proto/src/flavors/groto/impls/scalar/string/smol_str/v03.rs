@@ -106,7 +106,7 @@ impl<'a, RB, B> Decode<'a, Str<RB>, LengthDelimited, RB, B, Groto> for SmolStr {
   where
     Str<RB>: Sized + 'a,
     RB: crate::buffer::ReadBuf,
-    B: crate::buffer::Buffer<<Groto as crate::flavors::Flavor>::Unknown<RB>> + 'a,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'a,
   {
     <&str as Decode<'a, Str<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
   }

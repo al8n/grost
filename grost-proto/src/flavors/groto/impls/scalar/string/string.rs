@@ -1,14 +1,15 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{UnknownBuffer, ReadBuf},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, State,
+    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref,
     Transform, TryFromPartial, TryFromPartialRef, TryFromRef,
   },
+  state::State,
   decode::Str,
   flatten_state,
   flavors::{
     Groto,
-    groto::{Error, LengthDelimited, Unknown},
+    groto::{Error, LengthDelimited},
   },
   partial_ref_state, partial_state, ref_state, selectable,
 };
@@ -115,7 +116,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Strin
     Self: Sized,
     <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>>,
+    B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.to_string())
   }
@@ -124,7 +125,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Strin
 impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for String
 where
   RB: ReadBuf,
-  B: Buffer<Unknown<RB>> + 'de,
+  B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
     input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
@@ -139,7 +140,7 @@ where
 impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for String
 where
   RB: ReadBuf,
-  B: Buffer<Unknown<RB>> + 'de,
+  B: UnknownBuffer<RB, Groto>,
 {
   fn partial_try_from_ref(
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,

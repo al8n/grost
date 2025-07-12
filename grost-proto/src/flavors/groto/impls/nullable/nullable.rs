@@ -1,8 +1,9 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
-  convert::{PartialRef, PartialTransform, State, Transform},
+  buffer::{UnknownBuffer, ReadBuf},
+  convert::{PartialRef, PartialTransform, Transform},
   decode::Decode,
   encode::{Encode, PartialEncode},
+  state::State,
   flavors::{
     DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
     groto::{Context, Error, WireType},
@@ -358,7 +359,7 @@ where
   where
     O: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<<Groto as Flavor>::Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<O, RB, _>(context, src, |ctx, src| T::decode(ctx, src))
   }
@@ -370,7 +371,7 @@ where
   where
     Option<O>: Sized + 'de,
     RB: ReadBuf + 'de,
-    B: Buffer<<Groto as Flavor>::Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<O, RB, _>(context, src, |ctx, src| {
       T::decode_length_delimited(ctx, src)

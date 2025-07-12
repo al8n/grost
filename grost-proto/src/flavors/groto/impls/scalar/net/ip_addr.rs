@@ -8,7 +8,7 @@ use crate::{
   flatten_state,
   flavors::{
     Groto,
-    groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Unknown, Varint},
+    groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Varint},
   },
   groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
   selectable,
@@ -106,7 +106,7 @@ macro_rules! ip_addr {
       where
         Self: Sized + 'de,
         RB: ReadBuf + 'de,
-        B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, $convert, $variant, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
@@ -121,7 +121,7 @@ macro_rules! ip_addr {
       where
         Self: Sized + 'de,
         RB: ReadBuf + 'de,
-        B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, $convert, Varint, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
@@ -239,7 +239,7 @@ impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for IpAddr {
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     let src = src.as_bytes();
     macro_rules! decode_ip_variant {
@@ -274,7 +274,7 @@ impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for IpAddr {
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     let src = src.as_bytes();
 

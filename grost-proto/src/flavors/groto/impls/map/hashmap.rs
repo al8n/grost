@@ -5,7 +5,8 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef, State},
+  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef},
+  state::State,
   flavors::{
     DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
     RepeatedEntry, WireFormat, groto::PackedEntriesDecoder,

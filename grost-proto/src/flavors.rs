@@ -237,47 +237,47 @@ pub trait Flavor: core::fmt::Debug + 'static {
   #[cfg(feature = "quickcheck")]
   type Context: quickcheck::Arbitrary;
 
-  /// The unknown value used for this flavor.
-  type Unknown<B>;
-
   /// The error for this flavor.
   type Error: FlavorError<Self>;
 
   /// The name of the flavor.
   const NAME: &'static str;
 
-  /// Encodes the unknown value into a buffer.
-  fn encode_unknown<'de, B>(
-    ctx: &Self::Context,
-    value: &Self::Unknown<B>,
-    buf: &mut [u8],
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf + 'de;
+  // /// Encodes the unknown value into a buffer.
+  // fn encode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   value: &Self::Unknown<B>,
+  //   buf: &mut [u8],
+  // ) -> Result<usize, Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Returns the length of the encoded unknown value.
-  fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
-  where
-    B: ReadBuf + 'de;
+  // /// Returns the length of the encoded unknown value.
+  // fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Decodes an unknown value from a buffer.
-  ///
-  /// This function is used as a handler for unknown identifiers when decoding
-  /// a message. It is called when the identifier is not recognized by the
-  /// flavor.
-  fn decode_unknown<'de, B>(
-    ctx: &Self::Context,
-    buf: B,
-  ) -> Result<(usize, Self::Unknown<B>), Self::Error>
-  where
-    B: ReadBuf + 'de;
+  // /// Decodes an unknown value from a buffer.
+  // ///
+  // /// This function is used as a handler for unknown identifiers when decoding
+  // /// a message. It is called when the identifier is not recognized by the
+  // /// flavor.
+  // fn decode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   buf: B,
+  // ) -> Result<(usize, Self::Unknown<B>), Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Skips number of bytes in the buffer according to the wire type.
-  fn skip<'de, B>(
+  /// Try to peek the raw data according to the wire type.
+  /// 
+  /// If the given buffer does not contain enough data to determine the length of the next data,
+  /// it should return an error.
+  /// 
+  /// Returns the number of bytes for the next data.
+  fn peek_raw(
     ctx: &Self::Context,
     wire_type: Self::WireType,
-    buf: B,
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf + 'de;
+    buf: &[u8],
+  ) -> Result<usize, Self::Error>;
 }

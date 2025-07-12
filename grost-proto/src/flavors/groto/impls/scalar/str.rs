@@ -6,7 +6,7 @@ use crate::{
   encode_bridge, flatten_state,
   flavors::{
     Flavor,
-    groto::{Context, Error, Groto, LengthDelimited, Unknown},
+    groto::{Context, Error, Groto, LengthDelimited},
   },
   partial_ref_state, selectable,
 };
@@ -101,7 +101,7 @@ impl<'de, RB, B> Decode<'de, Str<RB>, LengthDelimited, RB, B, Groto> for str {
   where
     Str<B>: Sized + 'de,
     RB: crate::buffer::ReadBuf + 'de,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     <[u8] as Decode<'de, BytesSlice<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
       .and_then(|(read, val)| {
@@ -123,7 +123,7 @@ macro_rules! impl_ {
         where
           Str<B>: Sized + 'de,
           RB: crate::buffer::ReadBuf + 'de,
-          B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+          B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
         {
           <str as Decode<'de, Str<RB>, LengthDelimited, RB, B, Groto>>::decode(context, src)
         }

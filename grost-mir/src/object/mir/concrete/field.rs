@@ -273,7 +273,7 @@ impl<F> ConcreteTaggedField<F> {
       Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
+          #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::PartialRef<
               #lifetime,
               #read_buffer,
