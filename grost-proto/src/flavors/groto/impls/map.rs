@@ -2,8 +2,8 @@ use crate::{
   buffer::Buffer,
   convert::Partial,
   flavors::{Groto, groto::Context},
-  state::State,
   selection::{Selectable, Selector},
+  state::State,
 };
 
 pub use packed_entries_decoder::PackedEntriesDecoder;

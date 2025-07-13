@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::{BytesSlice, Decode},
   encode::{Encode, PartialEncode},
   flavors::{

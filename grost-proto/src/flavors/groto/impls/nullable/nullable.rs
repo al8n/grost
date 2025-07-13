@@ -1,14 +1,14 @@
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{PartialRef, PartialTransform, Transform},
   decode::Decode,
   encode::{Encode, PartialEncode},
-  state::State,
   flavors::{
     DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
     groto::{Context, Error, WireType},
   },
   selection::Selectable,
+  state::State,
 };
 
 impl<T> DefaultNullableWireFormat<Groto> for Option<T> {

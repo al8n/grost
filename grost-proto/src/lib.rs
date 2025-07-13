@@ -100,9 +100,9 @@ pub mod __private {
     selection::{self, *},
     state,
   };
+  pub use either;
   pub use paste;
   pub use varing;
-  pub use either;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
   pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>

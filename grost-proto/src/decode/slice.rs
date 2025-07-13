@@ -1,9 +1,5 @@
 use crate::{
-  buffer::ReadBuf,
-  convert::Flattened,
-  state::State,
-  flavors::Flavor,
-  selection::Selectable,
+  buffer::ReadBuf, convert::Flattened, flavors::Flavor, selection::Selectable, state::State,
 };
 
 /// The decoded type for `[u8]`

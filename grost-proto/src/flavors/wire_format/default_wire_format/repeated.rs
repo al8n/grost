@@ -1,9 +1,9 @@
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf},
   convert::{Flattened, Inner},
-  state::State,
   flavors::MergedWireFormat,
   marker::{Marker, RepeatedEntryMarker, RepeatedMarker},
+  state::State,
 };
 
 use super::{DefaultWireFormat, Flavor, WireFormat};

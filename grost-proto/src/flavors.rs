@@ -270,10 +270,10 @@ pub trait Flavor: core::fmt::Debug + 'static {
   //   B: ReadBuf + 'de;
 
   /// Try to peek the raw data according to the wire type.
-  /// 
+  ///
   /// If the given buffer does not contain enough data to determine the length of the next data,
   /// it should return an error.
-  /// 
+  ///
   /// Returns the number of bytes for the next data.
   fn peek_raw(
     ctx: &Self::Context,

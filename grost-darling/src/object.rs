@@ -183,7 +183,7 @@ impl Object {
           (match *item {
             #path_to_crate::__private::syn::Meta::Path(_) => Self::from_word(),
             #path_to_crate::__private::syn::Meta::List(ref value) => {
-              Self::from_list(&#path_to_crate::__private::utils::NestedMeta::parse_meta_list(value.tokens.clone())?[..])
+              Self::from_list(&#path_to_crate::__private::darling::ast::NestedMeta::parse_meta_list(value.tokens.clone())?[..])
             }
             #path_to_crate::__private::syn::Meta::NameValue(ref value) => Self::from_expr(&value.value),
           })

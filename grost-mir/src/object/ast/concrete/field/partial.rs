@@ -2,7 +2,11 @@ use quote::quote;
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
 use crate::{
-  object::{Label, meta::concrete::PartialFieldFromMeta},
+  object::{
+    Label,
+    ast::field::{FieldDecodeOptions, FieldEncodeOptions},
+    meta::concrete::PartialFieldFromMeta,
+  },
   utils::MissingOperation,
 };
 
@@ -15,9 +19,10 @@ impl PartialFieldFromMeta {
       ty: self.ty,
       copy: self.copy,
       attrs: self.attrs,
-      partial_transform_ref: self.partial_transform_ref.finalize()?,
-      transform_ref: self.transform_ref.finalize()?,
-      partial_transform: self.partial_transform.finalize()?,
+      from_ref: self.from_ref.finalize()?,
+      from_partial_ref: self.from_partial_ref.finalize()?,
+      encode: self.encode.finalize()?,
+      decode: self.decode.finalize()?,
     })
   }
 }
@@ -27,9 +32,10 @@ pub(super) struct PartialFieldOptions {
   pub(super) ty: Option<Type>,
   pub(super) copy: bool,
   pub(super) attrs: Vec<Attribute>,
-  pub(super) transform_ref: PartialFieldConvertOptions,
-  pub(super) partial_transform_ref: PartialFieldConvertOptions,
-  pub(super) partial_transform: PartialFieldConvertOptions,
+  pub(super) from_ref: PartialFieldConvertOptions,
+  pub(super) from_partial_ref: PartialFieldConvertOptions,
+  pub(super) encode: FieldEncodeOptions,
+  pub(super) decode: FieldDecodeOptions,
 }
 
 #[derive(Debug, Clone)]
@@ -42,9 +48,10 @@ pub struct PartialField {
   pub(super) transform_ref_constraints: Punctuated<WherePredicate, Comma>,
   pub(super) partial_transform_ref_constraints: Punctuated<WherePredicate, Comma>,
   pub(super) partial_transform_constraints: Punctuated<WherePredicate, Comma>,
-  pub(super) transform_ref: PartialFieldConvertOptions,
-  pub(super) partial_transform_ref: PartialFieldConvertOptions,
-  pub(super) partial_transform: PartialFieldConvertOptions,
+  pub(super) from_ref: PartialFieldConvertOptions,
+  pub(super) from_partial_ref: PartialFieldConvertOptions,
+  pub(super) encode: FieldEncodeOptions,
+  pub(super) decode: FieldDecodeOptions,
 }
 
 impl PartialField {
@@ -72,22 +79,29 @@ impl PartialField {
     self.attrs.as_slice()
   }
 
-  /// Returns the transformation options for the partial field.
+  /// Returns the options for converting from the reference field to partial field.
+  #[allow(clippy::wrong_self_convention)]
   #[inline]
-  pub const fn transform_ref(&self) -> &PartialFieldConvertOptions {
-    &self.transform_ref
+  pub const fn from_ref_options(&self) -> &PartialFieldConvertOptions {
+    &self.from_ref
   }
 
-  /// Returns the partial transformation options for the partial field.
+  /// Returns the options for converting from the partial reference field to partial field.
   #[inline]
-  pub const fn partial_transform_ref(&self) -> &PartialFieldConvertOptions {
-    &self.partial_transform_ref
+  pub const fn partial_transform_ref_options(&self) -> &PartialFieldConvertOptions {
+    &self.from_partial_ref
   }
 
-  /// Returns the partial transformation options for the partial field.
+  /// Returns the decoding options of the partial field.
   #[inline]
-  pub const fn partial_transform(&self) -> &PartialFieldConvertOptions {
-    &self.partial_transform
+  pub const fn decode_options(&self) -> &FieldDecodeOptions {
+    &self.decode
+  }
+
+  /// Returns the encoding options of the partial field.
+  #[inline]
+  pub const fn encode_options(&self) -> &FieldEncodeOptions {
+    &self.encode
   }
 
   /// Returns the type constraints of the partial field.
@@ -289,38 +303,39 @@ impl PartialField {
       transform_ref_constraints,
       partial_transform_constraints,
       partial_transform_ref_constraints,
-      transform_ref: {
-        let mo = opts.transform_ref.missing_operation.or_else(|| {
+      from_ref: {
+        let mo = opts.from_ref.missing_operation.or_else(|| {
           object
             .partial
-            .transform
+            .or_default
             .or_default_by_label(label)
             .then_some(MissingOperation::OrDefault)
         });
-        opts.transform_ref.missing_operation = mo;
-        opts.transform_ref
+        opts.from_ref.missing_operation = mo;
+        opts.from_ref
       },
-      partial_transform_ref: {
-        let mo = opts.partial_transform_ref.missing_operation.or_else(|| {
+      from_partial_ref: {
+        let mo = opts.from_partial_ref.missing_operation.or_else(|| {
           object
             .partial
-            .partial_transform
+            .or_default
             .or_default_by_label(label)
             .then_some(MissingOperation::OrDefault)
         });
-        opts.partial_transform_ref.missing_operation = mo;
-        opts.partial_transform_ref
+        opts.from_partial_ref.missing_operation = mo;
+        opts.from_partial_ref
       },
-      partial_transform: {
-        let mo = opts.partial_transform.missing_operation.or_else(|| {
+      encode: opts.encode,
+      decode: {
+        let mo = opts.decode.missing_operation.or_else(|| {
           object
             .partial
-            .partial_transform
+            .or_default
             .or_default_by_label(label)
             .then_some(MissingOperation::OrDefault)
         });
-        opts.partial_transform.missing_operation = mo;
-        opts.partial_transform
+        opts.decode.missing_operation = mo;
+        opts.decode
       },
     })
   }

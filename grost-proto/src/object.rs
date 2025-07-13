@@ -1,10 +1,14 @@
 use core::marker::PhantomData;
 
-use crate::{buffer::{UnknownBuffer, ReadBuf}, decode::{Decode1, EquivalentDecode}, flavors::{Flavor, WireFormat}};
+use crate::{
+  buffer::{ReadBuf, UnknownBuffer},
+  decode::{Decode1, EquivalentDecode},
+  flavors::{Flavor, WireFormat},
+};
 
 /// The raw field returned by object decoders.
-/// 
-/// This type 
+///
+/// This type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RawField<B, T, W, F: Flavor + ?Sized> {
   identifier: F::Identifier,
@@ -45,15 +49,13 @@ impl<RB, T, W, F: Flavor + ?Sized> RawField<RB, T, W, F> {
     (self.identifier, self.data)
   }
 
-  pub fn decode<'a, O, OW, OF, UB, D>(self, ctx: &F::Context) -> Result<O, F::Error>
+  pub fn decode<'a, O, OW, UB>(self, ctx: &'a F::Context) -> Result<(usize, O), F::Error>
   where
-    RB: ReadBuf,
-    D: FnOnce(RB) -> Result<O, F::Error>,
-    O: Decode1<'a, OW, RB, UB, OF>,
-    OW: WireFormat<OF>,
-    OF: Flavor + ?Sized,
-    UB: UnknownBuffer<RB, F>,
-    T: EquivalentDecode<'a, O, OW, RB, UB, OF, WireFormat = W, Flavor = F>,
+    RB: ReadBuf + 'a,
+    O: Decode1<'a, OW, RB, UB, F> + 'a,
+    OW: WireFormat<F>,
+    UB: UnknownBuffer<RB, F> + 'a,
+    T: EquivalentDecode<'a, O, OW, RB, UB, F, WireFormat = W, Flavor = F>,
   {
     O::decode(ctx, self.data)
   }

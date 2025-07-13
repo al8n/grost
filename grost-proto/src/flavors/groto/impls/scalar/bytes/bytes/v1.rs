@@ -1,14 +1,14 @@
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref,
-    Transform, TryFromPartial, TryFromPartialRef, TryFromRef,
+    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, Transform,
+    TryFromPartial, TryFromPartialRef, TryFromRef,
   },
-  state::State,
   decode::BytesSlice,
   decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Error, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
+  state::State,
 };
 use bytes_1::{Bytes, BytesMut};
 

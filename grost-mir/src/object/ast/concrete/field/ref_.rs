@@ -1,6 +1,6 @@
 use crate::{
   object::{
-    Label, ast::concrete::field::applied_partial_ref_state, meta::concrete::PartialRefFieldFromMeta,
+    Label, ast::concrete::field::applied_partial_ref_state, meta::concrete::RefFieldFromMeta,
   },
   utils::{MissingOperation, grost_decode_trait_lifetime},
 };
@@ -9,9 +9,9 @@ use super::{FieldDecodeOptions, FieldEncodeOptions};
 use quote::quote;
 use syn::{Attribute, Type, WherePredicate, punctuated::Punctuated, token::Comma};
 
-impl PartialRefFieldFromMeta {
-  pub(super) fn finalize(self) -> darling::Result<PartialRefFieldOptions> {
-    Ok(PartialRefFieldOptions {
+impl RefFieldFromMeta {
+  pub(super) fn finalize(self) -> darling::Result<RefFieldOptions> {
+    Ok(RefFieldOptions {
       copy: self.copy,
       attrs: self.attrs,
       ty: self.ty,
@@ -22,7 +22,7 @@ impl PartialRefFieldFromMeta {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct PartialRefFieldOptions {
+pub(super) struct RefFieldOptions {
   pub(in crate::object) copy: bool,
   pub(in crate::object) attrs: Vec<Attribute>,
   pub(in crate::object) ty: Option<Type>,
@@ -31,7 +31,7 @@ pub(super) struct PartialRefFieldOptions {
 }
 
 #[derive(Debug, Clone)]
-pub struct PartialRefField {
+pub struct RefField {
   pub(super) ty: Type,
   pub(super) nullable_type: Type,
   pub(super) state_type: Option<Type>,
@@ -43,20 +43,20 @@ pub struct PartialRefField {
   pub(super) decode: FieldDecodeOptions,
 }
 
-impl PartialRefField {
-  /// Returns the type of the partial ref field.
+impl RefField {
+  /// Returns the type of the ref field.
   #[inline]
   pub const fn ty(&self) -> &Type {
     &self.ty
   }
 
-  /// Returns the nullable type of the partial ref field, which is `Option<_>`.
+  /// Returns the nullable type of the ref field, which is `Option<_>`.
   #[inline]
   pub const fn nullable_type(&self) -> &Type {
     &self.nullable_type
   }
 
-  /// Returns the decoded state type of the partial ref field.
+  /// Returns the decoded state type of the ref field.
   ///
   /// Returns `Some(_)` only if the field use generics,
   #[inline]
@@ -64,37 +64,37 @@ impl PartialRefField {
     self.state_type.as_ref()
   }
 
-  /// Returns the field decode trait type for this partial ref field.
+  /// Returns the field decode trait type for this ref field.
   #[inline]
   pub const fn decode_trait_type(&self) -> &Type {
     &self.decode_trait_type
   }
 
-  /// Returns the constraints of the partial ref field.
+  /// Returns the constraints of the ref field.
   #[inline]
   pub const fn type_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
     &self.constraints
   }
 
-  /// Returns the attributes of the partial ref field.
+  /// Returns the attributes of the ref field.
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
   }
 
-  /// Returns whether the partial ref field is copyable.
+  /// Returns whether the ref field is copyable.
   #[inline]
   pub const fn copy(&self) -> bool {
     self.copy
   }
 
-  /// Returns the encode options about how to encode the partial ref field.
+  /// Returns the encode options about how to encode the ref field.
   #[inline]
   pub const fn encode(&self) -> &FieldEncodeOptions {
     &self.encode
   }
 
-  /// Returns the decode options about how to decode the partial ref field.
+  /// Returns the decode options about how to decode the ref field.
   #[inline]
   pub const fn decode(&self) -> &FieldDecodeOptions {
     &self.decode
@@ -105,7 +105,7 @@ impl PartialRefField {
     field_ty: &Type,
     wf: &Type,
     label: &Label,
-    mut opts: PartialRefFieldOptions,
+    mut opts: RefFieldOptions,
     mut type_constraints: Punctuated<WherePredicate, Comma>,
   ) -> darling::Result<Self> {
     let flavor_type = &object.flavor_type;

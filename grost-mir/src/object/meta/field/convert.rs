@@ -1,7 +1,7 @@
-use darling::FromMeta;
+use darling::{FromMeta, ast::NestedMeta};
 use syn::Meta;
 
-use crate::utils::{BoolOption, ConvertOperation, Invokable, MissingOperation, NestedMeta};
+use crate::utils::{BoolOption, ConvertOperation, Invokable, MissingOperation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct FieldConvertFromMeta {
@@ -39,7 +39,7 @@ impl FromMeta for PartialFieldConvertFromMeta {
 #[derive(Debug, Clone, PartialEq, Eq, FromMeta)]
 pub enum FieldSkipEncodeOperation {
   #[darling(rename = "skip")]
-  Default,
+  Always,
   #[darling(rename = "skip_if")]
   If(Invokable),
 }
@@ -74,7 +74,7 @@ impl FromMeta for FieldEncodeFromMeta {
     }
 
     let skip_operation = if skip.is_some() {
-      Some(FieldSkipEncodeOperation::Default)
+      Some(FieldSkipEncodeOperation::Always)
     } else {
       skip_if.map(FieldSkipEncodeOperation::If)
     };
@@ -103,12 +103,12 @@ impl FromMeta for FieldDecodeFromMeta {
     .map_err(|e| e.with_span(item))
   }
 
-  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+  fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
     let mut remaining_items = vec![];
     let mut missing_operation_items = vec![];
 
     items.iter().cloned().for_each(|item| match item {
-      darling::ast::NestedMeta::Meta(ref meta)
+      NestedMeta::Meta(ref meta)
         if meta.path().is_ident("or_else")
           || meta.path().is_ident("or_else_default")
           || meta.path().is_ident("ok_or_else") =>

@@ -6,11 +6,11 @@ use std::collections::HashMap;
 
 use crate::{
   convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef},
-  state::State,
   flavors::{
     DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
     RepeatedEntry, WireFormat, groto::PackedEntriesDecoder,
   },
+  state::State,
 };
 
 impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {

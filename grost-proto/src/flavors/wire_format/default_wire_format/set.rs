@@ -1,7 +1,7 @@
 use crate::{
   convert::{Flattened, Inner},
-  state::State,
   marker::{Marker, SetMarker},
+  state::State,
 };
 
 use super::{DefaultWireFormat, Flavor, WireFormat};

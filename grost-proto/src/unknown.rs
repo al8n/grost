@@ -1,5 +1,8 @@
-use crate::{buffer::ReadBuf, error::Error, flavors::{Flavor, Identifier}};
-
+use crate::{
+  buffer::ReadBuf,
+  error::Error,
+  flavors::{Flavor, Identifier},
+};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -24,7 +27,7 @@ where
   F: Flavor + ?Sized,
 {
   /// Decodes the unknown data from the given context and data.
-  /// 
+  ///
   /// Returns the number of bytes consumed and the decoded unknown data.
   pub fn decode(ctx: &F::Context, data: &B) -> Result<(usize, Self), F::Error>
   where
@@ -37,20 +40,20 @@ where
     if total_len > data.as_bytes().len() {
       return Err(Error::insufficient_buffer(total_len, data.as_bytes().len()).into());
     }
-    Ok((identifier_len + data_len, Self {
-      _flavor: core::marker::PhantomData,
-      tag: identifier.tag(),
-      wire_type: identifier.wire_type(),
-      encoded_identifier_len: identifier_len,
-      data: data.slice(..total_len),
-    }))
+    Ok((
+      identifier_len + data_len,
+      Self {
+        _flavor: core::marker::PhantomData,
+        tag: identifier.tag(),
+        wire_type: identifier.wire_type(),
+        encoded_identifier_len: identifier_len,
+        data: data.slice(..total_len),
+      },
+    ))
   }
 
   /// Encodes the unknown data into the given buffer.
-  pub fn encode(
-    &self,
-    buf: &mut [u8],
-  ) -> Result<usize, F::Error>
+  pub fn encode(&self, buf: &mut [u8]) -> Result<usize, F::Error>
   where
     B: ReadBuf,
   {
@@ -140,7 +143,7 @@ where
   }
 
   /// Returns the owned raw data of the unknown data type.
-  /// 
+  ///
   /// Note: The data includes the wire type and the tag.
   /// If you want to access the actual data, use [`data_owned`] instead.
   #[inline]

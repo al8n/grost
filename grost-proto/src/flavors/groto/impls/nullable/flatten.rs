@@ -1,7 +1,14 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer}, convert::{PartialRef, PartialTransform, Transform}, decode::Decode, encode::{Encode, PartialEncode}, flavors::{
-    groto::{Context, Error}, DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat
-  }, selection::Selectable, state::State
+  buffer::{ReadBuf, UnknownBuffer},
+  convert::{PartialRef, PartialTransform, Transform},
+  decode::Decode,
+  encode::{Encode, PartialEncode},
+  flavors::{
+    DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat,
+    groto::{Context, Error},
+  },
+  selection::Selectable,
+  state::State,
 };
 
 impl<T> DefaultFlattenWireFormat<Groto> for Option<T> {

@@ -39,11 +39,6 @@ impl From<IdentifierFromMeta> for IdentifierParser {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
-#[cfg_attr(
-  feature = "serde",
-  serde(try_from = "super::serde::IdentifierSerdeHelper",)
-)]
 pub struct IdentifierFromMeta {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,

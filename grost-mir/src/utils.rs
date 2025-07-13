@@ -1,16 +1,12 @@
 use std::path::PathBuf;
 
 use darling::FromMeta;
-use proc_macro2::{Delimiter, TokenTree};
 use quote::{ToTokens, quote};
-use syn::{
-  Attribute, ConstParam, Expr, ExprLit, Ident, Lit, MacroDelimiter, Meta, MetaList, MetaNameValue,
-  Path, PathSegment, Token, TypeParam,
-  ext::IdentExt,
-  parse::{ParseStream, Parser, discouraged::Speculative as _},
-  punctuated::Punctuated,
-  token::{self, Brace, Bracket, Paren},
-};
+use syn::{Attribute, ConstParam, TypeParam, parse::Parser};
+
+pub use or_default::OrDefault;
+
+mod or_default;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Invokable {
@@ -199,7 +195,7 @@ impl MissingOperation {
 
   /// Returns the possible names.
   #[inline]
-  pub const fn possible_names() -> &'static [&'static str] {
+  pub const fn possible_idents() -> &'static [&'static str] {
     &["or_else", "or_default", "ok_or_else"]
   }
 
@@ -219,9 +215,7 @@ impl MissingOperation {
     let mut missing_operation = None;
     for item in items {
       match item {
-        darling::ast::NestedMeta::Lit(lit) => {
-          return Err(darling::Error::unexpected_lit_type(lit));
-        }
+        darling::ast::NestedMeta::Lit(_) => {}
         darling::ast::NestedMeta::Meta(meta) => {
           if meta.path().is_ident("or_else") {
             if let Some(ref old_op) = missing_operation {
@@ -287,7 +281,7 @@ impl ConvertOperation {
 
   /// Returns the possible names.
   #[inline]
-  pub const fn possible_names() -> &'static [&'static str] {
+  pub const fn possible_idents() -> &'static [&'static str] {
     &["from", "try_from"]
   }
 
@@ -373,128 +367,6 @@ impl FromMeta for NoopFromMeta {
     }
 
     errors.finish().map(|_| Self)
-  }
-}
-
-#[derive(Debug, Clone)]
-pub enum NestedMeta {
-  Lit(syn::Lit),
-  Meta(syn::Meta),
-}
-
-fn parse_meta_path(input: ParseStream) -> syn::Result<Path> {
-  Ok(Path {
-    leading_colon: input.parse()?,
-    segments: {
-      let mut segments = Punctuated::new();
-      loop {
-        if !input.peek(Ident::peek_any) {
-          break;
-        }
-
-        let ident = Ident::parse_any(input)?;
-        segments.push_value(PathSegment::from(ident));
-        if !input.peek(Token![::]) {
-          break;
-        }
-        let punct = input.parse()?;
-        segments.push_punct(punct);
-      }
-      if segments.is_empty() {
-        return Err(input.parse::<Ident>().unwrap_err());
-      } else if segments.trailing_punct() {
-        return Err(input.error("expected path segment after `::`"));
-      }
-      segments
-    },
-  })
-}
-
-fn parse_meta_after_path(path: Path, input: ParseStream) -> syn::Result<Meta> {
-  if input.peek(token::Paren) || input.peek(token::Bracket) || input.peek(token::Brace) {
-    parse_meta_list_after_path(path, input).map(Meta::List)
-  } else if input.peek(Token![=]) {
-    parse_meta_name_value_after_path(path, input).map(Meta::NameValue)
-  } else {
-    Ok(Meta::Path(path))
-  }
-}
-
-fn parse_meta_list_after_path(path: Path, input: ParseStream) -> syn::Result<MetaList> {
-  let (delimiter, tokens) = input.step(|cursor| {
-    if let Some((TokenTree::Group(g), rest)) = cursor.token_tree() {
-      let span = g.delim_span();
-      let delimiter = match g.delimiter() {
-        Delimiter::Parenthesis => MacroDelimiter::Paren(Paren(span)),
-        Delimiter::Brace => MacroDelimiter::Brace(Brace(span)),
-        Delimiter::Bracket => MacroDelimiter::Bracket(Bracket(span)),
-        Delimiter::None => {
-          return Err(cursor.error("expected delimiter"));
-        }
-      };
-      Ok(((delimiter, g.stream()), rest))
-    } else {
-      Err(cursor.error("expected delimiter"))
-    }
-  })?;
-  Ok(MetaList {
-    path,
-    delimiter,
-    tokens,
-  })
-}
-
-fn parse_meta_name_value_after_path(path: Path, input: ParseStream) -> syn::Result<MetaNameValue> {
-  let eq_token: Token![=] = input.parse()?;
-  let ahead = input.fork();
-  let lit: Option<Lit> = ahead.parse()?;
-  let value = if let (Some(lit), true) = (lit, ahead.is_empty()) {
-    input.advance_to(&ahead);
-    Expr::Lit(ExprLit {
-      attrs: Vec::new(),
-      lit,
-    })
-  } else if input.peek(Token![#]) && input.peek2(token::Bracket) {
-    return Err(input.error("unexpected attribute inside of attribute"));
-  } else {
-    input.parse()?
-  };
-  Ok(MetaNameValue {
-    path,
-    eq_token,
-    value,
-  })
-}
-
-impl syn::parse::Parse for NestedMeta {
-  fn parse(input: ParseStream) -> syn::Result<Self> {
-    if input.peek(syn::Lit) && !(input.peek(syn::LitBool) && input.peek2(syn::Token![=])) {
-      input.parse().map(Self::Lit)
-    } else if input.peek(syn::Ident::peek_any) {
-      let path = parse_meta_path(input)?;
-      parse_meta_after_path(path, input).map(Self::Meta)
-    } else {
-      Err(input.error("expected identifier or literal"))
-    }
-  }
-}
-
-impl NestedMeta {
-  pub fn parse_meta_list(
-    tokens: proc_macro2::TokenStream,
-  ) -> syn::Result<Vec<darling::ast::NestedMeta>> {
-    syn::punctuated::Punctuated::<NestedMeta, Token![,]>::parse_terminated
-      .parse2(tokens)
-      .map(|punctuated| punctuated.into_iter().map(Into::into).collect())
-  }
-}
-
-impl From<NestedMeta> for darling::ast::NestedMeta {
-  fn from(value: NestedMeta) -> Self {
-    match value {
-      NestedMeta::Lit(lit) => darling::ast::NestedMeta::Lit(lit),
-      NestedMeta::Meta(meta) => darling::ast::NestedMeta::Meta(meta),
-    }
   }
 }
 

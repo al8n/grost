@@ -11,10 +11,10 @@ use syn::{
 };
 
 use crate::{
-  flavor::{DecodeOptions, IdentifierOptions, TagOptions},
+  flavor::{IdentifierOptions, TagOptions},
   object::{
     ast::{
-      Indexer, ObjectConvertOptions, accessors,
+      Indexer, accessors,
       concrete::{
         reflection::Reflection,
         selector::{Selector, SelectorIter},
@@ -25,16 +25,16 @@ use crate::{
     },
     meta::{
       ObjectFromMeta,
-      concrete::{ObjectFlavorFromMeta, PartialRefObjectFromMeta},
+      concrete::{ObjectFlavorFromMeta, PartialRefObjectFromMeta, RefObjectFromMeta},
     },
   },
-  utils::{Invokable, SchemaOptions},
+  utils::{Invokable, OrDefault, SchemaOptions},
 };
 
+pub use decoder::*;
 pub use field::*;
 pub use partial::*;
 pub use partial_ref::*;
-pub use decoder::*;
 
 mod decode;
 mod decoder;
@@ -53,7 +53,7 @@ impl PartialRefObjectFromMeta {
       name: self.name,
       attrs: self.attrs,
       copy: self.copy,
-      decode: self.decode.into(),
+      or_default: self.or_default,
     }
   }
 }
@@ -63,10 +63,46 @@ pub struct PartialRefObjectOptions {
   name: Option<Ident>,
   attrs: Vec<Attribute>,
   copy: bool,
-  decode: DecodeOptions,
+  or_default: OrDefault,
 }
 
 impl PartialRefObjectOptions {
+  /// Returns the name of the partial reference object
+  pub(crate) const fn name(&self) -> Option<&Ident> {
+    self.name.as_ref()
+  }
+
+  /// Returns the attributes of the partial reference object
+  pub const fn attrs(&self) -> &[Attribute] {
+    self.attrs.as_slice()
+  }
+
+  /// Returns whether the partial reference object is copyable
+  pub const fn copy(&self) -> bool {
+    self.copy
+  }
+}
+
+impl RefObjectFromMeta {
+  pub(super) fn finalize(self) -> RefObjectOptions {
+    RefObjectOptions {
+      name: self.name,
+      attrs: self.attrs,
+      copy: self.copy,
+      or_default: self.or_default,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct RefObjectOptions {
+  name: Option<Ident>,
+  attrs: Vec<Attribute>,
+  copy: bool,
+  or_default: OrDefault,
+}
+
+impl RefObjectOptions {
   /// Returns the name of the partial reference object
   pub(crate) const fn name(&self) -> Option<&Ident> {
     self.name.as_ref()
@@ -103,12 +139,13 @@ struct RawObject<T = (), S = (), O = ()> {
   identifier_options: IdentifierOptions,
   default: Option<Invokable>,
   schema: SchemaOptions,
-  transform: ObjectConvertOptions,
   partial: PartialObjectOptions,
   partial_ref: PartialRefObjectOptions,
+  ref_: RefObjectOptions,
   selector: SelectorOptions,
   selector_iter: SelectorIterOptions,
   indexer: IndexerOptions,
+  or_default: OrDefault,
   copy: bool,
   buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
@@ -191,7 +228,21 @@ impl<T, S, O> RawObject<T, S, O> {
       selector: meta.selector.finalize(),
       selector_iter: meta.selector_iter.finalize(),
       indexer: meta.indexer.into(),
-      transform: meta.transform.into(),
+      ref_: meta.ref_.finalize(),
+      or_default: OrDefault {
+        or_default: meta.or_default,
+        or_default_scalar: meta.or_default_scalar,
+        or_default_bytes: meta.or_default_bytes,
+        or_default_string: meta.or_default_string,
+        or_default_object: meta.or_default_object,
+        or_default_enum: meta.or_default_enum,
+        or_default_interface: meta.or_default_interface,
+        or_default_union: meta.or_default_union,
+        or_default_map: meta.or_default_map,
+        or_default_set: meta.or_default_set,
+        or_default_list: meta.or_default_list,
+        or_default_generic: meta.or_default_generic,
+      },
       copy: meta.copy,
       buffer_param: meta.generic.buffer,
       lifetime_param: meta.generic.lifetime,
@@ -268,13 +319,14 @@ impl<T, S, O> RawObject<T, S, O> {
       identifier_options,
       default,
       schema,
-      transform,
+      ref_,
       partial,
       partial_ref,
       selector,
       selector_iter,
       indexer,
       copy,
+      or_default,
       buffer_param,
       lifetime_param,
       read_buffer_param,
@@ -308,7 +360,8 @@ impl<T, S, O> RawObject<T, S, O> {
         identifier_options,
         default,
         schema,
-        transform,
+        ref_,
+        or_default,
         partial,
         partial_ref,
         selector,
@@ -586,7 +639,7 @@ impl<T, S, M> Object<T, S, M> {
         if let Ok(f) = f.try_unwrap_tagged_ref() {
           if !f.default_wire_format_constraints().is_empty() {
             let ty = f.ty();
-            let partial_ty = f.partial().ty();
+            let partial_ty = f.partial_field().ty();
             let field_wf = f.wire_format();
             let flavor_type = &object.flavor_type;
             let path_to_grost = &object.path_to_grost;

@@ -1,21 +1,18 @@
-use darling::FromMeta;
-pub use decode::*;
+use darling::{FromMeta, ast::NestedMeta};
 pub use identifier::*;
 pub use tag::*;
 
 use indexmap::IndexMap;
 use syn::{Ident, Meta, MetaList, Type};
 
-use crate::utils::NestedMeta;
+use crate::utils::OrDefault;
 
-mod decode;
 mod identifier;
 mod tag;
 
 pub(crate) fn duplicate_flavor_error(ident: &Ident) -> darling::Error {
   darling::Error::custom(format!(
-    "Duplicate flavor `{}` found. Each flavor can only be defined once within the same attribute.",
-    ident
+    "Duplicate flavor `{ident}` found. Each flavor can only be defined once within the same attribute."
   ))
 }
 
@@ -24,9 +21,6 @@ pub(crate) fn complex_flavor_ident_error() -> darling::Error {
     "Flavor names must be simple identifiers. Complex paths are not supported.",
   )
 }
-
-#[cfg(feature = "serde")]
-mod serde;
 
 pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
   (
@@ -76,43 +70,12 @@ pub(super) const RESERVED_FLAVOR_NAMES: &[(&str, &str)] = &[
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 pub(crate) struct BuiltinFlavorValueParser {
   #[darling(default)]
-  pub(crate) decode: DecodeFromMeta,
-}
-
-impl TryFrom<&str> for BuiltinFlavorValueParser {
-  type Error = darling::Error;
-
-  fn try_from(_value: &str) -> Result<Self, Self::Error> {
-    #[cfg(feature = "serde")]
-    {
-      use config::{Config, File};
-
-      Config::builder()
-        .add_source(File::with_name(_value))
-        .build()
-        .and_then(Config::try_deserialize)
-        .map_err(darling::Error::custom)
-    }
-
-    #[cfg(not(feature = "serde"))]
-    Err(darling::Error::custom(
-      "specify a flavor config file is not supported without the `serde` feature",
-    ))
-  }
+  pub(crate) decode: OrDefault,
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(
-  feature = "serde",
-  serde(
-    try_from = "serde::BuiltinFlavorValueSerdeHelper",
-    into = "serde::BuiltinFlavorValueSerdeHelper"
-  )
-)]
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum BuiltinFlavorRepr {
   Nested(BuiltinFlavorValueParser),
@@ -130,64 +93,29 @@ impl FromMeta for BuiltinFlavorRepr {
     Ok(Self::Bool(value))
   }
 
-  fn from_string(value: &str) -> darling::Result<Self> {
-    BuiltinFlavorValueParser::try_from(value).map(Self::Nested)
-  }
-
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     BuiltinFlavorValueParser::from_list(items).map(Self::Nested)
   }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, darling::FromMeta)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 struct FlavorValueParser {
   #[darling(rename = "type")]
-  #[cfg_attr(feature = "serde", serde(with = "serde::serde_type"))]
   ty: syn::Type,
-  #[cfg_attr(feature = "serde", serde(with = "serde::serde_type"))]
   format: syn::Type,
   identifier: IdentifierFromMeta,
   tag: TagFromMeta,
   #[darling(default)]
-  decode: DecodeFromMeta,
-}
-
-impl FlavorValueParser {
-  fn from_path(_value: &str) -> darling::Result<Self> {
-    #[cfg(feature = "serde")]
-    {
-      use config::{Config, File};
-
-      Config::builder()
-        .add_source(File::with_name(_value))
-        .build()
-        .and_then(Config::try_deserialize)
-        .map_err(darling::Error::custom)
-    }
-
-    #[cfg(not(feature = "serde"))]
-    Err(darling::Error::custom(
-      "specify a flavor config file is not supported without the `serde` feature",
-    ))
-  }
+  decode: OrDefault,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(
-  feature = "serde",
-  serde(
-    try_from = "serde::FlavorValueSerdeHelper",
-    into = "serde::FlavorValueSerdeHelper"
-  )
-)]
 pub(crate) struct FlavorValue {
   pub(crate) ty: Type,
   pub(crate) format: Type,
   pub(crate) identifier: IdentifierFromMeta,
   pub(crate) tag: TagFromMeta,
-  pub(crate) decode: DecodeFromMeta,
+  pub(crate) decode: OrDefault,
 }
 
 impl From<FlavorValueParser> for FlavorValue {
@@ -211,10 +139,6 @@ impl From<FlavorValueParser> for FlavorValue {
 }
 
 impl FromMeta for FlavorValue {
-  fn from_string(value: &str) -> darling::Result<Self> {
-    FlavorValueParser::from_path(value).map(Into::into)
-  }
-
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     FlavorValueParser::from_list(items).map(Into::into)
   }
@@ -230,7 +154,7 @@ impl FlavorValue {
       identifier: IdentifierFromMeta,
       tag: TagFromMeta,
       #[darling(default)]
-      decode: DecodeFromMeta,
+      decode: OrDefault,
     }
 
     let helper = Helper::from_list(&NestedMeta::parse_meta_list(list.tokens.clone())?)?;
@@ -345,11 +269,9 @@ impl FromMeta for FlavorFromMeta {
         let item = &items[0];
 
         match item {
-          darling::ast::NestedMeta::Lit(lit) => {
-            return Err(darling::Error::unexpected_lit_type(lit));
-          }
+          darling::ast::NestedMeta::Lit(lit) => Err(darling::Error::unexpected_lit_type(lit)),
           darling::ast::NestedMeta::Meta(meta) => match meta {
-            Meta::Path(_) => return Err(darling::Error::unsupported_format("word")),
+            Meta::Path(_) => Err(darling::Error::unsupported_format("word")),
             Meta::List(meta_list) => {
               let Some(ident) = meta_list.path.get_ident() else {
                 return Err(complex_flavor_ident_error());

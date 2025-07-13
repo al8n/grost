@@ -1,7 +1,7 @@
 use core::num::NonZeroU32;
 
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,

@@ -13,8 +13,8 @@ use crate::{
     ast::{
       concrete::RawObject,
       field::{
-        FieldConvertOptions, FieldDecodeOptions, FieldEncodeOptions, Index,
-        PartialFieldConvertOptions, RawSkippedField, SelectorFieldOptions, SkippedField,
+        FieldDecodeOptions, FieldEncodeOptions, Index, PartialFieldConvertOptions, RawSkippedField,
+        SelectorFieldOptions, SkippedField,
       },
     },
     meta::concrete::{FieldFromMeta, TaggedFieldFromMeta},
@@ -24,11 +24,13 @@ use crate::{
 
 pub use partial::*;
 pub use partial_ref::*;
+pub use ref_::*;
 pub use reflection::*;
 pub use selector::*;
 
 mod partial;
 mod partial_ref;
+mod ref_;
 mod reflection;
 mod selector;
 
@@ -41,9 +43,10 @@ pub struct RawTaggedField<E = ()> {
   label: Label,
   schema: SchemaOptions,
   tag: NonZeroU32,
-  transform: FieldConvertOptions,
+  missing_operation: Option<MissingOperation>,
   partial: PartialFieldOptions,
   partial_ref: PartialRefFieldOptions,
+  ref_: RefFieldOptions,
   selector: SelectorFieldOptions,
   copy: bool,
   extra: E,
@@ -63,9 +66,10 @@ impl<E> RawTaggedField<E> {
       label,
       schema,
       tag,
-      transform,
+      missing_operation,
       partial,
       partial_ref,
+      ref_,
       selector,
       copy,
       extra,
@@ -79,9 +83,10 @@ impl<E> RawTaggedField<E> {
         label,
         schema,
         tag,
-        transform,
+        missing_operation,
         partial,
         partial_ref,
+        ref_,
         selector,
         copy,
         extra: (),
@@ -123,10 +128,11 @@ impl<TM, SM> RawField<TM, SM> {
           label,
           schema,
           tag,
-          transform,
+          missing_operation,
           partial,
           partial_ref,
           selector,
+          ref_,
           copy,
           extra,
         } = field;
@@ -139,9 +145,10 @@ impl<TM, SM> RawField<TM, SM> {
           label,
           schema: schema.into(),
           tag,
-          transform: transform.finalize()?,
+          missing_operation,
           partial: partial.finalize()?,
           partial_ref: partial_ref.finalize()?,
+          ref_: ref_.finalize()?,
           selector: selector.finalize(),
           copy,
           extra,
@@ -178,12 +185,13 @@ pub struct TaggedField<T = ()> {
   lifetimes_usages: LifetimeSet,
   partial: PartialField,
   partial_ref: PartialRefField,
+  ref_: RefField,
   index: Index,
   reflection: FieldReflection,
   selector: SelectorField,
   schema_name: String,
   schema_description: String,
-  transform: FieldConvertOptions,
+  missing_operation: Option<MissingOperation>,
   default_wire_format_constraints: Punctuated<WherePredicate, Comma>,
   tag: u32,
   copy: bool,
@@ -265,14 +273,20 @@ impl<T> TaggedField<T> {
 
   /// Returns the partial field information.
   #[inline]
-  pub const fn partial(&self) -> &PartialField {
+  pub const fn partial_field(&self) -> &PartialField {
     &self.partial
   }
 
   /// Returns the partial decoded field information.
   #[inline]
-  pub const fn partial_ref(&self) -> &PartialRefField {
+  pub const fn partial_ref_field(&self) -> &PartialRefField {
     &self.partial_ref
+  }
+
+  /// Returns the ref field information.
+  #[inline]
+  pub const fn ref_field(&self) -> &RefField {
+    &self.ref_
   }
 
   /// Returns the default wire format constraints for the field.
@@ -293,10 +307,10 @@ impl<T> TaggedField<T> {
     &self.reflection
   }
 
-  /// Returns the transformation options for the field.
+  /// Returns the options how to handle missing operations for the field when decoding and converting.
   #[inline]
-  pub const fn transform(&self) -> &FieldConvertOptions {
-    &self.transform
+  pub const fn missing_operation(&self) -> Option<&MissingOperation> {
+    self.missing_operation.as_ref()
   }
 
   /// Returns the custom metadata associated with the field.
@@ -340,12 +354,13 @@ impl TaggedField {
       lifetimes_usages: self.lifetimes_usages,
       partial: self.partial,
       partial_ref: self.partial_ref,
+      ref_: self.ref_,
       index: self.index,
       reflection: self.reflection,
       selector: self.selector,
       schema_name: self.schema_name,
       schema_description: self.schema_description,
-      transform: self.transform,
+      missing_operation: self.missing_operation,
       tag: self.tag,
       copy: self.copy,
       meta,
@@ -364,6 +379,7 @@ impl TaggedField {
     let object_ty = &object.ty;
 
     let mut partial_ref_constraints = Punctuated::new();
+    let mut ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
     let purpose = Purpose::Declare;
@@ -394,6 +410,7 @@ impl TaggedField {
     let wfv = default_wire_format_associated_value(path_to_grost, flavor_type, &wft);
     if !dwf_constraints.is_empty() {
       partial_ref_constraints.extend(dwf_constraints.clone());
+      ref_constraints.extend(dwf_constraints.clone());
     }
 
     if field.label.is_generic() || field.label.is_inner_generic() {
@@ -401,7 +418,8 @@ impl TaggedField {
         #wft: #dwf
       })?;
       selector_constraints.push(pred.clone());
-      partial_ref_constraints.extend([pred]);
+      partial_ref_constraints.extend([pred.clone()]);
+      ref_constraints.extend([pred]);
     }
 
     let index = Index::new(index, &field.name, field.tag.get())?;
@@ -425,6 +443,15 @@ impl TaggedField {
       &field.label,
       field.partial_ref,
       partial_ref_constraints,
+    )?;
+
+    let ref_ = RefField::try_new(
+      object,
+      &field_ty,
+      &wf,
+      &field.label,
+      field.ref_,
+      ref_constraints,
     )?;
 
     let selector = SelectorField::try_new(
@@ -451,6 +478,7 @@ impl TaggedField {
       reflection,
       partial,
       partial_ref,
+      ref_,
       schema_description,
       schema_name,
       type_params_usages: field_type_params_usages,
@@ -459,15 +487,15 @@ impl TaggedField {
       wire_format: wf,
       wire_format_reflection: wfr,
       default_wire_format_constraints: dwf_constraints,
-      transform: {
-        let mo = field.transform.missing_operation().cloned().or_else(|| {
+      missing_operation: {
+        let mo = field.missing_operation.clone().or_else(|| {
           object
-            .transform
+            .or_default
             .or_default_by_label(&field.label)
             .then_some(MissingOperation::OrDefault)
         });
-        field.transform.missing_operation = mo;
-        field.transform
+        field.missing_operation = mo;
+        field.missing_operation
       },
       name: field.name,
       vis: field.vis,

@@ -1,10 +1,9 @@
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref,
-    Transform, TryFromPartial, TryFromPartialRef, TryFromRef,
+    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, Transform,
+    TryFromPartial, TryFromPartialRef, TryFromRef,
   },
-  state::State,
   decode::Str,
   flatten_state,
   flavors::{
@@ -12,6 +11,7 @@ use crate::{
     groto::{Error, LengthDelimited},
   },
   partial_ref_state, partial_state, ref_state, selectable,
+  state::State,
 };
 use std::string::String;
 

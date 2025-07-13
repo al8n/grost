@@ -1,16 +1,14 @@
 use quote::format_ident;
 use syn::{Ident, Path, Type, parse_quote};
 
-pub use decode::DecodeOptions;
 pub use identifier::IdentifierOptions;
 pub use tag::TagOptions;
 
 pub(crate) use meta::{
-  BuiltinFlavorRepr, DecodeFromMeta, FlavorFromMeta, GenericFlavorFromMeta, IdentifierFromMeta,
-  TagFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
+  BuiltinFlavorRepr, FlavorFromMeta, GenericFlavorFromMeta, IdentifierFromMeta, TagFromMeta,
+  complex_flavor_ident_error, duplicate_flavor_error,
 };
 
-mod decode;
 mod identifier;
 mod meta;
 mod tag;

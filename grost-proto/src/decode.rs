@@ -1,5 +1,5 @@
 use super::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   error::Error,
   flavors::{Flavor, WireFormat},
 };

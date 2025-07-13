@@ -1,5 +1,5 @@
-use ghost::phantom;
 use super::state::State;
+use ghost::phantom;
 
 pub use flatten::*;
 pub use partial_transform::*;

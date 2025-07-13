@@ -187,8 +187,7 @@ impl Flavor for Groto {
     _: &Self::Context,
     wire_type: Self::WireType,
     buf: &[u8],
-  ) -> Result<usize, Self::Error>
-  {
+  ) -> Result<usize, Self::Error> {
     skip_helper(wire_type, buf)
   }
 }

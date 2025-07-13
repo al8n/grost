@@ -1,9 +1,8 @@
 use core::marker::PhantomData;
 
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{Flattened, Partial, PartialRef},
-  state::State,
   decode::Decode,
   encode::Encode,
   flavors::{
@@ -11,6 +10,7 @@ use crate::{
     groto::{Context, Error, Fixed8},
   },
   selection::Selectable,
+  state::State,
 };
 
 /// A lazy decoder for repeated types (e.g. `Vec<T>`, `[T]`, `HashSet<T>`, `HashMap<K, V>` and etc.) of data that

@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{Partial, PartialRef, Ref, State},
   flavors::{Flavor, WireFormat},
 };

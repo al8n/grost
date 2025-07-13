@@ -1,15 +1,15 @@
 use core::mem::MaybeUninit;
 
 use crate::{
-  buffer::{UnknownBuffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   convert::{Partial, PartialRef, PartialTransform, Transform},
   decode::Decode,
   flavors::{
     Flavor, Groto, WireFormat,
     groto::{Error, PackedDecoder},
   },
-  state::State,
   selection::{Selectable, Selector},
+  state::State,
 };
 
 impl<'a, T, W, TW, RB, B, const N: usize> Transform<PackedDecoder<'a, T, RB, B, TW>, Self, W, Groto>

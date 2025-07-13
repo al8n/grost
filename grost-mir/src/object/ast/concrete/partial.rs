@@ -8,10 +8,12 @@ use syn::{
 
 use quote::{ToTokens, quote};
 
-use crate::object::{
-  ObjectConvertOptions,
-  ast::{derive_flatten_state, nullable_accessors},
-  meta::concrete::PartialObjectFromMeta,
+use crate::{
+  object::{
+    ast::{derive_flatten_state, nullable_accessors},
+    meta::concrete::PartialObjectFromMeta,
+  },
+  utils::OrDefault,
 };
 
 use super::{Field, RawObject};
@@ -21,8 +23,7 @@ impl PartialObjectFromMeta {
     PartialObjectOptions {
       name: self.name,
       attrs: self.attrs,
-      transform: self.transform.into(),
-      partial_transform: self.partial_transform.into(),
+      or_default: self.or_default,
       copy: self.copy,
     }
   }
@@ -32,8 +33,7 @@ impl PartialObjectFromMeta {
 pub struct PartialObjectOptions {
   pub(super) name: Option<Ident>,
   pub(super) attrs: Vec<Attribute>,
-  pub(super) transform: ObjectConvertOptions,
-  pub(super) partial_transform: ObjectConvertOptions,
+  pub(super) or_default: OrDefault,
   pub(super) copy: bool,
 }
 
@@ -109,10 +109,7 @@ impl PartialObject {
     (self.applied_decode_trait)(quote! { #ty })
   }
 
-  pub(super) fn from_options(
-    object: &mut RawObject,
-    fields: &[Field],
-  ) -> darling::Result<Self> {
+  pub(super) fn from_options(object: &mut RawObject, fields: &[Field]) -> darling::Result<Self> {
     let partial_object_name = object.partial_name();
     let buffer_param = &object.buffer_param;
     let read_buffer_param = &object.read_buffer_param;
@@ -137,9 +134,9 @@ impl PartialObject {
       .try_for_each(|f| {
         if f.uses_generics() {
           let ty = f.ty();
-          let partial_ref_ty = f.partial_ref().ty();
+          let partial_ref_ty = f.partial_ref_field().ty();
           let wf = f.wire_format();
-          let partial = f.partial();
+          let partial = f.partial_field();
           let partial_ty = partial.ty();
 
           generics
@@ -148,17 +145,17 @@ impl PartialObject {
             .extend(partial.type_constraints().iter().cloned());
 
           transform_ref_constraints.extend(partial.transform_ref_constraints().iter().cloned());
-          transform_ref_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
+          transform_ref_constraints.extend(f.partial_ref_field().type_constraints().iter().cloned());
 
           partial_transform_ref_constraints
             .extend(partial.partial_transform_ref_constraints().iter().cloned());
-          partial_transform_ref_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
+          partial_transform_ref_constraints.extend(f.partial_ref_field().type_constraints().iter().cloned());
 
           partial_transform_constraints
             .extend(partial.partial_transform_constraints().iter().cloned());
           partial_transform_constraints.extend(f.default_wire_format_constraints().iter().cloned());
 
-          decode_constraints.extend(f.partial_ref().type_constraints().iter().cloned());
+          decode_constraints.extend(f.partial_ref_field().type_constraints().iter().cloned());
           decode_constraints.push(syn::parse2::<WherePredicate>(quote! {
             #ty: #path_to_grost::__private::decode::Decode<#lt, #partial_ref_ty, #wf, #rb, #ub, #flavor_ty>
           })?);
@@ -352,7 +349,7 @@ impl PartialObject {
         }
         Field::Tagged(concrete_tagged_field) => {
           let vis = concrete_tagged_field.vis();
-          let field_ty = concrete_tagged_field.partial().nullable_type();
+          let field_ty = concrete_tagged_field.partial_field().nullable_type();
           Some(quote! {
             #(#attrs)*
             #vis #field_name: #field_ty
@@ -403,7 +400,7 @@ impl PartialObject {
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .map(|f| {
         let field_name = f.name();
-        let ty = f.partial().ty();
+        let ty = f.partial_field().ty();
         let copy = f.copy();
 
         nullable_accessors(

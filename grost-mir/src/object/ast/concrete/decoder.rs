@@ -1,10 +1,8 @@
-
-use super::{Object, Field, RawObject};
+use super::{Field, Object, RawObject};
 
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, ToTokens};
+use quote::{ToTokens, format_ident, quote};
 use syn::{Generics, Ident, WhereClause, WherePredicate};
-
 
 #[derive(Debug, Clone)]
 pub struct ObjectDecoder {
@@ -27,9 +25,7 @@ impl ObjectDecoder {
     &self.generics
   }
 
-  pub(super) fn try_new(
-    object: &RawObject,
-  ) -> darling::Result<Self> {
+  pub(super) fn try_new(object: &RawObject) -> darling::Result<Self> {
     let name = format_ident!("{}Decoder", object.name);
     let path_to_grost = &object.path_to_grost;
     let read_buffer_param = &object.read_buffer_param;
@@ -37,31 +33,31 @@ impl ObjectDecoder {
     let mut generics = object.generics.clone();
     generics.params.push(read_buffer_param.clone().into());
 
-    let base_impl_generics = { 
+    let base_impl_generics = {
       let (ig, _, _) = generics.split_for_impl();
       quote!(#ig)
     };
     let with_identifier_impl_generics = base_impl_generics.clone();
     let default_where_clause = generics.where_clause.clone();
 
-    generics.params.push(
-      syn::parse2::<syn::GenericParam>(quote! {
+    generics
+      .params
+      .push(syn::parse2::<syn::GenericParam>(quote! {
         __GROST_DECODER_STATE__
-      })?
-    );
+      })?);
 
     let mut read_buf_where_clause = generics.make_where_clause().clone();
     read_buf_where_clause
       .predicates
-      .extend([
-        syn::parse2::<WherePredicate>(quote! {
-          #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf
-        })?
-      ]);
+      .extend([syn::parse2::<WherePredicate>(quote! {
+        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf
+      })?]);
 
-    
     let base_type_generics = Self::replace_state_type_param(&generics, quote!(()));
-    let with_identifier_type_generics = Self::replace_state_type_param(&generics, quote!(#path_to_grost::__private::state::WithIdentifier));
+    let with_identifier_type_generics = Self::replace_state_type_param(
+      &generics,
+      quote!(#path_to_grost::__private::state::WithIdentifier),
+    );
 
     Ok(Self {
       name,
@@ -84,14 +80,12 @@ impl ObjectDecoder {
         quote!(#ident)
       }
     });
-    
+
     quote! {
       <#(#type_generics),*>
     }
   }
 }
-
-
 
 impl<M, F, S> Object<M, F, S> {
   pub(super) fn derive_decoder_defination(&self) -> darling::Result<proc_macro2::TokenStream> {
@@ -105,7 +99,8 @@ impl<M, F, S> Object<M, F, S> {
     let object_name = self.name();
     let partial_object_name = self.partial.name();
     let partial_ref_object_name = self.partial_ref.name();
-    let doc = format!(r###"Decoder for the `{object_name}` object.
+    let doc = format!(
+      r###"Decoder for the `{object_name}` object.
 
 This is the underlying decoder, which is used when users want to implement highly customized decoding logic.
 
@@ -113,7 +108,8 @@ If you do not want to implement a customized decoding logic, please see:
 
   - [`{object_name}::decode`]
   - [`{partial_object_name}::decode`]
-  - [`{partial_ref_object_name}::decode`]"###);
+  - [`{partial_ref_object_name}::decode`]"###
+    );
 
     let fields = self.fields().iter().filter_map(|f| {
       if f.use_generics() {
@@ -162,44 +158,52 @@ If you do not want to implement a customized decoding logic, please see:
     let with_identifier_tg = &decoder.with_identifier_type_generics;
     let new_doc = format!("Creates a new `{name}` decoder.");
 
-    let fields_init = self.fields().iter().filter_map(|f| {
-      let name = f.name();
-      if f.use_generics() {
-        let field_ty = f.ty();
-        Some(quote! {
-          #name: ::core::marker::PhantomData::<#field_ty>,
-        })
-      } else {
-        None
-      }
-    }).collect::<Vec<_>>();
+    let fields_init = self
+      .fields()
+      .iter()
+      .filter_map(|f| {
+        let name = f.name();
+        if f.use_generics() {
+          let field_ty = f.ty();
+          Some(quote! {
+            #name: ::core::marker::PhantomData::<#field_ty>,
+          })
+        } else {
+          None
+        }
+      })
+      .collect::<Vec<_>>();
 
     let flavor_type = self.flavor_type();
     let object_indexer = self.indexer.name();
     let object_ty = self.ty();
     let object_reflectable = self.reflectable();
-    let identifier = quote!(<#flavor_type as #path_to_grost::__private::flavors::Flavor>::Identifier);
+    let identifier =
+      quote!(<#flavor_type as #path_to_grost::__private::flavors::Flavor>::Identifier);
     let error = quote!(<#flavor_type as #path_to_grost::__private::flavors::Flavor>::Error);
 
-    let to_index = self.fields().iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()).map(|f| {
-      let name = f.name();
-      let name_str = f.name().to_string();
-      let field_identifier = f.reflection().identifier_reflection();
-      let field_variant = &f.index().variant().ident;
-      
+    let to_index = self
+      .fields()
+      .iter()
+      .filter_map(|f| f.try_unwrap_tagged_ref().ok())
+      .map(|f| {
+        let name = f.name();
+        let name_str = f.name().to_string();
+        let field_identifier = f.reflection().identifier_reflection();
+        let field_variant = &f.index().variant().ident;
 
-      let branch = if f.default_wire_format_constraints().is_empty() {
-        quote! { <#field_identifier as #object_reflectable>::REFLECTION }
-      } else {
-        quote! { _ if identifier.eq(<#field_identifier as #object_reflectable>::REFLECTION) }
-      };
+        let branch = if f.default_wire_format_constraints().is_empty() {
+          quote! { <#field_identifier as #object_reflectable>::REFLECTION }
+        } else {
+          quote! { _ if identifier.eq(<#field_identifier as #object_reflectable>::REFLECTION) }
+        };
 
-      quote! {
-        #branch => {
-          self.__grost_read_offset__ += readed;
+        quote! {
+          #branch => {
+            self.__grost_read_offset__ += readed;
+          }
         }
-      }
-    });
+      });
 
     Ok(quote! {
 
@@ -243,7 +247,7 @@ If you do not want to implement a customized decoding logic, please see:
       #[allow(clippy::type_complexity, clippy::non_camel_case_types)]
       impl #base_ig #name #base_tg #read_buf_wc {
         /// Returns the next field in the buffer.
-        /// 
+        ///
         /// - If the next field's identifier is unknown, it will return `Ok((None, decoder))`.
         /// - If the next field's identifier is known, it will return `Ok((Some(_), decoder)))`.
         /// - If there are some errors when decoding the next field, it will return `Err(error)`.
@@ -264,7 +268,7 @@ If you do not want to implement a customized decoding logic, please see:
           );
           let (readed, identifier) = <#identifier as #path_to_grost::__private::flavors::Identifier>::decode(&buf[self.__grost_read_offset__..])?;
 
-          match identifier {            
+          match identifier {
           }
         }
       }
@@ -272,7 +276,7 @@ If you do not want to implement a customized decoding logic, please see:
       #[automatically_derived]
       #[allow(clippy::type_complexity, clippy::non_camel_case_types)]
       impl #with_identifier_ig #name #with_identifier_tg #read_buf_wc {
-        
+
       }
     })
   }

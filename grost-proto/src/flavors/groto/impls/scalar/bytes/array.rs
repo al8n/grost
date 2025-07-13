@@ -3,9 +3,7 @@ use crate::{
   encode::Encode,
   flavors::{
     Groto,
-    groto::{
-      Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited,
-    },
+    groto::{Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited},
   },
 };
 
