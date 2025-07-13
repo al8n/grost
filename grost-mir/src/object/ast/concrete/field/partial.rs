@@ -23,6 +23,7 @@ impl PartialFieldFromMeta {
       from_partial_ref: self.from_partial_ref.finalize()?,
       encode: self.encode.finalize()?,
       decode: self.decode.finalize()?,
+      missing_operation: self.missing_operation,
     })
   }
 }
@@ -36,6 +37,7 @@ pub(super) struct PartialFieldOptions {
   pub(super) from_partial_ref: PartialFieldConvertOptions,
   pub(super) encode: FieldEncodeOptions,
   pub(super) decode: FieldDecodeOptions,
+  pub(super) missing_operation: Option<MissingOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -52,6 +54,7 @@ pub struct PartialField {
   pub(super) from_partial_ref: PartialFieldConvertOptions,
   pub(super) encode: FieldEncodeOptions,
   pub(super) decode: FieldDecodeOptions,
+  pub(super) missing_operation: Option<MissingOperation>,
 }
 
 impl PartialField {
@@ -77,6 +80,12 @@ impl PartialField {
   #[inline]
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
+  }
+
+  /// Returns the missing operation that should be performed if the field is missing during converting or decoding.
+  #[inline]
+  pub const fn missing_operation(&self) -> Option<&MissingOperation> {
+    self.missing_operation.as_ref()
   }
 
   /// Returns the options for converting from the reference field to partial field.
@@ -134,7 +143,7 @@ impl PartialField {
     field_ty: &Type,
     wf: &Type,
     label: &Label,
-    mut opts: PartialFieldOptions,
+    opts: PartialFieldOptions,
   ) -> darling::Result<Self> {
     let flavor_type = &object.flavor_type;
     let path_to_grost = &object.path_to_grost;
@@ -303,40 +312,19 @@ impl PartialField {
       transform_ref_constraints,
       partial_transform_constraints,
       partial_transform_ref_constraints,
-      from_ref: {
-        let mo = opts.from_ref.missing_operation.or_else(|| {
-          object
-            .partial
-            .or_default
-            .or_default_by_label(label)
-            .then_some(MissingOperation::OrDefault)
-        });
-        opts.from_ref.missing_operation = mo;
-        opts.from_ref
-      },
-      from_partial_ref: {
-        let mo = opts.from_partial_ref.missing_operation.or_else(|| {
-          object
-            .partial
-            .or_default
-            .or_default_by_label(label)
-            .then_some(MissingOperation::OrDefault)
-        });
-        opts.from_partial_ref.missing_operation = mo;
-        opts.from_partial_ref
-      },
+      from_ref: opts.from_ref,
+      from_partial_ref: opts.from_partial_ref,
       encode: opts.encode,
       decode: {
-        let mo = opts.decode.missing_operation.or_else(|| {
-          object
-            .partial
-            .or_default
-            .or_default_by_label(label)
-            .then_some(MissingOperation::OrDefault)
-        });
-        opts.decode.missing_operation = mo;
         opts.decode
       },
+      missing_operation: opts.missing_operation.or_else(|| {
+        object
+          .partial
+          .or_default
+          .or_default_by_label(label)
+          .then_some(MissingOperation::OrDefault)
+      }),
     })
   }
 }

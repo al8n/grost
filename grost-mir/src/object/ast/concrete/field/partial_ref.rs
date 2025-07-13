@@ -17,6 +17,7 @@ impl PartialRefFieldFromMeta {
       ty: self.ty,
       encode: self.encode.finalize()?,
       decode: self.decode.finalize()?,
+      missing_operation: self.missing_operation,
     })
   }
 }
@@ -28,6 +29,7 @@ pub(super) struct PartialRefFieldOptions {
   pub(in crate::object) ty: Option<Type>,
   pub(in crate::object) encode: FieldEncodeOptions,
   pub(in crate::object) decode: FieldDecodeOptions,
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +43,7 @@ pub struct PartialRefField {
   pub(super) copy: bool,
   pub(super) encode: FieldEncodeOptions,
   pub(super) decode: FieldDecodeOptions,
+  pub(super) missing_operation: Option<MissingOperation>,
 }
 
 impl PartialRefField {
@@ -98,6 +101,12 @@ impl PartialRefField {
   #[inline]
   pub const fn decode(&self) -> &FieldDecodeOptions {
     &self.decode
+  }
+
+  /// Returns the missing operation that should be performed if the field is missing during decoding.
+  #[inline]
+  pub const fn missing_operation(&self) -> Option<&MissingOperation> {
+    self.missing_operation.as_ref()
   }
 
   pub(super) fn try_new<T, S, M>(
@@ -178,15 +187,18 @@ impl PartialRefField {
       copy: partial_ref_copyable,
       encode: opts.encode,
       decode: {
-        let mo = opts.decode.missing_operation().cloned().or_else(|| {
+        opts.decode
+      },
+      missing_operation: {
+        let mo = opts.missing_operation.or_else(|| {
           object
             .partial_ref
             .or_default
             .or_default_by_label(label)
             .then_some(MissingOperation::OrDefault)
         });
-        opts.decode.missing_operation = mo;
-        opts.decode
+        opts.missing_operation = mo;
+        opts.missing_operation
       },
     })
   }

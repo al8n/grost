@@ -5,11 +5,10 @@ use syn::{Attribute, Meta, Path, Type};
 
 use crate::{
   object::{
-    Label,
     meta::{
       FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta, SelectorFieldFromMeta,
       SkippedFieldFromMeta,
-    },
+    }, Label
   },
   utils::{Attributes, MissingOperation, NoopFromMeta, SchemaFromMeta},
 };
@@ -86,6 +85,8 @@ pub struct PartialFieldFromMeta {
   pub(in crate::object) encode: FieldEncodeFromMeta,
   #[darling(default)]
   pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 /// The meta of the partial reference object field
@@ -101,6 +102,8 @@ pub struct PartialRefFieldFromMeta {
   pub(in crate::object) encode: FieldEncodeFromMeta,
   #[darling(default)]
   pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 /// The meta of the reference object field
@@ -116,6 +119,8 @@ pub struct RefFieldFromMeta {
   pub(in crate::object) encode: FieldEncodeFromMeta,
   #[darling(default)]
   pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -128,6 +133,8 @@ pub struct TaggedFieldFromMeta<TO = NoopFromMeta> {
   pub(in crate::object) partial_ref: PartialRefFieldFromMeta,
   pub(in crate::object) ref_: RefFieldFromMeta,
   pub(in crate::object) selector: SelectorFieldFromMeta,
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  pub(in crate::object) decode: FieldDecodeFromMeta,
   pub(in crate::object) copy: bool,
   pub(in crate::object) extra: TO,
 }
@@ -184,6 +191,10 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       #[darling(default)]
       selector: SelectorFieldFromMeta,
       #[darling(default)]
+      encode: FieldEncodeFromMeta,
+      #[darling(default)]
+      decode: FieldDecodeFromMeta,
+      #[darling(default)]
       copy: bool,
       #[darling(flatten)]
       extra: TO,
@@ -206,6 +217,8 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       ref_: helper.ref_,
       selector: helper.selector,
       copy: helper.copy,
+      encode: helper.encode,
+      decode: helper.decode,
       extra: helper.extra,
     })
   }

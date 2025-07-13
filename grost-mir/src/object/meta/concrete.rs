@@ -23,11 +23,11 @@ fn string_to_lifetime(s: String) -> darling::Result<LifetimeParam> {
 pub(in crate::object) struct Generic {
   #[darling(default = grost_lifetime, and_then = "string_to_lifetime")]
   pub(in crate::object) lifetime: LifetimeParam,
-  #[darling(default = grost_buffer_param)]
+  #[darling(rename = "unknown", default = grost_buffer_param)]
   pub(in crate::object) buffer: TypeParam,
-  #[darling(default = grost_read_buffer_param)]
+  #[darling(rename = "read", default = grost_read_buffer_param)]
   pub(in crate::object) read_buffer: TypeParam,
-  #[darling(default = grost_write_buffer_param)]
+  #[darling(rename = "write", default = grost_write_buffer_param)]
   pub(in crate::object) write_buffer: TypeParam,
 }
 

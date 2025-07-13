@@ -169,6 +169,25 @@ impl BoolOption {
   }
 }
 
+/// A wrapper around `Option<MissingOperation>`, which can be used with
+/// `darling(flatten)`
+#[derive(Debug, Default, Clone)]
+pub struct FlattenableMissingOperation(Option<MissingOperation>);
+
+impl FromMeta for FlattenableMissingOperation {
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let missing_operation = MissingOperation::parse_from_meta_list(items)?;
+    Ok(Self(missing_operation))
+  }
+}
+
+impl From<FlattenableMissingOperation> for Option<MissingOperation> {
+  fn from(value: FlattenableMissingOperation) -> Self {
+    value.0
+  }
+}
+
+
 /// Specifies the behavior of how to handle the missing field during decoding.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::Display, darling::FromMeta)]
 pub enum MissingOperation {

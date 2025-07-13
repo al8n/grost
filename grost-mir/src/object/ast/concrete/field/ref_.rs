@@ -17,6 +17,7 @@ impl RefFieldFromMeta {
       ty: self.ty,
       encode: self.encode.finalize()?,
       decode: self.decode.finalize()?,
+      missing_operation: self.missing_operation,
     })
   }
 }
@@ -28,6 +29,7 @@ pub(super) struct RefFieldOptions {
   pub(in crate::object) ty: Option<Type>,
   pub(in crate::object) encode: FieldEncodeOptions,
   pub(in crate::object) decode: FieldDecodeOptions,
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +43,7 @@ pub struct RefField {
   pub(super) copy: bool,
   pub(super) encode: FieldEncodeOptions,
   pub(super) decode: FieldDecodeOptions,
+  pub(super) missing_operation: Option<MissingOperation>,
 }
 
 impl RefField {
@@ -100,12 +103,18 @@ impl RefField {
     &self.decode
   }
 
+  /// Returns the missing operation that should be performed if the field is missing during decoding.
+  #[inline]
+  pub const fn missing_operation(&self) -> Option<&MissingOperation> {
+    self.missing_operation.as_ref()
+  }
+
   pub(super) fn try_new<T, S, M>(
     object: &super::RawObject<T, S, M>,
     field_ty: &Type,
     wf: &Type,
     label: &Label,
-    mut opts: RefFieldOptions,
+    opts: RefFieldOptions,
     mut type_constraints: Punctuated<WherePredicate, Comma>,
   ) -> darling::Result<Self> {
     let flavor_type = &object.flavor_type;
@@ -178,16 +187,16 @@ impl RefField {
       copy: partial_ref_copyable,
       encode: opts.encode,
       decode: {
-        let mo = opts.decode.missing_operation().cloned().or_else(|| {
+        
+        opts.decode
+      },
+      missing_operation: opts.missing_operation.or_else(|| {
           object
             .partial_ref
             .or_default
             .or_default_by_label(label)
             .then_some(MissingOperation::OrDefault)
-        });
-        opts.decode.missing_operation = mo;
-        opts.decode
-      },
+      }),
     })
   }
 }
