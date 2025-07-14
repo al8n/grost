@@ -48,6 +48,8 @@ pub struct RawTaggedField<E = ()> {
   partial_ref: PartialRefFieldOptions,
   ref_: RefFieldOptions,
   selector: SelectorFieldOptions,
+  encode: FieldEncodeOptions,
+  decode: FieldDecodeOptions,
   copy: bool,
   extra: E,
 }
@@ -71,6 +73,8 @@ impl<E> RawTaggedField<E> {
       partial_ref,
       ref_,
       selector,
+      encode,
+      decode,
       copy,
       extra,
     } = self;
@@ -86,6 +90,8 @@ impl<E> RawTaggedField<E> {
         missing_operation,
         partial,
         partial_ref,
+        encode,
+        decode,
         ref_,
         selector,
         copy,
@@ -133,6 +139,8 @@ impl<TM, SM> RawField<TM, SM> {
           partial_ref,
           selector,
           ref_,
+          encode,
+          decode,
           copy,
           extra,
         } = field;
@@ -150,6 +158,8 @@ impl<TM, SM> RawField<TM, SM> {
           partial_ref: partial_ref.finalize()?,
           ref_: ref_.finalize()?,
           selector: selector.finalize(),
+          encode: encode.finalize()?,
+          decode: decode.finalize()?,
           copy,
           extra,
         })))
