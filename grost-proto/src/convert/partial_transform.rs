@@ -43,10 +43,34 @@ where
     <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized;
 }
 
-pub trait PartialIdentity<W, F>
+impl<'a, RB, UB, W, F, T> PartialTryFromRef<'a, RB, UB, W, F> for T
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
+  RB: ?Sized,
+  UB: ?Sized,
+  Self: Selectable<F>
+    + State<PartialRef<'a, RB, UB, W, F>, Output = <Self as State<Partial<F>>>::Output>
+    + State<Partial<F>>,
+  <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Selectable<F, Selector = Self::Selector>,
+  <Self as State<Partial<F>>>::Output:
+    Selectable<F, Selector = Self::Selector> + PartialIdentity<F>,
+{
+  fn partial_try_from_ref(
+    input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
+    selector: &Self::Selector,
+  ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
+  where
+    <Self as State<Partial<F>>>::Output: Sized,
+    <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized,
+  {
+    Ok(PartialIdentity::<F>::partial_identity(input, selector))
+  }
+}
+
+pub trait PartialIdentity<F>
+where
+  F: Flavor + ?Sized,
   Self: Selectable<F>,
 {
   fn partial_identity(input: Self, selector: &Self::Selector) -> Self

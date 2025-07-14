@@ -25,9 +25,7 @@ impl FromMeta for PartialFieldConvertFromMeta {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let convert_operation = ConvertOperation::parse_from_meta_list(items)?;
 
-    Ok(PartialFieldConvertFromMeta {
-      convert_operation,
-    })
+    Ok(PartialFieldConvertFromMeta { convert_operation })
   }
 }
 

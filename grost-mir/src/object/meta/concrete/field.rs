@@ -5,10 +5,11 @@ use syn::{Attribute, Meta, Path, Type};
 
 use crate::{
   object::{
+    Label,
     meta::{
       FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta, SelectorFieldFromMeta,
       SkippedFieldFromMeta,
-    }, Label
+    },
   },
   utils::{Attributes, MissingOperation, NoopFromMeta, SchemaFromMeta},
 };

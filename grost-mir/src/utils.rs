@@ -187,7 +187,6 @@ impl From<FlattenableMissingOperation> for Option<MissingOperation> {
   }
 }
 
-
 /// Specifies the behavior of how to handle the missing field during decoding.
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::Display, darling::FromMeta)]
 pub enum MissingOperation {

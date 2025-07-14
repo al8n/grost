@@ -315,9 +315,7 @@ impl PartialField {
       from_ref: opts.from_ref,
       from_partial_ref: opts.from_partial_ref,
       encode: opts.encode,
-      decode: {
-        opts.decode
-      },
+      decode: { opts.decode },
       missing_operation: opts.missing_operation.or_else(|| {
         object
           .partial

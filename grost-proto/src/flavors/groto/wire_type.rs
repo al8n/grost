@@ -7,19 +7,19 @@ use crate::flavors::{
 wire_format!(
   WireType<Groto>
   /// The varint encoding/decoding wire format
-  "varint",
+  "varint" = None,
   /// The length-delimited encoding/decoding wire format
-  "length-delimited",
+  "length-delimited" = None,
   /// The fixed 8-bit length encoding/decoding wire format
-  "fixed8",
+  "fixed8" = Some(1),
   /// The fixed 16-bit length encoding/decoding wire format
-  "fixed16",
+  "fixed16" = Some(2),
   /// The fixed 32-bit length encoding/decoding wire format
-  "fixed32",
+  "fixed32" = Some(4),
   /// The fixed 64-bit length encoding/decoding wire format
-  "fixed64",
+  "fixed64" = Some(8),
   /// The fixed 128-bit length encoding/decoding wire format
-  "fixed128",
+  "fixed128" = Some(16),
 );
 
 wire_type!(
@@ -80,6 +80,7 @@ const _: () = {
     {
       const WIRE_TYPE: WireType = W::WIRE_TYPE;
       const INSTANCE: Self = JoinAscii;
+      const FIXED_LENGTH: Option<usize> = W::FIXED_LENGTH;
     }
 
     impl<W: WireFormat<Groto>, #(const A~N: char,)*> From<JoinChar<W, #(A~N,)*>> for WireType
@@ -93,6 +94,7 @@ const _: () = {
     {
       const WIRE_TYPE: WireType = W::WIRE_TYPE;
       const INSTANCE: Self = JoinChar;
+      const FIXED_LENGTH: Option<usize> = W::FIXED_LENGTH;
     }
   });
 };
@@ -108,6 +110,7 @@ const _: () = {
   impl<'a, W: WireFormat<Groto>> WireFormat<Groto> for Borrowed<'a, Packed<W>> {
     const WIRE_TYPE: WireType = Packed::<W>::WIRE_TYPE;
     const INSTANCE: Self = Borrowed;
+    const FIXED_LENGTH: Option<usize> = Packed::<W>::FIXED_LENGTH;
   }
 
   impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>> From<Borrowed<'a, PackedEntry<K, V>>>
@@ -123,6 +126,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = PackedEntry::<K, V>::WIRE_TYPE;
     const INSTANCE: Self = Borrowed;
+    const FIXED_LENGTH: Option<usize> = PackedEntry::<K, V>::FIXED_LENGTH;
   }
 };
 
@@ -141,6 +145,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
 
   impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>>
@@ -156,6 +161,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
 };
 
@@ -170,6 +176,7 @@ const _: () = {
   impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<Packed<W>, I> {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
 
   impl<K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>>
@@ -185,6 +192,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
 };
 
@@ -199,6 +207,7 @@ const _: () = {
   impl<W: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto> for Flatten<Nullable<W>, I> {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
 };
 
@@ -213,6 +222,7 @@ const _: () = {
   impl<W: WireFormat<Groto>> WireFormat<Groto> for Packed<W> {
     const WIRE_TYPE: WireType = WireType::LengthDelimited;
     const INSTANCE: Self = Packed;
+    const FIXED_LENGTH: Option<usize> = None;
   }
 };
 
@@ -227,6 +237,7 @@ const _: () = {
   impl<KW: WireFormat<Groto>, VW: WireFormat<Groto>> WireFormat<Groto> for PackedEntry<KW, VW> {
     const WIRE_TYPE: WireType = WireType::LengthDelimited;
     const INSTANCE: Self = PackedEntry;
+    const FIXED_LENGTH: Option<usize> = None;
   }
 };
 
@@ -241,6 +252,12 @@ const _: () = {
   impl<W: WireFormat<Groto>> WireFormat<Groto> for Nullable<W> {
     const WIRE_TYPE: WireType = WireType::Nullable;
     const INSTANCE: Self = Nullable;
+    const FIXED_LENGTH: Option<usize> = {
+      match W::FIXED_LENGTH {
+        Some(length) => Some(length + 1), // +1 for the nullable byte
+        None => None,
+      }
+    };
   }
 };
 
@@ -252,6 +269,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = W::WIRE_TYPE;
     const INSTANCE: Self = Repeated;
+    const FIXED_LENGTH: Option<usize> = None;
   }
 
   impl<const I: u32, W> From<Repeated<W, I>> for WireType
@@ -274,6 +292,7 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = MergedWireFormat::<KW, VW>::WIRE_TYPE;
     const INSTANCE: Self = RepeatedEntry;
+    const FIXED_LENGTH: Option<usize> = None;
   }
 
   impl<KW, VW, const I: u32> From<RepeatedEntry<KW, VW, I>> for WireType
@@ -332,6 +351,12 @@ const _: () = {
   {
     const WIRE_TYPE: WireType = <W1 as MergeableWireFormat<Groto, W2>>::Merged::WIRE_TYPE;
     const INSTANCE: Self = MergedWireFormat;
+    const FIXED_LENGTH: Option<usize> = {
+      match (W1::FIXED_LENGTH, W2::FIXED_LENGTH) {
+        (Some(len1), Some(len2)) => Some(len1 + len2),
+        _ => None,
+      }
+    };
   }
 
   impl<W1, W2> From<MergedWireFormat<W1, W2>> for WireType

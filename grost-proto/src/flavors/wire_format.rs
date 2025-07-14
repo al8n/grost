@@ -19,6 +19,12 @@ pub trait WireFormat<F: Flavor + ?Sized>:
   ///
   /// For ZSTs, this represents the canonical instance.
   const INSTANCE: Self;
+
+  /// If the wire format will always produce the same length of encoded data,
+  /// the value should be `Some(length)`.
+  ///
+  /// Otherwise, it should be `None`.
+  const FIXED_LENGTH: Option<usize>;
 }
 
 /// A wire format for packed repeated fields.

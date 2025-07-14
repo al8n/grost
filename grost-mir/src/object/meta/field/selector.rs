@@ -57,7 +57,7 @@ impl FromMeta for FieldSelection {
           }
           syn::Meta::NameValue(name_value) => {
             return if name_value.path.is_ident("custom") {
-              let value = &name_value.value;              
+              let value = &name_value.value;
               Ok(Self::Custom(Invokable::from_expr(value)?))
             } else {
               Err(darling::Error::custom(format!("unknown format, {HINTS}")))

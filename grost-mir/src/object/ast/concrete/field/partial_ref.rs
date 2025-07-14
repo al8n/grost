@@ -186,9 +186,7 @@ impl PartialRefField {
       constraints: type_constraints,
       copy: partial_ref_copyable,
       encode: opts.encode,
-      decode: {
-        opts.decode
-      },
+      decode: { opts.decode },
       missing_operation: {
         let mo = opts.missing_operation.or_else(|| {
           object

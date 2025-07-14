@@ -186,16 +186,13 @@ impl RefField {
       constraints: type_constraints,
       copy: partial_ref_copyable,
       encode: opts.encode,
-      decode: {
-        
-        opts.decode
-      },
+      decode: { opts.decode },
       missing_operation: opts.missing_operation.or_else(|| {
-          object
-            .partial_ref
-            .or_default
-            .or_default_by_label(label)
-            .then_some(MissingOperation::OrDefault)
+        object
+          .partial_ref
+          .or_default
+          .or_default_by_label(label)
+          .then_some(MissingOperation::OrDefault)
       }),
     })
   }

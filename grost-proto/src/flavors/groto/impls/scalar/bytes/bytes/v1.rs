@@ -1,12 +1,12 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, Transform,
-    TryFromPartial, TryFromPartialRef, TryFromRef,
+    Partial, PartialIdentity, PartialRef, PartialTransform, Ref, Transform, TryFromPartialRef,
+    TryFromRef,
   },
   decode::BytesSlice,
   decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
-  flavors::groto::{Error, Groto, LengthDelimited},
+  flavors::groto::{Context, Error, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
   state::State,
 };
@@ -66,17 +66,21 @@ identity_partial_transform!(
   }
 );
 
-impl TryFromPartial<LengthDelimited, Groto> for Bytes {
-  fn try_from_partial(input: <Self as State<Partial<Groto>>>::Output) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(input)
-  }
-}
+// impl TryFromPartial<Groto> for Bytes {
+//   fn try_from_partial(
+//     _: &Context,
+//     input: <Self as State<Partial<Groto>>>::Output,
+//   ) -> Result<Self, Error>
+//   where
+//     Self: Sized,
+//   {
+//     Ok(input)
+//   }
+// }
 
 impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
   fn try_from_partial_ref(
+    _: &'de Context,
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
@@ -90,6 +94,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
 
 impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
   fn try_from_ref(
+    _: &'de Context,
     input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
@@ -101,23 +106,7 @@ impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
   }
 }
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes
-where
-  RB: ReadBuf,
-  B: UnknownBuffer<RB, Groto>,
-{
-  fn partial_try_from_ref(
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
-    _: &bool,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(input.into_inner().to_bytes())
-  }
-}
-
-impl PartialIdentity<LengthDelimited, Groto> for Bytes {
+impl PartialIdentity<Groto> for Bytes {
   fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
   where
     Self: Sized,
@@ -126,17 +115,9 @@ impl PartialIdentity<LengthDelimited, Groto> for Bytes {
   }
 }
 
-impl TryFromPartial<LengthDelimited, Groto> for BytesMut {
-  fn try_from_partial(input: <Self as State<Partial<Groto>>>::Output) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(input)
-  }
-}
-
 impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for BytesMut {
   fn try_from_partial_ref(
+    _: &'de Context,
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
@@ -154,32 +135,20 @@ where
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
+    _: &'de Context,
     input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
   where
     Self: Sized,
+    <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     Ok(BytesMut::from(input.into_inner().to_bytes()))
   }
 }
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut
-where
-  RB: ReadBuf,
-  B: UnknownBuffer<RB, Groto>,
-{
-  fn partial_try_from_ref(
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
-    _: &bool,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(BytesMut::from(input.into_inner().to_bytes()))
-  }
-}
-
-impl PartialIdentity<LengthDelimited, Groto> for BytesMut {
+impl PartialIdentity<Groto> for BytesMut {
   fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
   where
     Self: Sized,

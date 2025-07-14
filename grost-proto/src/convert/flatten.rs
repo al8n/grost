@@ -132,24 +132,24 @@ macro_rules! flatten_impl {
   };
 }
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-const _: () = {
-  use std::collections::*;
+// #[cfg(any(feature = "std", feature = "alloc"))]
+// const _: () = {
+//   use std::collections::*;
 
-  flatten_impl!(
-    @(Sized & ?Optional)
-    VecDeque<T>,
-    LinkedList<T>,
-    BTreeSet<T>,
-  );
-};
+//   flatten_impl!(
+//     @(Sized & ?Optional)
+//     VecDeque<T>,
+//     LinkedList<T>,
+//     BTreeSet<T>,
+//   );
+// };
 
-#[cfg(feature = "std")]
-const _: () = {
-  use std::collections::HashSet;
+// #[cfg(feature = "std")]
+// const _: () = {
+//   use std::collections::HashSet;
 
-  flatten_impl!(
-    @Sized
-    HashSet<T>,
-  );
-};
+//   flatten_impl!(
+//     @Sized
+//     HashSet<T>,
+//   );
+// };

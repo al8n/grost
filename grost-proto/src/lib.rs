@@ -45,8 +45,14 @@ pub mod convert;
 /// Marker types
 pub mod marker;
 
+/// Common types and traits for list-like structures
+pub mod list;
+
 /// Common types for map-like structures
 pub mod map;
+
+/// Common types for set structures
+pub mod set;
 
 /// Common types for objects
 pub mod object;

@@ -75,22 +75,10 @@ macro_rules! try_str_bridge {
       bidi_equivalent!(impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
       bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
 
-      // $crate::groto_identity_transform!(
-      //   $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited,
-      // );
-
-      impl $crate::__private::convert::TryFromPartial<LengthDelimited, Groto> for $ty {
-        fn try_from_partial(input: <Self as $crate::__private::state::State<$crate::__private::convert::Partial<Groto>>>::Output) -> Result<Self, Error>
-        where
-          Self: Sized,
-        {
-          Ok(input)
-        }
-      }
-
       impl<'de, RB, B> $crate::__private::convert::TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for $ty
       {
         fn try_from_partial_ref(
+          _: &'de $crate::__private::flavors::groto::Context,
           input: <Self as $crate::__private::state::State<$crate::__private::convert::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
         ) -> Result<Self, Error>
         where
@@ -109,6 +97,7 @@ macro_rules! try_str_bridge {
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn try_from_ref(
+          _: &$crate::__private::flavors::groto::Context,
           input: <Self as $crate::__private::state::State<$crate::__private::convert::Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
         ) -> Result<Self, Error>
         where
@@ -134,7 +123,7 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl $crate::__private::convert::PartialIdentity<LengthDelimited, Groto> for $ty {
+      impl $crate::__private::convert::PartialIdentity<Groto> for $ty {
         fn partial_identity(input: <Self as $crate::__private::state::State<$crate::__private::convert::Partial<Groto>>>::Output, _: &bool) -> Self
         where
           Self: Sized,

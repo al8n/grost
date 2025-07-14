@@ -1,14 +1,14 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, PartialTryFromRef, Ref, Transform,
-    TryFromPartial, TryFromPartialRef, TryFromRef,
+    Partial, PartialIdentity, PartialRef, PartialTransform, Ref, Transform, TryFromPartialRef,
+    TryFromRef,
   },
   decode::Str,
   flatten_state,
   flavors::{
     Groto,
-    groto::{Error, LengthDelimited},
+    groto::{Context, Error, LengthDelimited},
   },
   partial_ref_state, partial_state, ref_state, selectable,
   state::State,
@@ -99,17 +99,9 @@ where
 bidi_equivalent!(:<RB: ReadBuf>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
 bidi_equivalent!(impl <String, LengthDelimited> for <str, LengthDelimited>);
 
-impl TryFromPartial<LengthDelimited, Groto> for String {
-  fn try_from_partial(input: <Self as State<Partial<Groto>>>::Output) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(input)
-  }
-}
-
 impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for String {
   fn try_from_partial_ref(
+    _: &'de Context,
     input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
@@ -128,6 +120,7 @@ where
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
+    _: &'de Context,
     input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
@@ -137,23 +130,7 @@ where
   }
 }
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for String
-where
-  RB: ReadBuf,
-  B: UnknownBuffer<RB, Groto>,
-{
-  fn partial_try_from_ref(
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
-    _: &bool,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-  {
-    Ok(input.to_string())
-  }
-}
-
-impl PartialIdentity<LengthDelimited, Groto> for String {
+impl PartialIdentity<Groto> for String {
   fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
   where
     Self: Sized,

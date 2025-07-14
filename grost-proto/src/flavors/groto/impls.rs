@@ -2,6 +2,7 @@
 pub use map::PackedEntriesDecoder;
 pub use packed_decoder::PackedDecoder;
 pub use repeated_decoder::RepeatedDecoder;
+pub use set::PackedSetDecoder;
 
 use crate::{
   convert::{PartialTransform, Transform},

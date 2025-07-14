@@ -10,7 +10,7 @@ mod wire_format;
 macro_rules! wire_format {
   ($name:ident<$flavor:ty> $(
     $(#[$meta:meta])*
-    $ty:literal
+    $ty:literal = $fixed_length:expr
   ),+$(,)?) => {
     paste::paste! {
       $(
@@ -24,6 +24,7 @@ macro_rules! wire_format {
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
           const INSTANCE: Self = [< $ty: camel >];
+          const FIXED_LENGTH: Option<usize> = $fixed_length;
         }
 
         impl From<[< $ty: camel >]> for $name {
