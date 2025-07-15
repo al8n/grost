@@ -29,23 +29,24 @@ where
   where
     Self: Sized,
   {
-    let mut array: [MaybeUninit<T>; N] = core::array::from_fn(|_| MaybeUninit::uninit());
-    for (index, res) in input.enumerate() {
-      let (_, item) = res?;
-      if index >= N {
-        #[cfg(any(feature = "alloc", feature = "std"))]
-        let err_msg = ::std::format!("expected array of length {N}, but got more elements");
-        #[cfg(not(any(feature = "alloc", feature = "std")))]
-        let err_msg = "got more elements than array capacity";
-        return Err(Error::custom(err_msg));
-      }
-      let item = T::transform(item)?;
-      array[index].write(item);
-    }
+    // let mut array: [MaybeUninit<T>; N] = core::array::from_fn(|_| MaybeUninit::uninit());
+    // for (index, res) in input.enumerate() {
+    //   let (_, item) = res?;
+    //   if index >= N {
+    //     #[cfg(any(feature = "alloc", feature = "std"))]
+    //     let err_msg = ::std::format!("expected array of length {N}, but got more elements");
+    //     #[cfg(not(any(feature = "alloc", feature = "std")))]
+    //     let err_msg = "got more elements than array capacity";
+    //     return Err(Error::custom(err_msg));
+    //   }
+    //   let item = T::transform(item)?;
+    //   array[index].write(item);
+    // }
 
-    // Safety: We have filled all elements of the array with initialized values.
-    // TODO(al8n): remove the `unsafe` block when https://github.com/rust-lang/rust/issues/79711 is resolved.
-    Ok(unsafe { array.map(|item| item.assume_init()) })
+    // // Safety: We have filled all elements of the array with initialized values.
+    // // TODO(al8n): remove the `unsafe` block when https://github.com/rust-lang/rust/issues/79711 is resolved.
+    // Ok(unsafe { array.map(|item| item.assume_init()) })
+    todo!()
   }
 }
 
@@ -72,31 +73,32 @@ where
     input: PackedDecoder<'a, T, RB, B, TW>,
     selector: &Self::Selector,
   ) -> Result<Option<[Option<T>; N]>, <Groto as Flavor>::Error> {
-    if selector.is_empty() {
-      return Ok(None);
-    }
-    let mut array: [MaybeUninit<Option<T>>; N] = core::array::from_fn(|_| MaybeUninit::uninit());
-    for (index, res) in input.enumerate() {
-      let (_, item) = res?;
-      if index >= N {
-        #[cfg(any(feature = "alloc", feature = "std"))]
-        let err_msg = ::std::format!("expected array of length {N}, but got more elements");
-        #[cfg(not(any(feature = "alloc", feature = "std")))]
-        let err_msg = "got more elements than array capacity";
-        return Err(Error::custom(err_msg));
-      }
-      let item = T::partial_transform(item, selector)?;
-      array[index].write(item);
-    }
+    // if selector.is_empty() {
+    //   return Ok(None);
+    // }
+    // let mut array: [MaybeUninit<Option<T>>; N] = core::array::from_fn(|_| MaybeUninit::uninit());
+    // for (index, res) in input.enumerate() {
+    //   let (_, item) = res?;
+    //   if index >= N {
+    //     #[cfg(any(feature = "alloc", feature = "std"))]
+    //     let err_msg = ::std::format!("expected array of length {N}, but got more elements");
+    //     #[cfg(not(any(feature = "alloc", feature = "std")))]
+    //     let err_msg = "got more elements than array capacity";
+    //     return Err(Error::custom(err_msg));
+    //   }
+    //   let item = T::partial_transform(item, selector)?;
+    //   array[index].write(item);
+    // }
 
-    // Safety: We have filled all elements of the array with initialized values.
-    // TODO(al8n): remove the `unsafe` block when https://github.com/rust-lang/rust/issues/79711 is resolved.
-    let array = unsafe { array.map(|item| item.assume_init()) };
-    if array.iter().all(|item| item.is_none()) {
-      return Ok(None);
-    }
+    // // Safety: We have filled all elements of the array with initialized values.
+    // // TODO(al8n): remove the `unsafe` block when https://github.com/rust-lang/rust/issues/79711 is resolved.
+    // let array = unsafe { array.map(|item| item.assume_init()) };
+    // if array.iter().all(|item| item.is_none()) {
+    //   return Ok(None);
+    // }
 
-    Ok(Some(array))
+    // Ok(Some(array))
+    todo!()
   }
 }
 

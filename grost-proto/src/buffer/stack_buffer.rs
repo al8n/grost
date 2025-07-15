@@ -90,7 +90,9 @@ impl<T, const CAP: usize> core::ops::IndexMut<usize> for StackBuffer<T, CAP> {
   }
 }
 
-impl<T, const CAP: usize> Buffer<T> for StackBuffer<T, CAP> {
+impl<T, const CAP: usize> Buffer for StackBuffer<T, CAP> {
+  type Item = T;
+
   fn new() -> Self {
     Self {
       items: core::array::from_fn(|_| MaybeUninit::uninit()),
@@ -129,6 +131,10 @@ impl<T, const CAP: usize> Buffer<T> for StackBuffer<T, CAP> {
 
   fn as_slice(&self) -> &[T] {
     Self::as_slice(self)
+  }
+
+  fn as_mut_slice(&mut self) -> &mut [T] {
+    Self::as_slice_mut(self)
   }
 }
 

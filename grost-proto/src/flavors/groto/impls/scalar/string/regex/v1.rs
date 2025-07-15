@@ -124,7 +124,7 @@ macro_rules! try_str_bridge {
       }
 
       impl $crate::__private::convert::PartialIdentity<Groto> for $ty {
-        fn partial_identity(input: <Self as $crate::__private::state::State<$crate::__private::convert::Partial<Groto>>>::Output, _: &bool) -> Self
+        fn partial_identity<'a>(input: &'a mut <Self as $crate::__private::state::State<$crate::__private::convert::Partial<Groto>>>::Output, _: &'a bool) -> &'a mut Self
         where
           Self: Sized,
         {

@@ -1,10 +1,7 @@
-#[cfg(all(not(feature = "std"), feature = "alloc", feature = "hashbrown_0_15"))]
-use hashbrown_0_15::HashSet;
+use indexmap_2::IndexSet;
 use varing::decode_u32_varint;
 
 use core::hash::{BuildHasher, Hash};
-#[cfg(feature = "std")]
-use std::collections::HashSet;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
@@ -24,25 +21,25 @@ use crate::{
 
 use super::DefaultPartialSetBuffer;
 
-impl<K, S> State<Flattened<Inner>> for HashSet<K, S> {
+impl<K, S> State<Flattened<Inner>> for IndexSet<K, S> {
   type Output = K;
 }
 
-impl<K, S> DefaultSetWireFormat<Groto> for HashSet<K, S> {
+impl<K, S> DefaultSetWireFormat<Groto> for IndexSet<K, S> {
   type Format<KM>
     = Packed<KM>
   where
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<K, S> DefaultRepeatedWireFormat<Groto> for HashSet<K, S> {
+impl<K, S> DefaultRepeatedWireFormat<Groto> for IndexSet<K, S> {
   type Format<KM, const TAG: u32>
     = Repeated<KM, TAG>
   where
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<K, S> State<Partial<Groto>> for HashSet<K, S>
+impl<K, S> State<Partial<Groto>> for IndexSet<K, S>
 where
   K: State<Partial<Groto>>,
   K::Output: Sized,
@@ -50,7 +47,7 @@ where
   type Output = super::DefaultPartialSetBuffer<K::Output>;
 }
 
-impl<'a, K, KW, S, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
@@ -59,7 +56,7 @@ where
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, S, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
@@ -68,14 +65,14 @@ where
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<K, S> Selectable<Groto> for HashSet<K, S>
+impl<K, S> Selectable<Groto> for IndexSet<K, S>
 where
   K: Selectable<Groto>,
 {
   type Selector = K::Selector;
 }
 
-impl<'a, K, KW, S, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   S: BuildHasher + Default,
@@ -104,10 +101,10 @@ where
     let (num_elements_size, num_elements) = decode_u32_varint(&bytes[offset..])?;
     offset += num_elements_size;
     if num_elements == 0 {
-      return Ok((offset, HashSet::with_capacity_and_hasher(0, S::default())));
+      return Ok((offset, IndexSet::with_capacity_and_hasher(0, S::default())));
     }
 
-    let mut set = HashSet::with_capacity_and_hasher(num_elements as usize, S::default());
+    let mut set = IndexSet::with_capacity_and_hasher(num_elements as usize, S::default());
     while set.len() < num_elements as usize && offset < bytes_len {
       let (read, item) = K::decode(context, src.slice(offset..))?;
       offset += read;
@@ -128,7 +125,7 @@ where
   }
 }
 
-impl<K, KW, S> Encode<Packed<KW>, Groto> for HashSet<K, S>
+impl<K, KW, S> Encode<Packed<KW>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
@@ -209,7 +206,7 @@ where
   }
 }
 
-impl<K, KW, S> PartialEncode<Packed<KW>, Groto> for HashSet<K, S>
+impl<K, KW, S> PartialEncode<Packed<KW>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
@@ -296,14 +293,14 @@ where
   }
 }
 
-impl<K, S> TryFromPartial<Groto> for HashSet<K, S>
+impl<K, S> TryFromPartial<Groto> for IndexSet<K, S>
 where
   K: TryFromPartial<Groto> + Eq + Hash,
   K::Output: Sized,
   S: BuildHasher + Default,
 {
   fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
-    let mut set = HashSet::with_capacity_and_hasher(input.len(), S::default());
+    let mut set = IndexSet::with_capacity_and_hasher(input.len(), S::default());
 
     for item in input {
       let item = K::try_from_partial(ctx, item)?;
@@ -316,7 +313,7 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
@@ -335,10 +332,11 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let expected_count = input.expected_count();
-    let mut set = HashSet::with_capacity_and_hasher(expected_count, S::default());
+    let iter = input.iter();
+    let expected_count = iter.expected_count();
+    let mut set = IndexSet::with_capacity_and_hasher(expected_count, S::default());
 
-    for res in input.iter() {
+    for res in iter {
       match res {
         Ok((_, item)) => {
           let item = K::try_from_ref(ctx, item)?;
@@ -361,7 +359,7 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
@@ -380,10 +378,11 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let expected_count = input.expected_count();
-    let mut set = HashSet::with_capacity_and_hasher(expected_count, S::default());
+    let iter = input.iter();
+    let expected_count = iter.expected_count();
+    let mut set = IndexSet::with_capacity_and_hasher(expected_count, S::default());
 
-    for res in input.iter() {
+    for res in iter {
       match res {
         Ok((_, item)) => {
           let item = K::try_from_partial_ref(ctx, item)?;
@@ -406,7 +405,7 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
@@ -425,14 +424,15 @@ where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
   {
-    let expected_count = input.expected_count();
+    let iter = input.iter();
+    let expected_count = iter.expected_count();
     let Some(mut partial_set) =
       <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(expected_count)
     else {
       return Err(Error::custom("failed to allocate partial set buffer"));
     };
 
-    for res in input.iter() {
+    for res in iter {
       match res {
         Ok((_, item)) => {
           let item = K::partial_try_from_ref(item, selector)?;
@@ -448,7 +448,7 @@ where
   }
 }
 
-impl<K, S> PartialIdentity<Groto> for HashSet<K, S>
+impl<K, S> PartialIdentity<Groto> for IndexSet<K, S>
 where
   K: PartialIdentity<Groto> + Ord,
   K::Output: Sized + Selectable<Groto, Selector = K::Selector>,

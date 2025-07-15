@@ -131,7 +131,10 @@ where
 }
 
 impl PartialIdentity<Groto> for String {
-  fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
+  fn partial_identity<'a>(
+    input: &'a mut <Self as State<Partial<Groto>>>::Output,
+    _: &'a bool,
+  ) -> &'a mut Self
   where
     Self: Sized,
   {

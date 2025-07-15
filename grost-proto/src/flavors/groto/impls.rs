@@ -1,7 +1,7 @@
 // mod map_selector;
-pub use map::PackedEntriesDecoder;
-pub use packed_decoder::PackedDecoder;
-pub use repeated_decoder::RepeatedDecoder;
+pub use map::*;
+pub use packed_decoder::*;
+pub use repeated_decoder::*;
 pub use set::PackedSetDecoder;
 
 use crate::{

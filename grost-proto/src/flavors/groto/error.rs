@@ -116,6 +116,15 @@ pub enum Error {
   #[error("length-delimited overflow the maximum value of u32")]
   LengthDelimitedOverflow,
 
+  /// Returned when the type cannot be merged in the given wire type format
+  #[error("cannot merge {ty} in {wire_type} format in {flavor} flavor", flavor = Groto::NAME)]
+  Unmergeable {
+    /// The type of the value.
+    ty: &'static str,
+    /// The wire type.
+    wire_type: WireType,
+  },
+
   /// A custom encoding error.
   #[error("{_0}")]
   #[cfg(any(feature = "std", feature = "alloc"))]
@@ -321,6 +330,12 @@ impl Error {
     Self::UnknownIdentifier { ty, identifier }
   }
 
+  /// Creates a unmergeable decoding error.
+  #[inline]
+  pub const fn unmergeable(ty: &'static str, wire_type: WireType) -> Self {
+    Self::Unmergeable { ty, wire_type }
+  }
+
   /// Update the error with the required and remaining buffer capacity.
   pub const fn update(mut self, required: usize, remaining: usize) -> Self {
     match self {
@@ -392,6 +407,7 @@ impl From<BaseError<Groto>> for Error {
         struct_name,
         field_name,
       } => Self::field_not_found(struct_name, field_name),
+      BaseError::Unmergeable { ty, wire_type } => Self::unmergeable(ty, wire_type),
       BaseError::UnknownIdentifier { ty, identifier } => Self::unknown_identifier(ty, identifier),
       BaseError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
       BaseError::Custom(cow) => Self::Custom(cow),

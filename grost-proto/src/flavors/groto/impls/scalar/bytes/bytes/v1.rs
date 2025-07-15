@@ -107,7 +107,10 @@ impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
 }
 
 impl PartialIdentity<Groto> for Bytes {
-  fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
+  fn partial_identity<'a>(
+    input: &'a mut <Self as State<Partial<Groto>>>::Output,
+    _: &'a bool,
+  ) -> &'a mut Self
   where
     Self: Sized,
   {
@@ -149,7 +152,10 @@ where
 }
 
 impl PartialIdentity<Groto> for BytesMut {
-  fn partial_identity(input: <Self as State<Partial<Groto>>>::Output, _: &bool) -> Self
+  fn partial_identity<'a>(
+    input: &'a mut <Self as State<Partial<Groto>>>::Output,
+    _: &'a bool,
+  ) -> &'a mut Self
   where
     Self: Sized,
   {

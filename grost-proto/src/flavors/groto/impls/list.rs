@@ -252,7 +252,8 @@ macro_rules! decode {
         return Err(Error::buffer_underflow());
       }
 
-      Ok((total, PackedDecoder::new(context, src, len)))
+      // Ok((total, PackedDecoder::new(context, src, len)))
+      todo!()
     }
   };
 }
@@ -440,11 +441,12 @@ macro_rules! list {
         where
           Self: Sized
         {
-          input.into_iter()
-            .map(|res| {
-              res.and_then(|(_, inp)| T::transform(inp))
-            })
-            .collect()
+          // input.into_iter()
+          //   .map(|res| {
+          //     res.and_then(|(_, inp)| T::transform(inp))
+          //   })
+          //   .collect()
+          todo!()
         }
       }
     )*
@@ -595,31 +597,32 @@ macro_rules! list {
             return ::core::result::Result::Ok(::core::option::Option::None);
           }
 
-          input.into_iter()
-            .filter_map(|res| {
-              match res.and_then(|(_, inp)| <
-                T as $crate::__private::convert::PartialTransform<<T as $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output, ::core::option::Option<<T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output>, TW, $crate::__private::flavors::Groto>
-              >::partial_transform(inp, selector)) {
-                ::core::result::Result::Ok(val) => match val {
-                  ::core::option::Option::Some(val) => ::core::option::Option::Some(
-                    <T as $crate::__private::convert::Transform<
-                      <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
-                      T,
-                      TW,
-                      $crate::__private::flavors::Groto
-                    >>::transform(val)
-                  ),
-                  ::core::option::Option::None => ::core::option::Option::None,
-                },
-                ::core::result::Result::Err(e) => ::core::option::Option::Some(::core::result::Result::Err(e)),
-              }
-            })
-            .collect::<::core::result::Result<$ty, _>>()
-            .map(|val| if val.is_empty() {
-              ::core::option::Option::None
-            } else {
-              ::core::option::Option::Some(val)
-            })
+          // input.into_iter()
+          //   .filter_map(|res| {
+          //     match res.and_then(|(_, inp)| <
+          //       T as $crate::__private::convert::PartialTransform<<T as $crate::__private::state::State<$crate::__private::convert::PartialRef<'a, RB, B, TW, $crate::__private::flavors::Groto>>>::Output, ::core::option::Option<<T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output>, TW, $crate::__private::flavors::Groto>
+          //     >::partial_transform(inp, selector)) {
+          //       ::core::result::Result::Ok(val) => match val {
+          //         ::core::option::Option::Some(val) => ::core::option::Option::Some(
+          //           <T as $crate::__private::convert::Transform<
+          //             <T as $crate::__private::state::State<$crate::__private::convert::Flattened>>::Output,
+          //             T,
+          //             TW,
+          //             $crate::__private::flavors::Groto
+          //           >>::transform(val)
+          //         ),
+          //         ::core::option::Option::None => ::core::option::Option::None,
+          //       },
+          //       ::core::result::Result::Err(e) => ::core::option::Option::Some(::core::result::Result::Err(e)),
+          //     }
+          //   })
+          //   .collect::<::core::result::Result<$ty, _>>()
+          //   .map(|val| if val.is_empty() {
+          //     ::core::option::Option::None
+          //   } else {
+          //     ::core::option::Option::Some(val)
+          //   })
+          todo!()
         }
       }
     )*

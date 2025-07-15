@@ -1,7 +1,7 @@
 pub use context::Context;
 pub use error::Error;
 pub use identifier::Identifier;
-pub use impls::{PackedDecoder, PackedEntriesDecoder, PackedSetDecoder, RepeatedDecoder};
+pub use impls::*;
 pub use tag::Tag;
 pub use wire_type::*;
 

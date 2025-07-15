@@ -1,4 +1,3 @@
-
 pub trait Set: IntoIterator<Item = Self::Key> {
   /// The type of the items in the set.
   type Key;
@@ -27,11 +26,9 @@ where
   }
 }
 
-pub trait SetMut: Set
-
-{
+pub trait SetMut: Set {
   /// Inserts an item into the set.
-  /// 
+  ///
   /// Returns `true` if the item was inserted, `false` if it was already present.
   fn insert(&mut self, item: Self::Key) -> bool;
 }

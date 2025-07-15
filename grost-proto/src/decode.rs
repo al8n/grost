@@ -126,6 +126,18 @@ where
 
     Self::decode(context, src.slice(len_size..total))
   }
+
+  /// Decodes an instance from a raw byte slice, merging the result into the current instance.
+  fn merge_decode(&mut self, ctx: &'de F::Context, src: RB) -> Result<usize, F::Error>
+  where
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
+  {
+    let _ = ctx;
+    let _ = src;
+    Err(Error::unmergeable(core::any::type_name::<Self>(), W::WIRE_TYPE).into())
+  }
 }
 
 /// A trait for fully decoding types from a borrowed byte slice.

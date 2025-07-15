@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use core::iter::FusedIterator;
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
@@ -6,56 +6,56 @@ use crate::{
   decode::Decode1,
   encode::Encode,
   flavors::{
-    Groto, WireFormat,
-    groto::{Context, Error},
+    Groto, Packed, WireFormat,
+    groto::{Context, Error, PackedDecoder, PackedDecoderIter},
   },
   selection::Selectable,
   state::State,
 };
 
-/// A lazy decoder for repeated types (e.g. `HashSet<T>`, `BtreeSet` and etc.) of data that
+/// A lazy decoder for repeated types (e.g. `HashSet<T>`, `IndexSet<T>`, `BTreeSet<T>`, and etc.) of data that
 /// iterates through the underlying buffer and decode elements on demand.
 ///
-/// `PackedSetDecoder` provides functionality to decode list-like structures from binary data.
+/// `PackedDecoder` provides functionality to decode list-like structures from binary data.
 /// It operates lazily, decoding elements only when requested through iteration.
-pub struct PackedSetDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
-  /// the source buffer
-  src: B,
-  expected_elements: usize,
-  yielded_elements: usize,
-  has_error: bool,
-  /// the length of the length prefix
-  data_offset: usize,
-  /// the current offset
-  offset: usize,
-  ctx: &'a Context,
-  _t: PhantomData<T>,
-  _w: PhantomData<W>,
-  _ub: PhantomData<UB>,
-}
+pub struct PackedSetDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized>(
+  PackedDecoder<'a, T, B, UB, W>,
+);
 
 impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedSetDecoder<'a, T, B, UB, W> {
   fn clone(&self) -> Self {
-    Self {
-      src: self.src.clone(),
-      data_offset: self.data_offset,
-      yielded_elements: self.yielded_elements,
-      expected_elements: self.expected_elements,
-      offset: self.offset,
-      has_error: self.has_error,
-      ctx: self.ctx,
-      _t: PhantomData,
-      _w: PhantomData,
-      _ub: PhantomData,
-    }
+    Self(self.0.clone())
   }
 }
 
 impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for PackedSetDecoder<'a, T, B, UB, W> {}
 
-impl<'a, T, B, UB, W> PackedSetDecoder<'a, T, B, UB, W>
+impl<'de, T, B, UB, W> PackedSetDecoder<'de, T, B, UB, W>
 where
   T: ?Sized,
+  UB: ?Sized,
+  W: ?Sized,
+{
+  /// Returns an iterator over the elements in the packed set decoder.
+  ///
+  /// The iterator will yield decoded elements one by one until it reaches the end of the source data.
+  pub const fn iter<'a>(&'a self) -> PackedSetDecoderIter<'a, 'de, T, B, UB, W> {
+    PackedSetDecoderIter(self.0.iter())
+  }
+
+  /// Returns the expected number of elements in the packed set decoder.
+  pub const fn expected_count(&self) -> usize {
+    self.0.expected_count()
+  }
+}
+
+pub struct PackedSetDecoderIter<'a, 'de: 'a, T: ?Sized, B, UB: ?Sized, W: ?Sized>(
+  PackedDecoderIter<'a, 'de, T, B, UB, W>,
+);
+
+impl<'a, 'de: 'a, T, B, UB, W> PackedSetDecoderIter<'a, 'de, T, B, UB, W>
+where
+  T: ?Sized + 'de,
   UB: ?Sized,
   W: ?Sized,
 {
@@ -64,7 +64,7 @@ where
   /// This represents how many bytes have been consumed during iteration.
   #[inline]
   pub const fn current_position(&self) -> usize {
-    self.offset
+    self.0.current_position()
   }
 
   /// Returns the number of elements that have been successfully decoded so far.
@@ -73,7 +73,7 @@ where
   /// It will never exceed the expected element count from the wire format.
   #[inline]
   pub const fn decoded_count(&self) -> usize {
-    self.yielded_elements
+    self.0.decoded_count()
   }
 
   /// Returns the number of elements expected according to the wire format.
@@ -86,7 +86,7 @@ where
   /// number of successfully decoded elements might be less.
   #[inline]
   pub const fn expected_count(&self) -> usize {
-    self.expected_elements
+    self.0.expected_count()
   }
 
   /// Returns the number of elements remaining to be attempted, or `None` if an error occurred.
@@ -104,56 +104,36 @@ where
   /// - `None` - An error occurred and remaining count is unknown
   #[inline]
   pub const fn remaining_expected(&self) -> Option<usize> {
-    if self.has_error {
-      return None;
-    }
-
-    Some(self.expected_elements.saturating_sub(self.yielded_elements))
+    self.0.remaining_expected()
   }
 }
 
-impl<'a, RB, B, W, T> Iterator for PackedSetDecoder<'a, T, RB, B, W>
+impl<'a, 'de: 'a, RB, B, W, T> Iterator for PackedSetDecoderIter<'a, 'de, T, RB, B, W>
 where
-  W: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, B, Groto> + 'a,
-  B: UnknownBuffer<RB, Groto> + 'a,
-  RB: ReadBuf + 'a,
+  W: WireFormat<Groto> + 'de,
+  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  B: UnknownBuffer<RB, Groto> + 'de,
+  RB: ReadBuf + 'de,
 {
   type Item = Result<(usize, T), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    let src_len = self.src.len();
-    if self.offset >= src_len {
-      return None;
-    }
-
-    if self.yielded_elements >= self.expected_elements {
-      return None;
-    }
-
-    if self.has_error {
-      return None;
-    }
-
-    Some(
-      T::decode(self.ctx, self.src.slice(self.offset..))
-        .inspect(|(read, _)| {
-          self.offset += read;
-          self.yielded_elements += 1;
-        })
-        .inspect_err(|_| {
-          self.has_error = true;
-        }),
-    )
+    self.0.next()
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let remaining = self
-      .expected_elements
-      .saturating_sub(self.expected_elements - self.yielded_elements);
-    (0, Some(remaining))
+    (0, self.remaining_expected())
   }
+}
+
+impl<'a, 'de: 'a, RB, B, W, T> FusedIterator for PackedSetDecoderIter<'a, 'de, T, RB, B, W>
+where
+  W: WireFormat<Groto> + 'de,
+  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  B: UnknownBuffer<RB, Groto> + 'de,
+  RB: ReadBuf + 'de,
+{
 }
 
 impl<'a, T, B, UB, W> Selectable<Groto> for PackedSetDecoder<'a, T, B, UB, W>
@@ -165,50 +145,33 @@ where
   type Selector = T::Selector;
 }
 
-impl<'a, T, RB, B, W> Encode<W, Groto> for PackedSetDecoder<'a, T, RB, B, W>
+impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
   T: ?Sized,
-  W: WireFormat<Groto> + 'a,
+  Packed<W>: WireFormat<Groto> + 'a,
   B: ?Sized,
   RB: ReadBuf,
 {
   fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let src_len = self.encoded_raw_len(ctx);
-    if buf_len < src_len {
-      return Err(Error::insufficient_buffer(src_len, buf_len));
-    }
-
-    buf[..src_len].copy_from_slice(&self.src.as_bytes()[self.data_offset..]);
-    Ok(src_len)
+    self.0.encode_raw(ctx, buf)
   }
 
-  fn encoded_raw_len(&self, _: &Context) -> usize {
-    self.src.len() - self.data_offset
+  fn encoded_raw_len(&self, ctx: &Context) -> usize {
+    self.0.encoded_raw_len(ctx)
   }
 
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let src = &self.src;
-
-    let buf_len = buf.len();
-    let src_len = src.len();
-    if buf_len < src_len {
-      return Err(Error::insufficient_buffer(src_len, buf_len));
-    }
-
-    buf[..src_len].copy_from_slice(src.as_bytes());
-    Ok(src_len)
+  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    self.0.encode(ctx, buf)
   }
 
-  fn encoded_len(&self, _: &Context) -> usize {
-    self.src.len()
+  fn encoded_len(&self, ctx: &Context) -> usize {
+    self.0.encoded_len(ctx)
   }
 }
 
-impl<'a, T, RB, B, W, PW> Decode1<'a, PW, RB, B, Groto> for PackedSetDecoder<'a, T, RB, B, W>
+impl<'a, T, B, W, RB> Decode1<'a, Packed<W>, RB, B, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
-  W: WireFormat<Groto> + 'a,
-  PW: WireFormat<Groto> + 'a,
+  Packed<W>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
 {
   fn decode(
@@ -220,36 +183,8 @@ where
     RB: crate::buffer::ReadBuf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let buf = src.as_bytes();
-    let buf_len = buf.len();
-    if buf_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
-
-    let (len, data_len) = varing::decode_u32_varint(buf)?;
-    let total = len + data_len as usize;
-    if total > buf_len {
-      return Err(Error::buffer_underflow());
-    }
-
-    let (num_elements_size, num_elements) = varing::decode_u32_varint(&buf[len..])?;
-    let num_elements = num_elements as usize;
-
-    Ok((
-      total,
-      Self {
-        src: src.slice(..total),
-        data_offset: len,
-        expected_elements: num_elements,
-        offset: len + num_elements_size,
-        yielded_elements: 0,
-        has_error: false,
-        ctx,
-        _t: PhantomData,
-        _w: PhantomData,
-        _ub: PhantomData,
-      },
-    ))
+    let (read, packed_decoder) = PackedDecoder::decode(ctx, src)?;
+    Ok((read, PackedSetDecoder(packed_decoder)))
   }
 }
 
@@ -262,7 +197,8 @@ where
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<PartialRef<'a, B, UB, W, Groto>> for PackedSetDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> State<PartialRef<'a, B, UB, Packed<W>, Groto>>
+  for PackedSetDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,
@@ -271,7 +207,7 @@ where
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<Ref<'a, B, UB, W, Groto>> for PackedSetDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W> State<Ref<'a, B, UB, Packed<W>, Groto>> for PackedSetDecoder<'a, T, B, UB, W>
 where
   T: ?Sized,
   W: ?Sized,

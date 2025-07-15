@@ -54,7 +54,10 @@ pub type DefaultBuffer<T> = smallvec_1::SmallVec<[T; 2]>;
 /// - **[`StackBuffer<T>`]**
 /// - **[`arrayvec::ArrayVec<T, 16>`](arrayvec_0_7::ArrayVec)** (requires `arrayvec` feature)
 /// - **[`tinyvec::ArrayVec<A>`](tinyvec_1::ArrayVec)** (requires `tinyvec` feature)
-pub trait Buffer<T> {
+pub trait Buffer {
+  /// The type of the items stored in the buffer.
+  type Item;
+
   /// Creates a new buffer.
   fn new() -> Self;
 
@@ -68,7 +71,7 @@ pub trait Buffer<T> {
   /// Pushes a value to the buffer.
   ///
   /// If the buffer is full, the given value will be returned back.
-  fn push(&mut self, value: T) -> Option<T>;
+  fn push(&mut self, value: Self::Item) -> Option<Self::Item>;
 
   /// Returns the capacity of the buffer.
   fn capacity(&self) -> usize;
@@ -77,7 +80,10 @@ pub trait Buffer<T> {
   fn len(&self) -> usize;
 
   /// Returns a slice of the stored data.
-  fn as_slice(&self) -> &[T];
+  fn as_slice(&self) -> &[Self::Item];
+
+  /// Returns a mutable slice of the stored data.
+  fn as_mut_slice(&mut self) -> &mut [Self::Item];
 
   /// Returns `true` if the buffer is empty.
   fn is_empty(&self) -> bool {
@@ -86,11 +92,11 @@ pub trait Buffer<T> {
 }
 
 /// A trait for implementing custom buffers that can store unknown data.
-pub trait UnknownBuffer<RB, F: Flavor + ?Sized>: Buffer<Unknown<RB, F>> {}
+pub trait UnknownBuffer<RB, F: Flavor + ?Sized>: Buffer<Item = Unknown<RB, F>> {}
 
 impl<T, RB, F> UnknownBuffer<RB, F> for T
 where
-  T: Buffer<Unknown<RB, F>>,
+  T: Buffer<Item = Unknown<RB, F>>,
   RB: ReadBuf,
   F: Flavor + ?Sized,
 {
@@ -100,7 +106,9 @@ where
 const _: () = {
   use std::vec::Vec;
 
-  impl<T> Buffer<T> for Vec<T> {
+  impl<T> Buffer for Vec<T> {
+    type Item = T;
+
     fn new() -> Self {
       Vec::new()
     }
@@ -132,6 +140,10 @@ const _: () = {
     fn as_slice(&self) -> &[T] {
       self.as_slice()
     }
+
+    fn as_mut_slice(&mut self) -> &mut [T] {
+      self.as_mut_slice()
+    }
   }
 };
 
@@ -139,7 +151,9 @@ const _: () = {
 const _: () = {
   use smallvec_1::SmallVec;
 
-  impl<T, const N: usize> Buffer<T> for SmallVec<[T; N]> {
+  impl<T, const N: usize> Buffer for SmallVec<[T; N]> {
+    type Item = T;
+
     fn new() -> Self {
       SmallVec::new()
     }
@@ -167,6 +181,10 @@ const _: () = {
     fn as_slice(&self) -> &[T] {
       self.as_slice()
     }
+
+    fn as_mut_slice(&mut self) -> &mut [T] {
+      self.as_mut_slice()
+    }
   }
 };
 
@@ -174,7 +192,9 @@ const _: () = {
 const _: () = {
   use arrayvec_0_7::ArrayVec;
 
-  impl<T, const N: usize> Buffer<T> for ArrayVec<T, N> {
+  impl<T, const N: usize> Buffer for ArrayVec<T, N> {
+    type Item = T;
+
     fn new() -> Self {
       ArrayVec::new()
     }
@@ -210,6 +230,10 @@ const _: () = {
     fn as_slice(&self) -> &[T] {
       self.as_slice()
     }
+
+    fn as_mut_slice(&mut self) -> &mut [T] {
+      self.as_mut_slice()
+    }
   }
 };
 
@@ -217,10 +241,12 @@ const _: () = {
 const _: () = {
   use tinyvec_1::{Array, ArrayVec};
 
-  impl<T, A> Buffer<T> for ArrayVec<A>
+  impl<T, A> Buffer for ArrayVec<A>
   where
     A: Array<Item = T>,
   {
+    type Item = T;
+
     fn new() -> Self {
       ArrayVec::new()
     }
@@ -256,16 +282,22 @@ const _: () = {
     fn as_slice(&self) -> &[T] {
       self.as_slice()
     }
+
+    fn as_mut_slice(&mut self) -> &mut [T] {
+      self.as_mut_slice()
+    }
   }
 
   #[cfg(any(feature = "std", feature = "alloc"))]
   const _: () = {
     use tinyvec_1::TinyVec;
 
-    impl<T, A> Buffer<T> for TinyVec<A>
+    impl<T, A> Buffer for TinyVec<A>
     where
       A: Array<Item = T>,
     {
+      type Item = T;
+
       fn new() -> Self {
         TinyVec::new()
       }
@@ -292,6 +324,10 @@ const _: () = {
 
       fn as_slice(&self) -> &[T] {
         self.as_slice()
+      }
+
+      fn as_mut_slice(&mut self) -> &mut [T] {
+        self.as_mut_slice()
       }
     }
   };

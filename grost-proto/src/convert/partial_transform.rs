@@ -50,30 +50,33 @@ where
   RB: ?Sized,
   UB: ?Sized,
   Self: Selectable<F>
+    + PartialIdentity<F>
     + State<PartialRef<'a, RB, UB, W, F>, Output = <Self as State<Partial<F>>>::Output>
     + State<Partial<F>>,
   <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Selectable<F, Selector = Self::Selector>,
-  <Self as State<Partial<F>>>::Output:
-    Selectable<F, Selector = Self::Selector> + PartialIdentity<F>,
+  <Self as State<Partial<F>>>::Output: Sized + Selectable<F, Selector = Self::Selector>,
 {
   fn partial_try_from_ref(
-    input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
+    mut input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
   where
     <Self as State<Partial<F>>>::Output: Sized,
     <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized,
   {
-    Ok(PartialIdentity::<F>::partial_identity(input, selector))
+    <Self as PartialIdentity<F>>::partial_identity(&mut input, selector);
+    Ok(input)
   }
 }
 
-pub trait PartialIdentity<F>
+pub trait PartialIdentity<F>: State<Partial<F>>
 where
   F: Flavor + ?Sized,
   Self: Selectable<F>,
+  Self::Output: Sized + Selectable<F, Selector = Self::Selector>,
 {
-  fn partial_identity(input: Self, selector: &Self::Selector) -> Self
-  where
-    Self: Sized;
+  fn partial_identity<'a>(
+    input: &'a mut Self::Output,
+    selector: &'a Self::Selector,
+  ) -> &'a mut Self::Output;
 }
