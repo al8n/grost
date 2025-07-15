@@ -13,34 +13,96 @@ use crate::{
   state::State,
 };
 
-/// A lazy decoder for repeated types (e.g. `Vec<T>`, `[T]`, `HashSet<T>`, `HashMap<K, V>` and etc.) of data that
-/// iterates through the underlying buffer and decode elements on demand.
+/// A lazy decoder for packed repeated elements from binary protocol data.
 ///
-/// `PackedDecoder` provides functionality to decode list-like structures from binary data.
-/// It operates lazily, decoding elements only when requested through iteration.
+/// `PackedDecoder` provides efficient decoding of packed list-like structures
+/// (such as `Vec<T>`, `[T]`, `HashSet<T>`, etc.) from binary data using the Groto
+/// packed format. It implements lazy evaluation, meaning elements are only decoded
+/// when explicitly requested through iteration.
 ///
-/// # Special Case
+/// ## Packed Wire Format
 ///
-/// When `T` is `u8`, the decoder considers the decoding process
-/// complete since the raw bytes are the final representation. In this case, `as_slice()`
-/// returns the entire decoded byte slice.
+/// The decoder expects binary data in this packed format:
+/// ```text
+/// [total_length][element_count][element1][element2][element3]...
+/// ```
 ///
-/// For other types, the decoder will yield decoded elements one by one through iteration
-/// until it reaches the end of the source data.
-pub struct PackedDecoder<'a, T: ?Sized, B, UB: ?Sized, W: ?Sized> {
-  /// the source buffer
+/// Key characteristics:
+/// - **Length-prefixed**: Total byte length of all element data
+/// - **Count-prefixed**: Number of elements that follow
+/// - **Contiguous elements**: No individual identifiers between elements
+/// - **Efficient**: Minimal wire overhead for primitive types
+///
+/// ## Packed vs Repeated Format
+///
+/// Unlike `RepeatedDecoder` which handles:
+/// ```text
+/// [id][element] [id][element] [id][element]...
+/// ```
+///
+/// `PackedDecoder` handles the more compact:
+/// ```text
+/// [length][count][element][element][element]...
+/// ```
+///
+/// ## Construction Strategy
+///
+/// During construction, the decoder:
+/// 1. Reads the total length prefix (varint)
+/// 2. Reads the element count prefix (varint)
+/// 3. Validates buffer contains enough data
+/// 4. Sets up iteration over the contiguous element data
+///
+/// ## Special Optimizations
+///
+/// ### Byte Arrays (`T = u8`)
+/// For byte arrays, the decoder provides direct slice access via:
+/// - `as_slice()` - Returns the complete byte slice
+/// - `Deref<Target = [u8]>` - Automatic dereferencing to slice
+/// - `AsRef<[u8]>` - Reference conversion
+///
+/// This avoids element-by-element iteration for raw byte data.
+///
+/// ## Error Handling
+///
+/// The decoder implements fail-fast error semantics:
+/// - Construction errors for malformed headers or insufficient data
+/// - Iterator errors set an internal flag and stop iteration
+/// - Use [`PackedDecoderIter::remaining_hint()`] to check error state
+///
+/// ## Performance
+///
+/// - **Construction**: O(1) time and space (just header parsing)
+/// - **Iteration**: O(1) time per element, O(1) space
+/// - **Memory**: Zero-copy when possible, minimal internal state
+/// - **Byte optimization**: O(1) slice access for `u8` arrays
+///
+/// ## Thread Safety
+///
+/// `PackedDecoder` is `Send` and `Sync` when its buffer type allows it.
+/// Multiple iterators can be created from the same decoder safely.
+///
+/// [`PackedDecoderIter::remaining_hint()`]: PackedDecoderIter::remaining_hint
+pub struct PackedDecoder<'a, T, B, UB, W> {
+  /// The source buffer containing all packed element data
   src: B,
+  /// Number of elements as read from the count prefix
   expected_elements: usize,
+  /// Size in bytes of the element count prefix
   num_elements_size: usize,
-  /// the length of the length prefix
+  /// Offset to the start of element data (after length and count prefixes)
   data_offset: usize,
+  /// Decoding context for the Groto protocol
   ctx: &'a Context,
+  /// Phantom data for type parameter `T`
   _t: PhantomData<T>,
+  /// Phantom data for type parameter `W`
   _w: PhantomData<W>,
+  /// Phantom data for type parameter `UB`
   _ub: PhantomData<UB>,
 }
 
-impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a, T, B, UB, W> {
+impl<'a, T, B: Clone, UB, W> Clone for PackedDecoder<'a, T, B, UB, W> {
   fn clone(&self) -> Self {
     Self {
       src: self.src.clone(),
@@ -55,14 +117,16 @@ impl<'a, T: ?Sized, B: Clone, UB: ?Sized, W: ?Sized> Clone for PackedDecoder<'a,
   }
 }
 
-impl<'a, T: ?Sized, B: Copy, UB: ?Sized, W: ?Sized> Copy for PackedDecoder<'a, T, B, UB, W> {}
+impl<'a, T, B: Copy, UB, W> Copy for PackedDecoder<'a, T, B, UB, W> {}
 
-impl<'de, T, B, UB, W> PackedDecoder<'de, T, B, UB, W>
-where
-  T: ?Sized,
-  UB: ?Sized,
-  W: ?Sized,
-{
+impl<'de, T, B, UB, W> PackedDecoder<'de, T, B, UB, W> {
+  /// Creates an iterator that borrows from the decoder.
+  ///
+  /// The returned iterator will have the same lifetime as the decoder.
+  /// Multiple iterators can be created from the same decoder, each maintaining
+  /// independent iteration state.
+  ///
+  /// For byte arrays (`T = u8`), consider using `as_slice()` for better performance.
   #[inline]
   pub const fn iter(&self) -> PackedDecoderIter<'_, 'de, T, B, UB, W> {
     PackedDecoderIter {
@@ -74,30 +138,49 @@ where
     }
   }
 
-  /// Returns the number of elements expected according to the wire format.
+  /// Returns a hint for the capacity needed to store all elements.
   ///
-  /// This value is read from the wire format during initialization. It represents
-  /// what the encoder claimed to have written, but the decoder might not successfully
-  /// yield all these elements due to errors, corruption, or early termination.
+  /// This value is read from the element count prefix during construction.
+  /// It represents the number of elements that the encoder claimed to have packed.
   ///
-  /// Use this for pre-allocating containers, but be prepared that the actual
-  /// number of successfully decoded elements might be less.
+  /// **Important**: This is a capacity *hint* based on the wire format,
+  /// not a guarantee of successful decoding. The iterator might not successfully
+  /// yield all these elements due to:
+  /// - Data corruption within individual elements
+  /// - Decoding errors in element content
+  /// - Early termination by the caller
+  ///
+  /// Use this for pre-allocating containers, but always handle potential
+  /// decoding failures gracefully.
   #[inline]
-  pub const fn expected_count(&self) -> usize {
+  pub const fn capacity_hint(&self) -> usize {
     self.expected_elements
+  }
+
+  /// Returns whether the decoder contains any elements.
+  #[inline]
+  pub const fn is_empty(&self) -> bool {
+    self.expected_elements == 0
   }
 }
 
 impl<'a, RB, B> PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  B: ?Sized,
   RB: ReadBuf,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
-  /// This method is specifically optimized for the case where `L` implements `Deref<Target = [u8]>`.
-  /// Since the target type is a byte slice, no further decoding is needed for individual elements.
-  /// The decoder can immediately provide the complete decoded byte slice.
+  /// This method is specifically optimized for packed byte arrays (`T = u8`).
+  /// Since the target type is a byte slice, no element-by-element decoding
+  /// is needed. The decoder can immediately provide the complete decoded
+  /// byte slice with zero overhead.
+  ///
+  /// For non-byte types, use the iterator instead.
+  ///
+  /// # Performance
+  ///
+  /// This is an O(1) operation that provides direct access to the underlying
+  /// byte data without any copying or additional processing.
   #[inline]
   pub fn as_slice(&self) -> &[u8] {
     let src = &self.src;
@@ -106,17 +189,18 @@ where
     }
 
     let src_len = src.len();
-    if src_len <= self.data_offset {
+    let start_offset = self.data_offset + self.num_elements_size;
+
+    if src_len <= start_offset {
       return &[];
     }
 
-    src.as_bytes().split_at(self.data_offset).1
+    &src.as_bytes()[start_offset..]
   }
 }
 
 impl<'a, RB, B> core::ops::Deref for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  B: ?Sized,
   RB: ReadBuf,
 {
   type Target = [u8];
@@ -129,7 +213,6 @@ where
 
 impl<'a, RB, B> AsRef<[u8]> for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  B: ?Sized,
   RB: ReadBuf,
 {
   #[inline]
@@ -140,18 +223,15 @@ where
 
 impl<'a, T, B, UB, W> Selectable<Groto> for PackedDecoder<'a, T, B, UB, W>
 where
-  T: ?Sized + Selectable<Groto>,
+  T: Selectable<Groto>,
   W: WireFormat<Groto> + 'a,
-  UB: ?Sized,
 {
   type Selector = T::Selector;
 }
 
 impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
-  T: ?Sized,
   Packed<W>: WireFormat<Groto> + 'a,
-  B: ?Sized,
   RB: ReadBuf,
 {
   fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -161,19 +241,21 @@ where
       return Err(Error::insufficient_buffer(src_len, buf_len));
     }
 
-    buf[..src_len].copy_from_slice(&self.src.as_bytes()[self.data_offset..]);
+    let start_offset = self.data_offset + self.num_elements_size;
+    buf[..src_len].copy_from_slice(&self.src.as_bytes()[start_offset..]);
     Ok(src_len)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
-    self.src.len() - self.data_offset
+    let start_offset = self.data_offset + self.num_elements_size;
+    self.src.len().saturating_sub(start_offset)
   }
 
   fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     let src = &self.src;
-
     let buf_len = buf.len();
     let src_len = src.len();
+
     if buf_len < src_len {
       return Err(Error::insufficient_buffer(src_len, buf_len));
     }
@@ -203,26 +285,33 @@ where
   {
     let buf = src.as_bytes();
     let buf_len = buf.len();
+
     if buf_len == 0 {
       return Err(Error::buffer_underflow());
     }
 
-    let (len, data_len) = varing::decode_u32_varint(buf)?;
-    let total = len + data_len as usize;
-    if total > buf_len {
+    // Decode the total length prefix
+    let (length_prefix_size, data_length) = varing::decode_u32_varint(buf)?;
+    let data_length = data_length as usize;
+
+    // Verify we have enough data for the declared length
+    let total_consumed = length_prefix_size + data_length;
+    if total_consumed > buf_len {
       return Err(Error::buffer_underflow());
     }
 
-    let (num_elements_size, num_elements) = varing::decode_u32_varint(&buf[len..])?;
-    let num_elements = num_elements as usize;
+    // Decode the element count prefix
+    let count_start = length_prefix_size;
+    let (count_prefix_size, element_count) = varing::decode_u32_varint(&buf[count_start..])?;
+    let element_count = element_count as usize;
 
     Ok((
-      total,
+      total_consumed,
       Self {
-        src: src.slice(..total),
-        data_offset: len,
-        expected_elements: num_elements,
-        num_elements_size: len + num_elements_size,
+        src: src.slice(..total_consumed),
+        data_offset: length_prefix_size,
+        expected_elements: element_count,
+        num_elements_size: count_prefix_size,
         ctx,
         _t: PhantomData,
         _w: PhantomData,
@@ -232,113 +321,132 @@ where
   }
 }
 
-impl<'a, T, B, UB, W> State<Partial<Groto>> for PackedDecoder<'a, T, B, UB, W>
-where
-  T: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
-{
+impl<'a, T, B, UB, W> State<Partial<Groto>> for PackedDecoder<'a, T, B, UB, W> {
   type Output = Self;
 }
 
 impl<'a, T, B, UB, W> State<PartialRef<'a, B, UB, Packed<W>, Groto>>
   for PackedDecoder<'a, T, B, UB, W>
-where
-  T: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
 {
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<Ref<'a, B, UB, Packed<W>, Groto>> for PackedDecoder<'a, T, B, UB, W>
-where
-  T: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
-{
+impl<'a, T, B, UB, W> State<Ref<'a, B, UB, Packed<W>, Groto>> for PackedDecoder<'a, T, B, UB, W> {
   type Output = Self;
 }
 
 impl<'a, T, B, UB, W, S> State<Flattened<S>> for PackedDecoder<'a, T, B, UB, W>
 where
-  T: ?Sized,
-  W: ?Sized,
-  UB: ?Sized,
   S: ?Sized,
 {
   type Output = Self;
 }
 
-pub struct PackedDecoderIter<'a, 'de: 'a, T, RB, UB, W>
-where
-  T: ?Sized,
-  UB: ?Sized,
-  W: ?Sized,
-{
+/// Iterator for lazily decoding packed elements.
+///
+/// This iterator maintains its own state and can be created multiple times
+/// from the same decoder. Each iterator starts from the beginning and
+/// maintains independent progress tracking.
+///
+/// ## Error Handling
+///
+/// The iterator implements fail-fast semantics:
+/// - First error sets the `has_error` flag
+/// - All subsequent `next()` calls return `None`
+/// - Use `remaining_hint()` to detect error state
+///
+/// ## Packed Format Iteration
+///
+/// Unlike repeated format iterators, this iterator processes contiguous
+/// element data without identifier prefixes between elements. Each call
+/// to `next()` advances through the packed data sequentially.
+///
+/// ## State Management
+///
+/// The iterator tracks:
+/// - Current byte offset in the element data
+/// - Number of elements successfully decoded
+/// - Error state for fail-fast behavior
+/// - Expected element count (from count prefix)
+pub struct PackedDecoderIter<'a, 'de: 'a, T, RB, UB, W> {
+  /// Reference to the parent decoder
   decoder: &'a PackedDecoder<'de, T, RB, UB, W>,
+  /// Current byte offset within the source buffer
   offset: usize,
+  /// Number of elements successfully decoded so far
   yielded_elements: usize,
+  /// Total elements expected (from count prefix)
   expected_elements: usize,
+  /// Error flag - once set, iteration stops permanently
   has_error: bool,
 }
 
-impl<'a, 'de: 'a, T, B, UB, W> PackedDecoderIter<'a, 'de, T, B, UB, W>
-where
-  T: ?Sized,
-  UB: ?Sized,
-  W: ?Sized,
-{
+impl<'a, 'de: 'a, T, B, UB, W> PackedDecoderIter<'a, 'de, T, B, UB, W> {
   /// Returns the current byte position within the source buffer.
   ///
-  /// This represents how many bytes have been consumed during iteration.
+  /// This represents how many bytes have been consumed during iteration
+  /// from the start of the element data (after prefixes).
   #[inline]
-  pub const fn current_position(&self) -> usize {
+  pub const fn position(&self) -> usize {
     self.offset
   }
 
   /// Returns the number of elements that have been successfully decoded so far.
   ///
-  /// This count increases each time `next()` successfully returns an element.
-  /// It will never exceed the expected element count from the wire format.
+  /// This count increases each time [`next()`] successfully returns an element.
+  /// It will never exceed the expected element count from the count prefix.
+  ///
+  /// [`next()`]: Iterator::next
   #[inline]
-  pub const fn decoded_count(&self) -> usize {
+  pub const fn decoded(&self) -> usize {
     self.yielded_elements
   }
 
-  /// Returns the number of elements expected according to the wire format.
+  /// Returns the capacity hint from the count prefix.
   ///
-  /// This value is read from the wire format during initialization. It represents
-  /// what the encoder claimed to have written, but the decoder might not successfully
-  /// yield all these elements due to errors, corruption, or early termination.
+  /// This value is read from the element count prefix during decoder construction.
+  /// See [`PackedDecoder::capacity_hint()`] for more details.
   ///
-  /// Use this for pre-allocating containers, but be prepared that the actual
-  /// number of successfully decoded elements might be less.
+  /// [`PackedDecoder::capacity_hint()`]: PackedDecoder::capacity_hint
   #[inline]
-  pub const fn expected_count(&self) -> usize {
+  pub const fn capacity_hint(&self) -> usize {
     self.expected_elements
   }
 
-  /// Returns the number of elements remaining to be attempted, or `None` if an error occurred.
+  /// Returns the estimated number of elements remaining, or `None` if an error occurred.
   ///
-  /// This is calculated as `expected_count - decoded_count`. Note that this represents
-  /// how many elements the decoder will *attempt* to decode, not a guarantee of how
-  /// many will be successfully decoded.
+  /// This is calculated as `capacity_hint() - decoded()`. It represents
+  /// how many elements the iterator will *attempt* to decode, not a guarantee
+  /// of successful decoding.
   ///
-  /// If the decoder has encountered an error during iteration, this returns `None`
-  /// to indicate that the remaining count is unreliable.
+  /// # Error Indication
+  ///
+  /// If the iterator has encountered an error during iteration, this returns `None`
+  /// to indicate that the remaining count is unreliable. This happens when:
+  /// - Buffer underflow occurs
+  /// - Element decoding fails
+  /// - Data corruption is detected
+  ///
+  /// Once an error occurs, the iterator enters a permanent error state and
+  /// will not attempt to decode any more elements.
   ///
   /// # Returns
   ///
   /// - `Some(count)` - Number of elements left to attempt decoding
-  /// - `None` - An error occurred and remaining count is unknown
+  /// - `None` - An error occurred and remaining count is unreliable
   #[inline]
-  pub const fn remaining_expected(&self) -> Option<usize> {
+  pub const fn remaining_hint(&self) -> Option<usize> {
     if self.has_error {
       return None;
     }
 
     Some(self.expected_elements.saturating_sub(self.yielded_elements))
+  }
+
+  /// Returns whether the iterator has encountered an error.
+  #[inline]
+  pub const fn has_error(&self) -> bool {
+    self.has_error
   }
 }
 
@@ -354,32 +462,40 @@ where
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
     let src_len = self.decoder.src.len();
+
+    // Check if we've reached the end of the buffer
     if self.offset >= src_len {
       return None;
     }
 
+    // Check if we've decoded all expected elements
     if self.yielded_elements >= self.expected_elements {
       return None;
     }
 
+    // Check if we're in an error state
     if self.has_error {
       return None;
     }
 
+    // Decode the next element from the packed data
+    // No identifier prefixes in packed format - elements are contiguous
     Some(
       T::decode(self.decoder.ctx, self.decoder.src.slice(self.offset..))
         .inspect(|(read, _)| {
+          // Update position by the number of bytes consumed
           self.offset += read;
           self.yielded_elements += 1;
         })
         .inspect_err(|_| {
+          // Set error flag to prevent further iteration attempts
           self.has_error = true;
         }),
     )
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
-    (0, self.remaining_expected())
+    (0, self.remaining_hint())
   }
 }
 

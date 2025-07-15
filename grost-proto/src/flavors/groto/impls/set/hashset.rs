@@ -55,6 +55,7 @@ where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
   K: State<PartialRef<'a, RB, B, KW, Groto>>,
+  K::Output: Sized,
 {
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
@@ -64,6 +65,7 @@ where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
   K: State<Ref<'a, RB, B, KW, Groto>>,
+  K::Output: Sized,
 {
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
@@ -335,8 +337,8 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let expected_count = input.expected_count();
-    let mut set = HashSet::with_capacity_and_hasher(expected_count, S::default());
+    let capacity_hint = input.capacity_hint();
+    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
     for res in input.iter() {
       match res {
@@ -350,9 +352,9 @@ where
       }
     }
 
-    if set.len() != expected_count && ctx.err_on_length_mismatch() {
+    if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
       return Err(Error::custom(format!(
-        "expected {expected_count} elements in set, but got {} elements",
+        "expected {capacity_hint} elements in set, but got {} elements",
         set.len()
       )));
     }
@@ -380,8 +382,8 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let expected_count = input.expected_count();
-    let mut set = HashSet::with_capacity_and_hasher(expected_count, S::default());
+    let capacity_hint = input.capacity_hint();
+    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
     for res in input.iter() {
       match res {
@@ -395,9 +397,9 @@ where
       }
     }
 
-    if set.len() != expected_count && ctx.err_on_length_mismatch() {
+    if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
       return Err(Error::custom(format!(
-        "expected {expected_count} elements in set, but got {} elements",
+        "expected {capacity_hint} elements in set, but got {} elements",
         set.len()
       )));
     }
@@ -425,9 +427,9 @@ where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
   {
-    let expected_count = input.expected_count();
+    let capacity_hint = input.capacity_hint();
     let Some(mut partial_set) =
-      <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(expected_count)
+      <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
     else {
       return Err(Error::custom("failed to allocate partial set buffer"));
     };
