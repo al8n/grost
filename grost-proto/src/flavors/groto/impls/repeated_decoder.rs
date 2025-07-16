@@ -583,10 +583,7 @@ where
   /// The iterator processes elements from each decoder sequentially,
   /// automatically advancing to the next decoder when the current one
   /// is exhausted.
-  pub fn iter(&self) -> RepeatedDecoderBufferIter<'_, 'de, T, RB, UB, W, TAG, B>
-  where
-    B: Copy,
-  {
+  pub fn iter(&self) -> RepeatedDecoderBufferIter<'_, 'de, T, RB, UB, W, TAG, B> {
     let total_expected = self
       .buffer
       .as_slice()

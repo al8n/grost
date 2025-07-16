@@ -1,5 +1,8 @@
-use std::collections::BTreeSet;
+use super::HashSet;
+
 use varing::decode_u32_varint;
+
+use core::hash::{BuildHasher, Hash};
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
@@ -14,16 +17,16 @@ use crate::{
   state::State,
 };
 
-use super::super::DefaultPartialSetBuffer;
+use super::DefaultPartialSetBuffer;
 
-impl<K> DefaultSetWireFormat<Groto> for BTreeSet<K> {
+impl<K, S> DefaultSetWireFormat<Groto> for HashSet<K, S> {
   type Format<KM>
     = Packed<KM>
   where
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<'a, K, KW, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
@@ -33,7 +36,7 @@ where
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
@@ -43,10 +46,11 @@ where
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Ord + Decode1<'a, KW, RB, B, Groto>,
+  S: BuildHasher + Default,
+  K: Eq + Hash + Decode1<'a, KW, RB, B, Groto>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -71,10 +75,10 @@ where
     let (num_elements_size, num_elements) = decode_u32_varint(&bytes[offset..])?;
     offset += num_elements_size;
     if num_elements == 0 {
-      return Ok((offset, BTreeSet::new()));
+      return Ok((offset, HashSet::with_capacity_and_hasher(0, S::default())));
     }
 
-    let mut set = BTreeSet::new();
+    let mut set = HashSet::with_capacity_and_hasher(num_elements as usize, S::default());
     while set.len() < num_elements as usize && offset < bytes_len {
       let (read, item) = K::decode(context, src.slice(offset..))?;
       offset += read;
@@ -95,7 +99,7 @@ where
   }
 }
 
-impl<K, KW> Encode<Packed<KW>, Groto> for BTreeSet<K>
+impl<K, KW, S> Encode<Packed<KW>, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
@@ -176,7 +180,7 @@ where
   }
 }
 
-impl<K, KW> PartialEncode<Packed<KW>, Groto> for BTreeSet<K>
+impl<K, KW, S> PartialEncode<Packed<KW>, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
@@ -282,11 +286,12 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  S: BuildHasher + Default,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -300,10 +305,11 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let iter = input.iter();
+    let capacity_hint = iter.capacity_hint();
+    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in input.iter() {
+    for res in iter {
       match res {
         Ok((_, item)) => {
           let item = K::try_from_ref(ctx, item)?;
@@ -326,11 +332,12 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  S: BuildHasher + Default,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -344,10 +351,11 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
-    let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let iter = input.iter();
+    let capacity_hint = iter.capacity_hint();
+    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in input.iter() {
+    for res in iter {
       match res {
         Ok((_, item)) => {
           let item = K::try_from_partial_ref(ctx, item)?;
@@ -370,13 +378,14 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
     Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+  S: BuildHasher + Default,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {

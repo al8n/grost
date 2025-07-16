@@ -1,16 +1,10 @@
 use std::collections::BTreeSet;
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{
-    Flattened, Inner, Partial, PartialIdentity, PartialRef, PartialTryFromRef, Ref, TryFromPartial,
-    TryFromPartialRef, TryFromRef,
-  },
-  decode::Decode1,
-  encode::{Encode, PartialEncode},
+  convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
   flavors::{
-    DefaultSetWireFormat, Groto, Packed, WireFormat,
-    groto::{Context, Error, PackedSetDecoder},
+    Groto,
+    groto::{Context, Error},
   },
   selection::Selectable,
   state::State,
@@ -38,4 +32,40 @@ where
   K: Selectable<Groto>,
 {
   type Selector = K::Selector;
+}
+
+impl<K> PartialIdentity<Groto> for BTreeSet<K>
+where
+  K: PartialIdentity<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+{
+  fn partial_identity<'a>(
+    input: &'a mut Self::Output,
+    selector: &'a Self::Selector,
+  ) -> &'a mut Self::Output {
+    input.as_mut_slice().iter_mut().for_each(|item| {
+      K::partial_identity(item, selector);
+    });
+
+    input
+  }
+}
+
+impl<K> TryFromPartial<Groto> for BTreeSet<K>
+where
+  K: TryFromPartial<Groto> + Ord,
+  K::Output: Sized,
+{
+  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
+    let mut set = BTreeSet::new();
+
+    for item in input {
+      let item = K::try_from_partial(ctx, item)?;
+      if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
+        return Err(Error::custom("duplicated keys in set"));
+      }
+    }
+
+    Ok(set)
+  }
 }

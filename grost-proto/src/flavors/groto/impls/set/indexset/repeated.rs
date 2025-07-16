@@ -1,4 +1,6 @@
-use std::collections::BTreeSet;
+use indexmap_2::IndexSet;
+
+use core::hash::BuildHasher;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
@@ -15,15 +17,15 @@ use crate::{
 
 use super::DefaultPartialSetBuffer;
 
-impl<K> DefaultRepeatedWireFormat<Groto> for BTreeSet<K> {
+impl<K, S> DefaultRepeatedWireFormat<Groto> for IndexSet<K, S> {
   type Format<KM, const TAG: u32>
     = Repeated<KM, TAG>
   where
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
-  for BTreeSet<K>
+impl<'a, K, KW, S, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
+  for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
@@ -33,8 +35,8 @@ where
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> State<Ref<'a, RB, B, Repeated<KW, TAG>, Groto>>
-  for BTreeSet<K>
+impl<'a, K, KW, S, RB, B, const TAG: u32> State<Ref<'a, RB, B, Repeated<KW, TAG>, Groto>>
+  for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
@@ -44,7 +46,7 @@ where
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
 }
 
-impl<K, KW, const TAG: u32> Encode<Repeated<KW, TAG>, Groto> for BTreeSet<K>
+impl<K, KW, S, const TAG: u32> Encode<Repeated<KW, TAG>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
@@ -138,7 +140,7 @@ where
   }
 }
 
-impl<K, KW, const TAG: u32> PartialEncode<Repeated<KW, TAG>, Groto> for BTreeSet<K>
+impl<K, KW, S, const TAG: u32> PartialEncode<Repeated<KW, TAG>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
@@ -250,10 +252,12 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto> for BTreeSet<K>
+impl<'a, K, KW, S, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>
+  for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Ord + Decode1<'a, KW, RB, B, Groto>,
+  K: core::hash::Hash + Eq + Decode1<'a, KW, RB, B, Groto>,
+  S: BuildHasher + Default,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -261,7 +265,7 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let mut this = BTreeSet::new();
+    let mut this = IndexSet::with_hasher(Default::default());
     <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
       .map(|size| (size, this))
   }
@@ -309,14 +313,15 @@ where
   }
 }
 
-impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>, Groto>
-  for BTreeSet<K>
+impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>, Groto>
+  for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, UB, KW, Groto> + Ord + 'a,
+  K: TryFromRef<'a, RB, UB, KW, Groto> + core::hash::Hash + Eq + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
+  S: BuildHasher + Default,
 {
   fn try_from_ref(
     ctx: &'a Context,
@@ -329,7 +334,7 @@ where
     UB: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
 
     for res in input.iter() {
       match res {
@@ -354,14 +359,15 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>
-  for BTreeSet<K>
+impl<'a, K, KW, S, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>
+  for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromPartialRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
+  S: BuildHasher + Default,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
@@ -374,7 +380,7 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
 
     for res in input.iter() {
       match res {
@@ -400,10 +406,10 @@ where
 }
 
 impl<'a, K, KW, RB, B, const TAG: u32> PartialTryFromRef<'a, RB, B, Repeated<KW, TAG>, Groto>
-  for BTreeSet<K>
+  for IndexSet<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: PartialTryFromRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
     Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
