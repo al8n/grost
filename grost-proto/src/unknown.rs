@@ -1,7 +1,8 @@
 use crate::{
   buffer::ReadBuf,
   error::Error,
-  flavors::{Flavor, Identifier},
+  flavors::Flavor,
+  identifier::Identifier,
 };
 
 /// The unknown type, used for forward and backward compatibility.

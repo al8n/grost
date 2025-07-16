@@ -4,10 +4,9 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
-    groto::{Context, Error, WireType},
+    groto::{Context, Error, WireType}, DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat
   },
-  selection::Selectable,
+  selection::{Selectable, Selector},
   state::State,
 };
 
@@ -140,7 +139,12 @@ where
   where
     F: Fn(&T, &Context, &S) -> usize,
     R: Fn(&T, &Context, &mut [u8], &S) -> Result<usize, Error>,
+    S: Selector<Groto>,
   {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     if buf.is_empty() {
       let required_len = if let Some(value) = self.value {
         2 + get_len(value, context, selector)
@@ -169,7 +173,12 @@ where
   fn partial_encoded_nullable_len<F, S>(&self, context: &Context, selector: &S, get_len: F) -> usize
   where
     F: Fn(&T, &Context, &S) -> usize,
+    S: Selector<Groto>,
   {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self.value {
       1 + 1 + get_len(value, context, selector) // presence marker + wire type + value length
     } else {

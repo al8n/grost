@@ -1,4 +1,4 @@
-use super::{buffer::ReadBuf, error::ParseTagError};
+use super::{error::ParseTagError, identifier::Identifier};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -133,27 +133,6 @@ pub mod groto;
 
 /// The flavor for encoding and decoding selector
 pub mod selector;
-
-/// The identifier
-pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::Display {
-  /// Returns the wire type of the identifier.
-  fn wire_type(&self) -> F::WireType;
-
-  /// Returns the tag of the identifier.
-  fn tag(&self) -> F::Tag;
-
-  /// Encode the identifier into a buffer.
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, F::Error>;
-
-  /// Return the length of the encoded identifier.
-  fn encoded_len(&self) -> usize;
-
-  /// Decode the identifier from a buffer.
-  fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
-  where
-    B: ReadBuf + Sized + 'de,
-    Self: Sized;
-}
 
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {

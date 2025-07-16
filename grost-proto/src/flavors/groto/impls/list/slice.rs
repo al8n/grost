@@ -1,12 +1,7 @@
 use crate::{
-  convert::{Flattened, Innermost},
-  encode::{Encode, EquivalentEncode, PartialEncode},
-  flavors::{
-    Borrowed, Flatten, Groto, Packed, WireFormat,
-    groto::{Context, Error, LengthDelimited},
-  },
-  reflection::{Reflectable, SchemaType, SchemaTypeReflection},
-  state::State,
+  convert::{Flattened, Innermost}, encode::{Encode, EquivalentEncode, PartialEncode}, flavors::{
+    groto::{Context, Error, LengthDelimited}, Borrowed, Flatten, Groto, Packed, WireFormat
+  }, reflection::{Reflectable, SchemaType, SchemaTypeReflection}, selection::Selector, state::State
 };
 
 mod join;
@@ -305,6 +300,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     check_list_type::<N>()?;
 
     let buf_len = buf.len();
@@ -327,6 +326,10 @@ where
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     self
       .iter()
       .map(|n| n.partial_encoded_raw_len(context, selector))
@@ -339,6 +342,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     check_list_type::<N>()?;
 
     let buf_len = buf.len();
@@ -364,6 +371,10 @@ where
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     let encoded_len =
       <Self as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encoded_raw_len(
         self, context, selector,
@@ -386,6 +397,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     check_list_type::<N>()?;
 
     let buf_len = buf.len();
@@ -409,6 +424,10 @@ where
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     self
       .iter()
       .map(|n| n.partial_encoded_raw_len(context, selector))
@@ -421,6 +440,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     check_list_type::<N>()?;
 
     let buf_len = buf.len();
@@ -447,6 +470,10 @@ where
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     let encoded_len =
       <Self as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encoded_raw_len(
         self, context, selector,

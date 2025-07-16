@@ -135,7 +135,7 @@ impl Varint for Identifier {
   }
 }
 
-impl crate::flavors::Identifier<super::Groto> for Identifier {
+impl crate::identifier::Identifier<super::Groto> for Identifier {
   fn tag(&self) -> Tag {
     self.tag
   }

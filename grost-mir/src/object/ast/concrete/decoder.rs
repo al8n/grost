@@ -266,7 +266,7 @@ If you do not want to implement a customized decoding logic, please see:
           let buf = #path_to_grost::__private::buffer::ReadBuf::as_bytes(
             &self.__grost_read_buffer__
           );
-          let (readed, identifier) = <#identifier as #path_to_grost::__private::flavors::Identifier>::decode(&buf[self.__grost_read_offset__..])?;
+          let (readed, identifier) = <#identifier as #path_to_grost::__private::identifier::Identifier>::decode(&buf[self.__grost_read_offset__..])?;
 
           match identifier {
           }

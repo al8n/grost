@@ -20,6 +20,9 @@ pub use quickcheck;
 /// The flavors of the encoding/decoding
 pub mod flavors;
 
+/// The identifier related types and traits
+pub mod identifier;
+
 /// The reflection of the Graph protocol buffer types
 pub mod reflection;
 
@@ -101,6 +104,7 @@ pub mod __private {
     decode::{self, *},
     encode::{self, *},
     error::{self, *},
+    identifier,
     flavors, groto_varint, indexer, marker, partial_encode_scalar, partial_ref_state, reflection,
     selectable,
     selection::{self, *},

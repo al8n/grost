@@ -4,10 +4,9 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat,
-    groto::{Context, Error},
+    groto::{Context, Error}, DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat
   },
-  selection::Selectable,
+  selection::{Selectable, Selector},
   state::State,
 };
 
@@ -128,6 +127,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, <Groto as Flavor>::Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encode_raw(context, buf, selector)
     } else {
@@ -140,6 +143,10 @@ where
     context: &<Groto as Flavor>::Context,
     selector: &Self::Selector,
   ) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encoded_raw_len(context, selector)
     } else {
@@ -153,6 +160,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encode(context, buf, selector)
     } else {
@@ -161,6 +172,10 @@ where
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encoded_len(context, selector)
     } else {
@@ -173,6 +188,10 @@ where
     context: &Context,
     selector: &Self::Selector,
   ) -> usize {
+    if selector.is_empty() {
+      return 0; // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encoded_length_delimited_len(context, selector)
     } else {
@@ -186,6 +205,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0); // If the selector is empty, no encoding is needed
+    }
+
     if let Some(value) = self {
       value.partial_encode_length_delimited(context, buf, selector)
     } else {
@@ -209,6 +232,10 @@ where
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
+    if src.is_empty() {
+      return Ok((0, None)); // If the source is empty, return None
+    }
+
     T::decode(context, src).map(|(read, val)| (read, Some(val)))
   }
 }

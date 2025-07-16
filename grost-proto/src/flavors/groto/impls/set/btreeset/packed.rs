@@ -10,10 +10,9 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultSetWireFormat, Groto, Packed, WireFormat,
-    groto::{Context, Error, PackedSetDecoder},
+    groto::{Context, Error, PackedSetDecoder}, DefaultSetWireFormat, Groto, Packed, WireFormat
   },
-  selection::Selectable,
+  selection::{Selectable, Selector},
   state::State,
 };
 
@@ -190,6 +189,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
     let encoded_len = self.partial_encoded_raw_len(context, selector);
     let buf_len = buf.len();
     if buf_len < encoded_len {
@@ -212,6 +215,10 @@ where
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
     let num_elems = self.len();
     let mut len = varing::encoded_u32_varint_len(num_elems as u32);
 
@@ -227,6 +234,10 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
     let encoded_raw_len = self.partial_encoded_raw_len(context, selector);
     let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
 
@@ -261,6 +272,10 @@ where
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
     let total_bytes = self.partial_encoded_raw_len(context, selector);
     varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
   }

@@ -1,3 +1,5 @@
+use crate::{identifier::MaybeEncodedIdentifier, selection::Selector};
+
 use super::{
   error::Error,
   flavors::{Flavor, FlavorError, WireFormat},
@@ -371,6 +373,49 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
 /// message fields at runtime. This is particularly useful for filtering, patch updates,
 /// field projections, or implementing protocols with nullable fields.
 ///
+/// ## Field Selection Guarantees
+///
+/// **Important**: The level of field selection depends on the implementing type:
+///
+/// - **The reference types of collections** (e.g., `RepeatedDecoder`, `PackedDecoder`, `PackedSetDecoder`, `PackedMapDecoder`, `RepeatedMapDecoder`): May encode additional fields
+///
+/// ### Collection Reference Types Behavior
+///
+/// The reference types of collections are lazy decoders by default that hold encoded collection data and decode
+/// elements on-demand during iteration. To encode only selected fields, they must first decode
+/// each element and then re-encode with field selection applied. This process has several implications:
+///
+/// #### Trade-offs
+///
+/// - **Memory efficiency vs. Field precision**: Lazy decoders avoid allocating full collections in memory,
+///   but may include additional fields in the output due to decoding granularity
+/// - **Performance vs. Size**: Direct encoding from lazy decoders is faster (zero-allocating) but produces larger output;
+///   decoding to owned data first is slower but guarantees minimal output size
+///
+/// #### Impact and Mitigation
+///
+/// **Generally not problematic**: On decoding, decoders can skip unselected fields,
+/// so additional fields don't affect correctness.
+///
+/// **When size matters**: If encoded size is critical for your protocol (bandwidth-constrained
+/// networks, storage limits, etc.), decode to owned collections first:
+///
+/// ```rust,ignore
+/// // Option 1: Direct encoding (faster, potentially larger output)
+/// let decoder: RepeatedDecoder<UserRef<'_>> = // ... from encoded data
+/// let data = decoder.partial_encode_to_vec(context, &selector)?; // May include additional fields beyond selection
+///
+/// // Option 2: Decode-first approach (slower, guaranteed minimal output)
+/// let users: Vec<User> = TryFromRef::try_from_ref(decoder)?; // Decode to owned collection
+/// let data = users.partial_encode_to_vec(context, &selector)?; // Guaranteed to contain only selected fields
+/// ```
+///
+/// #### Recommendation
+///
+/// - **Default approach**: Use direct encoding from collection reference types for better performance and memory usage
+/// - **Size-critical protocols**: Decode to owned collections first when output size must be minimized
+/// - **Hybrid approach**: Profile your specific use case to determine the optimal trade-off
+///
 /// ## Encoding Method Comparison
 ///
 /// Like [`Encode`], this trait provides three encoding strategies for partial data:
@@ -693,6 +738,372 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
       .map(Into::into)
   }
 }
+
+/// A trait for encoding selected fields with their field identifiers in protobuf-style formats.
+///
+/// `PartialEncodeField` extends [`PartialEncode`] by adding field identifier encoding,
+/// making it suitable for encoding fields within parent structures in protobuf-like wire formats.
+/// This trait handles the complete field encoding process: identifier + selected data.
+///
+/// ## Key Differences from [`PartialEncode`]
+///
+/// | Aspect | [`PartialEncode`] | `PartialEncodeField` |
+/// |--------|-------------------|---------------------|
+/// | **Purpose** | Direct encoding of selected data | Field encoding with identifier |
+/// | **Output** | `[selected_data]` | `[identifier][selected_data]` |
+/// | **Use case** | Root-level encoding | Field within parent structure |
+/// | **Identifier** | None | Required via `MaybeEncodedIdentifier` |
+///
+/// ## Field Encoding Process
+///
+/// Each method in this trait follows the same pattern:
+/// 1. **Selection check**: If selector is empty, return 0 (no encoding)
+/// 2. **Size calculation**: Calculate total size (identifier + selected data)
+/// 3. **Buffer validation**: Ensure sufficient buffer space
+/// 4. **Identifier encoding**: Write the field identifier first
+/// 5. **Data encoding**: Write the selected data using corresponding `PartialEncode` method
+///
+/// ## Empty Selection Optimization
+///
+/// All methods include an important optimization:
+/// ```rust
+/// if selector.is_empty() {
+///     return Ok(0);
+/// }
+/// ```
+/// 
+/// This ensures that:
+/// - **No field identifier is written** when no data is selected
+/// - **Zero bytes are produced** for completely unselected fields
+/// - **Performance is optimized** by avoiding unnecessary encoding work
+///
+/// ## Method Variants
+///
+/// This trait provides field encoding variants for all three `PartialEncode` methods:
+///
+/// ### Raw Field Encoding
+/// - `partial_encode_raw_field()` / `partial_encoded_raw_field_len()`
+/// - **Format**: `[identifier][raw_selected_data]`
+/// - **Use case**: Custom protocols, concatenation scenarios
+///
+/// ### Standard Field Encoding  
+/// - `partial_encode_field()` / `partial_encoded_field_len()`
+/// - **Format**: `[identifier][self_describing_selected_data]`
+/// - **Use case**: Standard protobuf-style field encoding
+/// - **Decoder compatible**: Output can be decoded by corresponding partial decoders
+///
+/// ### Length-Delimited Field Encoding
+/// - `partial_encode_length_delimited_field()` / `partial_encoded_length_delimited_field_len()`
+/// - **Format**: `[identifier][length_prefix][selected_data]`
+/// - **Use case**: Streaming protocols, framed messages
+/// - **Special requirement**: Needs length-delimited-aware decoders
+///
+/// ## Buffer Management
+///
+/// All encoding methods include comprehensive buffer management:
+/// - **Pre-flight size checks**: Validate buffer capacity before encoding
+/// - **Incremental validation**: Check buffer space at each encoding step
+/// - **Detailed error context**: Provide expected vs. actual buffer sizes in errors
+/// - **Atomic operations**: Either complete encoding succeeds or no bytes are written
+///
+/// ## Performance Characteristics
+///
+/// - **Zero allocation**: All methods work with provided buffers
+/// - **Single pass**: Each method makes exactly one pass through the data
+/// - **Early termination**: Empty selectors return immediately without processing
+/// - **Compile-time optimization**: Field identifiers can be pre-encoded at compile time
+/// - **Minimal overhead**: Identifier encoding is typically 1-5 bytes per field
+///
+/// ## Design Rationale
+///
+/// This trait addresses the fundamental challenge in protobuf-style encoding:
+/// **field selection must be determined before the field identifier is encoded**.
+/// 
+/// By providing a separate trait for field-level encoding, we achieve:
+/// - **Clean separation**: Direct encoding vs. field encoding are distinct operations
+/// - **Optimization opportunities**: Empty selections can skip all encoding work
+/// - **Flexibility**: Different identifier types and encoding strategies
+/// - **Consistency**: All three encoding variants follow the same pattern
+///
+/// ## Implementation Notes
+///
+/// This trait is automatically implemented for all types that implement `PartialEncode`:
+/// ```rust,ignore
+/// impl<F, W, T> PartialEncodeField<W, F> for T
+/// where
+///     T: PartialEncode<W, F> + ?Sized,
+///     F: Flavor + ?Sized,
+///     W: WireFormat<F>,
+/// {}
+/// ```
+///
+/// This blanket implementation ensures that any type supporting partial encoding
+/// automatically supports field encoding without additional implementation work.
+pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>:
+  PartialEncode<W, F>
+{
+  /// Encodes selected fields as a raw field with identifier.
+  ///
+  /// This method combines field identifier encoding with raw partial data encoding,
+  /// producing the format: `[identifier][raw_selected_data]`.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][raw_partial_data]
+  /// ```
+  ///
+  /// ## Empty Selection Behavior
+  /// If the selector is empty (no fields selected), this method returns `Ok(0)`
+  /// without writing any bytes, including the field identifier.
+  ///
+  /// ## Parameters
+  /// - `context`: Encoding context for the flavor
+  /// - `identifier`: Field identifier to encode before the data
+  /// - `buf`: Buffer to write the encoded field to
+  /// - `selector`: Specifies which fields to include in the encoding
+  ///
+  /// ## Returns
+  /// - `Ok(usize)`: Number of bytes written (identifier + selected data)
+  /// - `Err(F::Error)`: Buffer insufficient or encoding error
+  ///
+  /// ## Buffer Requirements
+  /// The buffer must be large enough to hold both the identifier and the selected data.
+  /// Use `partial_encoded_raw_field_len()` to determine the required buffer size.
+  fn partial_encode_raw_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, F::Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    let buf_len = buf.len();
+    let encoded_data_len = self.partial_encoded_raw_len(context, selector);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self.partial_encode_raw(context, &mut buf[offset..], selector)
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for raw field encoding.
+  ///
+  /// Calculates the total number of bytes that `partial_encode_raw_field` will write,
+  /// including both the field identifier and the selected data.
+  ///
+  /// ## Returns
+  /// - `0` if the selector is empty (no encoding will occur)
+  /// - `identifier_len + selected_data_len` otherwise
+  fn partial_encoded_raw_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    selector: &Self::Selector,
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    let encoded_data_len = self.partial_encoded_raw_len(context, selector);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+
+  /// Encodes selected fields as a complete field with identifier.
+  ///
+  /// This method combines field identifier encoding with standard partial data encoding,
+  /// producing the format: `[identifier][self_describing_selected_data]`.
+  ///
+  /// **Important**: This is the primary method for field encoding in protobuf-style formats.
+  /// The output is compatible with corresponding partial decoders.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][self_describing_partial_data]
+  /// ```
+  ///
+  /// ## Empty Selection Behavior
+  /// If the selector is empty, returns `Ok(0)` without writing any bytes.
+  ///
+  /// ## Decoder Compatibility
+  /// The output of this method can be decoded by partial decoders that expect
+  /// the standard field encoding format.
+  fn partial_encode_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, F::Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    let buf_len = buf.len();
+    let encoded_data_len = self.partial_encoded_len(context, selector);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self.partial_encode(context, &mut buf[offset..], selector)
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for standard field encoding.
+  ///
+  /// Calculates the total bytes for identifier + self-describing selected data.
+  fn partial_encoded_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    selector: &Self::Selector,
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    let encoded_data_len = self.partial_encoded_len(context, selector);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+
+  /// Encodes selected fields as a length-delimited field with identifier.
+  ///
+  /// This method produces a length-delimited field format suitable for streaming
+  /// protocols: `[identifier][length_prefix][selected_data]`.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][varint_length][selected_data]
+  /// ```
+  ///
+  /// ## Use Cases
+  /// - Streaming protocols that need message boundaries
+  /// - Framed transport protocols
+  /// - Protocols where field length must be known before processing data
+  ///
+  /// ## Decoder Requirements
+  /// Requires length-delimited-aware partial decoders. Standard partial decoders
+  /// expect the output of `partial_encode_field`, not this method.
+  ///
+  /// ## Empty Selection Behavior
+  /// Returns `Ok(0)` without writing any bytes if the selector is empty.
+  fn partial_encode_length_delimited_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, F::Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    let buf_len = buf.len();
+    let encoded_data_len = self.partial_encoded_length_delimited_len(context, selector);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self.partial_encode_length_delimited(context, &mut buf[offset..], selector)
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for length-delimited field encoding.
+  ///
+  /// Calculates the total bytes for identifier + length prefix + selected data.
+  fn partial_encoded_length_delimited_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    selector: &Self::Selector,
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    let encoded_data_len = self.partial_encoded_length_delimited_len(context, selector);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+}
+
+impl<F, W, T> PartialEncodeField<W, F> for T
+where
+  T: PartialEncode<W, F> + ?Sized,
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{}
 
 impl<F, W, T> Encode<W, F> for &T
 where
