@@ -6,7 +6,8 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{Context, Error, Identifier, Tag}, Flavor, Groto, Repeated, WireFormat
+    Flavor, Groto, Repeated, WireFormat,
+    groto::{Context, Error, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::State,
@@ -167,6 +168,66 @@ where
 
   fn encoded_len(&self, ctx: &Context) -> usize {
     self.encoded_raw_len(ctx)
+  }
+}
+
+impl<'a, T, RB, UB, W, const TAG: u32> PartialEncode<Repeated<W, TAG>, Groto>
+  for RepeatedDecoder<'a, T, RB, UB, W, TAG>
+where
+  W: WireFormat<Groto> + 'a,
+  Repeated<W, TAG>: WireFormat<Groto> + 'a,
+  T: Decode1<'a, W, RB, UB, Groto> + Selectable<Groto>,
+  RB: ReadBuf + 'a,
+  UB: UnknownBuffer<RB, Groto> + 'a,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    <Self as Encode<Repeated<W, TAG>, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn partial_encoded_raw_len(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    <Self as Encode<Repeated<W, TAG>, Groto>>::encoded_raw_len(self, context)
+  }
+
+  fn partial_encode(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, <Groto as Flavor>::Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    <Self as Encode<Repeated<W, TAG>, Groto>>::encode(self, context, buf)
+  }
+
+  fn partial_encoded_len(
+    &self,
+    context: &<Groto as Flavor>::Context,
+    selector: &Self::Selector,
+  ) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    <Self as Encode<Repeated<W, TAG>, Groto>>::encoded_len(self, context)
   }
 }
 
@@ -649,11 +710,7 @@ where
     <Self as Encode<Repeated<W, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
-  fn partial_encoded_raw_len(
-    &self,
-    context: &Context,
-    selector: &Self::Selector,
-  ) -> usize {
+  fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
     if selector.is_empty() {
       return 0;
     }
@@ -674,11 +731,7 @@ where
     <Self as Encode<Repeated<W, TAG>, Groto>>::encode(self, context, buf)
   }
 
-  fn partial_encoded_len(
-    &self,
-    context: &Context,
-    selector: &Self::Selector,
-  ) -> usize {
+  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
     if selector.is_empty() {
       return 0;
     }

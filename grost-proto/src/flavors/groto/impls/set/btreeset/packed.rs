@@ -10,7 +10,8 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{Context, Error, PackedSetDecoder}, DefaultSetWireFormat, Groto, Packed, WireFormat
+    DefaultSetWireFormat, Groto, Packed, WireFormat,
+    groto::{Context, Error, PackedSetDecoder},
   },
   selection::{Selectable, Selector},
   state::State,

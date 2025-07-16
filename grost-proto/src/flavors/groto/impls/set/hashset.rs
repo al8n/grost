@@ -15,7 +15,8 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{Context, Error, PackedSetDecoder}, DefaultRepeatedWireFormat, DefaultSetWireFormat, Groto, Packed, Repeated, WireFormat
+    DefaultRepeatedWireFormat, DefaultSetWireFormat, Groto, Packed, Repeated, WireFormat,
+    groto::{Context, Error, PackedSetDecoder},
   },
   selection::{Selectable, Selector},
   state::State,

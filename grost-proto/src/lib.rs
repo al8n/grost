@@ -104,9 +104,8 @@ pub mod __private {
     decode::{self, *},
     encode::{self, *},
     error::{self, *},
-    identifier,
-    flavors, groto_varint, indexer, marker, partial_encode_scalar, partial_ref_state, reflection,
-    selectable,
+    flavors, groto_varint, identifier, indexer, marker, partial_encode_scalar, partial_ref_state,
+    reflection, selectable,
     selection::{self, *},
     state,
   };

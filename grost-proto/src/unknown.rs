@@ -1,9 +1,4 @@
-use crate::{
-  buffer::ReadBuf,
-  error::Error,
-  flavors::Flavor,
-  identifier::Identifier,
-};
+use crate::{buffer::ReadBuf, error::Error, flavors::Flavor, identifier::Identifier};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,

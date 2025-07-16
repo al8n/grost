@@ -771,7 +771,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
 ///     return Ok(0);
 /// }
 /// ```
-/// 
+///
 /// This ensures that:
 /// - **No field identifier is written** when no data is selected
 /// - **Zero bytes are produced** for completely unselected fields
@@ -818,7 +818,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
 ///
 /// This trait addresses the fundamental challenge in protobuf-style encoding:
 /// **field selection must be determined before the field identifier is encoded**.
-/// 
+///
 /// By providing a separate trait for field-level encoding, we achieve:
 /// - **Clean separation**: Direct encoding vs. field encoding are distinct operations
 /// - **Optimization opportunities**: Empty selections can skip all encoding work
@@ -839,9 +839,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
 ///
 /// This blanket implementation ensures that any type supporting partial encoding
 /// automatically supports field encoding without additional implementation work.
-pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>:
-  PartialEncode<W, F>
-{
+pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncode<W, F> {
   /// Encodes selected fields as a raw field with identifier.
   ///
   /// This method combines field identifier encoding with raw partial data encoding,
@@ -897,7 +895,8 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>:
       return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
-    let written = self.partial_encode_raw(context, &mut buf[offset..], selector)
+    let written = self
+      .partial_encode_raw(context, &mut buf[offset..], selector)
       .map_err(|mut e| {
         e.update_insufficient_buffer(encoded_len, buf_len);
         e
@@ -982,7 +981,8 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>:
       return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
-    let written = self.partial_encode(context, &mut buf[offset..], selector)
+    let written = self
+      .partial_encode(context, &mut buf[offset..], selector)
       .map_err(|mut e| {
         e.update_insufficient_buffer(encoded_len, buf_len);
         e
@@ -1064,7 +1064,8 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>:
       return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
     }
 
-    let written = self.partial_encode_length_delimited(context, &mut buf[offset..], selector)
+    let written = self
+      .partial_encode_length_delimited(context, &mut buf[offset..], selector)
       .map_err(|mut e| {
         e.update_insufficient_buffer(encoded_len, buf_len);
         e
@@ -1103,7 +1104,8 @@ where
   T: PartialEncode<W, F> + ?Sized,
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-{}
+{
+}
 
 impl<F, W, T> Encode<W, F> for &T
 where

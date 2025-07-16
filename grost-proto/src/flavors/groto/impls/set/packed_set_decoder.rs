@@ -4,7 +4,7 @@ use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   convert::{Flattened, Partial, PartialRef, Ref},
   decode::Decode1,
-  encode::Encode,
+  encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
     groto::{Context, Error, PackedDecoder, PackedDecoderIter},
@@ -266,6 +266,40 @@ where
 
   fn encoded_len(&self, ctx: &Context) -> usize {
     self.0.encoded_len(ctx)
+  }
+}
+
+impl<'a, T, RB, B, W> PartialEncode<Packed<W>, Groto> for PackedSetDecoder<'a, T, RB, B, W>
+where
+  W: WireFormat<Groto> + 'a,
+  Packed<W>: WireFormat<Groto> + 'a,
+  RB: ReadBuf,
+  T: Selectable<Groto>,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    self.0.partial_encode_raw(context, buf, selector)
+  }
+
+  fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    self.0.partial_encoded_raw_len(context, selector)
+  }
+
+  fn partial_encode(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    self.0.partial_encode(context, buf, selector)
+  }
+
+  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    self.0.partial_encoded_len(context, selector)
   }
 }
 

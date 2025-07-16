@@ -1,6 +1,5 @@
 use super::{buffer::ReadBuf, flavors::Flavor};
 
-
 /// The identifier
 pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::Display {
   /// Returns the wire type of the identifier.
@@ -23,7 +22,7 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
 }
 
 /// An encoded identifier for a flavor.
-/// 
+///
 /// The struct contains the identifier and its encoded representation.
 pub struct EncodedIdentifier<'a, F: Flavor + ?Sized> {
   identifier: F::Identifier,
@@ -40,7 +39,9 @@ impl<'a, F: Flavor + ?Sized> core::fmt::Debug for EncodedIdentifier<'a, F> {
 }
 
 impl<'a, F: Flavor + ?Sized> core::clone::Clone for EncodedIdentifier<'a, F> {
-  fn clone(&self) -> Self { *self }
+  fn clone(&self) -> Self {
+    *self
+  }
 }
 
 impl<'a, F: Flavor + ?Sized> core::marker::Copy for EncodedIdentifier<'a, F> {}
@@ -49,7 +50,10 @@ impl<'a, F: Flavor + ?Sized> EncodedIdentifier<'a, F> {
   /// Creates a new compiled identifier.
   #[inline]
   pub const fn new(identifier: F::Identifier, encoded: &'a [u8]) -> Self {
-    Self { identifier, encoded }
+    Self {
+      identifier,
+      encoded,
+    }
   }
 
   /// Returns the identifier.
@@ -75,8 +79,14 @@ pub enum MaybeEncodedIdentifier<'a, F: Flavor + ?Sized> {
 impl<'a, F: Flavor + ?Sized> core::fmt::Debug for MaybeEncodedIdentifier<'a, F> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match self {
-      Self::Encoded(encoded) => f.debug_tuple("MaybeEncodedIdentifier::Encoded").field(encoded).finish(),
-      Self::Identifier(identifier) => f.debug_tuple("MaybeEncodedIdentifier::Identifier").field(identifier).finish(),
+      Self::Encoded(encoded) => f
+        .debug_tuple("MaybeEncodedIdentifier::Encoded")
+        .field(encoded)
+        .finish(),
+      Self::Identifier(identifier) => f
+        .debug_tuple("MaybeEncodedIdentifier::Identifier")
+        .field(identifier)
+        .finish(),
     }
   }
 }
@@ -126,7 +136,7 @@ impl<'a, F: Flavor + ?Sized> MaybeEncodedIdentifier<'a, F> {
         }
         buf[..encoded_len].copy_from_slice(encoded.encoded());
         Ok(encoded_len)
-      },
+      }
       Self::Identifier(identifier) => identifier.encode(buf),
     }
   }

@@ -4,7 +4,8 @@ use crate::{
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{Context, Error}, DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat
+    DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat,
+    groto::{Context, Error},
   },
   selection::{Selectable, Selector},
   state::State,
