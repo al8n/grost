@@ -8,7 +8,7 @@ use crate::{
   convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef},
   flavors::{
     DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
-    RepeatedEntry, WireFormat, groto::PackedEntriesDecoder,
+    RepeatedEntry, WireFormat, groto::PackedMapDecoder,
   },
   state::State,
 };
@@ -57,5 +57,5 @@ where
   VW: WireFormat<Groto> + 'a,
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
 {
-  type Output = PackedEntriesDecoder<'a, K, V, RB, B, KW, VW>;
+  type Output = PackedMapDecoder<'a, K, V, RB, B, KW, VW>;
 }
