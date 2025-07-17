@@ -5,13 +5,14 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef},
-  flavors::{
-    DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
-    RepeatedEntry, WireFormat, groto::PackedMapDecoder,
-  },
+  convert::{Flattened, Inner, MapKey, MapValue, Partial},
+  flavors::Groto,
+  selection::Selectable,
   state::State,
 };
+
+mod packed;
+mod repeated;
 
 impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {
   type Output = (K, V);
@@ -25,37 +26,20 @@ impl<K, V, S> State<Flattened<MapValue>> for HashMap<K, V, S> {
   type Output = V;
 }
 
-impl<K, V, S> DefaultMapWireFormat<Groto> for HashMap<K, V, S> {
-  type Format<KM, VM>
-    = PackedEntry<KM, VM>
-  where
-    KM: WireFormat<Groto> + 'static,
-    VM: WireFormat<Groto> + 'static;
-}
-
-impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for HashMap<K, V, S> {
-  type Format<KM, VM, const TAG: u32>
-    = RepeatedEntry<KM, VM, TAG>
-  where
-    KM: WireFormat<Groto> + 'static,
-    VM: WireFormat<Groto> + 'static,
-    MergedWireFormat<KM, VM>: WireFormat<Groto> + 'static;
-}
-
 impl<K, V, S> State<Partial<Groto>> for HashMap<K, V, S>
 where
+  K: State<Partial<Groto>>,
+  K::Output: Sized,
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = HashMap<K, V::Output, S>;
+  type Output = super::DefaultPartialMapBuffer<K::Output, V::Output>;
 }
 
-impl<'a, K, V, KW, VW, S, RB, B> State<PartialRef<'a, RB, B, PackedEntry<KW, VW>, Groto>>
-  for HashMap<K, V, S>
+impl<K, V, S> Selectable<Groto> for HashMap<K, V, S>
 where
-  KW: WireFormat<Groto> + 'a,
-  VW: WireFormat<Groto> + 'a,
-  PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
+  K: Selectable<Groto>,
+  V: Selectable<Groto>,
 {
-  type Output = PackedMapDecoder<'a, K, V, RB, B, KW, VW>;
+  type Selector = super::MapSelector<K::Selector, V::Selector>;
 }

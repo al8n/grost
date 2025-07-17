@@ -6,8 +6,8 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    Groto, PackedEntry, WireFormat, Tag,
-    groto::{Context, Error, Identifier},
+    Groto, PackedEntry, WireFormat,
+    groto::{Context, Error, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::State,
@@ -232,8 +232,7 @@ where
   }
 }
 
-impl<'a, K, V, B, KW, VW, RB> 
-  Decode1<'a, PackedEntry<KW, VW>, RB, B, Groto> 
+impl<'a, K, V, B, KW, VW, RB> Decode1<'a, PackedEntry<KW, VW>, RB, B, Groto>
   for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
@@ -241,10 +240,7 @@ where
   VW: WireFormat<Groto> + 'a,
   RB: ReadBuf,
 {
-  fn decode(
-    ctx: &'a Context,
-    src: RB,
-  ) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
     RB: crate::buffer::ReadBuf,
