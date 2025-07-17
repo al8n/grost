@@ -6,20 +6,15 @@ use crate::{
   state::State,
 };
 
+pub use entry::PartialMapEntry;
 pub use packed_map_decoder::PackedMapDecoder;
 pub use repeated_map_decoder::RepeatedMapDecoder;
+pub use selector::MapSelector;
 
 #[cfg(any(feature = "std", feature = "hashbrown_0_15"))]
 mod hashmap;
 
+mod entry;
 mod packed_map_decoder;
 mod repeated_map_decoder;
-
-pub enum MapEntry<K, V> {
-  Key(K),
-  Value(V),
-  Pair {
-    key: K,
-    value: V,
-  }
-}
+mod selector;

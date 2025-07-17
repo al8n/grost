@@ -6,20 +6,20 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    Groto, Packed, WireFormat,
-    groto::{Context, Error, Fixed8},
+    Groto, PackedEntry, WireFormat, Tag,
+    groto::{Context, Error, Identifier},
   },
   selection::{Selectable, Selector},
   state::State,
 };
 
-use super::MapEntry;
+use super::{MapSelector, PartialMapEntry};
 
 /// A lazy decoder for packed map entries from binary protocol data.
 ///
 /// `PackedMapDecoder` provides efficient decoding of packed map-like structures
 /// (such as `HashMap<K, V>`, `BTreeMap<K, V>`, etc.) from binary data using the Groto
-/// packed format. It implements lazy evaluation, meaning key-value pairs are only 
+/// packed format. It implements lazy evaluation, meaning key-value pairs are only
 /// decoded when explicitly requested through iteration.
 ///
 /// ## Packed Wire Format
@@ -71,6 +71,8 @@ pub struct PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   data_offset: usize,
   /// Decoding context for the Groto protocol
   ctx: &'a Context,
+  key_identifier: Identifier,
+  value_identifier: Identifier,
   _k: PhantomData<K>,
   _v: PhantomData<V>,
   _kw: PhantomData<KW>,
@@ -78,15 +80,15 @@ pub struct PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   _ub: PhantomData<UB>,
 }
 
-impl<'a, K, V, B: Clone, UB, KW, VW> Clone 
-  for PackedMapDecoder<'a, K, V, B, UB, KW, VW> 
-{
+impl<'a, K, V, B: Clone, UB, KW, VW> Clone for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   fn clone(&self) -> Self {
     Self {
       src: self.src.clone(),
       data_offset: self.data_offset,
       expected_elements: self.expected_elements,
       num_elements_size: self.num_elements_size,
+      key_identifier: self.key_identifier,
+      value_identifier: self.value_identifier,
       ctx: self.ctx,
       _k: PhantomData,
       _v: PhantomData,
@@ -97,13 +99,9 @@ impl<'a, K, V, B: Clone, UB, KW, VW> Clone
   }
 }
 
-impl<'a, K, V, B: Copy, UB, KW, VW> Copy 
-  for PackedMapDecoder<'a, K, V, B, UB, KW, VW> 
-{}
+impl<'a, K, V, B: Copy, UB, KW, VW> Copy for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {}
 
-impl<'de, K, V, B, UB, KW, VW> 
-  PackedMapDecoder<'de, K, V, B, UB, KW, VW> 
-{
+impl<'de, K, V, B, UB, KW, VW> PackedMapDecoder<'de, K, V, B, UB, KW, VW> {
   /// Creates an iterator that borrows from the decoder.
   ///
   /// The returned iterator will have the same lifetime as the decoder.
@@ -139,6 +137,192 @@ impl<'de, K, V, B, UB, KW, VW>
   }
 }
 
+impl<'a, K, V, RB, B, KW, VW> Encode<PackedEntry<KW, VW>, Groto>
+  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+where
+  PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
+  RB: ReadBuf,
+{
+  fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    let buf_len = buf.len();
+    let src_len = self.encoded_raw_len(ctx);
+    if buf_len < src_len {
+      return Err(Error::insufficient_buffer(src_len, buf_len));
+    }
+
+    let start_offset = self.data_offset + self.num_elements_size;
+    buf[..src_len].copy_from_slice(&self.src.as_bytes()[start_offset..]);
+    Ok(src_len)
+  }
+
+  fn encoded_raw_len(&self, _: &Context) -> usize {
+    let start_offset = self.data_offset + self.num_elements_size;
+    self.src.len().saturating_sub(start_offset)
+  }
+
+  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    let src = &self.src;
+    let buf_len = buf.len();
+    let src_len = src.len();
+
+    if buf_len < src_len {
+      return Err(Error::insufficient_buffer(src_len, buf_len));
+    }
+
+    buf[..src_len].copy_from_slice(src.as_bytes());
+    Ok(src_len)
+  }
+
+  fn encoded_len(&self, _: &Context) -> usize {
+    self.src.len()
+  }
+}
+
+impl<'a, K, V, RB, B, KW, VW> PartialEncode<PackedEntry<KW, VW>, Groto>
+  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+where
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+  PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
+  RB: ReadBuf,
+  K: Selectable<Groto>,
+  V: Selectable<Groto>,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    // Check if either key or value selector is empty
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    <Self as Encode<PackedEntry<KW, VW>, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context)
+  }
+
+  fn partial_encode(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    if selector.is_empty() {
+      return Ok(0);
+    }
+
+    <Self as Encode<PackedEntry<KW, VW>, Groto>>::encode(self, context, buf)
+  }
+
+  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    if selector.is_empty() {
+      return 0;
+    }
+
+    <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_len(self, context)
+  }
+}
+
+impl<'a, K, V, B, KW, VW, RB> 
+  Decode1<'a, PackedEntry<KW, VW>, RB, B, Groto> 
+  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+where
+  PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+  RB: ReadBuf,
+{
+  fn decode(
+    ctx: &'a Context,
+    src: RB,
+  ) -> Result<(usize, Self), Error>
+  where
+    Self: Sized + 'a,
+    RB: crate::buffer::ReadBuf,
+    B: UnknownBuffer<RB, Groto> + 'a,
+  {
+    let buf = src.as_bytes();
+    let buf_len = buf.len();
+
+    if buf_len == 0 {
+      return Err(Error::buffer_underflow());
+    }
+
+    // Decode the total length prefix
+    let (length_prefix_size, data_length) = varing::decode_u32_varint(buf)?;
+    let data_length = data_length as usize;
+
+    // Verify we have enough data for the declared length
+    let total_consumed = length_prefix_size + data_length;
+    if total_consumed > buf_len {
+      return Err(Error::buffer_underflow());
+    }
+
+    // Decode the element count prefix (number of key-value pairs)
+    let count_start = length_prefix_size;
+    let (count_prefix_size, element_count) = varing::decode_u32_varint(&buf[count_start..])?;
+    let element_count = element_count as usize;
+
+    Ok((
+      total_consumed,
+      Self {
+        src: src.slice(..total_consumed),
+        data_offset: length_prefix_size,
+        expected_elements: element_count,
+        num_elements_size: count_prefix_size,
+        key_identifier: Identifier::new(KW::WIRE_TYPE, Tag::new(1)),
+        value_identifier: Identifier::new(VW::WIRE_TYPE, Tag::new(2)),
+        ctx,
+        _k: PhantomData,
+        _v: PhantomData,
+        _kw: PhantomData,
+        _vw: PhantomData,
+        _ub: PhantomData,
+      },
+    ))
+  }
+}
+
+impl<'a, K, V, B, UB, KW, VW> Selectable<Groto> for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+where
+  K: Selectable<Groto>,
+  V: Selectable<Groto>,
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+{
+  // For maps, we might use a composite selector that can select both keys and values
+  type Selector = MapSelector<K::Selector, V::Selector>;
+}
+
+impl<'a, K, V, B, UB, KW, VW> State<Partial<Groto>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+  type Output = Self;
+}
+
+impl<'a, K, V, B, UB, KW, VW> State<PartialRef<'a, B, UB, PackedEntry<KW, VW>, Groto>>
+  for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+{
+  type Output = Self;
+}
+
+impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, B, UB, PackedEntry<KW, VW>, Groto>>
+  for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+{
+  type Output = Self;
+}
+
+impl<'a, K, V, B, UB, KW, VW, S> State<Flattened<S>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+  type Output = Self;
+}
+
 /// Iterator for lazily decoding packed map entries.
 ///
 /// This iterator maintains its own state and can be created multiple times
@@ -154,8 +338,8 @@ impl<'de, K, V, B, UB, KW, VW>
 ///
 /// ## Packed Format Iteration
 ///
-/// The iterator processes contiguous key-value pairs without identifier 
-/// prefixes between elements. Each call to `next()` decodes both a key 
+/// The iterator processes contiguous key-value pairs without identifier
+/// prefixes between elements. Each call to `next()` decodes both a key
 /// and its associated value sequentially.
 pub struct PackedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW> {
   /// Reference to the parent decoder
@@ -170,9 +354,7 @@ pub struct PackedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW> {
   has_error: bool,
 }
 
-impl<'a, 'de: 'a, K, V, B, UB, KW, VW> 
-  PackedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW> 
-{
+impl<'a, 'de: 'a, K, V, B, UB, KW, VW> PackedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW> {
   /// Returns the current byte position within the source buffer.
   #[inline]
   pub const fn position(&self) -> usize {
@@ -208,17 +390,17 @@ impl<'a, 'de: 'a, K, V, B, UB, KW, VW>
   }
 }
 
-impl<'a, 'de: 'a, RB, B, KW, VW, K, V> Iterator 
-  for PackedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW>
+impl<'a, 'de: 'a, RB, UB, KW, VW, K, V> Iterator
+  for PackedMapDecoderIter<'a, 'de, K, V, RB, UB, KW, VW>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, B, Groto> + 'de,
-  V: Decode1<'de, VW, RB, B, Groto> + 'de,
-  B: UnknownBuffer<RB, Groto> + 'de,
+  K: Decode1<'de, KW, RB, UB, Groto> + 'de,
+  V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+  UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
-  type Item = Result<(usize, MapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -239,34 +421,21 @@ where
       return None;
     }
 
-    // Decode the key
-    let key_result = K::decode(self.decoder.ctx, self.decoder.src.slice(self.offset..));
-    
-    let (key_size, key) = match key_result {
-      Ok((size, k)) => {
-        self.offset += size;
-        (size, k)
-      }
-      Err(e) => {
-        self.has_error = true;
-        return Some(Err(e));
-      }
-    };
-
-    // Decode the value
-    let value_result = V::decode(self.decoder.ctx, self.decoder.src.slice(self.offset..));
-    
-    match value_result {
-      Ok((value_size, value)) => {
-        self.offset += value_size;
+    Some(
+      PartialMapEntry::decode_packed_entry(
+        self.decoder.ctx,
+        self.decoder.src.slice(self.offset..),
+        &self.decoder.key_identifier,
+        &self.decoder.value_identifier,
+      )
+      .inspect(|(read, _)| {
+        self.offset += read;
         self.yielded_elements += 1;
-        Some(Ok(((key_size, key), (value_size, value))))
-      }
-      Err(e) => {
+      })
+      .inspect_err(|_| {
         self.has_error = true;
-        Some(Err(e))
-      }
-    }
+      }),
+    )
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
@@ -274,7 +443,7 @@ where
   }
 }
 
-impl<'a, 'de: 'a, RB, B, KW, VW, K, V> FusedIterator 
+impl<'a, 'de: 'a, RB, B, KW, VW, K, V> FusedIterator
   for PackedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW>
 where
   KW: WireFormat<Groto> + 'de,
@@ -285,4 +454,3 @@ where
   RB: ReadBuf + 'de,
 {
 }
-

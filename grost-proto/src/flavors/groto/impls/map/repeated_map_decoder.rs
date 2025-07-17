@@ -2,7 +2,16 @@ use core::marker::PhantomData;
 
 use crate::flavors::groto::Context;
 
-pub struct RepeatedMapDecoder<'a, K: ?Sized, V: ?Sized, B, UB: ?Sized, KW: ?Sized, VW: ?Sized, const TAG: u32> {
+pub struct RepeatedMapDecoder<
+  'a,
+  K: ?Sized,
+  V: ?Sized,
+  B,
+  UB: ?Sized,
+  KW: ?Sized,
+  VW: ?Sized,
+  const TAG: u32,
+> {
   /// the source buffer
   src: B,
   /// the length of the length prefix
