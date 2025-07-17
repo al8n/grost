@@ -50,7 +50,7 @@ where
   K: Encode<KW, Groto>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::try_new(TAG)?);
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
     let encoded_identifier = identifier.encode();
     let encoded_identifier_len = encoded_identifier.len();
     let encoded_len = self
@@ -85,7 +85,7 @@ where
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::new(TAG));
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
     let encoded_identifier_len = identifier.encoded_len();
     self
       .iter()
@@ -94,7 +94,7 @@ where
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::try_new(TAG)?);
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
     let encoded_identifier = identifier.encode();
     let encoded_identifier_len = encoded_identifier.len();
     let encoded_len = self
@@ -129,7 +129,7 @@ where
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::new(TAG));
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
     let encoded_identifier_len = identifier.encoded_len();
     self
       .iter()
@@ -153,7 +153,7 @@ where
       return Ok(0);
     }
 
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::try_new(TAG)?);
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
     let encoded_identifier = identifier.encode();
     let encoded_identifier_len = encoded_identifier.len();
     let encoded_len = self
@@ -188,7 +188,7 @@ where
       return 0;
     }
 
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::new(TAG));
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
     let encoded_identifier_len = identifier.encoded_len();
     self
       .iter()
@@ -206,7 +206,7 @@ where
       return Ok(0);
     }
 
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::try_new(TAG)?);
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
     let encoded_identifier = identifier.encode();
     let encoded_identifier_len = encoded_identifier.len();
     let encoded_len = self
@@ -241,7 +241,7 @@ where
       return 0;
     }
 
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::new(TAG));
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
     let encoded_identifier_len = identifier.encoded_len();
     self
       .iter()
@@ -272,7 +272,7 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let identifier = Identifier::new(KW::WIRE_TYPE, Tag::new(TAG));
+    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
     let mut offset = 0;
     let buf = src.as_bytes();
     let buf_len = buf.len();

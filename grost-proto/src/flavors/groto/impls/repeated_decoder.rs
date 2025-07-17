@@ -247,7 +247,7 @@ where
     RB: crate::buffer::ReadBuf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let expected_identifier = Identifier::new(W::WIRE_TYPE, Tag::new(TAG));
+    let expected_identifier = Identifier::new(Repeated::<W, TAG>::WIRE_TYPE, Tag::new(TAG));
     let mut num_elements = 0;
     let mut offset = 0;
     let buf = src.as_bytes();

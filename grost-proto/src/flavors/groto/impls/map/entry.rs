@@ -73,7 +73,7 @@ impl<K, V> PartialMapEntry<K, V> {
     Ok(PartialMapEntry { key, value })
   }
 
-  pub(super) fn encode_repeated_entry<KW, VW>(
+  pub(super) fn encode_repeated<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -91,11 +91,10 @@ impl<K, V> PartialMapEntry<K, V> {
     let buf_len = buf.len();
     let mut offset = ei
       .encode_to(buf)
-      .map_err(|e| e.update(self.encoded_repeated_entry_len(ctx, ei, ki, vi), buf_len))?;
+      .map_err(|e| e.update(self.encoded_repeated_len(ctx, ei, ki, vi), buf_len))?;
 
     offset += varing::encode_u32_varint_to(encoded_entry_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e)
-        .update(self.encoded_repeated_entry_len(ctx, ei, ki, vi), buf_len)
+      Error::from_varint_encode_error(e).update(self.encoded_repeated_len(ctx, ei, ki, vi), buf_len)
     })?;
 
     let total = offset + encoded_entry_len;
@@ -111,7 +110,7 @@ impl<K, V> PartialMapEntry<K, V> {
     })
   }
 
-  pub(super) fn encoded_repeated_entry_len<KW, VW>(
+  pub(super) fn encoded_repeated_len<KW, VW>(
     &self,
     ctx: &Context,
     ei: &Identifier,
@@ -131,7 +130,7 @@ impl<K, V> PartialMapEntry<K, V> {
     len
   }
 
-  pub(super) fn encode_packed_entry<KW, VW>(
+  pub(super) fn encode_packed<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -162,7 +161,7 @@ impl<K, V> PartialMapEntry<K, V> {
     })
   }
 
-  pub(super) fn encoded_packed_entry_len<KW, VW>(
+  pub(super) fn encoded_packed_len<KW, VW>(
     &self,
     ctx: &Context,
     ki: &Identifier,
@@ -211,7 +210,7 @@ impl<K, V> PartialMapEntry<K, V> {
     })
   }
 
-  pub(super) fn decode_repeated_entry<'de, KW, VW, RB, UB>(
+  pub(super) fn decode_repeated<'de, KW, VW, RB, UB>(
     parent_name: &'static str,
     ctx: &'de Context,
     src: RB,
@@ -422,7 +421,7 @@ impl<K, V> MapEntry<K, V> {
     Self { key, value }
   }
 
-  pub(super) fn encode_repeated_entry<KW, VW>(
+  pub(super) fn encode_repeated<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -440,11 +439,10 @@ impl<K, V> MapEntry<K, V> {
     let buf_len = buf.len();
     let mut offset = ei
       .encode_to(buf)
-      .map_err(|e| e.update(self.encoded_repeated_entry_len(ctx, ei, ki, vi), buf_len))?;
+      .map_err(|e| e.update(self.encoded_repeated_len(ctx, ei, ki, vi), buf_len))?;
 
     offset += varing::encode_u32_varint_to(encoded_entry_len as u32, buf).map_err(|e| {
-      Error::from_varint_encode_error(e)
-        .update(self.encoded_repeated_entry_len(ctx, ei, ki, vi), buf_len)
+      Error::from_varint_encode_error(e).update(self.encoded_repeated_len(ctx, ei, ki, vi), buf_len)
     })?;
 
     let total = offset + encoded_entry_len;
@@ -460,7 +458,7 @@ impl<K, V> MapEntry<K, V> {
     })
   }
 
-  pub(super) fn encoded_repeated_entry_len<KW, VW>(
+  pub(super) fn encoded_repeated_len<KW, VW>(
     &self,
     ctx: &Context,
     ei: &Identifier,
@@ -480,7 +478,7 @@ impl<K, V> MapEntry<K, V> {
     len
   }
 
-  pub(super) fn encode_packed_entry<KW, VW>(
+  pub(super) fn encode_packed<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -511,7 +509,7 @@ impl<K, V> MapEntry<K, V> {
     })
   }
 
-  pub(super) fn encoded_packed_entry_len<KW, VW>(
+  pub(super) fn encoded_packed_len<KW, VW>(
     &self,
     ctx: &Context,
     ki: &Identifier,
@@ -582,6 +580,73 @@ impl<K, V> MapEntry<K, V> {
     len
   }
 
+  pub(super) fn partial_encode_repeated<KW, VW>(
+    &self,
+    ctx: &Context,
+    buf: &mut [u8],
+    ei: &Identifier,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> Result<usize, Error>
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto>,
+    V: PartialEncode<VW, Groto>,
+  {
+    let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    let buf_len = buf.len();
+    let mut offset = ei.encode_to(buf).map_err(|e| {
+      e.update(
+        self.partial_encoded_repeated_len(ctx, ei, ki, vi, selector),
+        buf_len,
+      )
+    })?;
+
+    offset += varing::encode_u32_varint_to(encoded_entry_len as u32, buf).map_err(|e| {
+      Error::from_varint_encode_error(e).update(
+        self.partial_encoded_repeated_len(ctx, ei, ki, vi, selector),
+        buf_len,
+      )
+    })?;
+
+    let total = offset + encoded_entry_len;
+    if total >= buf_len {
+      return Err(Error::insufficient_buffer(total, buf_len));
+    }
+
+    self
+      .partial_encode_entry_helper(ctx, buf, ki, vi, selector)
+      .map(|written| {
+        #[cfg(debug_assertions)]
+        crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
+
+        total
+      })
+  }
+
+  pub(super) fn partial_encoded_repeated_len<KW, VW>(
+    &self,
+    ctx: &Context,
+    ei: &Identifier,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> usize
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
+    V: PartialEncode<VW, Groto> + Selectable<Groto>,
+  {
+    let mut len = ei.encoded_len();
+    let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    len += varing::encoded_u32_varint_len(encoded_len as u32);
+    len += encoded_len;
+    len
+  }
+
   pub(super) fn decode_packed_entry<'de, KW, VW, RB, UB>(
     ctx: &'de Context,
     src: RB,
@@ -613,14 +678,14 @@ impl<K, V> MapEntry<K, V> {
     })
   }
 
-  pub(super) fn decode_repeated_entry<'de, KW, VW, RB, UB>(
-    parent_name: &'static str,
+  /// None means we should stop.
+  pub(super) fn decode_repeated<'de, KW, VW, RB, UB>(
     ctx: &'de Context,
     src: RB,
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-  ) -> Result<(usize, Self), Error>
+  ) -> Result<(usize, Option<Self>), Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
@@ -635,7 +700,7 @@ impl<K, V> MapEntry<K, V> {
     // read the identifier of the entry
     let (mut offset, identifier) = Identifier::decode(buf)?;
     if identifier.ne(ei) {
-      return Err(Error::unknown_identifier(parent_name, identifier));
+      return Ok((offset, None));
     }
 
     if offset >= buf_len {
@@ -655,7 +720,7 @@ impl<K, V> MapEntry<K, V> {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
-      (total, ent)
+      (total, Some(ent))
     })
   }
 

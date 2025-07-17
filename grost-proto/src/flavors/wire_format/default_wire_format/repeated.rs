@@ -1,7 +1,5 @@
 use crate::{
-  buffer::{Buffer, DefaultBuffer, ReadBuf},
   convert::{Flattened, Inner},
-  flavors::MergedWireFormat,
   marker::{Marker, RepeatedEntryMarker, RepeatedMarker},
   state::State,
 };
@@ -40,8 +38,7 @@ pub trait DefaultRepeatedEntryWireFormat<F: Flavor + ?Sized> {
   type Format<K, V, const TAG: u32>: WireFormat<F> + 'static
   where
     K: WireFormat<F> + 'static,
-    V: WireFormat<F> + 'static,
-    MergedWireFormat<K, V>: WireFormat<F> + 'static;
+    V: WireFormat<F> + 'static;
 }
 
 impl<T, KM, VM, F, const TAG: u32> DefaultWireFormat<F> for RepeatedEntryMarker<T, KM, VM, TAG>
@@ -50,7 +47,6 @@ where
   KM::Marked: Sized,
   VM: DefaultWireFormat<F> + Marker + ?Sized,
   VM::Marked: Sized,
-  MergedWireFormat<KM::Format, VM::Format>: WireFormat<F> + 'static,
   T: ?Sized
     + State<Flattened<Inner>, Output = (KM::Marked, VM::Marked)>
     + DefaultRepeatedEntryWireFormat<F>,

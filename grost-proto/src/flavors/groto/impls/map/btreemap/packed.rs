@@ -137,7 +137,7 @@ where
     // encode the elements
     for item in self {
       let item_encoded_len =
-        MapEntry::from(item).encode_packed_entry(context, &mut buf[offset..], &ki, &vi)?;
+        MapEntry::from(item).encode_packed(context, &mut buf[offset..], &ki, &vi)?;
       offset += item_encoded_len;
     }
 
@@ -152,7 +152,7 @@ where
     let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
 
     for item in self {
-      len += MapEntry::from(item).encoded_packed_entry_len(context, &ki, &vi);
+      len += MapEntry::from(item).encoded_packed_len(context, &ki, &vi);
     }
 
     len
@@ -190,7 +190,7 @@ where
     // encode the elements
     for item in self {
       let item_encoded_len =
-        MapEntry::from(item).encode_packed_entry(context, &mut buf[offset..], &ki, &vi)?;
+        MapEntry::from(item).encode_packed(context, &mut buf[offset..], &ki, &vi)?;
       offset += item_encoded_len;
     }
 

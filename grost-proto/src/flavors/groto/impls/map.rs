@@ -7,8 +7,8 @@ use crate::{
 };
 
 pub use entry::PartialMapEntry;
-pub use packed_map_decoder::PackedMapDecoder;
-pub use repeated_map_decoder::RepeatedMapDecoder;
+pub use packed_map_decoder::*;
+pub use repeated_map_decoder::*;
 pub use selector::MapSelector;
 
 /// The default partial set buffer type.

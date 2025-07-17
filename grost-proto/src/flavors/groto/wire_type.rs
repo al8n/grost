@@ -288,9 +288,8 @@ const _: () = {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    MergedWireFormat<KW, VW>: WireFormat<Groto>,
   {
-    const WIRE_TYPE: WireType = MergedWireFormat::<KW, VW>::WIRE_TYPE;
+    const WIRE_TYPE: WireType = WireType::LengthDelimited;
     const INSTANCE: Self = RepeatedEntry;
     const FIXED_LENGTH: Option<usize> = None;
   }
@@ -299,10 +298,9 @@ const _: () = {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    MergedWireFormat<KW, VW>: WireFormat<Groto>,
   {
     fn from(_: RepeatedEntry<KW, VW, I>) -> Self {
-      MergedWireFormat::<KW, VW>::WIRE_TYPE
+      WireType::LengthDelimited
     }
   }
 };
