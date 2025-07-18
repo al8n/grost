@@ -363,9 +363,10 @@ where
     for res in iter {
       match res {
         Ok((_, item)) => {
-          let (k, v) = item.try_into_entry()?.into_components();
-          let k = K::try_from_ref(ctx, k)?;
-          let v = V::try_from_ref(ctx, v)?;
+          let (k, v) = item
+            .and_then(|k| K::try_from_ref(ctx, k), |v| V::try_from_ref(ctx, v))?
+            .try_into_entry()?
+            .into();
           if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
             return Err(Error::custom("duplicated keys in map"));
           }
@@ -414,9 +415,14 @@ where
     for res in iter {
       match res {
         Ok((_, item)) => {
-          let (k, v) = item.try_into_entry()?.into_components();
-          let k = K::try_from_partial_ref(ctx, k)?;
-          let v = V::try_from_partial_ref(ctx, v)?;
+          let (k, v) = item
+            .and_then(
+              |k| K::try_from_partial_ref(ctx, k),
+              |v| V::try_from_partial_ref(ctx, v),
+            )?
+            .try_into_entry()?
+            .into_components();
+
           if map.insert(k, v).is_some() && ctx.err_on_duplicated_set_keys() {
             return Err(Error::custom("duplicated keys in map"));
           }

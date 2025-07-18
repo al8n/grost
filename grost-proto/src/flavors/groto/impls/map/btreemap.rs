@@ -1,8 +1,12 @@
 use std::collections::BTreeMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, Partial},
-  flavors::Groto,
+  buffer::Buffer,
+  convert::{Flattened, Inner, MapKey, MapValue, Partial, TryFromPartial},
+  flavors::{
+    Groto,
+    groto::{Context, Error},
+  },
   selection::Selectable,
   state::State,
 };
@@ -38,4 +42,46 @@ where
   V: Selectable<Groto>,
 {
   type Selector = super::MapSelector<K::Selector, V::Selector>;
+}
+
+impl<K, V> TryFromPartial<Groto> for BTreeMap<K, V>
+where
+  K: TryFromPartial<Groto> + Ord,
+  K::Output: Sized,
+  V: TryFromPartial<Groto>,
+  V::Output: Sized,
+{
+  fn try_from_partial(
+    ctx: &Context,
+    input: <Self as State<Partial<Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+    <Self as State<Partial<Groto>>>::Output: Sized,
+  {
+    let expected = input.len();
+    let mut map = BTreeMap::new();
+
+    for ent in input.into_iter() {
+      let (k, v) = ent
+        .and_then(
+          |k| K::try_from_partial(ctx, k),
+          |v| V::try_from_partial(ctx, v),
+        )?
+        .try_into_entry()?
+        .into();
+      if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
+        return Err(Error::custom("duplicated keys in map"));
+      }
+    }
+
+    if map.len() != expected && ctx.err_on_length_mismatch() {
+      return Err(Error::custom(format!(
+        "expected {expected} elements in map, but got {} elements",
+        map.len()
+      )));
+    }
+
+    Ok(map)
+  }
 }

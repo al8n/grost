@@ -136,6 +136,20 @@ impl<T, const CAP: usize> Buffer for StackBuffer<T, CAP> {
   fn as_mut_slice(&mut self) -> &mut [T] {
     Self::as_slice_mut(self)
   }
+
+  fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+    let mut cnt = 0;
+    core::iter::from_fn(move || {
+      if cnt < self.len {
+        // SAFETY: We only access initialized elements, as `cnt` is always less than `self.len`.
+        let item = unsafe { self.items[cnt].assume_init_read() };
+        cnt += 1;
+        return Some(item);
+      }
+
+      None
+    })
+  }
 }
 
 // Implement Drop to properly handle cleanup of initialized elements

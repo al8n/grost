@@ -89,6 +89,19 @@ pub trait Buffer {
   fn is_empty(&self) -> bool {
     self.len() == 0
   }
+
+  /// Returns an iterator over the items in the buffer.
+  fn iter(&self) -> impl Iterator<Item = &Self::Item> {
+    self.as_slice().iter()
+  }
+
+  /// Returns a mutable iterator over the items in the buffer.
+  fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Item> {
+    self.as_mut_slice().iter_mut()
+  }
+
+  /// Consumes the buffer and returns an iterator over the items.
+  fn into_iter(self) -> impl Iterator<Item = Self::Item>;
 }
 
 /// A trait for implementing custom buffers that can store unknown data.
@@ -144,6 +157,10 @@ const _: () = {
     fn as_mut_slice(&mut self) -> &mut [T] {
       self.as_mut_slice()
     }
+
+    fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+      IntoIterator::into_iter(self)
+    }
   }
 };
 
@@ -184,6 +201,10 @@ const _: () = {
 
     fn as_mut_slice(&mut self) -> &mut [T] {
       self.as_mut_slice()
+    }
+
+    fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+      IntoIterator::into_iter(self)
     }
   }
 };
@@ -233,6 +254,10 @@ const _: () = {
 
     fn as_mut_slice(&mut self) -> &mut [T] {
       self.as_mut_slice()
+    }
+
+    fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+      IntoIterator::into_iter(self)
     }
   }
 };
@@ -286,6 +311,10 @@ const _: () = {
     fn as_mut_slice(&mut self) -> &mut [T] {
       self.as_mut_slice()
     }
+
+    fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+      IntoIterator::into_iter(self)
+    }
   }
 
   #[cfg(any(feature = "std", feature = "alloc"))]
@@ -328,6 +357,10 @@ const _: () = {
 
       fn as_mut_slice(&mut self) -> &mut [T] {
         self.as_mut_slice()
+      }
+
+      fn into_iter(self) -> impl Iterator<Item = Self::Item> {
+        IntoIterator::into_iter(self)
       }
     }
   };
