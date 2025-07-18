@@ -527,8 +527,7 @@ impl<K, V> PartialMapEntry<K, V> {
       if offset >= buf_len {
         return Err(Error::buffer_underflow());
       }
-      offset += k
-        .partial_encode(ctx, &mut buf[offset..], selector.key())?;
+      offset += k.partial_encode(ctx, &mut buf[offset..], selector.key())?;
     }
 
     if let Some(ref v) = self.value {
@@ -541,8 +540,7 @@ impl<K, V> PartialMapEntry<K, V> {
         return Err(Error::buffer_underflow());
       }
 
-      offset += v
-        .partial_encode(ctx, &mut buf[offset..], selector.value())?;
+      offset += v.partial_encode(ctx, &mut buf[offset..], selector.value())?;
     }
 
     #[cfg(debug_assertions)]

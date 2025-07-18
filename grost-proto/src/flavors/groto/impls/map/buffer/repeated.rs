@@ -5,7 +5,9 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer, Identifier, Tag},
+    groto::{
+      Context, Error, Identifier, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer, Tag,
+    },
   },
   state::State,
 };
@@ -45,8 +47,7 @@ where
 
     let mut offset = 0;
     for item in self.iter() {
-      let item_encoded_len =
-        item.encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi)?;
+      let item_encoded_len = item.encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi)?;
       offset += item_encoded_len;
     }
 
@@ -111,14 +112,8 @@ where
         return Err(Error::insufficient_buffer(encoded_len, buf_len));
       }
 
-      offset += item.partial_encode_repeated(
-        context,
-        &mut buf[offset..],
-        &ei,
-        &ki,
-        &vi,
-        selector,
-      )?;
+      offset +=
+        item.partial_encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi, selector)?;
     }
 
     Ok(offset)
@@ -135,9 +130,7 @@ where
 
     self
       .iter()
-      .map(|item| {
-        item.partial_encoded_repeated_len(context, &ei, &ki, &vi, selector)
-      })
+      .map(|item| item.partial_encoded_repeated_len(context, &ei, &ki, &vi, selector))
       .sum()
   }
 
@@ -156,6 +149,26 @@ where
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
       self, context, selector,
     )
+  }
+}
+
+impl<'a, K, KW, V, VW, S, RB, B, PB, const TAG: u32>
+  Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for PartialMapBuffer<K, V, PB>
+where
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+  S: BuildHasher + Default,
+  K: Decode1<'a, KW, RB, B, Groto>,
+  V: Decode1<'a, VW, RB, B, Groto>,
+  PB: Buffer<Item = PartialMapEntry<K, V>>,
+{
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  where
+    Self: Sized + 'a,
+    RB: ReadBuf + 'a,
+    B: UnknownBuffer<RB, Groto> + 'a,
+  {
+    todo!()
   }
 }
 

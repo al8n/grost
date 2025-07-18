@@ -5,10 +5,10 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
-    groto::{Context, Error, PackedMapDecoder, PartialMapBuffer, PartialMapEntry, Identifier, Tag},
+    groto::{Context, Error, Identifier, PackedMapDecoder, PartialMapBuffer, PartialMapEntry, Tag},
   },
-  state::State,
   selection::Selector,
+  state::State,
 };
 
 impl<'a, K, V, KW, VW, RB, UB, PB> State<PartialRef<'a, RB, UB, PackedEntry<KW, VW>, Groto>>
@@ -71,7 +71,7 @@ where
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-   let encoded_raw_len =
+    let encoded_raw_len =
       <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context);
     let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
 
@@ -151,13 +151,8 @@ where
 
     // encode the elements
     for item in self.into_iter() {
-      let item_encoded_len = item.partial_encode_packed(
-        context,
-        &mut buf[offset..],
-        &ki,
-        &vi,
-        selector,
-      )?;
+      let item_encoded_len =
+        item.partial_encode_packed(context, &mut buf[offset..], &ki, &vi, selector)?;
       offset += item_encoded_len;
     }
 
@@ -222,13 +217,8 @@ where
     let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
     // encode the elements
     for item in self.into_iter() {
-      let item_encoded_len = item.partial_encode_packed(
-        context,
-        &mut buf[offset..],
-        &ki,
-        &vi,
-        selector,
-      )?;
+      let item_encoded_len =
+        item.partial_encode_packed(context, &mut buf[offset..], &ki, &vi, selector)?;
       offset += item_encoded_len;
     }
 
@@ -244,6 +234,26 @@ where
       self, context, selector,
     );
     varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
+  }
+}
+
+impl<'a, K, KW, V, VW, S, RB, UB, PB> Decode1<'a, PackedEntry<KW, VW>, RB, UB, Groto>
+  for PartialMapBuffer<K, V, PB>
+where
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+  S: BuildHasher + Default,
+  K: Decode1<'a, KW, RB, UB, Groto>,
+  V: Decode1<'a, VW, RB, UB, Groto>,
+  PB: Buffer<Item = PartialMapEntry<K, V>>,
+{
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  where
+    Self: Sized + 'a,
+    RB: ReadBuf + 'a,
+    UB: UnknownBuffer<RB, Groto> + 'a,
+  {
+    todo!()
   }
 }
 
