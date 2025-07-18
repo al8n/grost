@@ -8,6 +8,9 @@ use crate::{
   state::State,
 };
 
+mod packed;
+mod repeated;
+
 use super::PartialMapEntry;
 
 /// The default partial set buffer type.
@@ -99,28 +102,4 @@ where
 
 impl<K, V, B> State<Partial<Groto>> for PartialMapBuffer<K, V, B> {
   type Output = Self;
-}
-
-impl<'a, K, V, KW, VW, RB, UB, PB> State<PartialRef<'a, RB, UB, PackedEntry<KW, VW>, Groto>>
-  for PartialMapBuffer<K, V, PB>
-{
-  type Output = super::PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
-}
-
-impl<'a, K, V, KW, VW, RB, UB, PB> State<Ref<'a, RB, UB, PackedEntry<KW, VW>, Groto>>
-  for PartialMapBuffer<K, V, PB>
-{
-  type Output = super::PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
-}
-
-impl<'a, K, V, KW, VW, RB, UB, PB, const TAG: u32>
-  State<PartialRef<'a, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>> for PartialMapBuffer<K, V, PB>
-{
-  type Output = super::PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
-}
-
-impl<'a, K, V, KW, VW, RB, UB, PB, const TAG: u32>
-  State<Ref<'a, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>> for PartialMapBuffer<K, V, PB>
-{
-  type Output = super::PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
 }

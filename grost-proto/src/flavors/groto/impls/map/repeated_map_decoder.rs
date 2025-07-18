@@ -267,10 +267,7 @@ where
   K: Decode1<'a, KW, RB, B, Groto>,
   V: Decode1<'a, VW, RB, B, Groto>,
 {
-  fn decode(
-    ctx: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
     RB: crate::buffer::ReadBuf,
@@ -1086,84 +1083,4 @@ where
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
-}
-
-impl<'de, K, V, RB, UB, PB, KW, VW, const TAG: u32>
-  TryFromRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto> for PartialMapBuffer<K, V, PB>
-where
-  KW: WireFormat<Groto> + 'de,
-  VW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
-  K::Output: Sized,
-  V: TryFromRef<'de, RB, UB, VW, Groto> + Decode1<'de, VW, RB, UB, Groto> + 'de,
-  V::Output: Sized,
-  UB: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
-{
-  fn try_from_ref(
-    ctx: &'de <Groto as crate::flavors::Flavor>::Context,
-    input: <Self as State<Ref<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
-  ) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-    <Self as State<Ref<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'de,
-    UB: UnknownBuffer<RB, Groto>,
-  {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
-    };
-
-    for res in input.iter() {
-      let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
-        return Err(Error::custom(
-          "exceeded buffer capacity while pushing map entry",
-        ));
-      }
-    }
-
-    Ok(buffer)
-  }
-}
-
-impl<'de, K, V, RB, UB, PB, KW, VW, const TAG: u32>
-  TryFromPartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto> for PartialMapBuffer<K, V, PB>
-where
-  KW: WireFormat<Groto> + 'de,
-  VW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
-  K::Output: Sized,
-  V: TryFromPartialRef<'de, RB, UB, VW, Groto> + Decode1<'de, VW, RB, UB, Groto> + 'de,
-  V::Output: Sized,
-  UB: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
-{
-  fn try_from_partial_ref(
-    ctx: &'de <Groto as crate::flavors::Flavor>::Context,
-    input: <Self as State<PartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
-  ) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-    <Self as State<PartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'de,
-    UB: UnknownBuffer<RB, Groto>,
-  {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
-    };
-
-    for res in input.iter() {
-      let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
-        return Err(Error::custom(
-          "exceeded buffer capacity while pushing map entry",
-        ));
-      }
-    }
-
-    Ok(buffer)
-  }
 }

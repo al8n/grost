@@ -102,7 +102,7 @@ impl<K, V> PartialMapEntry<K, V> {
       return Err(Error::insufficient_buffer(total, buf_len));
     }
 
-    self.encode_entry_helper(ctx, buf, ki, vi).map(|written| {
+    self.encode_helper(ctx, buf, ki, vi).map(|written| {
       #[cfg(debug_assertions)]
       crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
 
@@ -153,7 +153,7 @@ impl<K, V> PartialMapEntry<K, V> {
       return Err(Error::insufficient_buffer(total, buf_len));
     }
 
-    self.encode_entry_helper(ctx, buf, ki, vi).map(|written| {
+    self.encode_helper(ctx, buf, ki, vi).map(|written| {
       #[cfg(debug_assertions)]
       crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
 
@@ -175,6 +175,126 @@ impl<K, V> PartialMapEntry<K, V> {
   {
     let encoded_len = self.encoded_len_helper::<KW, VW>(ctx, ki, vi);
     let mut len = varing::encoded_u32_varint_len(encoded_len as u32);
+    len += encoded_len;
+    len
+  }
+
+  pub(super) fn partial_encode_packed<KW, VW>(
+    &self,
+    ctx: &Context,
+    buf: &mut [u8],
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> Result<usize, Error>
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto>,
+    V: PartialEncode<VW, Groto>,
+  {
+    let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    let buf_len = buf.len();
+
+    let offset = varing::encode_u32_varint_to(encoded_entry_len as u32, buf)
+      .map_err(|e| Error::from_varint_encode_error(e).update(encoded_entry_len, buf_len))?;
+    let total = offset + encoded_entry_len;
+    if total >= buf_len {
+      return Err(Error::insufficient_buffer(total, buf_len));
+    }
+
+    self
+      .partial_encode_helper(ctx, buf, ki, vi, selector)
+      .map(|written| {
+        #[cfg(debug_assertions)]
+        crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
+
+        total
+      })
+  }
+
+  pub(super) fn partial_encoded_packed_len<KW, VW>(
+    &self,
+    ctx: &Context,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> usize
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
+    V: PartialEncode<VW, Groto> + Selectable<Groto>,
+  {
+    let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    let mut len = varing::encoded_u32_varint_len(encoded_len as u32);
+    len += encoded_len;
+    len
+  }
+
+  pub(super) fn partial_encode_repeated<KW, VW>(
+    &self,
+    ctx: &Context,
+    buf: &mut [u8],
+    ei: &Identifier,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> Result<usize, Error>
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto>,
+    V: PartialEncode<VW, Groto>,
+  {
+    let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    let buf_len = buf.len();
+    let mut offset = ei.encode_to(buf).map_err(|e| {
+      e.update(
+        self.partial_encoded_repeated_len(ctx, ei, ki, vi, selector),
+        buf_len,
+      )
+    })?;
+
+    offset += varing::encode_u32_varint_to(encoded_entry_len as u32, buf).map_err(|e| {
+      Error::from_varint_encode_error(e).update(
+        self.partial_encoded_repeated_len(ctx, ei, ki, vi, selector),
+        buf_len,
+      )
+    })?;
+
+    let total = offset + encoded_entry_len;
+    if total >= buf_len {
+      return Err(Error::insufficient_buffer(total, buf_len));
+    }
+
+    self
+      .partial_encode_helper(ctx, buf, ki, vi, selector)
+      .map(|written| {
+        #[cfg(debug_assertions)]
+        crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
+
+        total
+      })
+  }
+
+  pub(super) fn partial_encoded_repeated_len<KW, VW>(
+    &self,
+    ctx: &Context,
+    ei: &Identifier,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> usize
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
+    V: PartialEncode<VW, Groto> + Selectable<Groto>,
+  {
+    let mut len = ei.encoded_len();
+    let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    len += varing::encoded_u32_varint_len(encoded_len as u32);
     len += encoded_len;
     len
   }
@@ -316,7 +436,7 @@ impl<K, V> PartialMapEntry<K, V> {
     Ok((offset, Self { key: k, value: v }))
   }
 
-  fn encode_entry_helper<KW, VW>(
+  fn encode_helper<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -376,6 +496,81 @@ impl<K, V> PartialMapEntry<K, V> {
     }
     if let Some(v) = &self.value {
       len += vi.encoded_len() + v.encoded_len(ctx);
+    }
+    len
+  }
+
+  fn partial_encode_helper<KW, VW>(
+    &self,
+    ctx: &Context,
+    buf: &mut [u8],
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> Result<usize, Error>
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto>,
+    V: PartialEncode<VW, Groto>,
+  {
+    let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
+    let buf_len = buf.len();
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+    }
+
+    let mut offset = 0;
+
+    if let Some(ref k) = self.key {
+      offset += ki.encode_to(buf)?;
+      if offset >= buf_len {
+        return Err(Error::buffer_underflow());
+      }
+      offset += k
+        .partial_encode(ctx, &mut buf[offset..], selector.key())?;
+    }
+
+    if let Some(ref v) = self.value {
+      if offset >= buf_len {
+        return Err(Error::buffer_underflow());
+      }
+      offset += vi.encode_to(&mut buf[offset..])?;
+
+      if offset >= buf_len {
+        return Err(Error::buffer_underflow());
+      }
+
+      offset += v
+        .partial_encode(ctx, &mut buf[offset..], selector.value())?;
+    }
+
+    #[cfg(debug_assertions)]
+    crate::debug_assert_write_eq::<Self>(offset, encoded_len);
+
+    Ok(offset)
+  }
+
+  fn partial_encoded_len_helper<KW, VW>(
+    &self,
+    ctx: &Context,
+    ki: &Identifier,
+    vi: &Identifier,
+    selector: &MapSelector<K::Selector, V::Selector>,
+  ) -> usize
+  where
+    KW: WireFormat<Groto>,
+    VW: WireFormat<Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
+    V: PartialEncode<VW, Groto> + Selectable<Groto>,
+  {
+    let mut len = 0;
+    if let Some(ref k) = self.key {
+      len += ki.encoded_len() + k.partial_encoded_len(ctx, selector.key());
+    }
+
+    if let Some(ref v) = self.value {
+      len += vi.encoded_len() + v.partial_encoded_len(ctx, selector.value());
     }
     len
   }
@@ -450,7 +645,7 @@ impl<K, V> MapEntry<K, V> {
       return Err(Error::insufficient_buffer(total, buf_len));
     }
 
-    self.encode_entry_helper(ctx, buf, ki, vi).map(|written| {
+    self.encode_helper(ctx, buf, ki, vi).map(|written| {
       #[cfg(debug_assertions)]
       crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
 
@@ -501,7 +696,7 @@ impl<K, V> MapEntry<K, V> {
       return Err(Error::insufficient_buffer(total, buf_len));
     }
 
-    self.encode_entry_helper(ctx, buf, ki, vi).map(|written| {
+    self.encode_helper(ctx, buf, ki, vi).map(|written| {
       #[cfg(debug_assertions)]
       crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
 
@@ -552,7 +747,7 @@ impl<K, V> MapEntry<K, V> {
     }
 
     self
-      .partial_encode_entry_helper(ctx, buf, ki, vi, selector)
+      .partial_encode_helper(ctx, buf, ki, vi, selector)
       .map(|written| {
         #[cfg(debug_assertions)]
         crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
@@ -617,7 +812,7 @@ impl<K, V> MapEntry<K, V> {
     }
 
     self
-      .partial_encode_entry_helper(ctx, buf, ki, vi, selector)
+      .partial_encode_helper(ctx, buf, ki, vi, selector)
       .map(|written| {
         #[cfg(debug_assertions)]
         crate::debug_assert_write_eq::<Self>(written, encoded_entry_len);
@@ -792,7 +987,7 @@ impl<K, V> MapEntry<K, V> {
     Ok((offset, Self { key: k, value: v }))
   }
 
-  fn encode_entry_helper<KW, VW>(
+  fn encode_helper<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
@@ -848,7 +1043,7 @@ impl<K, V> MapEntry<K, V> {
     len
   }
 
-  fn partial_encode_entry_helper<KW, VW>(
+  fn partial_encode_helper<KW, VW>(
     &self,
     ctx: &Context,
     buf: &mut [u8],
