@@ -1,6 +1,6 @@
 use super::{
   super::{
-    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
+    DefaultPartialMapBuffer, MapEntry, repeated_encode, repeated_encoded_len,
   },
   BTreeMap,
 };
@@ -12,7 +12,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, RepeatedMapDecoderBuffer},
+    groto::{Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer},
   },
   selection::{Selectable, Selector},
   state::State,
@@ -81,20 +81,16 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
-      let (read, entry) = MapEntry::decode_repeated(context, src, ei, ki, vi)?;
-      match entry {
-        Some(entry) => {
-          let (k, v) = entry.into_components();
-          if self.insert(k, v).is_some() && context.err_on_duplicated_map_keys() {
-            return Err(Error::custom("duplicated keys in map"));
-          }
-
-          Ok(Some(read))
-        }
-        None => Ok(None),
+    let (read, decoder) = RepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(context, src)?;
+    for item in decoder.iter() {
+      let (_, ent) = item?;
+      let (k, v) = ent.try_into_entry()?.into();
+      if self.insert(k, v).is_some() && context.err_on_duplicated_map_keys() {
+        return Err(Error::custom("duplicated keys in map"));
       }
-    })
+    }
+
+    Ok(read)
   }
 }
 

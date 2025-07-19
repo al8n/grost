@@ -53,6 +53,16 @@ where
   }
 
   #[inline]
+  fn try_reserve(&mut self, additional: usize) -> bool {
+    self.buffer.try_reserve(additional)
+  }
+
+  #[inline]
+  fn try_reserve_exact(&mut self, additional: usize) -> bool {
+    self.buffer.try_reserve_exact(additional)
+  }
+
+  #[inline]
   fn push(&mut self, value: Self::Item) -> Option<Self::Item> {
     self.buffer.push(value)
   }

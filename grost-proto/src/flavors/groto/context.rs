@@ -16,6 +16,61 @@ bitflags::bitflags! {
   }
 }
 
+/// Policy for decoding repeated fields in collections.
+///
+/// This enum determines the memory allocation strategy when decoding repeated fields
+/// into collections (maps, sets, vectors, etc.). Each strategy represents a different
+/// trade-off between processing time and memory allocation efficiency.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
+#[non_exhaustive]
+pub enum RepeatedDecodePolicy {
+  /// Pre-allocate collection capacity by traversing source data twice.
+  ///
+  /// This strategy first counts all elements to determine the exact capacity needed,
+  /// then allocates the collection with that capacity and decodes elements in a
+  /// second pass.
+  ///
+  /// **Advantages:**
+  /// - Minimizes memory allocations and reallocations
+  /// - Reduces memory fragmentation
+  /// - Better performance for large repeated fields
+  /// - Predictable memory usage
+  ///
+  /// **Trade-offs:**
+  /// - Requires two passes through the source data
+  /// - Higher initial processing overhead
+  /// - May over-allocate if source contains invalid data
+  ///
+  /// **Best for:** Large collections where memory efficiency is prioritized over
+  /// processing speed.
+  #[default]
+  #[display("preallocate-capacity")]
+  PreallocateCapacity,
+
+  /// Grow collection capacity incrementally during decoding.
+  ///
+  /// This strategy decodes elements one by one in a single pass, allowing the
+  /// collection to grow dynamically through standard reallocation mechanisms
+  /// (typically doubling capacity when full).
+  ///
+  /// **Advantages:**
+  /// - Single pass through source data
+  /// - Lower initial processing overhead
+  /// - Memory usage grows only as needed
+  /// - Faster startup time
+  ///
+  /// **Trade-offs:**
+  /// - May cause frequent reallocations for large collections
+  /// - Potential memory fragmentation from multiple allocations
+  /// - Less predictable memory usage patterns
+  /// - Temporary over-allocation during growth phases
+  ///
+  /// **Best for:** Small to medium collections or scenarios where minimizing
+  /// initial latency is important.
+  #[display("grow-incrementally")]
+  GrowIncrementally,
+}
+
 /// A context for encoding or decoding messages.
 ///
 /// ## Configuration
@@ -31,6 +86,7 @@ bitflags::bitflags! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Context {
   flags: Flags,
+  repeated_decode_policy: RepeatedDecodePolicy,
 }
 
 #[cfg(feature = "quickcheck")]
@@ -40,7 +96,11 @@ const _: () = {
   impl Arbitrary for Context {
     fn arbitrary(g: &mut Gen) -> Self {
       let flags = Flags::from_bits_truncate(*g.choose(&[1, 2, 4]).unwrap());
-      Self { flags }
+      Self { flags, repeated_decode_policy: if bool::arbitrary(g) {
+        RepeatedDecodePolicy::PreallocateCapacity
+      } else {
+        RepeatedDecodePolicy::GrowIncrementally
+      } }
     }
   }
 };
@@ -57,7 +117,28 @@ impl Context {
   pub const fn new() -> Self {
     Self {
       flags: Flags::empty(),
+      repeated_decode_policy: RepeatedDecodePolicy::PreallocateCapacity,
     }
+  }
+
+  /// Sets the repeated decode policy for the context.
+  #[inline]
+  pub const fn set_repeated_decode_policy(&mut self, policy: RepeatedDecodePolicy) -> &mut Self {
+    self.repeated_decode_policy = policy;
+    self
+  }
+
+  /// Sets the repeated decode policy for the context.
+  #[inline]
+  pub const fn with_repeated_decode_policy(mut self, policy: RepeatedDecodePolicy) -> Self {
+    self.repeated_decode_policy = policy;
+    self
+  }
+
+  /// Gets the repeated decode policy for the context.
+  #[inline]
+  pub const fn repeated_decode_policy(&self) -> RepeatedDecodePolicy {
+    self.repeated_decode_policy
   }
 
   /// Sets the return error when encountering unsupported wire type for the context.

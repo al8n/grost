@@ -4,8 +4,7 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer},
+    groto::{context::RepeatedDecodePolicy, Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoder, RepeatedMapDecoderBuffer}, Groto, RepeatedEntry, WireFormat
   },
   selection::Selector,
   state::State,
@@ -147,19 +146,39 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
-      let (read, entry) = PartialMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
-      match entry {
-        Some(entry) => {
-          if self.push(entry).is_some() {
+    match ctx.repeated_decode_policy() {
+      RepeatedDecodePolicy::PreallocateCapacity => {
+        let (read, decoder) = RepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(ctx, src)?;
+
+        if !self.try_reserve_exact(decoder.capacity_hint()) {
+          return Err(Error::custom("failed to reserve capacity for map entries"));
+        }
+
+        for item in decoder.iter() {
+          let (_, ent) = item?;
+          if self.push(ent).is_some() {
             return Err(Error::custom("exceeded map buffer capacity"));
           }
-
-          Ok(Some(read))
         }
-        None => Ok(None),
-      }
-    })
+
+        Ok(read)
+      },
+      RepeatedDecodePolicy::GrowIncrementally => {
+        repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
+          let (read, entry) = PartialMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
+          match entry {
+            Some(entry) => {
+              if self.push(entry).is_some() {
+                return Err(Error::custom("exceeded map buffer capacity"));
+              }
+
+              Ok(Some(read))
+            }
+            None => Ok(None),
+          }
+        })
+      },
+    }
   }
 }
 

@@ -111,6 +111,18 @@ impl<T, const CAP: usize> Buffer for StackBuffer<T, CAP> {
     }
   }
 
+  fn try_reserve(&mut self, additional: usize) -> bool {
+    if self.len + additional <= CAP {
+      true
+    } else {
+      false
+    }
+  }
+
+  fn try_reserve_exact(&mut self, additional: usize) -> bool {
+    self.try_reserve(additional)
+  }
+
   fn push(&mut self, value: T) -> Option<T> {
     if self.len < CAP {
       self.items[self.len] = MaybeUninit::new(value);

@@ -73,6 +73,16 @@ pub trait Buffer {
   /// If the buffer is full, the given value will be returned back.
   fn push(&mut self, value: Self::Item) -> Option<Self::Item>;
 
+  /// Reserves capacity for at least `additional` more elements.
+  ///
+  /// Returns `true` if the reservation was successful, `false` if the buffer is full.
+  fn try_reserve(&mut self, additional: usize) -> bool;
+
+  /// Try reserving capacity for exact `additional` more elements.
+  ///
+  /// Returns `true` if the reservation was successful, `false` if the buffer is full.
+  fn try_reserve_exact(&mut self, additional: usize) -> bool;
+
   /// Returns the capacity of the buffer.
   fn capacity(&self) -> usize;
 
@@ -142,6 +152,14 @@ const _: () = {
       }
     }
 
+    fn try_reserve(&mut self, additional: usize) -> bool {
+      self.try_reserve(additional).is_ok()
+    }
+
+    fn try_reserve_exact(&mut self, additional: usize) -> bool {
+      self.try_reserve_exact(additional).is_ok()
+    }
+
     fn capacity(&self) -> usize {
       self.capacity()
     }
@@ -180,6 +198,14 @@ const _: () = {
       Self: Sized,
     {
       Some(SmallVec::with_capacity(capacity))
+    }
+
+    fn try_reserve(&mut self, additional: usize) -> bool {
+      self.try_reserve(additional).is_ok()
+    }
+
+    fn try_reserve_exact(&mut self, additional: usize) -> bool {
+      self.try_reserve_exact(additional).is_ok()
     }
 
     fn push(&mut self, value: T) -> Option<T> {
@@ -229,6 +255,18 @@ const _: () = {
       } else {
         Some(ArrayVec::new())
       }
+    }
+
+    fn try_reserve(&mut self, additional: usize) -> bool {
+      if self.len() + additional <= N {
+        true
+      } else {
+        false
+      }
+    }
+
+    fn try_reserve_exact(&mut self, additional: usize) -> bool {
+      self.try_reserve(additional)
     }
 
     fn push(&mut self, value: T) -> Option<T> {
@@ -287,6 +325,18 @@ const _: () = {
       }
     }
 
+    fn try_reserve(&mut self, additional: usize) -> bool {
+      if self.len() + additional <= A::CAPACITY {
+        true
+      } else {
+        false
+      }
+    }
+
+    fn try_reserve_exact(&mut self, additional: usize) -> bool {
+      self.try_reserve(additional)
+    }
+
     fn push(&mut self, value: T) -> Option<T> {
       if self.len() < A::CAPACITY {
         self.push(value);
@@ -336,6 +386,14 @@ const _: () = {
         Self: Sized,
       {
         Some(TinyVec::with_capacity(capacity))
+      }
+
+      fn try_reserve(&mut self, additional: usize) -> bool {
+        self.try_reserve(additional).is_ok()
+      }
+
+      fn try_reserve_exact(&mut self, additional: usize) -> bool {
+        self.try_reserve_exact(additional).is_ok()
       }
 
       fn push(&mut self, value: T) -> Option<T> {
