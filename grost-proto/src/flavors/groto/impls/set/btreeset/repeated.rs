@@ -7,14 +7,14 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultRepeatedWireFormat, Groto, Repeated, WireFormat,
-    groto::{Context, Error, Identifier, RepeatedDecoderBuffer, Tag},
+    groto::{Context, Error, RepeatedDecoderBuffer},
   },
   selection::{Selectable, Selector},
   state::State,
 };
 
 use super::{
-  super::{repeated_encode, repeated_encoded_len},
+  super::{repeated_decode, repeated_encode, repeated_encoded_len},
   DefaultPartialSetBuffer,
 };
 
@@ -55,14 +55,14 @@ where
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     repeated_encode::<K, KW, _, TAG>(
       buf,
-      self.iter(),
+      || self.iter(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    repeated_encoded_len(self.iter(), |k| k.encoded_len(context))
+    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -89,9 +89,9 @@ where
       return Ok(0);
     }
 
-    repeated_encode(
+    repeated_encode::<K, KW, _, TAG>(
       buf,
-      self.iter(),
+      || self.iter(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
     )
@@ -102,7 +102,7 @@ where
       return 0;
     }
 
-    repeated_encoded_len(self.iter(), |k| k.partial_encoded_len(context, selector))
+    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.partial_encoded_len(context, selector))
   }
 
   fn partial_encode(
@@ -111,7 +111,9 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encode(self, context, buf, selector)
+    <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encode_raw(
+      self, context, buf, selector,
+    )
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -143,40 +145,15 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let mut offset = 0;
-    let buf = src.as_bytes();
-    let buf_len = buf.len();
-    if buf_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
+    repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
+      let (read, item) = K::decode(ctx, src)?;
 
-    // The following elements should be prefixed with the identifier.
-    // | identifier | element | identifier | element | ...
-    loop {
-      if offset >= buf_len {
-        break;
-      }
-
-      let (read, next_id) = Identifier::decode(&buf[offset..])?;
-
-      // If the next identifier does not match the expected identifier, which means we have reached the end of the repeated elements.
-      // We should stop decoding. We do not need to increment the offset here because we are not consuming the next identifier.
-      if next_id != identifier {
-        break;
-      }
-
-      // increment the offset by the size of the identifier
-      offset += read;
-      // consum the next element
-      let (read, k) = K::decode(ctx, src.slice(offset..))?;
-      offset += read;
-      if !self.insert(k) && ctx.err_on_duplicated_set_keys() {
+      if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
         return Err(Error::custom("duplicated keys in set"));
       }
-    }
 
-    Ok(offset)
+      Ok(read)
+    })
   }
 }
 

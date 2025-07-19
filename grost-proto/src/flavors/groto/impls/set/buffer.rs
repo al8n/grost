@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use crate::{
   buffer::{Buffer, DefaultBuffer},
   convert::Partial,
-  flavors::{Groto, Packed, Repeated},
+  flavors::Groto,
   selection::Selectable,
   state::State,
 };

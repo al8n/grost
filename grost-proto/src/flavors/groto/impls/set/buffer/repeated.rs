@@ -5,13 +5,13 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
-    groto::{Context, Error, Identifier, PartialSetBuffer, RepeatedDecoderBuffer, Tag},
+    groto::{Context, Error, PartialSetBuffer, RepeatedDecoderBuffer},
   },
   selection::Selector,
   state::State,
 };
 
-use super::super::{repeated_encode, repeated_encoded_len};
+use super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
 
 impl<'a, K, KW, RB, UB, PB, const TAG: u32> State<PartialRef<'a, RB, UB, Repeated<KW, TAG>, Groto>>
   for PartialSetBuffer<K, PB>
@@ -34,14 +34,14 @@ where
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     repeated_encode::<K, KW, _, TAG>(
       buf,
-      self.iter(),
+      || self.iter(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    repeated_encoded_len(self.iter(), |k| k.encoded_len(context))
+    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -69,9 +69,9 @@ where
       return Ok(0);
     }
 
-    repeated_encode(
+    repeated_encode::<K, KW, _, TAG>(
       buf,
-      self.iter(),
+      || self.iter(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
     )
@@ -82,7 +82,7 @@ where
       return 0;
     }
 
-    repeated_encoded_len(self.iter(), |k| k.partial_encoded_len(context, selector))
+    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.partial_encoded_len(context, selector))
   }
 
   fn partial_encode(
@@ -110,13 +110,36 @@ where
   K: Decode1<'a, KW, RB, B, Groto>,
   PB: Buffer<Item = K>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    todo!()
+    let mut this = PartialSetBuffer::new();
+    <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
+      .map(|size| (size, this))
+  }
+
+  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
+  where
+    Self: Sized + 'a,
+    RB: ReadBuf + 'a,
+    B: UnknownBuffer<RB, Groto> + 'a,
+  {
+    repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
+      let (read, item) = K::decode(ctx, src)?;
+
+      if set.push(item).is_some() {
+        return Err(Error::custom("exceeded set buffer capacity"));
+      }
+
+      if ctx.err_on_duplicated_set_keys() {
+        return Err(Error::custom("duplicated keys in set"));
+      }
+
+      Ok(read)
+    })
   }
 }
 
