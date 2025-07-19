@@ -13,7 +13,10 @@ use crate::{
   state::State,
 };
 
-use super::DefaultPartialSetBuffer;
+use super::{
+  super::{repeated_encode, repeated_encoded_len},
+  DefaultPartialSetBuffer,
+};
 
 impl<K> DefaultRepeatedWireFormat<Groto> for BTreeSet<K> {
   type Format<KM, const TAG: u32>
@@ -50,91 +53,24 @@ where
   K: Encode<KW, Groto>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let encoded_identifier = identifier.encode();
-    let encoded_identifier_len = encoded_identifier.len();
-    let encoded_len = self
-      .iter()
-      .map(|k| encoded_identifier_len + k.encoded_raw_len(context))
-      .sum::<usize>();
-    let buf_len = buf.len();
-    if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    for k in self.iter() {
-      if offset + encoded_identifier_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      buf[offset..offset + encoded_identifier_len].copy_from_slice(&encoded_identifier);
-      offset += encoded_identifier_len;
-
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      let k_len = k
-        .encode_raw(context, &mut buf[offset..])
-        .map_err(|e| e.update(encoded_len, buf_len))?;
-      offset += k_len;
-    }
-
-    Ok(offset)
+    repeated_encode::<K, KW, _, TAG>(
+      buf,
+      self.iter(),
+      |k| k.encoded_len(context),
+      |k, buf| k.encode(context, buf),
+    )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let encoded_identifier_len = identifier.encoded_len();
-    self
-      .iter()
-      .map(|k| encoded_identifier_len + k.encoded_raw_len(context))
-      .sum()
+    repeated_encoded_len(self.iter(), |k| k.encoded_len(context))
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let encoded_identifier = identifier.encode();
-    let encoded_identifier_len = encoded_identifier.len();
-    let encoded_len = self
-      .iter()
-      .map(|k| encoded_identifier_len + k.encoded_len(context))
-      .sum::<usize>();
-    let buf_len = buf.len();
-    if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    for k in self.iter() {
-      if offset + encoded_identifier_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      buf[offset..offset + encoded_identifier_len].copy_from_slice(&encoded_identifier);
-      offset += encoded_identifier_len;
-
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      let k_len = k
-        .encode(context, &mut buf[offset..])
-        .map_err(|e| e.update(encoded_len, buf_len))?;
-      offset += k_len;
-    }
-
-    Ok(offset)
+    <Self as Encode<Repeated<KW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let encoded_identifier_len = identifier.encoded_len();
-    self
-      .iter()
-      .map(|k| encoded_identifier_len + k.encoded_len(context))
-      .sum()
+    <Self as Encode<Repeated<KW, TAG>, Groto>>::encoded_raw_len(self, context)
   }
 }
 
@@ -153,34 +89,12 @@ where
       return Ok(0);
     }
 
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let encoded_identifier = identifier.encode();
-    let encoded_identifier_len = encoded_identifier.len();
-    let encoded_len = self
-      .iter()
-      .map(|k| encoded_identifier_len + k.partial_encoded_raw_len(context, selector))
-      .sum::<usize>();
-    let buf_len = buf.len();
-    if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-    let mut offset = 0;
-    for k in self.iter() {
-      if offset + encoded_identifier_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-      buf[offset..offset + encoded_identifier_len].copy_from_slice(&encoded_identifier);
-      offset += encoded_identifier_len;
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-      let k_len = k
-        .partial_encode_raw(context, &mut buf[offset..], selector)
-        .map_err(|e| e.update(encoded_len, buf_len))?;
-      offset += k_len;
-    }
-
-    Ok(offset)
+    repeated_encode(
+      buf,
+      self.iter(),
+      |k| k.partial_encoded_len(context, selector),
+      |k, buf| k.partial_encode(context, buf, selector),
+    )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -188,12 +102,7 @@ where
       return 0;
     }
 
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let encoded_identifier_len = identifier.encoded_len();
-    self
-      .iter()
-      .map(|k| encoded_identifier_len + k.partial_encoded_raw_len(context, selector))
-      .sum()
+    repeated_encoded_len(self.iter(), |k| k.partial_encoded_len(context, selector))
   }
 
   fn partial_encode(
@@ -202,51 +111,13 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    if selector.is_empty() {
-      return Ok(0);
-    }
-
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let encoded_identifier = identifier.encode();
-    let encoded_identifier_len = encoded_identifier.len();
-    let encoded_len = self
-      .iter()
-      .map(|k| encoded_identifier_len + k.partial_encoded_len(context, selector))
-      .sum::<usize>();
-    let buf_len = buf.len();
-    if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-    let mut offset = 0;
-    for k in self.iter() {
-      if offset + encoded_identifier_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-      buf[offset..offset + encoded_identifier_len].copy_from_slice(&encoded_identifier);
-      offset += encoded_identifier_len;
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-      let k_len = k
-        .partial_encode(context, &mut buf[offset..], selector)
-        .map_err(|e| e.update(encoded_len, buf_len))?;
-      offset += k_len;
-    }
-
-    Ok(offset)
+    <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encode(self, context, buf, selector)
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    if selector.is_empty() {
-      return 0;
-    }
-
-    let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let encoded_identifier_len = identifier.encoded_len();
-    self
-      .iter()
-      .map(|k| encoded_identifier_len + k.partial_encoded_len(context, selector))
-      .sum()
+    <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encoded_raw_len(
+      self, context, selector,
+    )
   }
 }
 

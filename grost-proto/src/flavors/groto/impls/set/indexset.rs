@@ -3,6 +3,7 @@ use indexmap_2::IndexSet;
 use core::hash::{BuildHasher, Hash};
 
 use crate::{
+  buffer::Buffer,
   convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
@@ -62,7 +63,7 @@ where
   fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
     let mut set = IndexSet::with_capacity_and_hasher(input.len(), S::default());
 
-    for item in input {
+    for item in input.into_iter() {
       let item = K::try_from_partial(ctx, item)?;
       if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
         return Err(Error::custom("duplicated keys in set"));

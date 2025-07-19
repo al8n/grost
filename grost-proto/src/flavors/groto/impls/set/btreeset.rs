@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::{
+  buffer::Buffer,
   convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
@@ -59,7 +60,7 @@ where
   fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
     let mut set = BTreeSet::new();
 
-    for item in input {
+    for item in input.into_inner() {
       let item = K::try_from_partial(ctx, item)?;
       if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
         return Err(Error::custom("duplicated keys in set"));

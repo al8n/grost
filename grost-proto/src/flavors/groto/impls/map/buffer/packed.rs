@@ -1,6 +1,6 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, Ref, TryFromPartialRef, TryFromRef},
+  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -63,7 +63,7 @@ where
     let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
     let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
 
-    for item in self.into_iter() {
+    for item in self.iter() {
       len += item.encoded_packed_len(context, &ki, &vi);
     }
 
@@ -150,7 +150,7 @@ where
     let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
 
     // encode the elements
-    for item in self.into_iter() {
+    for item in self.iter() {
       let item_encoded_len =
         item.partial_encode_packed(context, &mut buf[offset..], &ki, &vi, selector)?;
       offset += item_encoded_len;
@@ -216,7 +216,7 @@ where
     let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
     let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
     // encode the elements
-    for item in self.into_iter() {
+    for item in self.iter() {
       let item_encoded_len =
         item.partial_encode_packed(context, &mut buf[offset..], &ki, &vi, selector)?;
       offset += item_encoded_len;
@@ -237,12 +237,11 @@ where
   }
 }
 
-impl<'a, K, KW, V, VW, S, RB, UB, PB> Decode1<'a, PackedEntry<KW, VW>, RB, UB, Groto>
+impl<'a, K, KW, V, VW, RB, UB, PB> Decode1<'a, PackedEntry<KW, VW>, RB, UB, Groto>
   for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  S: BuildHasher + Default,
   K: Decode1<'a, KW, RB, UB, Groto>,
   V: Decode1<'a, VW, RB, UB, Groto>,
   PB: Buffer<Item = PartialMapEntry<K, V>>,

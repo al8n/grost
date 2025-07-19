@@ -1,5 +1,4 @@
 use std::collections::BTreeSet;
-use varing::decode_u32_varint;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
@@ -14,7 +13,10 @@ use crate::{
   state::State,
 };
 
-use super::super::DefaultPartialSetBuffer;
+use super::super::{
+  DefaultPartialSetBuffer, packed_decode, packed_encode, packed_encode_raw, packed_encoded_len,
+  packed_encoded_raw_len,
+};
 
 impl<K> DefaultSetWireFormat<Groto> for BTreeSet<K> {
   type Format<KM>
@@ -54,44 +56,21 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let bytes = src.as_bytes();
-    let bytes_len = bytes.len();
-    if bytes_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
+    packed_decode::<K, KW, Self, RB>(
+      context,
+      src,
+      |_| Ok(Self::new()),
+      Self::len,
+      |set, src| {
+        let (read, item) = K::decode(context, src)?;
 
-    // decode total bytes
-    let (mut offset, total_bytes) = decode_u32_varint(bytes)?;
+        if !set.insert(item) && context.err_on_duplicated_set_keys() {
+          return Err(Error::custom("duplicated keys in set"));
+        }
 
-    if bytes_len < offset + total_bytes as usize {
-      return Err(Error::buffer_underflow());
-    }
-
-    // decode the number of elements
-    let (num_elements_size, num_elements) = decode_u32_varint(&bytes[offset..])?;
-    offset += num_elements_size;
-    if num_elements == 0 {
-      return Ok((offset, BTreeSet::new()));
-    }
-
-    let mut set = BTreeSet::new();
-    while set.len() < num_elements as usize && offset < bytes_len {
-      let (read, item) = K::decode(context, src.slice(offset..))?;
-      offset += read;
-
-      if !set.insert(item) && context.err_on_duplicated_set_keys() {
-        return Err(Error::custom("duplicated keys in set"));
-      }
-    }
-
-    if set.len() != num_elements as usize && context.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {num_elements} elements in set, but got {} elements",
-        set.len()
-      )));
-    }
-
-    Ok((offset, set))
+        Ok(read)
+      },
+    )
   }
 }
 
@@ -101,78 +80,32 @@ where
   K: Encode<KW, Groto>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_len = <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context);
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len = item.encode(context, &mut buf[offset..])?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode_raw::<K, _, _, _>(
+      buf,
+      self.iter(),
+      || <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context),
+      |item, buf| item.encode(context, buf),
+    )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let num_elems = self.len();
-    let mut len = varing::encoded_u32_varint_len(num_elems as u32);
-
-    if let Some(fixed_length) = KW::FIXED_LENGTH {
-      len += fixed_length * num_elems;
-    } else {
-      for item in self {
-        len += item.encoded_len(context);
-      }
-    }
-    len
+    packed_encoded_raw_len::<K, KW, _, _>(self.len(), self.iter(), |item| item.encoded_len(context))
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_raw_len = <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context);
-    let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
-
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-
-    // encode total bytes
-    if encoded_len > u32::MAX as usize {
-      return Err(Error::too_large(encoded_len, u32::MAX as usize));
-    }
-
-    let total_bytes = encoded_raw_len as u32;
-    let total_bytes_size = varing::encode_u32_varint_to(total_bytes, buf)?;
-    offset += total_bytes_size;
-
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len = item.encode(context, &mut buf[offset..])?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode::<K, _, _, _>(
+      buf,
+      self.len(),
+      self.iter(),
+      || <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context),
+      |item, buf| item.encode(context, buf),
+    )
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    let total_bytes = <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context);
-    varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
+    packed_encoded_len::<_>(self.len(), || {
+      <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context)
+    })
   }
 }
 
@@ -191,26 +124,14 @@ where
       return Ok(0);
     }
 
-    let encoded_len =
-      <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector);
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len = item.partial_encode(context, &mut buf[offset..], selector)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode_raw::<K, _, _, _>(
+      buf,
+      self.iter(),
+      || {
+        <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector)
+      },
+      |item, buf| item.partial_encode(context, buf, selector),
+    )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -218,13 +139,9 @@ where
       return 0;
     }
 
-    let num_elems = self.len();
-    let mut len = varing::encoded_u32_varint_len(num_elems as u32);
-
-    for item in self {
-      len += item.partial_encoded_len(context, selector);
-    }
-    len
+    packed_encoded_raw_len::<K, KW, _, _>(self.len(), self.iter(), |item| {
+      item.partial_encoded_len(context, selector)
+    })
   }
 
   fn partial_encode(
@@ -237,38 +154,15 @@ where
       return Ok(0);
     }
 
-    let encoded_raw_len =
-      <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector);
-    let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
-
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-
-    // encode total bytes
-    if encoded_len > u32::MAX as usize {
-      return Err(Error::too_large(encoded_len, u32::MAX as usize));
-    }
-
-    let total_bytes = encoded_raw_len as u32;
-    let total_bytes_size = varing::encode_u32_varint_to(total_bytes, buf)?;
-    offset += total_bytes_size;
-
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len = item.partial_encode(context, &mut buf[offset..], selector)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode::<K, _, _, _>(
+      buf,
+      self.len(),
+      self.iter(),
+      || {
+        <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector)
+      },
+      |item, buf| item.partial_encode(context, buf, selector),
+    )
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -276,9 +170,9 @@ where
       return 0;
     }
 
-    let total_bytes =
-      <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector);
-    varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
+    packed_encoded_len::<_>(self.len(), || {
+      <Self as PartialEncode<Packed<KW>, Groto>>::partial_encoded_raw_len(self, context, selector)
+    })
   }
 }
 

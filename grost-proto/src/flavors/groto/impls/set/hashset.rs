@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use core::hash::{BuildHasher, Hash};
 
 use crate::{
+  buffer::Buffer,
   convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
@@ -42,14 +43,14 @@ where
 
 impl<K, S> PartialIdentity<Groto> for HashSet<K, S>
 where
-  K: PartialIdentity<Groto> + Ord,
+  K: PartialIdentity<Groto> + Eq + Hash,
   K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
 {
   fn partial_identity<'a>(
     input: &'a mut Self::Output,
     selector: &'a Self::Selector,
   ) -> &'a mut Self::Output {
-    input.as_mut_slice().iter_mut().for_each(|item| {
+    input.iter_mut().for_each(|item| {
       K::partial_identity(item, selector);
     });
 
@@ -66,7 +67,7 @@ where
   fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
     let mut set = HashSet::with_capacity_and_hasher(input.len(), S::default());
 
-    for item in input {
+    for item in input.into_iter() {
       let item = K::try_from_partial(ctx, item)?;
       if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
         return Err(Error::custom("duplicated keys in set"));

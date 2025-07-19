@@ -1,6 +1,6 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, Ref, TryFromPartialRef, TryFromRef},
+  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -9,6 +9,7 @@ use crate::{
       Context, Error, Identifier, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer, Tag,
     },
   },
+  selection::Selector,
   state::State,
 };
 
@@ -152,12 +153,11 @@ where
   }
 }
 
-impl<'a, K, KW, V, VW, S, RB, B, PB, const TAG: u32>
+impl<'a, K, KW, V, VW, RB, B, PB, const TAG: u32>
   Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  S: BuildHasher + Default,
   K: Decode1<'a, KW, RB, B, Groto>,
   V: Decode1<'a, VW, RB, B, Groto>,
   PB: Buffer<Item = PartialMapEntry<K, V>>,

@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{Buffer, DefaultBuffer},
-  convert::{Partial, PartialRef, Ref},
+  convert::Partial,
   flavors::{Groto, Packed, Repeated},
   selection::Selectable,
   state::State,
@@ -29,9 +29,9 @@ impl<K, B> PartialSetBuffer<K, B> {
 
 impl<K, B> Buffer for PartialSetBuffer<K, B>
 where
-  B: Buffer<Item = PartialSetEntry<K>>,
+  B: Buffer<Item = K>,
 {
-  type Item = PartialSetEntry<K>;
+  type Item = K;
 
   #[inline]
   fn new() -> Self {
