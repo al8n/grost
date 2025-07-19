@@ -1,9 +1,10 @@
-use varing::decode_u32_varint;
-
 use core::hash::{BuildHasher, Hash};
 
 use super::{
-  super::{DefaultPartialMapBuffer, MapEntry},
+  super::{
+    DefaultPartialMapBuffer, MapEntry, packed_decode, packed_encode, packed_encode_raw,
+    packed_encoded_len, packed_encoded_raw_len,
+  },
   IndexMap,
 };
 
@@ -14,7 +15,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultMapWireFormat, Groto, PackedEntry, WireFormat,
-    groto::{Context, Error, Identifier, PackedMapDecoder, Tag},
+    groto::{Context, Error, PackedMapDecoder},
   },
   selection::{Selectable, Selector},
   state::State,
@@ -71,48 +72,28 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let bytes = src.as_bytes();
-    let bytes_len = bytes.len();
-    if bytes_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
+    packed_decode::<K, KW, V, VW, Self, RB>(
+      context,
+      src,
+      |cap| {
+        if cap == 0 {
+          Ok(IndexMap::with_hasher(S::default()))
+        } else {
+          Ok(IndexMap::with_capacity_and_hasher(cap, S::default()))
+        }
+      },
+      |map| map.len(),
+      |map, ki, vi, src| {
+        let (read, item) = MapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
+        let (k, v) = item.into_components();
 
-    // decode total bytes
-    let (mut offset, total_bytes) = decode_u32_varint(bytes)?;
+        if map.insert(k, v).is_some() && context.err_on_duplicated_map_keys() {
+          return Err(Error::custom("duplicated keys in map"));
+        }
 
-    if bytes_len < offset + total_bytes as usize {
-      return Err(Error::buffer_underflow());
-    }
-
-    // decode the number of elements
-    let (num_elements_size, num_elements) = decode_u32_varint(&bytes[offset..])?;
-    offset += num_elements_size;
-    if num_elements == 0 {
-      return Ok((offset, IndexMap::with_capacity_and_hasher(0, S::default())));
-    }
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut map = IndexMap::with_capacity_and_hasher(num_elements as usize, S::default());
-    while map.len() < num_elements as usize && offset < bytes_len {
-      let (read, item) = MapEntry::decode_packed_entry(context, src.slice(offset..), &ki, &vi)?;
-      offset += read;
-      let (k, v) = item.into_components();
-
-      if map.insert(k, v).is_some() && context.err_on_duplicated_map_keys() {
-        return Err(Error::custom("duplicated keys in map"));
-      }
-    }
-
-    if map.len() != num_elements as usize && context.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {num_elements} elements in map, but got {} elements",
-        map.len()
-      )));
-    }
-
-    Ok((offset, map))
+        Ok(read)
+      },
+    )
   }
 }
 
@@ -124,87 +105,34 @@ where
   V: Encode<VW, Groto>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_len = <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context);
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len =
-        MapEntry::from(item).encode_packed(context, &mut buf[offset..], &ki, &vi)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
+      buf,
+      self.iter(),
+      || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
+      |item, ki, vi, buf| MapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+    )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let num_elems = self.len();
-    let mut len = varing::encoded_u32_varint_len(num_elems as u32);
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    for item in self {
-      len += MapEntry::from(item).encoded_packed_len(context, &ki, &vi);
-    }
-
-    len
+    packed_encoded_raw_len::<K, V, KW, VW, _, _>(self.iter(), |item, ki, vi| {
+      MapEntry::from(item).encoded_packed_len::<KW, VW>(context, ki, vi)
+    })
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_raw_len =
-      <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context);
-    let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
-
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-
-    // encode total bytes
-    if encoded_len > u32::MAX as usize {
-      return Err(Error::too_large(encoded_len, u32::MAX as usize));
-    }
-
-    let total_bytes = encoded_raw_len as u32;
-    let total_bytes_size = varing::encode_u32_varint_to(total_bytes, buf)?;
-    offset += total_bytes_size;
-
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len =
-        MapEntry::from(item).encode_packed(context, &mut buf[offset..], &ki, &vi)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode::<K, V, KW, VW, _, _, _, _>(
+      buf,
+      self.len(),
+      self.iter(),
+      || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
+      |item, ki, vi, buf| MapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+    )
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    let total_bytes = <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context);
-    varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
+    packed_encoded_len(self.len(), || {
+      <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context)
+    })
   }
 }
 
@@ -225,36 +153,18 @@ where
       return Ok(0);
     }
 
-    let encoded_len = <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
-      self, context, selector,
-    );
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    // encode the elements
-    for item in self {
-      let item_encoded_len = MapEntry::from(item).partial_encode_packed(
-        context,
-        &mut buf[offset..],
-        &ki,
-        &vi,
-        selector,
-      )?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
+      buf,
+      self.iter(),
+      || {
+        <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
+          self, context, selector,
+        )
+      },
+      |item, ki, vi, buf| {
+        MapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+      },
+    )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -262,16 +172,9 @@ where
       return 0;
     }
 
-    let num_elems = self.len();
-    let mut len = varing::encoded_u32_varint_len(num_elems as u32);
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    for item in self {
-      len += MapEntry::from(item).partial_encoded_packed_len(context, &ki, &vi, selector);
-    }
-    len
+    packed_encoded_raw_len::<K, V, KW, VW, _, _>(self.iter(), |item, ki, vi| {
+      MapEntry::from(item).partial_encoded_packed_len::<KW, VW>(context, ki, vi, selector)
+    })
   }
 
   fn partial_encode(
@@ -284,48 +187,19 @@ where
       return Ok(0);
     }
 
-    let encoded_raw_len =
-      <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
-        self, context, selector,
-      );
-    let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
-
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let mut offset = 0;
-
-    // encode total bytes
-    if encoded_len > u32::MAX as usize {
-      return Err(Error::too_large(encoded_len, u32::MAX as usize));
-    }
-
-    let total_bytes = encoded_raw_len as u32;
-    let total_bytes_size = varing::encode_u32_varint_to(total_bytes, buf)?;
-    offset += total_bytes_size;
-
-    // encode num of elements
-    let num_elems = self.len();
-    let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
-    offset += num_elems_size;
-
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-    // encode the elements
-    for item in self {
-      let item_encoded_len = MapEntry::from(item).partial_encode_packed(
-        context,
-        &mut buf[offset..],
-        &ki,
-        &vi,
-        selector,
-      )?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    packed_encode::<K, V, KW, VW, _, _, _, _>(
+      buf,
+      self.len(),
+      self.iter(),
+      || {
+        <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
+          self, context, selector,
+        )
+      },
+      |item, ki, vi, buf| {
+        MapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+      },
+    )
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -333,10 +207,11 @@ where
       return 0;
     }
 
-    let total_bytes = <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
-      self, context, selector,
-    );
-    varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
+    packed_encoded_len::<_>(self.len(), || {
+      <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
+        self, context, selector,
+      )
+    })
   }
 }
 
@@ -467,6 +342,7 @@ where
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(
+    context: &'a Context,
     input: <Self as State<PartialRef<'a, RB, B, PackedEntry<KW, VW>, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
@@ -488,8 +364,8 @@ where
           if <DefaultPartialMapBuffer<_, _> as Buffer>::push(
             &mut partial_map,
             item.and_then(
-              |k| K::partial_try_from_ref(k, selector.key()),
-              |v| V::partial_try_from_ref(v, selector.value()),
+              |k| K::partial_try_from_ref(context, k, selector.key()),
+              |v| V::partial_try_from_ref(context, v, selector.value()),
             )?,
           )
           .is_some()

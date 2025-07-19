@@ -1,7 +1,9 @@
 use core::hash::{BuildHasher, Hash};
 
 use super::{
-  super::{DefaultPartialMapBuffer, MapEntry},
+  super::{
+    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
+  },
   IndexMap,
 };
 
@@ -12,7 +14,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, Identifier, RepeatedMapDecoderBuffer, Tag},
+    groto::{Context, Error, RepeatedMapDecoderBuffer},
   },
   selection::{Selectable, Selector},
   state::State,
@@ -82,30 +84,20 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut offset = 0;
-    let buf_len = src.len();
-
-    while offset < buf_len {
-      let (read, entry) = MapEntry::decode_repeated(context, src.slice(offset..), &ei, &ki, &vi)?;
-
+    repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
+      let (read, entry) = MapEntry::decode_repeated(context, src, ei, ki, vi)?;
       match entry {
         Some(entry) => {
-          offset += read;
-
           let (k, v) = entry.into_components();
           if self.insert(k, v).is_some() && context.err_on_duplicated_map_keys() {
             return Err(Error::custom("duplicated keys in map"));
           }
-        }
-        None => break,
-      }
-    }
 
-    Ok(offset)
+          Ok(Some(read))
+        }
+        None => Ok(None),
+      }
+    })
   }
 }
 
@@ -118,36 +110,18 @@ where
   V: Encode<VW, Groto>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_len =
-      <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context);
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut offset = 0;
-    for item in self {
-      let item_encoded_len =
-        MapEntry::from(item).encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    repeated_encode::<KW, VW, _, _, TAG>(
+      buf,
+      self.iter(),
+      || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
+      |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
+    )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    self
-      .iter()
-      .map(|item| MapEntry::from(item).encoded_repeated_len(context, &ei, &ki, &vi))
-      .sum()
+    repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
+      MapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
+    })
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -177,36 +151,18 @@ where
       return Ok(0);
     }
 
-    let encoded_len =
-      <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
-        self, context, selector,
-      );
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut offset = 0;
-    for item in self {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      offset += MapEntry::from(item).partial_encode_repeated(
-        context,
-        &mut buf[offset..],
-        &ei,
-        &ki,
-        &vi,
-        selector,
-      )?;
-    }
-
-    Ok(offset)
+    repeated_encode::<KW, VW, _, _, TAG>(
+      buf,
+      self.iter(),
+      || {
+        <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
+          self, context, selector,
+        )
+      },
+      |item, ei, ki, vi, buf| {
+        MapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
+      },
+    )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -214,16 +170,9 @@ where
       return 0;
     }
 
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    self
-      .iter()
-      .map(|item| {
-        MapEntry::from(item).partial_encoded_repeated_len(context, &ei, &ki, &vi, selector)
-      })
-      .sum()
+    repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
+      MapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
+    })
   }
 
   fn partial_encode(
@@ -358,6 +307,7 @@ where
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(
+    context: &'a Context,
     input: <Self as State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
@@ -379,8 +329,8 @@ where
           if <DefaultPartialMapBuffer<_, _> as Buffer>::push(
             &mut partial_map,
             item.and_then(
-              |k| K::partial_try_from_ref(k, selector.key()),
-              |v| V::partial_try_from_ref(v, selector.value()),
+              |k| K::partial_try_from_ref(context, k, selector.key()),
+              |v| V::partial_try_from_ref(context, v, selector.value()),
             )?,
           )
           .is_some()

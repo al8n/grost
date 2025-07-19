@@ -1,5 +1,5 @@
 use crate::{
-  flavors::{Flavor, WireFormat},
+  flavors::{Flavor, WireFormat, groto::Context},
   selection::Selectable,
 };
 
@@ -35,6 +35,7 @@ where
 {
   /// Partially transforms from the input type `PartialRef<'a, RB, UB, W, F>` into the current type `Self`.
   fn partial_try_from_ref(
+    context: &'a Context,
     input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
@@ -57,6 +58,7 @@ where
   <Self as State<Partial<F>>>::Output: Sized + Selectable<F, Selector = Self::Selector>,
 {
   fn partial_try_from_ref(
+    _: &'a Context,
     mut input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>

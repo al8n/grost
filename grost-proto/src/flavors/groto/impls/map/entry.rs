@@ -331,13 +331,12 @@ impl<K, V> PartialMapEntry<K, V> {
   }
 
   pub(super) fn decode_repeated<'de, KW, VW, RB, UB>(
-    parent_name: &'static str,
     ctx: &'de Context,
     src: RB,
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-  ) -> Result<(usize, Self), Error>
+  ) -> Result<(usize, Option<Self>), Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
@@ -352,7 +351,7 @@ impl<K, V> PartialMapEntry<K, V> {
     // read the identifier of the entry
     let (mut offset, identifier) = Identifier::decode(buf)?;
     if identifier.ne(ei) {
-      return Err(Error::unknown_identifier(parent_name, identifier));
+      return Ok((offset, None));
     }
 
     if offset >= buf_len {
@@ -372,7 +371,7 @@ impl<K, V> PartialMapEntry<K, V> {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
-      (total, ent)
+      (total, Some(ent))
     })
   }
 

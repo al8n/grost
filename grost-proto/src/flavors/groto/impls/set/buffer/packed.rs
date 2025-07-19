@@ -1,11 +1,11 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, Ref, TryFromPartialRef, TryFromRef},
+  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
-    groto::{Context, Error, Identifier, PackedSetDecoder, PartialSetBuffer, Tag},
+    groto::{Context, Error, PackedSetDecoder, PartialSetBuffer},
   },
   selection::Selector,
   state::State,

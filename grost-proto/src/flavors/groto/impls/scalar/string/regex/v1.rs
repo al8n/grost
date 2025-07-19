@@ -113,6 +113,7 @@ macro_rules! try_str_bridge {
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn partial_try_from_ref(
+          _: &'de $crate::__private::flavors::groto::Context,
           input: <Self as $crate::__private::state::State<$crate::__private::convert::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
           _: &bool,
         ) -> Result<Self, Error>

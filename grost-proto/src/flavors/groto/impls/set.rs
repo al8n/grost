@@ -5,9 +5,8 @@ use varing::decode_u32_varint;
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   decode::Decode1,
-  encode::Encode,
   flavors::{
-    Groto, Packed, Repeated, WireFormat,
+    Groto, Repeated, WireFormat,
     groto::{Context, Error, Identifier, Tag},
   },
 };
@@ -169,14 +168,14 @@ where
   }
 
   let mut set = constructor(num_elements as usize)?;
-  while len(&set) < num_elements as usize && offset < bytes_len {
+  while offset < bytes_len {
     offset += merge_decode(&mut set, src.slice(offset..))?;
   }
 
-  if len(&set) != num_elements as usize && context.err_on_length_mismatch() {
+  let actual_num_elements = len(&set);
+  if actual_num_elements != num_elements as usize && context.err_on_length_mismatch() {
     return Err(Error::custom(format!(
-      "expected {num_elements} elements in set, but got {} elements",
-      len(&set)
+      "expected {num_elements} elements in set, but got {actual_num_elements} elements",
     )));
   }
 

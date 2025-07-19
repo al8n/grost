@@ -13,7 +13,7 @@ use crate::{
   state::State,
 };
 
-use super::{MapSelector, PartialMapBuffer, PartialMapEntry};
+use super::{MapSelector, PartialMapEntry};
 
 /// A lazy iterator for decoding repeated map entries from binary protocol data.
 ///
@@ -510,17 +510,26 @@ where
     // All entries follow the same [identifier][length][key_id][key][value_id][value] pattern
     Some(
       PartialMapEntry::decode_repeated(
-        core::any::type_name::<Self>(),
         self.decoder.ctx,
         self.decoder.src.slice(self.offset..),
         &self.decoder.entry_identifier,
         &self.decoder.key_identifier,
         &self.decoder.value_identifier,
       )
-      .inspect(|(read, _)| {
-        // Update position
-        self.offset += read;
-        self.yielded_elements += 1;
+      .and_then(|(read, ent)| {
+        match ent {
+          Some(ent) => {
+            // Update position
+            self.offset += read;
+            self.yielded_elements += 1;
+            Ok((read, ent))
+          }
+          None => {
+            // If we reach here, it means the entry was malformed or incomplete
+            self.has_error = true;
+            Err(Error::custom("malformed repeated map entry"))
+          }
+        }
       })
       .inspect_err(|_| {
         // Set error flag to prevent further iteration attempts

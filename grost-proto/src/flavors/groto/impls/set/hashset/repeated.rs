@@ -265,6 +265,7 @@ where
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(
+    context: &'a Context,
     input: <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
@@ -287,7 +288,7 @@ where
     for res in iter {
       match res {
         Ok((_, item)) => {
-          let item = K::partial_try_from_ref(item, selector)?;
+          let item = K::partial_try_from_ref(context, item, selector)?;
           if <DefaultPartialSetBuffer<_> as Buffer>::push(&mut partial_set, item).is_some() {
             return Err(Error::custom("capacity exceeded for partial set buffer"));
           }

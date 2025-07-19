@@ -2,8 +2,8 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{Buffer, DefaultBuffer},
-  convert::{Partial, PartialRef, Ref},
-  flavors::{Groto, PackedEntry, RepeatedEntry},
+  convert::Partial,
+  flavors::Groto,
   selection::Selectable,
   state::State,
 };

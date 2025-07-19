@@ -5,13 +5,13 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
-    groto::{
-      Context, Error, Identifier, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer, Tag,
-    },
+    groto::{Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoderBuffer},
   },
   selection::Selector,
   state::State,
 };
+
+use super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
 
 impl<'a, K, V, KW, VW, RB, UB, PB, const TAG: u32>
   State<PartialRef<'a, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>> for PartialMapBuffer<K, V, PB>
@@ -35,35 +35,18 @@ where
   PB: Buffer<Item = PartialMapEntry<K, V>>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let encoded_len =
-      <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context);
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut offset = 0;
-    for item in self.iter() {
-      let item_encoded_len = item.encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi)?;
-      offset += item_encoded_len;
-    }
-
-    Ok(offset)
+    repeated_encode::<KW, VW, _, _, TAG>(
+      buf,
+      self.iter(),
+      || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
+      |item, ei, ki, vi, buf| item.encode_repeated::<KW, VW>(context, buf, ei, ki, vi),
+    )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    self
-      .iter()
-      .map(|item| item.encoded_repeated_len(context, &ei, &ki, &vi))
-      .sum()
+    repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
+      item.encoded_repeated_len(context, ei, ki, vi)
+    })
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -94,30 +77,18 @@ where
       return Ok(0);
     }
 
-    let encoded_len =
-      <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
-        self, context, selector,
-      );
-    let buf_len = buf.len();
-    if buf_len < encoded_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    let mut offset = 0;
-    for item in self.iter() {
-      if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
-      }
-
-      offset +=
-        item.partial_encode_repeated(context, &mut buf[offset..], &ei, &ki, &vi, selector)?;
-    }
-
-    Ok(offset)
+    repeated_encode::<KW, VW, _, _, TAG>(
+      buf,
+      self.iter(),
+      || {
+        <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
+          self, context, selector,
+        )
+      },
+      |item, ei, ki, vi, buf| {
+        item.partial_encode_repeated::<KW, VW>(context, buf, ei, ki, vi, selector)
+      },
+    )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
@@ -125,14 +96,9 @@ where
       return 0;
     }
 
-    let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::new(TAG));
-    let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
-    let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
-
-    self
-      .iter()
-      .map(|item| item.partial_encoded_repeated_len(context, &ei, &ki, &vi, selector))
-      .sum()
+    repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
+      item.partial_encoded_repeated_len(context, ei, ki, vi, selector)
+    })
   }
 
   fn partial_encode(
@@ -168,7 +134,32 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    todo!()
+    let mut this = Self::new();
+    <Self as Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>::merge_decode(
+      &mut this, context, src,
+    )
+    .map(|size| (size, this))
+  }
+
+  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
+  where
+    Self: Sized + 'a,
+    RB: ReadBuf + 'a,
+    B: UnknownBuffer<RB, Groto> + 'a,
+  {
+    repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
+      let (read, entry) = PartialMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
+      match entry {
+        Some(entry) => {
+          if self.push(entry).is_some() {
+            return Err(Error::custom("exceeded map buffer capacity"));
+          }
+
+          Ok(Some(read))
+        }
+        None => Ok(None),
+      }
+    })
   }
 }
 
