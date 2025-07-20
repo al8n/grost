@@ -281,18 +281,26 @@ where
       return Err(Error::custom("failed to allocate partial set buffer"));
     };
 
-    for res in iter {
-      match res {
-        Ok((_, item)) => {
-          let item = K::partial_try_from_ref(context, item, selector)?;
-          if <DefaultPartialSetBuffer<_> as Buffer>::push(&mut partial_set, item).is_some() {
-            return Err(Error::custom("capacity exceeded for partial set buffer"));
-          }
+    try_from::<_, _, KW, RB, B, _, _>(
+      &mut partial_set,
+      iter,
+      |set| {
+        if set.len() != capacity_hint && context.err_on_length_mismatch() {
+          return Err(Error::custom(format!(
+            "expected {capacity_hint} elements in set, but got {} elements",
+            set.len()
+          )));
         }
-        Err(e) => return Err(e),
-      }
-    }
-
-    Ok(partial_set)
+        Ok(())
+      },
+      |set, k| {
+        if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
+          return Err(Error::custom("capacity exceeded for partial set buffer"));
+        }
+        Ok(())
+      },
+      |item| K::partial_try_from_ref(context, item, selector),
+    )
+    .map(|_| partial_set)
   }
 }

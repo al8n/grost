@@ -5,7 +5,10 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
-    groto::{Context, Error, PartialSetBuffer, RepeatedDecoder, RepeatedDecoderBuffer},
+    groto::{
+      Context, Error, PartialSetBuffer, RepeatedDecoder, RepeatedDecoderBuffer,
+      context::RepeatedDecodePolicy,
+    },
   },
   selection::Selector,
   state::State,
@@ -183,15 +186,23 @@ where
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
+    let capacity_hint = input.capacity_hint();
+    let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
       return Err(Error::custom("failed to create buffer with given capacity"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
+      if buffer.push(ent).is_some() {
         return Err(Error::custom("exceeded set buffer capacity"));
       }
+    }
+
+    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
+      return Err(Error::custom(format!(
+        "expected {capacity_hint} elements in set, but got {} elements",
+        buffer.len()
+      )));
     }
 
     Ok(buffer)
@@ -218,15 +229,23 @@ where
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
+    let capacity_hint = input.capacity_hint();
+    let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
       return Err(Error::custom("failed to create buffer with given capacity"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
+      if buffer.push(ent).is_some() {
         return Err(Error::custom("exceeded set buffer capacity"));
       }
+    }
+
+    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
+      return Err(Error::custom(format!(
+        "expected {capacity_hint} elements in set, but got {} elements",
+        buffer.len()
+      )));
     }
 
     Ok(buffer)
