@@ -21,7 +21,9 @@ bitflags::bitflags! {
 /// This enum determines the memory allocation strategy when decoding repeated fields
 /// into collections (maps, sets, vectors, etc.). Each strategy represents a different
 /// trade-off between processing time and memory allocation efficiency.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display)]
+#[derive(
+  Debug, Default, Clone, Copy, PartialEq, Eq, Hash, derive_more::IsVariant, derive_more::Display,
+)]
 #[non_exhaustive]
 pub enum RepeatedDecodePolicy {
   /// Pre-allocate collection capacity by traversing source data twice.
@@ -96,11 +98,14 @@ const _: () = {
   impl Arbitrary for Context {
     fn arbitrary(g: &mut Gen) -> Self {
       let flags = Flags::from_bits_truncate(*g.choose(&[1, 2, 4]).unwrap());
-      Self { flags, repeated_decode_policy: if bool::arbitrary(g) {
-        RepeatedDecodePolicy::PreallocateCapacity
-      } else {
-        RepeatedDecodePolicy::GrowIncrementally
-      } }
+      Self {
+        flags,
+        repeated_decode_policy: if bool::arbitrary(g) {
+          RepeatedDecodePolicy::PreallocateCapacity
+        } else {
+          RepeatedDecodePolicy::GrowIncrementally
+        },
+      }
     }
   }
 };

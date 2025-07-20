@@ -223,15 +223,10 @@ where
 
     for res in input.iter() {
       let (_, ent) = res?;
-      let ent = ent.and_then(
-        |k| K::try_from_ref(ctx, k),
-        |v| V::try_from_ref(ctx, v),
-      )?;
+      let ent = ent.and_then(|k| K::try_from_ref(ctx, k), |v| V::try_from_ref(ctx, v))?;
 
       if buffer.push(ent).is_some() {
-        return Err(Error::custom(
-          "exceeded map buffer capacity",
-        ));
+        return Err(Error::custom("exceeded map buffer capacity"));
       }
     }
 

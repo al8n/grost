@@ -17,7 +17,7 @@ use crate::{
 
 use super::super::{
   DefaultPartialSetBuffer, packed_decode, packed_encode, packed_encode_raw, packed_encoded_len,
-  packed_encoded_raw_len,
+  packed_encoded_raw_len, try_from,
 };
 
 impl<K, S> DefaultSetWireFormat<Groto> for HashSet<K, S> {
@@ -208,26 +208,27 @@ where
     let capacity_hint = iter.capacity_hint();
     let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in iter {
-      match res {
-        Ok((_, item)) => {
-          let item = K::try_from_ref(ctx, item)?;
-          if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-            return Err(Error::custom("duplicated keys in set"));
-          }
+    try_from::<K, K::Output, KW, RB, B, _, _>(
+      &mut set,
+      iter,
+      |set| {
+        if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
+          return Err(Error::custom(format!(
+            "expected {capacity_hint} elements in set, but got {} elements",
+            set.len()
+          )));
         }
-        Err(e) => return Err(e),
-      }
-    }
-
-    if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in set, but got {} elements",
-        set.len()
-      )));
-    }
-
-    Ok(set)
+        Ok(())
+      },
+      |set, item| {
+        if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
+          return Err(Error::custom("duplicated keys in set"));
+        }
+        Ok(())
+      },
+      |item| K::try_from_ref(ctx, item),
+    )
+    .map(|_| set)
   }
 }
 
@@ -254,26 +255,27 @@ where
     let capacity_hint = iter.capacity_hint();
     let mut set = HashSet::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in iter {
-      match res {
-        Ok((_, item)) => {
-          let item = K::try_from_partial_ref(ctx, item)?;
-          if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-            return Err(Error::custom("duplicated keys in set"));
-          }
+    try_from::<K, K::Output, KW, RB, B, _, _>(
+      &mut set,
+      iter,
+      |set| {
+        if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
+          return Err(Error::custom(format!(
+            "expected {capacity_hint} elements in set, but got {} elements",
+            set.len()
+          )));
         }
-        Err(e) => return Err(e),
-      }
-    }
-
-    if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in set, but got {} elements",
-        set.len()
-      )));
-    }
-
-    Ok(set)
+        Ok(())
+      },
+      |set, item| {
+        if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
+          return Err(Error::custom("duplicated keys in set"));
+        }
+        Ok(())
+      },
+      |item| K::try_from_partial_ref(ctx, item),
+    )
+    .map(|_| set)
   }
 }
 

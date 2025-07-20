@@ -5,7 +5,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
-    groto::{Context, Error, PartialSetBuffer, RepeatedDecoderBuffer},
+    groto::{Context, Error, PartialSetBuffer, RepeatedDecoder, RepeatedDecoderBuffer},
   },
   selection::Selector,
   state::State,
@@ -127,19 +127,39 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
-      let (read, item) = K::decode(ctx, src)?;
+    match ctx.repeated_decode_policy() {
+      RepeatedDecodePolicy::PreallocateCapacity => {
+        let (read, decoder) = RepeatedDecoder::<K, RB, B, KW, TAG>::decode(ctx, src)?;
 
-      if set.push(item).is_some() {
-        return Err(Error::custom("exceeded set buffer capacity"));
+        if !self.try_reserve_exact(decoder.capacity_hint()) {
+          return Err(Error::custom("failed to reserve capacity for set entries"));
+        }
+
+        for item in decoder.iter() {
+          let (_, ent) = item?;
+          if self.push(ent).is_some() {
+            return Err(Error::custom("exceeded set buffer capacity"));
+          }
+        }
+
+        Ok(read)
       }
+      RepeatedDecodePolicy::GrowIncrementally => {
+        repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
+          let (read, item) = K::decode(ctx, src)?;
 
-      if ctx.err_on_duplicated_set_keys() {
-        return Err(Error::custom("duplicated keys in set"));
+          if set.push(item).is_some() {
+            return Err(Error::custom("exceeded set buffer capacity"));
+          }
+
+          if ctx.err_on_duplicated_set_keys() {
+            return Err(Error::custom("duplicated keys in set"));
+          }
+
+          Ok(read)
+        })
       }
-
-      Ok(read)
-    })
+    }
   }
 }
 
@@ -170,9 +190,7 @@ where
     for res in input.iter() {
       let (_, ent) = res?;
       if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
-        return Err(Error::custom(
-          "exceeded buffer capacity while pushing set entry",
-        ));
+        return Err(Error::custom("exceeded set buffer capacity"));
       }
     }
 
@@ -207,9 +225,7 @@ where
     for res in input.iter() {
       let (_, ent) = res?;
       if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
-        return Err(Error::custom(
-          "exceeded buffer capacity while pushing set entry",
-        ));
+        return Err(Error::custom("exceeded set buffer capacity"));
       }
     }
 

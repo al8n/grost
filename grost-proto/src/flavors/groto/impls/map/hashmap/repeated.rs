@@ -2,7 +2,8 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::{
-    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len, try_from,
+    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
+    try_from,
   },
   HashMap,
 };
@@ -13,7 +14,10 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy}, DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat
+    DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat,
+    groto::{
+      Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
+    },
   },
   selection::{Selectable, Selector},
   state::State,

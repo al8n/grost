@@ -249,7 +249,8 @@ where
       },
       |k| K::try_from_ref(ctx, k),
       |v| V::try_from_ref(ctx, v),
-    ).map(|_| map)
+    )
+    .map(|_| map)
   }
 }
 
@@ -299,7 +300,8 @@ where
       },
       |k| K::try_from_partial_ref(ctx, k),
       |v| V::try_from_partial_ref(ctx, v),
-    ).map(|_| map)
+    )
+    .map(|_| map)
   }
 }
 

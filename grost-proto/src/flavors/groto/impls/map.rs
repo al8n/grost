@@ -8,9 +8,11 @@ use entry::MapEntry;
 use varing::decode_u32_varint;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer}, flavors::{
-    groto::{Context, Error, Identifier, Tag}, Groto, RepeatedEntry, WireFormat
-  }
+  buffer::{ReadBuf, UnknownBuffer},
+  flavors::{
+    Groto, RepeatedEntry, WireFormat,
+    groto::{Context, Error, Identifier, Tag},
+  },
 };
 
 #[cfg(any(feature = "std", feature = "alloc"))]

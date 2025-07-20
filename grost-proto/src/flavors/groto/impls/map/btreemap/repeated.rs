@@ -1,7 +1,5 @@
 use super::{
-  super::{
-    DefaultPartialMapBuffer, MapEntry, repeated_encode, repeated_encoded_len, try_from,
-  },
+  super::{DefaultPartialMapBuffer, MapEntry, repeated_encode, repeated_encoded_len, try_from},
   BTreeMap,
 };
 
@@ -231,7 +229,8 @@ where
       },
       |k| K::try_from_ref(ctx, k),
       |v| V::try_from_ref(ctx, v),
-    ).map(|_| map)
+    )
+    .map(|_| map)
   }
 }
 

@@ -4,7 +4,11 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    groto::{context::RepeatedDecodePolicy, Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoder, RepeatedMapDecoderBuffer}, Groto, RepeatedEntry, WireFormat
+    Groto, RepeatedEntry, WireFormat,
+    groto::{
+      Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoder,
+      RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
+    },
   },
   selection::Selector,
   state::State,
@@ -172,7 +176,7 @@ where
         }
 
         Ok(read)
-      },
+      }
       RepeatedDecodePolicy::GrowIncrementally => {
         repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
           let (read, entry) = PartialMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
@@ -187,7 +191,7 @@ where
             None => Ok(None),
           }
         })
-      },
+      }
     }
   }
 }
@@ -222,14 +226,9 @@ where
 
     for res in input.iter() {
       let (_, ent) = res?;
-      let ent = ent.and_then(
-        |k| K::try_from_ref(ctx, k),
-        |v| V::try_from_ref(ctx, v),
-      )?;
+      let ent = ent.and_then(|k| K::try_from_ref(ctx, k), |v| V::try_from_ref(ctx, v))?;
       if buffer.push(ent).is_some() {
-        return Err(Error::custom(
-          "exceeded map buffer capacity",
-        ));
+        return Err(Error::custom("exceeded map buffer capacity"));
       }
     }
 
@@ -280,9 +279,7 @@ where
         |v| V::try_from_partial_ref(ctx, v),
       )?;
       if buffer.push(ent).is_some() {
-        return Err(Error::custom(
-          "exceeded map buffer capacity",
-        ));
+        return Err(Error::custom("exceeded map buffer capacity"));
       }
     }
 
