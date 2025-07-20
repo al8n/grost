@@ -8,11 +8,9 @@ use entry::MapEntry;
 use varing::decode_u32_varint;
 
 use crate::{
-  buffer::ReadBuf,
-  flavors::{
-    Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, Identifier, Tag},
-  },
+  buffer::{ReadBuf, UnknownBuffer}, flavors::{
+    groto::{Context, Error, Identifier, Tag}, Groto, RepeatedEntry, WireFormat
+  }
 };
 
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -285,5 +283,31 @@ where
   Ok(offset)
 }
 
-#[test]
-fn t() {}
+fn try_from<'a, K, V, KO, VO, KW, VW, RB, B, I, T>(
+  map: &mut T,
+  iter: I,
+  check: impl FnOnce(&T) -> Result<(), Error>,
+  mut insert: impl FnMut(&mut T, K, V) -> Result<(), Error>,
+  mut from_key: impl FnMut(KO) -> Result<K, Error>,
+  mut from_value: impl FnMut(VO) -> Result<V, Error>,
+) -> Result<(), Error>
+where
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+  K: 'a,
+  V: 'a,
+  RB: ReadBuf + 'a,
+  B: UnknownBuffer<RB, Groto> + 'a,
+  I: Iterator<Item = Result<(usize, PartialMapEntry<KO, VO>), Error>>,
+{
+  for res in iter {
+    let (_, item) = res?;
+    let (k, v) = item
+      .and_then(|k| from_key(k), |v| from_value(v))?
+      .try_into_entry()?
+      .into();
+    insert(map, k, v)?;
+  }
+
+  check(map)
+}

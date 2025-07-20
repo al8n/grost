@@ -17,14 +17,24 @@ use super::super::{
 
 impl<'a, K, V, KW, VW, RB, UB, PB> State<PartialRef<'a, RB, UB, PackedEntry<KW, VW>, Groto>>
   for PartialMapBuffer<K, V, PB>
+where
+  K: State<PartialRef<'a, RB, UB, KW, Groto>>,
+  K::Output: Sized,
+  V: State<PartialRef<'a, RB, UB, VW, Groto>>,
+  V::Output: Sized,
 {
-  type Output = PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
+  type Output = PackedMapDecoder<'a, K::Output, V::Output, RB, UB, KW, VW>;
 }
 
 impl<'a, K, V, KW, VW, RB, UB, PB> State<Ref<'a, RB, UB, PackedEntry<KW, VW>, Groto>>
   for PartialMapBuffer<K, V, PB>
+where
+  K: State<Ref<'a, RB, UB, KW, Groto>>,
+  K::Output: Sized,
+  V: State<Ref<'a, RB, UB, VW, Groto>>,
+  V::Output: Sized,
 {
-  type Output = PackedMapDecoder<'a, K, V, RB, UB, KW, VW>;
+  type Output = PackedMapDecoder<'a, K::Output, V::Output, RB, UB, KW, VW>;
 }
 
 impl<K, V, KW, VW, PB> Encode<PackedEntry<KW, VW>, Groto> for PartialMapBuffer<K, V, PB>
@@ -188,10 +198,10 @@ impl<'de, K, V, RB, UB, PB, KW, VW> TryFromRef<'de, RB, UB, PackedEntry<KW, VW>,
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
-  K::Output: Sized,
-  V: TryFromRef<'de, RB, UB, VW, Groto> + Decode1<'de, VW, RB, UB, Groto> + 'de,
-  V::Output: Sized,
+  K: TryFromRef<'de, RB, UB, KW, Groto> + 'de,
+  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  V: TryFromRef<'de, RB, UB, VW, Groto> + 'de,
+  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
@@ -206,17 +216,30 @@ where
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
+    let capacity_hint = input.capacity_hint();
+    let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
       return Err(Error::custom("failed to create buffer with given capacity"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
+      let ent = ent.and_then(
+        |k| K::try_from_ref(ctx, k),
+        |v| V::try_from_ref(ctx, v),
+      )?;
+
+      if buffer.push(ent).is_some() {
         return Err(Error::custom(
-          "exceeded buffer capacity while pushing map entry",
+          "exceeded map buffer capacity",
         ));
       }
+    }
+
+    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
+      return Err(Error::custom(format!(
+        "expected {capacity_hint} elements in map, but got {} elements",
+        buffer.len()
+      )));
     }
 
     Ok(buffer)
@@ -228,10 +251,10 @@ impl<'de, K, V, RB, UB, PB, KW, VW> TryFromPartialRef<'de, RB, UB, PackedEntry<K
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
-  K::Output: Sized,
-  V: TryFromPartialRef<'de, RB, UB, VW, Groto> + Decode1<'de, VW, RB, UB, Groto> + 'de,
-  V::Output: Sized,
+  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + 'de,
+  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  V: TryFromPartialRef<'de, RB, UB, VW, Groto> + 'de,
+  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
@@ -246,17 +269,29 @@ where
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
-    let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
+    let capacity_hint = input.capacity_hint();
+    let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
       return Err(Error::custom("failed to create buffer with given capacity"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
-      if buffer.push(ent).is_none() && ctx.err_on_length_mismatch() {
+      let ent = ent.and_then(
+        |k| K::try_from_partial_ref(ctx, k),
+        |v| V::try_from_partial_ref(ctx, v),
+      )?;
+      if buffer.push(ent).is_some() {
         return Err(Error::custom(
           "exceeded buffer capacity while pushing map entry",
         ));
       }
+    }
+
+    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
+      return Err(Error::custom(format!(
+        "expected {capacity_hint} elements in map, but got {} elements",
+        buffer.len()
+      )));
     }
 
     Ok(buffer)

@@ -3,7 +3,7 @@ use core::hash::{BuildHasher, Hash};
 use super::{
   super::{
     DefaultPartialMapBuffer, MapEntry, packed_decode, packed_encode, packed_encode_raw,
-    packed_encoded_len, packed_encoded_raw_len,
+    packed_encoded_len, packed_encoded_raw_len, try_from,
   },
   IndexMap,
 };
@@ -242,29 +242,31 @@ where
     let capacity_hint = iter.capacity_hint();
     let mut map = IndexMap::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in iter {
-      match res {
-        Ok((_, item)) => {
-          let (k, v) = item
-            .and_then(|k| K::try_from_ref(ctx, k), |v| V::try_from_ref(ctx, v))?
-            .try_into_entry()?
-            .into();
-          if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
-            return Err(Error::custom("duplicated keys in map"));
-          }
+    try_from::<K, V, K::Output, V::Output, KW, VW, RB, B, _, _>(
+      &mut map,
+      iter,
+      |map| {
+        if map.is_empty() {
+          return Err(Error::custom("map cannot be empty"));
         }
-        Err(e) => return Err(e),
-      }
-    }
-
-    if map.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in map, but got {} elements",
-        map.len()
-      )));
-    }
-
-    Ok(map)
+        if map.len() > capacity_hint && ctx.err_on_length_mismatch() {
+          return Err(Error::custom(format!(
+            "exceeded capacity hint of {capacity_hint} elements in map, but got {} elements",
+            map.len()
+          )));
+        }
+        Ok(())
+      },
+      |map, k, v| {
+        if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
+          return Err(Error::custom("duplicated keys in map"));
+        }
+        Ok(())
+      },
+      |k| K::try_from_ref(ctx, k),
+      |v| V::try_from_ref(ctx, v),
+    )
+    .map(|_| map)
   }
 }
 
@@ -295,32 +297,31 @@ where
     let capacity_hint = iter.capacity_hint();
     let mut map = IndexMap::with_capacity_and_hasher(capacity_hint, S::default());
 
-    for res in iter {
-      match res {
-        Ok((_, item)) => {
-          let (k, v) = item
-            .and_then(
-              |k| K::try_from_partial_ref(ctx, k),
-              |v| V::try_from_partial_ref(ctx, v),
-            )?
-            .try_into_entry()?
-            .into();
-          if map.insert(k, v).is_some() && ctx.err_on_duplicated_set_keys() {
-            return Err(Error::custom("duplicated keys in map"));
-          }
+    try_from::<K, V, K::Output, V::Output, KW, VW, RB, B, _, _>(
+      &mut map,
+      iter,
+      |map| {
+        if map.is_empty() {
+          return Err(Error::custom("map cannot be empty"));
         }
-        Err(e) => return Err(e),
-      }
-    }
-
-    if map.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in map, but got {} elements",
-        map.len()
-      )));
-    }
-
-    Ok(map)
+        if map.len() > capacity_hint && ctx.err_on_length_mismatch() {
+          return Err(Error::custom(format!(
+            "exceeded capacity hint of {capacity_hint} elements in map, but got {} elements",
+            map.len()
+          )));
+        }
+        Ok(())
+      },
+      |map, k, v| {
+        if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
+          return Err(Error::custom("duplicated keys in map"));
+        }
+        Ok(())
+      },
+      |k| K::try_from_partial_ref(ctx, k),
+      |v| V::try_from_partial_ref(ctx, v),
+    )
+    .map(|_| map)
   }
 }
 
