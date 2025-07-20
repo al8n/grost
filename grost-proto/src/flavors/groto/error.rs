@@ -367,6 +367,33 @@ impl Error {
   pub const fn custom(value: &'static str) -> Self {
     Self::Custom(value)
   }
+
+  #[inline]
+  pub(crate) const fn allocation_failed(knd: &str) -> Self {
+    match knd {
+      "set" => Self::custom("allocation failed: could not allocate buffer with set capacity"),
+      "map" => Self::custom("allocation failed: could not allocate buffer with map capacity"),
+      _ => Self::custom("allocation failed: could not allocate buffer with capacity"),
+    }
+  }
+
+  #[inline]
+  pub(crate) const fn capacity_exceeded(knd: &str) -> Self {
+    match knd {
+      "set" => Self::custom("capacity exceeded: cannot add more elements to the set buffer"),
+      "map" => Self::custom("capacity exceeded: cannot add more elements to the map buffer"),
+      _ => Self::custom("capacity exceeded: cannot add more elements to the buffer"),
+    }
+  }
+
+  #[inline]
+  pub(crate) const fn fail_to_reserve_capacity(knd: &str) -> Self {
+    match knd {
+      "set" => Self::custom("failed to reserve capacity for set buffer"),
+      "map" => Self::custom("failed to reserve capacity for map buffer"),
+      _ => Self::custom("failed to reserve capacity for buffer"),
+    }
+  }
 }
 
 impl From<BaseError<Groto>> for Error {

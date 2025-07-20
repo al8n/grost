@@ -144,20 +144,13 @@ where
     packed_decode::<K, KW, Self, RB>(
       context,
       src,
-      |cap| {
-        PartialSetBuffer::with_capacity(cap)
-          .ok_or_else(|| Error::custom("failed to create buffer with given capacity"))
-      },
+      |cap| PartialSetBuffer::with_capacity(cap).ok_or_else(|| Error::allocation_failed("set")),
       Self::len,
       |set, src| {
         let (read, item) = K::decode(context, src)?;
 
         if set.push(item).is_some() {
-          return Err(Error::custom("exceeded set buffer capacity"));
-        }
-
-        if context.err_on_duplicated_set_keys() {
-          return Err(Error::custom("duplicated keys in set"));
+          return Err(Error::capacity_exceeded("set"));
         }
 
         Ok(read)
@@ -187,24 +180,19 @@ where
   {
     let capacity_hint = input.capacity_hint();
     let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
+      return Err(Error::allocation_failed("set"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
       if buffer.push(ent).is_some() {
-        return Err(Error::custom("exceeded set buffer capacity"));
+        return Err(Error::capacity_exceeded("set"));
       }
     }
 
-    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in set, but got {} elements",
-        buffer.len()
-      )));
-    }
-
-    Ok(buffer)
+    ctx
+      .err_length_mismatch(capacity_hint, buffer.len())
+      .map(|_| buffer)
   }
 }
 
@@ -230,23 +218,18 @@ where
   {
     let capacity_hint = input.capacity_hint();
     let Some(mut buffer) = Self::with_capacity(input.capacity_hint()) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
+      return Err(Error::allocation_failed("set"));
     };
 
     for res in input.iter() {
       let (_, ent) = res?;
       if buffer.push(ent).is_some() {
-        return Err(Error::custom("exceeded set buffer capacity"));
+        return Err(Error::capacity_exceeded("set"));
       }
     }
 
-    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in set, but got {} elements",
-        buffer.len()
-      )));
-    }
-
-    Ok(buffer)
+    ctx
+      .err_length_mismatch(capacity_hint, buffer.len())
+      .map(|_| buffer)
   }
 }

@@ -171,20 +171,13 @@ where
     packed_decode::<K, KW, V, VW, Self, RB>(
       context,
       src,
-      |cap| {
-        PartialMapBuffer::with_capacity(cap)
-          .ok_or_else(|| Error::custom("failed to create buffer with given capacity"))
-      },
+      |cap| PartialMapBuffer::with_capacity(cap).ok_or_else(|| Error::allocation_failed("map")),
       |map| map.len(),
       |map, ki, vi, src| {
         let (read, item) = PartialMapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
 
         if map.push(item).is_some() {
-          return Err(Error::custom("exceeded map buffer capacity"));
-        }
-
-        if context.err_on_duplicated_map_keys() {
-          return Err(Error::custom("duplicated keys in map"));
+          return Err(Error::capacity_exceeded("map"));
         }
 
         Ok(read)
@@ -218,7 +211,7 @@ where
   {
     let capacity_hint = input.capacity_hint();
     let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
+      return Err(Error::allocation_failed("map"));
     };
 
     for res in input.iter() {
@@ -226,18 +219,13 @@ where
       let ent = ent.and_then(|k| K::try_from_ref(ctx, k), |v| V::try_from_ref(ctx, v))?;
 
       if buffer.push(ent).is_some() {
-        return Err(Error::custom("exceeded map buffer capacity"));
+        return Err(Error::capacity_exceeded("map"));
       }
     }
 
-    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in map, but got {} elements",
-        buffer.len()
-      )));
-    }
-
-    Ok(buffer)
+    ctx
+      .err_length_mismatch(capacity_hint, buffer.len())
+      .map(|_| buffer)
   }
 }
 
@@ -266,7 +254,7 @@ where
   {
     let capacity_hint = input.capacity_hint();
     let Some(mut buffer) = Self::with_capacity(capacity_hint) else {
-      return Err(Error::custom("failed to create buffer with given capacity"));
+      return Err(Error::allocation_failed("map"));
     };
 
     for res in input.iter() {
@@ -276,19 +264,12 @@ where
         |v| V::try_from_partial_ref(ctx, v),
       )?;
       if buffer.push(ent).is_some() {
-        return Err(Error::custom(
-          "exceeded buffer capacity while pushing map entry",
-        ));
+        return Err(Error::capacity_exceeded("map"));
       }
     }
 
-    if buffer.len() != capacity_hint && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {capacity_hint} elements in map, but got {} elements",
-        buffer.len()
-      )));
-    }
-
-    Ok(buffer)
+    ctx
+      .err_length_mismatch(capacity_hint, buffer.len())
+      .map(|_| buffer)
   }
 }

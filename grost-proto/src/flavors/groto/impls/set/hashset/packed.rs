@@ -73,9 +73,7 @@ where
       |set, src| {
         let (read, item) = K::decode(context, src)?;
 
-        if !set.insert(item) && context.err_on_duplicated_set_keys() {
-          return Err(Error::custom("duplicated keys in set"));
-        }
+        context.err_duplicated_set_keys(!set.insert(item))?;
 
         Ok(read)
       },
@@ -211,21 +209,8 @@ where
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
       iter,
-      |set| {
-        if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
-          return Err(Error::custom(format!(
-            "expected {capacity_hint} elements in set, but got {} elements",
-            set.len()
-          )));
-        }
-        Ok(())
-      },
-      |set, item| {
-        if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-          return Err(Error::custom("duplicated keys in set"));
-        }
-        Ok(())
-      },
+      |set| ctx.err_length_mismatch(capacity_hint, set.len()),
+      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
       |item| K::try_from_ref(ctx, item),
     )
     .map(|_| set)
@@ -258,21 +243,8 @@ where
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
       iter,
-      |set| {
-        if set.len() != capacity_hint && ctx.err_on_length_mismatch() {
-          return Err(Error::custom(format!(
-            "expected {capacity_hint} elements in set, but got {} elements",
-            set.len()
-          )));
-        }
-        Ok(())
-      },
-      |set, item| {
-        if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-          return Err(Error::custom("duplicated keys in set"));
-        }
-        Ok(())
-      },
+      |set| ctx.err_length_mismatch(capacity_hint, set.len()),
+      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
       |item| K::try_from_partial_ref(ctx, item),
     )
     .map(|_| set)
@@ -304,24 +276,16 @@ where
     let Some(mut partial_set) =
       <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
     else {
-      return Err(Error::custom("failed to allocate partial set buffer"));
+      return Err(Error::allocation_failed("set"));
     };
 
     try_from::<_, _, KW, RB, B, _, _>(
       &mut partial_set,
       iter,
-      |set| {
-        if set.len() != capacity_hint && context.err_on_length_mismatch() {
-          return Err(Error::custom(format!(
-            "expected {capacity_hint} elements in set, but got {} elements",
-            set.len()
-          )));
-        }
-        Ok(())
-      },
+      |set| context.err_length_mismatch(capacity_hint, set.len()),
       |set, k| {
         if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
-          return Err(Error::custom("capacity exceeded for partial set buffer"));
+          return Err(Error::capacity_exceeded("set"));
         }
         Ok(())
       },

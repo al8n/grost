@@ -350,3 +350,40 @@ impl Context {
     self.flags.contains(Flags::ERR_ON_LENGTH_MISMATCH)
   }
 }
+
+impl Context {
+  #[inline]
+  pub(crate) fn err_length_mismatch(
+    &self,
+    expected: usize,
+    actual: usize,
+  ) -> Result<(), super::Error> {
+    if self.err_on_length_mismatch() && expected != actual {
+      #[cfg(any(feature = "std", feature = "alloc"))]
+      let err = format!("expected {expected} elements, but got {actual} elements");
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      let err = "expected elements not match actual elements";
+      Err(super::Error::custom(err))
+    } else {
+      Ok(())
+    }
+  }
+
+  #[inline]
+  pub(crate) fn err_duplicated_set_keys(&self, duplicated: bool) -> Result<(), super::Error> {
+    if duplicated && self.err_on_duplicated_set_keys() {
+      Err(super::Error::custom("duplicated keys in set"))
+    } else {
+      Ok(())
+    }
+  }
+
+  #[inline]
+  pub(crate) fn err_duplicated_map_keys(&self, duplicated: bool) -> Result<(), super::Error> {
+    if duplicated && self.err_on_duplicated_map_keys() {
+      Err(super::Error::custom("duplicated keys in map"))
+    } else {
+      Ok(())
+    }
+  }
+}
