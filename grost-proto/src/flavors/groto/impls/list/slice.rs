@@ -26,7 +26,10 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::{encode::{EquivalentEncode, Encode}, flavors::groto::Varint};
+  use crate::{
+    encode::{Encode, EquivalentEncode},
+    flavors::groto::Varint,
+  };
 
   use super::*;
 

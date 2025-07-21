@@ -18,8 +18,9 @@ use crate::{
 use super::super::{
   super::{
     packed_decode, packed_encode, packed_encode_raw, packed_encoded_len, packed_encoded_raw_len,
+    try_from,
   },
-  DefaultPartialSetBuffer, try_from,
+  DefaultPartialSetBuffer,
 };
 
 impl<K, S> DefaultSetWireFormat<Groto> for HashSet<K, S> {
@@ -273,6 +274,10 @@ where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
   {
+    if selector.is_empty() {
+      return Ok(<DefaultPartialSetBuffer<_> as Buffer>::new());
+    }
+
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
     let Some(mut partial_set) =

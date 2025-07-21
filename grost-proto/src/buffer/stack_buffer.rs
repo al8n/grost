@@ -177,6 +177,13 @@ impl<T, const CAP: usize> Drop for StackBuffer<T, CAP> {
   }
 }
 
+impl<T, const CAP: usize> crate::encode::Length for StackBuffer<T, CAP> {
+  #[inline]
+  fn len(&self) -> usize {
+    self.len
+  }
+}
+
 // Additional convenience methods
 impl<T, const CAP: usize> StackBuffer<T, CAP> {
   /// Returns `true` if the buffer is empty.

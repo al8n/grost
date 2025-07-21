@@ -27,6 +27,15 @@ impl<K, B> PartialSetBuffer<K, B> {
   }
 }
 
+impl<K, B> crate::encode::Length for PartialSetBuffer<K, B>
+where
+  B: Buffer<Item = K>,
+{
+  fn len(&self) -> usize {
+    self.buffer.len()
+  }
+}
+
 impl<K, B> Buffer for PartialSetBuffer<K, B>
 where
   B: Buffer<Item = K>,

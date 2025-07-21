@@ -18,6 +18,12 @@ use crate::{
 mod packed;
 mod repeated;
 
+impl<K, V, S> crate::encode::Length for HashMap<K, V, S> {
+  fn len(&self) -> usize {
+    self.len()
+  }
+}
+
 impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {
   type Output = (K, V);
 }
@@ -75,17 +81,10 @@ where
         )?
         .try_into_entry()?
         .into();
-      if map.insert(k, v).is_some() && ctx.err_on_duplicated_map_keys() {
-        return Err(Error::custom("duplicated keys in map"));
-      }
+      ctx.err_duplicated_map_keys(map.insert(k, v).is_some())?;
     }
 
-    if map.len() != expected && ctx.err_on_length_mismatch() {
-      return Err(Error::custom(format!(
-        "expected {expected} elements in map, but got {} elements",
-        map.len()
-      )));
-    }
+    ctx.err_length_mismatch(expected, map.len())?;
 
     Ok(map)
   }

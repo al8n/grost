@@ -14,10 +14,7 @@ use crate::{
 };
 
 use super::{
-  super::{
-    super::{repeated_decode, repeated_encode, repeated_encoded_len},
-    try_from,
-  },
+  super::super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from},
   DefaultPartialSetBuffer,
 };
 

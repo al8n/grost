@@ -1,9 +1,9 @@
 use crate::{
   convert::{Flattened, Innermost},
   encode::{EquivalentEncode, Length},
+  flavors::Flatten,
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
-  flavors::Flatten,
 };
 
 use super::*;

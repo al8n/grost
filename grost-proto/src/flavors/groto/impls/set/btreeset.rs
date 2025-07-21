@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use crate::{
   buffer::Buffer,
   convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
+  encode::Length,
   flavors::{
     Groto,
     groto::{Context, Error},
@@ -15,6 +16,12 @@ use super::DefaultPartialSetBuffer;
 
 mod packed;
 mod repeated;
+
+impl<K> Length for BTreeSet<K> {
+  fn len(&self) -> usize {
+    self.len()
+  }
+}
 
 impl<K> State<Flattened<Inner>> for BTreeSet<K> {
   type Output = K;
@@ -61,10 +68,7 @@ where
     let mut set = BTreeSet::new();
 
     for item in input.into_inner() {
-      let item = K::try_from_partial(ctx, item)?;
-      if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-        return Err(Error::custom("duplicated keys in set"));
-      }
+      ctx.err_duplicated_set_keys(!set.insert(K::try_from_partial(ctx, item)?))?;
     }
 
     Ok(set)

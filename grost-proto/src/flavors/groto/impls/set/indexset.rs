@@ -18,6 +18,12 @@ use super::DefaultPartialSetBuffer;
 mod packed;
 mod repeated;
 
+impl<K, S> crate::encode::Length for IndexSet<K, S> {
+  fn len(&self) -> usize {
+    self.len()
+  }
+}
+
 impl<K, S> State<Flattened<Inner>> for IndexSet<K, S> {
   type Output = K;
 }
@@ -64,10 +70,7 @@ where
     let mut set = IndexSet::with_capacity_and_hasher(input.len(), S::default());
 
     for item in input.into_iter() {
-      let item = K::try_from_partial(ctx, item)?;
-      if !set.insert(item) && ctx.err_on_duplicated_set_keys() {
-        return Err(Error::custom("duplicated keys in set"));
-      }
+      ctx.err_duplicated_set_keys(!set.insert(K::try_from_partial(ctx, item)?))?;
     }
 
     Ok(set)

@@ -1,6 +1,4 @@
-use super::HashSet;
-
-use core::hash::BuildHasher;
+use std::vec::Vec;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
@@ -8,29 +6,17 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultRepeatedWireFormat, Groto, Repeated, WireFormat,
-    groto::{
-      Context, Error, RepeatedDecoder, RepeatedDecoderBuffer, context::RepeatedDecodePolicy,
-    },
+    Groto, Repeated, WireFormat,
+    groto::{Context, Error, RepeatedDecoderBuffer},
   },
   selection::{Selectable, Selector},
   state::State,
 };
 
-use super::{
-  super::super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from},
-  DefaultPartialSetBuffer,
-};
+use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from};
 
-impl<K, S> DefaultRepeatedWireFormat<Groto> for HashSet<K, S> {
-  type Format<KM, const TAG: u32>
-    = Repeated<KM, TAG>
-  where
-    KM: WireFormat<Groto> + 'static;
-}
-
-impl<'a, K, KW, S, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
-  for HashSet<K, S>
+impl<'a, K, KW, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
+  for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
@@ -40,8 +26,7 @@ where
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
 }
 
-impl<'a, K, KW, S, RB, B, const TAG: u32> State<Ref<'a, RB, B, Repeated<KW, TAG>, Groto>>
-  for HashSet<K, S>
+impl<'a, K, KW, RB, B, const TAG: u32> State<Ref<'a, RB, B, Repeated<KW, TAG>, Groto>> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
@@ -51,7 +36,7 @@ where
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
 }
 
-impl<K, KW, S, const TAG: u32> Encode<Repeated<KW, TAG>, Groto> for HashSet<K, S>
+impl<K, KW, const TAG: u32> Encode<Repeated<KW, TAG>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
@@ -78,7 +63,7 @@ where
   }
 }
 
-impl<K, KW, S, const TAG: u32> PartialEncode<Repeated<KW, TAG>, Groto> for HashSet<K, S>
+impl<K, KW, const TAG: u32> PartialEncode<Repeated<KW, TAG>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
@@ -127,12 +112,10 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>
-  for HashSet<K, S>
+impl<'a, K, KW, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: core::hash::Hash + Eq + Decode1<'a, KW, RB, B, Groto>,
-  S: BuildHasher + Default,
+  K: Ord + Decode1<'a, KW, RB, B, Groto>,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -140,7 +123,7 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let mut this = HashSet::with_hasher(Default::default());
+    let mut this = Vec::new();
     <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
       .map(|size| (size, this))
   }
@@ -151,39 +134,22 @@ where
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    match ctx.repeated_decode_policy() {
-      RepeatedDecodePolicy::GrowIncrementally => {
-        repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
-          let (read, item) = K::decode(ctx, src)?;
-          ctx.err_duplicated_set_keys(!set.insert(item))?;
+    repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
+      let (read, item) = K::decode(ctx, src)?;
+      set.push(item);
 
-          Ok(read)
-        })
-      }
-      RepeatedDecodePolicy::PreallocateCapacity => {
-        let (read, decoder) = RepeatedDecoder::<K, RB, B, KW, TAG>::decode(ctx, src)?;
-        self.reserve(decoder.capacity_hint());
-
-        for item in decoder.iter() {
-          let (_, k) = item?;
-          ctx.err_duplicated_set_keys(!self.insert(k))?;
-        }
-
-        Ok(read)
-      }
-    }
+      Ok(read)
+    })
   }
 }
 
-impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>, Groto>
-  for HashSet<K, S>
+impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, UB, KW, Groto> + core::hash::Hash + Eq + 'a,
+  K: TryFromRef<'a, RB, UB, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
-  S: BuildHasher + Default,
 {
   fn try_from_ref(
     ctx: &'a Context,
@@ -196,28 +162,30 @@ where
     UB: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, Default::default());
+    let mut set = Vec::new();
 
     try_from::<K, K::Output, KW, RB, UB, _, _>(
       &mut set,
       input.iter(),
       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
+      |set, k| {
+        set.push(k);
+        Ok(())
+      },
       |item| K::try_from_ref(ctx, item),
     )
     .map(|_| set)
   }
 }
 
-impl<'a, K, KW, S, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>
-  for HashSet<K, S>
+impl<'a, K, KW, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>
+  for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
+  K: TryFromPartialRef<'a, RB, B, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
-  S: BuildHasher + Default,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
@@ -230,13 +198,16 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = HashSet::with_capacity_and_hasher(capacity_hint, Default::default());
+    let mut set = Vec::new();
 
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
       input.iter(),
       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
+      |set, k| {
+        set.push(k);
+        Ok(())
+      },
       |item| K::try_from_partial_ref(ctx, item),
     )
     .map(|_| set)
@@ -244,10 +215,10 @@ where
 }
 
 impl<'a, K, KW, RB, B, const TAG: u32> PartialTryFromRef<'a, RB, B, Repeated<KW, TAG>, Groto>
-  for HashSet<K>
+  for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
+  K: PartialTryFromRef<'a, RB, B, KW, Groto> + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
     Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
@@ -264,29 +235,23 @@ where
     <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
-      return Ok(DefaultPartialSetBuffer::new());
+      return Ok(Vec::new());
     }
 
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
-    let Some(mut partial_set) =
-      <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
-    else {
-      return Err(Error::allocation_failed("set"));
-    };
+    let mut output = Vec::with_capacity(capacity_hint);
 
     try_from::<_, _, KW, RB, B, _, _>(
-      &mut partial_set,
+      &mut output,
       iter,
       |set| context.err_length_mismatch(capacity_hint, set.len()),
       |set, k| {
-        if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
-          return Err(Error::capacity_exceeded("set"));
-        }
+        set.push(k);
         Ok(())
       },
       |item| K::partial_try_from_ref(context, item, selector),
     )
-    .map(|_| partial_set)
+    .map(|_| output)
   }
 }

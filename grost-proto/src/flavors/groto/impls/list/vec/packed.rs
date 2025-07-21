@@ -1,54 +1,68 @@
-use std::collections::BTreeSet;
+use std::vec::Vec;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
   convert::{Partial, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  decode::{BytesSlice, Decode1},
   encode::{Encode, PartialEncode},
   flavors::{
-    DefaultSetWireFormat, Groto, Packed, WireFormat,
-    groto::{Context, Error, PackedSetDecoder},
+    Borrowed, DefaultSetWireFormat, Groto, Packed, WireFormat,
+    groto::{Context, Error, LengthDelimited, PackedDecoder},
   },
   selection::{Selectable, Selector},
   state::State,
 };
 
-use super::super::{
-  super::{
-    packed_decode, packed_encode, packed_encode_raw, packed_encoded_len, packed_encoded_raw_len,
-    try_from,
-  },
-  DefaultPartialSetBuffer,
+use super::super::super::{
+  packed_decode, packed_encode, packed_encode_raw, packed_encoded_len, packed_encoded_raw_len,
+  try_from,
 };
 
-impl<K> DefaultSetWireFormat<Groto> for BTreeSet<K> {
+// Vec<u8> is the same as encode BytesSlice<RB>
+bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+// Vec<u8> is the same as encode [u8]
+bidi_equivalent!(impl <Vec<u8>, LengthDelimited> for <[u8], LengthDelimited>);
+
+// Vec<T> is the same as encode [T]
+bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
+bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
+
+// Vec<T> is the same as encode [&'a T]
+bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+
+// Vec<T> is the same as encode Vec<&'a T>
+bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+
+impl<K> DefaultSetWireFormat<Groto> for Vec<K> {
   type Format<KM>
     = Packed<KM>
   where
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<'a, K, KW, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for BTreeSet<K>
+impl<'a, K, KW, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
   K: State<PartialRef<'a, RB, B, KW, Groto>>,
   K::Output: Sized,
 {
-  type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
+  type Output = PackedDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for BTreeSet<K>
+impl<'a, K, KW, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
   K: State<Ref<'a, RB, B, KW, Groto>>,
   K::Output: Sized,
 {
-  type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
+  type Output = PackedDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for BTreeSet<K>
+impl<'a, K, KW, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
   K: Ord + Decode1<'a, KW, RB, B, Groto>,
@@ -66,8 +80,7 @@ where
       Self::len,
       |set, src| {
         let (read, item) = K::decode(context, src)?;
-
-        context.err_duplicated_set_keys(!set.insert(item))?;
+        set.push(item);
 
         Ok(read)
       },
@@ -75,7 +88,7 @@ where
   }
 }
 
-impl<K, KW> Encode<Packed<KW>, Groto> for BTreeSet<K>
+impl<K, KW> Encode<Packed<KW>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
@@ -110,7 +123,7 @@ where
   }
 }
 
-impl<K, KW> PartialEncode<Packed<KW>, Groto> for BTreeSet<K>
+impl<K, KW> PartialEncode<Packed<KW>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
@@ -177,10 +190,10 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromRef<'a, RB, B, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
@@ -196,23 +209,26 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let mut set = Vec::new();
 
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
       input.iter(),
       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, k| ctx.err_duplicated_set_keys(!set.insert(k)),
+      |set, k| {
+        set.push(k);
+        Ok(())
+      },
       |item| K::try_from_ref(ctx, item),
     )
     .map(|_| set)
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromPartialRef<'a, RB, B, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
@@ -228,23 +244,26 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = BTreeSet::new();
+    let mut set = Vec::new();
 
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
       input.iter(),
       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, k| ctx.err_duplicated_set_keys(!set.insert(k)),
+      |set, k| {
+        set.push(k);
+        Ok(())
+      },
       |item| K::try_from_partial_ref(ctx, item),
     )
     .map(|_| set)
   }
 }
 
-impl<'a, K, KW, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
+impl<'a, K, KW, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: PartialTryFromRef<'a, RB, B, KW, Groto> + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
     Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
@@ -261,29 +280,23 @@ where
     <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
-      return Ok(<DefaultPartialSetBuffer<_> as Buffer>::new());
+      return Ok(Vec::new());
     }
 
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
-    let Some(mut partial_set) =
-      <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
-    else {
-      return Err(Error::allocation_failed("set"));
-    };
+    let mut output = Vec::with_capacity(capacity_hint);
 
-    try_from::<_, _, KW, RB, B, _, _>(
-      &mut partial_set,
+    try_from::<<K as State<Partial<Groto>>>::Output, _, KW, RB, B, _, _>(
+      &mut output,
       iter,
       |set| context.err_length_mismatch(capacity_hint, set.len()),
       |set, k| {
-        if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
-          return Err(Error::capacity_exceeded("set"));
-        }
+        set.push(k);
         Ok(())
       },
       |item| K::partial_try_from_ref(context, item, selector),
     )
-    .map(|_| partial_set)
+    .map(|_| output)
   }
 }
