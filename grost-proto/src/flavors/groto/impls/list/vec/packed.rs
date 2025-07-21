@@ -18,6 +18,8 @@ use super::super::super::{
   try_from,
 };
 
+mod flatten;
+
 // Vec<u8> is the same as encode BytesSlice<RB>
 bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 // Vec<u8> is the same as encode [u8]

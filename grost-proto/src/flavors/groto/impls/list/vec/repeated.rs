@@ -6,14 +6,15 @@ use crate::{
   decode::Decode1,
   encode::{Encode, PartialEncode},
   flavors::{
-    Groto, Repeated, WireFormat,
-    groto::{Context, Error, RepeatedDecoderBuffer},
+    groto::{Context, Error, RepeatedDecoderBuffer}, Borrowed, Groto, Repeated, WireFormat
   },
   selection::{Selectable, Selector},
   state::State,
 };
 
 use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from};
+
+mod flatten;
 
 impl<'a, K, KW, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
   for Vec<K>
@@ -253,5 +254,72 @@ where
       |item| K::partial_try_from_ref(context, item, selector),
     )
     .map(|_| output)
+  }
+}
+
+impl<'b, T: 'b, W, const TAG: u32> Encode<Borrowed<'b, Repeated<W, TAG>>, Groto> for Vec<&'b T>
+where
+  T: Encode<W, Groto>,
+  W: WireFormat<Groto>,
+{
+  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <[&'b T] as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encode_raw(
+      self.as_slice(), context, buf,
+    )
+  }
+
+  fn encoded_raw_len(&self, context: &Context) -> usize {
+    <[&'b T] as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encoded_raw_len(
+      self.as_slice(), context,
+    )
+  }
+
+  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+    <Self as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encode_raw(self, context, buf)
+  }
+
+  fn encoded_len(&self, context: &Context) -> usize {
+    <Self as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encoded_raw_len(self, context)
+  }
+}
+
+impl<'b, T: 'b, W, const TAG: u32> PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>
+  for Vec<&'b T>
+where
+  T: PartialEncode<W, Groto>,
+  W: WireFormat<Groto>,
+{
+  fn partial_encode_raw(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    <[&'b T] as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encode_raw(
+      self.as_slice(), context, buf, selector,
+    )
+  }
+
+  fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    <[&'b T] as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encoded_raw_len(
+      self.as_slice(), context, selector,
+    )
+  }
+
+  fn partial_encode(
+    &self,
+    context: &Context,
+    buf: &mut [u8],
+    selector: &Self::Selector,
+  ) -> Result<usize, Error> {
+    <Self as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encode_raw(
+      self, context, buf, selector,
+    )
+  }
+
+  fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
+    <Self as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encoded_raw_len(
+      self, context, selector,
+    )
   }
 }
