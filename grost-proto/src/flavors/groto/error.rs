@@ -369,28 +369,36 @@ impl Error {
   }
 
   #[inline]
-  pub(crate) const fn allocation_failed(knd: &str) -> Self {
-    match knd {
-      "set" => Self::custom("allocation failed: could not allocate buffer with set capacity"),
-      "map" => Self::custom("allocation failed: could not allocate buffer with map capacity"),
+  pub(crate) fn allocation_failed(knd: &'static str) -> Self {
+    match () {
+      () if knd == "set" => {
+        Self::custom("allocation failed: could not allocate buffer with set capacity")
+      }
+      () if knd == "map" => {
+        Self::custom("allocation failed: could not allocate buffer with map capacity")
+      }
       _ => Self::custom("allocation failed: could not allocate buffer with capacity"),
     }
   }
 
   #[inline]
-  pub(crate) const fn capacity_exceeded(knd: &str) -> Self {
-    match knd {
-      "set" => Self::custom("capacity exceeded: cannot add more elements to the set buffer"),
-      "map" => Self::custom("capacity exceeded: cannot add more elements to the map buffer"),
+  pub(crate) fn capacity_exceeded(knd: &'static str) -> Self {
+    match () {
+      () if knd == "set" => {
+        Self::custom("capacity exceeded: cannot add more elements to the set buffer")
+      }
+      () if knd == "map" => {
+        Self::custom("capacity exceeded: cannot add more elements to the map buffer")
+      }
       _ => Self::custom("capacity exceeded: cannot add more elements to the buffer"),
     }
   }
 
   #[inline]
-  pub(crate) const fn fail_to_reserve_capacity(knd: &str) -> Self {
-    match knd {
-      "set" => Self::custom("failed to reserve capacity for set buffer"),
-      "map" => Self::custom("failed to reserve capacity for map buffer"),
+  pub(crate) fn fail_to_reserve_capacity(knd: &'static str) -> Self {
+    match () {
+      () if knd == "set" => Self::custom("failed to reserve capacity for set buffer"),
+      () if knd == "map" => Self::custom("failed to reserve capacity for map buffer"),
       _ => Self::custom("failed to reserve capacity for buffer"),
     }
   }

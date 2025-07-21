@@ -16,8 +16,10 @@ use crate::{
 };
 
 use super::super::{
-  DefaultPartialSetBuffer, packed_decode, packed_encode, packed_encode_raw, packed_encoded_len,
-  packed_encoded_raw_len, try_from,
+  super::{
+    packed_decode, packed_encode, packed_encode_raw, packed_encoded_len, packed_encoded_raw_len,
+  },
+  DefaultPartialSetBuffer, try_from,
 };
 
 impl<K, S> DefaultSetWireFormat<Groto> for IndexSet<K, S> {

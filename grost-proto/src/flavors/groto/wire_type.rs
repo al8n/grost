@@ -128,6 +128,36 @@ const _: () = {
     const INSTANCE: Self = Borrowed;
     const FIXED_LENGTH: Option<usize> = PackedEntry::<K, V>::FIXED_LENGTH;
   }
+
+  impl<'a, W: WireFormat<Groto>, const TAG: u32> From<Borrowed<'a, Repeated<W, TAG>>> for WireType {
+    fn from(_: Borrowed<'a, Repeated<W, TAG>>) -> Self {
+      Repeated::<W, TAG>::WIRE_TYPE
+    }
+  }
+
+  impl<'a, W: WireFormat<Groto>, const TAG: u32> WireFormat<Groto>
+    for Borrowed<'a, Repeated<W, TAG>>
+  {
+    const WIRE_TYPE: WireType = Repeated::<W, TAG>::WIRE_TYPE;
+    const INSTANCE: Self = Borrowed;
+    const FIXED_LENGTH: Option<usize> = Repeated::<W, TAG>::FIXED_LENGTH;
+  }
+
+  impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, const TAG: u32>
+    From<Borrowed<'a, RepeatedEntry<K, V, TAG>>> for WireType
+  {
+    fn from(_: Borrowed<'a, RepeatedEntry<K, V, TAG>>) -> Self {
+      WireType::LengthDelimited
+    }
+  }
+
+  impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, const TAG: u32> WireFormat<Groto>
+    for Borrowed<'a, RepeatedEntry<K, V, TAG>>
+  {
+    const WIRE_TYPE: WireType = RepeatedEntry::<K, V, TAG>::WIRE_TYPE;
+    const INSTANCE: Self = Borrowed;
+    const FIXED_LENGTH: Option<usize> = RepeatedEntry::<K, V, TAG>::FIXED_LENGTH;
+  }
 };
 
 // Flatten borrowed
@@ -163,6 +193,38 @@ const _: () = {
     const INSTANCE: Self = Flatten;
     const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
   }
+
+  impl<'a, W: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    From<Flatten<Borrowed<'a, Repeated<W, TAG>>, I>> for WireType
+  {
+    fn from(_: Flatten<Borrowed<'a, Repeated<W, TAG>>, I>) -> Self {
+      I::WIRE_TYPE
+    }
+  }
+
+  impl<'a, W: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32> WireFormat<Groto>
+    for Flatten<Borrowed<'a, Repeated<W, TAG>>, I>
+  {
+    const WIRE_TYPE: WireType = I::WIRE_TYPE;
+    const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
+  }
+
+  impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    From<Flatten<Borrowed<'a, RepeatedEntry<K, V, TAG>>, I>> for WireType
+  {
+    fn from(_: Flatten<Borrowed<'a, RepeatedEntry<K, V, TAG>>, I>) -> Self {
+      I::WIRE_TYPE
+    }
+  }
+
+  impl<'a, K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    WireFormat<Groto> for Flatten<Borrowed<'a, RepeatedEntry<K, V, TAG>>, I>
+  {
+    const WIRE_TYPE: WireType = I::WIRE_TYPE;
+    const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
+  }
 };
 
 // Flatten
@@ -189,6 +251,38 @@ const _: () = {
 
   impl<K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>> WireFormat<Groto>
     for Flatten<PackedEntry<K, V>, I>
+  {
+    const WIRE_TYPE: WireType = I::WIRE_TYPE;
+    const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
+  }
+
+  impl<W: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    From<Flatten<Repeated<W, TAG>, I>> for WireType
+  {
+    fn from(_: Flatten<Repeated<W, TAG>, I>) -> Self {
+      I::WIRE_TYPE
+    }
+  }
+
+  impl<W: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32> WireFormat<Groto>
+    for Flatten<Repeated<W, TAG>, I>
+  {
+    const WIRE_TYPE: WireType = I::WIRE_TYPE;
+    const INSTANCE: Self = Flatten;
+    const FIXED_LENGTH: Option<usize> = I::FIXED_LENGTH;
+  }
+
+  impl<K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    From<Flatten<RepeatedEntry<K, V, TAG>, I>> for WireType
+  {
+    fn from(_: Flatten<RepeatedEntry<K, V, TAG>, I>) -> Self {
+      I::WIRE_TYPE
+    }
+  }
+
+  impl<K: WireFormat<Groto>, V: WireFormat<Groto>, I: WireFormat<Groto>, const TAG: u32>
+    WireFormat<Groto> for Flatten<RepeatedEntry<K, V, TAG>, I>
   {
     const WIRE_TYPE: WireType = I::WIRE_TYPE;
     const INSTANCE: Self = Flatten;

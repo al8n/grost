@@ -14,7 +14,10 @@ use crate::{
 };
 
 use super::{
-  super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from},
+  super::{
+    super::{repeated_decode, repeated_encode, repeated_encoded_len},
+    try_from,
+  },
   DefaultPartialSetBuffer,
 };
 
@@ -181,9 +184,7 @@ where
       &mut set,
       input.iter(),
       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, k| {
-        ctx.err_duplicated_set_keys(!set.insert(k))?;
-      },
+      |set, k| ctx.err_duplicated_set_keys(!set.insert(k)),
       |item| K::try_from_ref(ctx, item),
     )
     .map(|_| set)

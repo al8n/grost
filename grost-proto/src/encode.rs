@@ -6,6 +6,24 @@ use super::{
   selection::Selectable,
 };
 
+/// A trait for collection types like `Vec`, `HashSet`, etc.
+pub trait Length {
+  /// Returns the number of elements in the collection.
+  fn len(&self) -> usize;
+}
+
+impl<T: ?Sized + Length> Length for &T {
+  fn len(&self) -> usize {
+    T::len(self)
+  }
+}
+
+impl<T> Length for [T] {
+  fn len(&self) -> usize {
+    <[T]>::len(self)
+  }
+}
+
 /// A marker trait indicating that two types produce equivalent encoded output
 /// despite potentially having different wire formats or internal representations.
 ///
