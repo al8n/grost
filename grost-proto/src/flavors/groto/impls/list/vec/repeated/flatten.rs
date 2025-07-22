@@ -1,6 +1,6 @@
 use crate::{
   convert::{Flattened, Innermost},
-  encode::{EquivalentEncode, Length},
+  encode::Length,
   flavors::{Borrowed, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
@@ -18,13 +18,16 @@ where
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     <[&N] as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
-      self.as_slice(), context, buf,
+      self.as_slice(),
+      context,
+      buf,
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     <[&N] as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encoded_raw_len(
-      self.as_slice(), context,
+      self.as_slice(),
+      context,
     )
   }
 
@@ -49,15 +52,11 @@ where
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(
-      self.as_slice(), context, buf,
-    )
+    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self.as_slice(), context, buf)
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encoded_raw_len(
-      self.as_slice(), context,
-    )
+    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encoded_raw_len(self.as_slice(), context)
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -85,13 +84,18 @@ where
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
     <[N] as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
-      self.as_slice(), context, buf, selector,
+      self.as_slice(),
+      context,
+      buf,
+      selector,
     )
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
     <[N] as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encoded_raw_len(
-      self.as_slice(), context, selector,
+      self.as_slice(),
+      context,
+      selector,
     )
   }
 
@@ -130,7 +134,10 @@ where
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
     <[&N] as PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
-      self.as_slice(), context, buf, selector,
+      self.as_slice(),
+      context,
+      buf,
+      selector,
     )
   }
 
@@ -155,6 +162,3 @@ where
     <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encoded_raw_len(self, context, selector)
   }
 }
-
-#[test]
-fn t() {}

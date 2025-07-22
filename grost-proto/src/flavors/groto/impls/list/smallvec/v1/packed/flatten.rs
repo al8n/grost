@@ -8,7 +8,8 @@ use crate::{
   state::State,
 };
 
-impl<'a, T, N, W> Encode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
+impl<'a, T, N, W, const CAP: usize> Encode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto>
+  for SmallVec<[&N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto> + ?Sized,
@@ -46,7 +47,8 @@ where
   }
 }
 
-unsafe impl<T, W> EquivalentEncode<[&[T]], Flatten<Borrowed<'_, Packed<W>>, W>, Groto> for Vec<T>
+unsafe impl<T, W, const CAP: usize>
+  EquivalentEncode<[&[T]], Flatten<Borrowed<'_, Packed<W>>, W>, Groto> for SmallVec<[T; CAP]>
 where
   W: WireFormat<Groto>,
   [T]: State<Flattened<Innermost>, Output = T> + Encode<Packed<W>, Groto>,
@@ -58,7 +60,7 @@ where
   type Flavor = Groto;
 }
 
-impl<T, N, W> Encode<Flatten<Packed<W>, W>, Groto> for Vec<N>
+impl<T, N, W, const CAP: usize> Encode<Flatten<Packed<W>, W>, Groto> for SmallVec<[N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto>,
@@ -82,7 +84,7 @@ where
   }
 }
 
-impl<T, N, W> PartialEncode<Flatten<Packed<W>, W>, Groto> for Vec<N>
+impl<T, N, W, const CAP: usize> PartialEncode<Flatten<Packed<W>, W>, Groto> for SmallVec<[N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T>
@@ -136,7 +138,8 @@ where
   }
 }
 
-impl<'a, T, N, W> PartialEncode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
+impl<'a, T, N, W, const CAP: usize> PartialEncode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto>
+  for SmallVec<[&N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T>

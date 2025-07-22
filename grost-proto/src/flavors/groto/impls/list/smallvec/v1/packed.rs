@@ -1,4 +1,4 @@
-use std::vec::Vec;
+use smallvec_1::SmallVec;
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
@@ -13,23 +13,21 @@ use crate::{
   state::State,
 };
 
-use super::super::super::{packed_decode, try_from};
+use super::super::super::super::{packed_decode, try_from};
 
 mod flatten;
 
-// Vec<T> is the same as encode [T]
-bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
-bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>: impl <Vec<T>, Packed<W>> for <[T], Packed<W>>);
+bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <SmallVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
+bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <SmallVec<[T; N]>, Packed<W>> for <[T], Packed<W>>);
 
-// Vec<T> is the same as encode [&'a T]
-bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
-bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <[&'a T], Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
+bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T], Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
 
-// Vec<T> is the same as encode Vec<&'a T>
-bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
-bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>: impl <Vec<&'a T>, Borrowed<'a, Packed<W>>> for <Vec<T>, Packed<W>>);
+bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <SmallVec<[&'a T; N]>, Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
+bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <SmallVec<[&'a T; N]>, Borrowed<'a, Packed<W>>> for <SmallVec<[T; N]>, Packed<W>>);
 
-impl<'a, K, KW, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for Vec<K>
+impl<'a, K, KW, RB, B, const CAP: usize> Decode1<'a, Packed<KW>, RB, B, Groto>
+  for SmallVec<[K; CAP]>
 where
   KW: WireFormat<Groto> + 'a,
   K: Ord + Decode1<'a, KW, RB, B, Groto>,
@@ -55,9 +53,11 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
+impl<'a, K, KW, RB, B, const CAP: usize> TryFromRef<'a, RB, B, Packed<KW>, Groto>
+  for SmallVec<[K; CAP]>
 where
   KW: WireFormat<Groto> + 'a,
+  Packed<KW>: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, B, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
@@ -74,7 +74,7 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = Vec::new();
+    let mut set = SmallVec::new();
 
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
@@ -90,9 +90,11 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
+impl<'a, K, KW, RB, B, const CAP: usize> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto>
+  for SmallVec<[K; CAP]>
 where
   KW: WireFormat<Groto> + 'a,
+  Packed<KW>: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + 'a,
   K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
@@ -109,7 +111,7 @@ where
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
-    let mut set = Vec::new();
+    let mut set = SmallVec::new();
 
     try_from::<K, K::Output, KW, RB, B, _, _>(
       &mut set,
@@ -125,9 +127,11 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for Vec<K>
+impl<'a, K, KW, RB, B, const CAP: usize> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto>
+  for SmallVec<[K; CAP]>
 where
   KW: WireFormat<Groto> + 'a,
+  Packed<KW>: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
     Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
@@ -145,12 +149,12 @@ where
     <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
-      return Ok(Vec::new());
+      return Ok(SmallVec::new());
     }
 
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
-    let mut output = Vec::with_capacity(capacity_hint);
+    let mut output = SmallVec::with_capacity(capacity_hint);
 
     try_from::<<K as State<Partial<Groto>>>::Output, _, KW, RB, B, _, _>(
       &mut output,

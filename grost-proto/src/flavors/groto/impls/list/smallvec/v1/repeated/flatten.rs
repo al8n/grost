@@ -1,22 +1,23 @@
-use super::*;
-
 use crate::{
   convert::{Flattened, Innermost},
-  encode::{EquivalentEncode, Length},
+  encode::Length,
   flavors::{Borrowed, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
 };
 
-impl<'a, T, N, W> Encode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
+use super::*;
+
+impl<'a, T, N, W, const TAG: u32, const CAP: usize>
+  Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for SmallVec<[&N; CAP]>
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto> + ?Sized,
+  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto> + ?Sized,
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <[&N] as Encode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::encode_raw(
+    <[&N] as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
       self.as_slice(),
       context,
       buf,
@@ -24,65 +25,52 @@ where
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    <[&N] as Encode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::encoded_raw_len(
+    <[&N] as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encoded_raw_len(
       self.as_slice(),
       context,
     )
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <[&N] as Encode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::encode(
-      self.as_slice(),
-      context,
-      buf,
+    <Self as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
+      self, context, buf,
     )
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    <[&N] as Encode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::encoded_len(
-      self.as_slice(),
-      context,
+    <Self as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encoded_raw_len(
+      self, context,
     )
   }
 }
 
-unsafe impl<T, W> EquivalentEncode<[&[T]], Flatten<Borrowed<'_, Packed<W>>, W>, Groto> for Vec<T>
+impl<T, N, W, const TAG: u32, const CAP: usize> Encode<Flatten<Repeated<W, TAG>, W>, Groto>
+  for SmallVec<[N; CAP]>
 where
   W: WireFormat<Groto>,
-  [T]: State<Flattened<Innermost>, Output = T> + Encode<Packed<W>, Groto>,
-  T: Encode<W, Groto>,
-  SchemaTypeReflection<[T]>: Reflectable<[T], Reflection = SchemaType>,
-{
-  type WireFormat = Packed<W>;
-
-  type Flavor = Groto;
-}
-
-impl<T, N, W> Encode<Flatten<Packed<W>, W>, Groto> for Vec<N>
-where
-  W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto>,
+  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto>,
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <[N] as Encode<Flatten<Packed<W>, W>, Groto>>::encode_raw(self.as_slice(), context, buf)
+    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self.as_slice(), context, buf)
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
-    <[N] as Encode<Flatten<Packed<W>, W>, Groto>>::encoded_raw_len(self.as_slice(), context)
+    <[N] as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encoded_raw_len(self.as_slice(), context)
   }
 
   fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    <[N] as Encode<Flatten<Packed<W>, W>, Groto>>::encode_raw(self.as_slice(), context, buf)
+    <Self as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self, context, buf)
   }
 
   fn encoded_len(&self, context: &Context) -> usize {
-    <[N] as Encode<Flatten<Packed<W>, W>, Groto>>::encoded_raw_len(self.as_slice(), context)
+    <Self as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encoded_raw_len(self, context)
   }
 }
 
-impl<T, N, W> PartialEncode<Flatten<Packed<W>, W>, Groto> for Vec<N>
+impl<T, N, W, const TAG: u32, const CAP: usize> PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>
+  for SmallVec<[N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T>
@@ -97,7 +85,7 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    <[N] as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encode_raw(
+    <[N] as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
       self.as_slice(),
       context,
       buf,
@@ -106,7 +94,7 @@ where
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    <[N] as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encoded_raw_len(
+    <[N] as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encoded_raw_len(
       self.as_slice(),
       context,
       selector,
@@ -119,29 +107,25 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    <[N] as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encode_raw(
-      self.as_slice(),
-      context,
-      buf,
-      selector,
+    <Self as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
+      self, context, buf, selector,
     )
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    <[N] as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encoded_raw_len(
-      self.as_slice(),
-      context,
-      selector,
+    <Self as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encoded_raw_len(
+      self, context, selector,
     )
   }
 }
 
-impl<'a, T, N, W> PartialEncode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
+impl<'a, T, N, W, const TAG: u32, const CAP: usize>
+  PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for SmallVec<[&N; CAP]>
 where
   W: WireFormat<Groto>,
   N: State<Flattened<Innermost>, Output = T>
     + Length
-    + PartialEncode<Packed<W>, Groto, Selector = T::Selector>,
+    + PartialEncode<Repeated<W, TAG>, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
@@ -151,7 +135,7 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    <[&N] as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encode_raw(
+    <[&N] as PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
       self.as_slice(),
       context,
       buf,
@@ -160,10 +144,8 @@ where
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    <[&N] as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encoded_raw_len(
-      self.as_slice(),
-      context,
-      selector,
+    <[&N] as PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto>>::partial_encoded_raw_len(
+      self.as_slice(), context, selector,
     )
   }
 
@@ -173,19 +155,15 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    <[&N] as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encode_raw(
-      self.as_slice(),
-      context,
-      buf,
-      selector,
+    <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
+      self, context, buf, selector,
     )
   }
 
   fn partial_encoded_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    <[&N] as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encoded_len(
-      self.as_slice(),
-      context,
-      selector,
-    )
+    <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encoded_raw_len(self, context, selector)
   }
 }
+
+#[test]
+fn t() {}
