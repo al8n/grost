@@ -164,6 +164,3 @@ where
     <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encoded_raw_len(self, context, selector)
   }
 }
-
-#[test]
-fn t() {}
