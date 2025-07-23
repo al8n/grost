@@ -679,11 +679,11 @@ impl<T, S, M> Object<T, S, M> {
     let rb = &rbp.ident;
 
     let partial_ref_state_type = syn::parse2(quote! {
-      #path_to_grost::__private::convert::PartialRef<#lt, #flavor_type, #wf, #rb, #ub>
+      #path_to_grost::__private::state::PartialRef<#lt, #flavor_type, #wf, #rb, #ub>
     })?;
 
     let partial_state_type = syn::parse2(quote! {
-      #path_to_grost::__private::convert::Partial<#flavor_type>
+      #path_to_grost::__private::state::Partial<#flavor_type>
     })?;
 
     let applied_decode_trait = {

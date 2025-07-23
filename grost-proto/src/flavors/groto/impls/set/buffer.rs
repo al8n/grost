@@ -2,9 +2,9 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{Buffer, DefaultBuffer},
-  convert::Partial,
   flavors::Groto,
   selection::Selectable,
+  state::Partial,
   state::State,
 };
 

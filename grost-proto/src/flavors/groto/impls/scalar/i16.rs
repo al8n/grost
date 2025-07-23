@@ -5,8 +5,7 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
-  selectable, try_from_bridge,
+  partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -26,20 +25,6 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: i16, NonZeroI16);
 flatten_state!(i16, NonZeroI16);
-groto_identity_transform!(
-  i16 as Fixed16,
-  i16 as Varint,
-  NonZeroI16 as Fixed16,
-  NonZeroI16 as Varint,
-);
-identity_partial_transform!(
-  Groto {
-    i16 as Fixed16,
-    i16 as Varint,
-    NonZeroI16 as Fixed16,
-    NonZeroI16 as Varint,
-  }
-);
 
 impl Encode<Fixed16, Groto> for i16 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -84,7 +69,7 @@ impl Encode<Varint, Groto> for i16 {
 
 partial_encode_scalar!(Groto: i16 as Fixed16, i16 as Varint);
 
-impl<'de, RB, B> Decode<'de, Self, Fixed16, RB, B, Groto> for i16 {
+impl<'de, RB, B> Decode<'de, Fixed16, RB, B, Groto> for i16 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
@@ -100,7 +85,7 @@ impl<'de, RB, B> Decode<'de, Self, Fixed16, RB, B, Groto> for i16 {
   }
 }
 
-impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for i16 {
+impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for i16 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,

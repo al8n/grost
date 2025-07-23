@@ -1,27 +1,8 @@
 use crate::{
   flavors::{Flavor, WireFormat, groto::Context},
   selection::Selectable,
+  state::{Partial, PartialRef, State},
 };
-
-use super::{Partial, PartialRef, State};
-
-/// A trait for partially transforming the input type `I` to the `<Self as State<STATE>>::Output`.
-pub trait PartialTransform<I, O, W, F>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  I: Selectable<F, Selector = Self::Selector>,
-  O: Selectable<F, Selector = Self::Selector>,
-  Self: Selectable<F>,
-{
-  /// Partially transforms from the input type `I` into the current type `Self`.
-  ///
-  /// - If there is nothing selected, it returns `Ok(None)`.
-  /// - If the selected fields are not present in the input, such fields will be `None` in the output.
-  /// - If the selected fields are present, they will be partially transformed into the corresponding fields in the output type
-  ///   according the the fields' selector.
-  fn partial_transform(input: I, selector: &Self::Selector) -> Result<O, F::Error>;
-}
 
 pub trait PartialTryFromRef<'a, RB, UB, W, F>
 where

@@ -1,7 +1,7 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
@@ -11,7 +11,7 @@ use crate::{
     },
   },
   selection::Selector,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
@@ -106,11 +106,11 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, PB, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>
+impl<'a, K, KW, RB, B, PB, const TAG: u32> Decode<'a, Repeated<KW, TAG>, RB, B, Groto>
   for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, B, Groto>,
+  K: Decode<'a, KW, RB, B, Groto>,
   PB: Buffer<Item = K>,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -120,7 +120,7 @@ where
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = PartialSetBuffer::new();
-    <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
+    <Self as Decode<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
       .map(|size| (size, this))
   }
 
@@ -166,7 +166,7 @@ impl<'de, K, RB, UB, PB, KW, const TAG: u32> TryFromRef<'de, RB, UB, Repeated<KW
   for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -204,7 +204,7 @@ impl<'de, K, RB, UB, PB, KW, const TAG: u32>
   TryFromPartialRef<'de, RB, UB, Repeated<KW, TAG>, Groto> for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,

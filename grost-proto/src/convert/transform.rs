@@ -1,18 +1,8 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, Ref, State},
   flavors::{Flavor, WireFormat},
+  state::{Partial, PartialRef, Ref, State},
 };
-
-/// A trait for transforming the input type `I` into the output type `O`
-pub trait Transform<I, O, W, F>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Transforms from the input type `I` into the current type `Self`.
-  fn transform(input: I) -> Result<O, F::Error>;
-}
 
 pub trait TryFromPartialRef<'a, RB, UB, W, F>: State<PartialRef<'a, RB, UB, W, F>>
 where

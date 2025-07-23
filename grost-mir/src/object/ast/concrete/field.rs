@@ -680,7 +680,7 @@ fn applied_partial_ref(
   flavor_type: impl ToTokens,
 ) -> proc_macro2::TokenStream {
   quote! {
-    #path_to_grost::__private::convert::PartialRef<
+    #path_to_grost::__private::state::PartialRef<
       #lt,
       #read_buffer,
       #buffer,

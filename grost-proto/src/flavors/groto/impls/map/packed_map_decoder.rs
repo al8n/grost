@@ -2,15 +2,15 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Flattened, Partial, PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{Flattened, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
     groto::{Context, Error, Identifier, PartialMapBuffer, Tag},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::{MapSelector, PartialMapEntry};
@@ -232,7 +232,7 @@ where
   }
 }
 
-impl<'a, K, V, B, KW, VW, RB> Decode1<'a, PackedEntry<KW, VW>, RB, B, Groto>
+impl<'a, K, V, B, KW, VW, RB> Decode<'a, PackedEntry<KW, VW>, RB, B, Groto>
   for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
@@ -391,8 +391,8 @@ impl<'a, 'de: 'a, RB, UB, KW, VW, K, V> Iterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-  V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+  K: Decode<'de, KW, RB, UB, Groto> + 'de,
+  V: Decode<'de, VW, RB, UB, Groto> + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -444,8 +444,8 @@ impl<'a, 'de: 'a, RB, B, KW, VW, K, V> FusedIterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, B, Groto> + 'de,
-  V: Decode1<'de, VW, RB, B, Groto> + 'de,
+  K: Decode<'de, KW, RB, B, Groto> + 'de,
+  V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {

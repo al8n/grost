@@ -1,6 +1,5 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{PartialRef, PartialTransform, Transform},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -8,6 +7,7 @@ use crate::{
     groto::{Context, Error, WireType},
   },
   selection::{Selectable, Selector},
+  state::PartialRef,
   state::State,
 };
 
@@ -27,39 +27,6 @@ where
   UB: ?Sized,
 {
   type Output = Option<T::Output>;
-}
-
-impl<W, I, O, T> Transform<Option<I>, Option<O>, Nullable<W>, Groto> for Option<T>
-where
-  W: WireFormat<Groto>,
-  T: Transform<I, O, W, Groto>,
-{
-  fn transform(input: Option<I>) -> Result<Option<O>, <Groto as Flavor>::Error> {
-    match input {
-      Some(value) => T::transform(value).map(Some),
-      None => Ok(None),
-    }
-  }
-}
-
-impl<I, O, W, T> PartialTransform<Option<I>, Option<O>, Nullable<W>, Groto> for Option<T>
-where
-  W: WireFormat<Groto>,
-  T: PartialTransform<I, Option<O>, W, Groto> + Sized + Selectable<Groto>,
-  I: Selectable<Groto, Selector = Self::Selector>,
-  O: Selectable<Groto, Selector = Self::Selector>,
-{
-  fn partial_transform(
-    input: Option<I>,
-    selector: &Self::Selector,
-  ) -> Result<Option<O>, <Groto as Flavor>::Error> {
-    match input {
-      Some(value) => {
-        <T as PartialTransform<I, Option<O>, W, Groto>>::partial_transform(value, selector)
-      }
-      None => Ok(None),
-    }
-  }
 }
 
 struct OptionImpl<'a, W: ?Sized, T> {
@@ -188,15 +155,14 @@ where
   }
 
   /// Helper function for decoding pattern
-  fn decode_nullable<'de, O, RB, F>(
+  fn decode_nullable<'de, RB, F>(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
     decode_fn: F,
-  ) -> Result<(usize, Option<O>), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Option<T>), <Groto as Flavor>::Error>
   where
-    O: Sized + 'de,
     RB: ReadBuf + 'de,
-    F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, O), <Groto as Flavor>::Error>,
+    F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), <Groto as Flavor>::Error>,
   {
     let buf = src.as_bytes();
     if buf.is_empty() {
@@ -357,33 +323,33 @@ where
   }
 }
 
-impl<'de, W, O, RB, B, T> Decode<'de, Option<O>, Nullable<W>, RB, B, Groto> for Option<T>
+impl<'de, W, RB, B, T> Decode<'de, Nullable<W>, RB, B, Groto> for Option<T>
 where
-  T: Decode<'de, O, W, RB, B, Groto>,
+  T: Decode<'de, W, RB, B, Groto>,
   W: WireFormat<Groto>,
 {
   fn decode(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
-  ) -> Result<(usize, Option<O>), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Self), <Groto as Flavor>::Error>
   where
-    O: Sized + 'de,
+    Self: Sized + 'de,
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    OptionImpl::<W, T>::decode_nullable::<O, RB, _>(context, src, |ctx, src| T::decode(ctx, src))
+    OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| T::decode(ctx, src))
   }
 
   fn decode_length_delimited(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
-  ) -> Result<(usize, Option<O>), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Self), <Groto as Flavor>::Error>
   where
-    Option<O>: Sized + 'de,
+    Self: Sized + 'de,
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    OptionImpl::<W, T>::decode_nullable::<O, RB, _>(context, src, |ctx, src| {
+    OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| {
       T::decode_length_delimited(ctx, src)
     })
   }

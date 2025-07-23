@@ -814,7 +814,7 @@ fn partial_ref_state_ty(
 ) -> syn::Type {
   parse_quote! {
     #path_to_grost::__private::state::State<
-      #path_to_grost::__private::convert::PartialRef<
+      #path_to_grost::__private::state::PartialRef<
         #lifetime,
         #flavor,
         <#wf as #path_to_grost::__private::reflection::Reflectable<#object_name #object_type_generics>>::Reflection,

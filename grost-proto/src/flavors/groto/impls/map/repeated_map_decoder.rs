@@ -2,15 +2,15 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
-  convert::{Flattened, Partial, PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{Flattened, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Flavor, Groto, RepeatedEntry, WireFormat,
     groto::{Context, Error, Identifier, Tag},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::{MapSelector, PartialMapEntry};
@@ -202,8 +202,8 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, UB, Groto> + Selectable<Groto>,
-  V: Decode1<'a, VW, RB, UB, Groto> + Selectable<Groto>,
+  K: Decode<'a, KW, RB, UB, Groto> + Selectable<Groto>,
+  V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -258,14 +258,14 @@ where
   }
 }
 
-impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>
+impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>
   for RepeatedMapDecoder<'a, K, V, RB, B, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, B, Groto>,
-  V: Decode1<'a, VW, RB, B, Groto>,
+  K: Decode<'a, KW, RB, B, Groto>,
+  V: Decode<'a, VW, RB, B, Groto>,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -472,8 +472,8 @@ impl<'a, 'de: 'a, RB, B, KW, VW, K, V, const TAG: u32> Iterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, B, Groto> + 'de,
-  V: Decode1<'de, VW, RB, B, Groto> + 'de,
+  K: Decode<'de, KW, RB, B, Groto> + 'de,
+  V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -549,8 +549,8 @@ impl<'a, 'de, RB, B, KW, VW, K, V, const TAG: u32> FusedIterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, B, Groto> + 'de,
-  V: Decode1<'de, VW, RB, B, Groto> + 'de,
+  K: Decode<'de, KW, RB, B, Groto> + 'de,
+  V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -713,8 +713,8 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, UB, Groto>,
-  V: Decode1<'a, VW, RB, UB, Groto>,
+  K: Decode<'a, KW, RB, UB, Groto>,
+  V: Decode<'a, VW, RB, UB, Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
@@ -763,8 +763,8 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, UB, Groto> + Selectable<Groto>,
-  V: Decode1<'a, VW, RB, UB, Groto> + Selectable<Groto>,
+  K: Decode<'a, KW, RB, UB, Groto> + Selectable<Groto>,
+  V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
@@ -813,14 +813,14 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B>
-  Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>
+  Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>
   for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, UB, Groto>,
-  V: Decode1<'a, VW, RB, UB, Groto>,
+  K: Decode<'a, KW, RB, UB, Groto>,
+  V: Decode<'a, VW, RB, UB, Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -840,7 +840,7 @@ where
       _vw: PhantomData,
     };
 
-    <Self as Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>::merge_decode(
+    <Self as Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>::merge_decode(
       &mut this, context, src,
     )
     .map(|size| (size, this))
@@ -852,7 +852,7 @@ where
     RB: ReadBuf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
-    let (read, decoder) = <RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG> as Decode1<
+    let (read, decoder) = <RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG> as Decode<
       'a,
       RepeatedEntry<KW, VW, TAG>,
       RB,
@@ -1011,8 +1011,8 @@ impl<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32, B> Iterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, UB, Groto> + Sized + 'de,
-  V: Decode1<'de, VW, RB, UB, Groto> + Sized + 'de,
+  K: Decode<'de, KW, RB, UB, Groto> + Sized + 'de,
+  V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
@@ -1086,8 +1086,8 @@ impl<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32, B> FusedIterator
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: Decode1<'de, KW, RB, UB, Groto> + Sized + 'de,
-  V: Decode1<'de, VW, RB, UB, Groto> + Sized + 'de,
+  K: Decode<'de, KW, RB, UB, Groto> + Sized + 'de,
+  V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,

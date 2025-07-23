@@ -2,7 +2,7 @@ use core::marker::PhantomData;
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  decode::{Decode1, EquivalentDecode},
+  decode::{Decode, EquivalentDecode},
   flavors::{Flavor, WireFormat},
 };
 
@@ -52,7 +52,7 @@ impl<RB, T, W, F: Flavor + ?Sized> RawField<RB, T, W, F> {
   pub fn decode<'a, O, OW, UB>(self, ctx: &'a F::Context) -> Result<(usize, O), F::Error>
   where
     RB: ReadBuf + 'a,
-    O: Decode1<'a, OW, RB, UB, F> + 'a,
+    O: Decode<'a, OW, RB, UB, F> + 'a,
     OW: WireFormat<F>,
     UB: UnknownBuffer<RB, F> + 'a,
     T: EquivalentDecode<'a, O, OW, RB, UB, F, WireFormat = W, Flavor = F>,

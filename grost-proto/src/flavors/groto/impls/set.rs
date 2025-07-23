@@ -1,10 +1,7 @@
 pub use buffer::{DefaultPartialSetBuffer, PartialSetBuffer};
 pub use packed_set_decoder::PackedSetDecoder;
 
-use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
-  flavors::{Groto, WireFormat, groto::Error},
-};
+use crate::flavors::{Groto, WireFormat, groto::Error};
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod btreeset;

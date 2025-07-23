@@ -2,13 +2,13 @@ use std::collections::BTreeMap;
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, MapKey, MapValue, Partial, TryFromPartial},
+  convert::{Flattened, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
     groto::{Context, Error},
   },
   selection::Selectable,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 mod packed;

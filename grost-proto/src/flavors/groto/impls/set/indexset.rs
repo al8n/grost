@@ -4,13 +4,13 @@ use core::hash::{BuildHasher, Hash};
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
+  convert::{Flattened, Inner, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
     groto::{Context, Error},
   },
   selection::Selectable,
-  state::State,
+  state::{Partial, State},
 };
 
 use super::DefaultPartialSetBuffer;

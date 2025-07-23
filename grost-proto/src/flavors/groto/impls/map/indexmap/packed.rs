@@ -10,15 +10,15 @@ use super::{
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultMapWireFormat, Groto, PackedEntry, WireFormat,
     groto::{Context, Error, PackedMapDecoder},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 impl<K, V, S> DefaultMapWireFormat<Groto> for IndexMap<K, V, S> {
@@ -57,14 +57,13 @@ where
   type Output = PackedMapDecoder<'a, K::Output, V::Output, RB, B, KW, VW>;
 }
 
-impl<'a, K, KW, V, VW, S, RB, B> Decode1<'a, PackedEntry<KW, VW>, RB, B, Groto>
-  for IndexMap<K, V, S>
+impl<'a, K, KW, V, VW, S, RB, B> Decode<'a, PackedEntry<KW, VW>, RB, B, Groto> for IndexMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   S: BuildHasher + Default,
-  K: Eq + Hash + Decode1<'a, KW, RB, B, Groto>,
-  V: Decode1<'a, VW, RB, B, Groto>,
+  K: Eq + Hash + Decode<'a, KW, RB, B, Groto>,
+  V: Decode<'a, VW, RB, B, Groto>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -218,9 +217,9 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   V: TryFromRef<'a, RB, B, VW, Groto> + 'a,
-  V::Output: Sized + Decode1<'a, VW, RB, B, Groto>,
+  V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
@@ -257,9 +256,9 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   V: TryFromPartialRef<'a, RB, B, VW, Groto> + 'a,
-  V::Output: Sized + Decode1<'a, VW, RB, B, Groto>,
+  V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
@@ -297,11 +296,11 @@ where
   VW: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
-    Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
+    Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   V: PartialTryFromRef<'a, RB, B, VW, Groto> + 'a,
   <V as State<PartialRef<'a, RB, B, VW, Groto>>>::Output:
-    Sized + Decode1<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
+    Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,

@@ -5,6 +5,9 @@ use crate::{buffer::ReadBuf, decode::BytesSlice, flavors::groto::LengthDelimited
 mod packed;
 mod repeated;
 
+flatten_state!(Vec<T>);
+partial_state!(Vec<T> => Vec<T::Output>);
+
 partial_ref_state!(@bytes Vec<u8>);
 partial_ref_state!(@packed Vec<T>);
 partial_ref_state!(@repeated Vec<T>);
@@ -22,13 +25,8 @@ encode_list!(@packed Vec<T>);
 encode_list!(@repeated Vec<T>);
 encode_list!(@borrow Vec<&'b T>);
 
-list!(@length Vec<T>);
-list!(@flatten_state Vec<T>);
-list!(@partial_state Vec<T> => Vec<T::Output>);
-list!(@selectable Vec<T>);
-list!(@decode_to_packed_decoder(from_bytes) Vec<u8> {
-  Vec::from
-});
+length!(Vec<T>);
+selectable!(Vec<T>);
 
 // Vec<u8> is the same as encode BytesSlice<RB>
 bidi_equivalent!(:<RB: ReadBuf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);

@@ -2,9 +2,9 @@ use tinyvec_1::TinyVec;
 
 use crate::{
   buffer::ReadBuf,
-  convert::Partial,
   decode::BytesSlice,
   flavors::{Groto, groto::LengthDelimited},
+  state::Partial,
   state::State,
 };
 
@@ -12,6 +12,8 @@ use super::{DefaultEncode, DefaultPartialEncode};
 
 mod packed;
 mod repeated;
+
+flatten_state!(:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 
 default_wire_format!(@bytes :<A: tinyvec_1::Array<Item = u8>>: TinyVec<A>);
 default_wire_format!(@packed :<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
@@ -30,14 +32,8 @@ encode_list!(@packed :<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 encode_list!(@repeated :<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 encode_list!(@borrow :<A: tinyvec_1::Array<Item = &'b T>>: TinyVec<A>);
 
-list!(@length:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-list!(@flatten_state:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-list!(@selectable:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
-list!(
-  @decode_to_packed_decoder(from_bytes):<A: tinyvec_1::Array<Item = u8>>: TinyVec<A> {
-    TinyVec::from
-  }
-);
+length!(:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
+selectable!(:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 
 bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <TinyVec<A>, LengthDelimited> for <[u8], LengthDelimited>);

@@ -1,14 +1,14 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
     groto::{Context, Error, PackedSetDecoder, PartialSetBuffer},
   },
   selection::Selector,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::super::{
@@ -129,10 +129,10 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, PB> Decode1<'a, Packed<KW>, RB, B, Groto> for PartialSetBuffer<K, PB>
+impl<'a, K, KW, RB, B, PB> Decode<'a, Packed<KW>, RB, B, Groto> for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, B, Groto>,
+  K: Decode<'a, KW, RB, B, Groto>,
   PB: Buffer<Item = K>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -162,7 +162,7 @@ where
 impl<'de, K, RB, UB, PB, KW> TryFromRef<'de, RB, UB, Packed<KW>, Groto> for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -200,7 +200,7 @@ impl<'de, K, RB, UB, PB, KW> TryFromPartialRef<'de, RB, UB, Packed<KW>, Groto>
   for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode1<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,

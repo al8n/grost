@@ -1,14 +1,14 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
     groto::{Context, Error, PackedMapDecoder, PartialMapBuffer, PartialMapEntry},
   },
   selection::Selector,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::{
@@ -153,13 +153,13 @@ where
   }
 }
 
-impl<'a, K, KW, V, VW, RB, UB, PB> Decode1<'a, PackedEntry<KW, VW>, RB, UB, Groto>
+impl<'a, K, KW, V, VW, RB, UB, PB> Decode<'a, PackedEntry<KW, VW>, RB, UB, Groto>
   for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, UB, Groto>,
-  V: Decode1<'a, VW, RB, UB, Groto>,
+  K: Decode<'a, KW, RB, UB, Groto>,
+  V: Decode<'a, VW, RB, UB, Groto>,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -192,9 +192,9 @@ where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
   K: TryFromRef<'de, RB, UB, KW, Groto> + 'de,
-  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
   V: TryFromRef<'de, RB, UB, VW, Groto> + 'de,
-  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
+  V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
@@ -235,9 +235,9 @@ where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
   K: TryFromPartialRef<'de, RB, UB, KW, Groto> + 'de,
-  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
   V: TryFromPartialRef<'de, RB, UB, VW, Groto> + 'de,
-  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
+  V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,

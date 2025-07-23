@@ -1,6 +1,6 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  decode::Decode1,
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
@@ -310,8 +310,8 @@ impl<K, V> PartialMapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     // read the length of the entry
     let (len_size, entry_size) = varing::decode_u32_varint(src.as_bytes())?;
@@ -342,8 +342,8 @@ impl<K, V> PartialMapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     let buf_len = src.len();
     let buf = src.as_bytes();
@@ -386,8 +386,8 @@ impl<K, V> PartialMapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     let buf_len = src.len();
     let buf = src.as_bytes();
@@ -850,8 +850,8 @@ impl<K, V> MapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     // read the length of the entry
     let (len_size, entry_size) = varing::decode_u32_varint(src.as_bytes())?;
@@ -883,8 +883,8 @@ impl<K, V> MapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     let buf_len = src.len();
     let buf = src.as_bytes();
@@ -927,8 +927,8 @@ impl<K, V> MapEntry<K, V> {
     VW: WireFormat<Groto>,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
-    K: Decode1<'de, KW, RB, UB, Groto> + 'de,
-    V: Decode1<'de, VW, RB, UB, Groto> + 'de,
+    K: Decode<'de, KW, RB, UB, Groto> + 'de,
+    V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     let buf_len = src.len();
     let buf = src.as_bytes();

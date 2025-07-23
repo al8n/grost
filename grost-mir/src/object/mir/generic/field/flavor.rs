@@ -306,7 +306,7 @@ impl FieldFlavor {
       None => {
         let state_type: Type = syn::parse2(quote! {
           #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::PartialRef<
+            #path_to_grost::__private::state::PartialRef<
               #lifetime,
               #buffer,
               <#wfr as #object_reflectable>::Reflection,

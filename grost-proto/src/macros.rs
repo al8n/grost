@@ -24,7 +24,7 @@ macro_rules! groto_varint {
       }
     );
 
-    $($crate::groto_identity_transform!($ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::Varint,);)*
+    // $($crate::groto_identity_transform!($ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::Varint,);)*
 
     // $(
     //   // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
@@ -98,34 +98,34 @@ macro_rules! varint {
     $($crate::varint!(@encode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
     $($crate::varint!(@decode $flavor:$wf:$ty $([ $(const $g: usize),* ])?);)*
 
-    $(
-      impl $(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$ty, ::core::option::Option<$ty>, $wf, $flavor> for $ty {
-        fn partial_transform(input: Self, selector: &bool) -> ::core::result::Result<::core::option::Option<$ty>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        {
-          if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-            return ::core::result::Result::Ok(::core::option::Option::None);
-          }
+    // $(
+    //   impl $(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$ty, ::core::option::Option<$ty>, $wf, $flavor> for $ty {
+    //     fn partial_transform(input: Self, selector: &bool) -> ::core::result::Result<::core::option::Option<$ty>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    //     {
+    //       if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+    //         return ::core::result::Result::Ok(::core::option::Option::None);
+    //       }
 
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
+    //       ::core::result::Result::Ok(::core::option::Option::Some(input))
+    //     }
+    //   }
 
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::Nullable<$wf>, $flavor,> for $ty {
-        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        {
-          match input {
-            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
-            ::core::option::Option::Some(input) => {
-              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-                return ::core::result::Result::Ok(::core::option::Option::None);
-              }
+    //   impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::Nullable<$wf>, $flavor,> for $ty {
+    //     fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    //     {
+    //       match input {
+    //         ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
+    //         ::core::option::Option::Some(input) => {
+    //           if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
+    //             return ::core::result::Result::Ok(::core::option::Option::None);
+    //           }
 
-              ::core::result::Result::Ok(::core::option::Option::Some(input))
-            }
-          }
-        }
-      }
-    )*
+    //           ::core::result::Result::Ok(::core::option::Option::Some(input))
+    //         }
+    //       }
+    //     }
+    //   }
+    // )*
   };
   (@encode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
     impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::Encode<$wf, $flavor> for $ty {
@@ -158,7 +158,7 @@ macro_rules! varint {
     }
   };
   (@decode $flavor:ty:$wf:ty:$ty:ty $([ $( const $g:ident: usize), +$(,)? ])?) => {
-    impl<'de, RB, B, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::decode::Decode<'de, Self, $wf, RB, B, $flavor> for $ty {
+    impl<'de, RB, B, $($(const $g: ::core::primitive::usize),*)?> $crate::__private::decode::Decode<'de, $wf, RB, B, $flavor> for $ty {
       $crate::varint!(@decode_impl $flavor:$wf);
     }
   };
@@ -235,46 +235,6 @@ macro_rules! partial_encode_scalar {
   };
 }
 
-/// A macro emits [`Transform`](super::convert::Transform) implementations for the `Self`
-#[macro_export]
-macro_rules! identity_transform {
-  ($flavor:ty {
-    $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?
-  }) => {
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, $ty, $wf, $flavor> for $ty {
-        fn transform(input: $ty) -> ::core::result::Result<Self, <$flavor as $crate::__private::flavors::Flavor>::Error> {
-          ::core::result::Result::Ok(input)
-        }
-      }
-    )*
-  };
-}
-
-/// A macro emits [`Transform`](super::convert::Transform) implementations for the `Self` for `Groto` flavor.
-#[macro_export]
-macro_rules! groto_identity_transform {
-  ($($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?) => {
-    $($crate::identity_transform!($crate::__private::flavors::Groto {
-      $ty $([ $(const $g: usize),* ])? as $wf,
-    });)*
-
-    $(
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$wf>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
-        fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$wf>, $crate::__private::flavors::Groto> for $ty {
-        fn transform(input: $ty) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
-    )*
-  };
-}
-
 /// A macro emits [`Selectable`](super::selector::Selectable) implementations for scalar types.
 #[macro_export]
 macro_rules! selectable {
@@ -307,7 +267,7 @@ macro_rules! partial_ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::state::PartialRef<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -323,7 +283,7 @@ macro_rules! ref_state {
   (&$lifetime:lifetime $flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Ref<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::state::Ref<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__, $wf, $flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -339,7 +299,7 @@ macro_rules! partial_state {
   ($flavor:ty: $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? => $target:ty ),+$(,)?) => {
     $(
       #[allow(non_camel_case_types)]
-      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::state::State<$crate::__private::convert::Partial<$flavor>> for $ty {
+      impl$(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::state::State<$crate::__private::state::Partial<$flavor>> for $ty {
         type Output = $target;
       }
     )*
@@ -817,7 +777,6 @@ macro_rules! decode_bridge {
       $(
         impl<'de, RB, B, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::decode::Decode<
           'de,
-          Self,
           $format,
           RB,
           B,
@@ -839,11 +798,10 @@ macro_rules! decode_bridge {
       $(
         impl<'de, RB, B, $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::decode::Decode<
           'de,
-          $flavor,
           $format,
-          Self,
           B,
-          UB
+          UB,
+          $flavor,
         > for $ty {
           $crate::decode_bridge!(@decode_impl $flavor: $from => $bridge as $format => $bridge);
         }
@@ -860,7 +818,7 @@ macro_rules! decode_bridge {
       RB: $crate::__private::ReadBuf + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode(context, src).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode(context, src).map(|(n, v)| (n, $from(v)))
     }
 
     fn decode_length_delimited(
@@ -872,7 +830,7 @@ macro_rules! decode_bridge {
       RB: $crate::__private::ReadBuf + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode_length_delimited(context, src).map(|(n, v)| (n, $from(v)))
+      <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode_length_delimited(context, src).map(|(n, v)| (n, $from(v)))
     }
   };
 }
@@ -889,7 +847,7 @@ macro_rules! try_decode_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de, RB, B> $crate::__private::decode::Decode<'de, Self, $format, RB, B, $flavor> for $ty {
+        impl<'de, RB, B> $crate::__private::decode::Decode<'de, $format, RB, B, $flavor> for $ty {
           $crate::try_decode_bridge!(@decode_impl $flavor: $from => $bridge as $format => $output);
         }
       )*
@@ -904,7 +862,7 @@ macro_rules! try_decode_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de, RB, B> $crate::__private::decode::Decode<'de, Self, $format, RB, B, $flavor> for $ty {
+        impl<'de, RB, B> $crate::__private::decode::Decode<'de, $format, RB, B, $flavor> for $ty {
           $crate::try_decode_bridge!(@decode_impl $flavor: $from => $bridge as $format => $bridge);
         }
       )*
@@ -920,7 +878,7 @@ macro_rules! try_decode_bridge {
       RB: $crate::__private::ReadBuf + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      <$bridge as $crate::__private::decode::Decode<'de, $output, $format, RB, B, $flavor>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+      <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
 
     fn decode_length_delimited(
@@ -932,7 +890,7 @@ macro_rules! try_decode_bridge {
       RB: $crate::__private::ReadBuf + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      <$bridge as $crate::__private::decode::Decode<$output, $format, RB, B, $flavor>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
+      <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
     }
   };
   (@decode $flavor:ty: $(
@@ -944,7 +902,7 @@ macro_rules! try_decode_bridge {
   ),+$(,)?) => {
     $(
       $(
-        impl<'de, RB, B> $crate::__private::decode::Decode<'de, Self, $format, RB, B, $flavor> for $ty {
+        impl<'de, RB, B> $crate::__private::decode::Decode<'de, $format, RB, B, $flavor> for $ty {
           $crate::try_decode_bridge!(@decode_impl $flavor: $from => $bridge as $format => $output);
         }
       )*

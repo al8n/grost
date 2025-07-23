@@ -505,6 +505,16 @@ pub trait ReadBuf: Clone {
   fn to_bytes(&self) -> crate::bytes::Bytes {
     crate::bytes::Bytes::copy_from_slice(self.as_bytes())
   }
+
+  #[cfg(all(feature = "bytes_1", any(feature = "std", feature = "alloc")))]
+  #[cfg_attr(
+    docsrs,
+    doc(cfg(all(feature = "bytes_1", any(feature = "std", feature = "alloc"))))
+  )]
+  /// Converts the read buffer to a `BytesMut` instance.
+  fn to_bytes_mut(&self) -> crate::bytes::BytesMut {
+    crate::bytes::BytesMut::from(self.to_bytes())
+  }
 }
 
 impl ReadBuf for &[u8] {

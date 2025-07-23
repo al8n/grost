@@ -4,8 +4,8 @@ use core::hash::BuildHasher;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultRepeatedWireFormat, Groto, Repeated, WireFormat,
@@ -14,7 +14,7 @@ use crate::{
     },
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::{
@@ -127,11 +127,11 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>
+impl<'a, K, KW, S, RB, B, const TAG: u32> Decode<'a, Repeated<KW, TAG>, RB, B, Groto>
   for IndexSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: core::hash::Hash + Eq + Decode1<'a, KW, RB, B, Groto>,
+  K: core::hash::Hash + Eq + Decode<'a, KW, RB, B, Groto>,
   S: BuildHasher + Default,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -141,7 +141,7 @@ where
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = IndexSet::with_hasher(Default::default());
-    <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
+    <Self as Decode<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
       .map(|size| (size, this))
   }
 
@@ -180,7 +180,7 @@ impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, T
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, UB, KW, Groto> + core::hash::Hash + Eq + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
   S: BuildHasher + Default,
@@ -214,7 +214,7 @@ impl<'a, K, KW, S, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
   S: BuildHasher + Default,
@@ -249,7 +249,7 @@ where
   KW: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + core::hash::Hash + Eq + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
-    Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
+    Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,

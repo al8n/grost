@@ -1,8 +1,7 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   convert::{
-    Partial, PartialIdentity, PartialRef, PartialTransform, Ref, Transform, TryFromPartialRef,
-    TryFromRef,
+    Partial, PartialIdentity, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef,
   },
   decode::Str,
   flatten_state,
@@ -34,68 +33,6 @@ str_bridge!(Groto: String {
   as_str: AsRef::as_ref;
 },);
 
-identity_partial_transform!(
-  Groto {
-    String as LengthDelimited,
-  }
-);
-
-impl Transform<&str, Self, LengthDelimited, Groto> for String {
-  fn transform(input: &str) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-  {
-    Ok(String::from(input))
-  }
-}
-
-impl PartialTransform<&str, Option<Self>, LengthDelimited, Groto> for String {
-  fn partial_transform(
-    input: &str,
-    selector: &bool,
-  ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-  {
-    if *selector {
-      <Self as Transform<&str, Self, LengthDelimited, Groto>>::transform(input).map(Some)
-    } else {
-      Ok(None)
-    }
-  }
-}
-
-impl<RB> Transform<Str<RB>, Self, LengthDelimited, Groto> for String
-where
-  RB: ReadBuf,
-{
-  fn transform(input: Str<RB>) -> Result<Self, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-  {
-    Ok(String::from(input.as_ref()))
-  }
-}
-
-impl<RB> PartialTransform<Str<RB>, Option<Self>, LengthDelimited, Groto> for String
-where
-  RB: ReadBuf,
-{
-  fn partial_transform(
-    input: Str<RB>,
-    selector: &bool,
-  ) -> Result<Option<Self>, <Groto as crate::flavors::Flavor>::Error>
-  where
-    Self: Sized,
-  {
-    if *selector {
-      <Self as Transform<Str<RB>, Self, LengthDelimited, Groto>>::transform(input).map(Some)
-    } else {
-      Ok(None)
-    }
-  }
-}
-
 bidi_equivalent!(:<RB: ReadBuf>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
 bidi_equivalent!(impl <String, LengthDelimited> for <str, LengthDelimited>);
 
@@ -125,6 +62,23 @@ where
   ) -> Result<Self, Error>
   where
     Self: Sized,
+  {
+    Ok(input.to_string())
+  }
+}
+
+impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for String
+where
+  RB: ReadBuf + 'de,
+{
+  fn partial_try_from_ref(
+    context: &'de Context,
+    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    selector: &Self::Selector,
+  ) -> Result<<Self as State<Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
+  where
+    <Self as State<Partial<Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
   {
     Ok(input.to_string())
   }

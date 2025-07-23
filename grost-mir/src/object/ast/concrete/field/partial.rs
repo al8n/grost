@@ -166,7 +166,7 @@ impl PartialField {
       None => {
         let state_type: Type = syn::parse2(quote! {
           #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Partial<
+            #path_to_grost::__private::state::Partial<
               #flavor_type,
             >
           >
@@ -175,7 +175,7 @@ impl PartialField {
         let state_type_constraint = if label.is_nullable() {
           quote! {
             #path_to_grost::__private::state::State<
-              #path_to_grost::__private::convert::Partial<
+              #path_to_grost::__private::state::Partial<
                 #flavor_type,
               >,
               Output = ::core::option::Option<<
@@ -183,7 +183,7 @@ impl PartialField {
                     #path_to_grost::__private::convert::Inner
                   >>
                 >::Output as
-                #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Partial<#flavor_type>>
+                #path_to_grost::__private::state::State<#path_to_grost::__private::state::Partial<#flavor_type>>
               >::Output>,
             >
           }
@@ -229,7 +229,7 @@ impl PartialField {
 
           let ref_state_type: Type = syn::parse2(quote! {
             #path_to_grost::__private::state::State<
-              #path_to_grost::__private::convert::PartialRef<
+              #path_to_grost::__private::state::PartialRef<
                 #lt,
                 #rb,
                 #ub,

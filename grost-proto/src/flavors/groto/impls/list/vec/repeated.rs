@@ -2,25 +2,25 @@ use std::vec::Vec;
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
     groto::{Context, Error},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::{super::try_from, repeated_decode_list};
 
 mod flatten;
 
-impl<'a, K, KW, RB, B, const TAG: u32> Decode1<'a, Repeated<KW, TAG>, RB, B, Groto> for Vec<K>
+impl<'a, K, KW, RB, B, const TAG: u32> Decode<'a, Repeated<KW, TAG>, RB, B, Groto> for Vec<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Ord + Decode1<'a, KW, RB, B, Groto>,
+  K: Ord + Decode<'a, KW, RB, B, Groto>,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -29,7 +29,7 @@ where
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Vec::new();
-    <Self as Decode1<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
+    <Self as Decode<'a, Repeated<KW, TAG>, RB, B, Groto>>::merge_decode(&mut this, ctx, src)
       .map(|size| (size, this))
   }
 
@@ -56,7 +56,7 @@ impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, UB, KW, Groto> + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -92,7 +92,7 @@ impl<'a, K, KW, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW,
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -129,7 +129,7 @@ where
   KW: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
-    Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
+    Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,

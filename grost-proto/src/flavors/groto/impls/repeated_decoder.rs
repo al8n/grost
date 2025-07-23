@@ -2,15 +2,15 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
-  convert::{Flattened, Partial, PartialRef, Ref},
-  decode::Decode1,
+  convert::Flattened,
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Flavor, Groto, Repeated, WireFormat,
     groto::{Context, Error, Identifier, Tag},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 /// A lazy iterator for decoding repeated elements from binary protocol data.
@@ -176,7 +176,7 @@ impl<'a, T, RB, UB, W, const TAG: u32> PartialEncode<Repeated<W, TAG>, Groto>
 where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, UB, Groto> + Selectable<Groto>,
+  T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -231,12 +231,12 @@ where
   }
 }
 
-impl<'a, T, RB, B, W, const TAG: u32> Decode1<'a, Repeated<W, TAG>, RB, B, Groto>
+impl<'a, T, RB, B, W, const TAG: u32> Decode<'a, Repeated<W, TAG>, RB, B, Groto>
   for RepeatedDecoder<'a, T, RB, B, W, TAG>
 where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, B, Groto>,
+  T: Decode<'a, W, RB, B, Groto>,
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
@@ -429,7 +429,7 @@ impl<'a, 'de: 'a, RB, B, W, T, const TAG: u32> Iterator
   for RepeatedDecoderIter<'a, 'de, T, RB, B, W, TAG>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -491,7 +491,7 @@ impl<'a, 'de, RB, B, W, T, const TAG: u32> FusedIterator
   for RepeatedDecoderIter<'a, 'de, T, RB, B, W, TAG>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -641,7 +641,7 @@ impl<'a, T, RB, UB, W, const TAG: u32, B> Encode<Repeated<W, TAG>, Groto>
 where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, UB, Groto>,
+  T: Decode<'a, W, RB, UB, Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
@@ -689,7 +689,7 @@ impl<'a, T, RB, UB, W, const TAG: u32, B> PartialEncode<Repeated<W, TAG>, Groto>
 where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, UB, Groto> + Selectable<Groto>,
+  T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
@@ -737,12 +737,12 @@ where
   }
 }
 
-impl<'a, T, RB, UB, W, const TAG: u32, B> Decode1<'a, Repeated<W, TAG>, RB, UB, Groto>
+impl<'a, T, RB, UB, W, const TAG: u32, B> Decode<'a, Repeated<W, TAG>, RB, UB, Groto>
   for RepeatedDecoderBuffer<'a, T, RB, UB, W, TAG, B>
 where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
-  T: Decode1<'a, W, RB, UB, Groto>,
+  T: Decode<'a, W, RB, UB, Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -760,7 +760,7 @@ where
       _w: PhantomData,
     };
 
-    <Self as Decode1<'a, Repeated<W, TAG>, RB, UB, Groto>>::merge_decode(&mut this, context, src)
+    <Self as Decode<'a, Repeated<W, TAG>, RB, UB, Groto>>::merge_decode(&mut this, context, src)
       .map(|size| (size, this))
   }
 
@@ -770,7 +770,7 @@ where
     RB: ReadBuf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
-    let (read, decoder) = <RepeatedDecoder<'a, T, RB, UB, W, TAG> as Decode1<
+    let (read, decoder) = <RepeatedDecoder<'a, T, RB, UB, W, TAG> as Decode<
       'a,
       Repeated<W, TAG>,
       RB,
@@ -926,7 +926,7 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> Iterator
   for RepeatedDecoderBufferIter<'a, 'de, T, RB, UB, W, TAG, B>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, UB, Groto> + Sized + 'de,
+  T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,
@@ -999,7 +999,7 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> FusedIterator
   for RepeatedDecoderBufferIter<'a, 'de, T, RB, UB, W, TAG, B>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, UB, Groto> + Sized + 'de,
+  T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,

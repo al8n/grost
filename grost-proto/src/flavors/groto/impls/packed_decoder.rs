@@ -2,15 +2,15 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{Flattened, Partial, PartialRef, Ref},
-  decode::Decode1,
+  convert::Flattened,
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
     groto::{Context, Error, Fixed8},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 /// A lazy decoder for packed repeated elements from binary protocol data.
@@ -319,7 +319,7 @@ where
   }
 }
 
-impl<'a, T, B, W, RB> Decode1<'a, Packed<W>, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
+impl<'a, T, B, W, RB> Decode<'a, Packed<W>, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
@@ -503,7 +503,7 @@ impl<'a, 'de: 'a, T, B, UB, W> PackedDecoderIter<'a, 'de, T, B, UB, W> {
 impl<'a, 'de: 'a, RB, B, W, T> Iterator for PackedDecoderIter<'a, 'de, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
@@ -552,7 +552,7 @@ where
 impl<'a, 'de: 'a, RB, B, W, T> FusedIterator for PackedDecoderIter<'a, 'de, T, RB, B, W>
 where
   W: WireFormat<Groto> + 'de,
-  T: Decode1<'de, W, RB, B, Groto> + 'de,
+  T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {

@@ -7,49 +7,13 @@ use varing::{decode_u32_varint, encode_u32_varint_to, encoded_u32_varint_len};
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{PartialTransform, Transform},
-  decode::Decode1,
+  decode::Decode,
   flavors::{
     Groto, Repeated, WireFormat,
     groto::{Context, Error, Identifier, Tag},
   },
   selection::Selectable,
 };
-
-macro_rules! identity_partial_transform {
-  ($flavor:ty {
-    $($ty:ty $([ $( const $g:ident: usize), +$(,)? ])? as $wf:ty), +$(,)?
-  }) => {
-    $(
-      impl $(< $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<$ty, ::core::option::Option<$ty>, $wf, $flavor> for $ty {
-        fn partial_transform(input: Self, selector: &bool) -> ::core::result::Result<::core::option::Option<$ty>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        {
-          if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-            return ::core::result::Result::Ok(::core::option::Option::None);
-          }
-
-          ::core::result::Result::Ok(::core::option::Option::Some(input))
-        }
-      }
-
-      impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::PartialTransform<::core::option::Option<Self>, ::core::option::Option<Self>, $crate::__private::flavors::Nullable<$wf>, $flavor,> for $ty {
-        fn partial_transform(input: ::core::option::Option<Self>, selector: &<Self as $crate::__private::selection::Selectable<$flavor>>::Selector) -> ::core::result::Result<::core::option::Option<Self>, <$flavor as $crate::__private::flavors::Flavor>::Error>
-        {
-          match input {
-            ::core::option::Option::None => ::core::result::Result::Ok(::core::option::Option::None),
-            ::core::option::Option::Some(input) => {
-              if $crate::__private::selection::Selector::<$flavor>::is_empty(selector) {
-                return ::core::result::Result::Ok(::core::option::Option::None);
-              }
-
-              ::core::result::Result::Ok(::core::option::Option::Some(input))
-            }
-          }
-        }
-      }
-    )*
-  };
-}
 
 macro_rules! bidi_equivalent {
   ($($($($($lt:lifetime), +$(,)?)? :< $($tg:ident:$t:path $(: $ltb:lifetime)?),+$(,)? >:)? $([$(const $g:ident: $gty:ty), +$(,)?])? impl<$other:ty, $wf:ty> for <$this:ty, $this_wf:ty>),+$(,)?) => {
@@ -164,42 +128,11 @@ mod list;
 mod map;
 mod nullable;
 mod packed_decoder;
+mod pointers;
 mod repeated_decoder;
 mod scalar;
 mod set;
 mod tuple;
-
-pub trait GrotoTransform<I, O, W>: Transform<I, O, W, Groto>
-where
-  W: WireFormat<Groto>,
-{
-}
-
-impl<I, O, W, T> GrotoTransform<I, O, W> for T
-where
-  W: WireFormat<Groto>,
-  T: Transform<I, O, W, Groto>,
-{
-}
-
-pub trait GrotoPartialTransform<I, O, W>: PartialTransform<I, O, W, Groto>
-where
-  W: WireFormat<Groto>,
-  I: Selectable<Groto, Selector = Self::Selector>,
-  O: Selectable<Groto, Selector = Self::Selector>,
-  Self: Selectable<Groto>,
-{
-}
-
-impl<I, O, W, T> GrotoPartialTransform<I, O, W> for T
-where
-  W: WireFormat<Groto>,
-  T: PartialTransform<I, O, W, Groto>,
-  I: Selectable<Groto, Selector = T::Selector>,
-  O: Selectable<Groto, Selector = T::Selector>,
-  T: Selectable<Groto>,
-{
-}
 
 macro_rules! default_wire_format_ref {
   ($($t:ident $(< $($p:ident),+$(,)? >)?),+$(,)?) => {
@@ -443,7 +376,7 @@ fn repeated_decode<'a, K: 'a, KW, T, RB, B, const TAG: u32>(
 where
   RB: ReadBuf + 'a,
   KW: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, B, Groto>,
+  K: Decode<'a, KW, RB, B, Groto>,
   T: Sized + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {

@@ -2,15 +2,15 @@ use std::collections::BTreeSet;
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Partial, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultSetWireFormat, Groto, Packed, WireFormat,
     groto::{Context, Error, PackedSetDecoder},
   },
   selection::{Selectable, Selector},
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::{
@@ -48,10 +48,10 @@ where
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, RB, B> Decode1<'a, Packed<KW>, RB, B, Groto> for BTreeSet<K>
+impl<'a, K, KW, RB, B> Decode<'a, Packed<KW>, RB, B, Groto> for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: Ord + Decode1<'a, KW, RB, B, Groto>,
+  K: Ord + Decode<'a, KW, RB, B, Groto>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -181,7 +181,7 @@ impl<'a, K, KW, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -213,7 +213,7 @@ impl<'a, K, KW, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for BTree
 where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, RB, B, KW, Groto> + Ord + 'a,
-  K::Output: Sized + Decode1<'a, KW, RB, B, Groto>,
+  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -246,7 +246,7 @@ where
   KW: WireFormat<Groto> + 'a,
   K: PartialTryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
   <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
-    Sized + Decode1<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
+    Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,

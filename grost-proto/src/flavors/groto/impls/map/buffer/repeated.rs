@@ -1,7 +1,7 @@
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialRef, Ref, TryFromPartialRef, TryFromRef},
-  decode::Decode1,
+  convert::{TryFromPartialRef, TryFromRef},
+  decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
@@ -11,7 +11,7 @@ use crate::{
     },
   },
   selection::Selector,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 
 use super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
@@ -133,12 +133,12 @@ where
 }
 
 impl<'a, K, KW, V, VW, RB, B, PB, const TAG: u32>
-  Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for PartialMapBuffer<K, V, PB>
+  Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: Decode1<'a, KW, RB, B, Groto>,
-  V: Decode1<'a, VW, RB, B, Groto>,
+  K: Decode<'a, KW, RB, B, Groto>,
+  V: Decode<'a, VW, RB, B, Groto>,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
@@ -148,7 +148,7 @@ where
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Self::new();
-    <Self as Decode1<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>::merge_decode(
+    <Self as Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>::merge_decode(
       &mut this, context, src,
     )
     .map(|size| (size, this))
@@ -202,9 +202,9 @@ where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
   K: TryFromRef<'de, RB, UB, KW, Groto> + 'de,
-  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
   V: TryFromRef<'de, RB, UB, VW, Groto> + 'de,
-  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
+  V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,
@@ -244,9 +244,9 @@ where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
   K: TryFromPartialRef<'de, RB, UB, KW, Groto> + 'de,
-  K::Output: Sized + Decode1<'de, KW, RB, UB, Groto>,
+  K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
   V: TryFromPartialRef<'de, RB, UB, VW, Groto> + 'de,
-  V::Output: Sized + Decode1<'de, VW, RB, UB, Groto>,
+  V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
   PB: Buffer<Item = PartialMapEntry<K, V>>,

@@ -2,14 +2,14 @@ use std::collections::BTreeSet;
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, Partial, PartialIdentity, TryFromPartial},
+  convert::{Flattened, Inner, PartialIdentity, TryFromPartial},
   encode::Length,
   flavors::{
     Groto,
     groto::{Context, Error},
   },
   selection::Selectable,
-  state::State,
+  state::{Partial, State},
 };
 
 use super::DefaultPartialSetBuffer;
