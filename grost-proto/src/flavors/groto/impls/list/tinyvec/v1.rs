@@ -5,10 +5,7 @@ mod tinyvec;
 
 use crate::{
   encode::{Encode, PartialEncode},
-  flavors::{
-    Groto, WireFormat,
-    groto::Error,
-  },
+  flavors::{Groto, WireFormat, groto::Error},
 };
 
 #[cfg(not(any(feature = "std", feature = "alloc")))]
@@ -47,6 +44,3 @@ where
   W: WireFormat<Groto>,
 {
 }
-
-#[test]
-fn t() {}
