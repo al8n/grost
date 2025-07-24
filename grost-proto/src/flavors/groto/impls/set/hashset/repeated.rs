@@ -179,7 +179,7 @@ impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, Repeated<KW, TAG>, RB,
   for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, UB, KW, Groto> + core::hash::Hash + Eq + 'a,
+  K: TryFromRef<'a, KW, RB, UB, Groto> + core::hash::Hash + Eq + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,

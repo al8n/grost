@@ -6,9 +6,8 @@ use crate::{
     DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
     groto::{Context, Error, WireType},
   },
-  selection::{Selectable, Selector},
-  state::PartialRef,
-  state::State,
+  selection::Selector,
+  state::{PartialRef, Ref, State},
 };
 
 impl<T> DefaultNullableWireFormat<Groto> for Option<T> {

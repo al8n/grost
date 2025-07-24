@@ -159,7 +159,7 @@ impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, Repeated<KW, TAG>, RB, UB
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, UB, KW, Groto> + Ord + 'a,
+  K: TryFromRef<'a, KW, RB, UB, Groto> + Ord + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,

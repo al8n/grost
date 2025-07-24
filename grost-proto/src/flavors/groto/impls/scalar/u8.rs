@@ -7,7 +7,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed8, Groto, Varint},
-  partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge, try_from_partial,
+  partial_encode_scalar, partial_identity, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: u8 as Fixed8; NonZeroU8 as Fixed8);
@@ -26,6 +27,7 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: u8, NonZeroU8);
 flatten_state!(u8, NonZeroU8);
+partial_identity!(@scalar Groto: u8, NonZeroU8);
 partial_encode_scalar!(Groto: u8 as Fixed8, u8 as Varint);
 
 impl Encode<Fixed8, Groto> for u8 {
@@ -110,6 +112,5 @@ try_from_bridge!(
   },
 );
 
-try_from_partial!(@scalar Groto: u8, NonZeroU8);
-
-// impl<'de, > crate::__private::convert::TryFromRef<'de, >
+#[test]
+fn t() {}

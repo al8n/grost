@@ -188,7 +188,7 @@ where
   VW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, KW, RB, B, Groto> + Ord + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  V: TryFromRef<'a, RB, B, VW, Groto> + 'a,
+  V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
@@ -266,7 +266,7 @@ where
   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-  V: PartialTryFromRef<'a, RB, B, VW, Groto> + 'a,
+  V: PartialTryFromRef<'a, VW, RB, B, Groto> + 'a,
   <V as State<PartialRef<'a, VW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,

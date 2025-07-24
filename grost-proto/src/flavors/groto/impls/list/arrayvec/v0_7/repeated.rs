@@ -70,7 +70,7 @@ impl<'a, K, KW, RB, UB, const TAG: u32, const CAP: usize>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, UB, KW, Groto> + 'a,
+  K: TryFromRef<'a, KW, RB, UB, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,

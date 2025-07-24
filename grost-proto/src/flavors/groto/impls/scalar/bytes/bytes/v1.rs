@@ -2,7 +2,7 @@ use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   convert::{PartialIdentity, TryFromPartialRef, TryFromRef},
   decode::{BytesSlice, Decode},
-  decode_bridge, default_bytes_wire_format, encode_bridge, flatten_state,
+  default_bytes_wire_format, encode_bridge, flatten_state,
   flavors::groto::{Context, Error, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
   state::{Partial, PartialRef, Ref, State},
@@ -23,19 +23,6 @@ encode_bridge!(
     },
   },
 );
-
-// decode_bridge!(
-//   Groto: &'de [u8] => BytesSlice<RB> {
-//     Bytes as LengthDelimited {
-//       convert: |src: &'de [u8]| Bytes::copy_from_slice(src.as_ref());
-//     },
-//     BytesMut as LengthDelimited {
-//       convert: |src: &'de [u8]| {
-//         BytesMut::from(src.as_ref())
-//       };
-//     },
-//   },
-// );
 
 ref_state!(
   &'a Groto:

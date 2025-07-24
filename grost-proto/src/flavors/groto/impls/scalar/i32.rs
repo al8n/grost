@@ -7,7 +7,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed32, Groto, Varint},
-  partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge,
+  partial_encode_scalar, partial_identity, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: i32 as Varint; NonZeroI32 as Varint);
@@ -26,6 +27,7 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: i32, NonZeroI32);
 flatten_state!(i32, NonZeroI32);
+partial_identity!(@scalar Groto: i32, NonZeroI32);
 
 impl Encode<Fixed32, Groto> for i32 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {

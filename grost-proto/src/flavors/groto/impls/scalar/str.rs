@@ -6,35 +6,7 @@ use crate::{
   encode_bridge, flatten_state,
   flavors::groto::{Context, Error, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
-  selection::Selectable,
 };
-
-macro_rules! decode_impl {
-  ($src:ident, $ty:ty) => {{
-    let bytes = $src.as_bytes();
-    let (len_size, len) =
-      $crate::__private::varing::decode_u32_varint(bytes).map_err(Error::from)?;
-
-    let len = len as usize;
-    let total = len_size + len;
-
-    if len_size >= bytes.len() {
-      return ::core::result::Result::Err(
-        $crate::__private::flavors::groto::Error::buffer_underflow(),
-      );
-    }
-
-    if total > bytes.len() {
-      return ::core::result::Result::Err(
-        $crate::__private::flavors::groto::Error::buffer_underflow(),
-      );
-    }
-
-    $crate::utils::from_utf8(&bytes[len_size..total])
-      .map_err(|_| $crate::__private::flavors::groto::Error::custom("invalid UTF-8"))
-      .map(|s| (total, <$ty>::from(s)))
-  }};
-}
 
 default_string_wire_format!(
   Groto: str as LengthDelimited

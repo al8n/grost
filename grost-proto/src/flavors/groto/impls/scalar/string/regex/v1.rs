@@ -25,14 +25,6 @@ macro_rules! try_str_bridge {
         },
       );
 
-      $crate::try_decode_bridge!(
-        $flavor: &'de str => $crate::__private::decode::Str<RB> {
-          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited {
-            convert: |s: $crate::__private::decode::Str<RB>| $from_str(s.as_ref());
-          },
-        },
-      );
-
       $crate::selectable!(@scalar Groto:
         $ty $([ $(const $g: usize),* ])?
       );

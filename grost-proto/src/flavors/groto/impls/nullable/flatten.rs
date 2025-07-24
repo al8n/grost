@@ -6,9 +6,8 @@ use crate::{
     DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat,
     groto::{Context, Error},
   },
-  selection::{Selectable, Selector},
-  state::PartialRef,
-  state::State,
+  selection::Selector,
+  state::{PartialRef, Ref, State},
 };
 
 impl<T> DefaultFlattenWireFormat<Groto> for Option<T> {

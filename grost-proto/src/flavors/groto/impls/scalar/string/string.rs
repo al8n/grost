@@ -1,16 +1,14 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::{
-    Partial, PartialIdentity, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef,
-  },
-  decode::Str,
+  convert::{PartialIdentity, PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::{Decode, Str},
   flatten_state,
   flavors::{
     Groto,
-    groto::{Context, Error, LengthDelimited},
+    groto::{Context, Error, LengthDelimited, impls::decode_str},
   },
   partial_ref_state, partial_state, ref_state, selectable,
-  state::State,
+  state::{Partial, PartialRef, Ref, State},
 };
 use std::string::String;
 
@@ -72,9 +70,9 @@ where
   RB: ReadBuf + 'de,
 {
   fn partial_try_from_ref(
-    context: &'de Context,
+    _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
-    selector: &Self::Selector,
+    _: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
@@ -93,5 +91,16 @@ impl PartialIdentity<Groto> for String {
     Self: Sized,
   {
     input
+  }
+}
+
+impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for String {
+  fn decode(_: &'de Context, src: RB) -> Result<(usize, Self), Error>
+  where
+    Self: Sized,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, Groto> + 'de,
+  {
+    decode_str(&src).map(|(read, s)| (read, s.to_string()))
   }
 }

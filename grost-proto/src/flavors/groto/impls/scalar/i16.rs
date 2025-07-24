@@ -5,7 +5,8 @@ use crate::{
   encode::Encode,
   flatten_state,
   flavors::groto::{Context, Error, Fixed16, Groto, Varint},
-  partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge,
+  partial_encode_scalar, partial_identity, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -25,6 +26,7 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: i16, NonZeroI16);
 flatten_state!(i16, NonZeroI16);
+partial_identity!(@scalar Groto: i16, NonZeroI16);
 
 impl Encode<Fixed16, Groto> for i16 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {

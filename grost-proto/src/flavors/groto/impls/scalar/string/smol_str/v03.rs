@@ -1,5 +1,11 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer}, convert::{Partial, PartialIdentity, PartialRef, PartialTryFromRef, Ref, TryFromPartialRef, TryFromRef}, decode::{Decode, Str}, decode_bridge, default_string_wire_format, encode_bridge, flatten_state, flavors::groto::{Context, Error, Groto, LengthDelimited}, partial_ref_state, partial_state, ref_state, selectable, state::State
+  buffer::{ReadBuf, UnknownBuffer},
+  convert::{PartialIdentity, PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  decode::{Decode, Str},
+  default_string_wire_format, encode_bridge, flatten_state,
+  flavors::groto::{Context, Error, Groto, LengthDelimited, impls::decode_str},
+  partial_ref_state, partial_state, ref_state, selectable,
+  state::{Partial, PartialRef, Ref, State},
 };
 use smol_str_0_3::SmolStr;
 
@@ -11,14 +17,6 @@ encode_bridge!(
   Groto: str {
     SmolStr as LengthDelimited {
       convert: SmolStr::as_str;
-    },
-  },
-);
-
-decode_bridge!(
-  Groto: &'de str => Str<RB> {
-    SmolStr as LengthDelimited {
-      convert: |src: &str| SmolStr::new(src);
     },
   },
 );
@@ -39,17 +37,13 @@ bidi_equivalent!(impl <str, LengthDelimited> for <SmolStr, LengthDelimited>);
 bidi_equivalent!(:<RB: ReadBuf>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 impl<'a, RB, B> Decode<'a, LengthDelimited, RB, B, Groto> for SmolStr {
-  fn decode(
-    context: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Str<RB>), <Groto as crate::flavors::Flavor>::Error>
+  fn decode(_: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
-    Str<RB>: Sized + 'a,
-    RB: crate::buffer::ReadBuf,
-    B: crate::buffer::UnknownBuffer<RB, Groto> + 'a,
+    Self: Sized + 'a,
+    RB: ReadBuf,
+    B: UnknownBuffer<RB, Groto> + 'a,
   {
-    <&'a str as Decode<'a, LengthDelimited, RB, B, Groto>>::decode(context, src)
-      .map(|(read, val)| (read, Self::new(val)))
+    decode_str(&src).map(|(read, s)| (read, SmolStr::new(s)))
   }
 }
 
@@ -92,7 +86,7 @@ where
     _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
     _: &Self::Selector,
-  ) -> Result<<Self as State<Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
+  ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,

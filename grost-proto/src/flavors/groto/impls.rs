@@ -12,7 +12,6 @@ use crate::{
     Groto, Repeated, WireFormat,
     groto::{Context, Error, Identifier, Tag},
   },
-  selection::Selectable,
 };
 
 macro_rules! bidi_equivalent {
@@ -436,4 +435,35 @@ where
   }
 
   check(set)
+}
+
+fn decode_slice<'de, RB>(src: &'de RB) -> Result<(usize, &'de [u8]), Error>
+where
+  RB: ReadBuf + 'de,
+{
+  let bytes = src.as_bytes();
+  let (len_size, len) = crate::__private::varing::decode_u32_varint(bytes).map_err(Error::from)?;
+
+  let len = len as usize;
+  let total = len_size + len;
+
+  if len_size >= bytes.len() {
+    return ::core::result::Result::Err(crate::__private::flavors::groto::Error::buffer_underflow());
+  }
+
+  if total > bytes.len() {
+    return ::core::result::Result::Err(crate::__private::flavors::groto::Error::buffer_underflow());
+  }
+
+  Ok((total, &bytes[len_size..total]))
+}
+
+fn decode_str<'de, RB>(src: &'de RB) -> Result<(usize, &'de str), Error>
+where
+  RB: ReadBuf + 'de,
+{
+  let (total, bytes) = decode_slice(src)?;
+  crate::utils::from_utf8(bytes)
+    .map_err(|_| Error::custom("invalid UTF-8"))
+    .map(|s| (total, s))
 }

@@ -203,7 +203,7 @@ where
   VW: WireFormat<Groto> + 'de,
   K: TryFromRef<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
-  V: TryFromRef<'de, RB, UB, VW, Groto> + 'de,
+  V: TryFromRef<'de, VW, RB, UB, Groto> + 'de,
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,

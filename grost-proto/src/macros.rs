@@ -4,14 +4,6 @@ macro_rules! groto_varint {
   (@scalar $(
     $ty:ty $([ $( const $g:ident: $gty:ty), +$(,)? ])?
   ),+$(,)?) => {
-    // $crate::varint!(
-    //   @scalar $crate::__private::flavors::Groto:
-    //     $crate::__private::flavors::groto::Varint {
-    //       $(
-    //         $ty $([ $(const $g: usize),* ])?
-    //       ),+
-    //     }
-    // );
     $(
       $crate::__default_wire_format__!(@impl scalar<$crate::__private::flavors::Groto>: $ty $([$(const $g: $gty),*])? as $crate::__private::flavors::groto::Varint);
     )*
@@ -24,21 +16,7 @@ macro_rules! groto_varint {
       }
     );
 
-    // $($crate::groto_identity_transform!($ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::Varint,);)*
-
-    // $(
-    //   // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for ::core::option::Option<$ty> {
-    //   //   fn transform(input: $ty) -> ::core::result::Result<Self, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
-    //   //     ::core::result::Result::Ok(::core::option::Option::Some(input))
-    //   //   }
-    //   // }
-
-    //   // impl $( < $(const $g: ::core::primitive::usize),* > )? $crate::__private::convert::Transform<$ty, ::core::option::Option<$ty>, $crate::__private::flavors::Nullable<$crate::__private::flavors::groto::Varint>, $crate::__private::flavors::Groto> for $ty {
-    //   //   fn transform(input: $ty) -> ::core::result::Result<::core::option::Option<Self>, <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error> {
-    //   //     ::core::result::Result::Ok(::core::option::Option::Some(input))
-    //   //   }
-    //   // }
-    // )*
+    $($crate::partial_identity!(@scalar $crate::__private::flavors::Groto: $ty $([ $(const $g: $gty),* ])?);)*
   };
 }
 
@@ -910,6 +888,7 @@ macro_rules! try_decode_bridge {
   };
 }
 
+/// A macro emits [`TryFromPartial`](super::convert::TryFromPartial) implementations for `Self`.
 #[macro_export]
 macro_rules! try_from_partial {
   (@scalar $flavor:ty: $($ty:ty),+$(,)?) => {
@@ -922,6 +901,91 @@ macro_rules! try_from_partial {
         where
           Self: ::core::marker::Sized,
           <Self as $crate::__private::state::State<$crate::__private::state::Partial<$flavor>>>::Output: ::core::marker::Sized
+        {
+          ::core::result::Result::Ok(input)
+        }
+      }
+    )*
+  };
+}
+
+/// A macro emits [`TryFromRef`](super::convert::TryFromRef) implementations for `Self`.
+#[macro_export]
+macro_rules! try_from_ref {
+  (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty as $wf:ty),+$(,)?) => {
+    $(
+      #[allow(non_camel_case_types)]
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__> $crate::__private::convert::TryFromRef<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor> for $ty {
+        fn try_from_ref(
+          ctx: &$lifetime <$flavor as $crate::__private::flavors::Flavor>::Context,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::Ref<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output,
+        ) -> ::core::result::Result<Self, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        where
+          Self: Sized,
+          <Self as $crate::__private::state::State<$crate::__private::state::Ref<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output: Sized,
+          __GROST_READ_BUF__: $crate::__private::buffer::ReadBuf + $lifetime,
+          __GROST_BUFFER__: $crate::__private::buffer::UnknownBuffer<__GROST_READ_BUF__, $flavor> + $lifetime,
+        {
+          ::core::result::Result::Ok(input)
+        }
+      }
+    )*
+  };
+}
+
+/// A macro emits [`PartialTryFromRef`](super::convert::PartialTryFromRef) implementations for `Self`.
+#[macro_export]
+macro_rules! try_from_partial_ref {
+  (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty as $wf:ty),+$(,)?) => {
+    $(
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__> $crate::__private::convert::PartialTryFromRef<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor> for $ty {
+        fn partial_try_from_ref(
+          context: &$lifetime <$flavor as $crate::__private::flavors::Flavor>::Context,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output,
+          selector: &Self::Selector,
+        ) -> ::core::result::Result<<Self as $crate::__private::state::State<$crate::__private::state::Partial<$flavor>>>::Output, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        where
+          <Self as $crate::__private::state::State<$crate::__private::state::Partial<$flavor>>>::Output: Sized,
+          <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output: Sized
+        {
+          ::core::result::Result::Ok(input)
+        }
+      }
+    )*
+  };
+}
+
+/// A macro emits [`PartialIdentity`](super::convert::PartialIdentity) implementations for `Self`.
+#[macro_export]
+macro_rules! partial_identity {
+  (@scalar $flavor:ty: $($ty:ty $([ $( const $g:ident: $gty:ty), +$(,)? ])?),+$(,)?) => {
+    $(
+      impl $(< $(const $g:$gty),* >)? $crate::__private::convert::PartialIdentity<$flavor> for $ty {
+        fn partial_identity<'a>(
+          input: &'a mut Self::Output,
+          _: &'a Self::Selector,
+        ) -> &'a mut Self::Output {
+          input
+        }
+      }
+    )*
+  };
+}
+
+/// A macro emits [`PartialTryFromRef`](super::convert::PartialTryFromRef) implementations for `Self`.
+#[macro_export]
+macro_rules! partial_try_from_ref {
+  (@scalar &$lifetime:lifetime $flavor:ty: $($ty:ty as $wf:ty),+$(,)?) => {
+    $(
+      impl<$lifetime, __GROST_READ_BUF__, __GROST_BUFFER__> $crate::__private::convert::PartialTryFromRef<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor> for $ty {
+        fn partial_try_from_ref(
+          context: &$lifetime <$flavor as $crate::__private::flavors::Flavor>::Context,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output,
+          _: &Self::Selector,
+        ) -> ::core::result::Result<<Self as $crate::__private::state::State<$crate::__private::state::Partial<$flavor>>>::Output, <$flavor as $crate::__private::flavors::Flavor>::Error>
+        where
+          <Self as $crate::__private::state::State<$crate::__private::state::Partial<$flavor>>>::Output: Sized,
+          <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output: Sized
         {
           ::core::result::Result::Ok(input)
         }

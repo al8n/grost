@@ -13,13 +13,6 @@ macro_rules! str_bridge {
         },
       );
 
-      $crate::decode_bridge!(
-        $flavor: &'de str => $crate::__private::decode::Str<RB> {
-          $ty $([ $(const $g: usize),* ])? as $crate::__private::flavors::groto::LengthDelimited {
-            convert: |s: $crate::__private::decode::Str<RB>| $from_str(s.as_ref());
-          },
-        },
-      );
       $crate::default_string_wire_format!(Groto: $ty as $crate::__private::flavors::groto::LengthDelimited);
     )*
   };
@@ -113,7 +106,7 @@ macro_rules! array_str {
 
     impl<'de, RB, B, const $g: ::core::primitive::usize> $crate::__private::decode::Decode<'de, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto,> for $ty {
       fn decode(
-        context: &'de $crate::__private::flavors::groto::Context,
+        _: &'de $crate::__private::flavors::groto::Context,
         src: RB,
       ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error>
       where
@@ -121,8 +114,7 @@ macro_rules! array_str {
         RB: $crate::__private::ReadBuf + 'de,
         B: $crate::__private::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
-        
-        <&'de ::core::primitive::str as $crate::__private::decode::Decode<'de, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto>>::decode(context, src)
+        $crate::__private::flavors::groto::impls::decode_str(&src)
           .and_then(|(len, s)| {
             $from_str(s).map(|s| (len, s))
           })
