@@ -100,6 +100,15 @@ macro_rules! array_str {
       type Selector = ::core::primitive::bool;
     }
 
+    impl<const $g: ::core::primitive::usize> $crate::__private::convert::PartialIdentity<$crate::__private::flavors::Groto> for $ty {
+      fn partial_identity<'a>(
+        input: &'a mut Self::Output,
+        _: &'a Self::Selector,
+      ) -> &'a mut Self {
+        input
+      }
+    }
+
     impl<const $g: ::core::primitive::usize> $crate::__private::PartialEncode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
       $crate::partial_encode_scalar!(@impl $crate::__private::flavors::Groto as $crate::__private::flavors::groto::LengthDelimited);
     }

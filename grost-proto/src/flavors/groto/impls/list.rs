@@ -45,41 +45,6 @@ where
   }
 }
 
-macro_rules! decode {
-  () => {
-    fn decode(
-      context: &'de <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Context,
-      src: RB,
-    ) -> Result<
-      (
-        usize,
-        $crate::__private::flavors::groto::PackedDecoder<'de, T, RB, B, W>,
-      ),
-      <$crate::__private::flavors::Groto as $crate::flavors::Flavor>::Error,
-    >
-    where
-      $crate::__private::flavors::groto::PackedDecoder<'de, T, RB, B, W>: Sized,
-      RB: $crate::buffer::ReadBuf + 'de,
-      B: $crate::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
-    {
-      let buf = src.as_bytes();
-      let buf_len = buf.len();
-      if buf_len == 0 {
-        return Err($crate::__private::flavors::groto::Error::buffer_underflow());
-      }
-
-      let (len, data_len) = varing::decode_u32_varint(buf)?;
-      let total = len + data_len as usize;
-      if total > buf_len {
-        return Err($crate::__private::flavors::groto::Error::buffer_underflow());
-      }
-
-      // Ok((total, PackedDecoder::new(context, src, len)))
-      todo!()
-    }
-  };
-}
-
 macro_rules! partial_ref_state {
   (@bytes $($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
@@ -387,10 +352,6 @@ macro_rules! encode_list {
   };
 }
 
-// macro_rules! decode_list {
-
-// }
-
 macro_rules! flatten_state {
   ($($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
@@ -430,9 +391,9 @@ macro_rules! partial_state {
 }
 
 macro_rules! length {
-  ($($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
+  ($($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: $gty:ty),+$(,)? ])?),+$(,)?) => {
     $(
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )? > $crate::__private::encode::Length for $ty {
+      impl<T, $($($tg:$t),*)? $( $(const $g: $gty),* )? > $crate::__private::encode::Length for $ty {
         #[inline]
         fn len(&self) -> usize {
           <$ty>::len(self)

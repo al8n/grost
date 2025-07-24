@@ -8,7 +8,7 @@ use crate::{
     groto::{Context, Error, PackedSetDecoder, PartialSetBuffer},
   },
   selection::Selector,
-  state::{Partial, PartialRef, Ref, State},
+  state::{PartialRef, Ref, State},
 };
 
 use super::super::super::{

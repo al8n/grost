@@ -11,7 +11,7 @@ use crate::{
     },
   },
   selection::Selector,
-  state::{Partial, PartialRef, Ref, State},
+  state::{PartialRef, Ref, State},
 };
 
 use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len};

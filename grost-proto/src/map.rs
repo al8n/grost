@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem};
+use core::mem;
 
 use crate::{
   flavors::Flavor,

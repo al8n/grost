@@ -3,10 +3,7 @@ use arrayvec_0_7::ArrayVec;
 use crate::{
   buffer::ReadBuf,
   decode::BytesSlice,
-  flavors::{
-    Groto,
-    groto::{Error, LengthDelimited},
-  },
+  flavors::groto::{Error, LengthDelimited},
 };
 
 mod packed;
