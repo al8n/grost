@@ -18,9 +18,20 @@ impl<T> DefaultFlattenWireFormat<Groto> for Option<T> {
     V: WireFormat<Groto> + 'static;
 }
 
-impl<'a, RB, UB, W, T> State<PartialRef<'a, RB, UB, Flatten<Nullable<W>, W>, Groto>> for Option<T>
+impl<'a, RB, UB, W, T> State<PartialRef<'a, Flatten<Nullable<W>, W>, RB, UB, Groto>> for Option<T>
 where
-  T: State<PartialRef<'a, RB, UB, W, Groto>>,
+  T: State<PartialRef<'a, W, RB, UB, Groto>>,
+  T::Output: Sized,
+  W: ?Sized,
+  RB: ?Sized,
+  UB: ?Sized,
+{
+  type Output = Option<T::Output>;
+}
+
+impl<'a, RB, UB, W, T> State<Ref<'a, Flatten<Nullable<W>, W>, RB, UB, Groto>> for Option<T>
+where
+  T: State<Ref<'a, W, RB, UB, Groto>>,
   T::Output: Sized,
   W: ?Sized,
   RB: ?Sized,

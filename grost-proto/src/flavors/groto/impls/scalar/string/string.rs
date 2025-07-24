@@ -36,14 +36,14 @@ str_bridge!(Groto: String {
 bidi_equivalent!(:<RB: ReadBuf>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
 bidi_equivalent!(impl <String, LengthDelimited> for <str, LengthDelimited>);
 
-impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for String {
+impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for String {
   fn try_from_partial_ref(
     _: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -51,14 +51,14 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Strin
   }
 }
 
-impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for String
+impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for String
 where
   RB: ReadBuf,
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
     _: &'de Context,
-    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
@@ -67,18 +67,18 @@ where
   }
 }
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for String
+impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for String
 where
   RB: ReadBuf + 'de,
 {
   fn partial_try_from_ref(
     context: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
   {
     Ok(input.to_string())
   }

@@ -276,9 +276,9 @@ impl<F> ConcreteTaggedField<F> {
           #path_to_grost::__private::state::State<
             #path_to_grost::__private::state::PartialRef<
               #lifetime,
+              #wf,
               #read_buffer,
               #buffer,
-              #wf,
               #flavor_type,
             >
           >

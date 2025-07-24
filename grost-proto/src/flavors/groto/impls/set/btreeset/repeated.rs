@@ -25,23 +25,23 @@ impl<K> DefaultRepeatedWireFormat<Groto> for BTreeSet<K> {
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>
+impl<'a, K, KW, RB, B, const TAG: u32> State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, RB, B, KW, Groto>>,
+  K: State<PartialRef<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> State<Ref<'a, RB, B, Repeated<KW, TAG>, Groto>>
+impl<'a, K, KW, RB, B, const TAG: u32> State<Ref<'a, Repeated<KW, TAG>, RB, B, Groto>>
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
-  K: State<Ref<'a, RB, B, KW, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
@@ -155,7 +155,7 @@ where
   }
 }
 
-impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, RB, UB, Repeated<KW, TAG>, Groto>
+impl<'a, K, KW, RB, UB, const TAG: u32> TryFromRef<'a, Repeated<KW, TAG>, RB, UB, Groto>
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
@@ -166,11 +166,11 @@ where
 {
   fn try_from_ref(
     ctx: &'a Context,
-    input: <Self as State<Ref<'a, RB, UB, Repeated<KW, TAG>, Groto>>>::Output,
+    input: <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'a, RB, UB, Repeated<KW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     UB: UnknownBuffer<RB, Groto>,
   {
@@ -188,22 +188,22 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> TryFromPartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>
+impl<'a, K, KW, RB, B, const TAG: u32> TryFromPartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Ord + 'a,
+  K: TryFromPartialRef<'a, KW, RB, B, Groto> + Ord + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -221,12 +221,12 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, const TAG: u32> PartialTryFromRef<'a, RB, B, Repeated<KW, TAG>, Groto>
+impl<'a, K, KW, RB, B, const TAG: u32> PartialTryFromRef<'a, Repeated<KW, TAG>, RB, B, Groto>
   for BTreeSet<K>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Ord + 'a,
-  <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
+  K: PartialTryFromRef<'a, KW, RB, B, Groto> + Ord + 'a,
+  <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   RB: ReadBuf + 'a,
@@ -234,12 +234,12 @@ where
 {
   fn partial_try_from_ref(
     context: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'a, RB, B, Repeated<KW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
       return Ok(DefaultPartialSetBuffer::new());

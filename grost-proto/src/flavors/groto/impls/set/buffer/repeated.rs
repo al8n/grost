@@ -16,13 +16,13 @@ use crate::{
 
 use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
 
-impl<'a, K, KW, RB, UB, PB, const TAG: u32> State<PartialRef<'a, RB, UB, Repeated<KW, TAG>, Groto>>
+impl<'a, K, KW, RB, UB, PB, const TAG: u32> State<PartialRef<'a, Repeated<KW, TAG>, RB, UB, Groto>>
   for PartialSetBuffer<K, PB>
 {
   type Output = RepeatedDecoderBuffer<'a, K, RB, UB, KW, TAG>;
 }
 
-impl<'a, K, KW, RB, UB, PB, const TAG: u32> State<Ref<'a, RB, UB, Repeated<KW, TAG>, Groto>>
+impl<'a, K, KW, RB, UB, PB, const TAG: u32> State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>
   for PartialSetBuffer<K, PB>
 {
   type Output = RepeatedDecoderBuffer<'a, K, RB, UB, KW, TAG>;
@@ -162,11 +162,11 @@ where
   }
 }
 
-impl<'de, K, RB, UB, PB, KW, const TAG: u32> TryFromRef<'de, RB, UB, Repeated<KW, TAG>, Groto>
+impl<'de, K, RB, UB, PB, KW, const TAG: u32> TryFromRef<'de, Repeated<KW, TAG>, RB, UB, Groto>
   for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromRef<'de, KW, RB, UB, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -174,11 +174,11 @@ where
 {
   fn try_from_ref(
     ctx: &'de Context,
-    input: <Self as State<Ref<'de, RB, UB, Repeated<KW, TAG>, Groto>>>::Output,
+    input: <Self as State<Ref<'de, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'de, RB, UB, Repeated<KW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'de, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
@@ -201,10 +201,10 @@ where
 }
 
 impl<'de, K, RB, UB, PB, KW, const TAG: u32>
-  TryFromPartialRef<'de, RB, UB, Repeated<KW, TAG>, Groto> for PartialSetBuffer<K, PB>
+  TryFromPartialRef<'de, Repeated<KW, TAG>, RB, UB, Groto> for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromPartialRef<'de, KW, RB, UB, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -212,11 +212,11 @@ where
 {
   fn try_from_partial_ref(
     ctx: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, UB, Repeated<KW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'de, RB, UB, Repeated<KW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {

@@ -308,8 +308,8 @@ impl FieldFlavor {
           #path_to_grost::__private::state::State<
             #path_to_grost::__private::state::PartialRef<
               #lifetime,
-              #buffer,
               <#wfr as #object_reflectable>::Reflection,
+              #buffer,
               #flavor_type,
             >
           >

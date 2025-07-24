@@ -20,18 +20,18 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Arc<str> {
 
 bidi_equivalent!(impl<str, LengthDelimited> for <Arc<str>, LengthDelimited>);
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for Arc<str>
+impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for Arc<str>
 where
   RB: ReadBuf + 'de,
 {
   fn partial_try_from_ref(
     context: &'de Context,
-    input: <Self as crate::state::State<crate::state::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as crate::state::State<crate::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as crate::state::State<crate::state::Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
   where
     <Self as crate::state::State<crate::state::Partial<Groto>>>::Output: Sized,
-    <Self as crate::state::State<crate::state::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized
+    <Self as crate::state::State<crate::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized
   {
     Ok(Arc::from(input.as_ref()))
   }

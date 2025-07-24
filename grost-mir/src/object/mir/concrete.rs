@@ -401,7 +401,7 @@ impl<M, F> ConcreteObject<M, F> {
         output
       },
       partial_ref_state_type: syn::parse2(quote! {
-        #path_to_grost::__private::state::PartialRef<#lt, #flavor_ty, #wf, #rb, #ub>
+        #path_to_grost::__private::state::PartialRef<#lt, #wf, #rb, #ub, #flavor_ty>
       })?,
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),

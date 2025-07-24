@@ -30,21 +30,21 @@ impl<K, S> DefaultSetWireFormat<Groto> for HashSet<K, S> {
     KM: WireFormat<Groto> + 'static;
 }
 
-impl<'a, K, KW, S, RB, B> State<PartialRef<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> State<PartialRef<'a, Packed<KW>, RB, B, Groto>> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, RB, B, KW, Groto>>,
+  K: State<PartialRef<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
 }
 
-impl<'a, K, KW, S, RB, B> State<Ref<'a, RB, B, Packed<KW>, Groto>> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> State<Ref<'a, Packed<KW>, RB, B, Groto>> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: State<Ref<'a, RB, B, KW, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;
@@ -186,10 +186,10 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> TryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> TryFromRef<'a, Packed<KW>, RB, B, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
+  K: TryFromRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,
@@ -197,11 +197,11 @@ where
 {
   fn try_from_ref(
     ctx: &'a Context,
-    input: <Self as State<Ref<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -220,10 +220,10 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> TryFromPartialRef<'a, Packed<KW>, RB, B, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
+  K: TryFromPartialRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,
@@ -231,11 +231,11 @@ where
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -254,11 +254,11 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, B> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto> for HashSet<K, S>
+impl<'a, K, KW, S, RB, B> PartialTryFromRef<'a, Packed<KW>, RB, B, Groto> for HashSet<K, S>
 where
   KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
-  <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
+  K: PartialTryFromRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
+  <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   S: BuildHasher + Default,
@@ -267,12 +267,12 @@ where
 {
   fn partial_try_from_ref(
     context: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
       return Ok(<DefaultPartialSetBuffer<_> as Buffer>::new());

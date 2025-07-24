@@ -54,10 +54,10 @@ partial_state!(
 );
 flatten_state!(Bytes, BytesMut);
 
-impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
+impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for Bytes {
   fn try_from_partial_ref(
     _: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
@@ -68,10 +68,10 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
   }
 }
 
-impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for Bytes {
+impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for Bytes {
   fn try_from_ref(
     _: &'de Context,
-    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
@@ -94,10 +94,10 @@ impl PartialIdentity<Groto> for Bytes {
   }
 }
 
-impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for BytesMut {
+impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for BytesMut {
   fn try_from_partial_ref(
     _: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
@@ -108,14 +108,14 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for Bytes
   }
 }
 
-impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for BytesMut {
+impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for BytesMut {
   fn try_from_ref(
     _: &'de Context,
-    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto>,
   {

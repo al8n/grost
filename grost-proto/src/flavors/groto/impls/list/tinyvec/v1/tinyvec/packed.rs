@@ -50,23 +50,23 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, A> TryFromRef<'a, RB, B, Packed<KW>, Groto> for TinyVec<A>
+impl<'a, K, KW, RB, B, A> TryFromRef<'a, Packed<KW>, RB, B, Groto> for TinyVec<A>
 where
   A: Array<Item = K>,
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, B, KW, Groto> + 'a,
+  K: TryFromRef<'a, KW, RB, B, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
     ctx: &'a Context,
-    input: <Self as State<Ref<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -87,23 +87,23 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, A> TryFromPartialRef<'a, RB, B, Packed<KW>, Groto> for TinyVec<A>
+impl<'a, K, KW, RB, B, A> TryFromPartialRef<'a, Packed<KW>, RB, B, Groto> for TinyVec<A>
 where
   A: Array<Item = K>,
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + 'a,
+  K: TryFromPartialRef<'a, KW, RB, B, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -124,13 +124,13 @@ where
   }
 }
 
-impl<'a, K, KW, RB, B, const CAP: usize> PartialTryFromRef<'a, RB, B, Packed<KW>, Groto>
+impl<'a, K, KW, RB, B, const CAP: usize> PartialTryFromRef<'a, Packed<KW>, RB, B, Groto>
   for TinyVec<[K; CAP]>
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Default + 'a,
-  <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
+  K: PartialTryFromRef<'a, KW, RB, B, Groto> + Default + 'a,
+  <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Default + Selectable<Groto, Selector = K::Selector>,
   RB: ReadBuf + 'a,
@@ -138,12 +138,12 @@ where
 {
   fn partial_try_from_ref(
     context: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'a, RB, B, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
       return Ok(TinyVec::new());

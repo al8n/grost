@@ -375,13 +375,13 @@ impl<'a, T, B, UB, W> State<Partial<Groto>> for PackedDecoder<'a, T, B, UB, W> {
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<PartialRef<'a, B, UB, Packed<W>, Groto>>
+impl<'a, T, B, UB, W> State<PartialRef<'a, Packed<W>, B, UB, Groto>>
   for PackedDecoder<'a, T, B, UB, W>
 {
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W> State<Ref<'a, B, UB, Packed<W>, Groto>> for PackedDecoder<'a, T, B, UB, W> {
+impl<'a, T, B, UB, W> State<Ref<'a, Packed<W>, B, UB, Groto>> for PackedDecoder<'a, T, B, UB, W> {
   type Output = Self;
 }
 

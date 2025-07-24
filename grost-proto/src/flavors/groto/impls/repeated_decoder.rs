@@ -304,13 +304,13 @@ impl<'a, T, B, UB, W, const TAG: u32> State<Partial<Groto>>
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, const TAG: u32> State<PartialRef<'a, B, UB, Repeated<W, TAG>, Groto>>
+impl<'a, T, B, UB, W, const TAG: u32> State<PartialRef<'a, Repeated<W, TAG>, B, UB, Groto>>
   for RepeatedDecoder<'a, T, B, UB, W, TAG>
 {
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, B, UB, Repeated<W, TAG>, Groto>>
+impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, Repeated<W, TAG>, B, UB, Groto>>
   for RepeatedDecoder<'a, T, B, UB, W, TAG>
 {
   type Output = Self;
@@ -794,13 +794,13 @@ impl<'a, T, B, UB, W, const TAG: u32> State<Partial<Groto>>
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, const TAG: u32> State<PartialRef<'a, B, UB, Repeated<W, TAG>, Groto>>
+impl<'a, T, B, UB, W, const TAG: u32> State<PartialRef<'a, Repeated<W, TAG>, B, UB, Groto>>
   for RepeatedDecoderBuffer<'a, T, B, UB, W, TAG>
 {
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, B, UB, Repeated<W, TAG>, Groto>>
+impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, Repeated<W, TAG>, B, UB, Groto>>
   for RepeatedDecoderBuffer<'a, T, B, UB, W, TAG>
 {
   type Output = Self;

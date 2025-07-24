@@ -343,14 +343,14 @@ impl<'a, K, V, B, UB, KW, VW, const TAG: u32> State<Partial<Groto>>
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<PartialRef<'a, B, UB, RepeatedEntry<KW, VW, TAG>, Groto>>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
   for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<Ref<'a, B, UB, RepeatedEntry<KW, VW, TAG>, Groto>>
+  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
   for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
@@ -877,14 +877,14 @@ impl<'a, K, V, B, UB, KW, VW, const TAG: u32> State<Partial<Groto>>
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<PartialRef<'a, B, UB, RepeatedEntry<KW, VW, TAG>, Groto>>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
   for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<Ref<'a, B, UB, RepeatedEntry<KW, VW, TAG>, Groto>>
+  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
   for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;

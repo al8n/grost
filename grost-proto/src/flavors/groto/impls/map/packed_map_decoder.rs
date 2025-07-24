@@ -303,13 +303,13 @@ impl<'a, K, V, B, UB, KW, VW> State<Partial<Groto>> for PackedMapDecoder<'a, K, 
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW> State<PartialRef<'a, B, UB, PackedEntry<KW, VW>, Groto>>
+impl<'a, K, V, B, UB, KW, VW> State<PartialRef<'a, PackedEntry<KW, VW>, B, UB, Groto>>
   for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
 {
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, B, UB, PackedEntry<KW, VW>, Groto>>
+impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, PackedEntry<KW, VW>, B, UB, Groto>>
   for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
 {
   type Output = Self;

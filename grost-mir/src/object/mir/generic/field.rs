@@ -242,10 +242,10 @@ impl<F> GenericTaggedField<F> {
         #path_to_grost::__private::state::State<
           #path_to_grost::__private::state::PartialRef<
             #lifetime,
-            #flavor_ident,
             <#wfr as #object_reflectable>::Reflection,
             #read_buffer,
             #buffer,
+            #flavor_ident,
           >
         >
       })?;

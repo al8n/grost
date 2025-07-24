@@ -17,22 +17,22 @@ use crate::{
 use super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
 
 impl<'a, K, V, KW, VW, RB, UB, PB, const TAG: u32>
-  State<PartialRef<'a, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>> for PartialMapBuffer<K, V, PB>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>> for PartialMapBuffer<K, V, PB>
 where
-  K: State<PartialRef<'a, RB, UB, KW, Groto>>,
+  K: State<PartialRef<'a, KW, RB, UB, Groto>>,
   K::Output: Sized,
-  V: State<PartialRef<'a, RB, UB, VW, Groto>>,
+  V: State<PartialRef<'a, VW, RB, UB, Groto>>,
   V::Output: Sized,
 {
   type Output = RepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, UB, KW, VW, TAG>;
 }
 
 impl<'a, K, V, KW, VW, RB, UB, PB, const TAG: u32>
-  State<Ref<'a, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>> for PartialMapBuffer<K, V, PB>
+  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>> for PartialMapBuffer<K, V, PB>
 where
-  K: State<Ref<'a, RB, UB, KW, Groto>>,
+  K: State<Ref<'a, KW, RB, UB, Groto>>,
   K::Output: Sized,
-  V: State<Ref<'a, RB, UB, VW, Groto>>,
+  V: State<Ref<'a, VW, RB, UB, Groto>>,
   V::Output: Sized,
 {
   type Output = RepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, UB, KW, VW, TAG>;
@@ -197,11 +197,11 @@ where
 }
 
 impl<'de, K, V, RB, UB, PB, KW, VW, const TAG: u32>
-  TryFromRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto> for PartialMapBuffer<K, V, PB>
+  TryFromRef<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto> for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + 'de,
+  K: TryFromRef<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
   V: TryFromRef<'de, RB, UB, VW, Groto> + 'de,
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
@@ -211,11 +211,11 @@ where
 {
   fn try_from_ref(
     ctx: &'de Context,
-    input: <Self as State<Ref<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
+    input: <Self as State<Ref<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
@@ -239,13 +239,13 @@ where
 }
 
 impl<'de, K, V, RB, UB, PB, KW, VW, const TAG: u32>
-  TryFromPartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto> for PartialMapBuffer<K, V, PB>
+  TryFromPartialRef<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto> for PartialMapBuffer<K, V, PB>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + 'de,
+  K: TryFromPartialRef<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized + Decode<'de, KW, RB, UB, Groto>,
-  V: TryFromPartialRef<'de, RB, UB, VW, Groto> + 'de,
+  V: TryFromPartialRef<'de, VW, RB, UB, Groto> + 'de,
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -253,11 +253,11 @@ where
 {
   fn try_from_partial_ref(
     ctx: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'de, RB, UB, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {

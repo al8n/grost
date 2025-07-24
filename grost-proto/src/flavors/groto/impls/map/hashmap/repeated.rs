@@ -32,13 +32,13 @@ impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for HashMap<K, V, S> {
 }
 
 impl<'a, K, V, KW, VW, S, RB, B, const TAG: u32>
-  State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>> for HashMap<K, V, S>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>> for HashMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, RB, B, KW, Groto>>,
+  K: State<PartialRef<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
-  V: State<PartialRef<'a, RB, B, VW, Groto>>,
+  V: State<PartialRef<'a, VW, RB, B, Groto>>,
   V::Output: Sized,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
 {
@@ -46,14 +46,14 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  State<Ref<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>> for HashMap<K, V, S>
+  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>> for HashMap<K, V, S>
 where
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: State<Ref<'a, RB, B, KW, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
-  V: State<Ref<'a, RB, B, VW, Groto>>,
+  V: State<Ref<'a, VW, RB, B, Groto>>,
   V::Output: Sized,
 {
   type Output = RepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, B, KW, VW, TAG>;
@@ -212,11 +212,11 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  TryFromRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto> for HashMap<K, V, S>
+  TryFromRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for HashMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
+  K: TryFromRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
   V: TryFromRef<'a, RB, B, VW, Groto> + 'a,
   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
@@ -226,11 +226,11 @@ where
 {
   fn try_from_ref(
     ctx: &'a Context,
-    input: <Self as State<Ref<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
+    input: <Self as State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -251,13 +251,13 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  TryFromPartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto> for HashMap<K, V, S>
+  TryFromPartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for HashMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
+  K: TryFromPartialRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  V: TryFromPartialRef<'a, RB, B, VW, Groto> + 'a,
+  V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   S: BuildHasher + Default,
   RB: ReadBuf + 'a,
@@ -265,11 +265,11 @@ where
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -290,16 +290,16 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  PartialTryFromRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto> for HashMap<K, V, S>
+  PartialTryFromRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for HashMap<K, V, S>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, RB, B, KW, Groto> + Eq + Hash + 'a,
-  <K as State<PartialRef<'a, RB, B, KW, Groto>>>::Output:
+  K: PartialTryFromRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
+  <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   V: PartialTryFromRef<'a, RB, B, VW, Groto> + 'a,
-  <V as State<PartialRef<'a, RB, B, VW, Groto>>>::Output:
+  <V as State<PartialRef<'a, VW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
   S: BuildHasher + Default,
@@ -308,12 +308,12 @@ where
 {
   fn partial_try_from_ref(
     context: &'a Context,
-    input: <Self as State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'a, RB, B, RepeatedEntry<KW, VW, TAG>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
       return Ok(<DefaultPartialMapBuffer<_, _> as Buffer>::new());

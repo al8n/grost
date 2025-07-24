@@ -15,13 +15,13 @@ use super::super::super::{
   packed_decode, packed_encode, packed_encode_raw, packed_encoded_len, packed_encoded_raw_len,
 };
 
-impl<'a, K, KW, RB, UB, PB> State<PartialRef<'a, RB, UB, Packed<KW>, Groto>>
+impl<'a, K, KW, RB, UB, PB> State<PartialRef<'a, Packed<KW>, RB, UB, Groto>>
   for PartialSetBuffer<K, PB>
 {
   type Output = PackedSetDecoder<'a, K, RB, UB, KW>;
 }
 
-impl<'a, K, KW, RB, UB, PB> State<Ref<'a, RB, UB, Packed<KW>, Groto>> for PartialSetBuffer<K, PB> {
+impl<'a, K, KW, RB, UB, PB> State<Ref<'a, Packed<KW>, RB, UB, Groto>> for PartialSetBuffer<K, PB> {
   type Output = PackedSetDecoder<'a, K, RB, UB, KW>;
 }
 
@@ -159,10 +159,10 @@ where
   }
 }
 
-impl<'de, K, RB, UB, PB, KW> TryFromRef<'de, RB, UB, Packed<KW>, Groto> for PartialSetBuffer<K, PB>
+impl<'de, K, RB, UB, PB, KW> TryFromRef<'de, Packed<KW>, RB, UB, Groto> for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromRef<'de, KW, RB, UB, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -170,11 +170,11 @@ where
 {
   fn try_from_ref(
     ctx: &'de Context,
-    input: <Self as State<Ref<'de, RB, UB, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<Ref<'de, Packed<KW>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<Ref<'de, RB, UB, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<Ref<'de, Packed<KW>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {
@@ -196,11 +196,11 @@ where
   }
 }
 
-impl<'de, K, RB, UB, PB, KW> TryFromPartialRef<'de, RB, UB, Packed<KW>, Groto>
+impl<'de, K, RB, UB, PB, KW> TryFromPartialRef<'de, Packed<KW>, RB, UB, Groto>
   for PartialSetBuffer<K, PB>
 where
   KW: WireFormat<Groto> + 'de,
-  K: TryFromPartialRef<'de, RB, UB, KW, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
+  K: TryFromPartialRef<'de, KW, RB, UB, Groto> + Decode<'de, KW, RB, UB, Groto> + 'de,
   K::Output: Sized,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
@@ -208,11 +208,11 @@ where
 {
   fn try_from_partial_ref(
     ctx: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, UB, Packed<KW>, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, Packed<KW>, RB, UB, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'de, RB, UB, Packed<KW>, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, Packed<KW>, RB, UB, Groto>>>::Output: Sized,
     RB: ReadBuf + 'de,
     UB: UnknownBuffer<RB, Groto>,
   {

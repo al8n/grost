@@ -679,7 +679,7 @@ impl<T, S, M> Object<T, S, M> {
     let rb = &rbp.ident;
 
     let partial_ref_state_type = syn::parse2(quote! {
-      #path_to_grost::__private::state::PartialRef<#lt, #flavor_type, #wf, #rb, #ub>
+      #path_to_grost::__private::state::PartialRef<#lt, #wf, #rb, #ub, #flavor_type>
     })?;
 
     let partial_state_type = syn::parse2(quote! {
@@ -695,7 +695,7 @@ impl<T, S, M> Object<T, S, M> {
       let rb = rb.clone();
       Rc::new(move |ty| {
         syn::parse2(quote! {
-          #path_to_grost::__private::decode::Decode<#lt, #ty, #wf, #rb, #ub, #flavor_ty>
+          #path_to_grost::__private::decode::Decode<#lt, #wf, #rb, #ub, #flavor_ty>
         })
       })
     };

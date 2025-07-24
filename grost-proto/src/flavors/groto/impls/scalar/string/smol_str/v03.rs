@@ -53,14 +53,14 @@ impl<'a, RB, B> Decode<'a, LengthDelimited, RB, B, Groto> for SmolStr {
   }
 }
 
-impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for SmolStr {
+impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for SmolStr {
   fn try_from_partial_ref(
     _: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
@@ -68,14 +68,14 @@ impl<'de, RB, B> TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for SmolS
   }
 }
 
-impl<'de, RB, B> TryFromRef<'de, RB, B, LengthDelimited, Groto> for SmolStr
+impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
   RB: ReadBuf,
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
     _: &'de Context,
-    input: <Self as State<Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
   ) -> Result<Self, Error>
   where
     Self: Sized,
@@ -84,18 +84,18 @@ where
   }
 }
 
-impl<'de, RB, B> PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for SmolStr
+impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
   RB: ReadBuf + 'de,
 {
   fn partial_try_from_ref(
     _: &'de Context,
-    input: <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+    input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
     _: &Self::Selector,
   ) -> Result<<Self as State<Partial<Groto>>>::Output, <Groto as crate::flavors::Flavor>::Error>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+    <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
   {
     Ok(SmolStr::new(input.as_ref()))
   }

@@ -54,15 +54,15 @@ macro_rules! try_str_bridge {
       bidi_equivalent!(impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
       bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
 
-      impl<'de, RB, B> $crate::__private::convert::TryFromPartialRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      impl<'de, RB, B> $crate::__private::convert::TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for $ty
       {
         fn try_from_partial_ref(
           _: &'de $crate::__private::flavors::groto::Context,
-          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
         ) -> Result<Self, Error>
         where
           Self: Sized,
-          <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output: Sized,
+          <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
           RB: $crate::__private::buffer::ReadBuf,
           B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto>,
         {
@@ -70,14 +70,14 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl<'de, RB, B> $crate::__private::convert::TryFromRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      impl<'de, RB, B> $crate::__private::convert::TryFromRef<'de, LengthDelimited, RB, B, Groto> for $ty
       where
         RB: ReadBuf,
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn try_from_ref(
           _: &$crate::__private::flavors::groto::Context,
-          input: <Self as $crate::__private::state::State<$crate::__private::state::Ref<'de, RB, B, LengthDelimited, Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
         ) -> Result<Self, Error>
         where
           Self: Sized,
@@ -86,14 +86,14 @@ macro_rules! try_str_bridge {
         }
       }
 
-      impl<'de, RB, B> $crate::__private::convert::PartialTryFromRef<'de, RB, B, LengthDelimited, Groto> for $ty
+      impl<'de, RB, B> $crate::__private::convert::PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for $ty
       where
         RB: ReadBuf,
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn partial_try_from_ref(
           _: &'de $crate::__private::flavors::groto::Context,
-          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, RB, B, LengthDelimited, Groto>>>::Output,
+          input: <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
           _: &bool,
         ) -> Result<Self, Error>
         where

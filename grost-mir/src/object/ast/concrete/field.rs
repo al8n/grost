@@ -682,9 +682,9 @@ fn applied_partial_ref(
   quote! {
     #path_to_grost::__private::state::PartialRef<
       #lt,
+      #wf,
       #read_buffer,
       #buffer,
-      #wf,
       #flavor_type,
     >
   }

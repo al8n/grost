@@ -231,9 +231,9 @@ impl PartialField {
             #path_to_grost::__private::state::State<
               #path_to_grost::__private::state::PartialRef<
                 #lt,
+                #wf,
                 #rb,
                 #ub,
-                #wf,
                 #flavor_type,
               >
             >
