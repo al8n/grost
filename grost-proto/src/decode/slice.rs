@@ -1,5 +1,5 @@
 use crate::{
-  buffer::ReadBuf, convert::Flattened, flavors::Flavor, selection::Selectable, state::State,
+  buffer::ReadBuf, convert::Extracted, flavors::Flavor, selection::Selectable, state::State,
 };
 
 /// The decoded type for `[u8]`
@@ -17,7 +17,7 @@ impl<RB: ?Sized, F: ?Sized + Flavor> Selectable<F> for BytesSlice<RB> {
   type Selector = bool;
 }
 
-impl<RB: ?Sized, O> State<Flattened<O>> for BytesSlice<RB> {
+impl<RB: ?Sized, O> State<Extracted<O>> for BytesSlice<RB> {
   type Output = Self;
 }
 

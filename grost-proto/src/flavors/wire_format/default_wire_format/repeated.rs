@@ -1,5 +1,5 @@
 use crate::{
-  convert::{Flattened, Inner},
+  convert::{Extracted, Inner},
   marker::{Marker, RepeatedEntryMarker, RepeatedMarker},
   state::State,
 };
@@ -22,7 +22,7 @@ impl<T, VM, F, const TAG: u32> DefaultWireFormat<F> for RepeatedMarker<T, VM, TA
 where
   F: ?Sized + Flavor,
   VM: DefaultWireFormat<F> + Marker,
-  T: State<Flattened<Inner>, Output = VM::Marked> + ?Sized + DefaultRepeatedWireFormat<F>,
+  T: State<Extracted<Inner>, Output = VM::Marked> + ?Sized + DefaultRepeatedWireFormat<F>,
 {
   type Format = T::Format<VM::Format, TAG>;
 }
@@ -48,7 +48,7 @@ where
   VM: DefaultWireFormat<F> + Marker + ?Sized,
   VM::Marked: Sized,
   T: ?Sized
-    + State<Flattened<Inner>, Output = (KM::Marked, VM::Marked)>
+    + State<Extracted<Inner>, Output = (KM::Marked, VM::Marked)>
     + DefaultRepeatedEntryWireFormat<F>,
   F: ?Sized + Flavor,
 {

@@ -2,7 +2,7 @@ use indexmap_2::IndexMap;
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, MapKey, MapValue, TryFromPartial},
+  convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
     groto::{Context, Error},
@@ -20,15 +20,15 @@ impl<K, V, S> crate::encode::Length for IndexMap<K, V, S> {
   }
 }
 
-impl<K, V, S> State<Flattened<Inner>> for IndexMap<K, V, S> {
+impl<K, V, S> State<Extracted<Inner>> for IndexMap<K, V, S> {
   type Output = (K, V);
 }
 
-impl<K, V, S> State<Flattened<MapKey>> for IndexMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapKey>> for IndexMap<K, V, S> {
   type Output = K;
 }
 
-impl<K, V, S> State<Flattened<MapValue>> for IndexMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapValue>> for IndexMap<K, V, S> {
   type Output = V;
 }
 

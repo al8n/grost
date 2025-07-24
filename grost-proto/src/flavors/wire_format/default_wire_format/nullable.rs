@@ -1,5 +1,5 @@
 use crate::{
-  convert::{Flattened, Inner},
+  convert::{Extracted, Inner},
   marker::{Marker, NullableMarker},
   state::State,
 };
@@ -18,7 +18,7 @@ impl<T, VM, F> DefaultWireFormat<F> for NullableMarker<T, VM>
 where
   F: ?Sized + Flavor,
   VM: DefaultWireFormat<F> + Marker,
-  T: State<Flattened<Inner>, Output = VM::Marked> + ?Sized + DefaultNullableWireFormat<F>,
+  T: State<Extracted<Inner>, Output = VM::Marked> + ?Sized + DefaultNullableWireFormat<F>,
 {
   type Format = T::Format<VM::Format>;
 }

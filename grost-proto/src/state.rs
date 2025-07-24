@@ -76,13 +76,13 @@ where
 /// ```
 #[phantom]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PartialRef<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized>;
+pub struct PartialRef<'a, W: ?Sized, RB: ?Sized, UB: ?Sized, F: ?Sized>;
 
-impl<'a, RB, UB, W, F, T> State<PartialRef<'a, RB, UB, W, F>> for &'a T
+impl<'a, W, RB, UB, F, T> State<PartialRef<'a, W, RB, UB, F>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,
-  T: State<PartialRef<'a, RB, UB, W, F>>,
+  T: State<PartialRef<'a, W, RB, UB, F>>,
   RB: ?Sized,
   UB: ?Sized,
 {
@@ -112,11 +112,11 @@ where
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Ref<'a, RB: ?Sized, UB: ?Sized, W: ?Sized, F: ?Sized>;
 
-impl<'a, RB, UB, W, F, T> State<Ref<'a, RB, UB, W, F>> for &'a T
+impl<'a, W, RB, UB, F, T> State<Ref<'a, W, RB, UB, F>> for &'a T
 where
   F: ?Sized,
   W: ?Sized,
-  T: State<Ref<'a, RB, UB, W, F>>,
+  T: State<Ref<'a, W, RB, UB, F>>,
   RB: ?Sized,
   UB: ?Sized,
 {
@@ -138,18 +138,27 @@ macro_rules! wrapper_impl {
   };
   (@partial_ref_state $($ty:ty),+$(,)?) => {
     $(
-      impl<'a, F, W, B, UB, T> State<PartialRef<'a, F, W, B, UB>> for $ty
+      impl<'a, F, W, RB, UB, T> State<PartialRef<'a, W, RB, UB, F>> for $ty
       where
-        T: State<PartialRef<'a, F, W, B, UB>> + ?Sized,
+        T: State<PartialRef<'a, W, RB, UB, F>> + ?Sized,
         F: ?Sized,
         W: ?Sized,
-        B: ?Sized,
+        RB: ?Sized,
         UB: ?Sized,
       {
         type Output = T::Output;
       }
 
-      // wrapper_impl!(@flatten $ty);
+      impl<'a, F, W, RB, UB, T> State<Ref<'a, W, RB, UB, F>> for $ty
+      where
+        T: State<Ref<'a, W, RB, UB, F>> + ?Sized,
+        F: ?Sized,
+        W: ?Sized,
+        RB: ?Sized,
+        UB: ?Sized,
+      {
+        type Output = T::Output;
+      }
     )*
   };
 }

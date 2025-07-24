@@ -2,7 +2,7 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
-  convert::{Flattened, TryFromPartialRef, TryFromRef},
+  convert::{Extracted, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -356,7 +356,7 @@ impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Flattened<S>>
+impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Extracted<S>>
   for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 where
   S: ?Sized,
@@ -890,7 +890,7 @@ impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Flattened<S>>
+impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Extracted<S>>
   for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
 where
   S: ?Sized,

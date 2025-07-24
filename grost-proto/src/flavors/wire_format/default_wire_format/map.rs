@@ -1,5 +1,5 @@
 use crate::{
-  convert::{Flattened, MapKey, MapValue},
+  convert::{Extracted, MapKey, MapValue},
   marker::{MapMarker, Marker},
   state::State,
 };
@@ -22,8 +22,8 @@ where
   VM: DefaultWireFormat<F> + Marker + ?Sized,
   VM::Marked: Sized,
   T: ?Sized
-    + State<Flattened<MapKey>, Output = KM::Marked>
-    + State<Flattened<MapValue>, Output = VM::Marked>
+    + State<Extracted<MapKey>, Output = KM::Marked>
+    + State<Extracted<MapValue>, Output = VM::Marked>
     + DefaultMapWireFormat<F>,
   F: ?Sized + Flavor,
 {

@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::{
-  convert::{Flattened, Innermost},
+  convert::{Extracted, Innermost},
   encode::{EquivalentEncode, Length},
   flavors::{Borrowed, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
@@ -11,7 +11,7 @@ use crate::{
 impl<'a, T, N, W> Encode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto> + ?Sized,
+  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto> + ?Sized,
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -49,7 +49,7 @@ where
 unsafe impl<T, W> EquivalentEncode<[&[T]], Flatten<Borrowed<'_, Packed<W>>, W>, Groto> for Vec<T>
 where
   W: WireFormat<Groto>,
-  [T]: State<Flattened<Innermost>, Output = T> + Encode<Packed<W>, Groto>,
+  [T]: State<Extracted<Innermost>, Output = T> + Encode<Packed<W>, Groto>,
   T: Encode<W, Groto>,
   SchemaTypeReflection<[T]>: Reflectable<[T], Reflection = SchemaType>,
 {
@@ -61,7 +61,7 @@ where
 impl<T, N, W> Encode<Flatten<Packed<W>, W>, Groto> for Vec<N>
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto>,
+  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Packed<W>, Groto>,
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -85,7 +85,7 @@ where
 impl<T, N, W> PartialEncode<Flatten<Packed<W>, W>, Groto> for Vec<N>
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T>
+  N: State<Extracted<Innermost>, Output = T>
     + Length
     + PartialEncode<W, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
@@ -139,7 +139,7 @@ where
 impl<'a, T, N, W> PartialEncode<Flatten<Borrowed<'a, Packed<W>>, W>, Groto> for Vec<&N>
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T>
+  N: State<Extracted<Innermost>, Output = T>
     + Length
     + PartialEncode<Packed<W>, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,

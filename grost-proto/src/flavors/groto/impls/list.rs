@@ -395,19 +395,19 @@ macro_rules! flatten_state {
   ($($(:< $($tg:ident:$t:path),+$(,)? >:)? $ty:ty $([ $(const $g:ident: usize),+$(,)? ])?),+$(,)?) => {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )? > $crate::__private::state::State<
-        $crate::__private::convert::Flattened
+        $crate::__private::convert::Extracted
       > for $ty {
         type Output = $ty;
       }
 
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>> for $ty
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Extracted<$crate::__private::convert::Innermost>> for $ty
       where
-        T: $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Innermost>>,
+        T: $crate::__private::state::State<$crate::__private::convert::Extracted<$crate::__private::convert::Innermost>>,
       {
         type Output = T::Output;
       }
 
-      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Flattened<$crate::__private::convert::Inner>> for $ty {
+      impl<T, $($($tg:$t),*)? $( $(const $g: ::core::primitive::usize),* )?> $crate::__private::state::State<$crate::__private::convert::Extracted<$crate::__private::convert::Inner>> for $ty {
         type Output = T;
       }
     )*

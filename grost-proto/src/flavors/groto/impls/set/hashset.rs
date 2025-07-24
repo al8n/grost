@@ -8,7 +8,7 @@ use core::hash::{BuildHasher, Hash};
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, PartialIdentity, TryFromPartial},
+  convert::{Extracted, Inner, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
     groto::{Context, Error},
@@ -22,7 +22,7 @@ use super::DefaultPartialSetBuffer;
 mod packed;
 mod repeated;
 
-impl<K, S> State<Flattened<Inner>> for HashSet<K, S> {
+impl<K, S> State<Extracted<Inner>> for HashSet<K, S> {
   type Output = K;
 }
 

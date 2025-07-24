@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, PartialIdentity, TryFromPartial},
+  convert::{Extracted, Inner, PartialIdentity, TryFromPartial},
   encode::Length,
   flavors::{
     Groto,
@@ -23,7 +23,7 @@ impl<K> Length for BTreeSet<K> {
   }
 }
 
-impl<K> State<Flattened<Inner>> for BTreeSet<K> {
+impl<K> State<Extracted<Inner>> for BTreeSet<K> {
   type Output = K;
 }
 

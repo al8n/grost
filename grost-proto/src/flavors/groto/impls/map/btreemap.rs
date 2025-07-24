@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::{
   buffer::Buffer,
-  convert::{Flattened, Inner, MapKey, MapValue, TryFromPartial},
+  convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
     groto::{Context, Error},
@@ -20,15 +20,15 @@ impl<K, V> crate::encode::Length for BTreeMap<K, V> {
   }
 }
 
-impl<K, V> State<Flattened<Inner>> for BTreeMap<K, V> {
+impl<K, V> State<Extracted<Inner>> for BTreeMap<K, V> {
   type Output = (K, V);
 }
 
-impl<K, V> State<Flattened<MapKey>> for BTreeMap<K, V> {
+impl<K, V> State<Extracted<MapKey>> for BTreeMap<K, V> {
   type Output = K;
 }
 
-impl<K, V> State<Flattened<MapValue>> for BTreeMap<K, V> {
+impl<K, V> State<Extracted<MapValue>> for BTreeMap<K, V> {
   type Output = V;
 }
 

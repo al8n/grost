@@ -2,7 +2,7 @@ use core::iter::FusedIterator;
 
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  convert::Flattened,
+  convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -338,7 +338,7 @@ impl<'a, T, B, UB, W> State<Ref<'a, B, UB, Packed<W>, Groto>>
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, S> State<Flattened<S>> for PackedSetDecoder<'a, T, B, UB, W>
+impl<'a, T, B, UB, W, S> State<Extracted<S>> for PackedSetDecoder<'a, T, B, UB, W>
 where
   S: ?Sized,
 {

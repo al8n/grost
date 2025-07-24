@@ -2,7 +2,7 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Flattened, TryFromPartialRef, TryFromRef},
+  convert::{Extracted, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -315,7 +315,7 @@ impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, B, UB, PackedEntry<KW, VW>, Groto>>
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, S> State<Flattened<S>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+impl<'a, K, V, B, UB, KW, VW, S> State<Extracted<S>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   type Output = Self;
 }
 

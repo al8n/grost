@@ -1,5 +1,5 @@
 use crate::{
-  convert::{Flattened, Innermost},
+  convert::{Extracted, Innermost},
   encode::{EquivalentEncode, Length},
   flavors::Flatten,
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
@@ -12,7 +12,7 @@ impl<'a, T, N, W, const TAG: u32> Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>,
   for [&N]
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto> + ?Sized,
+  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto> + ?Sized,
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -47,7 +47,7 @@ where
 impl<T, N, W, const TAG: u32> Encode<Flatten<Repeated<W, TAG>, W>, Groto> for [N]
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto>,
+  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto>,
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -78,7 +78,7 @@ where
 impl<T, N, W, const TAG: u32> PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto> for [N]
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T>
+  N: State<Extracted<Innermost>, Output = T>
     + Length
     + PartialEncode<W, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
@@ -137,7 +137,7 @@ impl<'a, T, N, W, const TAG: u32> PartialEncode<Flatten<Borrowed<'a, Repeated<W,
   for [&N]
 where
   W: WireFormat<Groto>,
-  N: State<Flattened<Innermost>, Output = T>
+  N: State<Extracted<Innermost>, Output = T>
     + Length
     + PartialEncode<Repeated<W, TAG>, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
@@ -222,7 +222,7 @@ unsafe impl<T, W, const TAG: u32>
   EquivalentEncode<[&[T]], Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto> for [T]
 where
   W: WireFormat<Groto>,
-  [T]: State<Flattened<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto>,
+  [T]: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto>,
   T: Encode<W, Groto>,
   SchemaTypeReflection<[T]>: Reflectable<[T], Reflection = SchemaType>,
 {

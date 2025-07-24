@@ -2,7 +2,7 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
-  convert::Flattened,
+  convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -316,7 +316,7 @@ impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, B, UB, Repeated<W, TAG>, Gro
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, S, const TAG: u32> State<Flattened<S>>
+impl<'a, T, B, UB, W, S, const TAG: u32> State<Extracted<S>>
   for RepeatedDecoder<'a, T, B, UB, W, TAG>
 where
   S: ?Sized,
@@ -806,7 +806,7 @@ impl<'a, T, B, UB, W, const TAG: u32> State<Ref<'a, B, UB, Repeated<W, TAG>, Gro
   type Output = Self;
 }
 
-impl<'a, T, B, UB, W, S, const TAG: u32> State<Flattened<S>>
+impl<'a, T, B, UB, W, S, const TAG: u32> State<Extracted<S>>
   for RepeatedDecoderBuffer<'a, T, B, UB, W, TAG>
 where
   S: ?Sized,

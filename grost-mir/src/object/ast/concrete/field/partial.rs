@@ -179,7 +179,7 @@ impl PartialField {
                 #flavor_type,
               >,
               Output = ::core::option::Option<<
-                  <#field_ty as #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Flattened<
+                  <#field_ty as #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Extracted<
                     #path_to_grost::__private::convert::Inner
                   >>
                 >::Output as

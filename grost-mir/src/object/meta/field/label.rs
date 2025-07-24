@@ -347,13 +347,13 @@ impl Label {
       })) => {
         let k: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapKey>,
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::MapKey>,
           >>::Output
         })?;
 
         let v: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::MapValue>,
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::MapValue>,
           >>::Output
         })?;
 
@@ -384,7 +384,7 @@ impl Label {
       Self::Set(Either::Left(ListLikeLabel { label, repeated })) => {
         let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
 
@@ -409,7 +409,7 @@ impl Label {
       Self::List(Either::Left(ListLikeLabel { label, repeated })) => {
         let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
 
@@ -436,7 +436,7 @@ impl Label {
       Self::Nullable(Either::Left(label)) => {
         let inner_ty: Type = syn::parse2(quote! {
           <#ty as #path_to_grost::__private::state::State<
-            #path_to_grost::__private::convert::Flattened<#path_to_grost::__private::convert::Inner>,
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
           >>::Output
         })?;
 

@@ -1,7 +1,7 @@
 use varing::encoded_u32_varint_len;
 
 use crate::{
-  convert::{Flattened, Innermost},
+  convert::{Extracted, Innermost},
   encode::{Encode, EquivalentEncode, Length, PartialEncode},
   flavors::{
     Borrowed, Flatten, Groto, Packed, WireFormat,
