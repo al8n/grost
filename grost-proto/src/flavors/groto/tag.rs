@@ -15,6 +15,11 @@ impl Tag {
   /// The minimum Tag value is `1`.
   pub const MIN: Self = Self(1);
 
+  /// The tag 1, which is the key tag in a map.
+  pub(crate) const MAP_KEY: Self = Self(1);
+  /// The tag 2, which is the value tag in a map.
+  pub(crate) const MAP_VALUE: Self = Self(2);
+
   /// Try to create a new tag with the given value,
   /// returning an error if the value is not in range `1..=536870911`.
   #[inline]

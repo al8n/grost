@@ -305,11 +305,11 @@ impl FieldFlavor {
       Some(ty) => ty.clone(),
       None => {
         let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::PartialRef<
+          #path_to_grost::__private::state::State<
+            #path_to_grost::__private::state::PartialRef<
               #lifetime,
-              #buffer,
               <#wfr as #object_reflectable>::Reflection,
+              #buffer,
               #flavor_type,
             >
           >

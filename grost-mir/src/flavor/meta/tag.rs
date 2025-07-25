@@ -39,8 +39,6 @@ impl From<TagFromMeta> for TagParser {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(try_from = "super::serde::TagSerdeHelper",))]
 pub struct TagFromMeta {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,

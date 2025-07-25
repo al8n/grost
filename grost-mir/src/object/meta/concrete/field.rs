@@ -7,11 +7,11 @@ use crate::{
   object::{
     Label,
     meta::{
-      FieldConvertFromMeta, FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta,
-      SelectorFieldFromMeta, SkippedFieldFromMeta,
+      FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta, SelectorFieldFromMeta,
+      SkippedFieldFromMeta,
     },
   },
-  utils::{Attributes, NestedMeta, NoopFromMeta, SchemaFromMeta},
+  utils::{Attributes, MissingOperation, NoopFromMeta, SchemaFromMeta},
 };
 
 /// The meta of the object field
@@ -70,111 +70,58 @@ where
 }
 
 /// The meta of the partial object field
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct PartialFieldFromMeta {
+  #[darling(default, rename = "type")]
   pub(in crate::object) ty: Option<Type>,
+  #[darling(default)]
   pub(in crate::object) copy: bool,
+  #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
-  pub(in crate::object) transform_ref: PartialFieldConvertFromMeta,
-  pub(in crate::object) partial_transform_ref: PartialFieldConvertFromMeta,
-  pub(in crate::object) partial_transform: PartialFieldConvertFromMeta,
-}
-
-impl FromMeta for PartialFieldFromMeta {
-  fn from_meta(item: &Meta) -> darling::Result<Self> {
-    (match *item {
-      Meta::Path(_) => Self::from_word(),
-      Meta::NameValue(ref value) => Self::from_expr(&value.value),
-      Meta::List(ref value) => {
-        #[derive(Debug, Default, Clone, FromMeta)]
-        struct Helper {
-          #[darling(default)]
-          ty: Option<Type>,
-          #[darling(default)]
-          copy: bool,
-          #[darling(default, map = "Attributes::into_inner")]
-          attrs: Vec<Attribute>,
-          #[darling(default)]
-          transform_ref: PartialFieldConvertFromMeta,
-          #[darling(default)]
-          partial_transform_ref: PartialFieldConvertFromMeta,
-          #[darling(default)]
-          partial_transform: PartialFieldConvertFromMeta,
-        }
-
-        let Helper {
-          ty,
-          copy,
-          attrs,
-          transform_ref,
-          partial_transform_ref,
-          partial_transform,
-        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
-
-        Ok(Self {
-          ty,
-          copy,
-          attrs,
-          transform_ref,
-          partial_transform_ref,
-          partial_transform,
-        })
-      }
-    })
-    .map_err(|e| e.with_span(item))
-  }
+  #[darling(default)]
+  pub(in crate::object) from_ref: PartialFieldConvertFromMeta,
+  #[darling(default)]
+  pub(in crate::object) from_partial_ref: PartialFieldConvertFromMeta,
+  #[darling(default)]
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  #[darling(default)]
+  pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 /// The meta of the partial reference object field
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct PartialRefFieldFromMeta {
+  #[darling(default)]
   pub(in crate::object) copy: bool,
+  #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default, rename = "type")]
   pub(in crate::object) ty: Option<Type>,
+  #[darling(default)]
   pub(in crate::object) encode: FieldEncodeFromMeta,
+  #[darling(default)]
   pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
-impl FromMeta for PartialRefFieldFromMeta {
-  fn from_meta(item: &Meta) -> darling::Result<Self> {
-    (match *item {
-      Meta::Path(_) => Self::from_word(),
-      Meta::NameValue(ref value) => Self::from_expr(&value.value),
-      Meta::List(ref value) => {
-        /// The meta of the partial reference object field
-        #[derive(Debug, Default, Clone, FromMeta)]
-        struct Helper {
-          #[darling(default)]
-          copy: bool,
-          #[darling(default, map = "Attributes::into_inner")]
-          attrs: Vec<Attribute>,
-          #[darling(default)]
-          encode: FieldEncodeFromMeta,
-          #[darling(default)]
-          decode: FieldDecodeFromMeta,
-          #[darling(rename = "type", default)]
-          ty: Option<Type>,
-        }
-
-        let Helper {
-          copy,
-          attrs,
-          encode,
-          decode,
-          ty,
-        } = Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
-
-        Ok(Self {
-          copy,
-          attrs,
-          ty,
-          encode,
-          decode,
-        })
-      }
-    })
-    .map_err(|e| e.with_span(item))
-  }
+/// The meta of the reference object field
+#[derive(Debug, Default, Clone, FromMeta)]
+pub struct RefFieldFromMeta {
+  #[darling(default)]
+  pub(in crate::object) copy: bool,
+  #[darling(default, map = "Attributes::into_inner")]
+  pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(default, rename = "type")]
+  pub(in crate::object) ty: Option<Type>,
+  #[darling(default)]
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  #[darling(default)]
+  pub(in crate::object) decode: FieldDecodeFromMeta,
+  #[darling(default, flatten, map = "FlattenableMissingOperation::into")]
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
 }
 
 #[derive(Debug, Clone)]
@@ -182,10 +129,13 @@ pub struct TaggedFieldFromMeta<TO = NoopFromMeta> {
   pub(in crate::object) label: Label,
   pub(in crate::object) schema: SchemaFromMeta,
   pub(in crate::object) tag: NonZeroU32,
-  pub(in crate::object) transform: FieldConvertFromMeta,
+  pub(in crate::object) missing_operation: Option<MissingOperation>,
   pub(in crate::object) partial: PartialFieldFromMeta,
   pub(in crate::object) partial_ref: PartialRefFieldFromMeta,
+  pub(in crate::object) ref_: RefFieldFromMeta,
   pub(in crate::object) selector: SelectorFieldFromMeta,
+  pub(in crate::object) encode: FieldEncodeFromMeta,
+  pub(in crate::object) decode: FieldDecodeFromMeta,
   pub(in crate::object) copy: bool,
   pub(in crate::object) extra: TO,
 }
@@ -194,6 +144,7 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
   fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
     let mut remaining_items = vec![];
     let mut label = None;
+    let mut missing_operation = None;
 
     for item in items {
       if let darling::ast::NestedMeta::Meta(meta) = item {
@@ -208,6 +159,16 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
             )));
           }
           label = Some(Label::from_meta(meta)?);
+        } else if MissingOperation::possible_idents()
+          .iter()
+          .any(|ident| path.is_ident(ident))
+        {
+          if let Some(old) = missing_operation {
+            return Err(darling::Error::custom(format!(
+              "Field missing operation has already been specified as `{old}`",
+            )));
+          }
+          missing_operation = MissingOperation::parse_from_meta_list(core::slice::from_ref(item))?;
         } else {
           remaining_items.push(item.clone());
         }
@@ -223,13 +184,17 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       schema: SchemaFromMeta,
       tag: NonZeroU32,
       #[darling(default)]
-      transform: FieldConvertFromMeta,
-      #[darling(default)]
       partial: PartialFieldFromMeta,
       #[darling(default)]
       partial_ref: PartialRefFieldFromMeta,
+      #[darling(default, rename = "ref")]
+      ref_: RefFieldFromMeta,
       #[darling(default)]
       selector: SelectorFieldFromMeta,
+      #[darling(default)]
+      encode: FieldEncodeFromMeta,
+      #[darling(default)]
+      decode: FieldDecodeFromMeta,
       #[darling(default)]
       copy: bool,
       #[darling(flatten)]
@@ -247,11 +212,14 @@ impl<TO: FromMeta> FromMeta for TaggedFieldFromMeta<TO> {
       })?,
       schema: helper.schema,
       tag: helper.tag,
-      transform: helper.transform,
+      missing_operation,
       partial: helper.partial,
       partial_ref: helper.partial_ref,
+      ref_: helper.ref_,
       selector: helper.selector,
       copy: helper.copy,
+      encode: helper.encode,
+      decode: helper.decode,
       extra: helper.extra,
     })
   }
@@ -265,6 +233,7 @@ fn is_tagged_field_only_identifiers(path: &Path) -> bool {
     "convert",
     "partial",
     "partial_ref",
+    "ref",
     "selector",
     "copy",
   ];

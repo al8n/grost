@@ -3,49 +3,9 @@ use crate::{
   encode::Encode,
   flavors::{
     Groto,
-    groto::{
-      Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited, Unknown,
-    },
+    groto::{Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited},
   },
 };
-
-// impl<'de, B, const N: usize> Decode<'de, Groto, LengthDelimited, Self, B> for [u8; N] {
-//   fn decode<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-//   where
-//     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
-//   {
-//     decode_to_array::<N>(src)
-//   }
-
-//   fn decode_length_delimited<UB>(_: &Context, src: &'de [u8]) -> Result<(usize, Self), Error>
-//   where
-//     Self: Sized + 'de,
-//     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
-//   {
-//     decode_length_delimited_to_array::<N>(src)
-//   }
-// }
-
-// impl<const N: usize> DecodeOwned<Groto, LengthDelimited, Self> for [u8; N] {
-//   fn decode_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-//   where
-//     Self: Sized + 'static,
-//     B: crate::buffer::BytesBuffer + 'static,
-//     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-//   {
-//     Self::decode::<()>(context, src.as_bytes())
-//   }
-
-//   fn decode_length_delimited_owned<B, UB>(context: &Context, src: B) -> Result<(usize, Self), Error>
-//   where
-//     Self: Sized + 'static,
-//     B: crate::buffer::BytesBuffer + 'static,
-//     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
-//   {
-//     Self::decode_length_delimited::<()>(context, src.as_bytes())
-//   }
-// }
 
 macro_rules! encode_fixed {
   ($this:ident($buf:ident) as $fixed:literal) => {{
@@ -95,8 +55,6 @@ macro_rules! impl_fixed {
         }
       }
 
-      // partial_encode_scalar!(Groto: [u8; $size] as $wt);
-
       impl<'de> Decode<'de, Groto, $wt, Self> for [u8; $size] {
         fn decode<UB>(
           _: &Context,
@@ -128,46 +86,35 @@ macro_rules! impl_fixed {
 
 // impl_fixed!(Fixed8(1), Fixed16(2), Fixed32(4), Fixed64(8), Fixed128(16),);
 
-#[inline]
-fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
-  if N == 0 {
-    return Ok((0, [0u8; N]));
-  }
+// #[inline]
+// fn decode_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
+//   if N == 0 {
+//     return Ok((0, [0u8; N]));
+//   }
 
-  if src.len() < N {
-    return Err(larger_than_array_capacity::<N>());
-  }
+//   if src.len() < N {
+//     return Err(larger_than_array_capacity::<N>());
+//   }
 
-  Ok((N, src[..N].try_into().unwrap()))
-}
+//   Ok((N, src[..N].try_into().unwrap()))
+// }
 
-#[inline]
-fn decode_length_delimited_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
-  if N == 0 {
-    return Ok((0, [0u8; N]));
-  }
+// #[inline]
+// fn decode_length_delimited_to_array<const N: usize>(src: &[u8]) -> Result<(usize, [u8; N]), Error> {
+//   if N == 0 {
+//     return Ok((0, [0u8; N]));
+//   }
 
-  let (size_len, size) = varing::decode_u32_varint(src)?;
-  let end = size_len + size as usize;
-  if end > src.len() {
-    return Err(Error::buffer_underflow());
-  }
+//   let (size_len, size) = varing::decode_u32_varint(src)?;
+//   let end = size_len + size as usize;
+//   if end > src.len() {
+//     return Err(Error::buffer_underflow());
+//   }
 
-  if end < N {
-    return Err(larger_than_array_capacity::<N>());
-  }
+//   if end < N {
+//     return Err(larger_than_array_capacity::<N>());
+//   }
 
-  Ok((end, src[size_len..end].try_into().unwrap()))
-}
+//   Ok((end, src[size_len..end].try_into().unwrap()))
+// }
 
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-fn larger_than_array_capacity<const N: usize>() -> Error {
-  Error::custom("cannot decode array with length greater than the capacity")
-}
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-fn larger_than_array_capacity<const N: usize>() -> Error {
-  Error::custom(std::format!(
-    "cannot decode array with length greater than the capacity {N}"
-  ))
-}

@@ -26,6 +26,16 @@ English | [简体中文][zh-cn-url]
 template_rs = "0.1"
 ```
 
+```rust
+let mut decoder = UserDecoder::new();
+decoder = decoder.next_identifier()?;
+let (output, decoder) = decoder.decode_name()?;
+decoder = decoder.next_identifier()?;
+let (output, decoder) = decoder.decode_comment(|comment_decoder| {
+  
+})?;
+```
+
 ## Features
 - [x] Create a Rust open-source repo fast 
 

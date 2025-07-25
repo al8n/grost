@@ -1,6 +1,7 @@
 use grost_codegen::{FlavorGenerator, Object, SchemaGeneratorBuilder, groto::Groto};
 use quote::quote;
 
+#[doc = include_str!("docs/object.md")]
 #[proc_macro_derive(Object, attributes(grost))]
 pub fn derive_object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let object = match Object::from_derive_input(input.into()) {

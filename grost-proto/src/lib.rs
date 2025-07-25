@@ -20,6 +20,9 @@ pub use quickcheck;
 /// The flavors of the encoding/decoding
 pub mod flavors;
 
+/// The identifier related types and traits
+pub mod identifier;
+
 /// The reflection of the Graph protocol buffer types
 pub mod reflection;
 
@@ -45,8 +48,23 @@ pub mod convert;
 /// Marker types
 pub mod marker;
 
+/// Common types and traits for list-like structures
+pub mod list;
+
 /// Common types for map-like structures
 pub mod map;
+
+/// Common types for set structures
+pub mod set;
+
+/// Common types for objects
+pub mod object;
+
+/// States
+pub mod state;
+
+/// The unknown data
+pub mod unknown;
 
 #[macro_use]
 mod macros;
@@ -86,10 +104,12 @@ pub mod __private {
     decode::{self, *},
     encode::{self, *},
     error::{self, *},
-    flavors, groto_varint, indexer, marker, partial_encode_scalar, partial_ref_state, reflection,
-    selectable,
+    flavors, groto_varint, identifier, indexer, marker, partial_encode_scalar, partial_ref_state,
+    reflection, selectable,
     selection::{self, *},
+    state,
   };
+  pub use either;
   pub use paste;
   pub use varing;
 

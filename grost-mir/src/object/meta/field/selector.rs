@@ -1,5 +1,6 @@
 use darling::FromMeta;
-use quote::quote;
+
+use crate::utils::Invokable;
 
 use super::Attributes;
 
@@ -17,7 +18,7 @@ pub enum FieldSelection {
   Default,
   All,
   None,
-  Custom(syn::Path),
+  Custom(Invokable),
 }
 
 impl FromMeta for FieldSelection {
@@ -57,11 +58,7 @@ impl FromMeta for FieldSelection {
           syn::Meta::NameValue(name_value) => {
             return if name_value.path.is_ident("custom") {
               let value = &name_value.value;
-              let path_str: syn::LitStr = syn::parse2::<syn::LitStr>(quote!(#value))
-                .map_err(|_| darling::Error::unexpected_expr_type(&name_value.value))?;
-              let path = syn::parse_str::<syn::Path>(&path_str.value())
-                .map_err(|_| darling::Error::unexpected_expr_type(&name_value.value))?;
-              Ok(Self::Custom(path))
+              Ok(Self::Custom(Invokable::from_expr(value)?))
             } else {
               Err(darling::Error::custom(format!("unknown format, {HINTS}")))
             };

@@ -8,10 +8,9 @@ use crate::{
   flatten_state,
   flavors::{
     Groto,
-    groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Unknown, Varint},
+    groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Varint},
   },
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
-  selectable,
+  partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable,
 };
 
 macro_rules! ip_addr {
@@ -98,7 +97,7 @@ macro_rules! ip_addr {
       }
     }
 
-    impl<'de, RB, B> Decode<'de, Self, $variant, RB, B, Groto> for $addr {
+    impl<'de, RB, B> Decode<'de, $variant, RB, B, Groto> for $addr {
       fn decode(
         ctx: &'de Context,
         src: RB,
@@ -106,14 +105,14 @@ macro_rules! ip_addr {
       where
         Self: Sized + 'de,
         RB: ReadBuf + 'de,
-        B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
       {
-        <$convert as Decode<'de, $convert, $variant, RB, B, Groto>>::decode(ctx, src)
+        <$convert as Decode<'de, $variant, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
       }
     }
 
-    impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for $addr {
+    impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for $addr {
       fn decode(
         ctx: &'de Context,
         src: RB,
@@ -121,9 +120,9 @@ macro_rules! ip_addr {
       where
         Self: Sized + 'de,
         RB: ReadBuf + 'de,
-        B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
       {
-        <$convert as Decode<'de, $convert, Varint, RB, B, Groto>>::decode(ctx, src)
+        <$convert as Decode<'de, Varint, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
       }
     }
@@ -138,22 +137,6 @@ ref_state!(@scalar &'a Groto: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr 
 partial_ref_state!(@scalar &'a Groto: Ipv4Addr as Fixed32, Ipv4Addr as Varint, Ipv6Addr as Fixed128, Ipv6Addr as Varint, IpAddr as LengthDelimited);
 partial_state!(@scalar Groto: Ipv4Addr, Ipv6Addr, IpAddr);
 flatten_state!(Ipv4Addr, Ipv6Addr, IpAddr);
-groto_identity_transform!(
-  Ipv4Addr as Fixed32,
-  Ipv4Addr as Varint,
-  Ipv6Addr as Fixed128,
-  Ipv6Addr as Varint,
-  IpAddr as LengthDelimited,
-);
-identity_partial_transform!(
-  Groto {
-    Ipv4Addr as Fixed32,
-    Ipv4Addr as Varint,
-    Ipv6Addr as Fixed128,
-    Ipv6Addr as Varint,
-    IpAddr as LengthDelimited,
-  }
-);
 
 const IPV4_LEN: usize = 4;
 const IPV6_LEN: usize = 16;
@@ -234,12 +217,12 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
   }
 }
 
-impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for IpAddr {
+impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     let src = src.as_bytes();
     macro_rules! decode_ip_variant {
@@ -274,7 +257,7 @@ impl<'de, RB, B> Decode<'de, Self, LengthDelimited, RB, B, Groto> for IpAddr {
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: crate::buffer::Buffer<Unknown<RB>> + 'de,
+    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     let src = src.as_bytes();
 
@@ -312,7 +295,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Fixed32, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<Ipv4Addr, Fixed32, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<Fixed32, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -320,7 +303,7 @@ mod tests {
       let encoded_len = <Ipv4Addr as Encode<Varint, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv4Addr as Decode<'_, Ipv4Addr, Varint, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv4Addr as Decode<'_, Varint, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -333,7 +316,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Fixed128, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<Ipv6Addr, Fixed128, &[u8], Vec<_>, Groto,>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<Fixed128, &[u8], Vec<_>, Groto,>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -341,7 +324,7 @@ mod tests {
       let encoded_len = <Ipv6Addr as Encode<Varint, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <Ipv6Addr as Decode<'_, Ipv6Addr, Varint, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <Ipv6Addr as Decode<'_, Varint, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -354,7 +337,7 @@ mod tests {
       let encoded_len = ip.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <IpAddr as Decode<IpAddr, LengthDelimited, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <IpAddr as Decode<LengthDelimited, &[u8], Vec<_>, Groto>>::decode_length_delimited(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
@@ -362,7 +345,7 @@ mod tests {
       let encoded_len = ip.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
-      let (len, decoded) = <IpAddr as Decode<IpAddr, LengthDelimited, &[u8], Vec<_>, Groto>>::decode(&Context::default(), &buf[..]).unwrap();
+      let (len, decoded) = <IpAddr as Decode<LengthDelimited, &[u8], Vec<_>, Groto>>::decode(&Context::default(), &buf[..]).unwrap();
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 

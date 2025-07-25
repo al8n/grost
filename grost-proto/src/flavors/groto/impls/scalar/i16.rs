@@ -1,12 +1,12 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
   flatten_state,
-  flavors::groto::{Context, Error, Fixed16, Groto, Unknown, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
-  selectable, try_from_bridge,
+  flavors::groto::{Context, Error, Fixed16, Groto, Varint},
+  partial_encode_scalar, partial_identity, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 use core::num::NonZeroI16;
 
@@ -26,20 +26,7 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: i16, NonZeroI16);
 flatten_state!(i16, NonZeroI16);
-groto_identity_transform!(
-  i16 as Fixed16,
-  i16 as Varint,
-  NonZeroI16 as Fixed16,
-  NonZeroI16 as Varint,
-);
-identity_partial_transform!(
-  Groto {
-    i16 as Fixed16,
-    i16 as Varint,
-    NonZeroI16 as Fixed16,
-    NonZeroI16 as Varint,
-  }
-);
+partial_identity!(@scalar Groto: i16, NonZeroI16);
 
 impl Encode<Fixed16, Groto> for i16 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -84,12 +71,12 @@ impl Encode<Varint, Groto> for i16 {
 
 partial_encode_scalar!(Groto: i16 as Fixed16, i16 as Varint);
 
-impl<'de, RB, B> Decode<'de, Self, Fixed16, RB, B, Groto> for i16 {
+impl<'de, RB, B> Decode<'de, Fixed16, RB, B, Groto> for i16 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     let src = src.as_bytes();
     if src.len() < 2 {
@@ -100,12 +87,12 @@ impl<'de, RB, B> Decode<'de, Self, Fixed16, RB, B, Groto> for i16 {
   }
 }
 
-impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for i16 {
+impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for i16 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     varing::decode_i16_varint(src.as_bytes()).map_err(Into::into)
   }

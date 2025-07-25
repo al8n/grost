@@ -1,57 +1,110 @@
 use crate::{
-  buffer::{Buffer, ReadBuf},
-  convert::{Partial, PartialRef, Ref, State},
+  buffer::{ReadBuf, UnknownBuffer},
   flavors::{Flavor, WireFormat},
+  state::{Partial, PartialRef, Ref, State},
 };
 
-/// A trait for transforming the input type `I` into the output type `O`
-pub trait Transform<I, O, W, F>
+pub trait TryFromPartialRef<'a, W, RB, UB, F>: State<PartialRef<'a, W, RB, UB, F>>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  /// Transforms from the input type `I` into the current type `Self`.
-  fn transform(input: I) -> Result<O, F::Error>;
-}
-
-pub trait TryFromPartialRef<'a, RB, UB, W, F>: State<PartialRef<'a, RB, UB, W, F>>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Transforms from the input type `PartialRef<'a, RB, UB, W, F>` into the current type `Self`.
+  /// Transforms from the input type `PartialRef<'a, W, RB, UB, F>` into the current type `Self`.
   fn try_from_partial_ref(
-    input: <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output,
+    ctx: &'a F::Context,
+    input: <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output,
   ) -> Result<Self, F::Error>
   where
     Self: Sized,
-    <Self as State<PartialRef<'a, RB, UB, W, F>>>::Output: Sized,
+    <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized,
     RB: ReadBuf,
-    UB: Buffer<F::Unknown<RB>>;
+    UB: UnknownBuffer<RB, F>;
 }
 
-pub trait TryFromPartial<W, F>: State<Partial<F>>
+impl<'a, W, RB, UB, F, T> TryFromPartialRef<'a, W, RB, UB, F> for T
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
+  T: State<PartialRef<'a, W, RB, UB, F>, Output = Self>,
+{
+  fn try_from_partial_ref(
+    _: &'a F::Context,
+    input: <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output,
+  ) -> Result<Self, F::Error>
+  where
+    Self: Sized,
+    <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized,
+    RB: ReadBuf,
+    UB: UnknownBuffer<RB, F>,
+  {
+    Ok(input)
+  }
+}
+
+pub trait TryFromPartial<F>: State<Partial<F>>
+where
+  F: Flavor + ?Sized,
 {
   /// Transforms from the input type `Partial<F>` into the current type `Self`.
-  fn try_from_partial(input: <Self as State<Partial<F>>>::Output) -> Result<Self, F::Error>
+  fn try_from_partial(
+    ctx: &F::Context,
+    input: <Self as State<Partial<F>>>::Output,
+  ) -> Result<Self, F::Error>
   where
     Self: Sized,
     <Self as State<Partial<F>>>::Output: Sized;
 }
 
-pub trait TryFromRef<'a, RB, UB, W, F>: State<Ref<'a, RB, UB, W, F>>
+impl<F, T> TryFromPartial<F> for T
+where
+  F: Flavor + ?Sized,
+  T: State<Partial<F>, Output = Self>,
+{
+  fn try_from_partial(
+    _: &F::Context,
+    input: <Self as State<Partial<F>>>::Output,
+  ) -> Result<Self, F::Error>
+  where
+    Self: Sized,
+    <Self as State<Partial<F>>>::Output: Sized,
+  {
+    Ok(input)
+  }
+}
+
+pub trait TryFromRef<'a, W, RB, UB, F>: State<Ref<'a, W, RB, UB, F>>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
-  /// Transforms from the input type `PartialRef<'a, RB, UB, W, F>` into the current type `Self`.
-  fn try_from_ref(input: <Self as State<Ref<'a, RB, UB, W, F>>>::Output) -> Result<Self, F::Error>
+  /// Transforms from the input type `PartialRef<'a, W, RB, UB, F>` into the current type `Self`.
+  fn try_from_ref(
+    ctx: &'a F::Context,
+    input: <Self as State<Ref<'a, W, RB, UB, F>>>::Output,
+  ) -> Result<Self, F::Error>
   where
     Self: Sized,
-    <Self as State<Ref<'a, RB, UB, W, F>>>::Output: Sized,
+    <Self as State<Ref<'a, W, RB, UB, F>>>::Output: Sized,
     RB: ReadBuf + 'a,
-    UB: Buffer<F::Unknown<RB>>;
+    UB: UnknownBuffer<RB, F>;
+}
+
+impl<'a, W, RB, UB, F, T> TryFromRef<'a, W, RB, UB, F> for T
+where
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+  T: State<Ref<'a, W, RB, UB, F>, Output = Self>,
+{
+  fn try_from_ref(
+    _: &'a F::Context,
+    input: <Self as State<Ref<'a, W, RB, UB, F>>>::Output,
+  ) -> Result<Self, F::Error>
+  where
+    Self: Sized,
+    <Self as State<Ref<'a, W, RB, UB, F>>>::Output: Sized,
+    RB: ReadBuf + 'a,
+    UB: UnknownBuffer<RB, F>,
+  {
+    Ok(input)
+  }
 }

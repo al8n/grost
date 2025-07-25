@@ -637,7 +637,7 @@ impl Groto {
     let fn_impl = if nullable {
       quote! {
         fn encode(
-          field: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          field: &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -678,7 +678,7 @@ impl Groto {
                 );
               }
 
-              <<#ty as #path_to_grost::__private::convert::State<
+              <<#ty as #path_to_grost::__private::state::State<
                 #path_to_grost::__private::convert::Encoded<
                   '_,
                   #path_to_grost::__private::flavors::Groto,
@@ -702,7 +702,7 @@ impl Groto {
     } else {
       quote! {
         fn encode(
-          f: &<#ty as #path_to_grost::__private::convert::State<
+          f: &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -740,7 +740,7 @@ impl Groto {
             );
           }
 
-          <<#ty as #path_to_grost::__private::convert::State<
+          <<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -768,7 +768,7 @@ impl Groto {
     let reflection = if nullable {
       quote! {
         fn(
-          &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -783,7 +783,7 @@ impl Groto {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::convert::State<
+          &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -836,7 +836,7 @@ impl Groto {
     let fn_impl = if nullable {
       quote! {
         fn encoded_len(
-          f: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          f: &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -850,7 +850,7 @@ impl Groto {
             ::core::option::Option::None => 0,
             ::core::option::Option::Some(f) => {
               (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_identifier_len())
-                + <<#ty as #path_to_grost::__private::convert::State<
+                + <<#ty as #path_to_grost::__private::state::State<
                     #path_to_grost::__private::convert::Encoded<
                       '_,
                       #path_to_grost::__private::flavors::Groto,
@@ -871,7 +871,7 @@ impl Groto {
     } else {
       quote! {
         fn encoded_len(
-          f: &<#ty as #path_to_grost::__private::convert::State<
+          f: &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -882,7 +882,7 @@ impl Groto {
           selector: &<#ty as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Groto, #wf>>::Selector,
         ) -> ::core::primitive::usize {
           (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_identifier_len())
-            + <<#ty as #path_to_grost::__private::convert::State<
+            + <<#ty as #path_to_grost::__private::state::State<
                 #path_to_grost::__private::convert::Encoded<
                   '_,
                   #path_to_grost::__private::flavors::Groto,
@@ -907,7 +907,7 @@ impl Groto {
     let reflection = if nullable {
       quote! {
         fn(
-          &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -921,7 +921,7 @@ impl Groto {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::convert::State<
+          &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -994,7 +994,7 @@ impl Groto {
     let fn_impl = if nullable {
       quote! {
         fn encode(
-          field: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          field: &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1033,7 +1033,7 @@ impl Groto {
                 );
               }
 
-              <<#ty as #path_to_grost::__private::convert::State<
+              <<#ty as #path_to_grost::__private::state::State<
                 #path_to_grost::__private::convert::Encoded<
                   '_,
                   #path_to_grost::__private::flavors::Groto,
@@ -1057,7 +1057,7 @@ impl Groto {
     } else {
       quote! {
         fn encode(
-          f: &<#ty as #path_to_grost::__private::convert::State<
+          f: &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1094,7 +1094,7 @@ impl Groto {
             );
           }
 
-          <<#ty as #path_to_grost::__private::convert::State<
+          <<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1121,7 +1121,7 @@ impl Groto {
     let reflection = if nullable {
       quote! {
         fn(
-          &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1135,7 +1135,7 @@ impl Groto {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::convert::State<
+          &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1187,7 +1187,7 @@ impl Groto {
     let fn_impl = if nullable {
       quote! {
         fn encoded_len(
-          f: &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          f: &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1200,7 +1200,7 @@ impl Groto {
             ::core::option::Option::None => 0,
             ::core::option::Option::Some(f) => {
               (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_identifier_len())
-                + <<#ty as #path_to_grost::__private::convert::State<
+                + <<#ty as #path_to_grost::__private::state::State<
                     #path_to_grost::__private::convert::Encoded<
                       '_,
                       #path_to_grost::__private::flavors::Groto,
@@ -1220,7 +1220,7 @@ impl Groto {
     } else {
       quote! {
         fn encoded_len(
-          f: &<#ty as #path_to_grost::__private::convert::State<
+          f: &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1230,7 +1230,7 @@ impl Groto {
           ctx: &#path_to_grost::__private::flavors::groto::Context,
         ) -> ::core::primitive::usize {
           (*<#struct_name>::reflection::<#path_to_grost::__private::flavors::Groto>().#field_name().encoded_identifier_len())
-            + <<#ty as #path_to_grost::__private::convert::State<
+            + <<#ty as #path_to_grost::__private::state::State<
                 #path_to_grost::__private::convert::Encoded<
                   '_,
                   #path_to_grost::__private::flavors::Groto,
@@ -1254,7 +1254,7 @@ impl Groto {
     let reflection = if nullable {
       quote! {
         fn(
-          &::core::option::Option<<#ty as #path_to_grost::__private::convert::State<
+          &::core::option::Option<<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,
@@ -1267,7 +1267,7 @@ impl Groto {
     } else {
       quote! {
         fn(
-          &<#ty as #path_to_grost::__private::convert::State<
+          &<#ty as #path_to_grost::__private::state::State<
             #path_to_grost::__private::convert::Encoded<
               '_,
               #path_to_grost::__private::flavors::Groto,

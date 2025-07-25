@@ -160,7 +160,7 @@ impl PartialRefObject {
     let rb = &read_buf_param.ident;
     let wf = &object.wire_format;
     for field in fields.iter().filter_map(|f| f.try_unwrap_tagged_ref().ok()) {
-      let type_constraints = field.partial_ref().type_constraints();
+      let type_constraints = field.partial_ref_field().type_constraints();
       if field.uses_generics() {
         generics
           .make_where_clause()
@@ -168,7 +168,7 @@ impl PartialRefObject {
           .extend(type_constraints.iter().cloned());
 
         let ty = field.ty();
-        let partial_ref_ty = field.partial_ref().ty();
+        let partial_ref_ty = field.partial_ref_field().ty();
         let wf = field.wire_format();
 
         decode_constraints.push(syn::parse2(quote! {
@@ -366,7 +366,7 @@ impl<T, S, M> Object<T, S, M> {
         let attrs = concrete_tagged_field.attrs();
         let vis = concrete_tagged_field.vis();
         let name = concrete_tagged_field.name();
-        let ty = concrete_tagged_field.partial_ref().nullable_type();
+        let ty = concrete_tagged_field.partial_ref_field().nullable_type();
         Some(quote! {
           #(#attrs)*
           #vis #name: #ty
@@ -421,7 +421,7 @@ impl<T, S, M> Object<T, S, M> {
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .try_for_each(|f| {
         let field_name = f.name();
-        let ty = &f.partial_ref().ty();
+        let ty = &f.partial_ref_field().ty();
         let vis = f.vis();
         fields_accessors.push(nullable_accessors(
           &self.path_to_grost,
@@ -429,7 +429,7 @@ impl<T, S, M> Object<T, S, M> {
           vis,
           ty,
           f.label(),
-          f.partial_ref().copy(),
+          f.partial_ref_field().copy(),
         )?);
         is_empty.push(quote! {
           self.#field_name.is_none()

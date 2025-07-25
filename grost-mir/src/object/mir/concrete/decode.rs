@@ -53,7 +53,7 @@ fn derive_partial_ref_state<M, F>(
     quote! {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
-      impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ty #where_clauses {
+      impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ty #where_clauses {
         type Output = #partial_ref_object_ty;
       }
     }
@@ -62,7 +62,7 @@ fn derive_partial_ref_state<M, F>(
   Ok(quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #ty #where_clauses {
+    impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #ty #where_clauses {
       type Output = #partial_ref_object_ty;
     }
 
@@ -70,7 +70,7 @@ fn derive_partial_ref_state<M, F>(
 
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
+    impl #ig #path_to_grost::__private::state::State<#partial_ref_state_type> for #partial_ref_object_ty #where_clauses {
       type Output = Self;
     }
   })
@@ -487,7 +487,7 @@ fn derive_partial_ref_object_decode<M, F>(
 
         let mut offset = 0;
         while offset < buf_len {
-          let (read, identifier) = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::flavors::Identifier<#flavor_ty>>::decode::<&[::core::primitive::u8]>(&buf[offset..])?;
+          let (read, identifier) = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::identifier::Identifier<#flavor_ty>>::decode::<&[::core::primitive::u8]>(&buf[offset..])?;
           offset += read;
 
           match &identifier {
@@ -511,7 +511,7 @@ fn derive_partial_ref_object_decode<M, F>(
 
                 offset += <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::skip(context, identifier.wire_type(), src.slice(offset..))?;
               } else {
-                let encoded_len = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::flavors::Identifier<#flavor_ty>>::encoded_len(&identifier);
+                let encoded_len = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::identifier::Identifier<#flavor_ty>>::encoded_len(&identifier);
                 let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.slice(offset - encoded_len..))?;
                 offset += read;
                 let unknowns_mut = this.#buffer_field_name.get_or_insert_with(|| #ubg::new());

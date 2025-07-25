@@ -11,7 +11,7 @@ use crate::{
       FieldDecodeFromMeta, FieldEncodeFromMeta, PartialFieldConvertFromMeta, SelectorFieldFromMeta,
     },
   },
-  utils::{Attributes, Invokable, NestedMeta, SchemaFromMeta},
+  utils::{Attributes, Invokable, SchemaFromMeta},
 };
 
 #[derive(Debug, Default, Clone, FromMeta)]
@@ -77,36 +77,14 @@ pub struct GenericPartialFieldFromMeta {
 }
 
 /// The meta of the partial reference object field
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, FromMeta)]
 pub struct GenericPartialRefFieldFromMeta {
+  #[darling(default)]
   pub(in crate::object) copy: bool,
+  #[darling(default, map = "Attributes::into_inner")]
   pub(in crate::object) attrs: Vec<Attribute>,
+  #[darling(rename = "type", default)]
   pub(in crate::object) ty: Option<Type>,
-}
-
-impl FromMeta for GenericPartialRefFieldFromMeta {
-  fn from_meta(item: &Meta) -> darling::Result<Self> {
-    (match *item {
-      Meta::Path(_) => Self::from_word(),
-      Meta::NameValue(ref value) => Self::from_expr(&value.value),
-      Meta::List(ref value) => {
-        #[derive(Debug, Default, Clone, FromMeta)]
-        struct Helper {
-          #[darling(default)]
-          copy: bool,
-          #[darling(default, map = "Attributes::into_inner")]
-          attrs: Vec<Attribute>,
-          #[darling(rename = "type", default)]
-          ty: Option<Type>,
-        }
-
-        let Helper { copy, attrs, ty } =
-          Helper::from_list(&NestedMeta::parse_meta_list(value.tokens.clone())?)?;
-        Ok(Self { copy, attrs, ty })
-      }
-    })
-    .map_err(|e| e.with_span(item))
-  }
 }
 
 /// The meta of the object field

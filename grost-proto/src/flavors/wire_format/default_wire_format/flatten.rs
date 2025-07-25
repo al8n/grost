@@ -1,6 +1,7 @@
 use crate::{
-  convert::{Flattened, Inner, State},
+  convert::{Extracted, Inner},
   marker::{FlattenMarker, Marker},
+  state::State,
 };
 
 use super::{DefaultWireFormat, Flavor, WireFormat};
@@ -17,7 +18,7 @@ impl<T, VM, F> DefaultWireFormat<F> for FlattenMarker<T, VM>
 where
   F: ?Sized + Flavor,
   VM: DefaultWireFormat<F> + Marker,
-  T: State<Flattened<Inner>, Output = VM::Marked> + ?Sized + DefaultFlattenWireFormat<F>,
+  T: State<Extracted<Inner>, Output = VM::Marked> + ?Sized + DefaultFlattenWireFormat<F>,
 {
   type Format = T::Format<VM::Format>;
 }

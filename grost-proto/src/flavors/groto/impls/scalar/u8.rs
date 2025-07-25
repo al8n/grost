@@ -1,14 +1,14 @@
 use core::num::NonZeroU8;
 
 use crate::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
   flatten_state,
-  flavors::groto::{Context, Error, Fixed8, Groto, Unknown, Varint},
-  groto_identity_transform, partial_encode_scalar, partial_ref_state, partial_state, ref_state,
-  selectable, try_from_bridge,
+  flavors::groto::{Context, Error, Fixed8, Groto, Varint},
+  partial_encode_scalar, partial_identity, partial_ref_state, partial_state, ref_state, selectable,
+  try_from_bridge,
 };
 
 default_scalar_wire_format!(Groto: u8 as Fixed8; NonZeroU8 as Fixed8);
@@ -27,21 +27,8 @@ partial_ref_state!(@scalar &'a Groto:
 );
 partial_state!(@scalar Groto: u8, NonZeroU8);
 flatten_state!(u8, NonZeroU8);
-
+partial_identity!(@scalar Groto: u8, NonZeroU8);
 partial_encode_scalar!(Groto: u8 as Fixed8, u8 as Varint);
-
-groto_identity_transform!(
-  u8 as Fixed8,
-  u8 as Varint,
-  NonZeroU8 as Fixed8,
-  NonZeroU8 as Varint,
-);
-identity_partial_transform!(Groto {
-  u8 as Fixed8,
-  u8 as Varint,
-  NonZeroU8 as Fixed8,
-  NonZeroU8 as Varint,
-});
 
 impl Encode<Fixed8, Groto> for u8 {
   fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
@@ -84,12 +71,12 @@ impl Encode<Varint, Groto> for u8 {
   }
 }
 
-impl<'de, RB, B> Decode<'de, Self, Fixed8, RB, B, Groto> for u8 {
+impl<'de, RB, B> Decode<'de, Fixed8, RB, B, Groto> for u8 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     if src.is_empty() {
       return Err(Error::buffer_underflow());
@@ -100,12 +87,12 @@ impl<'de, RB, B> Decode<'de, Self, Fixed8, RB, B, Groto> for u8 {
   }
 }
 
-impl<'de, RB, B> Decode<'de, Self, Varint, RB, B, Groto> for u8 {
+impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for u8 {
   fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'de,
     RB: ReadBuf,
-    B: Buffer<Unknown<RB>> + 'de,
+    B: UnknownBuffer<RB, Groto>,
   {
     varing::decode_u8_varint(src.as_bytes()).map_err(Into::into)
   }
@@ -124,3 +111,4 @@ try_from_bridge!(
     },
   },
 );
+

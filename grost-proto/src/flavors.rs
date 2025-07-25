@@ -1,4 +1,4 @@
-use super::{buffer::ReadBuf, error::ParseTagError};
+use super::{error::ParseTagError, identifier::Identifier};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -10,7 +10,7 @@ mod wire_format;
 macro_rules! wire_format {
   ($name:ident<$flavor:ty> $(
     $(#[$meta:meta])*
-    $ty:literal
+    $ty:literal = $fixed_length:expr
   ),+$(,)?) => {
     paste::paste! {
       $(
@@ -24,6 +24,7 @@ macro_rules! wire_format {
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
           const INSTANCE: Self = [< $ty: camel >];
+          const FIXED_LENGTH: Option<usize> = $fixed_length;
         }
 
         impl From<[< $ty: camel >]> for $name {
@@ -133,27 +134,6 @@ pub mod groto;
 /// The flavor for encoding and decoding selector
 pub mod selector;
 
-/// The identifier
-pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::Display {
-  /// Returns the wire type of the identifier.
-  fn wire_type(&self) -> F::WireType;
-
-  /// Returns the tag of the identifier.
-  fn tag(&self) -> F::Tag;
-
-  /// Encode the identifier into a buffer.
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, F::Error>;
-
-  /// Return the length of the encoded identifier.
-  fn encoded_len(&self) -> usize;
-
-  /// Decode the identifier from a buffer.
-  fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
-  where
-    B: ReadBuf + Sized + 'de,
-    Self: Sized;
-}
-
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
   use super::*;
@@ -237,47 +217,47 @@ pub trait Flavor: core::fmt::Debug + 'static {
   #[cfg(feature = "quickcheck")]
   type Context: quickcheck::Arbitrary;
 
-  /// The unknown value used for this flavor.
-  type Unknown<B>;
-
   /// The error for this flavor.
   type Error: FlavorError<Self>;
 
   /// The name of the flavor.
   const NAME: &'static str;
 
-  /// Encodes the unknown value into a buffer.
-  fn encode_unknown<'de, B>(
-    ctx: &Self::Context,
-    value: &Self::Unknown<B>,
-    buf: &mut [u8],
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf + 'de;
+  // /// Encodes the unknown value into a buffer.
+  // fn encode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   value: &Self::Unknown<B>,
+  //   buf: &mut [u8],
+  // ) -> Result<usize, Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Returns the length of the encoded unknown value.
-  fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
-  where
-    B: ReadBuf + 'de;
+  // /// Returns the length of the encoded unknown value.
+  // fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Decodes an unknown value from a buffer.
+  // /// Decodes an unknown value from a buffer.
+  // ///
+  // /// This function is used as a handler for unknown identifiers when decoding
+  // /// a message. It is called when the identifier is not recognized by the
+  // /// flavor.
+  // fn decode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   buf: B,
+  // ) -> Result<(usize, Self::Unknown<B>), Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
+
+  /// Try to peek the raw data according to the wire type.
   ///
-  /// This function is used as a handler for unknown identifiers when decoding
-  /// a message. It is called when the identifier is not recognized by the
-  /// flavor.
-  fn decode_unknown<'de, B>(
-    ctx: &Self::Context,
-    buf: B,
-  ) -> Result<(usize, Self::Unknown<B>), Self::Error>
-  where
-    B: ReadBuf + 'de;
-
-  /// Skips number of bytes in the buffer according to the wire type.
-  fn skip<'de, B>(
+  /// If the given buffer does not contain enough data to determine the length of the next data,
+  /// it should return an error.
+  ///
+  /// Returns the number of bytes for the next data.
+  fn peek_raw(
     ctx: &Self::Context,
     wire_type: Self::WireType,
-    buf: B,
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf + 'de;
+    buf: &[u8],
+  ) -> Result<usize, Self::Error>;
 }

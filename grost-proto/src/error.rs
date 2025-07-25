@@ -79,6 +79,15 @@ pub enum Error<F: Flavor + ?Sized> {
     actual: F::WireType,
   },
 
+  /// Returned when the type cannot be merged in the given wire type format
+  #[display("cannot merge {ty} in {wire_type} format in {flavor} flavor", flavor = F::NAME)]
+  Unmergeable {
+    /// The type of the value.
+    ty: &'static str,
+    /// The wire type.
+    wire_type: F::WireType,
+  },
+
   /// Returned when the buffer does not have enough data to decode the message.
   #[display("buffer underflow")]
   BytesBufferUnderflow,
@@ -250,6 +259,12 @@ impl<F: Flavor + ?Sized> Error<F> {
   #[inline]
   pub const fn unknown_identifier(ty: &'static str, identifier: F::Identifier) -> Self {
     Self::UnknownIdentifier { ty, identifier }
+  }
+
+  /// Creates a new unmergeable decoding error.
+  #[inline]
+  pub const fn unmergeable(ty: &'static str, wire_type: F::WireType) -> Self {
+    Self::Unmergeable { ty, wire_type }
   }
 
   /// Creates a new decoding error from [`varing::DecodeError`].

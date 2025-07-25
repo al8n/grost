@@ -153,7 +153,7 @@ impl SelectorIdentifier {
   }
 }
 
-impl crate::flavors::Identifier<super::Select> for SelectorIdentifier {
+impl crate::identifier::Identifier<super::Select> for SelectorIdentifier {
   fn tag(&self) -> SelectorTag {
     self.tag
   }

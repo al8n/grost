@@ -1,8 +1,4 @@
-use crate::{
-  convert::{Partial, State},
-  flavors::Groto,
-  selection::Selectable,
-};
+use crate::{flavors::Groto, selection::Selectable, state::Partial, state::State};
 
 mod flatten;
 

@@ -5,56 +5,87 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Flattened, Inner, MapKey, MapValue, Partial, PartialRef, State},
+  buffer::Buffer,
+  convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
-    DefaultMapWireFormat, DefaultRepeatedEntryWireFormat, Groto, MergedWireFormat, PackedEntry,
-    RepeatedEntry, WireFormat, groto::PackedEntriesDecoder,
+    Groto,
+    groto::{Context, Error},
   },
+  selection::Selectable,
+  state::{Partial, State},
 };
 
-impl<K, V, S> State<Flattened<Inner>> for HashMap<K, V, S> {
+mod packed;
+mod repeated;
+
+impl<K, V, S> crate::encode::Length for HashMap<K, V, S> {
+  fn length(&self) -> usize {
+    self.len()
+  }
+}
+
+impl<K, V, S> State<Extracted<Inner>> for HashMap<K, V, S> {
   type Output = (K, V);
 }
 
-impl<K, V, S> State<Flattened<MapKey>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapKey>> for HashMap<K, V, S> {
   type Output = K;
 }
 
-impl<K, V, S> State<Flattened<MapValue>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapValue>> for HashMap<K, V, S> {
   type Output = V;
-}
-
-impl<K, V, S> DefaultMapWireFormat<Groto> for HashMap<K, V, S> {
-  type Format<KM, VM>
-    = PackedEntry<KM, VM>
-  where
-    KM: WireFormat<Groto> + 'static,
-    VM: WireFormat<Groto> + 'static;
-}
-
-impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for HashMap<K, V, S> {
-  type Format<KM, VM, const TAG: u32>
-    = RepeatedEntry<KM, VM, TAG>
-  where
-    KM: WireFormat<Groto> + 'static,
-    VM: WireFormat<Groto> + 'static,
-    MergedWireFormat<KM, VM>: WireFormat<Groto> + 'static;
 }
 
 impl<K, V, S> State<Partial<Groto>> for HashMap<K, V, S>
 where
+  K: State<Partial<Groto>>,
+  K::Output: Sized,
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = HashMap<K, V::Output, S>;
+  type Output = super::DefaultPartialMapBuffer<K::Output, V::Output>;
 }
 
-impl<'a, K, V, KW, VW, S, RB, B> State<PartialRef<'a, RB, B, PackedEntry<KW, VW>, Groto>>
-  for HashMap<K, V, S>
+impl<K, V, S> Selectable<Groto> for HashMap<K, V, S>
 where
-  KW: WireFormat<Groto> + 'a,
-  VW: WireFormat<Groto> + 'a,
-  PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
+  K: Selectable<Groto>,
+  V: Selectable<Groto>,
 {
-  type Output = PackedEntriesDecoder<'a, K, V, RB, B, KW, VW>;
+  type Selector = super::MapSelector<K::Selector, V::Selector>;
+}
+
+impl<K, V, S> TryFromPartial<Groto> for HashMap<K, V, S>
+where
+  K: TryFromPartial<Groto> + Eq + core::hash::Hash,
+  K::Output: Sized,
+  V: TryFromPartial<Groto>,
+  V::Output: Sized,
+  S: Default + core::hash::BuildHasher,
+{
+  fn try_from_partial(
+    ctx: &Context,
+    input: <Self as State<Partial<Groto>>>::Output,
+  ) -> Result<Self, Error>
+  where
+    Self: Sized,
+    <Self as State<Partial<Groto>>>::Output: Sized,
+  {
+    let expected = input.len();
+    let mut map = HashMap::with_capacity_and_hasher(expected, S::default());
+
+    for ent in input.into_iter() {
+      let (k, v) = ent
+        .and_then(
+          |k| K::try_from_partial(ctx, k),
+          |v| V::try_from_partial(ctx, v),
+        )?
+        .try_into_entry()?
+        .into();
+      ctx.err_duplicated_map_keys(map.insert(k, v).is_some())?;
+    }
+
+    ctx.err_length_mismatch(expected, map.len())?;
+
+    Ok(map)
+  }
 }
