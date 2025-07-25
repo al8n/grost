@@ -1,10 +1,9 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
-  decode::{BytesSlice, Decode},
-  encode::{Encode, PartialEncode},
+  decode::Decode,
   flavors::{
-    Borrowed, Groto, Packed, WireFormat,
-    groto::{Context, Error, LengthDelimited, RepeatedDecoder, context::RepeatedDecodePolicy},
+    Groto, WireFormat,
+    groto::{Context, Error, RepeatedDecoder, context::RepeatedDecodePolicy},
   },
 };
 

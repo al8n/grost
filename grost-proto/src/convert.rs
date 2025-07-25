@@ -7,6 +7,3 @@ pub use transform::*;
 mod flatten;
 mod partial_transform;
 mod transform;
-
-#[test]
-fn t() {}

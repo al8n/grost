@@ -1,6 +1,6 @@
 use crate::{
   convert::{Extracted, Innermost},
-  encode::{Encode, Length, PartialEncode},
+  encode::{Encode, PartialEncode},
   flavors::{Borrowed, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,

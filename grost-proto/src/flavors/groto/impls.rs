@@ -127,7 +127,6 @@ mod list;
 mod map;
 mod nullable;
 mod packed_decoder;
-mod pointers;
 mod repeated_decoder;
 mod scalar;
 mod set;

@@ -112,5 +112,3 @@ try_from_bridge!(
   },
 );
 
-#[test]
-fn t() {}

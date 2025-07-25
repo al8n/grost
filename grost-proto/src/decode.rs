@@ -267,6 +267,3 @@ const _: () = {
 
   deref_decode_impl!(Arc<T>);
 };
-
-#[test]
-fn t() {}
