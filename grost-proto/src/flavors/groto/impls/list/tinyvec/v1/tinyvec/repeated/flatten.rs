@@ -12,7 +12,7 @@ impl<'a, T, N, W, const TAG: u32, const CAP: usize>
   Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for TinyVec<[&'a N; CAP]>
 where
   W: WireFormat<Groto>,
-  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto> + ?Sized,
+  N: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto> + ?Sized,
   &'a N: Default,
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
@@ -49,7 +49,7 @@ impl<T, N, W, const TAG: u32, const CAP: usize> Encode<Flatten<Repeated<W, TAG>,
   for TinyVec<[N; CAP]>
 where
   W: WireFormat<Groto>,
-  N: State<Extracted<Innermost>, Output = T> + Length + Default + Encode<Repeated<W, TAG>, Groto>,
+  N: State<Extracted<Innermost>, Output = T> + Default + Encode<Repeated<W, TAG>, Groto>,
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -75,7 +75,6 @@ impl<T, N, W, const TAG: u32, const CAP: usize> PartialEncode<Flatten<Repeated<W
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T>
-    + Length
     + PartialEncode<W, Groto, Selector = T::Selector>
     + Default,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
@@ -126,7 +125,6 @@ impl<'a, T, N, W, const TAG: u32, const CAP: usize>
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T>
-    + Length
     + PartialEncode<Repeated<W, TAG>, Groto, Selector = T::Selector>,
   &'a N: Default,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,

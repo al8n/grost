@@ -18,7 +18,7 @@ mod packed;
 mod repeated;
 
 impl<K> Length for BTreeSet<K> {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len()
   }
 }

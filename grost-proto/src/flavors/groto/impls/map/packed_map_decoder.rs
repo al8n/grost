@@ -1,13 +1,13 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{Extracted, TryFromPartialRef, TryFromRef},
+  buffer::{ReadBuf, UnknownBuffer},
+  convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
-    groto::{Context, Error, Identifier, PartialMapBuffer, Tag},
+    groto::{Context, Error, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -317,6 +317,23 @@ impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, PackedEntry<KW, VW>, B, UB, Groto>>
 
 impl<'a, K, V, B, UB, KW, VW, S> State<Extracted<S>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   type Output = Self;
+}
+
+impl<'a, K, V, B, UB, KW, VW> PartialIdentity<Groto> for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
+  V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+  V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+{
+  fn partial_identity<'b>(
+    input: &'b mut Self::Output,
+    _: &'b Self::Selector,
+  ) -> &'b mut Self::Output {
+    input
+  }
 }
 
 /// Iterator for lazily decoding packed map entries.

@@ -12,14 +12,14 @@ use crate::{
     groto::{Context, Error},
   },
   selection::Selectable,
-  state::{Partial, PartialRef, Ref, State},
+  state::{Partial, State},
 };
 
 mod packed;
 mod repeated;
 
 impl<K, V, S> crate::encode::Length for HashMap<K, V, S> {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len()
   }
 }

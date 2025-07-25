@@ -32,7 +32,7 @@ where
     let elems_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.encoded_raw_len(context)
       })
       .sum::<usize>();
@@ -51,7 +51,7 @@ where
     let num_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.encoded_raw_len(context)
       })
       .sum::<usize>();
@@ -102,7 +102,7 @@ where
     let elems_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.encoded_raw_len(context)
       })
       .sum::<usize>();
@@ -121,7 +121,7 @@ where
     let num_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.encoded_raw_len(context)
       })
       .sum::<usize>();
@@ -190,7 +190,7 @@ where
     let elems_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.partial_encoded_raw_len(context, selector)
       })
       .sum::<usize>();
@@ -213,7 +213,7 @@ where
     let num_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.partial_encoded_raw_len(context, selector)
       })
       .sum::<usize>();
@@ -282,7 +282,7 @@ where
     let elems_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.partial_encoded_raw_len(context, selector)
       })
       .sum::<usize>();
@@ -305,7 +305,7 @@ where
     let num_bytes = self
       .iter()
       .map(|n| {
-        num_elems += n.len();
+        num_elems += n.length();
         n.partial_encoded_raw_len(context, selector)
       })
       .sum::<usize>();

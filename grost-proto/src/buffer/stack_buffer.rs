@@ -179,7 +179,7 @@ impl<T, const CAP: usize> Drop for StackBuffer<T, CAP> {
 
 impl<T, const CAP: usize> crate::encode::Length for StackBuffer<T, CAP> {
   #[inline]
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len
   }
 }

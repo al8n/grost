@@ -42,7 +42,7 @@ where
 }
 
 impl<K, S> crate::encode::Length for HashSet<K, S> {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len()
   }
 }

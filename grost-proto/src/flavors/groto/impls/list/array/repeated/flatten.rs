@@ -1,6 +1,5 @@
 use crate::{
   convert::{Extracted, Innermost},
-  encode::Length,
   flavors::{Borrowed, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
@@ -9,7 +8,7 @@ use crate::{
 use super::*;
 
 impl<'a, T, N, W, const TAG: u32, const CAP: usize>
-  Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for SmallVec<[&N; CAP]>
+  Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for [&N; CAP]
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto> + ?Sized,
@@ -45,7 +44,7 @@ where
 }
 
 impl<T, N, W, const TAG: u32, const CAP: usize> Encode<Flatten<Repeated<W, TAG>, W>, Groto>
-  for SmallVec<[N; CAP]>
+  for [N; CAP]
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto>,
@@ -70,7 +69,7 @@ where
 }
 
 impl<T, N, W, const TAG: u32, const CAP: usize> PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>
-  for SmallVec<[N; CAP]>
+  for [N; CAP]
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T> + PartialEncode<W, Groto, Selector = T::Selector>,
@@ -118,7 +117,7 @@ where
 }
 
 impl<'a, T, N, W, const TAG: u32, const CAP: usize>
-  PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for SmallVec<[&N; CAP]>
+  PartialEncode<Flatten<Borrowed<'a, Repeated<W, TAG>>, W>, Groto> for [&N; CAP]
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T>

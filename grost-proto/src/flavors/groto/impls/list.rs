@@ -395,7 +395,7 @@ macro_rules! length {
     $(
       impl<T, $($($tg:$t),*)? $( $(const $g: $gty),* )? > $crate::__private::encode::Length for $ty {
         #[inline]
-        fn len(&self) -> usize {
+        fn length(&self) -> usize {
           <$ty>::len(self)
         }
       }
@@ -415,40 +415,6 @@ macro_rules! selectable {
     )*
   };
 }
-
-flatten_state!([T; N] [const N: usize], [T]);
-partial_state!([T; N] [const N: usize] => [T::Output; N], [T] => [T::Output]);
-
-partial_ref_state!(@bytes [u8; N] [const N: usize], [u8]);
-partial_ref_state!(@packed [T; N] [const N: usize], [T]);
-partial_ref_state!(@repeated [T; N] [const N: usize], [T]);
-
-ref_state!(@bytes [u8; N] [const N: usize], [u8]);
-ref_state!(@packed [T; N] [const N: usize], [T]);
-ref_state!(@repeated [T; N] [const N: usize], [T]);
-
-default_wire_format!(@bytes [u8; N] [const N: usize], [u8]);
-default_wire_format!(@packed [T; N] [const N: usize], [T]);
-default_wire_format!(@repeated [T; N] [const N: usize], [T]);
-
-encode_list!(@bytes [u8; N] [const N: usize]);
-encode_list!(@packed [T; N] [const N: usize]);
-encode_list!(@repeated [T; N] [const N: usize]);
-encode_list!(@borrow [&'b T; N] [const N: usize]);
-
-length!([T; N] [const N: usize]);
-
-selectable!([T; N] [const N: usize], [T]);
-
-// TODO(al8n): change this to single direction equivalent
-bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<[u8; N], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
-bidi_equivalent!([const N: usize] impl <[u8; N], LengthDelimited> for <[u8], LengthDelimited>);
-
-bidi_equivalent!(@encode :<T: Encode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <[T; N], Packed<W>> for <[T], Packed<W>>);
-bidi_equivalent!(@partial_encode :<T: PartialEncode<W, Groto>, W: WireFormat<Groto>>:[const N: usize] impl <[T; N], Packed<W>> for <[T], Packed<W>>);
-
-bidi_equivalent!(@encode 'a:<T: Encode<W, Groto>, W:WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T; N], Borrowed<'a, Packed<W>>> for <[T], Packed<W>>);
-bidi_equivalent!(@partial_encode 'a:<T: PartialEncode<W, Groto>, W: WireFormat<Groto>:'a>:[const N: usize] impl <[&'a T; N], Borrowed<'a, Packed<W>>> for <[T], Packed<W>>);
 
 // #[test]
 // fn t() {

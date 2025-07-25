@@ -43,10 +43,6 @@ impl<K, V> PartialMapEntry<K, V> {
     (self.key, self.value)
   }
 
-  pub(super) fn new(key: Option<K>, value: Option<V>) -> Self {
-    Self { key, value }
-  }
-
   #[inline]
   pub(super) fn try_into_entry(self) -> Result<MapEntry<K, V>, Error> {
     let key = self
@@ -607,10 +603,6 @@ impl<K, V> MapEntry<K, V> {
   #[inline]
   pub fn into_components(self) -> (K, V) {
     (self.key, self.value)
-  }
-
-  pub(super) fn new(key: K, value: V) -> Self {
-    Self { key, value }
   }
 
   pub(super) fn encode_repeated<KW, VW>(

@@ -9,17 +9,17 @@ use super::{
 /// A trait for collection types like `Vec`, `HashSet`, etc.
 pub trait Length {
   /// Returns the number of elements in the collection.
-  fn len(&self) -> usize;
+  fn length(&self) -> usize;
 }
 
 impl<T: ?Sized + Length> Length for &T {
-  fn len(&self) -> usize {
-    T::len(self)
+  fn length(&self) -> usize {
+    T::length(self)
   }
 }
 
 impl<T> Length for [T] {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     <[T]>::len(self)
   }
 }

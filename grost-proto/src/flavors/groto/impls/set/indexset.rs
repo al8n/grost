@@ -19,7 +19,7 @@ mod packed;
 mod repeated;
 
 impl<K, S> crate::encode::Length for IndexSet<K, S> {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len()
   }
 }

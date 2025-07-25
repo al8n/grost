@@ -8,14 +8,14 @@ use crate::{
     groto::{Context, Error},
   },
   selection::Selectable,
-  state::{Partial, PartialRef, Ref, State},
+  state::{Partial, State},
 };
 
 mod packed;
 mod repeated;
 
 impl<K, V> crate::encode::Length for BTreeMap<K, V> {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.len()
   }
 }

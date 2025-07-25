@@ -2,7 +2,7 @@ use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
   buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
-  convert::{Extracted, TryFromPartialRef, TryFromRef},
+  convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -151,6 +151,24 @@ impl<'de, K, V, B, UB, KW, VW, const TAG: u32> RepeatedMapDecoder<'de, K, V, B, 
   #[inline]
   pub const fn capacity_hint(&self) -> usize {
     self.expected_elements
+  }
+}
+
+impl<'a, K, V, B, UB, KW, VW, const TAG: u32> PartialIdentity<Groto>
+  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
+  V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+  V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+{
+  fn partial_identity<'b>(
+    input: &'b mut Self::Output,
+    _: &'b Self::Selector,
+  ) -> &'b mut Self::Output {
+    input
   }
 }
 
@@ -870,32 +888,50 @@ where
   }
 }
 
-impl<'a, K, V, B, UB, KW, VW, const TAG: u32> State<Partial<Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
+impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32> State<Partial<Groto>>
+  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
+impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>
+  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
-  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
+impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32>
+  State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>
+  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Extracted<S>>
-  for RepeatedMapDecoderBuffer<'a, K, V, B, UB, KW, VW, TAG>
+impl<'a, K, V, RB, UB, KW, VW, S, B, const TAG: u32> State<Extracted<S>>
+  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   S: ?Sized,
 {
   type Output = Self;
+}
+
+impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32> PartialIdentity<Groto>
+  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
+  V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+  V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
+  VW: WireFormat<Groto> + 'a,
+{
+  fn partial_identity<'b>(
+    input: &'b mut Self::Output,
+    _: &'b Self::Selector,
+  ) -> &'b mut Self::Output {
+    input
+  }
 }
 
 /// Iterator that processes entries from multiple `RepeatedMapDecoder` instances sequentially.

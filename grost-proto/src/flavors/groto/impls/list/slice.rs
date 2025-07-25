@@ -10,6 +10,23 @@ mod join;
 mod packed;
 mod repeated;
 
+flatten_state!([T]);
+partial_state!([T] => [T::Output]);
+
+partial_ref_state!(@bytes [u8]);
+partial_ref_state!(@packed [T]);
+partial_ref_state!(@repeated [T]);
+
+ref_state!(@bytes [u8]);
+ref_state!(@packed [T]);
+ref_state!(@repeated [T]);
+
+default_wire_format!(@bytes [u8]);
+default_wire_format!(@packed [T]);
+default_wire_format!(@repeated [T]);
+
+selectable!([T]);
+
 fn check_list_type<T>() -> Result<(), Error>
 where
   T: ?Sized,

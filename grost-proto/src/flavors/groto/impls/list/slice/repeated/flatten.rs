@@ -1,6 +1,6 @@
 use crate::{
   convert::{Extracted, Innermost},
-  encode::{EquivalentEncode, Length},
+  encode::EquivalentEncode,
   flavors::Flatten,
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
@@ -12,7 +12,7 @@ impl<'a, T, N, W, const TAG: u32> Encode<Flatten<Borrowed<'a, Repeated<W, TAG>>,
   for [&N]
 where
   W: WireFormat<Groto>,
-  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto> + ?Sized,
+  N: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto> + ?Sized,
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -47,7 +47,7 @@ where
 impl<T, N, W, const TAG: u32> Encode<Flatten<Repeated<W, TAG>, W>, Groto> for [N]
 where
   W: WireFormat<Groto>,
-  N: State<Extracted<Innermost>, Output = T> + Length + Encode<Repeated<W, TAG>, Groto>,
+  N: State<Extracted<Innermost>, Output = T> + Encode<Repeated<W, TAG>, Groto>,
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
@@ -78,9 +78,7 @@ where
 impl<T, N, W, const TAG: u32> PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto> for [N]
 where
   W: WireFormat<Groto>,
-  N: State<Extracted<Innermost>, Output = T>
-    + Length
-    + PartialEncode<W, Groto, Selector = T::Selector>,
+  N: State<Extracted<Innermost>, Output = T> + PartialEncode<W, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
@@ -138,7 +136,6 @@ impl<'a, T, N, W, const TAG: u32> PartialEncode<Flatten<Borrowed<'a, Repeated<W,
 where
   W: WireFormat<Groto>,
   N: State<Extracted<Innermost>, Output = T>
-    + Length
     + PartialEncode<Repeated<W, TAG>, Groto, Selector = T::Selector>,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,

@@ -34,7 +34,7 @@ impl<K, V, B> crate::encode::Length for PartialMapBuffer<K, V, B>
 where
   B: Buffer<Item = PartialMapEntry<K, V>>,
 {
-  fn len(&self) -> usize {
+  fn length(&self) -> usize {
     self.buffer.len()
   }
 }
