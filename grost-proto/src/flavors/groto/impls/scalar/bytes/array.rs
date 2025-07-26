@@ -117,4 +117,3 @@ macro_rules! impl_fixed {
 
 //   Ok((end, src[size_len..end].try_into().unwrap()))
 // }
-

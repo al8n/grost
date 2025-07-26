@@ -1,8 +1,47 @@
 use crate::{
   buffer::{ReadBuf, UnknownBuffer},
   flavors::{Flavor, WireFormat},
+  selection::Selectable,
   state::{Partial, PartialRef, Ref, State},
 };
+
+pub trait TryTransform<I, F: Flavor + ?Sized> {
+  fn try_transform(context: &F::Context, input: I) -> Result<Self, F::Error>
+  where
+    Self: Sized;
+}
+
+pub trait Transform<I, F: Flavor + ?Sized> {
+  fn transform(context: &F::Context, input: I) -> Self
+  where
+    Self: Sized;
+}
+
+pub trait SelectFrom<I, F: Flavor + ?Sized> {
+  /// Selects fields from the input type `I` based on the selector.
+  ///
+  /// This method returns an `Option<Self>` where `Some` contains the selected fields
+  /// and `None` indicates that no fields were selected.
+  fn select_from(context: &F::Context, input: I, selector: &Self::Selector) -> Option<Self>
+  where
+    Self: Sized + Selectable<F>,
+    I: Selectable<F, Selector = Self::Selector>;
+}
+
+pub trait TrySelectFrom<I, F: Flavor + ?Sized>: Selectable<F> {
+  /// Attempts to select fields from the input type `I` based on the selector.
+  ///
+  /// This method returns a `Result<Self, F::Error>` where `Ok` contains the selected fields
+  /// and `Err` indicates an error during selection.
+  fn try_select_from(
+    context: &F::Context,
+    input: I,
+    selector: &Self::Selector,
+  ) -> Result<Option<Self>, F::Error>
+  where
+    Self: Sized + Selectable<F>,
+    I: Selectable<F, Selector = Self::Selector>;
+}
 
 pub trait TryFromPartialRef<'a, W, RB, UB, F>: State<PartialRef<'a, W, RB, UB, F>>
 where
