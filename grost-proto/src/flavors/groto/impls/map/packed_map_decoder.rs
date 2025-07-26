@@ -13,7 +13,7 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::{DecomposableMapSelector, PartialMapEntry};
+use super::{DecomposableMapSelector, PartialDecomposableMapEntry};
 
 /// A lazy decoder for packed map entries from binary protocol data.
 ///
@@ -413,7 +413,7 @@ where
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -435,7 +435,7 @@ where
     }
 
     Some(
-      PartialMapEntry::decode_packed_entry(
+      PartialDecomposableMapEntry::decode_packed_entry(
         self.decoder.ctx,
         self.decoder.src.slice(self.offset..),
         &self.decoder.key_identifier,

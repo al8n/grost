@@ -2,7 +2,7 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::super::{
-    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
+    DefaultPartialMapBuffer, DecomposableMapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
     try_from,
   },
   HashMap,
@@ -91,7 +91,7 @@ where
     match context.repeated_decode_policy() {
       RepeatedDecodePolicy::GrowIncrementally => {
         repeated_decode::<KW, VW, HashMap<K, V, S>, RB, TAG>(src, |ei, ki, vi, src| {
-          let (read, entry) = MapEntry::decode_repeated(context, src, ei, ki, vi)?;
+          let (read, entry) = DecomposableMapEntry::decode_repeated(context, src, ei, ki, vi)?;
           match entry {
             Some(entry) => {
               let (k, v) = entry.into_components();
@@ -119,7 +119,8 @@ where
   }
 }
 
-impl<K, KW, V, VW, S, const TAG: u32> Encode<RepeatedEntry<KW, VW, TAG>, Groto> for Decomposable<HashMap<K, V, S>>
+impl<K, KW, V, VW, S, const TAG: u32> Encode<RepeatedEntry<KW, VW, TAG>, Groto>
+  for Decomposable<HashMap<K, V, S>>
 where
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
@@ -132,14 +133,14 @@ where
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
       |item, ei, ki, vi, buf| {
-        MapEntry::from(item).encode_repeated::<KW, VW>(context, buf, ei, ki, vi)
+        DecomposableMapEntry::from(item).encode_repeated::<KW, VW>(context, buf, ei, ki, vi)
       },
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
+      DecomposableMapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
     })
   }
 
@@ -179,7 +180,7 @@ where
         )
       },
       |item, ei, ki, vi, buf| {
-        MapEntry::from(item).partial_encode_repeated::<KW, VW>(context, buf, ei, ki, vi, selector)
+        DecomposableMapEntry::from(item).partial_encode_repeated::<KW, VW>(context, buf, ei, ki, vi, selector)
       },
     )
   }
@@ -190,7 +191,7 @@ where
     }
 
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
+      DecomposableMapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
     })
   }
 

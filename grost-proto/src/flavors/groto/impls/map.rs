@@ -1,10 +1,9 @@
 pub use buffer::{DefaultPartialMapBuffer, PartialMapBuffer};
-pub use entry::PartialMapEntry;
+pub use decomposable::*;
+pub use entry::{PartialMapEntry, MapEntry};
 pub use packed_map_decoder::*;
 pub use repeated_map_decoder::*;
-pub use decomposable::DecomposableMapSelector;
 
-use entry::MapEntry;
 use varing::decode_u32_varint;
 
 use crate::{
@@ -300,7 +299,7 @@ where
   V: 'a,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
-  I: Iterator<Item = Result<(usize, PartialMapEntry<KO, VO>), Error>>,
+  I: Iterator<Item = Result<(usize, PartialDecomposableMapEntry<KO, VO>), Error>>,
 {
   for res in iter {
     let (_, item) = res?;

@@ -5,7 +5,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
-    groto::{Context, Error, PackedMapDecoder, PartialMapBuffer, PartialMapEntry},
+    groto::{Context, Error, PackedMapDecoder, PartialMapBuffer, PartialDecomposableMapEntry},
   },
   selection::Selector,
   state::{Partial, PartialRef, Ref, State},
@@ -43,7 +43,7 @@ where
   V: Encode<VW, Groto>,
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
@@ -83,7 +83,7 @@ where
   V: PartialEncode<VW, Groto>,
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn partial_encode_raw(
     &self,
@@ -160,7 +160,7 @@ where
   VW: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -174,7 +174,7 @@ where
       |cap| PartialMapBuffer::with_capacity(cap).ok_or_else(|| Error::allocation_failed("map")),
       |map| map.len(),
       |map, ki, vi, src| {
-        let (read, item) = PartialMapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
+        let (read, item) = PartialDecomposableMapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
 
         if map.push(item).is_some() {
           return Err(Error::capacity_exceeded("map"));
@@ -197,7 +197,7 @@ where
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn try_from_ref(
     ctx: &'de Context,
@@ -240,7 +240,7 @@ where
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn try_from_partial_ref(
     ctx: &'de Context,

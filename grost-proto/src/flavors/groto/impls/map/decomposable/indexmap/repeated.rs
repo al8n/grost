@@ -2,7 +2,7 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::super::{
-    DefaultPartialMapBuffer, MapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
+    DefaultPartialMapBuffer, DecomposableMapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
     try_from,
   },
   IndexMap,
@@ -33,7 +33,8 @@ impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for Decomposable<IndexMap<K,
 }
 
 impl<'a, K, V, KW, VW, S, RB, B, const TAG: u32>
-  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>> for Decomposable<IndexMap<K, V, S>>
+  State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>
+  for Decomposable<IndexMap<K, V, S>>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
@@ -91,7 +92,7 @@ where
     match context.repeated_decode_policy() {
       RepeatedDecodePolicy::GrowIncrementally => {
         repeated_decode::<KW, VW, IndexMap<K, V, S>, RB, TAG>(src, |ei, ki, vi, src| {
-          let (read, entry) = MapEntry::decode_repeated(context, src, ei, ki, vi)?;
+          let (read, entry) = DecomposableMapEntry::decode_repeated(context, src, ei, ki, vi)?;
           match entry {
             Some(entry) => {
               let (k, v) = entry.into_components();
@@ -132,13 +133,13 @@ where
       buf,
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
-      |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
+      |item, ei, ki, vi, buf| DecomposableMapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
+      DecomposableMapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
     })
   }
 
@@ -178,7 +179,7 @@ where
         )
       },
       |item, ei, ki, vi, buf| {
-        MapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
+        DecomposableMapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
       },
     )
   }
@@ -189,7 +190,7 @@ where
     }
 
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
+      DecomposableMapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
     })
   }
 
@@ -251,7 +252,8 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  TryFromPartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for Decomposable<IndexMap<K, V, S>>
+  TryFromPartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>
+  for Decomposable<IndexMap<K, V, S>>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
@@ -290,7 +292,8 @@ where
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
-  PartialTryFromRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto> for Decomposable<IndexMap<K, V, S>>
+  PartialTryFromRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>
+  for Decomposable<IndexMap<K, V, S>>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,

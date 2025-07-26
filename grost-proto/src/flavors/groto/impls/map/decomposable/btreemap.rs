@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use super::super::{DecomposableMapSelector, DefaultPartialMapBuffer};
 use crate::{
   buffer::Buffer,
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
@@ -11,7 +12,6 @@ use crate::{
   state::{Partial, State},
   utils::Decomposable,
 };
-use super::super::{DefaultPartialMapBuffer, DecomposableMapSelector};
 
 mod packed;
 mod repeated;

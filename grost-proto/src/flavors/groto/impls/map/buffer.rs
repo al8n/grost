@@ -11,13 +11,13 @@ use crate::{
 mod packed;
 mod repeated;
 
-use super::PartialMapEntry;
+use super::PartialDecomposableMapEntry;
 
 /// The default partial set buffer type.
 pub type DefaultPartialMapBuffer<K, V> = PartialMapBuffer<K, V>;
 
 /// A buffer for partial map entries.
-pub struct PartialMapBuffer<K, V, B = DefaultBuffer<PartialMapEntry<K, V>>> {
+pub struct PartialMapBuffer<K, V, B = DefaultBuffer<PartialDecomposableMapEntry<K, V>>> {
   buffer: B,
   _k: PhantomData<K>,
   _v: PhantomData<V>,
@@ -32,7 +32,7 @@ impl<K, V, B> PartialMapBuffer<K, V, B> {
 
 impl<K, V, B> crate::encode::Length for PartialMapBuffer<K, V, B>
 where
-  B: Buffer<Item = PartialMapEntry<K, V>>,
+  B: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn length(&self) -> usize {
     self.buffer.len()
@@ -41,9 +41,9 @@ where
 
 impl<K, V, B> Buffer for PartialMapBuffer<K, V, B>
 where
-  B: Buffer<Item = PartialMapEntry<K, V>>,
+  B: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
-  type Item = PartialMapEntry<K, V>;
+  type Item = PartialDecomposableMapEntry<K, V>;
 
   #[inline]
   fn new() -> Self {

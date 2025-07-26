@@ -1,5 +1,5 @@
 use super::{
-  super::{DefaultPartialMapBuffer, MapEntry, repeated_encode, repeated_encoded_len, try_from},
+  super::{DefaultPartialMapBuffer, DecomposableMapEntry, repeated_encode, repeated_encoded_len, try_from},
   BTreeMap,
 };
 
@@ -102,13 +102,13 @@ where
       buf,
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
-      |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
+      |item, ei, ki, vi, buf| DecomposableMapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
+      DecomposableMapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
     })
   }
 
@@ -148,7 +148,7 @@ where
         )
       },
       |item, ei, ki, vi, buf| {
-        MapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
+        DecomposableMapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
       },
     )
   }
@@ -159,7 +159,7 @@ where
     }
 
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      MapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
+      DecomposableMapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
     })
   }
 

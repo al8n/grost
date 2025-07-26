@@ -124,24 +124,24 @@ where
 }
 
 /// A map entry that contains a key and a value.
-pub struct MapEntry<K, V> {
+pub struct DecomposableMapEntry<K, V> {
   key: K,
   value: V,
 }
 
-impl<K, V> From<(K, V)> for MapEntry<K, V> {
+impl<K, V> From<(K, V)> for DecomposableMapEntry<K, V> {
   fn from((key, value): (K, V)) -> Self {
     Self { key, value }
   }
 }
 
-impl<K, V> From<MapEntry<K, V>> for (K, V) {
-  fn from(MapEntry { key, value }: MapEntry<K, V>) -> Self {
+impl<K, V> From<DecomposableMapEntry<K, V>> for (K, V) {
+  fn from(DecomposableMapEntry { key, value }: DecomposableMapEntry<K, V>) -> Self {
     (key, value)
   }
 }
 
-impl<K, V> MapEntry<K, V> {
+impl<K, V> DecomposableMapEntry<K, V> {
   /// Creates a new map entry with the given key and value.
   #[inline]
   pub const fn new(key: K, value: V) -> Self {
@@ -185,7 +185,7 @@ impl<K, V> MapEntry<K, V> {
   }
 }
 
-impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> MapEntry<&'k K, &'v V> {
+impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> DecomposableMapEntry<&'k K, &'v V> {
   /// Creates a new map entry with the given refernece key and value.
   #[inline]
   pub const fn from_ref(key: &'k K, value: &'v V) -> Self {
@@ -193,7 +193,7 @@ impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> MapEntry<&'k K, &'v V> {
   }
 }
 
-impl<K, V, F> Selectable<F> for MapEntry<K, V>
+impl<K, V, F> Selectable<F> for DecomposableMapEntry<K, V>
 where
   V: Selectable<F>,
   F: Flavor + ?Sized,

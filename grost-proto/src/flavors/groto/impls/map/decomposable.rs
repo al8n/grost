@@ -1,4 +1,5 @@
 pub use selector::DecomposableMapSelector;
+pub use entry::{DecomposableMapEntry, PartialDecomposableMapEntry};
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod btreemap;
@@ -8,4 +9,4 @@ mod hashmap;
 mod indexmap;
 
 mod selector;
-
+mod entry;

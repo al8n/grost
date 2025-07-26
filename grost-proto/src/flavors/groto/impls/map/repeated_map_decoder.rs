@@ -13,7 +13,7 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::{DecomposableMapSelector, PartialMapEntry};
+use super::{DecomposableMapSelector, PartialDecomposableMapEntry};
 
 /// A lazy iterator for decoding repeated map entries from binary protocol data.
 ///
@@ -495,7 +495,7 @@ where
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -527,7 +527,7 @@ where
     // Decode the repeated map entry
     // All entries follow the same [identifier][length][key_id][key][value_id][value] pattern
     Some(
-      PartialMapEntry::decode_repeated(
+      PartialDecomposableMapEntry::decode_repeated(
         self.decoder.ctx,
         self.decoder.src.slice(self.offset..),
         &self.decoder.entry_identifier,
@@ -1053,7 +1053,7 @@ where
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   fn next(&mut self) -> Option<Self::Item> {
     // Check if we've processed all decoder batches

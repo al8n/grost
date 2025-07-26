@@ -16,7 +16,7 @@ use crate::{
   utils::Decomposable,
 };
 
-use super::super::{DefaultPartialMapBuffer, DecomposableMapSelector};
+use super::super::{DecomposableMapSelector, DefaultPartialMapBuffer};
 
 mod packed;
 mod repeated;

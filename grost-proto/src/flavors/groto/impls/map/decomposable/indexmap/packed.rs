@@ -2,7 +2,7 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::super::{
-    DefaultPartialMapBuffer, MapEntry, packed_decode, packed_encode, packed_encode_raw,
+    DefaultPartialMapBuffer, DecomposableMapEntry, packed_decode, packed_encode, packed_encode_raw,
     packed_encoded_len, packed_encoded_raw_len, try_from,
   },
   IndexMap,
@@ -85,7 +85,7 @@ where
       },
       |map| map.len(),
       |map, ki, vi, src| {
-        let (read, item) = MapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
+        let (read, item) = DecomposableMapEntry::<K, V>::decode_packed_entry(context, src, ki, vi)?;
         let (k, v) = item.into_components();
         context.err_duplicated_map_keys(!map.insert(k, v).is_some())?;
 
@@ -108,13 +108,13 @@ where
       buf,
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
-      |item, ki, vi, buf| MapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+      |item, ki, vi, buf| DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     packed_encoded_raw_len::<K, V, KW, VW, _, _>(self.iter(), |item, ki, vi| {
-      MapEntry::from(item).encoded_packed_len::<KW, VW>(context, ki, vi)
+      DecomposableMapEntry::from(item).encoded_packed_len::<KW, VW>(context, ki, vi)
     })
   }
 
@@ -124,7 +124,7 @@ where
       self.len(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
-      |item, ki, vi, buf| MapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+      |item, ki, vi, buf| DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
     )
   }
 
@@ -161,7 +161,7 @@ where
         )
       },
       |item, ki, vi, buf| {
-        MapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+        DecomposableMapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
       },
     )
   }
@@ -172,7 +172,7 @@ where
     }
 
     packed_encoded_raw_len::<K, V, KW, VW, _, _>(self.iter(), |item, ki, vi| {
-      MapEntry::from(item).partial_encoded_packed_len::<KW, VW>(context, ki, vi, selector)
+      DecomposableMapEntry::from(item).partial_encoded_packed_len::<KW, VW>(context, ki, vi, selector)
     })
   }
 
@@ -196,7 +196,7 @@ where
         )
       },
       |item, ki, vi, buf| {
-        MapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+        DecomposableMapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
       },
     )
   }

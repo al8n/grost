@@ -6,7 +6,7 @@ use crate::{
   flavors::{
     Groto, RepeatedEntry, WireFormat,
     groto::{
-      Context, Error, PartialMapBuffer, PartialMapEntry, RepeatedMapDecoder,
+      Context, Error, PartialMapBuffer, PartialDecomposableMapEntry, RepeatedMapDecoder,
       RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
     },
   },
@@ -45,7 +45,7 @@ where
   V: Encode<VW, Groto>,
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
     repeated_encode::<KW, VW, _, _, TAG>(
@@ -78,7 +78,7 @@ where
   V: PartialEncode<VW, Groto>,
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn partial_encode_raw(
     &self,
@@ -139,7 +139,7 @@ where
   VW: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, B, Groto>,
   V: Decode<'a, VW, RB, B, Groto>,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -179,7 +179,7 @@ where
       }
       RepeatedDecodePolicy::GrowIncrementally => {
         repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
-          let (read, entry) = PartialMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
+          let (read, entry) = PartialDecomposableMapEntry::<K, V>::decode_repeated(ctx, src, ei, ki, vi)?;
           match entry {
             Some(entry) => {
               if self.push(entry).is_some() {
@@ -207,7 +207,7 @@ where
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn try_from_ref(
     ctx: &'de Context,
@@ -249,7 +249,7 @@ where
   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
-  PB: Buffer<Item = PartialMapEntry<K, V>>,
+  PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
   fn try_from_partial_ref(
     ctx: &'de Context,
