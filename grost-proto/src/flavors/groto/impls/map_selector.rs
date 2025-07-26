@@ -5,7 +5,7 @@
 //     DefaultWireFormat, Groto, WireFormat,
 //     groto::{Context, DecodeError, EncodeError, Identifier, LengthDelimited, Tag, Unknown},
 //   },
-//   map::MapSelector,
+//   map::DecomposableMapSelector,
 //   selector::{Selectable, Selector},
 // };
 
@@ -26,11 +26,11 @@
 //   Identifier::new(V::WIRE_TYPE, VALUE_TAG)
 // }
 
-// impl<K, V> Selectable<Groto> for MapSelector<K, V> {
+// impl<K, V> Selectable<Groto> for DecomposableMapSelector<K, V> {
 //   type Selector = ();
 // }
 
-// impl<K, V> Encode<LengthDelimited, Groto> for MapSelector<K, V>
+// impl<K, V> Encode<LengthDelimited, Groto> for DecomposableMapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + Encode<Groto, K::Format>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + Encode<Groto, V::Format>,
@@ -87,7 +87,7 @@
 //   }
 // }
 
-// impl<K, V> PartialEncode<LengthDelimited, Groto> for MapSelector<K, V>
+// impl<K, V> PartialEncode<LengthDelimited, Groto> for DecomposableMapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + PartialEncode<Groto, K::Format>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + PartialEncode<Groto, V::Format>,
@@ -119,7 +119,7 @@
 //   }
 // }
 
-// impl<'de, K, V> Decode<'de, Groto, LengthDelimited, Self> for MapSelector<K, V>
+// impl<'de, K, V> Decode<'de, Groto, LengthDelimited, Self> for DecomposableMapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + Decode<'de, Groto, K::Format, K>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + Decode<'de, Groto, V::Format, V>,
@@ -207,7 +207,7 @@
 //   }
 // }
 
-// impl<K, V> DecodeOwned<Groto, LengthDelimited, Self> for MapSelector<K, V>
+// impl<K, V> DecodeOwned<Groto, LengthDelimited, Self> for DecomposableMapSelector<K, V>
 // where
 //   K: Selector<Groto> + DefaultWireFormat<Groto> + DecodeOwned<Groto, K::Format, K>,
 //   V: Selector<Groto> + DefaultWireFormat<Groto> + DecodeOwned<Groto, V::Format, V>,

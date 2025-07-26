@@ -2,7 +2,7 @@ pub use buffer::{DefaultPartialMapBuffer, PartialMapBuffer};
 pub use entry::PartialMapEntry;
 pub use packed_map_decoder::*;
 pub use repeated_map_decoder::*;
-pub use selector::MapSelector;
+pub use decomposable::DecomposableMapSelector;
 
 use entry::MapEntry;
 use varing::decode_u32_varint;
@@ -23,10 +23,10 @@ mod hashmap;
 mod indexmap;
 
 mod buffer;
+mod decomposable;
 mod entry;
 mod packed_map_decoder;
 mod repeated_map_decoder;
-mod selector;
 
 fn packed_encoded_raw_len<'a, K, V, KW, VW, I, Item>(
   iter: I,

@@ -13,7 +13,7 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::{MapSelector, PartialMapEntry};
+use super::{DecomposableMapSelector, PartialMapEntry};
 
 /// A lazy iterator for decoding repeated map entries from binary protocol data.
 ///
@@ -180,7 +180,7 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
-  type Selector = MapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Encode<RepeatedEntry<KW, VW, TAG>, Groto>
@@ -659,7 +659,7 @@ where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
 {
-  type Selector = MapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<'de, K, V, RB, UB, KW, VW, const TAG: u32, B>

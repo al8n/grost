@@ -13,7 +13,7 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::{MapSelector, PartialMapEntry};
+use super::{DecomposableMapSelector, PartialMapEntry};
 
 /// A lazy decoder for packed map entries from binary protocol data.
 ///
@@ -296,7 +296,7 @@ where
   VW: WireFormat<Groto> + 'a,
 {
   // For maps, we might use a composite selector that can select both keys and values
-  type Selector = MapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<'a, K, V, B, UB, KW, VW> State<Partial<Groto>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {

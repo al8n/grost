@@ -9,7 +9,7 @@ use crate::{
   selection::Selectable,
 };
 
-use super::MapSelector;
+use super::DecomposableMapSelector;
 
 pub struct PartialMapEntry<K, V> {
   key: Option<K>,
@@ -21,7 +21,7 @@ where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = MapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<K, V> PartialMapEntry<K, V> {
@@ -181,7 +181,7 @@ impl<K, V> PartialMapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -214,7 +214,7 @@ impl<K, V> PartialMapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
@@ -235,7 +235,7 @@ impl<K, V> PartialMapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -280,7 +280,7 @@ impl<K, V> PartialMapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
@@ -501,7 +501,7 @@ impl<K, V> PartialMapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -549,7 +549,7 @@ impl<K, V> PartialMapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
@@ -717,7 +717,7 @@ impl<K, V> MapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -750,7 +750,7 @@ impl<K, V> MapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
@@ -771,7 +771,7 @@ impl<K, V> MapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -816,7 +816,7 @@ impl<K, V> MapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
@@ -1038,7 +1038,7 @@ impl<K, V> MapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
@@ -1085,7 +1085,7 @@ impl<K, V> MapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &MapSelector<K::Selector, V::Selector>,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,

@@ -13,48 +13,51 @@ use crate::{
   },
   selection::Selectable,
   state::{Partial, State},
+  utils::Decomposable,
 };
+
+use super::super::{DefaultPartialMapBuffer, DecomposableMapSelector};
 
 mod packed;
 mod repeated;
 
-impl<K, V, S> crate::encode::Length for HashMap<K, V, S> {
+impl<K, V, S> crate::encode::Length for Decomposable<HashMap<K, V, S>> {
   fn length(&self) -> usize {
     self.len()
   }
 }
 
-impl<K, V, S> State<Extracted<Inner>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<Inner>> for Decomposable<HashMap<K, V, S>> {
   type Output = (K, V);
 }
 
-impl<K, V, S> State<Extracted<MapKey>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapKey>> for Decomposable<HashMap<K, V, S>> {
   type Output = K;
 }
 
-impl<K, V, S> State<Extracted<MapValue>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapValue>> for Decomposable<HashMap<K, V, S>> {
   type Output = V;
 }
 
-impl<K, V, S> State<Partial<Groto>> for HashMap<K, V, S>
+impl<K, V, S> State<Partial<Groto>> for Decomposable<HashMap<K, V, S>>
 where
   K: State<Partial<Groto>>,
   K::Output: Sized,
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = super::DefaultPartialMapBuffer<K::Output, V::Output>;
+  type Output = DefaultPartialMapBuffer<K::Output, V::Output>;
 }
 
-impl<K, V, S> Selectable<Groto> for HashMap<K, V, S>
+impl<K, V, S> Selectable<Groto> for Decomposable<HashMap<K, V, S>>
 where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = super::DecomposableMapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
-impl<K, V, S> TryFromPartial<Groto> for HashMap<K, V, S>
+impl<K, V, S> TryFromPartial<Groto> for Decomposable<HashMap<K, V, S>>
 where
   K: TryFromPartial<Groto> + Eq + core::hash::Hash,
   K::Output: Sized,
@@ -86,6 +89,6 @@ where
 
     ctx.err_length_mismatch(expected, map.len())?;
 
-    Ok(map)
+    Ok(map.into())
   }
 }

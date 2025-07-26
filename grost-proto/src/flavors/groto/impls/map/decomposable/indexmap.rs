@@ -1,9 +1,6 @@
-#[cfg(all(not(feature = "std"), feature = "alloc", feature = "hashbrown_0_15"))]
-use hashbrown_0_15::HashMap;
+use indexmap_2::IndexMap;
 
-#[cfg(feature = "std")]
-use std::collections::HashMap;
-
+use super::super::{DecomposableMapSelector, DefaultPartialMapBuffer};
 use crate::{
   buffer::Buffer,
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
@@ -13,48 +10,49 @@ use crate::{
   },
   selection::Selectable,
   state::{Partial, State},
+  utils::Decomposable,
 };
 
 mod packed;
 mod repeated;
 
-impl<K, V, S> crate::encode::Length for HashMap<K, V, S> {
+impl<K, V, S> crate::encode::Length for Decomposable<IndexMap<K, V, S>> {
   fn length(&self) -> usize {
     self.len()
   }
 }
 
-impl<K, V, S> State<Extracted<Inner>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<Inner>> for Decomposable<IndexMap<K, V, S>> {
   type Output = (K, V);
 }
 
-impl<K, V, S> State<Extracted<MapKey>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapKey>> for Decomposable<IndexMap<K, V, S>> {
   type Output = K;
 }
 
-impl<K, V, S> State<Extracted<MapValue>> for HashMap<K, V, S> {
+impl<K, V, S> State<Extracted<MapValue>> for Decomposable<IndexMap<K, V, S>> {
   type Output = V;
 }
 
-impl<K, V, S> State<Partial<Groto>> for HashMap<K, V, S>
+impl<K, V, S> State<Partial<Groto>> for Decomposable<IndexMap<K, V, S>>
 where
   K: State<Partial<Groto>>,
   K::Output: Sized,
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = super::DefaultPartialMapBuffer<K::Output, V::Output>;
+  type Output = DefaultPartialMapBuffer<K::Output, V::Output>;
 }
 
-impl<K, V, S> Selectable<Groto> for HashMap<K, V, S>
+impl<K, V, S> Selectable<Groto> for Decomposable<IndexMap<K, V, S>>
 where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = super::DecomposableMapSelector<K::Selector, V::Selector>;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
-impl<K, V, S> TryFromPartial<Groto> for HashMap<K, V, S>
+impl<K, V, S> TryFromPartial<Groto> for Decomposable<IndexMap<K, V, S>>
 where
   K: TryFromPartial<Groto> + Eq + core::hash::Hash,
   K::Output: Sized,
@@ -71,7 +69,7 @@ where
     <Self as State<Partial<Groto>>>::Output: Sized,
   {
     let expected = input.len();
-    let mut map = HashMap::with_capacity_and_hasher(expected, S::default());
+    let mut map = IndexMap::with_capacity_and_hasher(expected, S::default());
 
     for ent in input.into_iter() {
       let (k, v) = ent
@@ -86,6 +84,6 @@ where
 
     ctx.err_length_mismatch(expected, map.len())?;
 
-    Ok(map)
+    Ok(map.into())
   }
 }

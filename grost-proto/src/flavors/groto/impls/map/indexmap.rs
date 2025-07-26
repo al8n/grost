@@ -47,7 +47,7 @@ where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = super::MapSelector<K::Selector, V::Selector>;
+  type Selector = super::DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<K, V, S> TryFromPartial<Groto> for IndexMap<K, V, S>

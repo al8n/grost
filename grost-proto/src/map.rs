@@ -7,7 +7,7 @@ use crate::{
 
 /// The selector for a map.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MapSelector<KS, VS> {
+pub enum DecomposableMapSelector<KS, VS> {
   /// Only selects the keys of the map.
   Key(KS),
   /// Only selects the values of the map.
@@ -21,18 +21,18 @@ pub enum MapSelector<KS, VS> {
   },
 }
 
-impl<K, V, F> Selector<F> for MapSelector<K, V>
+impl<K, V, F> Selector<F> for DecomposableMapSelector<K, V>
 where
   K: Selector<F>,
   V: Selector<F>,
   F: Flavor + ?Sized,
 {
-  const ALL: Self = MapSelector::Entry {
+  const ALL: Self = DecomposableMapSelector::Entry {
     key: K::ALL,
     value: V::ALL,
   };
 
-  const NONE: Self = MapSelector::Entry {
+  const NONE: Self = DecomposableMapSelector::Entry {
     key: K::NONE,
     value: V::NONE,
   };
@@ -41,29 +41,29 @@ where
 
   fn selected(&self) -> usize {
     match self {
-      MapSelector::Key(k) => k.selected(),
-      MapSelector::Value(v) => v.selected(),
-      MapSelector::Entry { key, value } => key.selected() + value.selected(),
+      DecomposableMapSelector::Key(k) => k.selected(),
+      DecomposableMapSelector::Value(v) => v.selected(),
+      DecomposableMapSelector::Entry { key, value } => key.selected() + value.selected(),
     }
   }
 
   fn unselected(&self) -> usize {
     match self {
-      MapSelector::Key(k) => k.unselected(),
-      MapSelector::Value(v) => v.unselected(),
-      MapSelector::Entry { key, value } => key.unselected() + value.unselected(),
+      DecomposableMapSelector::Key(k) => k.unselected(),
+      DecomposableMapSelector::Value(v) => v.unselected(),
+      DecomposableMapSelector::Entry { key, value } => key.unselected() + value.unselected(),
     }
   }
 
   fn flip(&mut self) -> &mut Self {
     match self {
-      MapSelector::Key(k) => {
+      DecomposableMapSelector::Key(k) => {
         k.flip();
       }
-      MapSelector::Value(v) => {
+      DecomposableMapSelector::Value(v) => {
         v.flip();
       }
-      MapSelector::Entry { key, value } => {
+      DecomposableMapSelector::Entry { key, value } => {
         key.flip();
         value.flip();
       }
@@ -73,46 +73,49 @@ where
 
   fn merge(&mut self, other: Self) -> &mut Self {
     match (&mut *self, other) {
-      (MapSelector::Key(k1), MapSelector::Key(k2)) => {
+      (DecomposableMapSelector::Key(k1), DecomposableMapSelector::Key(k2)) => {
         k1.merge(k2);
         self
       }
-      (MapSelector::Value(v1), MapSelector::Value(v2)) => {
+      (DecomposableMapSelector::Value(v1), DecomposableMapSelector::Value(v2)) => {
         v1.merge(v2);
         self
       }
-      (MapSelector::Entry { key: k1, value: v1 }, MapSelector::Entry { key: k2, value: v2 }) => {
+      (
+        DecomposableMapSelector::Entry { key: k1, value: v1 },
+        DecomposableMapSelector::Entry { key: k2, value: v2 },
+      ) => {
         k1.merge(k2);
         v1.merge(v2);
         self
       }
-      (MapSelector::Key(k), MapSelector::Entry { key: k2, value: v2 }) => {
+      (DecomposableMapSelector::Key(k), DecomposableMapSelector::Entry { key: k2, value: v2 }) => {
         k.merge(k2);
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry { key: k, value: v2 };
+        *self = DecomposableMapSelector::Entry { key: k, value: v2 };
         self
       }
-      (MapSelector::Key(k), MapSelector::Value(v)) => {
+      (DecomposableMapSelector::Key(k), DecomposableMapSelector::Value(v)) => {
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry { key: k, value: v };
+        *self = DecomposableMapSelector::Entry { key: k, value: v };
         self
       }
-      (MapSelector::Value(v), MapSelector::Key(k)) => {
+      (DecomposableMapSelector::Value(v), DecomposableMapSelector::Key(k)) => {
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry { key: k, value: v };
+        *self = DecomposableMapSelector::Entry { key: k, value: v };
         self
       }
-      (MapSelector::Value(v), MapSelector::Entry { key, value }) => {
+      (DecomposableMapSelector::Value(v), DecomposableMapSelector::Entry { key, value }) => {
         v.merge(value);
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry { key, value: v };
+        *self = DecomposableMapSelector::Entry { key, value: v };
         self
       }
-      (MapSelector::Entry { key, .. }, MapSelector::Key(k)) => {
+      (DecomposableMapSelector::Entry { key, .. }, DecomposableMapSelector::Key(k)) => {
         key.merge(k);
         self
       }
-      (MapSelector::Entry { value, .. }, MapSelector::Value(v)) => {
+      (DecomposableMapSelector::Entry { value, .. }, DecomposableMapSelector::Value(v)) => {
         value.merge(v);
         self
       }
