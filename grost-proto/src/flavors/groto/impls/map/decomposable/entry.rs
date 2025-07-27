@@ -9,20 +9,22 @@ use crate::{
   selection::Selectable,
 };
 
-pub struct PartialMapEntry<K, V> {
+use super::DecomposableMapSelector;
+
+pub struct PartialDecomposableMapEntry<K, V> {
   key: Option<K>,
   value: Option<V>,
 }
 
-impl<K, V> Selectable<Groto> for PartialMapEntry<K, V>
+impl<K, V> Selectable<Groto> for PartialDecomposableMapEntry<K, V>
 where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = V::Selector;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
-impl<K, V> PartialMapEntry<K, V> {
+impl<K, V> PartialDecomposableMapEntry<K, V> {
   /// Returns the key of the map entry, if it exists.
   #[inline]
   pub const fn key(&self) -> Option<&K> {
@@ -42,29 +44,29 @@ impl<K, V> PartialMapEntry<K, V> {
   }
 
   #[inline]
-  pub(super) fn try_into_entry(self) -> Result<MapEntry<K, V>, Error> {
+  pub(crate) fn try_into_entry(self) -> Result<DecomposableMapEntry<K, V>, Error> {
     let key = self
       .key
       .ok_or_else(|| Error::custom("missing key in map entry"))?;
     let value = self
       .value
       .ok_or_else(|| Error::custom("missing value in map entry"))?;
-    Ok(MapEntry { key, value })
+    Ok(DecomposableMapEntry { key, value })
   }
 
   #[inline]
-  pub(super) fn and_then<NK, NV, KF, VF>(
+  pub(crate) fn and_then<NK, NV, KF, VF>(
     self,
     kf: KF,
     vf: VF,
-  ) -> Result<PartialMapEntry<NK, NV>, Error>
+  ) -> Result<PartialDecomposableMapEntry<NK, NV>, Error>
   where
     KF: FnOnce(K) -> Result<NK, Error>,
     VF: FnOnce(V) -> Result<NV, Error>,
   {
     let key = self.key.map(kf).transpose()?;
     let value = self.value.map(vf).transpose()?;
-    Ok(PartialMapEntry { key, value })
+    Ok(PartialDecomposableMapEntry { key, value })
   }
 
   pub(super) fn encode_repeated<KW, VW>(
@@ -179,12 +181,12 @@ impl<K, V> PartialMapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -212,12 +214,12 @@ impl<K, V> PartialMapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -233,12 +235,12 @@ impl<K, V> PartialMapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -278,12 +280,12 @@ impl<K, V> PartialMapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let mut len = ei.encoded_len();
@@ -499,12 +501,12 @@ impl<K, V> PartialMapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -520,7 +522,7 @@ impl<K, V> PartialMapEntry<K, V> {
       if offset >= buf_len {
         return Err(Error::buffer_underflow());
       }
-      offset += k.encode(ctx, &mut buf[offset..])?;
+      offset += k.partial_encode(ctx, &mut buf[offset..], selector.key())?;
     }
 
     if let Some(ref v) = self.value {
@@ -533,7 +535,7 @@ impl<K, V> PartialMapEntry<K, V> {
         return Err(Error::buffer_underflow());
       }
 
-      offset += v.partial_encode(ctx, &mut buf[offset..], selector)?;
+      offset += v.partial_encode(ctx, &mut buf[offset..], selector.value())?;
     }
 
     #[cfg(debug_assertions)]
@@ -547,44 +549,44 @@ impl<K, V> PartialMapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let mut len = 0;
     if let Some(ref k) = self.key {
-      len += ki.encoded_len() + k.encoded_len(ctx);
+      len += ki.encoded_len() + k.partial_encoded_len(ctx, selector.key());
     }
 
     if let Some(ref v) = self.value {
-      len += vi.encoded_len() + v.partial_encoded_len(ctx, selector);
+      len += vi.encoded_len() + v.partial_encoded_len(ctx, selector.value());
     }
     len
   }
 }
 
-pub struct MapEntry<K, V> {
+pub struct DecomposableMapEntry<K, V> {
   key: K,
   value: V,
 }
 
-impl<K, V> From<(K, V)> for MapEntry<K, V> {
+impl<K, V> From<(K, V)> for DecomposableMapEntry<K, V> {
   fn from((key, value): (K, V)) -> Self {
     Self { key, value }
   }
 }
 
-impl<K, V> From<MapEntry<K, V>> for (K, V) {
-  fn from(entry: MapEntry<K, V>) -> Self {
+impl<K, V> From<DecomposableMapEntry<K, V>> for (K, V) {
+  fn from(entry: DecomposableMapEntry<K, V>) -> Self {
     entry.into_components()
   }
 }
 
-impl<K, V> MapEntry<K, V> {
+impl<K, V> DecomposableMapEntry<K, V> {
   /// Returns the key of the map entry, if it exists.
   #[inline]
   pub const fn key(&self) -> &K {
@@ -715,12 +717,12 @@ impl<K, V> MapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -748,12 +750,12 @@ impl<K, V> MapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -769,12 +771,12 @@ impl<K, V> MapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_entry_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -814,12 +816,12 @@ impl<K, V> MapEntry<K, V> {
     ei: &Identifier,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let mut len = ei.encoded_len();
@@ -1036,12 +1038,12 @@ impl<K, V> MapEntry<K, V> {
     buf: &mut [u8],
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> Result<usize, Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto>,
     V: PartialEncode<VW, Groto>,
   {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
@@ -1055,7 +1057,9 @@ impl<K, V> MapEntry<K, V> {
     if offset >= buf_len {
       return Err(Error::buffer_underflow());
     }
-    offset += self.key.encode(ctx, &mut buf[offset..])?;
+    offset += self
+      .key
+      .partial_encode(ctx, &mut buf[offset..], selector.key())?;
 
     if offset >= buf_len {
       return Err(Error::buffer_underflow());
@@ -1068,7 +1072,7 @@ impl<K, V> MapEntry<K, V> {
 
     offset += self
       .value
-      .partial_encode(ctx, &mut buf[offset..], selector)?;
+      .partial_encode(ctx, &mut buf[offset..], selector.value())?;
 
     #[cfg(debug_assertions)]
     crate::debug_assert_write_eq::<Self>(offset, encoded_len);
@@ -1081,17 +1085,17 @@ impl<K, V> MapEntry<K, V> {
     ctx: &Context,
     ki: &Identifier,
     vi: &Identifier,
-    selector: &V::Selector,
+    selector: &DecomposableMapSelector<K::Selector, V::Selector>,
   ) -> usize
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    K: Encode<KW, Groto>,
+    K: PartialEncode<KW, Groto> + Selectable<Groto>,
     V: PartialEncode<VW, Groto> + Selectable<Groto>,
   {
     let mut len = 0;
-    len += ki.encoded_len() + self.key.encoded_len(ctx);
-    len += vi.encoded_len() + self.value.partial_encoded_len(ctx, selector);
+    len += ki.encoded_len() + self.key.partial_encoded_len(ctx, selector.key());
+    len += vi.encoded_len() + self.value.partial_encoded_len(ctx, selector.value());
     len
   }
 }

@@ -7,7 +7,7 @@ use crate::{
 
 /// The selector for a map.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum MapSelector<KS, VS> {
+pub enum DecomposableMapSelector<KS, VS> {
   /// Only selects the keys of the map.
   Key(KS),
   /// Only selects the values of the map.
@@ -21,18 +21,18 @@ pub enum MapSelector<KS, VS> {
   },
 }
 
-impl<K, V, F> Selector<F> for MapSelector<K, V>
+impl<K, V, F> Selector<F> for DecomposableMapSelector<K, V>
 where
   K: Selector<F>,
   V: Selector<F>,
   F: Flavor + ?Sized,
 {
-  const ALL: Self = MapSelector::Entry {
+  const ALL: Self = DecomposableMapSelector::Entry {
     key: K::ALL,
     value: V::ALL,
   };
 
-  const NONE: Self = MapSelector::Entry {
+  const NONE: Self = DecomposableMapSelector::Entry {
     key: K::NONE,
     value: V::NONE,
   };
@@ -41,29 +41,29 @@ where
 
   fn selected(&self) -> usize {
     match self {
-      MapSelector::Key(k) => k.selected(),
-      MapSelector::Value(v) => v.selected(),
-      MapSelector::Entry { key, value } => key.selected() + value.selected(),
+      DecomposableMapSelector::Key(k) => k.selected(),
+      DecomposableMapSelector::Value(v) => v.selected(),
+      DecomposableMapSelector::Entry { key, value } => key.selected() + value.selected(),
     }
   }
 
   fn unselected(&self) -> usize {
     match self {
-      MapSelector::Key(k) => k.unselected(),
-      MapSelector::Value(v) => v.unselected(),
-      MapSelector::Entry { key, value } => key.unselected() + value.unselected(),
+      DecomposableMapSelector::Key(k) => k.unselected(),
+      DecomposableMapSelector::Value(v) => v.unselected(),
+      DecomposableMapSelector::Entry { key, value } => key.unselected() + value.unselected(),
     }
   }
 
   fn flip(&mut self) -> &mut Self {
     match self {
-      MapSelector::Key(k) => {
+      DecomposableMapSelector::Key(k) => {
         k.flip();
       }
-      MapSelector::Value(v) => {
+      DecomposableMapSelector::Value(v) => {
         v.flip();
       }
-      MapSelector::Entry { key, value } => {
+      DecomposableMapSelector::Entry { key, value } => {
         key.flip();
         value.flip();
       }
@@ -73,46 +73,49 @@ where
 
   fn merge(&mut self, other: Self) -> &mut Self {
     match (&mut *self, other) {
-      (MapSelector::Key(k1), MapSelector::Key(k2)) => {
+      (DecomposableMapSelector::Key(k1), DecomposableMapSelector::Key(k2)) => {
         k1.merge(k2);
         self
       }
-      (MapSelector::Value(v1), MapSelector::Value(v2)) => {
+      (DecomposableMapSelector::Value(v1), DecomposableMapSelector::Value(v2)) => {
         v1.merge(v2);
         self
       }
-      (MapSelector::Entry { key: k1, value: v1 }, MapSelector::Entry { key: k2, value: v2 }) => {
+      (
+        DecomposableMapSelector::Entry { key: k1, value: v1 },
+        DecomposableMapSelector::Entry { key: k2, value: v2 },
+      ) => {
         k1.merge(k2);
         v1.merge(v2);
         self
       }
-      (MapSelector::Key(k), MapSelector::Entry { key: k2, value: v2 }) => {
+      (DecomposableMapSelector::Key(k), DecomposableMapSelector::Entry { key: k2, value: v2 }) => {
         k.merge(k2);
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry { key: k, value: v2 };
+        *self = DecomposableMapSelector::Entry { key: k, value: v2 };
         self
       }
-      (MapSelector::Key(k), MapSelector::Value(v)) => {
+      (DecomposableMapSelector::Key(k), DecomposableMapSelector::Value(v)) => {
         let k = mem::replace(k, K::NONE);
-        *self = MapSelector::Entry { key: k, value: v };
+        *self = DecomposableMapSelector::Entry { key: k, value: v };
         self
       }
-      (MapSelector::Value(v), MapSelector::Key(k)) => {
+      (DecomposableMapSelector::Value(v), DecomposableMapSelector::Key(k)) => {
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry { key: k, value: v };
+        *self = DecomposableMapSelector::Entry { key: k, value: v };
         self
       }
-      (MapSelector::Value(v), MapSelector::Entry { key, value }) => {
+      (DecomposableMapSelector::Value(v), DecomposableMapSelector::Entry { key, value }) => {
         v.merge(value);
         let v = mem::replace(v, V::NONE);
-        *self = MapSelector::Entry { key, value: v };
+        *self = DecomposableMapSelector::Entry { key, value: v };
         self
       }
-      (MapSelector::Entry { key, .. }, MapSelector::Key(k)) => {
+      (DecomposableMapSelector::Entry { key, .. }, DecomposableMapSelector::Key(k)) => {
         key.merge(k);
         self
       }
-      (MapSelector::Entry { value, .. }, MapSelector::Value(v)) => {
+      (DecomposableMapSelector::Entry { value, .. }, DecomposableMapSelector::Value(v)) => {
         value.merge(v);
         self
       }
@@ -121,24 +124,24 @@ where
 }
 
 /// A map entry that contains a key and a value.
-pub struct MapEntry<K, V> {
+pub struct DecomposableMapEntry<K, V> {
   key: K,
   value: V,
 }
 
-impl<K, V> From<(K, V)> for MapEntry<K, V> {
+impl<K, V> From<(K, V)> for DecomposableMapEntry<K, V> {
   fn from((key, value): (K, V)) -> Self {
     Self { key, value }
   }
 }
 
-impl<K, V> From<MapEntry<K, V>> for (K, V) {
-  fn from(MapEntry { key, value }: MapEntry<K, V>) -> Self {
+impl<K, V> From<DecomposableMapEntry<K, V>> for (K, V) {
+  fn from(DecomposableMapEntry { key, value }: DecomposableMapEntry<K, V>) -> Self {
     (key, value)
   }
 }
 
-impl<K, V> MapEntry<K, V> {
+impl<K, V> DecomposableMapEntry<K, V> {
   /// Creates a new map entry with the given key and value.
   #[inline]
   pub const fn new(key: K, value: V) -> Self {
@@ -182,7 +185,7 @@ impl<K, V> MapEntry<K, V> {
   }
 }
 
-impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> MapEntry<&'k K, &'v V> {
+impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> DecomposableMapEntry<&'k K, &'v V> {
   /// Creates a new map entry with the given refernece key and value.
   #[inline]
   pub const fn from_ref(key: &'k K, value: &'v V) -> Self {
@@ -190,7 +193,7 @@ impl<'k, 'v, K: 'k + ?Sized, V: 'v + ?Sized> MapEntry<&'k K, &'v V> {
   }
 }
 
-impl<K, V, F> Selectable<F> for MapEntry<K, V>
+impl<K, V, F> Selectable<F> for DecomposableMapEntry<K, V>
 where
   V: Selectable<F>,
   F: Flavor + ?Sized,

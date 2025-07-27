@@ -1,19 +1,11 @@
 use indexmap_2::IndexSet;
 
-use core::hash::{BuildHasher, Hash};
-
 use crate::{
-  buffer::Buffer,
-  convert::{Extracted, Inner, PartialIdentity, TryFromPartial},
-  flavors::{
-    Groto,
-    groto::{Context, Error},
-  },
+  convert::{Extracted, Inner, PartialIdentity},
+  flavors::Groto,
   selection::Selectable,
   state::{Partial, State},
 };
-
-use super::DefaultPartialSetBuffer;
 
 mod packed;
 mod repeated;
@@ -28,19 +20,12 @@ impl<K, S> State<Extracted<Inner>> for IndexSet<K, S> {
   type Output = K;
 }
 
-impl<K, S> State<Partial<Groto>> for IndexSet<K, S>
-where
-  K: State<Partial<Groto>>,
-  K::Output: Sized,
-{
-  type Output = super::DefaultPartialSetBuffer<K::Output>;
+impl<K, S> State<Partial<Groto>> for IndexSet<K, S> {
+  type Output = IndexSet<K, S>;
 }
 
-impl<K, S> Selectable<Groto> for IndexSet<K, S>
-where
-  K: Selectable<Groto>,
-{
-  type Selector = K::Selector;
+impl<K, S> Selectable<Groto> for IndexSet<K, S> {
+  type Selector = bool;
 }
 
 impl<K, S> PartialIdentity<Groto> for IndexSet<K, S>
@@ -50,29 +35,8 @@ where
 {
   fn partial_identity<'a>(
     input: &'a mut Self::Output,
-    selector: &'a Self::Selector,
+    _: &'a Self::Selector,
   ) -> &'a mut Self::Output {
-    input.as_mut_slice().iter_mut().for_each(|item| {
-      K::partial_identity(item, selector);
-    });
-
     input
-  }
-}
-
-impl<K, S> TryFromPartial<Groto> for IndexSet<K, S>
-where
-  K: TryFromPartial<Groto> + Eq + Hash,
-  K::Output: Sized,
-  S: BuildHasher + Default,
-{
-  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
-    let mut set = IndexSet::with_capacity_and_hasher(input.len(), S::default());
-
-    for item in input.into_iter() {
-      ctx.err_duplicated_set_keys(!set.insert(K::try_from_partial(ctx, item)?))?;
-    }
-
-    Ok(set)
   }
 }

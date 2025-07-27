@@ -1,12 +1,8 @@
 use std::collections::BTreeMap;
 
 use crate::{
-  buffer::Buffer,
-  convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
-  flavors::{
-    Groto,
-    groto::{Context, Error},
-  },
+  convert::{Extracted, Inner, MapKey, MapValue},
+  flavors::Groto,
   selection::Selectable,
   state::{Partial, State},
 };
@@ -34,53 +30,43 @@ impl<K, V> State<Extracted<MapValue>> for BTreeMap<K, V> {
 
 impl<K, V> State<Partial<Groto>> for BTreeMap<K, V>
 where
-  K: State<Partial<Groto>>,
-  K::Output: Sized,
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = super::DefaultPartialMapBuffer<K::Output, V::Output>;
+  type Output = BTreeMap<K, V::Output>;
 }
 
 impl<K, V> Selectable<Groto> for BTreeMap<K, V>
 where
-  K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
-  type Selector = super::MapSelector<K::Selector, V::Selector>;
+  type Selector = V::Selector;
 }
 
-impl<K, V> TryFromPartial<Groto> for BTreeMap<K, V>
-where
-  K: TryFromPartial<Groto> + Ord,
-  K::Output: Sized,
-  V: TryFromPartial<Groto>,
-  V::Output: Sized,
-{
-  fn try_from_partial(
-    ctx: &Context,
-    input: <Self as State<Partial<Groto>>>::Output,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-    <Self as State<Partial<Groto>>>::Output: Sized,
-  {
-    let expected = input.len();
-    let mut map = BTreeMap::new();
+// impl<K, V> TryFromPartial<Groto> for BTreeMap<K, V>
+// where
+//   K: TryFromPartial<Groto> + Ord,
+//   K::Output: Sized,
+//   V: TryFromPartial<Groto>,
+//   V::Output: Sized,
+// {
+//   fn try_from_partial(
+//     ctx: &Context,
+//     input: <Self as State<Partial<Groto>>>::Output,
+//   ) -> Result<Self, Error>
+//   where
+//     Self: Sized,
+//     <Self as State<Partial<Groto>>>::Output: Sized,
+//   {
+//     let expected = input.len();
+//     let mut map = BTreeMap::new();
 
-    for ent in input.into_iter() {
-      let (k, v) = ent
-        .and_then(
-          |k| K::try_from_partial(ctx, k),
-          |v| V::try_from_partial(ctx, v),
-        )?
-        .try_into_entry()?
-        .into();
-      ctx.err_duplicated_map_keys(map.insert(k, v).is_some())?;
-    }
+//     for (k, v) in input.into_iter() {
+//       ctx.err_duplicated_map_keys(map.insert(k, V::try_from_partial(ctx, v)?).is_some())?;
+//     }
 
-    ctx.err_length_mismatch(expected, map.len())?;
+//     ctx.err_length_mismatch(expected, map.len())?;
 
-    Ok(map)
-  }
-}
+//     Ok(map)
+//   }
+// }

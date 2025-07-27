@@ -3,8 +3,7 @@ use indexmap_2::IndexSet;
 use core::hash::BuildHasher;
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -13,14 +12,10 @@ use crate::{
       Context, Error, RepeatedDecoder, RepeatedDecoderBuffer, context::RepeatedDecodePolicy,
     },
   },
-  selection::{Selectable, Selector},
-  state::{Partial, PartialRef, Ref, State},
+  state::{PartialRef, Ref, State},
 };
 
-use super::{
-  super::super::{repeated_decode, repeated_encode, repeated_encoded_len, try_from},
-  DefaultPartialSetBuffer,
-};
+use super::super::super::{repeated_decode, repeated_encode, repeated_encoded_len};
 
 impl<K, S> DefaultRepeatedWireFormat<Groto> for IndexSet<K, S> {
   type Format<KM, const TAG: u32>
@@ -34,7 +29,7 @@ impl<'a, K, KW, S, RB, B, const TAG: u32> State<PartialRef<'a, Repeated<KW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, KW, RB, B, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;
@@ -81,7 +76,7 @@ where
 impl<K, KW, S, const TAG: u32> PartialEncode<Repeated<KW, TAG>, Groto> for IndexSet<K, S>
 where
   KW: WireFormat<Groto>,
-  K: PartialEncode<KW, Groto>,
+  K: Encode<KW, Groto>,
 {
   fn partial_encode_raw(
     &self,
@@ -89,24 +84,19 @@ where
     buf: &mut [u8],
     selector: &Self::Selector,
   ) -> Result<usize, Error> {
-    if selector.is_empty() {
+    if *selector {
       return Ok(0);
     }
 
-    repeated_encode::<K, KW, _, TAG>(
-      buf,
-      || self.iter(),
-      |k| k.partial_encoded_len(context, selector),
-      |k, buf| k.partial_encode(context, buf, selector),
-    )
+    <Self as Encode<Repeated<KW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
   fn partial_encoded_raw_len(&self, context: &Context, selector: &Self::Selector) -> usize {
-    if selector.is_empty() {
+    if *selector {
       return 0;
     }
 
-    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.partial_encoded_len(context, selector))
+    repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
   fn partial_encode(
@@ -175,119 +165,119 @@ where
   }
 }
 
-impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, Repeated<KW, TAG>, RB, UB, Groto>
-  for IndexSet<K, S>
-where
-  KW: WireFormat<Groto> + 'a,
-  K: TryFromRef<'a, KW, RB, UB, Groto> + core::hash::Hash + Eq + 'a,
-  K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
-  RB: ReadBuf + 'a,
-  UB: UnknownBuffer<RB, Groto> + 'a,
-  S: BuildHasher + Default,
-{
-  fn try_from_ref(
-    ctx: &'a Context,
-    input: <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-    <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'a,
-    UB: UnknownBuffer<RB, Groto>,
-  {
-    let capacity_hint = input.capacity_hint();
-    let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
+// impl<'a, K, KW, S, RB, UB, const TAG: u32> TryFromRef<'a, Repeated<KW, TAG>, RB, UB, Groto>
+//   for IndexSet<K, S>
+// where
+//   KW: WireFormat<Groto> + 'a,
+//   K: TryFromRef<'a, KW, RB, UB, Groto> + core::hash::Hash + Eq + 'a,
+//   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
+//   RB: ReadBuf + 'a,
+//   UB: UnknownBuffer<RB, Groto> + 'a,
+//   S: BuildHasher + Default,
+// {
+//   fn try_from_ref(
+//     ctx: &'a Context,
+//     input: <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
+//   ) -> Result<Self, Error>
+//   where
+//     Self: Sized,
+//     <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
+//     RB: ReadBuf + 'a,
+//     UB: UnknownBuffer<RB, Groto>,
+//   {
+//     let capacity_hint = input.capacity_hint();
+//     let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
 
-    try_from::<K, K::Output, KW, RB, UB, _, _>(
-      &mut set,
-      input.iter(),
-      |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
-      |item| K::try_from_ref(ctx, item),
-    )
-    .map(|_| set)
-  }
-}
+//     try_from::<K, K::Output, KW, RB, UB, _, _>(
+//       &mut set,
+//       input.iter(),
+//       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
+//       |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
+//       |item| K::try_from_ref(ctx, item),
+//     )
+//     .map(|_| set)
+//   }
+// }
 
-impl<'a, K, KW, S, RB, B, const TAG: u32> TryFromPartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>
-  for IndexSet<K, S>
-where
-  KW: WireFormat<Groto> + 'a,
-  K: TryFromPartialRef<'a, KW, RB, B, Groto> + core::hash::Hash + Eq + 'a,
-  K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: ReadBuf + 'a,
-  B: UnknownBuffer<RB, Groto> + 'a,
-  S: BuildHasher + Default,
-{
-  fn try_from_partial_ref(
-    ctx: &'a Context,
-    input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-    <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'a,
-    B: UnknownBuffer<RB, Groto>,
-  {
-    let capacity_hint = input.capacity_hint();
-    let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
+// impl<'a, K, KW, S, RB, B, const TAG: u32> TryFromPartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>
+//   for IndexSet<K, S>
+// where
+//   KW: WireFormat<Groto> + 'a,
+//   K: TryFromPartialRef<'a, KW, RB, B, Groto> + core::hash::Hash + Eq + 'a,
+//   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
+//   RB: ReadBuf + 'a,
+//   B: UnknownBuffer<RB, Groto> + 'a,
+//   S: BuildHasher + Default,
+// {
+//   fn try_from_partial_ref(
+//     ctx: &'a Context,
+//     input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
+//   ) -> Result<Self, Error>
+//   where
+//     Self: Sized,
+//     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
+//     RB: ReadBuf + 'a,
+//     B: UnknownBuffer<RB, Groto>,
+//   {
+//     let capacity_hint = input.capacity_hint();
+//     let mut set = IndexSet::with_capacity_and_hasher(capacity_hint, Default::default());
 
-    try_from::<K, K::Output, KW, RB, B, _, _>(
-      &mut set,
-      input.iter(),
-      |set| ctx.err_length_mismatch(capacity_hint, set.len()),
-      |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
-      |item| K::try_from_partial_ref(ctx, item),
-    )
-    .map(|_| set)
-  }
-}
+//     try_from::<K, K::Output, KW, RB, B, _, _>(
+//       &mut set,
+//       input.iter(),
+//       |set| ctx.err_length_mismatch(capacity_hint, set.len()),
+//       |set, item| ctx.err_duplicated_set_keys(!set.insert(item)),
+//       |item| K::try_from_partial_ref(ctx, item),
+//     )
+//     .map(|_| set)
+//   }
+// }
 
-impl<'a, K, KW, RB, B, S, const TAG: u32> PartialTryFromRef<'a, Repeated<KW, TAG>, RB, B, Groto>
-  for IndexSet<K, S>
-where
-  KW: WireFormat<Groto> + 'a,
-  K: PartialTryFromRef<'a, KW, RB, B, Groto> + core::hash::Hash + Eq + 'a,
-  <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
-    Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
-  <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-  RB: ReadBuf + 'a,
-  B: UnknownBuffer<RB, Groto> + 'a,
-  S: BuildHasher + Default,
-{
-  fn partial_try_from_ref(
-    context: &'a Context,
-    input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
-    selector: &Self::Selector,
-  ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
-  where
-    <Self as State<Partial<Groto>>>::Output: Sized,
-    <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-  {
-    if selector.is_empty() {
-      return Ok(DefaultPartialSetBuffer::new());
-    }
+// impl<'a, K, KW, RB, B, S, const TAG: u32> PartialTryFromRef<'a, Repeated<KW, TAG>, RB, B, Groto>
+//   for IndexSet<K, S>
+// where
+//   KW: WireFormat<Groto> + 'a,
+//   K: PartialTryFromRef<'a, KW, RB, B, Groto> + core::hash::Hash + Eq + 'a,
+//   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
+//     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
+//   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
+//   RB: ReadBuf + 'a,
+//   B: UnknownBuffer<RB, Groto> + 'a,
+//   S: BuildHasher + Default,
+// {
+//   fn partial_try_from_ref(
+//     context: &'a Context,
+//     input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
+//     selector: &Self::Selector,
+//   ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
+//   where
+//     <Self as State<Partial<Groto>>>::Output: Sized,
+//     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
+//   {
+//     if selector.is_empty() {
+//       return Ok(IndexSet::with_hasher(S::default()));
+//     }
 
-    let iter = input.iter();
-    let capacity_hint = iter.capacity_hint();
-    let Some(mut partial_set) =
-      <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
-    else {
-      return Err(Error::allocation_failed("set"));
-    };
+//     let iter = input.iter();
+//     let capacity_hint = iter.capacity_hint();
+//     let Some(mut partial_set) =
+//       <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
+//     else {
+//       return Err(Error::allocation_failed("set"));
+//     };
 
-    try_from::<_, _, KW, RB, B, _, _>(
-      &mut partial_set,
-      iter,
-      |set| context.err_length_mismatch(capacity_hint, set.len()),
-      |set, k| {
-        if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
-          return Err(Error::capacity_exceeded("set"));
-        }
-        Ok(())
-      },
-      |item| K::partial_try_from_ref(context, item, selector),
-    )
-    .map(|_| partial_set)
-  }
-}
+//     try_from::<_, _, KW, RB, B, _, _>(
+//       &mut partial_set,
+//       iter,
+//       |set| context.err_length_mismatch(capacity_hint, set.len()),
+//       |set, k| {
+//         if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
+//           return Err(Error::capacity_exceeded("set"));
+//         }
+//         Ok(())
+//       },
+//       |item| K::partial_try_from_ref(context, item, selector),
+//     )
+//     .map(|_| partial_set)
+//   }
+// }

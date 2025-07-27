@@ -1,10 +1,8 @@
-pub use buffer::{DefaultPartialMapBuffer, PartialMapBuffer};
-pub use entry::PartialMapEntry;
+pub use decomposable::*;
+pub use entry::{MapEntry, PartialMapEntry};
 pub use packed_map_decoder::*;
 pub use repeated_map_decoder::*;
-pub use selector::MapSelector;
 
-use entry::MapEntry;
 use varing::decode_u32_varint;
 
 use crate::{
@@ -22,11 +20,10 @@ mod hashmap;
 #[cfg(feature = "indexmap_2")]
 mod indexmap;
 
-mod buffer;
+mod decomposable;
 mod entry;
 mod packed_map_decoder;
 mod repeated_map_decoder;
-mod selector;
 
 fn packed_encoded_raw_len<'a, K, V, KW, VW, I, Item>(
   iter: I,
@@ -300,7 +297,7 @@ where
   V: 'a,
   RB: ReadBuf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
-  I: Iterator<Item = Result<(usize, PartialMapEntry<KO, VO>), Error>>,
+  I: Iterator<Item = Result<(usize, PartialDecomposableMapEntry<KO, VO>), Error>>,
 {
   for res in iter {
     let (_, item) = res?;

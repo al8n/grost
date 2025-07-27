@@ -1,12 +1,12 @@
 use crate::{flavors::Groto, selection::Selector};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-pub struct MapSelector<K, V> {
+pub struct DecomposableMapSelector<K, V> {
   key: K,
   value: V,
 }
 
-impl<K, V> MapSelector<K, V> {
+impl<K, V> DecomposableMapSelector<K, V> {
   #[inline]
   pub const fn new(key: K, value: V) -> Self {
     Self { key, value }
@@ -23,7 +23,7 @@ impl<K, V> MapSelector<K, V> {
   }
 }
 
-impl<K, V> Selector<Groto> for MapSelector<K, V>
+impl<K, V> Selector<Groto> for DecomposableMapSelector<K, V>
 where
   K: Selector<Groto>,
   V: Selector<Groto>,
