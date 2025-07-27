@@ -26,7 +26,7 @@ impl<'a, K, KW, RB, B> State<PartialRef<'a, Packed<KW>, RB, B, Groto>> for BTree
 where
   KW: WireFormat<Groto> + 'a,
   Packed<KW>: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, KW, RB, B, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = PackedSetDecoder<'a, K::Output, RB, B, KW>;

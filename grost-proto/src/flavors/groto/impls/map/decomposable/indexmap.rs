@@ -1,6 +1,6 @@
 use indexmap_2::IndexMap;
 
-use super::super::{DecomposableMapSelector, DefaultPartialMapBuffer};
+use super::super::{DecomposableMapSelector, DecomposablePartialMapBuffer};
 use crate::{
   buffer::Buffer,
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
@@ -41,7 +41,7 @@ where
   V: State<Partial<Groto>>,
   V::Output: Sized,
 {
-  type Output = DefaultPartialMapBuffer<K::Output, V::Output>;
+  type Output = DecomposablePartialMapBuffer<K::Output, V::Output>;
 }
 
 impl<K, V, S> Selectable<Groto> for Decomposable<IndexMap<K, V, S>>

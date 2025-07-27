@@ -2,8 +2,8 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::super::{
-    DefaultPartialMapBuffer, DecomposableMapEntry, packed_decode, packed_encode, packed_encode_raw,
-    packed_encoded_len, packed_encoded_raw_len, try_from,
+    DecomposableMapEntry, DecomposablePartialMapBuffer, packed_decode, packed_encode,
+    packed_encode_raw, packed_encoded_len, packed_encoded_raw_len, try_from,
   },
   HashMap,
 };
@@ -15,7 +15,7 @@ use crate::{
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultMapWireFormat, Groto, PackedEntry, WireFormat,
-    groto::{Context, Error, PackedMapDecoder},
+    groto::{Context, DecomposablePackedMapDecoder, Error},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -41,7 +41,7 @@ where
   V::Output: Sized,
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
 {
-  type Output = PackedMapDecoder<'a, K::Output, V::Output, RB, B, KW, VW>;
+  type Output = DecomposablePackedMapDecoder<'a, K::Output, V::Output, RB, B, KW, VW>;
 }
 
 impl<'a, K, KW, V, VW, S, RB, B> State<Ref<'a, PackedEntry<KW, VW>, RB, B, Groto>>
@@ -55,7 +55,7 @@ where
   V: State<Ref<'a, VW, RB, B, Groto>>,
   V::Output: Sized,
 {
-  type Output = PackedMapDecoder<'a, K::Output, V::Output, RB, B, KW, VW>;
+  type Output = DecomposablePackedMapDecoder<'a, K::Output, V::Output, RB, B, KW, VW>;
 }
 
 impl<'a, K, KW, V, VW, S, RB, B> Decode<'a, PackedEntry<KW, VW>, RB, B, Groto>
@@ -108,7 +108,9 @@ where
       buf,
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
-      |item, ki, vi, buf| DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+      |item, ki, vi, buf| {
+        DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi)
+      },
     )
   }
 
@@ -124,7 +126,9 @@ where
       self.len(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
-      |item, ki, vi, buf| DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
+      |item, ki, vi, buf| {
+        DecomposableMapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi)
+      },
     )
   }
 
@@ -161,7 +165,8 @@ where
         )
       },
       |item, ki, vi, buf| {
-        DecomposableMapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+        DecomposableMapEntry::from(item)
+          .partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
       },
     )
   }
@@ -172,7 +177,8 @@ where
     }
 
     packed_encoded_raw_len::<K, V, KW, VW, _, _>(self.iter(), |item, ki, vi| {
-      DecomposableMapEntry::from(item).partial_encoded_packed_len::<KW, VW>(context, ki, vi, selector)
+      DecomposableMapEntry::from(item)
+        .partial_encoded_packed_len::<KW, VW>(context, ki, vi, selector)
     })
   }
 
@@ -196,7 +202,8 @@ where
         )
       },
       |item, ki, vi, buf| {
-        DecomposableMapEntry::from(item).partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
+        DecomposableMapEntry::from(item)
+          .partial_encode_packed::<KW, VW>(context, buf, ki, vi, selector)
       },
     )
   }
@@ -319,13 +326,13 @@ where
     <Self as State<PartialRef<'a, PackedEntry<KW, VW>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
-      return Ok(<DefaultPartialMapBuffer<_, _> as Buffer>::new());
+      return Ok(<DecomposablePartialMapBuffer<_, _> as Buffer>::new());
     }
 
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
     let Some(mut partial_map) =
-      <DefaultPartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
+      <DecomposablePartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
     else {
       return Err(Error::allocation_failed("map"));
     };
@@ -333,7 +340,7 @@ where
     for res in iter {
       match res {
         Ok((_, item)) => {
-          if <DefaultPartialMapBuffer<_, _> as Buffer>::push(
+          if <DecomposablePartialMapBuffer<_, _> as Buffer>::push(
             &mut partial_map,
             item.and_then(
               |k| K::partial_try_from_ref(context, k, selector.key()),

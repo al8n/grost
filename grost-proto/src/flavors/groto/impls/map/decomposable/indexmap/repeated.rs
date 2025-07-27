@@ -2,8 +2,8 @@ use core::hash::{BuildHasher, Hash};
 
 use super::{
   super::super::{
-    DefaultPartialMapBuffer, DecomposableMapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
-    try_from,
+    DecomposableMapEntry, DecomposablePartialMapBuffer, repeated_decode, repeated_encode,
+    repeated_encoded_len, try_from,
   },
   IndexMap,
 };
@@ -16,7 +16,8 @@ use crate::{
   flavors::{
     DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat,
     groto::{
-      Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
+      Context, DecomposableRepeatedMapDecoder, DecomposableRepeatedMapDecoderBuffer, Error,
+      context::RepeatedDecodePolicy,
     },
   },
   selection::{Selectable, Selector},
@@ -44,7 +45,7 @@ where
   V::Output: Sized,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
 {
-  type Output = RepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, B, KW, VW, TAG>;
+  type Output = DecomposableRepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, B, KW, VW, TAG>;
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
@@ -58,7 +59,7 @@ where
   V: State<Ref<'a, VW, RB, B, Groto>>,
   V::Output: Sized,
 {
-  type Output = RepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, B, KW, VW, TAG>;
+  type Output = DecomposableRepeatedMapDecoderBuffer<'a, K::Output, V::Output, RB, B, KW, VW, TAG>;
 }
 
 impl<'a, K, KW, V, VW, S, RB, B, const TAG: u32>
@@ -105,7 +106,8 @@ where
         })
       }
       RepeatedDecodePolicy::PreallocateCapacity => {
-        let (read, decoder) = RepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(context, src)?;
+        let (read, decoder) =
+          DecomposableRepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(context, src)?;
         self.reserve(decoder.capacity_hint());
 
         for item in decoder.iter() {
@@ -133,7 +135,9 @@ where
       buf,
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
-      |item, ei, ki, vi, buf| DecomposableMapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
+      |item, ei, ki, vi, buf| {
+        DecomposableMapEntry::from(item).encode_repeated(context, buf, ei, ki, vi)
+      },
     )
   }
 
@@ -319,13 +323,13 @@ where
     <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
   {
     if selector.is_empty() {
-      return Ok(<DefaultPartialMapBuffer<_, _> as Buffer>::new());
+      return Ok(<DecomposablePartialMapBuffer<_, _> as Buffer>::new());
     }
 
     let iter = input.iter();
     let capacity_hint = iter.capacity_hint();
     let Some(mut partial_map) =
-      <DefaultPartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
+      <DecomposablePartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
     else {
       return Err(Error::allocation_failed("map"));
     };
@@ -333,7 +337,7 @@ where
     for res in iter {
       match res {
         Ok((_, item)) => {
-          if <DefaultPartialMapBuffer<_, _> as Buffer>::push(
+          if <DecomposablePartialMapBuffer<_, _> as Buffer>::push(
             &mut partial_map,
             item.and_then(
               |k| K::partial_try_from_ref(context, k, selector.key()),

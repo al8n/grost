@@ -1,6 +1,5 @@
-pub use buffer::{DefaultPartialMapBuffer, PartialMapBuffer};
 pub use decomposable::*;
-pub use entry::{PartialMapEntry, MapEntry};
+pub use entry::{MapEntry, PartialMapEntry};
 pub use packed_map_decoder::*;
 pub use repeated_map_decoder::*;
 
@@ -21,7 +20,6 @@ mod hashmap;
 #[cfg(feature = "indexmap_2")]
 mod indexmap;
 
-mod buffer;
 mod decomposable;
 mod entry;
 mod packed_map_decoder;

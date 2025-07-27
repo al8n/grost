@@ -5,11 +5,8 @@ use hashbrown_0_15::HashMap;
 use std::collections::HashMap;
 
 use crate::{
-  convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
-  flavors::{
-    Groto,
-    groto::{Context, Error},
-  },
+  convert::{Extracted, Inner, MapKey, MapValue},
+  flavors::Groto,
   selection::Selectable,
   state::{Partial, State},
 };
@@ -45,37 +42,36 @@ where
 
 impl<K, V, S> Selectable<Groto> for HashMap<K, V, S>
 where
-  K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
   type Selector = V::Selector;
 }
 
-impl<K, V, S> TryFromPartial<Groto> for HashMap<K, V, S>
-where
-  K: Eq + core::hash::Hash,
-  V: TryFromPartial<Groto>,
-  V::Output: Sized,
-  S: Default + core::hash::BuildHasher,
-{
-  fn try_from_partial(
-    ctx: &Context,
-    input: <Self as State<Partial<Groto>>>::Output,
-  ) -> Result<Self, Error>
-  where
-    Self: Sized,
-    <Self as State<Partial<Groto>>>::Output: Sized,
-  {
-    let expected = input.len();
-    let mut map = HashMap::with_capacity_and_hasher(expected, S::default());
+// impl<K, V, S> TryFromPartial<Groto> for HashMap<K, V, S>
+// where
+//   K: Eq + core::hash::Hash,
+//   V: TryFromPartial<Groto>,
+//   V::Output: Sized,
+//   S: Default + core::hash::BuildHasher,
+// {
+//   fn try_from_partial(
+//     ctx: &Context,
+//     input: <Self as State<Partial<Groto>>>::Output,
+//   ) -> Result<Self, Error>
+//   where
+//     Self: Sized,
+//     <Self as State<Partial<Groto>>>::Output: Sized,
+//   {
+//     let expected = input.len();
+//     let mut map = HashMap::with_capacity_and_hasher(expected, S::default());
 
-    for (k, v) in input.into_iter() {
-      let v = V::try_from_partial(ctx, v)?;
-      ctx.err_duplicated_map_keys(map.insert(k, v).is_some())?;
-    }
+//     for (k, v) in input.into_iter() {
+//       let v = V::try_from_partial(ctx, v)?;
+//       ctx.err_duplicated_map_keys(map.insert(k, v).is_some())?;
+//     }
 
-    ctx.err_length_mismatch(expected, map.len())?;
+//     ctx.err_length_mismatch(expected, map.len())?;
 
-    Ok(map)
-  }
-}
+//     Ok(map)
+//   }
+// }

@@ -14,23 +14,24 @@ mod repeated;
 use super::PartialDecomposableMapEntry;
 
 /// The default partial set buffer type.
-pub type DefaultPartialMapBuffer<K, V> = PartialMapBuffer<K, V>;
+pub type DefaultDecomposablePartialMapBuffer<K, V> = DecomposablePartialMapBuffer<K, V>;
 
 /// A buffer for partial map entries.
-pub struct PartialMapBuffer<K, V, B = DefaultBuffer<PartialDecomposableMapEntry<K, V>>> {
+pub struct DecomposablePartialMapBuffer<K, V, B = DefaultBuffer<PartialDecomposableMapEntry<K, V>>>
+{
   buffer: B,
   _k: PhantomData<K>,
   _v: PhantomData<V>,
 }
 
-impl<K, V, B> PartialMapBuffer<K, V, B> {
+impl<K, V, B> DecomposablePartialMapBuffer<K, V, B> {
   #[inline]
   pub fn into_inner(self) -> B {
     self.buffer
   }
 }
 
-impl<K, V, B> crate::encode::Length for PartialMapBuffer<K, V, B>
+impl<K, V, B> crate::encode::Length for DecomposablePartialMapBuffer<K, V, B>
 where
   B: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
@@ -39,7 +40,7 @@ where
   }
 }
 
-impl<K, V, B> Buffer for PartialMapBuffer<K, V, B>
+impl<K, V, B> Buffer for DecomposablePartialMapBuffer<K, V, B>
 where
   B: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
@@ -111,7 +112,7 @@ where
   }
 }
 
-impl<K, V, B> Selectable<Groto> for PartialMapBuffer<K, V, B>
+impl<K, V, B> Selectable<Groto> for DecomposablePartialMapBuffer<K, V, B>
 where
   K: Selectable<Groto>,
   V: Selectable<Groto>,
@@ -119,6 +120,6 @@ where
   type Selector = super::DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
-impl<K, V, B> State<Partial<Groto>> for PartialMapBuffer<K, V, B> {
+impl<K, V, B> State<Partial<Groto>> for DecomposablePartialMapBuffer<K, V, B> {
   type Output = Self;
 }

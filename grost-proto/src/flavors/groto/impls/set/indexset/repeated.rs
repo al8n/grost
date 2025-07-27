@@ -29,7 +29,7 @@ impl<'a, K, KW, S, RB, B, const TAG: u32> State<PartialRef<'a, Repeated<KW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, KW, RB, B, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
 {
   type Output = RepeatedDecoderBuffer<'a, K::Output, RB, B, KW, TAG>;

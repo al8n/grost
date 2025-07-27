@@ -13,11 +13,11 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::PartialMapEntry;
+use super::{DecomposableMapSelector, PartialDecomposableMapEntry};
 
 /// A lazy decoder for packed map entries from binary protocol data.
 ///
-/// `PackedMapDecoder` provides efficient decoding of packed map-like structures
+/// `DecomposablePackedMapDecoder` provides efficient decoding of packed map-like structures
 /// (such as `HashMap<K, V>`, `BTreeMap<K, V>`, etc.) from binary data using the Groto
 /// packed format. It implements lazy evaluation, meaning key-value pairs are only
 /// decoded when explicitly requested through iteration.
@@ -48,7 +48,7 @@ use super::PartialMapEntry;
 /// The decoder implements fail-fast error semantics:
 /// - Construction errors for malformed headers or insufficient data
 /// - Iterator errors set an internal flag and stop iteration
-/// - Use [`PackedMapDecoderIter::remaining_hint()`] to check error state
+/// - Use [`DecomposablePackedMapDecoderIter::remaining_hint()`] to check error state
 ///
 /// ## Performance
 ///
@@ -58,9 +58,9 @@ use super::PartialMapEntry;
 ///
 /// ## Thread Safety
 ///
-/// `PackedMapDecoder` is `Send` and `Sync` when its buffer type allows it.
+/// `DecomposablePackedMapDecoder` is `Send` and `Sync` when its buffer type allows it.
 /// Multiple iterators can be created from the same decoder safely.
-pub struct PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+pub struct DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   /// The source buffer containing all packed element data
   src: B,
   /// Number of elements as read from the count prefix
@@ -80,7 +80,9 @@ pub struct PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
   _ub: PhantomData<UB>,
 }
 
-impl<'a, K, V, B: Clone, UB, KW, VW> Clone for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+impl<'a, K, V, B: Clone, UB, KW, VW> Clone
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
+{
   fn clone(&self) -> Self {
     Self {
       src: self.src.clone(),
@@ -99,17 +101,17 @@ impl<'a, K, V, B: Clone, UB, KW, VW> Clone for PackedMapDecoder<'a, K, V, B, UB,
   }
 }
 
-impl<'a, K, V, B: Copy, UB, KW, VW> Copy for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {}
+impl<'a, K, V, B: Copy, UB, KW, VW> Copy for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW> {}
 
-impl<'de, K, V, B, UB, KW, VW> PackedMapDecoder<'de, K, V, B, UB, KW, VW> {
+impl<'de, K, V, B, UB, KW, VW> DecomposablePackedMapDecoder<'de, K, V, B, UB, KW, VW> {
   /// Creates an iterator that borrows from the decoder.
   ///
   /// The returned iterator will have the same lifetime as the decoder.
   /// Multiple iterators can be created from the same decoder, each maintaining
   /// independent iteration state.
   #[inline]
-  pub const fn iter(&self) -> PackedMapDecoderIter<'_, 'de, K, V, B, UB, KW, VW> {
-    PackedMapDecoderIter {
+  pub const fn iter(&self) -> DecomposablePackedMapDecoderIter<'_, 'de, K, V, B, UB, KW, VW> {
+    DecomposablePackedMapDecoderIter {
       decoder: self,
       offset: self.data_offset + self.num_elements_size,
       yielded_elements: 0,
@@ -138,7 +140,7 @@ impl<'de, K, V, B, UB, KW, VW> PackedMapDecoder<'de, K, V, B, UB, KW, VW> {
 }
 
 impl<'a, K, V, RB, B, KW, VW> Encode<PackedEntry<KW, VW>, Groto>
-  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+  for DecomposablePackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
@@ -179,12 +181,13 @@ where
 }
 
 impl<'a, K, V, RB, B, KW, VW> PartialEncode<PackedEntry<KW, VW>, Groto>
-  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+  for DecomposablePackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
+  K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
   fn partial_encode_raw(
@@ -232,7 +235,7 @@ where
 }
 
 impl<'a, K, V, B, KW, VW, RB> Decode<'a, PackedEntry<KW, VW>, RB, B, Groto>
-  for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
+  for DecomposablePackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
   KW: WireFormat<Groto> + 'a,
@@ -287,39 +290,50 @@ where
   }
 }
 
-impl<'a, K, V, B, UB, KW, VW> Selectable<Groto> for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+impl<'a, K, V, B, UB, KW, VW> Selectable<Groto>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
 where
+  K: Selectable<Groto>,
   V: Selectable<Groto>,
+  KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
   // For maps, we might use a composite selector that can select both keys and values
-  type Selector = V::Selector;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
-impl<'a, K, V, B, UB, KW, VW> State<Partial<Groto>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+impl<'a, K, V, B, UB, KW, VW> State<Partial<Groto>>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
+{
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW> State<PartialRef<'a, PackedEntry<KW, VW>, B, UB, Groto>>
-  for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW> State<Ref<'a, PackedEntry<KW, VW>, B, UB, Groto>>
-  for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
 {
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW, S> State<Extracted<S>> for PackedMapDecoder<'a, K, V, B, UB, KW, VW> {
+impl<'a, K, V, B, UB, KW, VW, S> State<Extracted<S>>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
+{
   type Output = Self;
 }
 
-impl<'a, K, V, B, UB, KW, VW> PartialIdentity<Groto> for PackedMapDecoder<'a, K, V, B, UB, KW, VW>
+impl<'a, K, V, B, UB, KW, VW> PartialIdentity<Groto>
+  for DecomposablePackedMapDecoder<'a, K, V, B, UB, KW, VW>
 where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
   V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
   fn partial_identity<'b>(
@@ -348,9 +362,9 @@ where
 /// The iterator processes contiguous key-value pairs without identifier
 /// prefixes between elements. Each call to `next()` decodes both a key
 /// and its associated value sequentially.
-pub struct PackedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW> {
+pub struct DecomposablePackedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW> {
   /// Reference to the parent decoder
-  decoder: &'a PackedMapDecoder<'de, K, V, RB, UB, KW, VW>,
+  decoder: &'a DecomposablePackedMapDecoder<'de, K, V, RB, UB, KW, VW>,
   /// Current byte offset within the source buffer
   offset: usize,
   /// Number of key-value pairs successfully decoded so far
@@ -361,7 +375,9 @@ pub struct PackedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW> {
   has_error: bool,
 }
 
-impl<'a, 'de: 'a, K, V, B, UB, KW, VW> PackedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW> {
+impl<'a, 'de: 'a, K, V, B, UB, KW, VW>
+  DecomposablePackedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW>
+{
   /// Returns the current byte position within the source buffer.
   #[inline]
   pub const fn position(&self) -> usize {
@@ -398,7 +414,7 @@ impl<'a, 'de: 'a, K, V, B, UB, KW, VW> PackedMapDecoderIter<'a, 'de, K, V, B, UB
 }
 
 impl<'a, 'de: 'a, RB, UB, KW, VW, K, V> Iterator
-  for PackedMapDecoderIter<'a, 'de, K, V, RB, UB, KW, VW>
+  for DecomposablePackedMapDecoderIter<'a, 'de, K, V, RB, UB, KW, VW>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
@@ -407,7 +423,7 @@ where
   UB: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -429,7 +445,7 @@ where
     }
 
     Some(
-      PartialMapEntry::decode_packed_entry(
+      PartialDecomposableMapEntry::decode_packed_entry(
         self.decoder.ctx,
         self.decoder.src.slice(self.offset..),
         &self.decoder.key_identifier,
@@ -451,7 +467,7 @@ where
 }
 
 impl<'a, 'de: 'a, RB, B, KW, VW, K, V> FusedIterator
-  for PackedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW>
+  for DecomposablePackedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,

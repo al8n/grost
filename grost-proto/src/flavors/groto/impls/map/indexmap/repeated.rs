@@ -1,16 +1,12 @@
 use core::hash::{BuildHasher, Hash};
 
 use super::{
-  super::{
-    DefaultPartialMapBuffer, DecomposableMapEntry, repeated_decode, repeated_encode, repeated_encoded_len,
-    try_from,
-  },
+  super::{MapEntry, repeated_decode, repeated_encode, repeated_encoded_len},
   IndexMap,
 };
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
-  convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
+  buffer::{ReadBuf, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -19,8 +15,8 @@ use crate::{
       Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
     },
   },
-  selection::{Selectable, Selector},
-  state::{Partial, PartialRef, Ref, State},
+  selection::Selector,
+  state::{PartialRef, Ref, State},
 };
 
 impl<K, V, S> DefaultRepeatedEntryWireFormat<Groto> for IndexMap<K, V, S> {
@@ -36,7 +32,7 @@ impl<'a, K, V, KW, VW, S, RB, B, const TAG: u32>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  K: State<PartialRef<'a, KW, RB, B, Groto>>,
+  K: State<Ref<'a, KW, RB, B, Groto>>,
   K::Output: Sized,
   V: State<PartialRef<'a, VW, RB, B, Groto>>,
   V::Output: Sized,
@@ -90,7 +86,7 @@ where
     match context.repeated_decode_policy() {
       RepeatedDecodePolicy::GrowIncrementally => {
         repeated_decode::<KW, VW, Self, RB, TAG>(src, |ei, ki, vi, src| {
-          let (read, entry) = DecomposableMapEntry::decode_repeated(context, src, ei, ki, vi)?;
+          let (read, entry) = MapEntry::decode_repeated(context, src, ei, ki, vi)?;
           match entry {
             Some(entry) => {
               let (k, v) = entry.into_components();
@@ -131,13 +127,13 @@ where
       buf,
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
-      |item, ei, ki, vi, buf| DecomposableMapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
+      |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
     )
   }
 
   fn encoded_raw_len(&self, context: &Context) -> usize {
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      DecomposableMapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
+      MapEntry::from(item).encoded_repeated_len(context, ei, ki, vi)
     })
   }
 
@@ -177,7 +173,7 @@ where
         )
       },
       |item, ei, ki, vi, buf| {
-        DecomposableMapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
+        MapEntry::from(item).partial_encode_repeated(context, buf, ei, ki, vi, selector)
       },
     )
   }
@@ -188,7 +184,7 @@ where
     }
 
     repeated_encoded_len::<KW, VW, _, _, TAG>(self.iter(), |item, ei, ki, vi| {
-      DecomposableMapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
+      MapEntry::from(item).partial_encoded_repeated_len(context, ei, ki, vi, selector)
     })
   }
 
@@ -315,13 +311,13 @@ where
 //     <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
 //   {
 //     if selector.is_empty() {
-//       return Ok(<DefaultPartialMapBuffer<_, _> as Buffer>::new());
+//       return Ok(<DecomposablePartialMapBuffer<_, _> as Buffer>::new());
 //     }
 
 //     let iter = input.iter();
 //     let capacity_hint = iter.capacity_hint();
 //     let Some(mut partial_map) =
-//       <DefaultPartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
+//       <DecomposablePartialMapBuffer<_, _> as Buffer>::with_capacity(capacity_hint)
 //     else {
 //       return Err(Error::allocation_failed("map"));
 //     };
@@ -329,7 +325,7 @@ where
 //     for res in iter {
 //       match res {
 //         Ok((_, item)) => {
-//           if <DefaultPartialMapBuffer<_, _> as Buffer>::push(
+//           if <DecomposablePartialMapBuffer<_, _> as Buffer>::push(
 //             &mut partial_map,
 //             item.and_then(
 //               |k| K::partial_try_from_ref(context, k, selector.key()),

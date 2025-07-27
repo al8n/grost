@@ -13,11 +13,11 @@ use crate::{
   state::{Partial, PartialRef, Ref, State},
 };
 
-use super::PartialMapEntry;
+use super::{DecomposableMapSelector, PartialDecomposableMapEntry};
 
 /// A lazy iterator for decoding repeated map entries from binary protocol data.
 ///
-/// `RepeatedMapDecoder` provides efficient, on-demand decoding of map entries
+/// `DecomposableRepeatedMapDecoder` provides efficient, on-demand decoding of map entries
 /// (key-value pairs) from binary data using the Groto protocol format.
 /// It implements lazy evaluation, meaning entries are only decoded when explicitly
 /// requested through iteration.
@@ -50,7 +50,7 @@ use super::PartialMapEntry;
 /// The decoder implements fail-fast error semantics:
 /// - Any decoding error sets an internal error flag on the iterator
 /// - Once an error occurs, all subsequent iterations return `None`
-/// - Use [`RepeatedMapDecoderIter::remaining_hint()`] to check if errors occurred
+/// - Use [`DecomposableRepeatedMapDecoderIter::remaining_hint()`] to check if errors occurred
 ///
 /// ## Performance
 ///
@@ -60,9 +60,9 @@ use super::PartialMapEntry;
 ///
 /// ## Thread Safety
 ///
-/// `RepeatedMapDecoder` is `Send` and `Sync` when its buffer type allows it.
+/// `DecomposableRepeatedMapDecoder` is `Send` and `Sync` when its buffer type allows it.
 /// Multiple iterators can be created from the same decoder safely.
-pub struct RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, const TAG: u32> {
+pub struct DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, const TAG: u32> {
   /// The source buffer containing all repeated map entry data
   src: B,
   /// Total number of map entries found during greedy construction scan
@@ -90,7 +90,7 @@ pub struct RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, const TAG: u32> {
 }
 
 impl<'a, K, V, B: Clone, UB, KW, VW, const TAG: u32> Clone
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   fn clone(&self) -> Self {
     Self {
@@ -111,19 +111,23 @@ impl<'a, K, V, B: Clone, UB, KW, VW, const TAG: u32> Clone
 }
 
 impl<'a, K, V, B: Copy, UB, KW, VW, const TAG: u32> Copy
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
 }
 
-impl<'de, K, V, B, UB, KW, VW, const TAG: u32> RepeatedMapDecoder<'de, K, V, B, UB, KW, VW, TAG> {
+impl<'de, K, V, B, UB, KW, VW, const TAG: u32>
+  DecomposableRepeatedMapDecoder<'de, K, V, B, UB, KW, VW, TAG>
+{
   /// Creates an iterator that borrows from the decoder.
   ///
   /// The returned iterator will have the same lifetime as the decoder.
   /// Multiple iterators can be created from the same decoder, each maintaining
   /// independent iteration state.
   #[inline]
-  pub const fn iter(&self) -> RepeatedMapDecoderIter<'_, 'de, K, V, B, UB, KW, VW, TAG> {
-    RepeatedMapDecoderIter {
+  pub const fn iter(
+    &self,
+  ) -> DecomposableRepeatedMapDecoderIter<'_, 'de, K, V, B, UB, KW, VW, TAG> {
+    DecomposableRepeatedMapDecoderIter {
       decoder: self,
       expected_elements: self.expected_elements,
       has_error: false,
@@ -155,10 +159,13 @@ impl<'de, K, V, B, UB, KW, VW, const TAG: u32> RepeatedMapDecoder<'de, K, V, B, 
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32> PartialIdentity<Groto>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
   V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
   fn partial_identity<'b>(
@@ -170,16 +177,18 @@ where
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32> Selectable<Groto>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 where
+  K: Selectable<Groto>,
   V: Selectable<Groto>,
+  KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
-  type Selector = V::Selector;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Encode<RepeatedEntry<KW, VW, TAG>, Groto>
-  for RepeatedMapDecoder<'a, K, V, RB, B, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, RB, B, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
@@ -210,12 +219,12 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32> PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>
-  for RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode<'a, KW, RB, UB, Groto>,
+  K: Decode<'a, KW, RB, UB, Groto> + Selectable<Groto>,
   V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
@@ -272,7 +281,7 @@ where
 }
 
 impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>
-  for RepeatedMapDecoder<'a, K, V, RB, B, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, RB, B, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
@@ -350,27 +359,27 @@ where
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32> State<Partial<Groto>>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
   State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW, const TAG: u32>
   State<Ref<'a, RepeatedEntry<KW, VW, TAG>, B, UB, Groto>>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, B, UB, KW, VW, S, const TAG: u32> State<Extracted<S>>
-  for RepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoder<'a, K, V, B, UB, KW, VW, TAG>
 where
   S: ?Sized,
 {
@@ -397,9 +406,9 @@ where
 /// - Number of entries successfully decoded
 /// - Error state for fail-fast behavior
 /// - Expected entry count (cached from decoder)
-pub struct RepeatedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32> {
+pub struct DecomposableRepeatedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32> {
   /// Reference to the parent decoder
-  decoder: &'a RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>,
+  decoder: &'a DecomposableRepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>,
   /// Total entries expected (cached from decoder)
   expected_elements: usize,
   /// Error flag - once set, iteration stops permanently
@@ -413,7 +422,7 @@ pub struct RepeatedMapDecoderIter<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: 
 }
 
 impl<'a, 'de: 'a, K, V, B, UB, KW, VW, const TAG: u32>
-  RepeatedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW, TAG>
+  DecomposableRepeatedMapDecoderIter<'a, 'de, K, V, B, UB, KW, VW, TAG>
 {
   /// Returns the current byte position within the source buffer.
   ///
@@ -441,9 +450,9 @@ impl<'a, 'de: 'a, K, V, B, UB, KW, VW, const TAG: u32>
   /// Returns the total number of entries expected according to the wire format.
   ///
   /// This value is determined during decoder construction. See
-  /// [`RepeatedMapDecoder::capacity_hint()`] for more details.
+  /// [`DecomposableRepeatedMapDecoder::capacity_hint()`] for more details.
   ///
-  /// [`RepeatedMapDecoder::capacity_hint()`]: RepeatedMapDecoder::capacity_hint
+  /// [`DecomposableRepeatedMapDecoder::capacity_hint()`]: DecomposableRepeatedMapDecoder::capacity_hint
   #[inline]
   pub const fn capacity_hint(&self) -> usize {
     self.expected_elements
@@ -481,7 +490,7 @@ impl<'a, 'de: 'a, K, V, B, UB, KW, VW, const TAG: u32>
 }
 
 impl<'a, 'de: 'a, RB, B, KW, VW, K, V, const TAG: u32> Iterator
-  for RepeatedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
@@ -490,7 +499,7 @@ where
   B: UnknownBuffer<RB, Groto> + 'de,
   RB: ReadBuf + 'de,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -522,7 +531,7 @@ where
     // Decode the repeated map entry
     // All entries follow the same [identifier][length][key_id][key][value_id][value] pattern
     Some(
-      PartialMapEntry::decode_repeated(
+      PartialDecomposableMapEntry::decode_repeated(
         self.decoder.ctx,
         self.decoder.src.slice(self.offset..),
         &self.decoder.entry_identifier,
@@ -558,7 +567,7 @@ where
 }
 
 impl<'a, 'de, RB, B, KW, VW, K, V, const TAG: u32> FusedIterator
-  for RepeatedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW, TAG>
+  for DecomposableRepeatedMapDecoderIter<'a, 'de, K, V, RB, B, KW, VW, TAG>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
@@ -569,7 +578,7 @@ where
 {
 }
 
-/// A buffer that holds multiple `RepeatedMapDecoder` instances.
+/// A buffer that holds multiple `DecomposableRepeatedMapDecoder` instances.
 ///
 /// This buffer handles repeated map fields that may appear multiple times in a message,
 /// potentially interleaved with other fields. Each decoder instance represents a
@@ -597,7 +606,7 @@ where
 /// - **Construction**: O(k) where k is the number of batches
 /// - **Iteration**: O(1) amortized per entry across all batches
 /// - **Memory**: Stores references to decoder instances, minimal overhead
-pub struct RepeatedMapDecoderBuffer<
+pub struct DecomposableRepeatedMapDecoderBuffer<
   'a,
   K,
   V,
@@ -606,9 +615,9 @@ pub struct RepeatedMapDecoderBuffer<
   KW,
   VW,
   const TAG: u32,
-  B = DefaultBuffer<RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
+  B = DefaultBuffer<DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
 > {
-  /// Buffer containing multiple RepeatedMapDecoder instances
+  /// Buffer containing multiple DecomposableRepeatedMapDecoder instances
   buffer: B,
   /// Phantom data for various lifetimes and types
   _lt: PhantomData<&'a ()>,
@@ -621,7 +630,7 @@ pub struct RepeatedMapDecoderBuffer<
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B> Clone
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   B: Clone,
 {
@@ -640,32 +649,36 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B> Copy
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   B: Copy,
 {
 }
 
 impl<'de, K, V, RB, UB, KW, VW, const TAG: u32, B> Selectable<Groto>
-  for RepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>
 where
+  K: Selectable<Groto>,
   V: Selectable<Groto>,
+  KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
 {
-  type Selector = V::Selector;
+  type Selector = DecomposableMapSelector<K::Selector, V::Selector>;
 }
 
 impl<'de, K, V, RB, UB, KW, VW, const TAG: u32, B>
-  RepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>
+  DecomposableRepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>
 where
-  B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
   /// Creates an iterator over all entries across all decoder batches.
   ///
   /// The iterator processes entries from each decoder sequentially,
   /// automatically advancing to the next decoder when the current one
   /// is exhausted.
-  pub fn iter(&self) -> RepeatedMapDecoderBufferIter<'_, 'de, K, V, RB, UB, KW, VW, TAG, B> {
+  pub fn iter(
+    &self,
+  ) -> DecomposableRepeatedMapDecoderBufferIter<'_, 'de, K, V, RB, UB, KW, VW, TAG, B> {
     let total_expected = self
       .buffer
       .as_slice()
@@ -673,7 +686,7 @@ where
       .map(|d| d.expected_elements)
       .sum();
 
-    RepeatedMapDecoderBufferIter {
+    DecomposableRepeatedMapDecoderBufferIter {
       buffer: self,
       has_error: false,
       current_index: 0,
@@ -719,14 +732,14 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B> Encode<RepeatedEntry<KW, VW, TAG>, Groto>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto>,
-  B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -769,14 +782,14 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B> PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
-  K: Decode<'a, KW, RB, UB, Groto>,
+  K: Decode<'a, KW, RB, UB, Groto> + Selectable<Groto>,
   V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
-  B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
@@ -825,14 +838,14 @@ where
 
 impl<'a, K, V, RB, UB, KW, VW, const TAG: u32, B>
   Decode<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto>,
-  B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
 {
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
@@ -863,13 +876,14 @@ where
     RB: ReadBuf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
-    let (read, decoder) = <RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG> as Decode<
-      'a,
-      RepeatedEntry<KW, VW, TAG>,
-      RB,
-      UB,
-      Groto,
-    >>::decode(ctx, src)?;
+    let (read, decoder) =
+      <DecomposableRepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG> as Decode<
+        'a,
+        RepeatedEntry<KW, VW, TAG>,
+        RB,
+        UB,
+        Groto,
+      >>::decode(ctx, src)?;
 
     if self.buffer.push(decoder).is_none() {
       return Err(Error::custom(
@@ -882,27 +896,27 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32> State<Partial<Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32>
   State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32>
   State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 {
   type Output = Self;
 }
 
 impl<'a, K, V, RB, UB, KW, VW, S, B, const TAG: u32> State<Extracted<S>>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
   S: ?Sized,
 {
@@ -910,10 +924,13 @@ where
 }
 
 impl<'a, K, V, RB, UB, KW, VW, B, const TAG: u32> PartialIdentity<Groto>
-  for RepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBuffer<'a, K, V, RB, UB, KW, VW, TAG, B>
 where
+  K: PartialIdentity<Groto> + Selectable<Groto>,
   V: PartialIdentity<Groto> + Selectable<Groto>,
+  K::Output: Sized + Selectable<Groto, Selector = K::Selector>,
   V::Output: Sized + Selectable<Groto, Selector = V::Selector>,
+  KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
   fn partial_identity<'b>(
@@ -924,7 +941,7 @@ where
   }
 }
 
-/// Iterator that processes entries from multiple `RepeatedMapDecoder` instances sequentially.
+/// Iterator that processes entries from multiple `DecomposableRepeatedMapDecoder` instances sequentially.
 ///
 /// This iterator maintains state for traversing multiple decoder batches, automatically
 /// advancing to the next decoder when the current one is exhausted. It provides
@@ -947,12 +964,23 @@ where
 ///
 /// ## Implementation Notes
 ///
-/// The iterator creates temporary `RepeatedMapDecoderIter` instances and manually
+/// The iterator creates temporary `DecomposableRepeatedMapDecoderIter` instances and manually
 /// restores their state to maintain consistent iteration across decoder boundaries.
 /// This approach allows seamless transitions between decoder batches.
-pub struct RepeatedMapDecoderBufferIter<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32, B> {
+pub struct DecomposableRepeatedMapDecoderBufferIter<
+  'a,
+  'de: 'a,
+  K,
+  V,
+  RB,
+  UB,
+  KW,
+  VW,
+  const TAG: u32,
+  B,
+> {
   /// Reference to the parent buffer
-  buffer: &'a RepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>,
+  buffer: &'a DecomposableRepeatedMapDecoderBuffer<'de, K, V, RB, UB, KW, VW, TAG, B>,
   /// Error flag - once set, iteration stops permanently
   has_error: bool,
   /// Index of the currently active decoder batch
@@ -968,7 +996,7 @@ pub struct RepeatedMapDecoderBufferIter<'a, 'de: 'a, K, V, RB, UB, KW, VW, const
 }
 
 impl<'a, 'de, K, V, RB, UB, KW, VW, const TAG: u32, B>
-  RepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
+  DecomposableRepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
 {
   /// Returns the total capacity hint across all decoder batches.
   #[inline]
@@ -1021,9 +1049,9 @@ impl<'a, 'de, K, V, RB, UB, KW, VW, const TAG: u32, B>
 }
 
 impl<'a, 'de, K, V, RB, UB, KW, VW, const TAG: u32, B>
-  RepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
+  DecomposableRepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
 where
-  B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
   /// Returns the total number of decoder batches.
   #[inline]
@@ -1033,7 +1061,7 @@ where
 }
 
 impl<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32, B> Iterator
-  for RepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
@@ -1041,9 +1069,9 @@ where
   V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
-  B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
   fn next(&mut self) -> Option<Self::Item> {
     // Check if we've processed all decoder batches
@@ -1108,7 +1136,7 @@ where
 }
 
 impl<'a, 'de: 'a, K, V, RB, UB, KW, VW, const TAG: u32, B> FusedIterator
-  for RepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
+  for DecomposableRepeatedMapDecoderBufferIter<'a, 'de, K, V, RB, UB, KW, VW, TAG, B>
 where
   KW: WireFormat<Groto> + 'de,
   VW: WireFormat<Groto> + 'de,
@@ -1116,6 +1144,6 @@ where
   V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
   RB: ReadBuf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
-  B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
+  B: Buffer<Item = DecomposableRepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
 }
