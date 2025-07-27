@@ -1,0 +1,152 @@
+[package]
+name = "grost-proto"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+default = ["std"]
+alloc = ["bytes_1", "smol_str_0_3", "hostaddr_0_1?/alloc", "tinyvec_1?/alloc"]
+std = ["thiserror/std", "bytes_1/default", "smol_str_0_3/default", "hostaddr_0_1?/default", "tinyvec_1?/default", "either/default"]
+sql = []
+
+# Enable `syn`, `proc-macro2`, and `quote` features for code generation
+codegen = ["dep:syn", "dep:proc-macro2", "dep:quote"]
+
+arbitrary-int_1 = ["dep:arbitrary-int_1", "varing/arbitrary-int_1"]
+arbitrary-int = ["arbitrary-int_1"]
+
+arrayvec_0_7 = ["dep:arrayvec_0_7"]
+arrayvec = ["arrayvec_0_7"]
+
+bnum_0_13 = ["dep:bnum_0_13", "varing/bnum_0_13"]
+bnum = ["bnum_0_13"]
+
+bstr_1 = ["dep:bstr_1"]
+bstr = ["bstr_1"]
+
+bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
+bytes = ["bytes_1"]
+
+chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
+chrono = ["chrono_0_4"]
+
+chrono-tz_0_10 = ["dep:chrono-tz_0_10", "varing/chrono-tz_0_10"]
+chrono-tz = ["chrono-tz_0_10"]
+
+decimal_1 = ["dep:rust_decimal_1"]
+decimal = ["decimal_1"]
+
+half_2 = ["dep:half_2", "varing/half_2"]
+half = ["half_2"]
+
+hashbrown_0_15 = ["dep:hashbrown_0_15"]
+hashbrown = ["hashbrown_0_15"]
+
+indexmap_2 = ["dep:indexmap_2"]
+indexmap = ["indexmap_2"]
+
+hostaddr_0_1 = ["dep:hostaddr_0_1"]
+hostaddr = ["hostaddr_0_1"]
+
+num-rational_0_4 = ["dep:num-rational_0_4", "varing/num-rational_0_4"]
+num-rational = ["num-rational_0_4"]
+
+num-complex_0_4 = ["dep:num-complex_0_4", "varing/num-complex_0_4"]
+num-complex = ["num-complex_0_4"]
+
+regex_1 = ["dep:regex_1"]
+regex = ["regex_1"]
+
+ruint_1 = ["dep:ruint_1", "varing/ruint_1"]
+ruint = ["ruint_1"]
+
+smol_str_0_3 = ["dep:smol_str_0_3", "hostaddr_0_1?/smol_str_0_3"]
+smol_str = ["smol_str_0_3"]
+
+smallvec_1 = ["dep:smallvec_1", "hostaddr_0_1?/smallvec_1"]
+smallvec = ["smallvec_1"]
+
+time_0_3 = ["dep:time_0_3", "varing/time_0_3"]
+time = ["time_0_3"]
+
+triomphe_0_1 = ["dep:triomphe_0_1", "hostaddr_0_1?/triomphe_0_1"]
+triomphe = ["triomphe_0_1"]
+
+tinystr_0_8 = ["dep:tinystr_0_8"]
+tinystr = ["tinystr_0_8"]
+
+tinyvec_1 = ["dep:tinyvec_1"]
+tinyvec = ["tinyvec_1"]
+
+uuid_1 = ["dep:uuid_1"]
+uuid = ["uuid_1"]
+
+url_2 = ["dep:url_2"]
+url = ["url_2"]
+
+arbitrary = [
+  "dep:arbitrary",
+  "chrono-tz_0_10?/arbitrary",
+  "chrono-tz_0_10?/std",
+  "smol_str_0_3?/arbitrary",
+  "ruint_1?/arbitrary",
+  "rust_decimal_1?/rust-fuzz",
+  "uuid_1?/arbitrary",
+]
+quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck"]
+
+[dependencies]
+auto_enums = "0.8"
+either = { workspace = true, default-features = false }
+ghost = "0.1"
+ref-cast = { version = "1", default-features = false }
+seq-macro = "0.3"
+paste.workspace = true
+simdutf8 = { version = "0.1", default-features = false, optional = true }
+typenum = { version = "1", default-features = false }
+
+
+bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
+bitflags = { version = "2", default-features = false }
+derive_more = { workspace = true, features = ["display", "debug", "is_variant", "try_unwrap", "unwrap"] }
+varing.workspace = true
+quickcheck = { version = "1", optional = true }
+arbitrary = { version = "1", optional = true, features = ["derive"] }
+thiserror.workspace = true
+
+arrayvec_0_7 = { package = "arrayvec", version = "0.7", default-features = false, optional = true }
+arbitrary-int_1 = { package = "arbitrary-int", version = "1", default-features = false, optional = true }
+bstr_1 = { package = "bstr", version = "1", default-features = false, optional = true }
+bnum_0_13 = { package = "bnum", version = "0.13", default-features = false, optional = true }
+chrono_0_4 = { package = "chrono", version = "0.4", default-features = false, optional = true }
+chrono-tz_0_10 = { package = "chrono-tz", version = "0.10", default-features = false, optional = true }
+half_2 = { package = "half", version = "2", default-features = false, optional = true }
+# heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
+hashbrown_0_15 = { package = "hashbrown", version = "0.15", default-features = false, optional = true }
+hostaddr_0_1 = { package = "hostaddr", path = "../../hostaddr", version = "0.1", default-features = false, optional = true }
+indexmap_2 = { package = "indexmap", version = "2", default-features = false, optional = true }
+num-rational_0_4 = { package = "num-rational", version = "0.4", default-features = false, optional = true }
+num-complex_0_4 = { package = "num-complex", version = "0.4", default-features = false, optional = true }
+regex_1 = { package = "regex", version = "1", default-features = false, optional = true }
+ruint_1 = { package = "ruint", version = "1", default-features = false, optional = true }
+rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
+smallvec_1 = { package = "smallvec", version = "1", default-features = false, optional = true, features = ["const_generics"] }
+time_0_3 = { package = "time", version = "0.3", default-features = false, optional = true }
+tinystr_0_8 = { package = "tinystr", version = "0.8", default-features = false, optional = true }
+tinyvec_1 = { package = "tinyvec", version = "1", default-features = false, optional = true, features = ["latest_stable_rust"] }
+triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
+uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
+url_2 = { package = "url", version = "2", default-features = false, optional = true }
+
+syn = { workspace = true, optional = true }
+proc-macro2 = { version = "1", optional = true }
+quote = { version = "1", optional = true }
+

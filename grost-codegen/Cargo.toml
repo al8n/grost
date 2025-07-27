@@ -1,0 +1,48 @@
+[package]
+name = "grost-codegen"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+default = ["std"]
+# generate code for std environment
+std = []
+# generate code for alloc environment
+alloc = []
+
+# support types from `arbitrary-int = "1"`
+arbitrary-int_1 = []
+# support types from `bnum = "0.13"`
+bnum_0_13 = []
+# support types from `ruint = "1"`
+ruint_1 = []
+
+# generate quichcheck implementations and quickcheck unit tests
+quickcheck = []
+# generate code for the `arbitrary` crate
+arbitrary = []
+
+[dependencies]
+cfg-if = "1"
+derive_more = { workspace = true, features = ["unwrap", "from", "display", "is_variant"] }
+either.workspace = true
+heck.workspace = true
+indexmap = "2"
+grost-proto = { workspace = true, features = ["codegen"] }
+grost-mir.workspace = true
+paste.workspace = true
+prettyplease.workspace = true
+proc-macro2 = { workspace = true, features = ["default"] }
+quote = { workspace = true, features = ["default"] }
+syn = { workspace = true, features = ["full", "visit"] }
+darling = { workspace = true, features = ["diagnostics"] }
+smol_str.workspace = true
+thiserror.workspace = true
+varing.workspace = true

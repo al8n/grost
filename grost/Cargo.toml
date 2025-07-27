@@ -1,0 +1,124 @@
+[package]
+name = "grost"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+categories.workspace = true
+metadata.workspace = true
+
+[features]
+default = ["std", "simdutf8", "derive"]
+alloc = [
+  "grost-proto/alloc",
+  "memchr/alloc",
+]
+std = [
+  "grost-proto/default",
+  "memchr/default",
+  "varing/default",
+  "thiserror/default",
+  "bitflags/std",
+]
+derive = ["dep:grost-derive"]
+
+arrayvec_0_7 = ["grost-proto/arrayvec_0_7"]
+arrayvec = ["grost-proto/arrayvec"]
+
+arbitrary-int_1 = ["grost-proto/arbitrary-int_1"]
+arbitrary-int = ["grost-proto/arbitrary-int"]
+
+bnum_0_13 = ["grost-proto/bnum_0_13"]
+bnum = ["grost-proto/bnum"]
+
+bstr_1 = ["grost-proto/bstr_1"]
+bstr = ["grost-proto/bstr"]
+
+bytes_1 = ["grost-proto/bytes_1"]
+bytes = ["grost-proto/bytes"]
+
+chrono_0_4 = ["grost-proto/chrono_0_4"]
+chrono = ["grost-proto/chrono"]
+
+chrono-tz_0_10 = ["grost-proto/chrono-tz_0_10"]
+chrono-tz = ["grost-proto/chrono-tz"]
+
+decimal_1 = ["grost-proto/decimal_1"]
+decimal = ["grost-proto/decimal"]
+
+half_2 = ["grost-proto/half_2"]
+half = ["grost-proto/half"]
+
+# hashbrown_0_15 = ["grost-proto/hashbrown_0_15"]
+# hashbrown = ["grost-proto/hashbrown"]
+
+# heapless_0_9 = ["grost-proto/heapless_0_9"]
+# heapless = ["grost-proto/heapless"]
+
+hostaddr_0_1 = ["grost-proto/hostaddr_0_1"]
+hostaddr = ["grost-proto/hostaddr"]
+
+# indexmap_2 = ["grost-proto/indexmap_2"]
+# indexmap = ["grost-proto/indexmap"]
+
+num-rational_0_4 = ["grost-proto/num-rational_0_4"]
+num-rational = ["grost-proto/num-rational"]
+
+num-complex_0_4 = ["grost-proto/num-complex_0_4"]
+num-complex = ["grost-proto/num-complex"]
+
+regex_1 = ["grost-proto/regex_1"]
+regex = ["grost-proto/regex"]
+
+ruint_1 = ["grost-proto/ruint_1"]
+ruint = ["grost-proto/ruint"]
+
+smol_str_0_3 = ["grost-proto/smol_str_0_3"]
+smol_str = ["grost-proto/smol_str"]
+
+smallvec_1 = ["grost-proto/smallvec_1"]
+smallvec = ["grost-proto/smallvec"]
+
+time_0_3 = ["grost-proto/time_0_3"]
+time = ["grost-proto/time"]
+
+triomphe_0_1 = ["grost-proto/triomphe_0_1"]
+triomphe = ["grost-proto/triomphe"]
+
+tinystr_0_8 = ["grost-proto/tinystr_0_8"]
+tinystr = ["grost-proto/tinystr"]
+
+tinyvec_1 = ["grost-proto/tinyvec_1"]
+tinyvec = ["grost-proto/tinyvec"]
+
+url_2 = ["grost-proto/url_2"]
+url = ["grost-proto/url"]
+
+uuid_1 = ["grost-proto/uuid_1"]
+uuid = ["grost-proto/uuid"]
+
+arbitrary = [
+  "dep:arbitrary",
+]
+quickcheck = ["grost-proto/quickcheck"]
+
+[dependencies]
+varing.workspace = true
+bitflags = { version = "2", default-features = false }
+derive_more = { version = "2", features = ["is_variant", "display", "unwrap", "try_unwrap"] }
+either = { version = "1", default-features = false }
+grost-proto.workspace = true
+grost-derive = { workspace = true, optional = true }
+memchr = { version = "2", default-features = false }
+paste = "1"
+ref-cast = { version = "1", default-features = false }
+seq-macro = "0.3"
+thiserror = { version = "2", default-features = false }
+
+simdutf8 = { version = "0.1", default-features = false, optional = true }
+
+# Optional dependencies
+arbitrary = { version = "1", optional = true, features = ["derive"] }
