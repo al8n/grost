@@ -4,8 +4,11 @@ use syn::{Attribute, Ident, Type, Visibility, WherePredicate, punctuated::Punctu
 use quote::quote;
 
 use crate::{
-  object::{FieldIndex, Label},
-  utils::Invokable,
+  object::{
+    ConvertAttribute, FieldIndex, Label,
+    ast::{FieldDecodeFlavor, FieldEncodeFlavor},
+  },
+  utils::{Invokable, grost_decode_trait_lifetime},
 };
 
 use super::{
@@ -16,12 +19,12 @@ use super::{
 };
 
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
@@ -38,12 +41,14 @@ pub struct ConcreteTaggedField<F = ()> {
   type_params_usages: IdentSet,
   lifetime_params_usages: LifetimeSet,
   partial: ConcretePartialField,
-  partial_decoded: ConcretePartialDecodedField,
+  partial_ref: ConcretePartialRefField,
   index: FieldIndex,
   reflection: ConcreteFieldReflection,
   selector: ConcreteSelectorField,
   schema_name: String,
   schema_description: String,
+  encode: FieldEncodeFlavor,
+  decode: FieldDecodeFlavor,
   tag: u32,
   copy: bool,
   meta: F,
@@ -136,8 +141,8 @@ impl<F> ConcreteTaggedField<F> {
 
   /// Returns the partial decoded field information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedField {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &ConcretePartialRefField {
+    &self.partial_ref
   }
 
   /// Returns the selector field information
@@ -170,6 +175,18 @@ impl<F> ConcreteTaggedField<F> {
     &self.lifetime_params_usages
   }
 
+  /// Returns the encode flavor of the field.
+  #[inline]
+  pub const fn encode(&self) -> &FieldEncodeFlavor {
+    &self.encode
+  }
+
+  /// Returns the decode flavor of the field.
+  #[inline]
+  pub const fn decode(&self) -> &FieldDecodeFlavor {
+    &self.decode
+  }
+
   fn from_ast<M>(
     object: &ConcreteObjectAst<M, F>,
     index: usize,
@@ -185,10 +202,12 @@ impl<F> ConcreteTaggedField<F> {
     let object_ty = object.ty();
     let lifetime_param = object.lifetime_param();
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = object.unknown_buffer_param();
-    let unknown_buffer = &unknown_buffer_param.ident;
+    let buffer_param = object.buffer_param();
+    let buffer = &buffer_param.ident;
+    let read_buffer_param = object.read_buffer_param();
+    let read_buffer = &read_buffer_param.ident;
 
-    let mut partial_decoded_constraints = Punctuated::new();
+    let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
     let use_generics =
@@ -213,7 +232,7 @@ impl<F> ConcreteTaggedField<F> {
             #field_ty: #dwf
           })?;
           selector_constraints.push(pred.clone());
-          partial_decoded_constraints.push(pred);
+          partial_ref_constraints.push(pred);
         }
 
         syn::parse2(quote! {
@@ -225,7 +244,6 @@ impl<F> ConcreteTaggedField<F> {
     let selectable = syn::parse2(quote! {
       #path_to_grost::__private::selection::Selectable<
         #flavor_type,
-        #wf,
       >
     })?;
     let selector_type = syn::parse2(quote! {
@@ -238,8 +256,8 @@ impl<F> ConcreteTaggedField<F> {
       })?);
     }
 
-    let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
-    let partial_decoded_copy_contraint = if partial_decoded_copyable {
+    let partial_ref_copyable = object.partial_ref().copy() || field.partial_ref_copy();
+    let partial_ref_copy_contraint = if partial_ref_copyable {
       Some(quote! {
         + ::core::marker::Copy
       })
@@ -247,37 +265,51 @@ impl<F> ConcreteTaggedField<F> {
       None
     };
 
-    let partial_decoded_ty = match field.flavor().ty().or_else(|| field.partial_decoded_type()) {
-      Some(ty) => ty.clone(),
+    let (partial_ref_ty, partial_ref_state_type) = match field
+      .flavor()
+      .ty()
+      .or_else(|| field.partial_ref_type())
+    {
+      Some(ty) => (ty.clone(), None),
       None => {
         let state_type: Type = syn::parse2(quote! {
-          #path_to_grost::__private::convert::State<
-            #path_to_grost::__private::convert::Decoded<
+          #path_to_grost::__private::state::State<
+            #path_to_grost::__private::state::PartialRef<
               #lifetime,
-              #flavor_type,
               #wf,
-              #unknown_buffer,
+              #read_buffer,
+              #buffer,
+              #flavor_type,
             >
           >
         })?;
 
         if use_generics {
-          partial_decoded_constraints.push(syn::parse2(quote! {
+          partial_ref_constraints.push(syn::parse2(quote! {
             #field_ty: #state_type
           })?);
-          partial_decoded_constraints.push(syn::parse2(quote! {
-            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+          partial_ref_constraints.push(syn::parse2(quote! {
+            <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_ref_copy_contraint
           })?);
         }
 
-        syn::parse2(quote! {
-          <#field_ty as #state_type>::Output
-        })?
+        (
+          syn::parse2(quote! {
+            <#field_ty as #state_type>::Output
+          })?,
+          Some(state_type),
+        )
       }
     };
 
-    let optional_partial_decoded_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_decoded_ty>
+    let flavor_ty = object.flavor().ty();
+    let decode_lt = grost_decode_trait_lifetime();
+    let decode_trait_type = syn::parse2(quote! {
+      #path_to_grost::__private::decode::Decode<#decode_lt, #partial_ref_ty, #wf, #read_buffer, #buffer, #flavor_ty>
+    })?;
+
+    let nullable_partial_ref_type = syn::parse2(quote! {
+      ::core::option::Option<#partial_ref_ty>
     })?;
 
     let use_generics =
@@ -287,19 +319,16 @@ impl<F> ConcreteTaggedField<F> {
     let schema_description = field.schema_description;
     let field_ty = field.ty;
     let partial = field.partial;
-    let partial = ConcretePartialField::from_ast(
-      object.path_to_grost(),
-      &field_ty,
-      partial.ty(),
-      partial.attrs(),
-      use_generics,
-    )?;
-    let partial_decoded = ConcretePartialDecodedField {
-      ty: partial_decoded_ty,
-      optional_type: optional_partial_decoded_type,
-      attrs: field.partial_decoded.attrs,
-      constraints: partial_decoded_constraints,
-      copy: partial_decoded_copyable,
+    let partial = ConcretePartialField::from_ast(&field_ty, partial.ty(), partial.attrs())?;
+    let partial_ref = ConcretePartialRefField {
+      ty: partial_ref_ty,
+      nullable_type: nullable_partial_ref_type,
+      partial_ref_state_type,
+      decode_trait_type,
+      attrs: field.partial_ref.attrs,
+      constraints: partial_ref_constraints,
+      copy: partial_ref_copyable,
+      convert: field.flavor.convert,
     };
     let selector = ConcreteSelectorField {
       ty: selector_type,
@@ -320,7 +349,7 @@ impl<F> ConcreteTaggedField<F> {
 
     Ok(Self {
       partial,
-      partial_decoded,
+      partial_ref,
       name: field.name,
       vis: field.vis,
       label: field.label,
@@ -330,6 +359,8 @@ impl<F> ConcreteTaggedField<F> {
       default: field.default,
       schema_description,
       schema_name,
+      encode: field.flavor.encode,
+      decode: field.flavor.decode,
       type_params_usages: field.type_params_usages,
       lifetime_params_usages: field.lifetime_params_usages,
       copy: field.copy,

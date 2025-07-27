@@ -3,12 +3,12 @@ use syn::Attribute;
 use crate::object::meta::{FieldSelection, SelectorFieldFromMeta};
 
 #[derive(Debug, Clone)]
-pub struct SelectorFieldAttribute {
+pub struct SelectorFieldOptions {
   pub(crate) attrs: Vec<Attribute>,
   pub(crate) select: FieldSelection,
 }
 
-impl SelectorFieldAttribute {
+impl SelectorFieldOptions {
   /// Returns the attributes of the selector field
   pub const fn attrs(&self) -> &[Attribute] {
     self.attrs.as_slice()
@@ -22,8 +22,8 @@ impl SelectorFieldAttribute {
 
 impl SelectorFieldFromMeta {
   /// Finalizes the selector field meta and returns the attribute
-  pub fn finalize(self) -> SelectorFieldAttribute {
-    SelectorFieldAttribute {
+  pub fn finalize(self) -> SelectorFieldOptions {
+    SelectorFieldOptions {
       attrs: self.attrs,
       select: self.select,
     }

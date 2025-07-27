@@ -3,20 +3,20 @@ use quote::quote;
 use syn::{Attribute, GenericParam, Generics, Ident};
 
 use crate::object::mir::derive_flatten_state;
-use crate::object::mir::optional_accessors;
+use crate::object::mir::nullable_accessors;
 
 use super::{super::super::ast::GenericObject as GenericObjectAst, GenericField};
 
 #[derive(Debug, Clone)]
-pub struct GenericPartialDecodedObject {
+pub struct GenericPartialRefObject {
   name: Ident,
   attrs: Vec<Attribute>,
   generics: Generics,
   copy: bool,
-  unknown_buffer_field_name: Ident,
+  buffer_field_name: Ident,
 }
 
-impl GenericPartialDecodedObject {
+impl GenericPartialRefObject {
   /// Returns the name of the partial decoded object.
   #[inline]
   pub const fn name(&self) -> &Ident {
@@ -46,12 +46,12 @@ impl GenericPartialDecodedObject {
     fields: &[GenericField<F>],
   ) -> darling::Result<Self> {
     let path_to_grost = &object.path_to_grost;
-    let partial_decoded_object = &object.partial_decoded;
-    let partial_decoded_object_name = partial_decoded_object.name().clone();
+    let partial_ref_object = &object.partial_ref;
+    let partial_ref_object_name = partial_ref_object.name().clone();
     let flavor_param = &object.flavor_param;
-    let unknown_buffer_param = &object.unknown_buffer_param;
+    let buffer_param = &object.buffer_param;
     let lifetime_param = &object.lifetime_param;
-    let copy = partial_decoded_object.copy();
+    let copy = partial_ref_object.copy();
     let original_generics = &object.generics;
     let mut generics = Generics::default();
 
@@ -84,7 +84,7 @@ impl GenericPartialDecodedObject {
 
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
 
     // push the original const generic parameters last
     generics.params.extend(
@@ -105,7 +105,7 @@ impl GenericPartialDecodedObject {
       .iter()
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .for_each(|f| {
-        let type_constraints = f.partial_decoded().type_constraints();
+        let type_constraints = f.partial_ref().type_constraints();
         if !type_constraints.is_empty() {
           generics
             .make_where_clause()
@@ -115,19 +115,19 @@ impl GenericPartialDecodedObject {
       });
 
     Ok(Self {
-      name: partial_decoded_object_name,
-      attrs: partial_decoded_object.attrs().to_vec(),
+      name: partial_ref_object_name,
+      attrs: partial_ref_object.attrs().to_vec(),
       generics,
-      unknown_buffer_field_name: format_ident!("__grost_unknown_buffer__"),
+      buffer_field_name: format_ident!("__grost_buffer__"),
       copy,
     })
   }
 }
 
 impl<M, F> super::GenericObject<M, F> {
-  pub(super) fn derive_partial_decoded_object_defination(&self) -> proc_macro2::TokenStream {
-    let partial_decoded_object = self.partial_decoded();
-    let name = partial_decoded_object.name();
+  pub(super) fn derive_partial_ref_object_defination(&self) -> proc_macro2::TokenStream {
+    let partial_ref_object = self.partial_ref();
+    let name = partial_ref_object.name();
     let vis = self.vis();
     let fields = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
@@ -145,9 +145,9 @@ impl<M, F> super::GenericObject<M, F> {
           }
         }
         GenericField::Tagged(generic_tagged_field) => {
-          let ty = generic_tagged_field.partial_decoded().optional_type();
+          let ty = generic_tagged_field.partial_ref().nullable_type();
           let vis = generic_tagged_field.vis();
-          let attrs = generic_tagged_field.partial_decoded().attrs();
+          let attrs = generic_tagged_field.partial_ref().attrs();
 
           Some(quote! {
             #(#attrs)*
@@ -156,9 +156,9 @@ impl<M, F> super::GenericObject<M, F> {
         }
       }
     });
-    let generics = partial_decoded_object.generics();
+    let generics = partial_ref_object.generics();
     let where_clause = generics.where_clause.as_ref();
-    let attrs = partial_decoded_object.attrs();
+    let attrs = partial_ref_object.attrs();
 
     let doc = if !attrs.iter().any(|attr| attr.path().is_ident("doc")) {
       let doc = format!(
@@ -171,8 +171,8 @@ impl<M, F> super::GenericObject<M, F> {
     } else {
       quote! {}
     };
-    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_param().ident;
+    let ubfn = &partial_ref_object.buffer_field_name;
+    let ubg = &self.buffer_param().ident;
 
     quote! {
       #(#attrs)*
@@ -186,9 +186,9 @@ impl<M, F> super::GenericObject<M, F> {
     }
   }
 
-  pub(super) fn derive_partial_decoded_object(&self) -> proc_macro2::TokenStream {
-    let partial_decoded_object = self.partial_decoded();
-    let name = partial_decoded_object.name();
+  pub(super) fn derive_partial_ref_object(&self) -> proc_macro2::TokenStream {
+    let partial_ref_object = self.partial_ref();
+    let name = partial_ref_object.name();
     let fields_init = self.fields().iter().filter_map(|f| {
       let field_name = f.name();
       match f {
@@ -218,26 +218,26 @@ impl<M, F> super::GenericObject<M, F> {
       .filter_map(|f| f.try_unwrap_tagged_ref().ok())
       .for_each(|f| {
         let field_name = f.name();
-        let ty = &f.partial_decoded().ty();
+        let ty = &f.partial_ref().ty();
         let vis = f.vis();
-        fields_accessors.push(optional_accessors(
+        fields_accessors.push(nullable_accessors(
           field_name,
           vis,
           ty,
-          f.partial_decoded().copy(),
+          f.partial_ref().copy(),
         ));
         is_empty.push(quote! {
           self.#field_name.is_none()
         });
       });
 
-    let (ig, tg, where_clauses) = partial_decoded_object.generics().split_for_impl();
-    let ubfn = &partial_decoded_object.unknown_buffer_field_name;
-    let ubg = &self.unknown_buffer_param().ident;
+    let (ig, tg, where_clauses) = partial_ref_object.generics().split_for_impl();
+    let ubfn = &partial_ref_object.buffer_field_name;
+    let ubg = &self.buffer_param().ident;
     let flatten_state = derive_flatten_state(
       &self.path_to_grost,
-      partial_decoded_object.generics(),
-      partial_decoded_object.name(),
+      partial_ref_object.generics(),
+      partial_ref_object.name(),
     );
 
     quote! {
@@ -273,47 +273,47 @@ impl<M, F> super::GenericObject<M, F> {
 
         /// Returns a reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer(&self) -> ::core::option::Option<&#ubg> {
+        pub const fn buffer(&self) -> ::core::option::Option<&#ubg> {
           self.#ubfn.as_ref()
         }
 
-        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is unknown_buffer
+        // TODO(al8n): the following fns may lead to name conflicts if the struct has field whose name is buffer
         /// Returns a mutable reference to the unknown buffer, which holds the unknown data when decoding.
         #[inline]
-        pub const fn unknown_buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
+        pub const fn buffer_mut(&mut self) -> ::core::option::Option<&mut #ubg> {
          self.#ubfn.as_mut()
         }
 
         /// Takes the unknown buffer out if the unknown buffer is not `None`.
         #[inline]
-        pub const fn take_unknown_buffer(&mut self) -> ::core::option::Option<#ubg> {
+        pub const fn take_buffer(&mut self) -> ::core::option::Option<#ubg> {
           self.#ubfn.take()
         }
 
         /// Set the value of unknown buffer
         #[inline]
-        pub fn set_unknown_buffer(&mut self, buffer: #ubg) -> &mut Self {
+        pub fn set_buffer(&mut self, buffer: #ubg) -> &mut Self {
           self.#ubfn = ::core::option::Option::Some(buffer);
           self
         }
 
         /// Clears the unknown buffer.
         #[inline]
-        pub fn clear_unknown_buffer(&mut self) -> &mut Self {
+        pub fn clear_buffer(&mut self) -> &mut Self {
           self.#ubfn = ::core::option::Option::None;
           self
         }
 
         /// Set the value of unknown buffer
         #[inline]
-        pub fn with_unknown_buffer(mut self, buffer: #ubg) -> Self {
+        pub fn with_buffer(mut self, buffer: #ubg) -> Self {
           self.#ubfn = ::core::option::Option::Some(buffer);
           self
         }
 
         /// Clears the unknown buffer.
         #[inline]
-        pub fn without_unknown_buffer(mut self) -> Self {
+        pub fn without_buffer(mut self) -> Self {
           self.#ubfn = ::core::option::Option::None;
           self
         }

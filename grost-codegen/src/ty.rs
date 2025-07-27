@@ -201,10 +201,10 @@ impl Ty {
     }
   }
 
-  /// Creates a new optional [`Ty`].
-  pub fn optional(mut typ: Self) -> Self {
+  /// Creates a new nullable [`Ty`].
+  pub fn nullable(mut typ: Self) -> Self {
     match typ.repr {
-      // nested optional type is not allowed
+      // nested nullable type is not allowed
       TyRepr::Optional(ty) => *ty,
       _ => {
         typ.schema_type = typ.schema_type.trim_end_matches("!").into();
@@ -264,7 +264,7 @@ impl Ty {
   //       let name = self.schema_type();
 
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Primitive {
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::Primitive {
   //           name: #name,
   //           description: #description,
   //         }
@@ -273,14 +273,14 @@ impl Ty {
   //     TyRepr::List { ty, item } => {
   //       let inner = item.to_type_reflection(path_to_grost, flavor);
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::List(&#inner)
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::List(&#inner)
   //       }
   //     }
   //     TyRepr::Map { ty, key, value } => {
   //       let inner_key = key.to_type_reflection(path_to_grost, flavor);
   //       let inner_value = value.to_type_reflection(path_to_grost, flavor);
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Map {
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::Map {
   //           key: &#inner_key,
   //           value: &#inner_value,
   //         }
@@ -288,12 +288,12 @@ impl Ty {
   //     }
   //     TyRepr::Enum(ty) => {
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::UintEnum(<#ty>::REFLECTION)
   //       }
   //     }
   //     TyRepr::Object(ty) => {
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Object(<
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::Object(<
   //           #ty as #path_to_grost::__private::reflection::Reflectable<
   //             #flavor_ty,
   //           >
@@ -305,7 +305,7 @@ impl Ty {
   //     TyRepr::Optional(ty) => {
   //       let inner = ty.to_type_reflection(path_to_grost, flavor);
   //       quote! {
-  //         #path_to_grost::__private::reflection::Type::<#flavor_ty>::Optional(&#inner)
+  //         #path_to_grost::__private::reflection::SchemaType::<#flavor_ty>::Optional(&#inner)
   //       }
   //     }
   //   }

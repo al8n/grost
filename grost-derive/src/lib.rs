@@ -1,19 +1,19 @@
-use grost_codegen::{FlavorGenerator, Object, SchemaGeneratorBuilder, network::Network};
+use grost_codegen::{FlavorGenerator, Object, SchemaGeneratorBuilder, groto::Groto};
 use quote::quote;
 
+#[doc = include_str!("docs/object.md")]
 #[proc_macro_derive(Object, attributes(grost))]
 pub fn derive_object(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
   let object = match Object::from_derive_input(input.into()) {
     Ok(input) => input,
     Err(e) => {
-      println!("Object Error: {:?}", e);
       return e.write_errors().into();
     }
   };
 
-  let network = Network::new(object.mir().path_to_grost());
+  let groto = Groto::new(object.mir().path_to_grost());
   let mut builder = SchemaGeneratorBuilder::new();
-  let Ok(_) = builder.add_flavor(network.name(), network) else {
+  let Ok(_) = builder.add_flavor(groto.name(), groto) else {
     panic!("failed to add flavor");
   };
   builder.objects_mut().insert(object);
@@ -39,9 +39,9 @@ pub fn object(
     Err(e) => return e.write_errors().into(),
   };
 
-  let network = Network::new(object.mir().path_to_grost());
+  let groto = Groto::new(object.mir().path_to_grost());
   let mut builder = SchemaGeneratorBuilder::new();
-  let Ok(_) = builder.add_flavor(network.name(), network) else {
+  let Ok(_) = builder.add_flavor(groto.name(), groto) else {
     panic!("failed to add flavor");
   };
   builder.objects_mut().insert(object);

@@ -1,12 +1,18 @@
+use std::sync::Arc;
+
+use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
-use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
+use syn::{
+  Attribute, GenericParam, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility,
+  WherePredicate, punctuated::Punctuated, token::Comma,
+};
 
 use super::{super::ast::ConcreteObject as ConcreteObjectAst, accessors};
 use crate::{flavor::FlavorAttribute, object::ast::Indexer, utils::Invokable};
 
 pub use field::*;
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
@@ -15,11 +21,11 @@ mod encode;
 mod field;
 mod indexer;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
-#[derive(Debug, Clone)]
+#[derive(derive_more::Debug, Clone)]
 pub struct ConcreteObject<M = (), F = ()> {
   path_to_grost: Path,
   attrs: Vec<Attribute>,
@@ -28,11 +34,16 @@ pub struct ConcreteObject<M = (), F = ()> {
   schema_description: String,
   vis: Visibility,
   ty: Type,
-  decoded_state_type: Type,
+  partial_ref_state_type: Type,
   reflectable: Type,
   generics: Generics,
+  /// Extra constraints when deriving `Decode` trait for the partial decoded object.
+  decode_generics: Generics,
+  /// The trait type which applies the cooresponding generics to the `Decode` trait.
+  #[debug(skip)]
+  applied_decode_trait: Arc<dyn Fn(TokenStream) -> syn::Result<Type> + 'static>,
   flavor: FlavorAttribute,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: LifetimeParam,
   read_buffer_param: TypeParam,
   write_buffer_param: TypeParam,
@@ -40,7 +51,7 @@ pub struct ConcreteObject<M = (), F = ()> {
   indexer: Indexer,
   default: Option<Invokable>,
   partial: ConcretePartialObject,
-  partial_decoded: ConcretePartialDecodedObject,
+  partial_ref: ConcretePartialRefObject,
   selector: ConcreteSelector,
   selector_iter: ConcreteSelectorIter,
   reflection: ConcreteObjectReflection,
@@ -121,8 +132,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the decoded state type of the concrete object.
   #[inline]
-  pub const fn decoded_state_type(&self) -> &Type {
-    &self.decoded_state_type
+  pub const fn partial_ref_state_type(&self) -> &Type {
+    &self.partial_ref_state_type
   }
 
   /// Returns the reflectable type of the concrete object.
@@ -137,6 +148,12 @@ impl<M, F> ConcreteObject<M, F> {
     &self.generics
   }
 
+  /// Returns the decode generics of the concrete object.
+  #[inline]
+  pub const fn decode_generics(&self) -> &Generics {
+    &self.decode_generics
+  }
+
   /// Returns the flavor type of the concrete object.
   #[inline]
   pub const fn flavor_type(&self) -> &Type {
@@ -145,8 +162,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns the lifetime generic parameter, which will be used in generated structs or impls
@@ -187,8 +204,8 @@ impl<M, F> ConcreteObject<M, F> {
 
   /// Returns the partial decoded object information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &ConcretePartialDecodedObject {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &ConcretePartialRefObject {
+    &self.partial_ref
   }
 
   /// Returns the selector information of the concrete object.
@@ -227,8 +244,8 @@ impl<M, F> ConcreteObject<M, F> {
     let partial_def = self.partial.derive_defination(self)?;
     let partial_impl = self.partial.derive(self)?;
 
-    let partial_decoded_def = self.derive_partial_decoded_object_defination();
-    let partial_decoded_impl = self.derive_partial_decoded_object();
+    let partial_ref_def = self.derive_partial_ref_object_defination();
+    let partial_ref_impl = self.derive_partial_ref_object();
 
     let reflection_impl = self.reflection.derive(self)?;
 
@@ -245,7 +262,7 @@ impl<M, F> ConcreteObject<M, F> {
       #selector
       #selector_iter_def
       #partial_def
-      #partial_decoded_def
+      #partial_ref_def
 
       const _: () = {
         #default
@@ -254,7 +271,7 @@ impl<M, F> ConcreteObject<M, F> {
 
         #partial_impl
 
-        #partial_decoded_impl
+        #partial_ref_impl
 
         #reflection_impl
 
@@ -269,6 +286,10 @@ impl<M, F> ConcreteObject<M, F> {
     })
   }
 
+  pub(super) fn applied_decode_trait(&self, ty: impl ToTokens) -> syn::Result<Type> {
+    (self.applied_decode_trait)(quote! { #ty })
+  }
+
   pub(super) fn from_ast(object: ConcreteObjectAst<M, F>) -> darling::Result<Self>
   where
     M: Clone,
@@ -277,6 +298,8 @@ impl<M, F> ConcreteObject<M, F> {
     let mut fields = object.fields().to_vec();
     fields.sort_by_key(|f| f.tag().unwrap_or(u32::MAX));
 
+    let path_to_grost = object.path_to_grost();
+    let mut decode_constraints: Punctuated<WherePredicate, Comma> = Punctuated::new();
     let fields = fields
       .iter()
       .cloned()
@@ -284,16 +307,40 @@ impl<M, F> ConcreteObject<M, F> {
       .map(|(idx, f)| ConcreteField::from_ast(&object, idx, f))
       .collect::<darling::Result<Vec<_>>>()?;
 
+    fields.iter().try_for_each(|f| {
+      if let ConcreteField::Tagged(f) = f {
+        if !f.type_params_usages().is_empty() || !f.lifetime_params_usages().is_empty() {
+          let field_ty = f.ty();
+          let lt = &object.lifetime_param().lifetime;
+          let ub = &object.buffer_param().ident;
+          let flavor_ty = object.flavor().ty();
+          let wf = f.wire_format();
+          decode_constraints.push(syn::parse2(quote! {
+            #field_ty: #path_to_grost::__private::decode::Decode<
+              #lt,
+              #field_ty,
+              #wf,
+              #ub,
+              #flavor_ty,
+            >
+          })?);
+        }
+      }
+      darling::Result::Ok(())
+    })?;
+
     let partial = ConcretePartialObject::from_ast(&object, &fields)?;
-    let partial_decoded = ConcretePartialDecodedObject::from_ast(&object, &fields)?;
+    let partial_ref = ConcretePartialRefObject::from_ast(&object, &fields)?;
     let selector = ConcreteSelector::from_ast(&object, &fields)?;
     let selector_iter = selector.selector_iter(&object)?;
     let reflection = ConcreteObjectReflection::from_ast(&object, &fields)?;
     let path_to_grost = object.path_to_grost();
     let lt = &object.lifetime_param().lifetime;
-    let ub = &object.unknown_buffer_param().ident;
+    let ub = &object.buffer_param().ident;
+    let rb = &object.read_buffer_param().ident;
     let flavor_ty = object.flavor().ty();
     let wf = object.flavor().wire_format();
+    let generics = object.generics();
 
     Ok(Self {
       path_to_grost: object.path_to_grost().clone(),
@@ -303,13 +350,63 @@ impl<M, F> ConcreteObject<M, F> {
       schema_name: object.schema_name().to_string(),
       vis: object.vis().clone(),
       ty: object.ty().clone(),
-      decoded_state_type: syn::parse2(quote! {
-        #path_to_grost::__private::convert::Decoded<#lt, #flavor_ty, #wf, #ub>
+      applied_decode_trait: {
+        let path_to_grost = path_to_grost.clone();
+        let flavor_ty = flavor_ty.clone();
+        let wf = wf.clone();
+        let lt = lt.clone();
+        let ub = ub.clone();
+        let rb = rb.clone();
+        Arc::new(move |ty| {
+          syn::parse2(quote! {
+            #path_to_grost::__private::decode::Decode<#lt, #ty, #wf, #rb, #ub, #flavor_ty>
+          })
+        })
+      },
+      decode_generics: {
+        let lt = object.lifetime_param().clone();
+        let mut output = Generics::default();
+        output
+          .params
+          .extend(generics.lifetimes().cloned().map(GenericParam::from));
+        output.params.push(GenericParam::Lifetime(lt.clone()));
+        output
+          .params
+          .extend(generics.type_params().cloned().map(GenericParam::from));
+        output
+          .params
+          .push(GenericParam::Type(object.read_buffer_param().clone()));
+        output
+          .params
+          .push(GenericParam::Type(object.buffer_param().clone()));
+        output
+          .params
+          .extend(generics.const_params().cloned().map(GenericParam::from));
+        output.where_clause = generics.where_clause.clone();
+        output
+          .make_where_clause()
+          .predicates
+          .extend(decode_constraints);
+
+        generics
+          .lifetimes()
+          .filter(|lt| lt.lifetime.ident.ne("static"))
+          .try_for_each(|ltp| {
+            let ident = &ltp.lifetime;
+            syn::parse2(quote! {
+              #lt: #ident
+            })
+            .map(|pred| output.make_where_clause().predicates.push(pred))
+          })?;
+        output
+      },
+      partial_ref_state_type: syn::parse2(quote! {
+        #path_to_grost::__private::state::PartialRef<#lt, #wf, #rb, #ub, #flavor_ty>
       })?,
       reflectable: object.reflectable().clone(),
       generics: object.generics().clone(),
       flavor: object.flavor().clone(),
-      unknown_buffer_param: object.unknown_buffer_param,
+      buffer_param: object.buffer_param,
       lifetime_param: object.lifetime_param,
       read_buffer_param: object.read_buffer_param,
       write_buffer_param: object.write_buffer_param,
@@ -317,7 +414,7 @@ impl<M, F> ConcreteObject<M, F> {
       fields,
       default: object.default,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       meta: object.meta,

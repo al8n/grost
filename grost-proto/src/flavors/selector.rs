@@ -1,6 +1,6 @@
 // use super::{DefaultWireFormat, Flavor, WireFormat};
 
-// pub use super::network::Context;
+// pub use super::groto::Context;
 // pub use error::*;
 // pub use identifier::*;
 // pub use unknown::Unknown;

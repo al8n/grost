@@ -1,85 +1,85 @@
 use super::{
-  super::{Reflectable, TypeReflection},
+  super::{Reflectable, SchemaTypeReflection},
   Enum, Object, Scalar,
 };
 
 macro_rules! impl_type_reflection {
   (@map $(@<$g:ident>)? $ty:ty) => {
-    impl <K, V, $($g)?> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty>
+    impl <K, V, $($g)?> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::SchemaTypeReflection<$ty>
     where
-      $crate::__private::reflection::TypeReflection<K>: $crate::__private::reflection::Reflectable<K, Reflection = $crate::__private::reflection::Type>,
-      $crate::__private::reflection::TypeReflection<V>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::Type>,
+      $crate::__private::reflection::SchemaTypeReflection<K>: $crate::__private::reflection::Reflectable<K, Reflection = $crate::__private::reflection::SchemaType>,
+      $crate::__private::reflection::SchemaTypeReflection<V>: $crate::__private::reflection::Reflectable<V, Reflection = $crate::__private::reflection::SchemaType>,
     {
-      type Reflection = $crate::__private::reflection::Type;
+      type Reflection = $crate::__private::reflection::SchemaType;
 
       const REFLECTION: &'static Self::Reflection =
-        &Type::Map {
-          key: <$crate::__private::reflection::TypeReflection<K> as $crate::__private::reflection::Reflectable<K>>::REFLECTION,
-          value: <$crate::__private::reflection::TypeReflection<V> as $crate::__private::reflection::Reflectable<V>>::REFLECTION,
+        &SchemaType::Map {
+          key: <$crate::__private::reflection::SchemaTypeReflection<K> as $crate::__private::reflection::Reflectable<K>>::REFLECTION,
+          value: <$crate::__private::reflection::SchemaTypeReflection<V> as $crate::__private::reflection::Reflectable<V>>::REFLECTION,
         };
     }
   };
   (@set $(@<$g:ident>)? $ty:ty) => {
-    impl<T, $($g)?> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty>
+    impl<T, $($g)?> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::SchemaTypeReflection<$ty>
     where
-      $crate::__private::reflection::TypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::Type>,
+      $crate::__private::reflection::SchemaTypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::SchemaType>,
     {
-      type Reflection = $crate::__private::reflection::Type;
+      type Reflection = $crate::__private::reflection::SchemaType;
 
       const REFLECTION: &'static Self::Reflection = {
-        &$crate::__private::reflection::Type::Set(
-          <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
+        &$crate::__private::reflection::SchemaType::Set(
+          <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
         )
       };
     }
   };
   (@wrapper $($ty:ty $([ ?$sized:path ])?),+$(,)?) => {
     $(
-      impl<T> $crate::reflection::Reflectable<$ty> for $crate::reflection::TypeReflection<$ty>
+      impl<T> $crate::reflection::Reflectable<$ty> for $crate::reflection::SchemaTypeReflection<$ty>
       where
-        $crate::reflection::TypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::Type>,
+        $crate::reflection::SchemaTypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::SchemaType>,
         $(T: ?$sized)?
       {
-        type Reflection = $crate::reflection::Type;
+        type Reflection = $crate::reflection::SchemaType;
 
-        const REFLECTION: &'static Self::Reflection = <$crate::reflection::TypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
+        const REFLECTION: &'static Self::Reflection = <$crate::reflection::SchemaTypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
       }
 
-      impl<T> $crate::reflection::Reflectable<$ty> for $crate::reflection::TypeReflection<T>
+      impl<T> $crate::reflection::Reflectable<$ty> for $crate::reflection::SchemaTypeReflection<T>
       where
-        $crate::reflection::TypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::Type>,
+        $crate::reflection::SchemaTypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::SchemaType>,
         $(T: ?$sized)?
       {
-        type Reflection = $crate::reflection::Type;
+        type Reflection = $crate::reflection::SchemaType;
 
-        const REFLECTION: &'static Self::Reflection = <$crate::reflection::TypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
+        const REFLECTION: &'static Self::Reflection = <$crate::reflection::SchemaTypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
       }
 
-      impl<T> $crate::reflection::Reflectable<T> for $crate::reflection::TypeReflection<$ty>
+      impl<T> $crate::reflection::Reflectable<T> for $crate::reflection::SchemaTypeReflection<$ty>
       where
-        $crate::reflection::TypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::Type>,
+        $crate::reflection::SchemaTypeReflection<T>: $crate::reflection::Reflectable<T, Reflection = $crate::reflection::SchemaType>,
         $(T: ?$sized)?
       {
-        type Reflection = $crate::reflection::Type;
+        type Reflection = $crate::reflection::SchemaType;
 
-        const REFLECTION: &'static Self::Reflection = <$crate::reflection::TypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
+        const REFLECTION: &'static Self::Reflection = <$crate::reflection::SchemaTypeReflection<T> as $crate::reflection::Reflectable<T>>::REFLECTION;
       }
     )*
   };
   (@list $($ty:ty),+$(,)?) => {
     $(
-      impl<T> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty>
+      impl<T> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::SchemaTypeReflection<$ty>
       where
-        $crate::__private::reflection::TypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::Type>,
+        $crate::__private::reflection::SchemaTypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::SchemaType>,
       {
-        type Reflection = $crate::__private::reflection::Type;
+        type Reflection = $crate::__private::reflection::SchemaType;
 
         const REFLECTION: &'static Self::Reflection = {
-          if <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
-            &$crate::__private::reflection::Type::bytes()
+          if <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
+            &$crate::__private::reflection::SchemaType::bytes()
           } else {
-            &$crate::__private::reflection::Type::List(
-              <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
+            &$crate::__private::reflection::SchemaType::List(
+              <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
             )
           }
         };
@@ -88,18 +88,18 @@ macro_rules! impl_type_reflection {
   };
   (@array $($ty:ty),+$(,)?) => {
     $(
-      impl<T, const N: usize> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty>
+      impl<T, const N: usize> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::SchemaTypeReflection<$ty>
       where
-        $crate::__private::reflection::TypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::Type>,
+        $crate::__private::reflection::SchemaTypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::SchemaType>,
       {
-        type Reflection = $crate::__private::reflection::Type;
+        type Reflection = $crate::__private::reflection::SchemaType;
 
         const REFLECTION: &'static Self::Reflection = {
-          if <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
-            &$crate::__private::reflection::Type::bytes()
+          if <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
+            &$crate::__private::reflection::SchemaType::bytes()
           } else {
-            &$crate::__private::reflection::Type::List(
-              <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
+            &$crate::__private::reflection::SchemaType::List(
+              <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
             )
           }
         };
@@ -108,19 +108,19 @@ macro_rules! impl_type_reflection {
   };
   (@tinyvec $($ty:ty),+$(,)?) => {
     $(
-      impl<T, A> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::TypeReflection<$ty>
+      impl<T, A> $crate::__private::reflection::Reflectable<$ty> for $crate::__private::reflection::SchemaTypeReflection<$ty>
       where
         A: tinyvec_1::Array<Item = T>,
-        $crate::__private::reflection::TypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::Type>,
+        $crate::__private::reflection::SchemaTypeReflection<T>: $crate::__private::reflection::Reflectable<T, Reflection = $crate::__private::reflection::SchemaType>,
       {
-        type Reflection = $crate::__private::reflection::Type;
+        type Reflection = $crate::__private::reflection::SchemaType;
 
         const REFLECTION: &'static Self::Reflection = {
-          if <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
-            &$crate::__private::reflection::Type::bytes()
+          if <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION.is_byte() {
+            &$crate::__private::reflection::SchemaType::bytes()
           } else {
-            &$crate::__private::reflection::Type::List(
-              <$crate::__private::reflection::TypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
+            &$crate::__private::reflection::SchemaType::List(
+              <$crate::__private::reflection::SchemaTypeReflection<T> as $crate::__private::reflection::Reflectable<T>>::REFLECTION
             )
           }
         };
@@ -195,89 +195,92 @@ const _: () = {
   impl_type_reflection!(@array smallvec_1::SmallVec<[T; N]>);
 };
 
-impl<T> Reflectable<Option<T>> for TypeReflection<Option<T>>
+impl<T> Reflectable<Option<T>> for SchemaTypeReflection<Option<T>>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &Type::Optional(<TypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
-impl<T> Reflectable<T> for TypeReflection<Option<T>>
+impl<T> Reflectable<T> for SchemaTypeReflection<Option<T>>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &Type::Optional(<TypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
-impl<T> Reflectable<Option<T>> for TypeReflection<T>
+impl<T> Reflectable<Option<T>> for SchemaTypeReflection<T>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
   const REFLECTION: &'static Self::Reflection =
-    &Type::Optional(<TypeReflection<T> as Reflectable<T>>::REFLECTION);
+    &SchemaType::Nullable(<SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION);
 }
 
-impl<T> Reflectable<&T> for TypeReflection<&T>
+impl<T> Reflectable<&T> for SchemaTypeReflection<&T>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
-  const REFLECTION: &'static Self::Reflection = <TypeReflection<T> as Reflectable<T>>::REFLECTION;
+  const REFLECTION: &'static Self::Reflection =
+    <SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION;
 }
 
-impl<T> Reflectable<T> for TypeReflection<&T>
+impl<T> Reflectable<T> for SchemaTypeReflection<&T>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
-  const REFLECTION: &'static Self::Reflection = <TypeReflection<T> as Reflectable<T>>::REFLECTION;
+  const REFLECTION: &'static Self::Reflection =
+    <SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION;
 }
 
-impl<T> Reflectable<&T> for TypeReflection<T>
+impl<T> Reflectable<&T> for SchemaTypeReflection<T>
 where
-  TypeReflection<T>: Reflectable<T, Reflection = Type>,
+  SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
-  type Reflection = Type;
+  type Reflection = SchemaType;
 
-  const REFLECTION: &'static Self::Reflection = <TypeReflection<T> as Reflectable<T>>::REFLECTION;
+  const REFLECTION: &'static Self::Reflection =
+    <SchemaTypeReflection<T> as Reflectable<T>>::REFLECTION;
 }
 
 /// The type in the Graph protocol schema
-#[derive(Debug)]
-pub enum Type {
+#[derive(Debug, derive_more::IsVariant)]
+pub enum SchemaType {
   Scalar(Scalar),
-  List(&'static Type),
-  Set(&'static Type),
+  List(&'static SchemaType),
+  Set(&'static SchemaType),
   Map {
-    key: &'static Type,
-    value: &'static Type,
+    key: &'static SchemaType,
+    value: &'static SchemaType,
   },
-  Optional(&'static Type),
+  Nullable(&'static SchemaType),
   Object(&'static Object),
   Enum(&'static Enum),
   Union(),
   Interface(),
 }
 
-impl Clone for Type {
+impl Clone for SchemaType {
   fn clone(&self) -> Self {
     *self
   }
 }
 
-impl Copy for Type {}
+impl Copy for SchemaType {}
 
-impl Type {
+impl SchemaType {
   /// Construct a
   pub const fn custom_scalar(name: &'static str, description: &'static str) -> Self {
     Self::Scalar(Scalar::custom(name, description))
@@ -306,7 +309,7 @@ impl Type {
   /// Returns `true` if this type is `byte` or `u8`
   pub const fn is_byte(self) -> bool {
     match self {
-      Type::Scalar(scalar) => scalar.is_byte(),
+      Self::Scalar(scalar) => scalar.is_byte(),
       _ => false,
     }
   }

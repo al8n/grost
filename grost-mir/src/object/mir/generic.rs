@@ -12,7 +12,7 @@ use super::{
 pub use field::*;
 pub use flavor::*;
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use reflection::*;
 pub use selector::*;
 
@@ -20,7 +20,7 @@ mod field;
 mod flavor;
 mod indexer;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
@@ -38,12 +38,12 @@ pub struct GenericObject<M, F> {
   fields: Vec<GenericField<F>>,
   indexer: Indexer,
   flavor_param: TypeParam,
-  unknown_buffer_param: TypeParam,
+  buffer_param: TypeParam,
   lifetime_param: syn::LifetimeParam,
   wire_format_param: TypeParam,
   generics: Generics,
   partial: GenericPartialObject,
-  partial_decoded: GenericPartialDecodedObject,
+  partial_ref: GenericPartialRefObject,
   reflection: GenericObjectReflection,
   selector: GenericSelector,
   selector_iter: GenericSelectorIter,
@@ -153,8 +153,8 @@ impl<M, F> GenericObject<M, F> {
 
   /// Returns the partial decoded object information.
   #[inline]
-  pub const fn partial_decoded(&self) -> &GenericPartialDecodedObject {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &GenericPartialRefObject {
+    &self.partial_ref
   }
 
   /// Returns the selector information of the object.
@@ -177,8 +177,8 @@ impl<M, F> GenericObject<M, F> {
 
   /// Returns the generic unknown buffer type parameter, which will be used in generated structs or impls.
   #[inline]
-  pub const fn unknown_buffer_param(&self) -> &TypeParam {
-    &self.unknown_buffer_param
+  pub const fn buffer_param(&self) -> &TypeParam {
+    &self.buffer_param
   }
 
   /// Returns the generic lifetime parameter, which will be used in generated structs or impls.
@@ -228,7 +228,7 @@ impl<M, F> GenericObject<M, F> {
       .collect::<darling::Result<Vec<_>>>()?;
 
     let partial = GenericPartialObject::from_ast(&object, &fields)?;
-    let partial_decoded = GenericPartialDecodedObject::from_ast(&object, &fields)?;
+    let partial_ref = GenericPartialRefObject::from_ast(&object, &fields)?;
     let flavors = object
       .flavors
       .iter()
@@ -257,11 +257,11 @@ impl<M, F> GenericObject<M, F> {
       generics: object.generics,
       meta: object.meta,
       partial,
-      partial_decoded,
+      partial_ref,
       selector,
       selector_iter,
       flavors,
-      unknown_buffer_param: object.unknown_buffer_param,
+      buffer_param: object.buffer_param,
       lifetime_param: object.lifetime_param,
       wire_format_param: object.wire_format_param,
     })
@@ -277,8 +277,8 @@ impl<M, F> GenericObject<M, F> {
     let partial_object = self.derive_partial_object_defination();
     let partial_object_impl = self.derive_partial_object();
 
-    let partial_decoded_object = self.derive_partial_decoded_object_defination();
-    let partial_decoded_object_impl = self.derive_partial_decoded_object();
+    let partial_ref_object = self.derive_partial_ref_object_defination();
+    let partial_ref_object_impl = self.derive_partial_ref_object();
 
     let selector = self.derive_selector_defination();
     let selector_impl = self.derive_selector()?;
@@ -292,7 +292,7 @@ impl<M, F> GenericObject<M, F> {
 
       #partial_object
 
-      #partial_decoded_object
+      #partial_ref_object
 
       #selector
 
@@ -307,7 +307,7 @@ impl<M, F> GenericObject<M, F> {
 
         #partial_object_impl
 
-        #partial_decoded_object_impl
+        #partial_ref_object_impl
 
         #reflection_impl
 

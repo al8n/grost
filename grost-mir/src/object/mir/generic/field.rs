@@ -16,12 +16,12 @@ use syn::{Attribute, Ident, Type, TypeParam, Visibility, punctuated::Punctuated}
 
 pub use flavor::*;
 pub use partial::*;
-pub use partial_decoded::*;
+pub use partial_ref::*;
 pub use selector::*;
 
 mod flavor;
 mod partial;
-mod partial_decoded;
+mod partial_ref;
 mod reflection;
 mod selector;
 
@@ -36,7 +36,7 @@ pub struct GenericTaggedField<M = ()> {
   flavor_param: TypeParam,
   index: FieldIndex,
   label: Label,
-  partial_decoded: GenericPartialDecodedField,
+  partial_ref: GenericPartialRefField,
   partial: GenericPartialField,
   selector: GenericSelectorField,
   reflection: GenericFieldReflection,
@@ -140,8 +140,8 @@ impl<F> GenericTaggedField<F> {
 
   /// Returns the partial decoded field information of this field.
   #[inline]
-  pub const fn partial_decoded(&self) -> &GenericPartialDecodedField {
-    &self.partial_decoded
+  pub const fn partial_ref(&self) -> &GenericPartialRefField {
+    &self.partial_ref
   }
 
   /// Returns the reflection information of this field.
@@ -184,10 +184,12 @@ impl<F> GenericTaggedField<F> {
     let object_reflectable = &object.reflectable;
     let lifetime_param = &object.lifetime_param;
     let lifetime = &lifetime_param.lifetime;
-    let unknown_buffer_param = &object.unknown_buffer_param;
-    let unknown_buffer = &unknown_buffer_param.ident;
+    let buffer_param = &object.buffer_param;
+    let buffer = &buffer_param.ident;
+    let read_buffer_param = &object.read_buffer_param;
+    let read_buffer = &read_buffer_param.ident;
 
-    let mut partial_decoded_constraints = Punctuated::new();
+    let mut partial_ref_constraints = Punctuated::new();
     let mut selector_constraints = Punctuated::new();
 
     let wfr: Type = syn::parse2(quote! {
@@ -204,17 +206,16 @@ impl<F> GenericTaggedField<F> {
     let selectable = syn::parse2(quote! {
       #path_to_grost::__private::selection::Selectable<
         #flavor_ident,
-        #wf,
       >
     })?;
     let selector_type = syn::parse2(quote! {
       <#field_ty as #selectable>::Selector
     })?;
 
-    partial_decoded_constraints.push(syn::parse2(quote! {
+    partial_ref_constraints.push(syn::parse2(quote! {
       #wfr: #object_reflectable
     })?);
-    partial_decoded_constraints.push(syn::parse2(quote! {
+    partial_ref_constraints.push(syn::parse2(quote! {
       #wf: #path_to_grost::__private::flavors::WireFormat<#flavor_ident>
     })?);
     selector_constraints.push(syn::parse2(quote! {
@@ -227,8 +228,8 @@ impl<F> GenericTaggedField<F> {
       #field_ty: #selectable
     })?);
 
-    let partial_decoded_copyable = object.partial_decoded().copy() || field.partial_decoded_copy();
-    let partial_decoded_copy_contraint = if partial_decoded_copyable {
+    let partial_ref_copyable = object.partial_ref().copy() || field.partial_ref_copy();
+    let partial_ref_copy_contraint = if partial_ref_copyable {
       Some(quote! {
         + ::core::marker::Copy
       })
@@ -236,23 +237,24 @@ impl<F> GenericTaggedField<F> {
       None
     };
 
-    let partial_decoded_ty = {
+    let partial_ref_ty = {
       let state_type: Type = syn::parse2(quote! {
-        #path_to_grost::__private::convert::State<
-          #path_to_grost::__private::convert::Decoded<
+        #path_to_grost::__private::state::State<
+          #path_to_grost::__private::state::PartialRef<
             #lifetime,
-            #flavor_ident,
             <#wfr as #object_reflectable>::Reflection,
-            #unknown_buffer,
+            #read_buffer,
+            #buffer,
+            #flavor_ident,
           >
         >
       })?;
 
-      partial_decoded_constraints.push(syn::parse2(quote! {
+      partial_ref_constraints.push(syn::parse2(quote! {
         #field_ty: #state_type
       })?);
-      partial_decoded_constraints.push(syn::parse2(quote! {
-        <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_decoded_copy_contraint
+      partial_ref_constraints.push(syn::parse2(quote! {
+        <#field_ty as #state_type>::Output: ::core::marker::Sized #partial_ref_copy_contraint
       })?);
 
       syn::parse2(quote! {
@@ -260,8 +262,8 @@ impl<F> GenericTaggedField<F> {
       })?
     };
 
-    let optional_partial_decoded_type = syn::parse2(quote! {
-      ::core::option::Option<#partial_decoded_ty>
+    let nullable_partial_ref_type = syn::parse2(quote! {
+      ::core::option::Option<#partial_ref_ty>
     })?;
 
     let flavors = object
@@ -272,7 +274,7 @@ impl<F> GenericTaggedField<F> {
           .flavors()
           .get(name)
           .expect("Field flavor already checked when constructing the AST");
-        FieldFlavor::try_new(object, &field, flavor.ty(), field_flavor).map(|ff| (name.clone(), ff))
+        FieldFlavor::try_new(object, flavor, &field, field_flavor).map(|ff| (name.clone(), ff))
       })
       .collect::<darling::Result<IndexMap<_, _>>>()?;
 
@@ -291,12 +293,12 @@ impl<F> GenericTaggedField<F> {
       flavor_param: field.flavor().clone(),
       label: field.label().clone(),
       partial,
-      partial_decoded: GenericPartialDecodedField {
-        ty: partial_decoded_ty,
-        optional_type: optional_partial_decoded_type,
-        attrs: field.partial_decoded_attrs().to_vec(),
-        constraints: partial_decoded_constraints,
-        copy: partial_decoded_copyable,
+      partial_ref: GenericPartialRefField {
+        ty: partial_ref_ty,
+        nullable_type: nullable_partial_ref_type,
+        attrs: field.partial_ref_attrs().to_vec(),
+        constraints: partial_ref_constraints,
+        copy: partial_ref_copyable,
       },
       selector: GenericSelectorField {
         ty: selector_type,

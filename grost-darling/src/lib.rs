@@ -39,7 +39,10 @@ pub fn field(
     Err(e) => return e.write_errors().into(),
   };
 
-  input.to_token_stream().into()
+  match input.derive() {
+    Ok(tokens) => tokens.into(),
+    Err(e) => e.write_errors().into(),
+  }
 }
 
 #[proc_macro_attribute]

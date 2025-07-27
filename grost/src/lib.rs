@@ -6,14 +6,13 @@ extern crate alloc as std;
 #[cfg(feature = "std")]
 extern crate std;
 
-// pub use decode::*;
-// pub use encode::*;
-pub use flavors::Flavor;
+#[cfg(feature = "derive")]
+pub use grost_derive::*;
 pub use grost_proto::{
   buffer, convert,
   decode::{self, Decode, DecodeOwned},
   encode::{self, Encode, PartialEncode},
-  reflection, selection,
+  flavors, marker, reflection, selection,
 };
 
 #[cfg(feature = "bytes")]
@@ -21,13 +20,6 @@ pub use grost_proto::bytes;
 
 #[cfg(feature = "smol_str")]
 pub use grost_proto::smol_str;
-
-// pub use impls::*;
-// pub use selection_set::SelectionSet;
-
-/// The flavors of the encoding/decoding
-pub mod flavors;
-mod selection_set;
 
 #[doc(hidden)]
 #[cfg(debug_assertions)]

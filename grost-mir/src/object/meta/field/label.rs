@@ -1,51 +1,178 @@
-use std::sync::Arc;
-use syn::{ext::IdentExt, parse::ParseStream};
+use either::Either;
+use quote::quote;
+use syn::{
+  Ident, Meta, Path, Token, Type, WherePredicate,
+  ext::IdentExt,
+  parse::{Parse, ParseStream},
+  punctuated::Punctuated,
+  spanned::Spanned,
+  token::{Comma, Paren},
+};
+
+pub use generic::*;
+pub use list_like::*;
+pub use map::*;
+pub use nullable::*;
+
+mod generic;
+mod list_like;
+mod map;
+mod nullable;
+
+const LIST_TAG: u8 = 0;
+const SET_TAG: u8 = 1;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LabelInformation {
+  pub(in crate::object) wire_format: Type,
+  pub(in crate::object) wire_format_constraints: Punctuated<WherePredicate, Comma>,
+}
+
+impl LabelInformation {
+  /// Creates a new `LabelInformation` with the given type and wire_format_constraints.
+  fn new(wire_format: Type) -> Self {
+    Self {
+      wire_format,
+      wire_format_constraints: Punctuated::new(),
+    }
+  }
+
+  fn with_wire_format_constraints(
+    wire_format: Type,
+    wire_format_constraints: Punctuated<WherePredicate, Comma>,
+  ) -> Self {
+    Self {
+      wire_format,
+      wire_format_constraints,
+    }
+  }
+
+  /// Returns the type of the default wire format.
+  pub fn wire_format(&self) -> &Type {
+    &self.wire_format
+  }
+
+  /// Returns the constraints of the default wire format.
+  pub fn wire_format_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.wire_format_constraints
+  }
+
+  /// Consumes the `LabelInformation`
+  pub fn into_wire_format_components(self) -> (Type, Punctuated<WherePredicate, Comma>) {
+    (self.wire_format, self.wire_format_constraints)
+  }
+}
 
 /// A type specification for an object field.
-#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
+#[derive(Debug, Clone, derive_more::IsVariant, derive_more::Display)]
 #[non_exhaustive]
+#[allow(clippy::large_enum_variant)]
 pub enum Label {
   /// A scalar type label, e.g. `i32`, `f64`, etc.
   #[display("scalar")]
-  Scalar,
+  Scalar(Option<Type>),
   /// A byte array type label, e.g. `Vec<u8>`, `bytes`, etc.
   #[display("bytes")]
-  Bytes,
+  Bytes(Option<Type>),
   /// A string type label, e.g. `String`, `&str`, etc.
   #[display("string")]
-  String,
+  String(Option<Type>),
   /// An object type label
   #[display("object")]
-  Object,
+  Object(Option<Type>),
   /// An enum type label
   #[display("enum")]
-  Enum,
+  Enum(Option<Type>),
   /// A union type label
   #[display("union")]
-  Union,
+  Union(Option<Type>),
   /// An interface type label
   #[display("interface")]
-  Interface,
+  Interface(Option<Type>),
+  /// A generic type label, which means the type of this field is generic param
+  #[display("generic")]
+  Generic(GenericLabelValue),
   /// A map type label
-  #[display("map(key({key}), value({value}))")]
-  Map {
-    /// The key type label of the map
-    key: Arc<Label>,
-    /// The value type label of the map
-    value: Arc<Label>,
-  },
+  #[display("map")]
+  Map(Either<MapLabel, Type>),
   /// A set type label
-  #[display("set({_0})")]
-  Set(Arc<Label>),
+  #[display("set")]
+  Set(Either<ListLikeLabel, Type>),
   /// A list type label
-  #[display("list({_0})")]
-  List(Arc<Label>),
-  /// An optional type label
-  #[display("optional({_0})")]
-  Optional(Arc<Label>),
+  #[display("list")]
+  List(Either<ListLikeLabel, Type>),
+  /// An nullable type label
+  #[display("nullable")]
+  Nullable(Either<NullableLabel, Type>),
 }
 
 impl Label {
+  /// Returns the possible identifiers for labels.
+  #[inline]
+  pub const fn possible_idents() -> &'static [&'static str] {
+    &[
+      "scalar",
+      "bytes",
+      "string",
+      "object",
+      "enum",
+      "union",
+      "interface",
+      "generic",
+      "map",
+      "set",
+      "list",
+      "nullable",
+    ]
+  }
+}
+
+impl darling::FromMeta for Label {
+  fn from_meta(item: &Meta) -> darling::Result<Self> {
+    (syn::parse2(quote!(#item))).map_err(|e| darling::Error::from(e).with_span(item))
+  }
+
+  fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+    let ts = quote! (
+      #(#items)*
+    );
+
+    (syn::parse2(ts)).map_err(darling::Error::from)
+  }
+}
+
+impl Label {
+  /// Returns `true` if the inner type is generic.
+  ///
+  /// e.g.
+  /// - `map(key(generic(...)), value(string)): true``
+  /// - `set(generic(...)): true`
+  /// - `list(generic(...)): true`
+  /// - `nullable(generic(...)): true`
+  /// - `generic(...): false`
+  pub fn is_inner_generic(&self) -> bool {
+    match self {
+      Label::Map(Either::Left(map_label)) => {
+        map_label.key().is_generic() || map_label.value().is_generic()
+      }
+      Label::Set(Either::Left(label)) => label.label().is_generic(),
+      Label::List(Either::Left(label)) => label.label().is_generic(),
+      Label::Nullable(Either::Left(label)) => label.label().is_generic(),
+      _ => false,
+    }
+  }
+
+  /// Returns `true` if the label is marked as repeated.
+  pub fn is_repeated(&self) -> bool {
+    match self {
+      Label::Map(Either::Left(map_label)) => map_label.is_repeated(),
+      Label::Set(Either::Left(label)) => label.is_repeated(),
+      Label::List(Either::Left(label)) => label.is_repeated(),
+      Label::Nullable(Either::Left(label)) => label.label().is_repeated(),
+      _ => false,
+    }
+  }
+
   /// Check if the parse stream starts with a label that can be parsed as a `Label`.
   pub fn peek(input: &ParseStream) -> syn::Result<bool> {
     if input.peek(syn::Token![enum]) {
@@ -65,457 +192,493 @@ impl Label {
         () if ident.eq("map") => true,
         () if ident.eq("set") => true,
         () if ident.eq("list") => true,
-        () if ident.eq("optional") => true,
+        () if ident.eq("nullable") => true,
+        () if ident.eq("generic") => true,
         _ => false,
       });
     }
 
     Ok(false)
   }
+
+  /// Returns the default wire format type for this label.
+  pub fn label_info(
+    &self,
+    path_to_grost: &Path,
+    flavor_type: &Type,
+    ty: &Type,
+    tag: u32,
+  ) -> syn::Result<LabelInformation> {
+    self.label_info_helper(path_to_grost, flavor_type, ty, tag, true)
+  }
+
+  fn label_info_helper(
+    &self,
+    path_to_grost: &Path,
+    flavor_type: &Type,
+    ty: &Type,
+    tag: u32,
+    outermost: bool,
+  ) -> syn::Result<LabelInformation> {
+    /// The inner tag for repeating fields should always be 1.
+    ///
+    /// e.g.
+    ///
+    /// ```rust,ignore
+    /// struct User {
+    ///   #[grost(tag = 3, map(key(string), value(list(string, repeated)), repeated))]
+    ///   media: HashMap<String, Vec<String>>,
+    /// }
+    /// ```
+    ///
+    /// For the first repeated field, the tag will be 3,
+    /// the inner tag for the repeated field will be 1, because it just like
+    ///
+    /// ```rust,ignore
+    /// struct Anonymous {
+    ///   #[grost(tag = 1, list(string, repeated))]
+    ///   links: Vec<String>
+    /// }
+    ///
+    /// struct User {
+    ///   #[grost(tag = 3, map(key(string), value(object), repeated))]
+    ///   media: HashMap<String, Anonymous>,
+    /// }
+    /// ```
+    const INNER_TAG: u32 = 1;
+
+    Ok(match self {
+      Self::Scalar(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::ScalarMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Bytes(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::BytesMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::String(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::StringMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Object(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::ObjectMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Enum(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::EnumMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Union(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::UnionMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Interface(wf) => LabelInformation::new(match wf {
+        None => syn::parse2(quote! {
+          #path_to_grost::__private::marker::InterfaceMarker<#ty>
+        })?,
+        Some(wf) => syn::parse2(quote! {
+          #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+        })?,
+      }),
+      Self::Generic(GenericLabelValue { value, .. }) => match value {
+        GenericLabelValueVariant::Marker { marker, marked } => {
+          let mut wire_format_constraints = Punctuated::new();
+
+          let marked = marked.as_ref().unwrap_or(ty);
+          wire_format_constraints.push(syn::parse2(quote! {
+            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type> + #path_to_grost::__private::marker::Marker<Marked = #marked>
+          })?);
+
+          LabelInformation::with_wire_format_constraints(
+            syn::parse2(quote! {
+              #path_to_grost::__private::marker::GenericMarker<#marked, #marker>
+            })?,
+            wire_format_constraints,
+          )
+        }
+        GenericLabelValueVariant::As {
+          wire_format: wf,
+          marked,
+        } => {
+          let mut wire_format_constraints = Punctuated::new();
+
+          let marked = marked.as_ref().unwrap_or(ty);
+          let marker: Type = syn::parse2(quote! {
+            #path_to_grost::__private::marker::WireFormatMarker<#marked, #wf>
+          })?;
+          wire_format_constraints.push(syn::parse2(quote! {
+            #marker: #path_to_grost::__private::flavors::DefaultWireFormat<#flavor_type>
+          })?);
+
+          LabelInformation::with_wire_format_constraints(marker, wire_format_constraints)
+        }
+      },
+      Self::Map(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
+      Self::Map(Either::Left(MapLabel {
+        key,
+        value,
+        repeated,
+      })) => {
+        let k: Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::state::State<
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::MapKey>,
+          >>::Output
+        })?;
+
+        let v: Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::state::State<
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::MapValue>,
+          >>::Output
+        })?;
+
+        let LabelInformation {
+          wire_format: kwf,
+          wire_format_constraints: kwfc,
+        } = key.label_info_helper(path_to_grost, flavor_type, &k, INNER_TAG, false)?;
+        let LabelInformation {
+          wire_format: vwf,
+          wire_format_constraints: vwfc,
+        } = value.label_info_helper(path_to_grost, flavor_type, &v, INNER_TAG, false)?;
+
+        let ty = if *repeated {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::RepeatedEntryMarker<#ty, #kwf, #vwf, #tag>
+          })?
+        } else {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::MapMarker<#ty, #kwf, #vwf>
+          })?
+        };
+
+        LabelInformation::with_wire_format_constraints(ty, kwfc.into_iter().chain(vwfc).collect())
+      }
+      Self::Set(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
+      Self::Set(Either::Left(ListLikeLabel { label, repeated })) => {
+        let inner_ty: Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::state::State<
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+
+        let LabelInformation {
+          wire_format: inner_wf,
+          wire_format_constraints,
+        } = label.label_info_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?;
+        let ty = if *repeated {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner_wf, #tag>
+          })?
+        } else {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::SetMarker<#ty, #inner_wf>
+          })?
+        };
+        LabelInformation::with_wire_format_constraints(ty, wire_format_constraints)
+      }
+      Self::List(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
+      Self::List(Either::Left(ListLikeLabel { label, repeated })) => {
+        let inner_ty: Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::state::State<
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+
+        let LabelInformation {
+          wire_format: inner,
+          wire_format_constraints: c,
+        } = label.label_info_helper(path_to_grost, flavor_type, &inner_ty, INNER_TAG, false)?;
+
+        let ty = if *repeated {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::RepeatedMarker<#ty, #inner, #tag>
+          })?
+        } else {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::ListMarker<#ty, #inner>
+          })?
+        };
+
+        LabelInformation::with_wire_format_constraints(ty, c)
+      }
+      Self::Nullable(Either::Right(wf)) => LabelInformation::new(syn::parse2(quote! {
+        #path_to_grost::__private::marker::WireFormatMarker<#ty, #wf>
+      })?),
+      Self::Nullable(Either::Left(label)) => {
+        let inner_ty: Type = syn::parse2(quote! {
+          <#ty as #path_to_grost::__private::state::State<
+            #path_to_grost::__private::convert::Extracted<#path_to_grost::__private::convert::Inner>,
+          >>::Output
+        })?;
+
+        let LabelInformation {
+          wire_format: inner,
+          wire_format_constraints: c,
+        } = label
+          .label()
+          .label_info_helper(path_to_grost, flavor_type, &inner_ty, tag, false)?;
+
+        // if the option is the outermost, we should use the inner type wire format.
+        //
+        // e.g.
+        //
+        // ```rust
+        // struct User {
+        //   name: Option<String>,
+        // }
+        // ```
+        //
+        // In this case, there is no outer wrapper over the `Option<String>`,
+        // the default should be the default wire format of String, encode name as nullable
+        // will waste at least 2 bytes space.
+        let ty = if outermost {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::FlattenMarker<#ty, #inner>
+          })?
+        } else {
+          syn::parse2(quote! {
+            #path_to_grost::__private::marker::NullableMarker<#ty, #inner>
+          })?
+        };
+
+        LabelInformation::with_wire_format_constraints(ty, c)
+      }
+    })
+  }
 }
 
-impl syn::parse::Parse for Label {
+fn parse_maybe_as(input: ParseStream, name: &str) -> syn::Result<Option<Type>> {
+  if input.is_empty() {
+    return Ok(None);
+  }
+
+  if input.peek(Paren) {
+    let content;
+    syn::parenthesized!(content in input);
+
+    if content.is_empty() {
+      return Ok(None);
+    }
+
+    if content.peek(Token![as]) && content.peek2(Token![=]) {
+      let _: Token![as] = content.parse()?;
+      let _: Token![=] = content.parse()?;
+      let ty: Type = parse_type(&content)?;
+
+      return Ok(Some(ty));
+    }
+  }
+
+  Err(syn::Error::new(
+    input.span(),
+    format!("Expected `{name}`, `{name}()`, or `{name}(as = \"...\")`"),
+  ))
+}
+
+fn unexpected_eos_error(ident: Ident) -> syn::Result<Label> {
+  match () {
+    () if ident.eq("map") => Err(syn::Error::new(
+      ident.span(),
+      "`map` requires a key and value, e.g. `map(key(...), value(...))`, `map(key(...), value(...), repeated)` or `map(as = \"...\")`",
+    )),
+    () if ident.eq("set") => Err(syn::Error::new(
+      ident.span(),
+      "`set` requires a type, e.g. `set(...)` or `set(..., repeated)`",
+    )),
+    () if ident.eq("list") => Err(syn::Error::new(
+      ident.span(),
+      "`list` requires a type, e.g. `list(...)` or `list(..., repeated)`",
+    )),
+    () if ident.eq("nullable") => Err(syn::Error::new(
+      ident.span(),
+      "`nullable` requires a type, e.g. `nullable(...)`",
+    )),
+    () if ident.eq("key") => Err(syn::Error::new(
+      ident.span(),
+      "`key` can only be used in `map(...)`",
+    )),
+    () if ident.eq("value") => Err(syn::Error::new(
+      ident.span(),
+      "`value` can only be used in `map(...)`",
+    )),
+    _ => Err(syn::Error::new(
+      ident.span(),
+      "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
+    )),
+  }
+}
+
+fn parse_type(input: ParseStream) -> syn::Result<Type> {
+  let expr: syn::ExprLit = input.parse()?;
+  match expr.lit {
+    syn::Lit::Str(lit_str) => syn::parse_str(lit_str.value().as_str()),
+    _ => Err(syn::Error::new(
+      expr.span(),
+      "Expected a string literal for type",
+    )),
+  }
+}
+
+impl Parse for Label {
   fn parse(input: ParseStream) -> syn::Result<Self> {
     if input.peek(syn::Token![enum]) {
       let _: syn::Token![enum] = input.parse()?;
-      return Ok(Self::Enum);
+
+      return parse_maybe_as(input, "enum").map(Self::Enum);
     }
 
-    if input.peek(syn::Ident::peek_any) && !input.peek2(syn::token::Paren) {
-      let ident: syn::Ident = input.parse()?;
-      return Ok(match () {
-        () if ident.eq("scalar") => Self::Scalar,
-        () if ident.eq("bytes") => Self::Bytes,
-        () if ident.eq("string") => Self::String,
-        () if ident.eq("object") => Self::Object,
-        () if ident.eq("enum") => Self::Enum,
-        () if ident.eq("union") => Self::Union,
-        () if ident.eq("interface") => Self::Interface,
-        () if ident.eq("map") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`map` requires a key and value, e.g. `map(key(...), value(...))`",
-          ));
-        }
-        () if ident.eq("set") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`set` requires a type, e.g. `set(...)`",
-          ));
-        }
-        () if ident.eq("list") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`list` requires a type, e.g. `list(...)`",
-          ));
-        }
-        () if ident.eq("optional") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`optional` requires a type, e.g. `optional(...)`",
-          ));
-        }
-        _ => {
-          return Err(syn::Error::new(
-            input.span(),
-            "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
-          ));
-        }
-      });
+    if !input.peek(syn::Ident::peek_any) {
+      return Err(syn::Error::new(
+        input.span(),
+        "Expected one of [scalar, bytes, string, generic, object, enum, union, interface, map, set, list, nullable]",
+      ));
     }
 
-    if input.peek(syn::Ident::peek_any) && input.peek2(syn::token::Paren) {
-      let ident: syn::Ident = input.parse()?;
-      let content;
-      syn::parenthesized!(content in input);
+    let ident: syn::Ident = input.parse()?;
+    Ok(match () {
+      () if ident.eq("scalar") => parse_maybe_as(input, "scalar").map(Self::Scalar)?,
+      () if ident.eq("bytes") => parse_maybe_as(input, "bytes").map(Self::Bytes)?,
+      () if ident.eq("string") => parse_maybe_as(input, "string").map(Self::String)?,
+      () if ident.eq("object") => parse_maybe_as(input, "object").map(Self::Object)?,
+      () if ident.eq("enum") => parse_maybe_as(input, "enum").map(Self::Enum)?,
+      () if ident.eq("union") => parse_maybe_as(input, "union").map(Self::Union)?,
+      () if ident.eq("interface") => parse_maybe_as(input, "interface").map(Self::Interface)?,
+      _ => {
+        if input.is_empty() {
+          return unexpected_eos_error(ident);
+        }
 
-      if content.is_empty() {
-        return Err(syn::Error::new(
-          input.span(),
-          "Unexpected format `map()`, expected `map(key(...), value(...))`",
-        ));
-      }
+        if !input.peek(Paren) {
+          return Err(syn::Error::new(
+            ident.span(),
+            format!("Expected `(...)` after the {ident}"),
+          ));
+        }
 
-      return Ok(match () {
-        () if ident.eq("map") => {
-          let mut key_ty = None;
-          let mut value_ty = None;
+        let content;
+        syn::parenthesized!(content in input);
 
-          while !content.is_empty() {
-            let require_comma = key_ty.is_none() && value_ty.is_none();
+        if content.is_empty() {
+          return unexpected_eos_error(ident);
+        }
 
-            let param_name: syn::Ident = content.parse()?;
-
-            if !(param_name.eq("key") || param_name.eq("value")) {
-              return Err(syn::Error::new(
-                param_name.span(),
-                format!("Unknown `{param_name}`, possible attributes in map are: `key` or `value`"),
-              ));
-            }
-
-            if !content.peek(syn::token::Paren) {
-              return Err(syn::Error::new(
-                param_name.span(),
-                format!(
-                  "Unexpected format `map({}{content})`, expected `map(key(...), value(...))`",
-                  param_name
-                ),
-              ));
-            }
-
-            let param_content;
-            syn::parenthesized!(param_content in content);
-            match () {
-              () if param_name.eq("key") => {
-                if key_ty.is_some() {
+        return Ok(match () {
+          () if ident.eq("generic") => GenericLabelValue::parse(&content).map(Self::Generic)?,
+          () if ident.eq("nullable") => {
+            NullableLabelParser::parse(&content).and_then(|NullableLabelParser(val)| match val {
+              Either::Left(label) => {
+                if label.label().is_nullable() {
                   return Err(syn::Error::new(
-                    param_name.span(),
-                    "Duplicate `key` found in `map(...)`",
+                    content.span(),
+                    "`nullable(nullable(...))` is not supported",
                   ));
                 }
 
-                if param_content.peek(syn::Ident::peek_any) {
-                  let next_ident: syn::Ident = param_content.fork().parse()?;
-                  if next_ident.eq("map") {
-                    return Err(syn::Error::new(
-                      param_name.span(),
-                      "`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`",
-                    ));
-                  }
-                }
-
-                key_ty = Some(Arc::new(Label::parse(&param_content)?));
-              }
-              () if param_name.eq("value") => {
-                if value_ty.is_some() {
+                if label.label().is_generic() {
                   return Err(syn::Error::new(
-                    param_name.span(),
-                    "Duplicate `value` found in `map(...)`",
+                    content.span(),
+                    "`nullable(generic(...))` is not supported",
                   ));
                 }
-                value_ty = Some(Arc::new(Label::parse(&param_content)?));
+
+                Ok(Self::Nullable(Either::Left(label)))
               }
-              _ => {
+              Either::Right(val) => Ok(Self::Nullable(Either::Right(val))),
+            })?
+          }
+          () if ident.eq("set") => {
+            ListLikeLabelParser::<SET_TAG>::parse(&content).and_then(|label| {
+              if let Either::Left(label) = &label.0 {
+                if label.label().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`set(generic(...))` is not supported",
+                  ));
+                }
+              }
+              Ok(Self::Set(label.0))
+            })?
+          }
+          () if ident.eq("list") => {
+            ListLikeLabelParser::<LIST_TAG>::parse(&content).and_then(|label| {
+              if let Either::Left(label) = &label.0 {
+                if label.label().is_generic() {
+                  return Err(syn::Error::new(
+                    content.span(),
+                    "`list(generic(...))` is not supported",
+                  ));
+                }
+              }
+              Ok(Self::List(label.0))
+            })?
+          }
+          () if ident.eq("key") => {
+            return Err(syn::Error::new(
+              content.span(),
+              "`key` can only be used in `map(...)`",
+            ));
+          }
+          () if ident.eq("value") => {
+            return Err(syn::Error::new(
+              content.span(),
+              "`value` can only be used in `map(...)`",
+            ));
+          }
+          () if ident.eq("map") => MapLabelParser::parse(&content).and_then(|label| {
+            if let Either::Left(label) = &label.0 {
+              if label.key().is_generic() {
                 return Err(syn::Error::new(
-                  param_name.span(),
-                  format!(
-                    "Unexpected `{}` in `map(...)`, expected `key(...)` or `value(...)`",
-                    param_name
-                  ),
+                  content.span(),
+                  "`key(generic(...))` is not supported",
+                ));
+              }
+
+              if label.value().is_generic() {
+                return Err(syn::Error::new(
+                  content.span(),
+                  "`value(generic(...))` is not supported",
                 ));
               }
             }
-
-            if require_comma || content.peek(syn::Token![,]) {
-              let _: syn::Token![,] = content.parse()?;
-            }
-          }
-
-          // Ensure both key and value were provided
-          let key = key_ty
-            .ok_or_else(|| syn::Error::new(input.span(), "Missing `key(...)` in `map(...)`"))?;
-
-          let value = value_ty
-            .ok_or_else(|| syn::Error::new(input.span(), "Missing `value(...)` in `map(...)`"))?;
-
-          Self::Map { key, value }
-        }
-        () if ident.eq("key") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`key` can only be used in `map(...)`",
-          ));
-        }
-        () if ident.eq("value") => {
-          return Err(syn::Error::new(
-            input.span(),
-            "`value` can only be used in `map(...)`",
-          ));
-        }
-        () if ident.eq("set") => {
-          let ty = Label::parse(&content)?;
-          if ty.is_set() {
+            Ok(Self::Map(label.0))
+          })?,
+          _ => {
             return Err(syn::Error::new(
-              input.span(),
-              "`set(set(...))` is not allowed",
+              content.span(),
+              "Expected one of [map, set, list, nullable]",
             ));
           }
-
-          if ty.is_map() {
-            return Err(syn::Error::new(
-              input.span(),
-              "`set(map(...))` is not allowed",
-            ));
-          }
-
-          Self::Set(Arc::new(ty))
-        }
-        () if ident.eq("list") => Self::List(Arc::new(Label::parse(&content)?)),
-        () if ident.eq("optional") => {
-          let ty = Label::parse(&content)?;
-          if ty.is_optional() {
-            return Err(syn::Error::new(
-              input.span(),
-              "`optional(optional(...))` is not allowed",
-            ));
-          }
-          Self::Optional(Arc::new(ty))
-        }
-        _ => {
-          return Err(syn::Error::new(
-            input.span(),
-            "Expected one of [map, set, list, optional]",
-          ));
-        }
-      });
-    }
-    Err(syn::Error::new(
-      input.span(),
-      "Expected one of [scalar, bytes, string, object, enum, union, interface, map, set, list, optional]",
-    ))
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use quote::quote;
-
-  use super::*;
-
-  #[test]
-  fn test_scalar() {
-    let scalar = quote! {
-      scalar
-    };
-
-    let ty = syn::parse2::<Label>(scalar).unwrap();
-    assert_eq!(ty, Label::Scalar);
-  }
-
-  #[test]
-  fn test_bytes() {
-    let bytes = quote! {
-      bytes
-    };
-
-    let ty = syn::parse2::<Label>(bytes).unwrap();
-    assert_eq!(ty, Label::Bytes);
-  }
-
-  #[test]
-  fn test_string() {
-    let string = quote! {
-      string
-    };
-
-    let ty = syn::parse2::<Label>(string).unwrap();
-    assert_eq!(ty, Label::String);
-  }
-
-  #[test]
-  fn test_object() {
-    let object = quote! {
-      object
-    };
-
-    let ty = syn::parse2::<Label>(object).unwrap();
-    assert_eq!(ty, Label::Object);
-  }
-
-  #[test]
-  fn test_enum() {
-    let enum_ty = quote! {
-      enum
-    };
-
-    let ty = syn::parse2::<Label>(enum_ty).unwrap();
-    assert_eq!(ty, Label::Enum);
-  }
-
-  #[test]
-  fn test_union() {
-    let union = quote! {
-      union
-    };
-
-    let ty = syn::parse2::<Label>(union).unwrap();
-    assert_eq!(ty, Label::Union);
-  }
-
-  #[test]
-  fn test_interface() {
-    let interface = quote! {
-      interface
-    };
-
-    let ty = syn::parse2::<Label>(interface).unwrap();
-    assert_eq!(ty, Label::Interface);
-  }
-
-  #[test]
-  fn test_map() {
-    let map = quote! {
-      map(key(scalar), value(string))
-    };
-
-    let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_scalar() && value.is_string()));
-  }
-
-  #[test]
-  fn test_map_nested_key() {
-    let map = quote! {
-      map(key(list(scalar)), value(string))
-    };
-
-    let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_string()));
-  }
-
-  #[test]
-  fn test_map_nested_value() {
-    let map = quote! {
-      map(key(list(scalar)), value(map(key(string), value(object))))
-    };
-
-    let ty = syn::parse2::<Label>(map).unwrap();
-    assert!(matches!(ty, Label::Map { key, value } if key.is_list() && value.is_map()));
-  }
-
-  #[test]
-  fn test_set() {
-    let set = quote! {
-      set(string)
-    };
-
-    let ty = syn::parse2::<Label>(set).unwrap();
-    assert!(matches!(ty, Label::Set(inner) if inner.is_string()));
-  }
-
-  #[test]
-  fn test_list() {
-    let list = quote! {
-      list(object)
-    };
-
-    let ty = syn::parse2::<Label>(list).unwrap();
-    assert!(matches!(ty, Label::List(inner) if inner.is_object()));
-  }
-
-  #[test]
-  fn test_optional() {
-    let optional = quote! {
-      optional(string)
-    };
-
-    let ty = syn::parse2::<Label>(optional).unwrap();
-    assert!(matches!(ty, Label::Optional(inner) if inner.is_string()));
-  }
-
-  #[test]
-  fn test_invalid_set() {
-    let invalid_set = quote! {
-      set(map(key(scalar), value(string)))
-    };
-
-    let result = syn::parse2::<Label>(invalid_set);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("`set(map(...))` is not allowed")
-    );
-  }
-
-  #[test]
-  fn test_invalid_set2() {
-    let invalid_list = quote! {
-      set(set(string))
-    };
-
-    let result = syn::parse2::<Label>(invalid_list);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("`set(set(...))` is not allowed")
-    );
-  }
-
-  #[test]
-  fn test_invalid_map() {
-    let invalid_map = quote! {
-      map(scalar)
-    };
-
-    let result = syn::parse2::<Label>(invalid_map);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("Unknown `scalar`, possible attributes in map are: `key` or `value`")
-    );
-  }
-
-  #[test]
-  fn test_invalid_map2() {
-    let invalid_map = quote! {
-      map()
-    };
-
-    let result = syn::parse2::<Label>(invalid_map);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("Unexpected format `map()`, expected `map(key(...), value(...))`")
-    );
-  }
-
-  #[test]
-  fn test_invalid_map3() {
-    let invalid_map = quote! {
-      map(key)
-    };
-
-    let result = syn::parse2::<Label>(invalid_map);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("Unexpected format `map(key)`, expected `map(key(...), value(...))`")
-    );
-  }
-
-  #[test]
-  fn test_invalid_map_key() {
-    let invalid_map = quote! {
-      map(key(map(key(scalar))))
-    };
-
-    let result = syn::parse2::<Label>(invalid_map);
-    assert!(result.is_err());
-    assert!(result.unwrap_err().to_string().contains("`map(key(map(...)), value(...))` is not allowed, because the `key` of a `map` cannot be another `map`"));
-  }
-
-  #[test]
-  fn test_invalid_optional() {
-    let invalid_set = quote! {
-      optional(optional(string))
-    };
-
-    let result = syn::parse2::<Label>(invalid_set);
-    assert!(result.is_err());
-    assert!(
-      result
-        .unwrap_err()
-        .to_string()
-        .contains("`optional(optional(...))` is not allowed")
-    );
+        });
+      }
+    })
   }
 }

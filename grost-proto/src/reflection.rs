@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use ghost::phantom;
 
 pub use schema::*;
 pub use wire_format::WireFormatReflection;
@@ -11,18 +11,12 @@ macro_rules! phantom {
     paste::paste! {
       $(
         $(#[$meta])*
-        #[repr(transparent)]
-        pub struct $name<R: ?::core::marker::Sized>(::core::marker::PhantomData<R>);
-
-        impl<R: ?::core::marker::Sized> ::core::clone::Clone for $name<R> {
-          fn clone(&self) -> Self {
-            *self
-          }
-        }
-
-        impl<R: ?::core::marker::Sized> ::core::marker::Copy for $name<R> {}
+        #[derive(Copy, Clone, PartialEq, Eq, Hash)]
+        #[phantom]
+        pub struct $name<R: ?::core::marker::Sized>;
 
         impl<R: ?::core::marker::Sized> ::core::default::Default for $name<R> {
+          #[inline]
           fn default() -> Self {
             Self::new()
           }
@@ -32,7 +26,7 @@ macro_rules! phantom {
           #[doc = "creates a new `" $name "`"]
           #[inline]
           pub const fn new() -> Self {
-            Self(::core::marker::PhantomData)
+            $name
           }
         }
       )*
@@ -49,7 +43,6 @@ macro_rules! zst {
     paste::paste! {
       $(
         $(#[$meta])*
-        #[repr(transparent)]
         #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
         pub struct $name;
       )*
@@ -70,7 +63,7 @@ phantom!(
   /// Reflection to the tag of a field
   TagReflection,
   /// Reflection to the wire type of a field
-  WireTypeReflection,
+  WireSchemaTypeReflection,
   /// Reflection to length related
   Len,
   /// Reflection to an encode fn.
@@ -78,7 +71,7 @@ phantom!(
   /// Reflection to an partial encode fn.
   PartialEncodeReflection,
   /// Reflection to the schema [`Type`].
-  TypeReflection,
+  SchemaTypeReflection,
 );
 
 /// Reflectable.
@@ -90,23 +83,10 @@ pub trait Reflectable<F: ?Sized> {
 }
 
 /// A phantom relection type which can be dereferenced to [`Reflectable::REFLECTION`].
-#[repr(transparent)]
-pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized> {
-  _r: PhantomData<R>,
-  _f: PhantomData<F>,
-  _t: PhantomData<T>,
-}
 
-impl<T, R, F> Default for Reflection<T, R, F>
-where
-  T: ?Sized,
-  R: ?Sized,
-  F: ?Sized,
-{
-  fn default() -> Self {
-    Self::new()
-  }
-}
+#[phantom]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct Reflection<T: ?Sized, R: ?Sized, F: ?Sized>;
 
 impl<T, R, F> Reflection<T, R, F>
 where
@@ -117,11 +97,7 @@ where
   /// Creates a new [`Reflection`].
   #[inline]
   pub const fn new() -> Self {
-    Self {
-      _r: PhantomData,
-      _f: PhantomData,
-      _t: PhantomData,
-    }
+    Reflection
   }
 }
 
@@ -224,9 +200,9 @@ where
 //   #[inline]
 //   pub const fn decoded(
 //     &self,
-//   ) -> decoded::DecodedReflection<T, Identified<ObjectField, TAG>, F>
+//   ) -> decoded::PartialRefReflection<T, Identified<ObjectField, TAG>, F>
 //   {
-//     decoded::DecodedReflection::new()
+//     decoded::PartialRefReflection::new()
 //   }
 
 //   /// Returns the reflection to the encode fn of the field.
@@ -365,7 +341,7 @@ where
 //     T,
 //     Identified<
 //       EncodeReflection<
-//         super::Decoded<
+//         super::PartialRef<
 //           'a,
 //           F,
 //           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -381,7 +357,7 @@ where
 //       T,
 //       Identified<
 //         EncodeReflection<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -399,14 +375,14 @@ where
 //   #[inline]
 //   pub const fn encoded_decoded_len<'a>(
 //     &self,
-//   ) -> Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//   ) -> Reflection<T, Identified<EncodeReflection<Len<super::PartialRef<
 //     'a,
 //     F,
 //     <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
 //   >>>, TAG>, F>
 //   where
 //     Reflection<T, Identified<WireFormatReflection, TAG>, F>: Reflectable<T>,
-//     Reflection<T, Identified<EncodeReflection<Len<super::Decoded<
+//     Reflection<T, Identified<EncodeReflection<Len<super::PartialRef<
 //       'a,
 //       F,
 //       <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -423,7 +399,7 @@ where
 //     T,
 //     Identified<
 //       PartialEncodeReflection<
-//         super::Decoded<
+//         super::PartialRef<
 //           'a,
 //           F,
 //           <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -439,7 +415,7 @@ where
 //       T,
 //       Identified<
 //         PartialEncodeReflection<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -462,7 +438,7 @@ where
 //     Identified<
 //       PartialEncodeReflection<
 //         Len<
-//           super::Decoded<
+//           super::PartialRef<
 //             'a,
 //             F,
 //             <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,
@@ -480,7 +456,7 @@ where
 //       Identified<
 //         PartialEncodeReflection<
 //           Len<
-//             super::Decoded<
+//             super::PartialRef<
 //               'a,
 //               F,
 //               <Reflection<T, Identified<WireFormatReflection, TAG>, F> as Reflectable<T>>::Reflection,

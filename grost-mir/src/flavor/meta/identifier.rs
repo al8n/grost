@@ -39,11 +39,6 @@ impl From<IdentifierFromMeta> for IdentifierParser {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
-#[cfg_attr(
-  feature = "serde",
-  serde(try_from = "super::serde::IdentifierSerdeHelper",)
-)]
 pub struct IdentifierFromMeta {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,
@@ -60,6 +55,19 @@ impl IdentifierFromMeta {
   #[inline]
   pub const fn encode(&self) -> &Invokable {
     &self.encode
+  }
+
+  pub(crate) fn groto(path_to_grost: &Path) -> darling::Result<Self> {
+    let constructor =
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Identifier::new })?;
+    let encode = syn::parse2::<Path>(
+      quote! { #path_to_grost::__private::flavors::groto::Identifier::encode },
+    )?;
+
+    Ok(Self {
+      constructor: constructor.into(),
+      encode: encode.into(),
+    })
   }
 }
 

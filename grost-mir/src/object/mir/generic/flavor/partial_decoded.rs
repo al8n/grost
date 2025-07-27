@@ -2,12 +2,12 @@ use quote::quote;
 use syn::{GenericParam, Generics, Ident, Type};
 
 #[derive(Debug, Clone)]
-pub struct PartialDecodedObjectFlavor {
+pub struct PartialRefObjectFlavor {
   ty: Type,
   generics: Generics,
 }
 
-impl PartialDecodedObjectFlavor {
+impl PartialRefObjectFlavor {
   /// Returns the type of the partial decoded object which applies the flavor.
   #[inline]
   pub const fn ty(&self) -> &Type {
@@ -26,9 +26,9 @@ impl PartialDecodedObjectFlavor {
     object: &super::super::GenericObjectAst<M, F>,
     fields: &[super::super::GenericField<F>],
   ) -> darling::Result<Self> {
-    let partial_decoded_object = &object.partial_decoded;
-    let partial_decoded_object_name = partial_decoded_object.name().clone();
-    let unknown_buffer_param = &object.unknown_buffer_param;
+    let partial_ref_object = &object.partial_ref;
+    let partial_ref_object_name = partial_ref_object.name().clone();
+    let buffer_param = &object.buffer_param;
     let lifetime_param = &object.lifetime_param;
     let original_generics = &object.generics;
     let mut generics = Generics::default();
@@ -69,9 +69,9 @@ impl PartialDecodedObjectFlavor {
 
     generics
       .params
-      .push(syn::GenericParam::Type(unknown_buffer_param.clone()));
+      .push(syn::GenericParam::Type(buffer_param.clone()));
     ty_params.push({
-      let ident = &unknown_buffer_param.ident;
+      let ident = &buffer_param.ident;
       quote! { #ident }
     });
 
@@ -102,7 +102,7 @@ impl PartialDecodedObjectFlavor {
           .flavors()
           .get(flavor_name)
           .expect("Field flavor already checked when constructing the AST");
-        let type_constraints = ff.partial_decoded().type_constraints();
+        let type_constraints = ff.partial_ref().type_constraints();
         if !type_constraints.is_empty() {
           generics
             .make_where_clause()
@@ -112,7 +112,7 @@ impl PartialDecodedObjectFlavor {
       });
 
     let ty = syn::parse2(quote! {
-      #partial_decoded_object_name<#(#ty_params),*>
+      #partial_ref_object_name<#(#ty_params),*>
     })?;
     Ok(Self { ty, generics })
   }

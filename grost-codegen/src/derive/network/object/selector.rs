@@ -2,7 +2,7 @@ use heck::ToUpperCamelCase;
 
 use super::super::*;
 
-impl Network {
+impl Groto {
   pub(crate) fn derive_selectable_for_object(
     &self,
     path_to_grost: &syn::Path,
@@ -10,7 +10,7 @@ impl Network {
   ) -> proc_macro2::TokenStream {
     let struct_name = struct_.name();
     let partial_struct_name = struct_.partial_struct_name();
-    let partial_decoded_name = struct_.partial_decoded_name();
+    let partial_ref_name = struct_.partial_ref_name();
     let selector = struct_.selector_name();
 
     let selectable_impl = |name: &syn::Ident| -> proc_macro2::TokenStream {
@@ -18,33 +18,33 @@ impl Network {
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         impl #path_to_grost::__private::selection::Selectable<
-          #path_to_grost::__private::flavors::Network,
-          #path_to_grost::__private::flavors::network::LengthDelimited,
+          #path_to_grost::__private::flavors::Groto,
+          #path_to_grost::__private::flavors::groto::LengthDelimited,
         > for #name
         {
-          type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+          type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
         }
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         impl #path_to_grost::__private::selection::Selectable<
-          #path_to_grost::__private::flavors::Network,
-          #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
+          #path_to_grost::__private::flavors::Groto,
+          #path_to_grost::__private::flavors::groto::Repeated<#path_to_grost::__private::flavors::groto::LengthDelimited>,
         > for #name
         {
-          type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+          type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
         }
 
         #[automatically_derived]
         #[allow(non_camel_case_types)]
         impl<const I: ::core::primitive::u32> #path_to_grost::__private::selection::Selectable<
-          #path_to_grost::__private::flavors::Network,
-          #path_to_grost::__private::flavors::network::Repeated<
-            #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
+          #path_to_grost::__private::flavors::Groto,
+          #path_to_grost::__private::flavors::groto::Repeated<
+            #path_to_grost::__private::flavors::groto::Stream<#path_to_grost::__private::flavors::groto::LengthDelimited, I>
           >,
         > for #name
         {
-          type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+          type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
         }
       }
     };
@@ -60,33 +60,33 @@ impl Network {
       #[automatically_derived]
       #[allow(non_camel_case_types)]
       impl<'__grost_lifetime__> #path_to_grost::__private::selection::Selectable<
-        #path_to_grost::__private::flavors::Network,
-        #path_to_grost::__private::flavors::network::LengthDelimited,
-      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+        #path_to_grost::__private::flavors::Groto,
+        #path_to_grost::__private::flavors::groto::LengthDelimited,
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
       {
-        type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+        type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
       impl<'__grost_lifetime__> #path_to_grost::__private::selection::Selectable<
-        #path_to_grost::__private::flavors::Network,
-        #path_to_grost::__private::flavors::network::Repeated<#path_to_grost::__private::flavors::network::LengthDelimited>,
-      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+        #path_to_grost::__private::flavors::Groto,
+        #path_to_grost::__private::flavors::groto::Repeated<#path_to_grost::__private::flavors::groto::LengthDelimited>,
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
       {
-        type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+        type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
       }
 
       #[automatically_derived]
       #[allow(non_camel_case_types)]
       impl<'__grost_lifetime__, const I: ::core::primitive::u32> #path_to_grost::__private::selection::Selectable<
-        #path_to_grost::__private::flavors::Network,
-        #path_to_grost::__private::flavors::network::Repeated<
-          #path_to_grost::__private::flavors::network::Stream<#path_to_grost::__private::flavors::network::LengthDelimited, I>
+        #path_to_grost::__private::flavors::Groto,
+        #path_to_grost::__private::flavors::groto::Repeated<
+          #path_to_grost::__private::flavors::groto::Stream<#path_to_grost::__private::flavors::groto::LengthDelimited, I>
         >,
-      > for #partial_decoded_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network>
+      > for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
       {
-        type Selector = #selector<#path_to_grost::__private::flavors::Network>;
+        type Selector = #selector<#path_to_grost::__private::flavors::Groto>;
       }
     }
   }
@@ -99,8 +99,8 @@ impl Network {
     let iter_name = struct_.selector_iter_name();
     quote! {
       #[automatically_derived]
-      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::Iterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network, N> {
-        type Item = &'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>;
+      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::Iterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto, N> {
+        type Item = &'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>;
 
         fn next(&mut self) -> ::core::option::Option<Self::Item> {
           loop {
@@ -133,10 +133,10 @@ impl Network {
       }
 
       #[automatically_derived]
-      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::FusedIterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network, N> {}
+      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::FusedIterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto, N> {}
 
       #[automatically_derived]
-      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::ExactSizeIterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Network, N> {
+      impl<'__grost_lifetime__, const N: ::core::primitive::bool> ::core::iter::ExactSizeIterator for #iter_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto, N> {
         #[inline]
         fn len(&self) -> ::core::primitive::usize {
           self.remaining()
@@ -159,14 +159,14 @@ impl Network {
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
       let reflection = quote! {
-        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>> = ::core::option::Option::Some(
           <
             #field_reflection<
-              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>,
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>,
+              #path_to_grost::__private::flavors::Groto,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::flavors::Groto,
             >
           >::REFLECTION
         );
@@ -192,14 +192,14 @@ impl Network {
       let field_reflection = struct_.field_reflection_name();
       let tag = f.tag();
       let reflection = quote! {
-        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = ::core::option::Option::Some(
+        const REFLECTION: ::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>> = ::core::option::Option::Some(
           <
             #field_reflection<
-              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>,
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>,
+              #path_to_grost::__private::flavors::Groto,
               #tag,
             > as #path_to_grost::__private::reflection::Reflectable<
-              #path_to_grost::__private::flavors::Network,
+              #path_to_grost::__private::flavors::Groto,
             >
           >::REFLECTION
         );
@@ -209,7 +209,7 @@ impl Network {
         #indexer_name::#field_variant => {
           #reflection
 
-          if #path_to_grost::__private::selection::Selector::<#path_to_grost::__private::flavors::Network>::is_empty(&self.#field_name) {
+          if #path_to_grost::__private::selection::Selector::<#path_to_grost::__private::flavors::Groto>::is_empty(&self.#field_name) {
             NONE
           } else {
             &REFLECTION
@@ -220,14 +220,14 @@ impl Network {
 
     quote! {
       #[automatically_derived]
-      impl ::core::ops::Index<(#indexer_name, ::core::primitive::bool)> for #selector_name<#path_to_grost::__private::flavors::Network> {
-        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>>;
+      impl ::core::ops::Index<(#indexer_name, ::core::primitive::bool)> for #selector_name<#path_to_grost::__private::flavors::Groto> {
+        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>>;
 
         fn index(
           &self,
           (indexer, select): (#indexer_name, ::core::primitive::bool),
         ) -> &Self::Output {
-          const NONE: &::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
+          const NONE: &::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>> = &::core::option::Option::None;
 
           match indexer {
             #(#index_trait_select),*
@@ -236,14 +236,14 @@ impl Network {
       }
 
       #[automatically_derived]
-      impl ::core::ops::Index<#indexer_name> for #selector_name<#path_to_grost::__private::flavors::Network> {
-        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>>;
+      impl ::core::ops::Index<#indexer_name> for #selector_name<#path_to_grost::__private::flavors::Groto> {
+        type Output = ::core::option::Option<&'static #path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>>;
 
         fn index(
           &self,
           indexer: #indexer_name,
         ) -> &Self::Output {
-          const NONE: &::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Network>> = &::core::option::Option::None;
+          const NONE: &::core::option::Option<&#path_to_grost::__private::reflection::Field<#path_to_grost::__private::flavors::Groto>> = &::core::option::Option::None;
 
           match indexer {
             #(#index_selector),*

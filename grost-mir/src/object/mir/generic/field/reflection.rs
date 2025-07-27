@@ -44,7 +44,7 @@ impl GenericFieldReflection {
 
     if !field.type_params_usages.is_empty() || !field.lifetime_params_usages.is_empty() {
       let pred: WherePredicate = syn::parse2(quote! {
-        #path_to_grost::__private::reflection::TypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::Type>
+        #path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty>: #path_to_grost::__private::reflection::Reflectable<#field_ty, Reflection = #path_to_grost::__private::reflection::SchemaType>
       })?;
       constraints.push(pred);
     }
@@ -58,7 +58,7 @@ impl GenericFieldReflection {
       #path_to_grost::__private::reflection::ObjectFieldBuilder {
         name: #schema_name,
         description: #schema_description,
-        ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
+        ty: <#path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
       }.build()
     })?;
 
@@ -101,7 +101,7 @@ impl<F> super::GenericTaggedField<F> {
           #path_to_grost::__private::reflection::ObjectFieldBuilder {
             name: #schema_name,
             description: #schema_description,
-            ty: <#path_to_grost::__private::reflection::TypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
+            ty: <#path_to_grost::__private::reflection::SchemaTypeReflection<#field_ty> as #path_to_grost::__private::reflection::Reflectable<#field_ty>>::REFLECTION,
           }.build()
         };
       }

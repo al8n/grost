@@ -15,11 +15,13 @@ pub use smol_str_0_3 as smol_str;
 #[cfg(feature = "quickcheck")]
 pub use quickcheck;
 
-pub use convert::*;
 // pub use select_set::SelectionSet;
 
 /// The flavors of the encoding/decoding
 pub mod flavors;
+
+/// The identifier related types and traits
+pub mod identifier;
 
 /// The reflection of the Graph protocol buffer types
 pub mod reflection;
@@ -43,9 +45,29 @@ pub mod selection;
 /// Traits for conversions between types.
 pub mod convert;
 
+/// Marker types
+pub mod marker;
+
+/// Common types and traits for list-like structures
+pub mod list;
+
+/// Common types for map-like structures
+pub mod map;
+
+/// Common types for set structures
+pub mod set;
+
+/// Common types for objects
+pub mod object;
+
+/// States
+pub mod state;
+
+/// The unknown data
+pub mod unknown;
+
 #[macro_use]
 mod macros;
-mod map;
 mod select_set;
 mod utils;
 
@@ -80,11 +102,32 @@ pub mod __private {
     convert::{self, *},
     debug_assert_read_eq, debug_assert_write_eq,
     decode::{self, *},
-    decoded_state, default_wire_format,
     encode::{self, *},
-    flavors::{self, RawTag},
-    indexer, network_varint, partial_encode_scalar, reflection, selectable,
+    error::{self, *},
+    flavors, groto_varint, identifier, indexer, marker, partial_encode_scalar, partial_ref_state,
+    reflection, selectable,
     selection::{self, *},
+    state,
   };
+  pub use either;
+  pub use paste;
   pub use varing;
+
+  #[cfg(not(any(feature = "std", feature = "alloc")))]
+  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  where
+    F: flavors::Flavor + ?Sized,
+  {
+    Error::custom("cannot decode array with length greater than the capacity")
+  }
+
+  #[cfg(any(feature = "std", feature = "alloc"))]
+  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  where
+    F: flavors::Flavor + ?Sized,
+  {
+    Error::custom(std::format!(
+      "cannot decode array with length greater than the capacity {N}"
+    ))
+  }
 }

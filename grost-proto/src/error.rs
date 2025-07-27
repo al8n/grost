@@ -2,6 +2,19 @@ use core::num::NonZeroUsize;
 
 use crate::flavors::Flavor;
 
+/// Invalid tag error
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
+pub struct ParseTagError(pub(crate) u32);
+
+impl ParseTagError {
+  /// Returns the invalid tag value.
+  #[inline]
+  pub const fn value(&self) -> u32 {
+    self.0
+  }
+}
+
 /// A data encoding error
 #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, derive_more::Display)]
 pub enum Error<F: Flavor + ?Sized> {
@@ -50,12 +63,29 @@ pub enum Error<F: Flavor + ?Sized> {
   },
 
   /// Returned when the expect identifier for encoding is mismatch the actual identifier for encoding.
-  #[display("identifier mismatch: expect {expect}, actual {actual}")]
-  IdentifierMismatch {
+  #[display("unexpected identifier {actual}, expected {expected}")]
+  UnexpectedIdentifier {
     /// The expected identifier for encoding.
-    expect: F::Identifier,
+    expected: F::Identifier,
     /// The actual identifier for encoding.
     actual: F::Identifier,
+  },
+  /// Returned when the wire type is unexpected for the given type.
+  #[display("unexpected wire type {actual}, expected {expected}")]
+  UnexpectedWireType {
+    /// The expected wire type.
+    expected: F::WireType,
+    /// The actual wire type.
+    actual: F::WireType,
+  },
+
+  /// Returned when the type cannot be merged in the given wire type format
+  #[display("cannot merge {ty} in {wire_type} format in {flavor} flavor", flavor = F::NAME)]
+  Unmergeable {
+    /// The type of the value.
+    ty: &'static str,
+    /// The wire type.
+    wire_type: F::WireType,
   },
 
   /// Returned when the buffer does not have enough data to decode the message.
@@ -80,6 +110,26 @@ pub enum Error<F: Flavor + ?Sized> {
     ty: &'static str,
     /// The identifier of the field.
     identifier: F::Identifier,
+  },
+
+  /// Returned when the field is duplicated in the message.
+  #[display("duplicated field {name} with identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = F::NAME)]
+  DuplicatedField {
+    /// The field name.
+    name: &'static str,
+    /// The type of the message.
+    ty: &'static str,
+    /// The identifier of the field.
+    identifier: F::Identifier,
+  },
+
+  /// Returned when the field is not found but is required in the message.
+  #[display("field {field_name} not found when constructing {struct_name}")]
+  FieldNotFound {
+    /// The structure name.
+    struct_name: &'static str,
+    /// The field name.
+    field_name: &'static str,
   },
 
   /// Returned when fail to decode the length-delimited
@@ -133,10 +183,39 @@ impl<F: Flavor + ?Sized> Error<F> {
     Self::UnsupportedIdentifier { ty, identifier }
   }
 
-  /// Creates an identifier mismatch error.
+  /// Creates an unexpected identifier error.
   #[inline]
-  pub const fn identifier_mismatch(expect: F::Identifier, actual: F::Identifier) -> Self {
-    Self::IdentifierMismatch { expect, actual }
+  pub const fn unexpected_identifier(expected: F::Identifier, actual: F::Identifier) -> Self {
+    Self::UnexpectedIdentifier { expected, actual }
+  }
+
+  /// Creates an unexpected wire type error.
+  #[inline]
+  pub const fn unexpected_wire_type(expected: F::WireType, actual: F::WireType) -> Self {
+    Self::UnexpectedWireType { expected, actual }
+  }
+
+  /// Creates a new duplicated field error.
+  #[inline]
+  pub const fn duplicated_field(
+    name: &'static str,
+    ty: &'static str,
+    identifier: F::Identifier,
+  ) -> Self {
+    Self::DuplicatedField {
+      name,
+      ty,
+      identifier,
+    }
+  }
+
+  /// Creates a field not found error.
+  #[inline]
+  pub const fn field_not_found(struct_name: &'static str, field_name: &'static str) -> Self {
+    Self::FieldNotFound {
+      struct_name,
+      field_name,
+    }
   }
 
   /// Creates a new encoding error from a [`varing::EncodeError`].
@@ -180,6 +259,12 @@ impl<F: Flavor + ?Sized> Error<F> {
   #[inline]
   pub const fn unknown_identifier(ty: &'static str, identifier: F::Identifier) -> Self {
     Self::UnknownIdentifier { ty, identifier }
+  }
+
+  /// Creates a new unmergeable decoding error.
+  #[inline]
+  pub const fn unmergeable(ty: &'static str, wire_type: F::WireType) -> Self {
+    Self::Unmergeable { ty, wire_type }
   }
 
   /// Creates a new decoding error from [`varing::DecodeError`].

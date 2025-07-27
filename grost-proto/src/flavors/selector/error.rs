@@ -92,7 +92,7 @@ pub enum DecodeError {
 
   /// Returned when there is a unknown wire type.
   #[display("identifier mismatch: expect {expect}, actual {actual}")]
-  IdentifierMismatch {
+  UnexpectedIdentifier {
     /// The type of the message.
     expect: SelectorIdentifier,
     /// The identifier
@@ -138,8 +138,8 @@ impl From<BaseDecodeError<super::Select>> for DecodeError {
       BaseDecodeError::UnsupportedIdentifier { ty, identifier } => {
         Self::unsupported_identifier(ty, identifier)
       }
-      BaseDecodeError::IdentifierMismatch { expect, actual } => {
-        Self::identifier_mismatch(expect, actual)
+      BaseDecodeError::UnexpectedIdentifier { expect, actual } => {
+        Self::unexpected_identifier(expect, actual)
       }
       BaseDecodeError::UnknownIdentifier { ty, identifier } => {
         Self::unknown_identifier(ty, identifier)
@@ -214,8 +214,8 @@ impl DecodeError {
 
   /// Creates a new identifier mismatch decoding error.
   #[inline]
-  pub const fn identifier_mismatch(expect: SelectorIdentifier, actual: SelectorIdentifier) -> Self {
-    Self::IdentifierMismatch { expect, actual }
+  pub const fn unexpected_identifier(expect: SelectorIdentifier, actual: SelectorIdentifier) -> Self {
+    Self::UnexpectedIdentifier { expect, actual }
   }
 
   /// Creates a new decoding error from [`varing::DecodeError`].

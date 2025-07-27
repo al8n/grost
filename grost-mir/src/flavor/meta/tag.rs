@@ -39,8 +39,6 @@ impl From<TagFromMeta> for TagParser {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(try_from = "super::serde::TagSerdeHelper",))]
 pub struct TagFromMeta {
   pub(crate) constructor: Invokable,
   pub(crate) encode: Invokable,
@@ -57,6 +55,18 @@ impl TagFromMeta {
   #[inline]
   pub const fn encode(&self) -> &Invokable {
     &self.encode
+  }
+
+  pub(crate) fn groto(path_to_grost: &Path) -> darling::Result<Self> {
+    let constructor =
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Tag::new })?;
+    let encode =
+      syn::parse2::<Path>(quote! { #path_to_grost::__private::flavors::groto::Tag::encode })?;
+
+    Ok(Self {
+      constructor: constructor.into(),
+      encode: encode.into(),
+    })
   }
 }
 

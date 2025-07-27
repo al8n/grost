@@ -1,10 +1,80 @@
-use crate::selection::Selectable;
-
 use super::{
-  buffer::{Buffer, ReadBuf},
+  buffer::{ReadBuf, UnknownBuffer},
   error::Error,
   flavors::{Flavor, WireFormat},
 };
+
+pub use slice::BytesSlice;
+pub use str::Str;
+
+mod slice;
+mod str;
+
+/// A marker trait indicating that two types produce equivalent encoded output
+/// despite potentially having different wire formats or internal representations.
+///
+/// ## Safety
+///
+/// This trait is unsafe because incorrect implementation can lead to data corruption
+/// or incorrect behavior in systems that rely on encoding equivalence. Implementers
+/// must ensure that:
+///
+/// 1. all methods of `Encode` for `Self` and `O` produce the same results for equivalent values
+/// 2. The equivalence holds across all possible contexts (both `F::Context` and `<Self::Flavor as Flavor>::Context`)
+///
+/// # Example
+///
+/// ```ignore
+/// struct MyStr(str);
+///
+/// unsafe impl EquivalentDecode<MyStr, LengthDelimited, Groto> for str {
+///   type Flavor = Groto;
+///   type WireFormat = LengthDelimited;
+/// }
+/// ```
+pub unsafe trait EquivalentDecode<'a, Rhs, W, RB, B, F>
+where
+  Self: Decode<'a, Self::WireFormat, RB, B, Self::Flavor>,
+  Rhs: Decode<'a, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  /// The wire format for Self
+  type WireFormat: WireFormat<Self::Flavor>;
+
+  /// The flavor for Self
+  type Flavor: Flavor + ?Sized;
+}
+
+unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, T, W, RB, B, F> for T
+where
+  T: Decode<'a, W, RB, B, F> + ?Sized,
+  W: WireFormat<F>,
+  F: Flavor + ?Sized,
+{
+  type WireFormat = W;
+  type Flavor = F;
+}
+
+// unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, &T, W, RB, B, F> for T
+// where
+//   T: Decode<'a, W, RB, B, F> + ?Sized,
+//   W: WireFormat<F>,
+//   F: Flavor + ?Sized,
+// {
+//   type WireFormat = W;
+//   type Flavor = F;
+// }
+
+// unsafe impl<'a, T, W, RB, B, F> EquivalentDecode<'a, T, W, RB, B, F> for &T
+// where
+//   T: Decode<'a, W, RB, B, F> + ?Sized,
+//   W: WireFormat<F>,
+//   F: Flavor + ?Sized,
+// {
+//   type WireFormat = W;
+//   type Flavor = F;
+// }
 
 /// A trait for fully decoding types from a borrowed byte slice.
 ///
@@ -14,11 +84,11 @@ use super::{
 /// ## Type Parameters
 ///
 /// - `'de`: Lifetime of the input data.
-/// - `F`: The decoding flavor (e.g., [`Network`](crate::flavors::Network) or other implementations) implementing the [`Flavor`] trait.
-/// - `W`: The wire format strategy of the flavor.
-/// - `O`: The output type resulting from decoding.
-/// - `B`: The buffer implementation used to store the unknown data during decoding (defaults to `()`, will ignore the unknown data).
-pub trait Decode<'de, F, W, O, UB = ()>
+/// - `F`: The decoding flavor (e.g., [`Groto`](crate::flavors::Groto) or other implementations) implementing the [`Flavor`] trait.
+/// - `W`: The wire format strategy of the flavor, which must implement [`WireFormat<F>`].
+/// - `RB`: The type of the read buffer used for decoding, which must implement [`ReadBuf`].
+/// - `B`: The buffer implementation used to store the unknown data during decoding, which must implement [`Buffer`].
+pub trait Decode<'de, W, RB, B, F>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
@@ -26,20 +96,20 @@ where
   /// Decodes an instance from a raw byte slice.
   ///
   /// Returns a tuple with the number of bytes consumed and the decoded output.
-  fn decode<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
   where
-    O: Sized + 'de,
-    B: ReadBuf<'de>,
-    UB: Buffer<F::Unknown<B>> + 'de;
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
   /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
-  fn decode_length_delimited<B>(context: &'de F::Context, src: B) -> Result<(usize, O), F::Error>
+  fn decode_length_delimited(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
   where
-    O: Sized + 'de,
-    B: ReadBuf<'de> + 'de,
-    UB: Buffer<F::Unknown<B>> + 'de,
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
   {
     let as_bytes = src.as_bytes();
     let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
@@ -56,146 +126,84 @@ where
 
     Self::decode(context, src.slice(len_size..total))
   }
+
+  /// Decodes an instance from a raw byte slice, merging the result into the current instance.
+  fn merge_decode(&mut self, ctx: &'de F::Context, src: RB) -> Result<usize, F::Error>
+  where
+    Self: Sized + 'de,
+    RB: ReadBuf + 'de,
+    B: UnknownBuffer<RB, F> + 'de,
+  {
+    let _ = ctx;
+    let _ = src;
+    Err(Error::unmergeable(core::any::type_name::<Self>(), W::WIRE_TYPE).into())
+  }
 }
 
 /// A data structure that can be deserialized without borrowing any data from the source buffer.
-pub trait DecodeOwned<F, W, O, UB = ()>: for<'de> Decode<'de, F, W, O, UB>
+pub trait DecodeOwned<W, RB, B, F>: for<'de> Decode<'de, W, RB, B, F>
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
 {
 }
 
-impl<F, W, O, UB, T> DecodeOwned<F, W, O, UB> for T
+impl<W, RB, B, F, T> DecodeOwned<W, RB, B, F> for T
 where
   F: Flavor + ?Sized,
   W: WireFormat<F>,
-  T: for<'de> Decode<'de, F, W, O, UB>,
+  T: for<'de> Decode<'de, W, RB, B, F>,
 {
-}
-
-/// A trait for transforming the input type `I` into the current type `Self`.
-pub trait Transform<F, W, I>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Transforms from the input type `I` into the current type `Self`.
-  fn transform(input: I) -> Result<Self, F::Error>
-  where
-    Self: Sized;
-}
-
-/// A trait for partially transforming the input type `I` into the current type `Self`.
-pub trait PartialTransform<F, W, I>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  I: Selectable<F, W, Selector = Self::Selector>,
-  Self: Selectable<F, W>,
-{
-  /// Partially transforms from the input type `I` into the current type `Self`.
-  ///
-  /// If there is nothing selected, it returns `Ok(None)`.
-  fn partial_transform(input: I, selector: &I::Selector) -> Result<Option<Self>, F::Error>
-  where
-    Self: Sized;
-}
-
-/// A trait for transforming the current type into another type `O`.
-pub trait TransformInto<F, W, O>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-{
-  /// Transforms the current type into the output type `O`.
-  fn transform_into(self) -> Result<O, F::Error>
-  where
-    Self: Sized;
-}
-
-impl<F, W, I, T> TransformInto<F, W, T> for I
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  T: Transform<F, W, I> + Sized,
-{
-  fn transform_into(self) -> Result<T, F::Error> {
-    T::transform(self)
-  }
-}
-
-/// A trait for partially transforming the current type into another type `O`.
-pub trait PartialTransformInto<F, W, O>
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  O: Selectable<F, W, Selector = Self::Selector>,
-  Self: Selectable<F, W>,
-{
-  /// Partially transforms the current type into the output type `O`.
-  ///
-  /// If there is nothing selected, it returns `Ok(None)`.
-  fn partial_transform_into(self, selector: &Self::Selector) -> Result<Option<O>, F::Error>
-  where
-    Self: Sized;
-}
-
-impl<F, W, I, T> PartialTransformInto<F, W, T> for I
-where
-  F: Flavor + ?Sized,
-  W: WireFormat<F>,
-  T: PartialTransform<F, W, I> + Sized + Selectable<F, W>,
-  I: Selectable<F, W, Selector = T::Selector>,
-{
-  fn partial_transform_into(self, selector: &T::Selector) -> Result<Option<T>, <F as Flavor>::Error>
-  where
-    Self: Sized + Selectable<F, W, Selector = T::Selector>,
-  {
-    T::partial_transform(self, selector)
-  }
 }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
 macro_rules! deref_decode_impl {
   ($($ty:ty),+$(,)?) => {
     $(
-      impl<'de, F, W, O, UB, T> Decode<'de, F, W, O, UB> for $ty
+      impl<'de, W, RB, B, F, T> Decode<'de, W, RB, B, F> for $ty
       where
         F: Flavor + ?Sized,
         W: WireFormat<F>,
-        T: Decode<'de, F, W, O, UB> + ?Sized,
+        T: Decode<'de, W, RB, B, F>,
       {
-        fn decode<B>(context: &'de <F as Flavor>::Context, src: B) -> Result<(usize, O), <F as Flavor>::Error>
+        fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, Self), <F as Flavor>::Error>
         where
-          O: Sized + 'de,
-          B: ReadBuf<'de>,
-          UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
+          Self: Sized + 'de,
+          RB: ReadBuf + 'de,
+          B: UnknownBuffer<RB, F> + 'de
         {
-          T::decode::<B>(context, src)
+          T::decode(context, src).map(|(size, output)| (size, Self::new(output)))
         }
 
-        fn decode_length_delimited<B>(
+        fn decode_length_delimited(
           context: &'de <F as Flavor>::Context,
-          src: B,
-        ) -> Result<(usize, O), <F as Flavor>::Error>
+          src: RB,
+        ) -> Result<(usize, Self), <F as Flavor>::Error>
         where
-          O: Sized + 'de,
-          B: ReadBuf<'de>,
-          UB: Buffer<<F as Flavor>::Unknown<B>> + 'de
+          Self: Sized + 'de,
+          RB: ReadBuf + 'de,
+          B: UnknownBuffer<RB, F> + 'de
         {
-          T::decode_length_delimited::<B>(context, src)
+          T::decode_length_delimited(context, src).map(|(size, output)| (size, Self::new(output)))
         }
-      }
 
-      impl<F, W, I, T> Transform<F, W, I> for $ty
-      where
-        F: Flavor + ?Sized,
-        W: WireFormat<F>,
-        T: Transform<F, W, I> + Sized,
-      {
-        fn transform(input: I) -> Result<$ty, F::Error> {
-          T::transform(input).map(Into::into)
+        fn merge_decode(&mut self, ctx: &'de <F as Flavor>::Context, src: RB) -> Result<usize, <F as Flavor>::Error>
+        where
+          Self: Sized + 'de,
+          RB: ReadBuf + 'de,
+          B: UnknownBuffer<RB, F> + 'de
+        {
+          if let Some(val) = <$ty>::get_mut(self) {
+            return T::merge_decode(val, ctx, src);
+          }
+
+          Err(::core::convert::Into::into(
+            $crate::error::Error::custom(concat!(
+              "cannot merge decode into ",
+              stringify!($ty),
+              " as there are other references to the same allocation"
+            ))
+          ))
         }
       }
     )*
@@ -206,7 +214,51 @@ macro_rules! deref_decode_impl {
 const _: () = {
   use std::{boxed::Box, rc::Rc, sync::Arc};
 
-  deref_decode_impl!(Box<T>, Rc<T>, Arc<T>);
+  impl<'de, W, RB, B, F, T> Decode<'de, W, RB, B, F> for Box<T>
+  where
+    F: Flavor + ?Sized,
+    W: WireFormat<F>,
+    T: Decode<'de, W, RB, B, F>,
+  {
+    fn decode(
+      context: &'de <F as Flavor>::Context,
+      src: RB,
+    ) -> Result<(usize, Self), <F as Flavor>::Error>
+    where
+      Self: Sized + 'de,
+      RB: ReadBuf + 'de,
+      B: UnknownBuffer<RB, F> + 'de,
+    {
+      T::decode(context, src).map(|(size, output)| (size, Box::new(output)))
+    }
+
+    fn decode_length_delimited(
+      context: &'de <F as Flavor>::Context,
+      src: RB,
+    ) -> Result<(usize, Self), <F as Flavor>::Error>
+    where
+      Self: Sized + 'de,
+      RB: ReadBuf + 'de,
+      B: UnknownBuffer<RB, F> + 'de,
+    {
+      T::decode_length_delimited(context, src).map(|(size, output)| (size, Box::new(output)))
+    }
+
+    fn merge_decode(
+      &mut self,
+      ctx: &'de <F as Flavor>::Context,
+      src: RB,
+    ) -> Result<usize, <F as Flavor>::Error>
+    where
+      Self: Sized + 'de,
+      RB: ReadBuf + 'de,
+      B: UnknownBuffer<RB, F> + 'de,
+    {
+      T::merge_decode(&mut **self, ctx, src)
+    }
+  }
+
+  deref_decode_impl!(Arc<T>, Rc<T>);
 };
 
 #[cfg(feature = "triomphe_0_1")]

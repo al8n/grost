@@ -1,25 +1,21 @@
 #![allow(clippy::type_complexity)]
-
-use core::marker::PhantomData;
+use ghost::phantom;
 
 use crate::{
   flavors::Flavor,
   reflection::{
     EncodeReflection, IdentifierReflection, Len, TagReflection, WireFormatReflection,
-    WireTypeReflection,
+    WireSchemaTypeReflection,
   },
 };
 
 use super::{
-  super::{super::Reflectable, Type},
+  super::{super::Reflectable, SchemaType},
   Object, ObjectReflection,
 };
 
-pub struct ObjectFieldReflection<O: ?Sized, T: ?Sized, F: ?Sized, const TAG: u32> {
-  _object: PhantomData<O>,
-  _flavor: PhantomData<F>,
-  _target: PhantomData<T>,
-}
+#[phantom]
+pub struct ObjectFieldReflection<O: ?Sized, T: ?Sized, F: ?Sized, const TAG: u32>;
 
 impl<O, T, F, const TAG: u32> Default for ObjectFieldReflection<O, T, F, TAG>
 where
@@ -41,11 +37,7 @@ where
   /// Creates a new [`ObjectFieldReflection`].
   #[inline]
   pub const fn new() -> Self {
-    Self {
-      _object: PhantomData,
-      _flavor: PhantomData,
-      _target: PhantomData,
-    }
+    ObjectFieldReflection
   }
 }
 
@@ -154,12 +146,14 @@ where
 
   /// Returns the reflection to the wire type of the field.
   #[inline]
-  pub const fn wire_type(&self) -> WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
+  pub const fn wire_type(
+    &self,
+  ) -> WireSchemaTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>
   where
-    WireTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>:
+    WireSchemaTypeReflection<ObjectFieldReflection<O, F::WireType, F, TAG>>:
       Reflectable<O, Reflection = F::WireType>,
   {
-    WireTypeReflection::new()
+    WireSchemaTypeReflection::new()
   }
 
   /// Returns the reflection to the identifier of the field.
@@ -203,7 +197,7 @@ where
 pub struct ObjectFieldBuilder {
   pub name: &'static str,
   pub description: &'static str,
-  pub ty: &'static Type,
+  pub ty: &'static SchemaType,
 }
 
 impl ObjectFieldBuilder {
@@ -222,7 +216,7 @@ impl ObjectFieldBuilder {
 pub struct ObjectField {
   name: &'static str,
   description: &'static str,
-  ty: &'static Type,
+  ty: &'static SchemaType,
 }
 
 impl Clone for ObjectField {
@@ -254,7 +248,7 @@ impl ObjectField {
   ///
   /// This will returns the type in the Graph protocol buffer schema file.
   #[inline]
-  pub const fn ty(&self) -> &'static Type {
+  pub const fn ty(&self) -> &'static SchemaType {
     self.ty
   }
 }

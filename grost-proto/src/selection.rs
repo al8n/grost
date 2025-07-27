@@ -120,25 +120,15 @@ impl<F: ?Sized> Selector<F> for bool {
 }
 
 /// A trait for types that can be selected.
-pub trait Selectable<F: ?Sized, W: ?Sized> {
+pub trait Selectable<F: ?Sized> {
   /// The corresponding selector for this type.
   type Selector: Selector<F>;
 }
 
-impl<T, F, W> Selectable<F, W> for &T
+impl<T, F> Selectable<F> for &T
 where
-  T: Selectable<F, W> + ?Sized,
+  T: Selectable<F> + ?Sized,
   F: ?Sized,
-  W: ?Sized,
-{
-  type Selector = T::Selector;
-}
-
-impl<T, F, W> Selectable<F, W> for Option<T>
-where
-  T: Selectable<F, W>,
-  F: ?Sized,
-  W: ?Sized,
 {
   type Selector = T::Selector;
 }

@@ -1,16 +1,17 @@
-use super::buffer::ReadBuf;
+use super::{error::ParseTagError, identifier::Identifier};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
-pub use network::Network;
+pub use groto::Groto;
+pub use wire_format::*;
 
-macro_rules! wire_type {
-  (enum $name:ident<$flavor:ty> {
-    $(
-      $(#[$meta:meta])*
-      $ty:literal = $value:literal
-    ),+$(,)?
-  }) => {
+mod wire_format;
+
+macro_rules! wire_format {
+  ($name:ident<$flavor:ty> $(
+    $(#[$meta:meta])*
+    $ty:literal = $fixed_length:expr
+  ),+$(,)?) => {
     paste::paste! {
       $(
         $(
@@ -22,8 +23,8 @@ macro_rules! wire_type {
 
         impl $crate::flavors::WireFormat<$flavor> for [< $ty: camel >] {
           const WIRE_TYPE: $name = $name::[< $ty: camel >];
-          const NAME: &'static str = $ty;
-          const SELF: Self = [< $ty: camel >];
+          const INSTANCE: Self = [< $ty: camel >];
+          const FIXED_LENGTH: Option<usize> = $fixed_length;
         }
 
         impl From<[< $ty: camel >]> for $name {
@@ -32,7 +33,18 @@ macro_rules! wire_type {
           }
         }
       )*
+    }
+  };
+}
 
+macro_rules! wire_type {
+  (enum $name:ident<$flavor:ty> {
+    $(
+      $(#[$meta:meta])*
+      $ty:literal = $value:literal
+    ),+$(,)?
+  }) => {
+    paste::paste! {
       #[doc = "The error when parsing a [`" $name "`]"]
       #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
       #[error("invalid selector wire type value: {0}")]
@@ -116,111 +128,60 @@ macro_rules! wire_type {
   };
 }
 
-/// The network flavor
-pub mod network;
+/// The groto flavor
+pub mod groto;
 
 /// The flavor for encoding and decoding selector
 pub mod selector;
 
-/// The identifier
-pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::Display {
-  /// Returns the wire type of the identifier.
-  fn wire_type(&self) -> F::WireType;
-
-  /// Returns the tag of the identifier.
-  fn tag(&self) -> F::Tag;
-
-  /// Encode the identifier into a buffer.
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, F::Error>;
-
-  /// Return the length of the encoded identifier.
-  fn encoded_len(&self) -> usize;
-
-  /// Decode the identifier from a buffer.
-  fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
-  where
-    B: ReadBuf<'de> + Sized,
-    Self: Sized;
-}
-
-/// The wire format used for encoding and decoding.
-pub trait WireFormat<F: Flavor + ?Sized>:
-  Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display + Into<F::WireType>
-{
-  /// The cooresponding value to the wire type.
-  const WIRE_TYPE: F::WireType;
-  /// The name of the wire format.
-  const NAME: &'static str;
-  /// The self.
-  const SELF: Self;
-}
-
-/// The default wire format for a type on flavor `F`.
-pub trait DefaultWireFormat<F: Flavor + ?Sized> {
-  /// The default wire format of the type for this flavor.
-  type Format: WireFormat<F>;
-}
-
-impl<T, F> DefaultWireFormat<F> for &T
-where
-  T: DefaultWireFormat<F> + ?Sized,
-  F: Flavor + ?Sized,
-{
-  type Format = T::Format;
-}
-
-impl<T, F> DefaultWireFormat<F> for Option<T>
-where
-  T: DefaultWireFormat<F>,
-  F: Flavor + ?Sized,
-{
-  type Format = T::Format;
-}
-
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
+  use super::*;
   use std::{boxed::Box, rc::Rc, sync::Arc};
 
-  impl<T, F> DefaultWireFormat<F> for Box<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Box<T>: super::encode::Encode<F, T::Format>,
-  {
-    type Format = T::Format;
+  macro_rules! default_wire_format {
+    (impl $trait:ident $(< $($g:ident),+$(,)? >)? for $ty:ty) => {
+      impl<T, F> $crate::__private::flavors::$trait<F> for $ty
+      where
+        T: $trait<F> + ?Sized,
+        F: Flavor + ?Sized,
+      {
+        type Format $(< $($g),*>)? = T::Format $(< $($g),*>)? $( where $($g: WireFormat<F> + 'static),* )?;
+      }
+    };
+    (@builtins $($t:ident $(< $($g:ident),+$(,)? >)?),+$(,)?) => {
+      $(
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Box<T>
+        );
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Rc<T>
+        );
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for Arc<T>
+        );
+
+        #[cfg(feature = "triomphe_0_1")]
+        default_wire_format!(
+          impl $t $(<$($g),*>)? for triomphe_0_1::Arc<T>
+        );
+      )*
+    };
   }
 
-  impl<T, F> DefaultWireFormat<F> for Rc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Rc<T>: super::encode::Encode<F, T::Format>,
-  {
-    type Format = T::Format;
-  }
-
-  impl<T, F> DefaultWireFormat<F> for Arc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<F, T::Format>,
-  {
-    type Format = T::Format;
-  }
-};
-
-#[cfg(feature = "triomphe_0_1")]
-const _: () = {
-  use triomphe_0_1::Arc;
-
-  impl<T, F> DefaultWireFormat<F> for Arc<T>
-  where
-    T: DefaultWireFormat<F>,
-    F: Flavor + ?Sized,
-    Arc<T>: super::encode::Encode<F, T::Format>,
-  {
-    type Format = T::Format;
-  }
+  default_wire_format!(
+    @builtins
+    DefaultScalarWireFormat,
+    DefaultBytesWireFormat,
+    DefaultObjectWireFormat,
+    DefaultListWireFormat<V>,
+    DefaultSetWireFormat<V>,
+    DefaultMapWireFormat<K, V>,
+    DefaultNullableWireFormat<V>,
+    DefaultFlattenWireFormat<V>,
+    DefaultEnumWireFormat,
+    DefaultUnionWireFormat,
+  );
 };
 
 /// The error for the flavor.
@@ -237,7 +198,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
   type Identifier: Identifier<Self>;
 
   /// The tag used for this flavor.
-  type Tag: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display;
+  type Tag: Copy
+    + Eq
+    + core::hash::Hash
+    + core::fmt::Debug
+    + core::fmt::Display
+    + TryFrom<u32, Error = ParseTagError>;
 
   /// The wire type used for this flavor.
   ///
@@ -251,52 +217,47 @@ pub trait Flavor: core::fmt::Debug + 'static {
   #[cfg(feature = "quickcheck")]
   type Context: quickcheck::Arbitrary;
 
-  /// The unknown value used for this flavor.
-  type Unknown<B>;
-
   /// The error for this flavor.
   type Error: FlavorError<Self>;
 
   /// The name of the flavor.
   const NAME: &'static str;
 
-  /// Encodes the unknown value into a buffer.
-  fn encode_unknown<'de, B>(
-    ctx: &Self::Context,
-    value: &Self::Unknown<B>,
-    buf: &mut [u8],
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf<'de>;
+  // /// Encodes the unknown value into a buffer.
+  // fn encode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   value: &Self::Unknown<B>,
+  //   buf: &mut [u8],
+  // ) -> Result<usize, Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Returns the length of the encoded unknown value.
-  fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
-  where
-    B: ReadBuf<'de>;
+  // /// Returns the length of the encoded unknown value.
+  // fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
+  // where
+  //   B: ReadBuf + 'de;
 
-  /// Decodes an unknown value from a buffer.
+  // /// Decodes an unknown value from a buffer.
+  // ///
+  // /// This function is used as a handler for unknown identifiers when decoding
+  // /// a message. It is called when the identifier is not recognized by the
+  // /// flavor.
+  // fn decode_unknown<'de, B>(
+  //   ctx: &Self::Context,
+  //   buf: B,
+  // ) -> Result<(usize, Self::Unknown<B>), Self::Error>
+  // where
+  //   B: ReadBuf + 'de;
+
+  /// Try to peek the raw data according to the wire type.
   ///
-  /// This function is used as a handler for unknown identifiers when decoding
-  /// a message. It is called when the identifier is not recognized by the
-  /// flavor.
-  fn decode_unknown<'de, B>(
-    ctx: &Self::Context,
-    buf: B,
-  ) -> Result<(usize, Self::Unknown<B>), Self::Error>
-  where
-    B: ReadBuf<'de>;
-
-  /// Skips number of bytes in the buffer according to the wire type.
-  fn skip<'de, B>(
+  /// If the given buffer does not contain enough data to determine the length of the next data,
+  /// it should return an error.
+  ///
+  /// Returns the number of bytes for the next data.
+  fn peek_raw(
     ctx: &Self::Context,
     wire_type: Self::WireType,
-    buf: B,
-  ) -> Result<usize, Self::Error>
-  where
-    B: ReadBuf<'de>;
+    buf: &[u8],
+  ) -> Result<usize, Self::Error>;
 }
-
-/// A raw tag for a field.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
-#[display("{}", T)]
-pub struct RawTag<const T: u32>;

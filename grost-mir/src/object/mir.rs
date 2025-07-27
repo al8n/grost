@@ -8,11 +8,15 @@ use syn::{
 
 use super::{RawField, RawObject, ast::Object as ObjectAst};
 
-pub use concrete::*;
-pub use generic::*;
+pub use self::{
+  concrete::{ConcreteField, ConcreteObject},
+  generic::{GenericField, GenericObject},
+};
 
-mod concrete;
-mod generic;
+/// Concrete object MIR
+pub mod concrete;
+/// Generic object MIR
+pub mod generic;
 
 #[derive(Debug, Clone)]
 pub struct FieldIndex {
@@ -200,7 +204,7 @@ fn accessors(
   }
 }
 
-fn optional_accessors(
+fn nullable_accessors(
   field_name: &Ident,
   vis: &Visibility,
   ty: &Type,
@@ -339,7 +343,7 @@ fn derive_flatten_state(
   quote! {
     #[automatically_derived]
     #[allow(non_camel_case_types, clippy::type_complexity)]
-    impl #ig #path_to_grost::__private::convert::State<#path_to_grost::__private::convert::Flatten<__GROST_FLATTEN_STATE__>> for #name #tg #w {
+    impl #ig #path_to_grost::__private::state::State<#path_to_grost::__private::convert::Extracted<__GROST_FLATTEN_STATE__>> for #name #tg #w {
       type Output = Self;
       type Input = Self;
     }
@@ -384,7 +388,7 @@ fn wire_type_reflection(
   tag: u32,
 ) -> syn::Result<Type> {
   syn::parse2(quote! {
-    #path_to_grost::__private::reflection::WireTypeReflection<
+    #path_to_grost::__private::reflection::WireSchemaTypeReflection<
       #path_to_grost::__private::reflection::ObjectFieldReflection<
         #object_type,
         <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::WireType,

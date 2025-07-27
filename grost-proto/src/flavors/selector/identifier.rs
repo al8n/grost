@@ -153,7 +153,7 @@ impl SelectorIdentifier {
   }
 }
 
-impl crate::flavors::Identifier<super::Select> for SelectorIdentifier {
+impl crate::identifier::Identifier<super::Select> for SelectorIdentifier {
   fn tag(&self) -> SelectorTag {
     self.tag
   }
@@ -174,7 +174,7 @@ impl crate::flavors::Identifier<super::Select> for SelectorIdentifier {
     1
   }
 
-  fn decode<B>(buf: B) -> Result<(usize, Self), DecodeError>
+  fn decode(buf: B) -> Result<(usize, Self), DecodeError>
   where
     B: crate::buffer::BytesBuffer + Sized,
     Self: Sized,

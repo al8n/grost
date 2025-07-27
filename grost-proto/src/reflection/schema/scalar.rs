@@ -102,32 +102,32 @@ impl core::fmt::Display for Scalar {
         non_zero,
         signed,
       } => match (signed, non_zero) {
-        (true, false) => write!(fmt, "i{}", bits),
+        (true, false) => write!(fmt, "i{bits}"),
         (false, false) => {
           if *bits == 8 {
             return write!(fmt, "byte");
           }
-          write!(fmt, "u{}", bits)
+          write!(fmt, "u{bits}")
         }
-        (true, true) => write!(fmt, "NonZeroI{}", bits),
-        (false, true) => write!(fmt, "NonZeroU{}", bits),
+        (true, true) => write!(fmt, "NonZeroI{bits}"),
+        (false, true) => write!(fmt, "NonZeroU{bits}"),
       },
-      Self::ComplexFloat(n) => write!(fmt, "f{}c", n),
+      Self::ComplexFloat(n) => write!(fmt, "f{n}c"),
       Self::ComplexInteger { signed, bits } => {
         if *signed {
-          write!(fmt, "i{}c", bits)
+          write!(fmt, "i{bits}c")
         } else {
-          write!(fmt, "u{}c", bits)
+          write!(fmt, "u{bits}c")
         }
       }
       Self::Rational { signed, bits } => {
         if *signed {
-          write!(fmt, "i{}r", bits)
+          write!(fmt, "i{bits}r")
         } else {
-          write!(fmt, "u{}r", bits)
+          write!(fmt, "u{bits}r")
         }
       }
-      Self::Float(n) => write!(fmt, "f{}", n),
+      Self::Float(n) => write!(fmt, "f{n}"),
       Self::Duration => write!(fmt, "duration"),
       Self::Utc => write!(fmt, "utc"),
       Self::Uuid => write!(fmt, "uuid"),
@@ -242,6 +242,18 @@ impl Scalar {
   #[inline]
   pub const fn float(n: usize) -> Self {
     Self::Float(n)
+  }
+
+  /// Creates a char scalar.
+  #[inline]
+  pub const fn char() -> Self {
+    Self::Char
+  }
+
+  /// Creates a bool scalar.
+  #[inline]
+  pub const fn bool() -> Self {
+    Self::Boolean
   }
 
   /// Creates a new custom scalar with the given name and description.

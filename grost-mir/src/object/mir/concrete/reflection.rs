@@ -23,7 +23,7 @@ impl ConcreteObjectReflection {
     &self.object_reflection_generics
   }
 
-  /// Returns the generics when deriving the `Reflectable` trait for the `TypeReflection`.
+  /// Returns the generics when deriving the `Reflectable` trait for the `SchemaTypeReflection`.
   #[inline]
   pub const fn type_reflection_generics(&self) -> &Generics {
     &self.type_reflection_generics
@@ -110,10 +110,10 @@ impl ConcreteObjectReflection {
       #[automatically_derived]
       #[allow(non_camel_case_types, clippy::type_complexity)]
       impl #type_reflection_ig #object_reflectable for #object_type #type_reflection_wc {
-        type Reflection = #path_to_grost::__private::reflection::Type;
+        type Reflection = #path_to_grost::__private::reflection::SchemaType;
 
         const REFLECTION: &'static Self::Reflection = &{
-          #path_to_grost::__private::reflection::Type::Object(
+          #path_to_grost::__private::reflection::SchemaType::Object(
             &#path_to_grost::__private::reflection::ObjectBuilder {
               name: #schema_name,
               description: #schema_description,

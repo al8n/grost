@@ -4,7 +4,7 @@ use crate::{
   encode::Encode,
   flavors::{
     DefaultWireFormat,
-    network::Context,
+    groto::Context,
     selector::{
       DecodeError, EncodeError, Select, SelectorIdentifier, SelectorTag, SelectorWireType, Unknown,
       Zst,
@@ -70,11 +70,11 @@ impl Encode<Select, Zst> for bool {
     match tag {
       SelectorTag::All if *self => <Self as Encode<Select, Zst>>::encode(self, context, buf),
       SelectorTag::None if !*self => <Self as Encode<Select, Zst>>::encode(self, context, buf),
-      SelectorTag::All => Err(EncodeError::identifier_mismatch(
+      SelectorTag::All => Err(EncodeError::unexpected_identifier(
         SelectorIdentifier::all(),
         *identifier,
       )),
-      SelectorTag::None => Err(EncodeError::identifier_mismatch(
+      SelectorTag::None => Err(EncodeError::unexpected_identifier(
         SelectorIdentifier::none(),
         *identifier,
       )),

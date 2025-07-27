@@ -1,130 +1,116 @@
 use quote::format_ident;
 use syn::{Ident, Path, Type, parse_quote};
 
-pub use decode::DecodeAttribute;
-pub use encode::EncodeAttribute;
-pub use identifier::IdentifierAttribute;
-pub use tag::TagAttribute;
+pub use identifier::IdentifierOptions;
+pub use tag::TagOptions;
 
 pub(crate) use meta::{
-  BuiltinFlavorRepr, FlavorFromMeta, complex_flavor_ident_error, duplicate_flavor_error,
+  BuiltinFlavorRepr, FlavorFromMeta, GenericFlavorFromMeta, IdentifierFromMeta, TagFromMeta,
+  complex_flavor_ident_error, duplicate_flavor_error,
 };
 
-mod decode;
-mod encode;
 mod identifier;
 mod meta;
 mod tag;
 
-impl FlavorFromMeta {
-  pub(crate) fn finalize(self, path_to_grost: &Path) -> syn::Result<Vec<FlavorAttribute>> {
-    let mut flavors = Vec::new();
+// impl GenericFlavorFromMeta {
+//   pub(crate) fn finalize(self, path_to_grost: &Path) -> syn::Result<Vec<FlavorAttribute>> {
+//     let mut flavors = Vec::new();
 
-    match self.default {
-      BuiltinFlavorRepr::Nested(default_flavor_value_parser) => flavors.push(FlavorAttribute {
-        name: format_ident!("default"),
-        ty: parse_quote!(#path_to_grost::__private::flavors::Network),
-        format: parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited),
-        identifier: IdentifierAttribute::network(path_to_grost),
-        tag: TagAttribute::network(path_to_grost),
-        encode: default_flavor_value_parser.encode.into(),
-        decode: default_flavor_value_parser.decode.into(),
-      }),
-      BuiltinFlavorRepr::Bool(val) => {
-        if val {
-          flavors.push(FlavorAttribute::network_object(path_to_grost)?);
-        }
-      }
-    }
+//     match self.default {
+//       BuiltinFlavorRepr::Nested(default_flavor_value_parser) => flavors.push(FlavorAttribute {
+//         name: format_ident!("default"),
+//         ty: parse_quote!(#path_to_grost::__private::flavors::Groto),
+//         format: parse_quote!(#path_to_grost::__private::flavors::groto::LengthDelimited),
+//         identifier: IdentifierOptions::groto(path_to_grost),
+//         tag: TagOptions::groto(path_to_grost),
+//         decode: default_flavor_value_parser.decode.into(),
+//       }),
+//       BuiltinFlavorRepr::Bool(val) => {
+//         if val {
+//           flavors.push(FlavorAttribute::groto_object(path_to_grost)?);
+//         }
+//       }
+//     }
 
-    for (name, value) in self.flavors {
-      let ty = value.ty;
-      let format = value.format;
-      let identifier = value.identifier.into();
-      let tag = value.tag.into();
-      let encode = value.encode.into();
-      let decode = value.decode.into();
+//     for (name, value) in self.flavors {
+//       let ty = value.ty;
+//       let format = value.format;
+//       let identifier = value.identifier.into();
+//       let tag = value.tag.into();
+//       let decode = value.decode.into();
 
-      flavors.push(FlavorAttribute {
-        name,
-        ty,
-        format,
-        tag,
-        identifier,
-        encode,
-        decode,
-      });
-    }
+//       flavors.push(FlavorAttribute {
+//         name,
+//         ty,
+//         format,
+//         tag,
+//         identifier,
+//         decode,
+//       });
+//     }
 
-    Ok(flavors)
-  }
-}
+//     Ok(flavors)
+//   }
+// }
 
-#[derive(Debug, Clone)]
-pub struct FlavorAttribute {
-  name: Ident,
-  ty: Type,
-  format: Type,
-  identifier: IdentifierAttribute,
-  tag: TagAttribute,
-  encode: EncodeAttribute,
-  decode: DecodeAttribute,
-}
+// #[derive(Debug, Clone)]
+// pub struct FlavorAttribute {
+//   name: Ident,
+//   ty: Type,
+//   format: Type,
+//   identifier: IdentifierOptions,
+//   tag: TagOptions,
+//   decode: DecodeOptions,
+// }
 
-impl FlavorAttribute {
-  fn network_object(path_to_grost: &Path) -> syn::Result<Self> {
-    let ty = parse_quote!(#path_to_grost::__private::flavors::Network);
-    let format = parse_quote!(#path_to_grost::__private::flavors::network::LengthDelimited);
-    let identifier = IdentifierAttribute::network(path_to_grost);
-    let tag = TagAttribute::network(path_to_grost);
-    let encode = EncodeAttribute::network(path_to_grost)?;
-    let decode = DecodeAttribute::network(path_to_grost);
+// impl FlavorAttribute {
+//   fn groto_object(path_to_grost: &Path) -> syn::Result<Self> {
+//     let ty = parse_quote!(#path_to_grost::__private::flavors::Groto);
+//     let format = parse_quote!(#path_to_grost::__private::flavors::groto::LengthDelimited);
+//     let identifier = IdentifierOptions::groto(path_to_grost);
+//     let tag = TagOptions::groto(path_to_grost);
+//     let decode = DecodeOptions::groto(path_to_grost);
 
-    Ok(Self {
-      name: format_ident!("network"),
-      ty,
-      format,
-      identifier,
-      tag,
-      encode,
-      decode,
-    })
-  }
+//     Ok(Self {
+//       name: format_ident!("groto"),
+//       ty,
+//       format,
+//       identifier,
+//       tag,
+//       decode,
+//     })
+//   }
 
-  /// Returns the name of the flavor.
-  pub const fn name(&self) -> &syn::Ident {
-    &self.name
-  }
+//   /// Returns the name of the flavor.
+//   pub const fn name(&self) -> &syn::Ident {
+//     &self.name
+//   }
 
-  /// Returns the type of the flavor.
-  pub const fn ty(&self) -> &syn::Type {
-    &self.ty
-  }
+//   /// Returns the type of the flavor.
+//   pub const fn ty(&self) -> &syn::Type {
+//     &self.ty
+//   }
 
-  /// Returns the wire format for the type of the flavor.
-  ///
-  /// e.g. If the macro is used on object, then this will return the wire format for the object.
-  pub const fn wire_format(&self) -> &syn::Type {
-    &self.format
-  }
+//   /// Returns the wire format for the type of the flavor.
+//   ///
+//   /// e.g. If the macro is used on object, then this will return the wire format for the object.
+//   pub const fn wire_format(&self) -> &syn::Type {
+//     &self.format
+//   }
 
-  /// Returns the identifier attribute of the flavor.
-  pub const fn identifier(&self) -> &IdentifierAttribute {
-    &self.identifier
-  }
+//   /// Returns the identifier attribute of the flavor.
+//   pub const fn identifier(&self) -> &IdentifierOptions {
+//     &self.identifier
+//   }
 
-  /// Returns the tag attribute of the flavor.
-  pub const fn tag(&self) -> &TagAttribute {
-    &self.tag
-  }
+//   /// Returns the tag attribute of the flavor.
+//   pub const fn tag(&self) -> &TagOptions {
+//     &self.tag
+//   }
 
-  /// Returns the encode attribute of the flavor.
-  pub const fn encode(&self) -> &EncodeAttribute {
-    &self.encode
-  }
-
-  /// Returns the decode attribute of the flavor.
-  pub const fn decode(&self) -> &DecodeAttribute {
-    &self.decode
-  }
-}
+//   /// Returns the decode attribute of the flavor.
+//   pub const fn decode(&self) -> &DecodeOptions {
+//     &self.decode
+//   }
+// }
