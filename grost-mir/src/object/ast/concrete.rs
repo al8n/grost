@@ -32,6 +32,7 @@ use crate::{
 };
 
 pub use decoder::*;
+pub use encoder::*;
 pub use field::*;
 pub use partial::*;
 pub use partial_ref::*;
@@ -411,6 +412,7 @@ pub struct Object<T = (), S = (), M = ()> {
   fields: Vec<Field<T, S>>,
   indexer: Indexer,
   decoder: ObjectDecoder,
+  encoder: ObjectEncoder,
   partial: PartialObject,
   partial_ref: PartialRefObject,
   selector: Selector,
@@ -593,6 +595,12 @@ impl<T, S, M> Object<T, S, M> {
     &self.selector
   }
 
+  /// Returns the encoder information
+  #[inline]
+  pub const fn encoder(&self) -> &ObjectEncoder {
+    &self.encoder
+  }
+
   /// Returns the selector iterator information
   #[inline]
   pub const fn selector_iter(&self) -> &SelectorIter {
@@ -661,6 +669,7 @@ impl<T, S, M> Object<T, S, M> {
     let partial_ref = PartialRefObject::from_options(&mut object, &fields)?;
     let partial = PartialObject::from_options(&mut object, &fields)?;
     let decoder = ObjectDecoder::try_new(&object)?;
+    let encoder = ObjectEncoder::try_new(&object)?;
 
     let selector =
       Selector::from_options(&object.generics, selector_name, object.selector, &fields)?;
@@ -733,6 +742,7 @@ impl<T, S, M> Object<T, S, M> {
         .name
         .unwrap_or_else(|| object.name.to_string()),
       schema_description: object.schema.description.unwrap_or_default(),
+      encoder,
       decoder,
       name: object.name,
       vis: object.vis,

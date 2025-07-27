@@ -56,7 +56,7 @@ mod tests {
     where
       W: WireFormat<Groto>,
       T: Encode<W, Groto> + ?Sized,
-      [u16]: EquivalentEncode<T, W, Groto, WireFormat = Packed<Varint>, Flavor = Groto>,
+      [u16]: EquivalentEncode<T, W, Groto, WireFormat = Packed<Varint>>,
     {
       input.encoded_len(ctx)
     }

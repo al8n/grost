@@ -68,8 +68,6 @@ where
   SchemaTypeReflection<[T]>: Reflectable<[T], Reflection = SchemaType>,
 {
   type WireFormat = Packed<W>;
-
-  type Flavor = Groto;
 }
 
 impl<T, N, W> Encode<Flatten<Packed<W>, W>, Groto> for [N]

@@ -224,6 +224,4 @@ where
   SchemaTypeReflection<[T]>: Reflectable<[T], Reflection = SchemaType>,
 {
   type WireFormat = Repeated<W, TAG>;
-
-  type Flavor = Groto;
 }

@@ -23,49 +23,49 @@ macro_rules! bidi_equivalent {
     $(
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<$other, $wf, $crate::__private::flavors::Groto> for $this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<$this, $this_wf, $crate::__private::flavors::Groto> for $other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<&$other, $wf, $crate::__private::flavors::Groto> for &$this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for &$other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<&$other, $wf, $crate::__private::flavors::Groto> for $this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for $other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<$other, $wf, $crate::__private::flavors::Groto> for &$this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentEncode<$this, $this_wf, $crate::__private::flavors::Groto> for &$other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
     )*
@@ -74,49 +74,49 @@ macro_rules! bidi_equivalent {
     $(
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<$other, $wf, $crate::__private::flavors::Groto> for $this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<$this, $this_wf, $crate::__private::flavors::Groto> for $other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<&$other, $wf, $crate::__private::flavors::Groto> for &$this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for &$other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<&$other, $wf, $crate::__private::flavors::Groto> for $this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<&$this, $this_wf, $crate::__private::flavors::Groto> for $other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<$other, $wf, $crate::__private::flavors::Groto> for &$this
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $this_wf;
       }
 
       unsafe impl<$($($lt),*,)? $($($tg:$t $(+ $ltb)?),*,)? $($(const $g: $gty),*)?> $crate::__private::encode::EquivalentPartialEncode<$this, $this_wf, $crate::__private::flavors::Groto> for &$other
       {
-        type Flavor = $crate::__private::flavors::Groto;
+        
         type WireFormat = $wf;
       }
     )*

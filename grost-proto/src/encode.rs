@@ -48,16 +48,13 @@ impl<T> Length for [T] {
 /// ```
 pub unsafe trait EquivalentEncode<Rhs, W, F>
 where
-  Self: Encode<Self::WireFormat, Self::Flavor>,
+  Self: Encode<Self::WireFormat, F>,
   Rhs: Encode<W, F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
   /// The wire format for Self
-  type WireFormat: WireFormat<Self::Flavor>;
-
-  /// The flavor for Self
-  type Flavor: Flavor + ?Sized;
+  type WireFormat: WireFormat<F>;
 }
 
 unsafe impl<W, F, T> EquivalentEncode<T, W, F> for T
@@ -67,7 +64,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 unsafe impl<W, F, T> EquivalentEncode<&T, W, F> for T
@@ -77,7 +73,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 unsafe impl<W, F, T> EquivalentEncode<T, W, F> for &T
@@ -87,7 +82,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 /// A marker trait indicating that two types produce equivalent partial encoded output
@@ -114,16 +108,13 @@ where
 /// ```
 pub unsafe trait EquivalentPartialEncode<Rhs, W, F>
 where
-  Self: PartialEncode<Self::WireFormat, Self::Flavor> + Selectable<Self::Flavor>,
+  Self: PartialEncode<Self::WireFormat, F> + Selectable<F>,
   Rhs: PartialEncode<W, F> + Selectable<F> + ?Sized,
   W: WireFormat<F>,
   F: Flavor + ?Sized,
 {
   /// The wire format for Self
-  type WireFormat: WireFormat<Self::Flavor>;
-
-  /// The flavor for Self
-  type Flavor: Flavor + ?Sized;
+  type WireFormat: WireFormat<F>;
 }
 
 unsafe impl<W, F, T> EquivalentPartialEncode<T, W, F> for T
@@ -133,7 +124,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 unsafe impl<W, F, T> EquivalentPartialEncode<&T, W, F> for T
@@ -143,7 +133,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 unsafe impl<W, F, T> EquivalentPartialEncode<T, W, F> for &T
@@ -153,7 +142,6 @@ where
   F: Flavor + ?Sized,
 {
   type WireFormat = W;
-  type Flavor = F;
 }
 
 /// A trait for serializing data into a binary format using a specified [`Flavor`] and [`WireFormat`].
@@ -1125,6 +1113,352 @@ where
 {
 }
 
+/// A trait for encoding complete fields with their field identifiers in protobuf-style formats.
+///
+/// `EncodeField` extends [`Encode`] by adding field identifier encoding,
+/// making it suitable for encoding complete fields within parent structures in protobuf-like wire formats.
+/// This trait handles the complete field encoding process: identifier + complete data.
+///
+/// ## Key Differences from [`Encode`]
+///
+/// | Aspect | [`Encode`] | `EncodeField` |
+/// |--------|------------|---------------|
+/// | **Purpose** | Direct encoding of complete data | Field encoding with identifier |
+/// | **Output** | `[complete_data]` | `[identifier][complete_data]` |
+/// | **Use case** | Root-level encoding | Field within parent structure |
+/// | **Identifier** | None | Required via `MaybeEncodedIdentifier` |
+///
+/// ## Relationship to `PartialEncodeField`
+///
+/// | Aspect | `PartialEncodeField` | `EncodeField` |
+/// |--------|---------------------|---------------|
+/// | **Data scope** | Selected fields only | Complete structure |
+/// | **Selector** | Required for field selection | Not applicable |
+/// | **Empty optimization** | Skips encoding if selector empty | Always encodes (no selector) |
+/// | **Use case** | Selective field encoding | Complete field encoding |
+///
+/// ## Field Encoding Process
+///
+/// Each method in this trait follows the same pattern:
+/// 1. **Size calculation**: Calculate total size (identifier + complete data)
+/// 2. **Buffer validation**: Ensure sufficient buffer space
+/// 3. **Identifier encoding**: Write the field identifier first
+/// 4. **Data encoding**: Write the complete data using corresponding `Encode` method
+///
+/// ## Method Variants
+///
+/// This trait provides field encoding variants for all three `Encode` methods:
+///
+/// ### Raw Field Encoding
+/// - `encode_raw_field()` / `encoded_raw_field_len()`
+/// - **Format**: `[identifier][raw_complete_data]`
+/// - **Use case**: Custom protocols, concatenation scenarios
+///
+/// ### Standard Field Encoding  
+/// - `encode_field()` / `encoded_field_len()`
+/// - **Format**: `[identifier][self_describing_complete_data]`
+/// - **Use case**: Standard protobuf-style field encoding
+/// - **Decoder compatible**: Output can be decoded by corresponding decoders
+///
+/// ### Length-Delimited Field Encoding
+/// - `encode_length_delimited_field()` / `encoded_length_delimited_field_len()`
+/// - **Format**: `[identifier][length_prefix][complete_data]`
+/// - **Use case**: Streaming protocols, framed messages
+/// - **Special requirement**: Needs length-delimited-aware decoders
+///
+/// ## Buffer Management
+///
+/// All encoding methods include comprehensive buffer management:
+/// - **Pre-flight size checks**: Validate buffer capacity before encoding
+/// - **Incremental validation**: Check buffer space at each encoding step
+/// - **Detailed error context**: Provide expected vs. actual buffer sizes in errors
+/// - **Atomic operations**: Either complete encoding succeeds or no bytes are written
+///
+/// ## Performance Characteristics
+///
+/// - **Zero allocation**: All methods work with provided buffers
+/// - **Single pass**: Each method makes exactly one pass through the data
+/// - **Compile-time optimization**: Field identifiers can be pre-encoded at compile time
+/// - **Minimal overhead**: Identifier encoding is typically 1-5 bytes per field
+/// - **No selection overhead**: Unlike `PartialEncodeField`, no selector processing required
+///
+/// ## Design Rationale
+///
+/// This trait addresses complete field encoding in protobuf-style formats where:
+/// **the entire structure needs to be encoded with a field identifier**.
+///
+/// By providing a separate trait for complete field-level encoding, we achieve:
+/// - **Clean separation**: Complete encoding vs. partial encoding are distinct operations
+/// - **Performance**: No selector processing overhead for complete encoding
+/// - **Flexibility**: Different identifier types and encoding strategies
+/// - **Consistency**: All three encoding variants follow the same pattern as `PartialEncodeField`
+///
+/// ## Implementation Notes
+///
+/// This trait is automatically implemented for all types that implement `Encode`:
+/// ```rust,ignore
+/// impl<F, W, T> EncodeField<W, F> for T
+/// where
+///     T: Encode<W, F> + ?Sized,
+///     F: Flavor + ?Sized,
+///     W: WireFormat<F>,
+/// {}
+/// ```
+///
+/// This blanket implementation ensures that any type supporting complete encoding
+/// automatically supports field encoding without additional implementation work.
+pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
+  /// Encodes the complete structure as a raw field with identifier.
+  ///
+  /// This method combines field identifier encoding with raw complete data encoding,
+  /// producing the format: `[identifier][raw_complete_data]`.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][raw_complete_data]
+  /// ```
+  ///
+  /// ## Purpose
+  /// Raw field encoding is used when you need direct byte-level concatenation
+  /// without any self-describing metadata. The output contains the field identifier
+  /// followed immediately by the raw encoded data.
+  ///
+  /// ## Parameters
+  /// - `context`: Encoding context for the flavor, providing protocol-specific settings
+  /// - `identifier`: Field identifier to encode before the data. This identifies the field
+  ///   in the parent structure and is typically 1-5 bytes for most protocols
+  /// - `buf`: Mutable byte buffer to write the encoded field to. Must have sufficient capacity
+  /// - `selector`: Specifies which fields to include in the encoding (unused in this trait)
+  ///
+  /// ## Returns
+  /// - `Ok(usize)`: Number of bytes written to the buffer (identifier + complete raw data)
+  /// - `Err(F::Error)`: Encoding failed due to insufficient buffer space or encoding error
+  ///
+  /// ## Buffer Requirements
+  /// The buffer must be large enough to hold both the field identifier and the complete
+  /// raw encoded data. Use `encoded_raw_field_len()` to determine the exact buffer size needed.
+  ///
+  /// ## Error Conditions
+  /// - **Insufficient buffer**: Buffer too small for identifier + data
+  /// - **Identifier encoding failure**: Field identifier cannot be encoded
+  /// - **Data encoding failure**: Raw data encoding fails
+  ///
+  /// ## Use Cases
+  /// - **Custom protocols**: When you need control over the exact byte layout
+  /// - **Performance-critical paths**: Minimal encoding overhead
+  /// - **Binary concatenation**: Direct byte-level composition
+  /// - **Legacy protocol support**: Protocols without self-describing formats
+  ///
+  /// ## Example
+  /// ```rust,ignore
+  /// let mut buffer = [0u8; 256];
+  /// let identifier = MaybeEncodedIdentifier::from_field_number(42);
+  /// let bytes_written = my_struct.encode_raw_field(&context, identifier, &mut buffer)?;
+  /// // buffer now contains: [field_42_id][raw_struct_bytes]
+  /// ```
+  fn encode_raw_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+  ) -> Result<usize, F::Error> {
+    let buf_len = buf.len();
+    let encoded_data_len = self.encoded_raw_len(context);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self
+      .encode_raw(context, &mut buf[offset..])
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for raw field encoding.
+  ///
+  /// Calculates the total number of bytes that `partial_encode_raw_field` will write,
+  /// including both the field identifier and the selected data.
+  ///
+  /// ## Returns
+  /// - `identifier_len + selected_data_len` otherwise
+  fn encoded_raw_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+  ) -> usize {
+    let encoded_data_len = self.encoded_raw_len(context);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+
+  /// Encodes field with identifier.
+  ///
+  /// This method combines field identifier encoding with standard partial data encoding,
+  /// producing the format: `[identifier][self_describing_complete_data]`.
+  ///
+  /// **Important**: This is the primary method for field encoding in protobuf-style formats.
+  /// The output is compatible with corresponding partial decoders.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][self_describing_complete_data]
+  /// ```
+  /// 
+  /// ## Decoder Compatibility
+  /// The output of this method can be decoded by partial decoders that expect
+  /// the standard field encoding format.
+  fn encode_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+  ) -> Result<usize, F::Error> {
+    let buf_len = buf.len();
+    let encoded_data_len = self.encoded_len(context);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self
+      .encode(context, &mut buf[offset..])
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for standard field encoding.
+  ///
+  /// Calculates the total bytes for identifier + self-describing selected data.
+  fn encoded_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+  ) -> usize {
+    let encoded_data_len = self.encoded_len(context);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+
+  /// Encodes selected fields as a length-delimited field with identifier.
+  ///
+  /// This method produces a length-delimited field format suitable for streaming
+  /// protocols: `[identifier][length_prefix][complete_data]`.
+  ///
+  /// ## Format
+  /// ```text
+  /// [field_identifier][varint_length][complete_data]
+  /// ```
+  ///
+  /// ## Use Cases
+  /// - Streaming protocols that need message boundaries
+  /// - Framed transport protocols
+  /// - Protocols where field length must be known before processing data
+  ///
+  /// ## Decoder Requirements
+  /// Requires length-delimited-aware partial decoders. Standard partial decoders
+  /// expect the output of `partial_encode_field`, not this method.
+  fn encode_length_delimited_field(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+    buf: &mut [u8],
+  ) -> Result<usize, F::Error> {
+    let buf_len = buf.len();
+    let encoded_data_len = self.encoded_length_delimited_len(context);
+    let encoded_len = identifier.encoded_len() + encoded_data_len;
+
+    if encoded_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let mut offset = identifier.encode_to(buf).map_err(|mut e| {
+      e.update_insufficient_buffer(encoded_len, buf_len);
+      e
+    })?;
+
+    if offset + encoded_data_len > buf_len {
+      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+    }
+
+    let written = self
+      .encode_length_delimited(context, &mut buf[offset..])
+      .map_err(|mut e| {
+        e.update_insufficient_buffer(encoded_len, buf_len);
+        e
+      })?;
+    offset += written;
+
+    #[cfg(debug_assertions)]
+    {
+      crate::debug_assert_write_eq::<Self>(written, encoded_len);
+    }
+
+    Ok(offset)
+  }
+
+  /// Returns the total encoded length for length-delimited field encoding.
+  ///
+  /// Calculates the total bytes for identifier + length prefix + selected data.
+  fn encoded_length_delimited_field_len(
+    &self,
+    context: &F::Context,
+    identifier: MaybeEncodedIdentifier<'_, F>,
+  ) -> usize {
+    let encoded_data_len = self.encoded_length_delimited_len(context);
+    let identifier_len = identifier.encoded_len();
+    identifier_len + encoded_data_len
+  }
+}
+
+impl<F, W, T> EncodeField<W, F> for T
+where
+  T: Encode<W, F> + ?Sized,
+  F: Flavor + ?Sized,
+  W: WireFormat<F>,
+{
+}
+
 impl<F, W, T> Encode<W, F> for &T
 where
   T: Encode<W, F> + ?Sized,
@@ -1216,6 +1550,28 @@ where
   ) -> usize {
     (*self).partial_encoded_length_delimited_len(context, selector)
   }
+}
+
+/// A trait for types that can be encoded into a wire format.
+///
+/// `Encodable` provides a high-level abstraction for types that support encoding
+/// by creating specialized encoder instances. This trait serves as the entry point
+/// for encoding complex structured data in grost's type system.
+pub trait Encodable<W: WireFormat<F>, F: Flavor + ?Sized> {
+  /// The type of encoder that can be used to encode this type.
+  ///
+  /// This associated type defines the specific encoder implementation that will
+  /// handle encoding operations for this type.
+  type Encoder<B>;
+
+  /// Returns the encoder for this type.
+  ///
+  /// Creates and initializes an encoder instance that can be used to encode
+  /// values of this type into the specified wire format.
+  fn new<B>(buf: B) -> Self::Encoder<B>;
+
+  /// Returns an encoder with buf and the start position of the buffer.
+  fn with_position<B>(buf: B, current_position: usize) -> Self::Encoder<B>;
 }
 
 #[cfg(any(feature = "std", feature = "alloc", feature = "triomphe_0_1"))]
