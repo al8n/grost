@@ -881,6 +881,12 @@ impl WriteBuf for [u8] {
   }
 }
 
+/// A trait for implementing custom buffers that can be resized.
+pub trait Resizable {
+  /// Resizes the buffer to the specified length, filling new bytes with the given value.
+  fn resize(&mut self, new_len: usize, fill_value: u8);
+}
+
 /// A trait for implementing custom buffers that can store and manipulate byte sequences.
 pub trait ReadBuf: Clone {
   /// Returns an empty read buffer.
@@ -1016,6 +1022,13 @@ const _: () = {
       self.as_mut()
     }
   }
+
+  impl Resizable for BytesMut {
+    #[inline]
+    fn resize(&mut self, new_len: usize, fill_value: u8) {
+      self.resize(new_len, fill_value);
+    }
+  }
 };
 
 #[cfg(any(feature = "std", feature = "alloc"))]
@@ -1036,6 +1049,13 @@ const _: () = {
     #[inline]
     fn as_mut_slice(&mut self) -> &mut [u8] {
       self.as_mut_slice()
+    }
+  }
+
+  impl Resizable for Vec<u8> {
+    #[inline]
+    fn resize(&mut self, new_len: usize, fill_value: u8) {
+      self.resize(new_len, fill_value);
     }
   }
 };

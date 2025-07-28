@@ -199,6 +199,14 @@ impl<T, S, M> Object<T, S, M> {
       })?;
 
     Ok(quote! {
+      #[automatically_derived]
+      #[allow(clippy::type_complexity, non_camel_case_types)]
+      impl #ig ::core::convert::From<#name #tg> for (::core::primitive::usize, #wbi) #wc {
+        fn from(encoder: #name #tg) -> (::core::primitive::usize, #wbi) {
+          encoder.into_components()
+        }
+      }
+
       impl #ig #name #tg #wc {
         /// Returns the current position of the underlying write buffer
         #[inline]
@@ -219,23 +227,28 @@ impl<T, S, M> Object<T, S, M> {
           }
         }
 
-        /// Finalizes the encoder, returning the total bytes written to the write buffer and the write buffer itself
+        /// Consumes the encoder, returning the total bytes written to the write buffer and the write buffer itself
         #[inline]
-        pub const fn finalize(self) -> (::core::primitive::usize, #wbi) {
+        pub const fn into_components(self) -> (::core::primitive::usize, #wbi) {
           (self.__grost_write_cursor__, self.__grost_write_buffer__)
         }
-      }
 
-      impl #ig #name #tg #ewc {
         /// Resizes the write buffer to the given size
         ///
         /// ## Panics
         /// - If the new size is less than the current position.
-        pub fn resize(&mut self, new_size: ::core::primitive::usize) -> ::core::result::Result<(), <#wbi as #path_to_grost::__private::buffer::WriteBuf>::Error> {
+        pub fn resize(&mut self, new_size: ::core::primitive::usize)
+        where
+          #wbi: #path_to_grost::__private::buffer::Resizable,
+        {
           if new_size < self.__grost_write_cursor__ {
             ::core::panic!("cannot resize the write buffer to a size smaller than the current position");
           }
-          self.__grost_write_buffer__.resize(new_size, 0)
+          #path_to_grost::__private::buffer::Resizable::resize(
+            &mut self.__grost_write_buffer__,
+            new_size,
+            0,
+          );
         }
       }
 
