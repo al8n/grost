@@ -16,7 +16,6 @@ pub struct PartialMapEntry<K, V> {
 
 impl<K, V> Selectable<Groto> for PartialMapEntry<K, V>
 where
-  K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
   type Selector = V::Selector;
