@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, TinyVec};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   flavors::{

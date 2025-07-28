@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -202,10 +202,13 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       |value, ctx| value.encoded_raw_len(ctx),
       |value, ctx, buf| value.encode_raw(ctx, buf),
     )
@@ -216,10 +219,13 @@ where
       .encoded_nullable_len(context, |value, ctx| value.encoded_raw_len(ctx))
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       |value, ctx| value.encoded_len(ctx),
       |value, ctx, buf| value.encode(ctx, buf),
     )
@@ -230,14 +236,17 @@ where
       .encoded_nullable_len(context, |value, ctx| value.encoded_len(ctx))
   }
 
-  fn encode_length_delimited(
+  fn encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+    buf: &mut WB,
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       |value, ctx| value.encoded_length_delimited_len(ctx),
       |value, ctx, buf| value.encode_length_delimited(ctx, buf),
     )
@@ -255,15 +264,18 @@ where
   T: PartialEncode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       selector,
       |value, ctx, sel| value.partial_encoded_raw_len(ctx, sel),
       |value, ctx, buf, sel| value.partial_encode_raw(ctx, buf, sel),
@@ -282,15 +294,18 @@ where
     )
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       selector,
       |value, ctx, sel| value.partial_encoded_len(ctx, sel),
       |value, ctx, buf, sel| value.partial_encode(ctx, buf, sel),
@@ -305,15 +320,18 @@ where
     )
   }
 
-  fn partial_encode_length_delimited(
+  fn partial_encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf,
+      buf.as_mut_slice(),
       selector,
       |value, ctx, sel| value.partial_encoded_length_delimited_len(ctx, sel),
       |value, ctx, buf, sel| value.partial_encode_length_delimited(ctx, buf, sel),

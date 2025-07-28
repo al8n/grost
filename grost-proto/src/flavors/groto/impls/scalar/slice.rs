@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::{BytesSlice, Decode},
   encode::{Encode, PartialEncode},
   flavors::groto::{Context, Error, Groto, LengthDelimited},
@@ -32,18 +32,13 @@ macro_rules! decode_impl {
 
 impl Encode<LengthDelimited, Groto> for [u8] {
   #[inline]
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    let buf_len = buf.len();
-    let this_len = self.len();
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(
-        <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-        buf_len,
-      ));
-    }
-
-    buf[..this_len].copy_from_slice(self);
-    Ok(this_len)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
+    buf
+      .write_slice_checked(self)
+      .ok_or_else(|| Error::insufficient_buffer(self.len(), buf.len()))
   }
 
   #[inline]
@@ -52,7 +47,10 @@ impl Encode<LengthDelimited, Groto> for [u8] {
   }
 
   #[inline]
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     let buf_len = buf.len();
     let this_len = self.len();
     if buf_len < this_len {
@@ -62,14 +60,14 @@ impl Encode<LengthDelimited, Groto> for [u8] {
       ));
     }
 
-    let len_size = varing::encode_u32_varint_to(this_len as u32, buf).map_err(|e| {
+    let len_size = buf.write_u32_varint(this_len as u32).map_err(|e| {
       Error::from_varint_encode_error(e).update(
         <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
         buf_len,
       )
     })?;
 
-    <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, &mut buf[len_size..])
+    <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf.suffix_mut(len_size))
       .map(|write| len_size + write)
       .map_err(|e| {
         e.update(
@@ -89,12 +87,15 @@ impl Encode<LengthDelimited, Groto> for [u8] {
 
 impl PartialEncode<LengthDelimited, Groto> for [u8] {
   #[inline]
-  fn partial_encode_raw(
+  fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
     } else {
@@ -112,12 +113,15 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
   }
 
   #[inline]
-  fn partial_encode(
+  fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
     } else {
@@ -139,7 +143,10 @@ impl<RB> Encode<LengthDelimited, Groto> for BytesSlice<RB>
 where
   RB: ReadBuf,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <[u8] as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -147,7 +154,10 @@ where
     <[u8] as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <[u8] as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
 
@@ -160,12 +170,15 @@ impl<RB> PartialEncode<LengthDelimited, Groto> for BytesSlice<RB>
 where
   RB: ReadBuf,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )
@@ -177,12 +190,15 @@ where
     )
   }
 
-  fn partial_encode(
+  fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
 

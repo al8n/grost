@@ -111,23 +111,32 @@ macro_rules! varint {
     }
   };
   (@encode_impl $flavor:ty:$wf:ty) => {
-    fn encode_raw(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
-      $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
+    fn encode_raw<WB>(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
+      $crate::__private::varing::Varint::encode(self, buf.as_mut_slice()).map_err(::core::convert::Into::into)
     }
 
     fn encoded_raw_len(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context,) -> ::core::primitive::usize {
       $crate::__private::varing::Varint::encoded_len(self)
     }
 
-    fn encode(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
-      $crate::__private::varing::Varint::encode(self, buf).map_err(::core::convert::Into::into)
+    fn encode<WB>(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
+      $crate::__private::varing::Varint::encode(self, buf.as_mut_slice()).map_err(::core::convert::Into::into)
     }
 
     fn encoded_len(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context,) -> ::core::primitive::usize {
       $crate::__private::varing::Varint::encoded_len(self)
     }
 
-    fn encode_length_delimited(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8]) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    fn encode_length_delimited<WB>(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <Self as $crate::__private::Encode<$wf, $flavor>>::encode(self, ctx, buf)
     }
 
@@ -156,7 +165,10 @@ macro_rules! varint {
 #[macro_export]
 macro_rules! partial_encode_scalar {
   (@impl $flavor:ty as $format:ty) => {
-    fn partial_encode_raw(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    fn partial_encode_raw<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode_raw(self, context, buf)
       } else {
@@ -172,7 +184,10 @@ macro_rules! partial_encode_scalar {
       }
     }
 
-    fn partial_encode(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    fn partial_encode<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode(self, context, buf)
       } else {
@@ -188,7 +203,10 @@ macro_rules! partial_encode_scalar {
       }
     }
 
-    fn partial_encode_length_delimited(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut [::core::primitive::u8], s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    fn partial_encode_length_delimited<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: &mut WB, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode_length_delimited(self, context, buf)
       } else {
@@ -621,11 +639,14 @@ macro_rules! encode_bridge {
     )*
   };
   (@encode_impl $flavor:ty: $bridge:ty as $format:ty => $to:expr) => {
-    fn encode_raw(
+    fn encode_raw<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      buf: &mut WB,
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode_raw(&$to(self), context, buf)
     }
 
@@ -633,11 +654,14 @@ macro_rules! encode_bridge {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encoded_raw_len(&$to(self), context)
     }
 
-    fn encode(
+    fn encode<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      buf: &mut WB,
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode(&$to(self), context, buf)
     }
 
@@ -645,11 +669,14 @@ macro_rules! encode_bridge {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encoded_len(&$to(self), context)
     }
 
-    fn encode_length_delimited(
+    fn encode_length_delimited<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+      buf: &mut WB,
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode_length_delimited(&$to(self), context, buf)
     }
 
@@ -673,12 +700,15 @@ macro_rules! encode_bridge {
     )*
   };
   (@partial_encode_impl $flavor:ty: $bridge:ty as $format:ty => $to:expr) => {
-    fn partial_encode_raw(
+    fn partial_encode_raw<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
+      buf: &mut WB,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode_raw(&$to(self), context, buf, selector)
     }
 
@@ -690,12 +720,15 @@ macro_rules! encode_bridge {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encoded_raw_len(&$to(self), context, selector)
     }
 
-    fn partial_encode(
+    fn partial_encode<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
+      buf: &mut WB,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode(&$to(self), context, buf, selector)
     }
 
@@ -707,12 +740,15 @@ macro_rules! encode_bridge {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encoded_len(&$to(self), context, selector)
     }
 
-    fn partial_encode_length_delimited(
+    fn partial_encode_length_delimited<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: &mut [::core::primitive::u8],
+      buf: &mut WB,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error> {
+    ) -> ::core::result::Result<::core::primitive::usize, <$flavor as $crate::__private::flavors::Flavor>::Error>
+    where
+      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+    {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode_length_delimited(&$to(self), context, buf, selector)
     }
 

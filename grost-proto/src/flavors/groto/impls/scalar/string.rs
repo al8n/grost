@@ -30,11 +30,14 @@ macro_rules! array_str {
     }
   ) => {
     impl<const $g: ::core::primitive::usize> $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto> for $ty {
-      fn encode_raw(
+      fn encode_raw<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error> {
+        buf: &mut WB,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+      where
+        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_raw(
           self.as_str(),
           context,
@@ -49,11 +52,14 @@ macro_rules! array_str {
         )
       }
 
-      fn encode(
+      fn encode<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error> {
+        buf: &mut WB,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+      where
+        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode(
           self.as_str(),
           context,
@@ -61,11 +67,14 @@ macro_rules! array_str {
         )
       }
 
-      fn encode_length_delimited(
+      fn encode_length_delimited<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut [::core::primitive::u8],
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error> {
+        buf: &mut WB,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+      where
+        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_length_delimited(
           self.as_str(),
           context,

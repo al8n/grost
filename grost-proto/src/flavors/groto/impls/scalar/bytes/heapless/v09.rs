@@ -87,7 +87,7 @@ impl<const N: usize, L: LenType> Encode<Groto> for Vec<u8, N, L> {
 impl<const N: usize, L: LenType> PartialEncode<Groto> for Vec<u8, N, L> {
   type Selection = ();
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
     wire_type: WireType,

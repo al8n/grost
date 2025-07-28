@@ -7,7 +7,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
+  buffer::{Buffer, ReadBuf, UnknownBuffer, WriteBuf},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -95,9 +95,12 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
       |item, ki, vi, buf| {
@@ -112,9 +115,12 @@ where
     })
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.len(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
@@ -138,18 +144,21 @@ where
   K: PartialEncode<KW, Groto>,
   V: PartialEncode<VW, Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || {
         <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
@@ -174,18 +183,21 @@ where
     })
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.len(),
       self.iter(),
       || {

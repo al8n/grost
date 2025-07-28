@@ -1,7 +1,7 @@
 use arrayvec_0_7::ArrayVec;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},

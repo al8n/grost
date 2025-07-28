@@ -1,7 +1,7 @@
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::{
-  buffer::ReadBuf,
+  buffer::{ReadBuf, WriteBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -18,11 +18,14 @@ macro_rules! ip_addr {
     default_scalar_wire_format!(Groto: $addr as $variant);
 
     impl Encode<$variant, Groto> for $addr {
-      fn encode_raw(
+      fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: &mut [u8],
-      ) -> Result<usize, Error> {
+        buf: &mut B,
+      ) -> Result<usize, Error>
+      where
+        B: WriteBuf + ?Sized,
+      {
         <$convert as Encode<$variant, Groto>>::encode_raw(
           &self.to_bits(),
           context,
@@ -37,11 +40,14 @@ macro_rules! ip_addr {
         )
       }
 
-      fn encode(
+      fn encode<B>(
         &self,
         context: &Context,
-        buf: &mut [u8],
-      ) -> Result<usize, Error> {
+        buf: &mut B,
+      ) -> Result<usize, Error>
+      where
+        B: WriteBuf + ?Sized,
+      {
         <$convert as Encode<$variant, Groto>>::encode(
           &self.to_bits(),
           context,
@@ -58,11 +64,14 @@ macro_rules! ip_addr {
     }
 
     impl Encode<Varint, Groto> for $addr {
-      fn encode_raw(
+      fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: &mut [u8],
-      ) -> Result<usize, Error> {
+        buf: &mut B,
+      ) -> Result<usize, Error>
+      where
+        B: WriteBuf + ?Sized,
+      {
         <$convert as Encode<Varint, Groto>>::encode_raw(
           &self.to_bits(),
           context,
@@ -77,11 +86,14 @@ macro_rules! ip_addr {
         )
       }
 
-      fn encode(
+      fn encode<B>(
         &self,
         context: &Context,
-        buf: &mut [u8],
-      ) -> Result<usize, Error> {
+        buf: &mut B,
+      ) -> Result<usize, Error>
+      where
+        B: WriteBuf + ?Sized,
+      {
         <$convert as Encode<Varint, Groto>>::encode(
           &self.to_bits(),
           context,
@@ -154,11 +166,14 @@ const IPV6_ENCODED_LENGTH_DELIMITED_LEN: usize =
 default_scalar_wire_format!(Groto: IpAddr as LengthDelimited);
 
 impl Encode<LengthDelimited, Groto> for IpAddr {
-  fn encode_raw(
+  fn encode_raw<B>(
     &self,
     context: &<Groto as crate::flavors::Flavor>::Context,
-    buf: &mut [u8],
-  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
+    buf: &mut B,
+  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     match self {
       Self::V4(ipv4_addr) => {
         <Ipv4Addr as Encode<Fixed32, Groto>>::encode_raw(ipv4_addr, context, buf)
@@ -180,7 +195,10 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
     }
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     macro_rules! encode_ip_variant {
       ($variant:ident::$wt:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {

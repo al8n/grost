@@ -1,5 +1,7 @@
 use ghost::phantom;
 
+use crate::flavors::Flavor;
+
 /// The generic `S` can be any type representing a state.
 pub trait State<S: ?Sized> {
   /// The output state type.
@@ -195,3 +197,20 @@ const _: () = {
     Arc<T> => Arc<T::Output>,
   );
 };
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct WithIdentifier<F: Flavor + ?Sized>(&'static F::Identifier);
+
+impl<F: Flavor + ?Sized> WithIdentifier<F> {
+  /// Creates a new `WithIdentifier` instance with the given identifier.
+  #[inline]
+  pub const fn new(identifier: &'static F::Identifier) -> Self {
+    Self(identifier)
+  }
+
+  /// Returns the identifier.
+  #[inline]
+  pub const fn identifier(&self) -> &'static F::Identifier {
+    self.0
+  }
+}

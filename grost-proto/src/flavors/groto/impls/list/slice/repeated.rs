@@ -1,4 +1,5 @@
 use crate::{
+  buffer::WriteBuf,
   encode::{Encode, PartialEncode},
   flavors::{
     Borrowed, Groto, Repeated, WireFormat,
@@ -19,9 +20,12 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     repeated_encode::<T, W, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
@@ -32,7 +36,10 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as Encode<Repeated<W, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -46,18 +53,21 @@ where
   T: PartialEncode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<T, W, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
@@ -72,18 +82,21 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter(), |k| k.partial_encoded_len(context, selector))
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<T, W, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
@@ -104,9 +117,12 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     repeated_encode::<T, W, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter().copied(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
@@ -117,7 +133,10 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter().copied(), |k| k.encoded_len(context))
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -132,18 +151,21 @@ where
   T: PartialEncode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<T, W, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter().copied(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
@@ -160,12 +182,15 @@ where
     })
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )

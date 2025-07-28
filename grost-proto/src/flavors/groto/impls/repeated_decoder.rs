@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer},
+  buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer, WriteBuf},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -147,22 +147,30 @@ where
   W: WireFormat<Groto> + 'a,
   RB: ReadBuf,
 {
-  fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
-    if buf_len < src_len {
-      return Err(Error::insufficient_buffer(src_len, buf_len));
-    }
 
-    buf[..src_len].copy_from_slice(self.src.as_bytes());
-    Ok(src_len)
+    match buf.prefix_mut_checked(src_len) {
+      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      Some(buf) => {
+        buf.copy_from_slice(self.src.as_bytes());
+        Ok(src_len)
+      }
+    }
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     self.src.len()
   }
 
-  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.encode_raw(ctx, buf)
   }
 
@@ -180,12 +188,15 @@ where
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -205,12 +216,15 @@ where
     <Self as Encode<Repeated<W, TAG>, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -646,7 +660,10 @@ where
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let encoded_raw_len = self.encoded_raw_len(context);
     let buf_len = buf.len();
     if buf_len < encoded_raw_len {
@@ -654,13 +671,14 @@ where
     }
 
     let mut offset = 0;
+    let wb = buf.as_mut_slice();
     for decoder in self.buffer.as_slice() {
       // Double-check bounds for each decoder
       if offset >= buf_len {
         return Err(Error::insufficient_buffer(encoded_raw_len, buf_len));
       }
 
-      let size = decoder.encode_raw(context, &mut buf[offset..])?;
+      let size = decoder.encode_raw(context, &mut wb[offset..])?;
       offset += size;
     }
     Ok(offset)
@@ -675,7 +693,10 @@ where
       .sum()
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.encode_raw(context, buf)
   }
 
@@ -694,12 +715,15 @@ where
   RB: ReadBuf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -715,12 +739,15 @@ where
     <Self as Encode<Repeated<W, TAG>, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }

@@ -6,7 +6,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -122,9 +122,12 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
       |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
@@ -137,7 +140,10 @@ where
     })
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -154,18 +160,21 @@ where
   K: Encode<KW, Groto>,
   V: PartialEncode<VW, Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || {
         <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
@@ -188,12 +197,15 @@ where
     })
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )

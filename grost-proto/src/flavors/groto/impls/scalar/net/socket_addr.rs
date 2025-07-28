@@ -1,6 +1,7 @@
 use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
 use crate::{
+  buffer::WriteBuf,
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -33,14 +34,19 @@ macro_rules! socket_addr_impl {
     $(
       paste::paste! {
         impl Encode<LengthDelimited, Groto> for [< SocketAddrV $variant >] {
-          fn encode_raw(
+          fn encode_raw<B>(
             &self,
             _: &Context,
-            buf: &mut [u8],
-          ) -> Result<usize, Error> {
+            buf: &mut B,
+          ) -> Result<usize, Error>
+          where
+            B: WriteBuf + ?Sized,
+          {
             if buf.len() < [< SOCKET_ADDR_V $variant _LEN >] {
               return Err(Error::insufficient_buffer([< SOCKET_ADDR_V $variant _LEN >], buf.len()));
             }
+
+            let buf = buf.as_mut_slice();
 
             buf[0..[< IPV $variant _LEN >]].copy_from_slice(&self.ip().to_bits().to_le_bytes());
             buf[[< IPV $variant _LEN >]..[< SOCKET_ADDR_V $variant _LEN >]].copy_from_slice(&self.port().to_le_bytes());
@@ -52,7 +58,10 @@ macro_rules! socket_addr_impl {
             [< SOCKET_ADDR_V $variant _LEN >]
           }
 
-          fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+          fn encode<B>(&self, ctx: &Context, buf: &mut B) -> Result<usize, Error>
+          where
+            B: WriteBuf + ?Sized,
+          {
             if buf.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::insufficient_buffer(
                 [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >],
@@ -61,6 +70,7 @@ macro_rules! socket_addr_impl {
             }
 
             let mut offset = 0;
+            let buf = buf.as_mut_slice();
             buf[offset..[< SOCKET_ADDR_V $variant _LENGTH_DELIMITED_LEN >]]
               .copy_from_slice([< ENCODED_SOCKET_ADDR_V $variant _LENGTH_DELIMITED >]);
             offset += [< SOCKET_ADDR_V $variant _LENGTH_DELIMITED_LEN >];
@@ -130,7 +140,10 @@ partial_state!(@scalar Groto: SocketAddrV4, SocketAddrV6, SocketAddr);
 flatten_state!(SocketAddrV4, SocketAddrV6, SocketAddr);
 
 impl Encode<LengthDelimited, Groto> for SocketAddr {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     match self {
       Self::V4(addr) => {
         <SocketAddrV4 as Encode<LengthDelimited, Groto>>::encode_raw(addr, context, buf)
@@ -152,7 +165,10 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
     }
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     macro_rules! encode_addr {
       ($addr:ident, $variant:literal) => {{
         paste::paste! {
@@ -162,6 +178,7 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
               buf.len(),
             ));
           }
+          let buf = buf.as_mut_slice();
           buf[0] = [< SOCKET_ADDR_V $variant _LEN>] as u8;
           <[< SocketAddrV $variant >] as Encode<LengthDelimited, Groto>>::encode_raw($addr, context, &mut buf[1..])
             .map(|val| 1 + val)

@@ -1,7 +1,7 @@
 use core::iter::FusedIterator;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -252,7 +252,10 @@ where
   Packed<W>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
 {
-  fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.0.encode_raw(ctx, buf)
   }
 
@@ -260,7 +263,10 @@ where
     self.0.encoded_raw_len(ctx)
   }
 
-  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.0.encode(ctx, buf)
   }
 
@@ -276,12 +282,15 @@ where
   RB: ReadBuf,
   T: Selectable<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.0.partial_encode_raw(context, buf, selector)
   }
 
@@ -289,12 +298,15 @@ where
     self.0.partial_encoded_raw_len(context, selector)
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     self.0.partial_encode(context, buf, selector)
   }
 

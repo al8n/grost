@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   convert::PartialTryFromRef,
   decode::Decode,
   flavors::groto::{Context, Error, Groto, LengthDelimited, impls::decode_str},

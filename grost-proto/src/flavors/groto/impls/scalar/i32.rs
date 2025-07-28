@@ -1,7 +1,7 @@
 use core::num::NonZeroI32;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -30,20 +30,23 @@ flatten_state!(i32, NonZeroI32);
 partial_identity!(@scalar Groto: i32, NonZeroI32);
 
 impl Encode<Fixed32, Groto> for i32 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    if buf.len() < 4 {
-      return Err(Error::insufficient_buffer(2, buf.len()));
-    }
-
-    buf[..4].copy_from_slice(self.to_le_bytes().as_slice());
-    Ok(4)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf
+      .write_i32_le_checked(*self)
+      .ok_or_else(|| Error::insufficient_buffer(4, buf.len()))
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     4
   }
 
-  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, ctx: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Fixed32, Groto>>::encode_raw(self, ctx, buf)
   }
 
@@ -53,15 +56,21 @@ impl Encode<Fixed32, Groto> for i32 {
 }
 
 impl Encode<Varint, Groto> for i32 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    varing::encode_i32_varint_to(*self, buf).map_err(Into::into)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf.write_i32_varint(*self).map_err(Into::into)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     varing::encoded_i32_varint_len(*self)
   }
 
-  fn encode(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, ctx: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Varint, Groto>>::encode_raw(self, ctx, buf)
   }
 

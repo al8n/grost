@@ -1,7 +1,7 @@
 use triomphe_0_1::Arc;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   flavors::groto::{Context, Error, Groto, LengthDelimited},
 };

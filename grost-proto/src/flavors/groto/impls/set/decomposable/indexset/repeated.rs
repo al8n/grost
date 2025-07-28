@@ -3,7 +3,7 @@ use indexmap_2::IndexSet;
 use core::hash::BuildHasher;
 
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer},
+  buffer::{Buffer, ReadBuf, UnknownBuffer, WriteBuf},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -57,9 +57,12 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     repeated_encode::<K, KW, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.0.iter(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
@@ -70,7 +73,10 @@ where
     repeated_encoded_len::<K, KW, _, TAG>(self.0.iter(), |k| k.encoded_len(context))
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Repeated<KW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -85,18 +91,21 @@ where
   KW: WireFormat<Groto>,
   K: PartialEncode<KW, Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<K, KW, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.0.iter(),
       |k| k.partial_encoded_len(context, selector),
       |k, buf| k.partial_encode(context, buf, selector),
@@ -113,12 +122,15 @@ where
     })
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )

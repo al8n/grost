@@ -144,8 +144,11 @@ impl crate::identifier::Identifier<super::Groto> for Identifier {
     self.wire_type
   }
 
-  fn encode(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
-    self.encode_to(dst)
+  fn encode<B>(&self, dst: &mut B) -> Result<usize, super::Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    self.encode_to(dst.as_mut_slice())
   }
 
   fn encoded_len(&self) -> usize {

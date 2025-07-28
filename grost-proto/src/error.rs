@@ -2,6 +2,8 @@ use core::num::NonZeroUsize;
 
 use crate::flavors::Flavor;
 
+pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
+
 /// Invalid tag error
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
@@ -218,11 +220,11 @@ impl<F: Flavor + ?Sized> Error<F> {
     }
   }
 
-  /// Creates a new encoding error from a [`varing::EncodeError`].
+  /// Creates a new encoding error from a [`EncodeVarintError`].
   #[inline]
-  pub const fn from_varint_encode_error(e: varing::EncodeError) -> Self {
+  pub const fn from_varint_encode_error(e: EncodeVarintError) -> Self {
     match e {
-      varing::EncodeError::Underflow {
+      EncodeVarintError::Underflow {
         required,
         remaining,
       } => Self::InsufficientBytesBuffer {
@@ -230,11 +232,11 @@ impl<F: Flavor + ?Sized> Error<F> {
         remaining,
       },
       #[cfg(any(feature = "std", feature = "alloc"))]
-      varing::EncodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+      EncodeVarintError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
       #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
-      varing::EncodeError::Custom(e) => Self::Custom(e),
+      EncodeVarintError::Custom(e) => Self::Custom(e),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       _ => Self::Custom("unknown error"),
     }
@@ -267,18 +269,18 @@ impl<F: Flavor + ?Sized> Error<F> {
     Self::Unmergeable { ty, wire_type }
   }
 
-  /// Creates a new decoding error from [`varing::DecodeError`].
+  /// Creates a new decoding error from [`DecodeVarintError`].
   #[inline]
-  pub const fn from_varint_decode_error(e: varing::DecodeError) -> Self {
+  pub const fn from_varint_decode_error(e: DecodeVarintError) -> Self {
     match e {
-      varing::DecodeError::Underflow => Self::BytesBufferUnderflow,
-      varing::DecodeError::Overflow => Self::LengthDelimitedOverflow,
+      DecodeVarintError::Underflow => Self::BytesBufferUnderflow,
+      DecodeVarintError::Overflow => Self::LengthDelimitedOverflow,
       #[cfg(any(feature = "std", feature = "alloc"))]
-      varing::DecodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+      DecodeVarintError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
       #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
-      varing::DecodeError::Custom(e) => Self::Custom(e),
+      DecodeVarintError::Custom(e) => Self::Custom(e),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       _ => Self::Custom("unknown error"),
     }
@@ -317,16 +319,16 @@ impl<F: Flavor + ?Sized> Error<F> {
   }
 }
 
-impl<F: Flavor + ?Sized> From<varing::EncodeError> for Error<F> {
+impl<F: Flavor + ?Sized> From<EncodeVarintError> for Error<F> {
   #[inline]
-  fn from(value: varing::EncodeError) -> Self {
+  fn from(value: EncodeVarintError) -> Self {
     Self::from_varint_encode_error(value)
   }
 }
 
-impl<F: Flavor + ?Sized> From<varing::DecodeError> for Error<F> {
+impl<F: Flavor + ?Sized> From<DecodeVarintError> for Error<F> {
   #[inline]
-  fn from(e: varing::DecodeError) -> Self {
+  fn from(e: DecodeVarintError) -> Self {
     Self::from_varint_decode_error(e)
   }
 }

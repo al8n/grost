@@ -1,7 +1,7 @@
 use std::boxed::Box;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   flavors::groto::{Context, Error, Groto, LengthDelimited, impls::decode_str},
 };

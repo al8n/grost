@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -234,7 +234,10 @@ where
   Packed<W>: WireFormat<Groto> + 'a,
   RB: ReadBuf,
 {
-  fn encode_raw(&self, ctx: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
     if buf_len < src_len {
@@ -242,8 +245,13 @@ where
     }
 
     let start_offset = self.data_offset + self.num_elements_size;
-    buf[..src_len].copy_from_slice(&self.src.as_bytes()[start_offset..]);
-    Ok(src_len)
+    match buf.prefix_mut_checked(src_len) {
+      Some(buf) => {
+        buf.copy_from_slice(&self.src.as_bytes()[start_offset..]);
+        Ok(src_len)
+      }
+      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+    }
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
@@ -251,7 +259,10 @@ where
     self.src.len().saturating_sub(start_offset)
   }
 
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let src = &self.src;
     let buf_len = buf.len();
     let src_len = src.len();
@@ -260,8 +271,13 @@ where
       return Err(Error::insufficient_buffer(src_len, buf_len));
     }
 
-    buf[..src_len].copy_from_slice(src.as_bytes());
-    Ok(src_len)
+    match buf.prefix_mut_checked(src_len) {
+      Some(buf) => {
+        buf.copy_from_slice(src.as_bytes());
+        Ok(src_len)
+      }
+      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+    }
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
@@ -276,12 +292,15 @@ where
   RB: ReadBuf,
   T: Selectable<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -297,12 +316,15 @@ where
     <Self as Encode<Packed<W>, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }

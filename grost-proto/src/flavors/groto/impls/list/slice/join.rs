@@ -1,4 +1,5 @@
 use crate::{
+  buffer::WriteBuf,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, JoinAscii, JoinChar, WireFormat,
@@ -9,12 +10,15 @@ use crate::{
 
 macro_rules! blanket_partial_encode_impl {
   ($wf:ty) => {
-    fn partial_encode_raw(
+    fn partial_encode_raw<WB>(
       &self,
       context: &Context,
-      buf: &mut [u8],
+      buf: &mut WB,
       selector: &Self::Selector,
-    ) -> Result<usize, Error> {
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
       if !*selector {
         return Ok(0);
       }
@@ -30,12 +34,15 @@ macro_rules! blanket_partial_encode_impl {
       }
     }
 
-    fn partial_encode(
+    fn partial_encode<WB>(
       &self,
       context: &Context,
-      buf: &mut [u8],
+      buf: &mut WB,
       selector: &Self::Selector,
-    ) -> Result<usize, Error> {
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
       if *selector {
         <Self as Encode<$wf, Groto>>::encode(self, context, buf)
       } else {
@@ -169,26 +176,32 @@ seq_macro::seq!(IDX in 0..=63 {
     N: AsRef<[u8]>,
     JoinAscii<LengthDelimited, #(A~IDX,)*>: WireFormat<Groto>,
   {
-    fn encode_raw(
+    fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: &mut [u8],
-    ) -> Result<usize, Error> {
-      encode_raw(self, buf, JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
+      buf: &mut WB,
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
+      encode_raw(self, buf.as_mut_slice(), JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
 
     fn encoded_raw_len(&self, _: &Context) -> usize {
       encoded_raw_len(self, JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES)
     }
 
-    fn encode(
+    fn encode<WB>(
       &self,
       context: &Context,
-      buf: &mut [u8],
-    ) -> Result<usize, Error> {
+      buf: &mut WB,
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
       encode(
         self,
-        buf,
+        buf.as_mut_slice(),
         JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES,
         || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, context),
       )
@@ -214,26 +227,32 @@ seq_macro::seq!(IDX in 0..=63 {
     N: AsRef<[u8]>,
     JoinChar<LengthDelimited, #(A~IDX,)*>: WireFormat<Groto>,
   {
-    fn encode_raw(
+    fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: &mut [u8],
-    ) -> Result<usize, Error> {
-      encode_raw(self, buf, JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
+      buf: &mut WB,
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
+      encode_raw(self, buf.as_mut_slice(), JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
 
     fn encoded_raw_len(&self, _: &Context) -> usize {
       encoded_raw_len(self, JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES)
     }
 
-    fn encode(
+    fn encode<WB>(
       &self,
       context: &Context,
-      buf: &mut [u8],
-    ) -> Result<usize, Error> {
+      buf: &mut WB,
+    ) -> Result<usize, Error>
+    where
+      WB: WriteBuf + ?Sized,
+    {
       encode(
         self,
-        buf,
+        buf.as_mut_slice(),
         JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES,
         || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, context),
       )

@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -44,7 +44,10 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if let Some(value) = self {
       value.encode_raw(context, buf)
     } else {
@@ -60,7 +63,10 @@ where
     }
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     if let Some(value) = self {
       value.encode(context, buf)
     } else {
@@ -76,7 +82,10 @@ where
     }
   }
 
-  fn encode_length_delimited(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_length_delimited<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if let Some(value) = self {
       value.encode_length_delimited(context, buf)
     } else {
@@ -98,12 +107,15 @@ where
   T: PartialEncode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error> {
+  ) -> Result<usize, <Groto as Flavor>::Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
     }
@@ -131,12 +143,15 @@ where
     }
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
     }
@@ -176,12 +191,15 @@ where
     }
   }
 
-  fn partial_encode_length_delimited(
+  fn partial_encode_length_delimited<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
     }

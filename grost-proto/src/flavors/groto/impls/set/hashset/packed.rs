@@ -3,7 +3,7 @@ use super::HashSet;
 use core::hash::{BuildHasher, Hash};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -83,9 +83,12 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     packed_encode_raw::<K, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context),
       |item, buf| item.encode(context, buf),
@@ -96,9 +99,12 @@ where
     packed_encoded_raw_len::<K, KW, _, _>(self.len(), self.iter(), |item| item.encoded_len(context))
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     packed_encode::<K, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.len(),
       self.iter(),
       || <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context),
@@ -118,12 +124,15 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if *selector {
       return Ok(0);
     }
@@ -139,12 +148,15 @@ where
     <Self as Encode<Packed<KW>, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if *selector {
       return Ok(0);
     }

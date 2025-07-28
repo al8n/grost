@@ -14,11 +14,14 @@ macro_rules! tuple2_impl {
         K: Encode<$wf, Groto>,
         V: Encode<$wf, Groto>,
       {
-        fn encode_raw(
+        fn encode_raw<B>(
           &self,
           context: &<Groto as crate::flavors::Flavor>::Context,
-          buf: &mut [u8],
-        ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
+          buf: &mut B,
+        ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
+        where
+          B: crate::buffer::WriteBuf + ?Sized,
+        {
           let buf_len = buf.len();
           if buf_len < <$merged_wf>::SIZE {
             return Err(<Groto as crate::flavors::Flavor>::Error::insufficient_buffer(<$merged_wf>::SIZE, buf_len));
@@ -34,7 +37,7 @@ macro_rules! tuple2_impl {
 
           offset += encoded_len;
 
-          let encoded_len = <V as Encode<$wf, Groto>>::encode(&self.1, context, &mut buf[offset..])
+          let encoded_len = <V as Encode<$wf, Groto>>::encode(&self.1, context, &mut buf.as_mut_slice()[offset..])
             .map_err(|e| e.update(<Self as Encode<$merged_wf, Groto>>::encoded_len(self, context), buf_len))?;
           #[cfg(debug_assertions)]
           {
@@ -54,7 +57,10 @@ macro_rules! tuple2_impl {
           <$merged_wf>::SIZE
         }
 
-        fn encode(&self, context: &<Groto as crate::flavors::Flavor>::Context, buf: &mut [u8]) -> Result<usize, <Groto as crate::flavors::Flavor>::Error> {
+        fn encode<B>(&self, context: &<Groto as crate::flavors::Flavor>::Context, buf: &mut B) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
+        where
+          B: crate::buffer::WriteBuf + ?Sized,
+        {
           <Self as Encode<$merged_wf, Groto>>::encode_raw(self, context, buf)
         }
 

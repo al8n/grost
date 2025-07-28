@@ -31,7 +31,7 @@ macro_rules! impl_fixed {
   ($($wt:ident($size:literal)),+$(,)?) => {
     $(
       impl Encode<Groto, $wt> for [u8; $size] {
-        fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+        fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error> where WB: WriteBuf + ?Sized {
           Ok(encode_fixed!(self(buf) as $size))
         }
 

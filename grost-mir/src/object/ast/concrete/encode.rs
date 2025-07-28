@@ -1,4 +1,4 @@
-use quote::{format_ident, quote};
+use quote::quote;
 
 impl<T, S, M> super::Object<T, S, M> {
   pub(super) fn derive_encode(&self) -> darling::Result<proc_macro2::TokenStream> {

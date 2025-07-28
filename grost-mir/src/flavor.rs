@@ -1,13 +1,7 @@
-use quote::format_ident;
-use syn::{Ident, Path, Type, parse_quote};
-
 pub use identifier::IdentifierOptions;
 pub use tag::TagOptions;
 
-pub(crate) use meta::{
-  BuiltinFlavorRepr, FlavorFromMeta, GenericFlavorFromMeta, IdentifierFromMeta, TagFromMeta,
-  complex_flavor_ident_error, duplicate_flavor_error,
-};
+pub(crate) use meta::{GenericFlavorFromMeta, IdentifierFromMeta, TagFromMeta};
 
 mod identifier;
 mod meta;

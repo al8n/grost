@@ -1,13 +1,9 @@
-use darling::FromMeta;
 pub use field::*;
 pub(super) use indexer::IndexerFromMeta;
 pub(super) use selector::{SelectorFromMeta, SelectorIterFromMeta};
 
 pub use concrete::{FieldFromMeta, ObjectFromMeta};
 pub use generic::GenericObjectFromMeta;
-use syn::Meta;
-
-use crate::utils::BoolOption;
 
 mod field;
 mod indexer;

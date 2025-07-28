@@ -143,14 +143,14 @@ where
           darling::ast::NestedMeta::Meta(ref meta) => {
             if let Meta::Path(path) = meta {
               if path.is_ident("skip") {
-                return None;
+                None
               } else if is_tagged_field_only_identifiers(path) {
-                return Some(Err(darling::Error::custom(format!(
+                Some(Err(darling::Error::custom(format!(
                   "`{}` is not supported by skipped field",
                   path_to_string(path)
-                ))));
+                ))))
               } else {
-                return Some(Ok(item));
+                Some(Ok(item))
               }
             } else {
               Some(Ok(item))

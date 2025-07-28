@@ -271,7 +271,7 @@ where
 
 //   /// Returns the reflection to the partial encode fn for the field.
 //   #[inline]
-//   pub const fn partial_encode(
+//   pub const fn partial_encode<WB>(
 //     &self,
 //   ) -> Reflection<
 //     T,

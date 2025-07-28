@@ -23,7 +23,7 @@ impl DefaultWireFormat<Select> for bool {
 }
 
 impl Encode<Select, Zst> for bool {
-  fn encode(&self, _: &Context, buf: &mut [u8]) -> Result<usize, EncodeError> {
+  fn encode(&self, _: &Context, buf: &mut impl crate::buffer::WriteBuf) -> Result<usize, EncodeError> {
     if buf.is_empty() {
       return Err(EncodeError::insufficient_buffer(1, 0));
     }

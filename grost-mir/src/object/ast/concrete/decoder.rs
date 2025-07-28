@@ -1,4 +1,4 @@
-use super::{Field, Object, RawObject};
+use super::{Object, RawObject};
 
 use proc_macro2::TokenStream;
 use quote::{ToTokens, format_ident, quote};

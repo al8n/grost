@@ -107,7 +107,7 @@ impl Object {
       let ident = f.ident.as_ref().unwrap();
       let vis = &f.vis;
       let ty = &f.ty;
-      let doc = format!("Returns the `{}` field of the meta.", ident);
+      let doc = format!("Returns the `{ident}` field of the meta.");
       quote! {
         #[doc = #doc]
         #[inline]

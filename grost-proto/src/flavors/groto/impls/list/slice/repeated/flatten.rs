@@ -16,11 +16,14 @@ where
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |item| item.encoded_len(context),
       |item, buf| item.encode(context, buf),
@@ -31,7 +34,10 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <Self as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
       self, context, buf,
     )
@@ -51,11 +57,14 @@ where
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |item| item.encoded_len(context),
       |item, buf| item.encode(context, buf),
@@ -66,7 +75,10 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -82,12 +94,15 @@ where
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -95,7 +110,7 @@ where
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |item| item.partial_encoded_len(context, selector),
       |item, buf| item.partial_encode(context, buf, selector),
@@ -113,12 +128,15 @@ where
       .sum::<usize>()
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )
@@ -140,12 +158,15 @@ where
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -153,7 +174,7 @@ where
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf,
+      buf.as_mut_slice(),
       || self.iter(),
       |item| item.partial_encoded_len(context, selector),
       |item, buf| item.partial_encode(context, buf, selector),
@@ -171,12 +192,15 @@ where
       .sum::<usize>()
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
     )

@@ -1,7 +1,7 @@
 use core::num::NonZeroI64;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -30,20 +30,23 @@ flatten_state!(i64, NonZeroI64);
 partial_identity!(@scalar Groto: i64, NonZeroI64);
 
 impl Encode<Fixed64, Groto> for i64 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    if buf.len() < 8 {
-      return Err(Error::insufficient_buffer(8, buf.len()));
-    }
-
-    buf[..8].copy_from_slice(self.to_le_bytes().as_slice());
-    Ok(8)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf
+      .write_i64_le_checked(*self)
+      .ok_or_else(|| Error::insufficient_buffer(8, buf.len()))
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     8
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Fixed64, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -53,15 +56,21 @@ impl Encode<Fixed64, Groto> for i64 {
 }
 
 impl Encode<Varint, Groto> for i64 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    varing::encode_i64_varint_to(*self, buf).map_err(Into::into)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf.write_i64_varint(*self).map_err(Into::into)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     varing::encoded_i64_varint_len(*self)
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Varint, Groto>>::encode_raw(self, context, buf)
   }
 

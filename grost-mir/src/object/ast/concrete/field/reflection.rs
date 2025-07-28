@@ -15,6 +15,7 @@ pub struct FieldReflection {
   field_reflection_generics: Generics,
   wire_format_reflection: Type,
   wire_format_reflection_generics: Generics,
+  wire_format_constraints: Punctuated<WherePredicate, Comma>,
   wire_type_reflection: Type,
   wire_type_reflection_generics: Generics,
   identifier_reflection: Type,
@@ -153,6 +154,12 @@ impl FieldReflection {
     &self.encoded_tag_len_reflection_generics
   }
 
+  /// Returns the field constraints of the wire format.
+  #[inline]
+  pub const fn wire_format_constraints(&self) -> &Punctuated<WherePredicate, Comma> {
+    &self.wire_format_constraints
+  }
+
   #[allow(clippy::too_many_arguments)]
   pub(super) fn try_new<T, S, M>(
     object: &RawObject<T, S, M>,
@@ -174,7 +181,7 @@ impl FieldReflection {
       wire_format_reflection_generics
         .make_where_clause()
         .predicates
-        .extend(wire_format_constraints);
+        .extend(wire_format_constraints.clone());
     }
 
     let mut field_reflection_constraints = Punctuated::new();
@@ -222,6 +229,7 @@ impl FieldReflection {
       identifier_reflection,
       encoded_identifier_reflection,
       encoded_identifier_len_reflection,
+      wire_format_constraints,
       tag_reflection,
       encoded_tag_reflection,
       encoded_tag_len_reflection,

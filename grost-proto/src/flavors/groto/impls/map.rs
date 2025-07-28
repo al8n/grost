@@ -6,7 +6,7 @@ pub use repeated_map_decoder::*;
 use varing::decode_u32_varint;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
     groto::{Context, Error, Identifier, Tag},

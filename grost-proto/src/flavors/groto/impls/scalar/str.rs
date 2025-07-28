@@ -1,5 +1,5 @@
 use crate::{
-  buffer::ReadBuf,
+  buffer::{ReadBuf, WriteBuf},
   decode::{BytesSlice, Decode, Str},
   default_string_wire_format,
   encode::{Encode, PartialEncode},
@@ -33,7 +33,10 @@ impl<RB> Encode<LengthDelimited, Groto> for Str<RB>
 where
   RB: ReadBuf,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <str as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -41,7 +44,10 @@ where
     <str as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <str as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
 
@@ -54,12 +60,15 @@ impl<RB> PartialEncode<LengthDelimited, Groto> for Str<RB>
 where
   RB: ReadBuf,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(self, context, buf, selector)
   }
 
@@ -67,12 +76,15 @@ where
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encoded_raw_len(self, context, selector)
   }
 
-  fn partial_encode(
+  fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut B,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    B: WriteBuf + ?Sized,
+  {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
 

@@ -1,7 +1,7 @@
 use core::num::NonZeroI128;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -30,20 +30,23 @@ flatten_state!(i128, NonZeroI128);
 partial_identity!(@scalar Groto: i128, NonZeroI128);
 
 impl Encode<Fixed128, Groto> for i128 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    if buf.len() < 16 {
-      return Err(Error::insufficient_buffer(16, buf.len()));
-    }
-
-    buf[..16].copy_from_slice(self.to_le_bytes().as_slice());
-    Ok(16)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf
+      .write_i128_le_checked(*self)
+      .ok_or_else(|| Error::insufficient_buffer(16, buf.len()))
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     16
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Fixed128, Groto>>::encode_raw(self, context, buf)
   }
 
@@ -53,15 +56,21 @@ impl Encode<Fixed128, Groto> for i128 {
 }
 
 impl Encode<Varint, Groto> for i128 {
-  fn encode_raw(&self, _: &Context, buf: &mut [u8]) -> Result<usize, Error> {
-    varing::encode_i128_varint_to(*self, buf).map_err(Into::into)
+  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
+    buf.write_i128_varint(*self).map_err(Into::into)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     varing::encoded_i128_varint_len(*self)
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  where
+    B: crate::buffer::WriteBuf + ?Sized,
+  {
     <Self as Encode<Varint, Groto>>::encode_raw(self, context, buf)
   }
 

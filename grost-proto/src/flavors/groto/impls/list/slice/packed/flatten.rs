@@ -7,11 +7,14 @@ where
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     check_list_type::<N>()?;
 
     packed_encode_raw::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || {
         <Self as Encode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::encoded_raw_len(self, context)
@@ -27,7 +30,10 @@ where
       .sum::<usize>()
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let mut num_elems = 0;
     let elems_bytes = self
       .iter()
@@ -38,7 +44,7 @@ where
       .sum::<usize>();
 
     packed_encode::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       num_elems,
       self.iter(),
       || elems_bytes,
@@ -77,11 +83,14 @@ where
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     check_list_type::<N>()?;
 
     packed_encode_raw::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || <Self as Encode<Flatten<Packed<W>, W>, Groto>>::encoded_raw_len(self, context),
       |item, buf| item.encode_raw(context, buf),
@@ -95,7 +104,10 @@ where
       .sum::<usize>()
   }
 
-  fn encode(&self, context: &Context, buf: &mut [u8]) -> Result<usize, Error> {
+  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     let mut num_elems = 0;
     let elems_bytes = self
       .iter()
@@ -106,7 +118,7 @@ where
       .sum::<usize>();
 
     packed_encode::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       num_elems,
       self.iter(),
       || elems_bytes,
@@ -137,12 +149,15 @@ where
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -150,7 +165,7 @@ where
     check_list_type::<N>()?;
 
     packed_encode_raw::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || {
         <Self as PartialEncode<Flatten<Packed<W>, W>, Groto>>::partial_encoded_raw_len(
@@ -172,12 +187,15 @@ where
       .sum::<usize>()
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -194,7 +212,7 @@ where
       .sum::<usize>();
 
     packed_encode::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       num_elems,
       self.iter(),
       || elems_bytes,
@@ -229,12 +247,15 @@ where
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
   T: PartialEncode<W, Groto> + Sized,
 {
-  fn partial_encode_raw(
+  fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -242,7 +263,7 @@ where
     check_list_type::<N>()?;
 
     packed_encode_raw::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       self.iter(),
       || {
         <Self as PartialEncode<Flatten<Borrowed<'_, Packed<W>>, W>, Groto>>::partial_encoded_raw_len(
@@ -264,12 +285,15 @@ where
       .sum::<usize>()
   }
 
-  fn partial_encode(
+  fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    buf: &mut WB,
     selector: &Self::Selector,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize, Error>
+  where
+    WB: WriteBuf + ?Sized,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
@@ -286,7 +310,7 @@ where
       .sum::<usize>();
 
     packed_encode::<_, _, _, _>(
-      buf,
+      buf.as_mut_slice(),
       num_elems,
       self.iter(),
       || elems_bytes,

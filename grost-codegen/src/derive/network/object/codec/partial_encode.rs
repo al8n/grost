@@ -98,7 +98,7 @@ impl Groto {
     quote! {
       #[automatically_derived]
       impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited> for #struct_name {
-        fn partial_encode(
+        fn partial_encode<WB>(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
@@ -269,7 +269,7 @@ impl Groto {
       #[allow(non_camel_case_types)]
       impl #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited> for #partial_struct_name
       {
-        fn partial_encode(
+        fn partial_encode<WB>(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],
@@ -470,7 +470,7 @@ impl Groto {
       #[allow(non_camel_case_types)]
       impl<'__grost_lifetime__> #path_to_grost::__private::PartialEncode<#path_to_grost::__private::flavors::Groto, #path_to_grost::__private::flavors::groto::LengthDelimited> for #partial_ref_name<'__grost_lifetime__, #path_to_grost::__private::flavors::Groto>
       {
-        fn partial_encode(
+        fn partial_encode<WB>(
           &self,
           ctx: &<#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::Context,
           buf: &mut [::core::primitive::u8],

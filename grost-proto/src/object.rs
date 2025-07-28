@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer},
+  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
   decode::{Decode, EquivalentDecode},
   flavors::{Flavor, WireFormat},
 };

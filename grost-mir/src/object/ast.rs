@@ -1,11 +1,7 @@
 use quote::{ToTokens, format_ident, quote};
-use syn::{Attribute, Generics, Ident, LifetimeParam, Path, Type, TypeParam, Visibility};
+use syn::{Attribute, Generics, Ident, Path, Type, Visibility};
 
-use crate::{
-  flavor::{IdentifierOptions, TagOptions},
-  object::{Label, meta::ObjectFromMeta},
-  utils::{Invokable, SchemaOptions, grost_flavor_param},
-};
+use crate::object::Label;
 
 pub use concrete::{
   Object, PartialObject, PartialObjectOptions, PartialRefObject, PartialRefObjectOptions, RawField,
