@@ -174,7 +174,7 @@ where
     RB: ReadBuf + 'de,
     F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), <Groto as Flavor>::Error>,
   {
-    let buf = src.as_bytes();
+    let buf = src.remaining_slice();
     if buf.is_empty() {
       return Err(Error::buffer_underflow());
     }
@@ -193,7 +193,7 @@ where
       return Err(Error::unexpected_wire_type(W::WIRE_TYPE, wire_type));
     }
 
-    decode_fn(context, src.slice(2..)).map(|(read, val)| (read + 2, Some(val)))
+    decode_fn(context, src.segment(2..)).map(|(read, val)| (read + 2, Some(val)))
   }
 }
 

@@ -307,15 +307,15 @@ impl<K, V> PartialMapEntry<K, V> {
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     // read the length of the entry
-    let (len_size, entry_size) = varing::decode_u32_varint(src.as_bytes())?;
-    let src_len = src.len();
+    let (len_size, entry_size) = varing::decode_u32_varint(src.remaining_slice())?;
+    let src_len = src.remaining();
     let total = len_size + entry_size as usize;
     if total > src_len {
       return Err(Error::buffer_underflow());
     }
 
     // decode the entry
-    Self::decode_entry_helper(ctx, src.slice(len_size..total), ki, vi).map(|(_read, ent)| {
+    Self::decode_entry_helper(ctx, src.segment(len_size..total), ki, vi).map(|(_read, ent)| {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
@@ -338,8 +338,8 @@ impl<K, V> PartialMapEntry<K, V> {
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
-    let buf_len = src.len();
-    let buf = src.as_bytes();
+    let buf_len = src.remaining();
+    let buf = src.remaining_slice();
 
     // read the identifier of the entry
     let (mut offset, identifier) = Identifier::decode(buf)?;
@@ -360,7 +360,7 @@ impl<K, V> PartialMapEntry<K, V> {
     }
 
     // decode the entry
-    Self::decode_entry_helper(ctx, src.slice(offset..total), ki, vi).map(|(_read, ent)| {
+    Self::decode_entry_helper(ctx, src.segment(offset..total), ki, vi).map(|(_read, ent)| {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
@@ -382,8 +382,8 @@ impl<K, V> PartialMapEntry<K, V> {
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
-    let buf_len = src.len();
-    let buf = src.as_bytes();
+    let buf_len = src.remaining();
+    let buf = src.remaining_slice();
     let mut offset = 0;
 
     let mut k = None;
@@ -402,7 +402,7 @@ impl<K, V> PartialMapEntry<K, V> {
           if k.is_some() {
             return Err(Error::custom("duplicate key found when decoding map entry"));
           }
-          let (klen, key) = K::decode(ctx, src.slice(offset..))?;
+          let (klen, key) = K::decode(ctx, src.segment(offset..))?;
           offset += klen;
           k = Some(key);
         }
@@ -412,7 +412,7 @@ impl<K, V> PartialMapEntry<K, V> {
               "duplicate value found when decoding map entry",
             ));
           }
-          let (vlen, value) = V::decode(ctx, src.slice(offset..))?;
+          let (vlen, value) = V::decode(ctx, src.segment(offset..))?;
           offset += vlen;
           v = Some(value);
         }
@@ -843,15 +843,15 @@ impl<K, V> MapEntry<K, V> {
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     // read the length of the entry
-    let (len_size, entry_size) = varing::decode_u32_varint(src.as_bytes())?;
-    let src_len = src.len();
+    let (len_size, entry_size) = varing::decode_u32_varint(src.remaining_slice())?;
+    let src_len = src.remaining();
     let total = len_size + entry_size as usize;
     if total > src_len {
       return Err(Error::buffer_underflow());
     }
 
     // decode the entry
-    Self::decode_entry_helper(ctx, src.slice(len_size..total), ki, vi).map(|(_read, ent)| {
+    Self::decode_entry_helper(ctx, src.segment(len_size..total), ki, vi).map(|(_read, ent)| {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
@@ -875,8 +875,8 @@ impl<K, V> MapEntry<K, V> {
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
-    let buf_len = src.len();
-    let buf = src.as_bytes();
+    let buf_len = src.remaining();
+    let buf = src.remaining_slice();
 
     // read the identifier of the entry
     let (mut offset, identifier) = Identifier::decode(buf)?;
@@ -897,7 +897,7 @@ impl<K, V> MapEntry<K, V> {
     }
 
     // decode the entry
-    Self::decode_entry_helper(ctx, src.slice(offset..total), ki, vi).map(|(_read, ent)| {
+    Self::decode_entry_helper(ctx, src.segment(offset..total), ki, vi).map(|(_read, ent)| {
       #[cfg(debug_assertions)]
       crate::debug_assert_read_eq::<Self>(_read, entry_size as usize);
 
@@ -919,8 +919,8 @@ impl<K, V> MapEntry<K, V> {
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
-    let buf_len = src.len();
-    let buf = src.as_bytes();
+    let buf_len = src.remaining();
+    let buf = src.remaining_slice();
     let mut offset = 0;
 
     let mut k = None;
@@ -939,7 +939,7 @@ impl<K, V> MapEntry<K, V> {
           if k.is_some() {
             return Err(Error::custom("duplicate key found when decoding map entry"));
           }
-          let (klen, key) = K::decode(ctx, src.slice(offset..))?;
+          let (klen, key) = K::decode(ctx, src.segment(offset..))?;
           offset += klen;
           k = Some(key);
         }
@@ -949,7 +949,7 @@ impl<K, V> MapEntry<K, V> {
               "duplicate value found when decoding map entry",
             ));
           }
-          let (vlen, value) = V::decode(ctx, src.slice(offset..))?;
+          let (vlen, value) = V::decode(ctx, src.segment(offset..))?;
           offset += vlen;
           v = Some(value);
         }

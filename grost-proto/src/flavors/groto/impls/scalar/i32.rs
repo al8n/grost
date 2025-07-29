@@ -88,8 +88,8 @@ impl<'de, RB, B> Decode<'de, Fixed32, RB, B, Groto> for i32 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    let as_bytes = src.as_bytes();
-    if src.len() < 4 {
+    let as_bytes = src.remaining_slice();
+    if src.remaining() < 4 {
       return Err(Error::buffer_underflow());
     }
 
@@ -104,7 +104,7 @@ impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for i32 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    varing::decode_i32_varint(src.as_bytes()).map_err(Into::into)
+    varing::decode_i32_varint(src.remaining_slice()).map_err(Into::into)
   }
 }
 

@@ -94,11 +94,11 @@ macro_rules! socket_addr_impl {
             RB: crate::buffer::ReadBuf,
             B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
           {
-            if src.len() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
+            if src.remaining() < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(Error::buffer_underflow());
             }
 
-            let buf = src.as_bytes();
+            let buf = src.remaining_slice();
             let (offset, remaining) = varing::decode_u32_varint(buf).map_err(|_| Error::buffer_underflow())?;
             if remaining != [< SOCKET_ADDR_V $variant _LEN >] as u32 {
               return Err(Error::custom(concat!("invalid socket v", $variant, " address length")));
@@ -206,12 +206,12 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for SocketAddr {
     RB: crate::buffer::ReadBuf + 'de,
     B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
-    let len = src.len();
+    let len = src.remaining();
     if len == 0 {
       return Err(Error::buffer_underflow());
     }
 
-    let buf = src.as_bytes();
+    let buf = src.remaining_slice();
     let remaining = buf[0];
 
     macro_rules! decode_addr {

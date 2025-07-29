@@ -111,9 +111,9 @@ where
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, F> + 'de,
   {
-    let as_bytes = src.as_bytes();
+    let as_bytes = src.remaining_slice();
     let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
-    let src_len = src.len();
+    let src_len = src.remaining();
     let len = len as usize;
     let total = len_size + len;
     if total > src_len {
@@ -124,7 +124,7 @@ where
       return Err(Error::buffer_underflow().into());
     }
 
-    Self::decode(context, src.slice(len_size..total))
+    Self::decode(context, src.segment(len_size..total))
   }
 
   /// Decodes an instance from a raw byte slice, merging the result into the current instance.

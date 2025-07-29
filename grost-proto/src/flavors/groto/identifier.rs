@@ -160,6 +160,6 @@ impl crate::identifier::Identifier<super::Groto> for Identifier {
     B: crate::buffer::ReadBuf + Sized + 'de,
     Self: Sized,
   {
-    Self::decode(buf.as_bytes())
+    Self::decode(buf.remaining_slice())
   }
 }

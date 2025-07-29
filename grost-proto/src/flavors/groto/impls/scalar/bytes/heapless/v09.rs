@@ -185,7 +185,7 @@ impl<const N: usize, L: LenType + 'static> DecodeOwned<Groto, Self> for Vec<u8, 
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    <Self as Decode<Groto, Self>>::decode::<()>(context, wire_type, src.as_bytes())
+    <Self as Decode<Groto, Self>>::decode::<()>(context, wire_type, src.remaining_slice())
   }
 
   fn decode_length_delimited_owned<B, UB>(
@@ -198,7 +198,11 @@ impl<const N: usize, L: LenType + 'static> DecodeOwned<Groto, Self> for Vec<u8, 
     B: crate::buffer::BytesBuffer + 'static,
     UB: crate::buffer::Buffer<Unknown<B>> + 'static,
   {
-    <Self as Decode<Groto, Self>>::decode_length_delimited::<()>(context, wire_type, src.as_bytes())
+    <Self as Decode<Groto, Self>>::decode_length_delimited::<()>(
+      context,
+      wire_type,
+      src.remaining_slice(),
+    )
   }
 }
 

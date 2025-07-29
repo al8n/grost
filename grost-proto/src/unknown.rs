@@ -29,12 +29,13 @@ where
   where
     B: Sized + ReadBuf,
   {
-    let (identifier_len, identifier) = <F::Identifier as Identifier<F>>::decode(data.as_bytes())?;
+    let (identifier_len, identifier) =
+      <F::Identifier as Identifier<F>>::decode(data.remaining_slice())?;
 
-    let data_len = F::peek_raw(ctx, identifier.wire_type(), data.as_bytes())?;
+    let data_len = F::peek_raw(ctx, identifier.wire_type(), data.remaining_slice())?;
     let total_len = identifier_len + data_len;
-    if total_len > data.as_bytes().len() {
-      return Err(Error::insufficient_buffer(total_len, data.as_bytes().len()).into());
+    if total_len > data.remaining() {
+      return Err(Error::insufficient_buffer(total_len, data.remaining()).into());
     }
     Ok((
       identifier_len + data_len,
@@ -43,7 +44,7 @@ where
         tag: identifier.tag(),
         wire_type: identifier.wire_type(),
         encoded_identifier_len: identifier_len,
-        data: data.slice(..total_len),
+        data: data.segment(..total_len),
       },
     ))
   }
@@ -92,7 +93,7 @@ where
   where
     B: ReadBuf,
   {
-    let bytes = self.data.as_bytes();
+    let bytes = self.data.remaining_slice();
     let len = bytes.len();
     if len < self.encoded_identifier_len {
       return &[];
@@ -102,7 +103,7 @@ where
       return bytes;
     }
 
-    &self.data.as_bytes()[self.encoded_identifier_len..]
+    &self.data.remaining_slice()[self.encoded_identifier_len..]
   }
 
   /// Returns the owned data of the unknown data type.
@@ -113,7 +114,7 @@ where
   where
     B: ReadBuf + Sized,
   {
-    let bytes = self.data.as_bytes();
+    let bytes = self.data.remaining_slice();
     let len = bytes.len();
     if len < self.encoded_identifier_len {
       return B::empty();
@@ -123,7 +124,7 @@ where
       return self.data;
     }
 
-    self.data.slice(self.encoded_identifier_len..)
+    self.data.segment(self.encoded_identifier_len..)
   }
 
   /// Returns the raw data of the unknown data type.
@@ -135,7 +136,7 @@ where
   where
     B: ReadBuf,
   {
-    self.data.as_bytes()
+    self.data.remaining_slice()
   }
 
   /// Returns the owned raw data of the unknown data type.

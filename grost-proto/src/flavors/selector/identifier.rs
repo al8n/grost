@@ -180,7 +180,7 @@ impl crate::identifier::Identifier<super::Select> for SelectorIdentifier {
     Self: Sized,
   {
     let src = buf.as_bytes();
-    if src.is_empty() {
+    if !src.has_remaining() {
       return Err(DecodeError::buffer_underflow());
     }
 

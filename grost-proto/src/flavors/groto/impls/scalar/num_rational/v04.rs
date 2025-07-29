@@ -128,7 +128,7 @@ macro_rules! codec {
               const DENOM_IDENTIFIER: Identifier = Identifier::new(WireType::$wt, DENOM_TAG);
 
               let mut offset = 0;
-              let buf_len = src.len();
+              let buf_len = src.remaining();
               let mut numer = None;
               let mut denom = None;
 
@@ -227,7 +227,7 @@ macro_rules! codec {
           B: crate::buffer::BytesBuffer + 'static,
           UB: crate::buffer::Buffer<Unknown<B>> + 'static,
         {
-          Self::decode::<()>(context, wire_type, src.as_bytes())
+          Self::decode::<()>(context, wire_type, src.remaining_slice())
         }
       
         fn decode_length_delimited_owned<B, UB>(
@@ -240,7 +240,7 @@ macro_rules! codec {
           B: crate::buffer::BytesBuffer + 'static,
           UB: crate::buffer::Buffer<Unknown<B>> + 'static,
         {
-          Self::decode_length_delimited::<()>(context, wire_type, src.as_bytes())
+          Self::decode_length_delimited::<()>(context, wire_type, src.remaining_slice())
         }
       }
       

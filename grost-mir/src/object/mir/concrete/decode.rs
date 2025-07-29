@@ -383,7 +383,7 @@ fn derive_partial_ref_object_decode<M, F>(
             );
           }
 
-          let (read, value) = <#field_ty as  #field_decode_trait_type>::decode(context, src.slice(offset..))?;
+          let (read, value) = <#field_ty as  #field_decode_trait_type>::decode(context, src.segment(offset..))?;
           #value
           this.#field_name = ::core::option::Option::Some(value);
           offset += read;
@@ -481,7 +481,7 @@ fn derive_partial_ref_object_decode<M, F>(
         #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
-        let buf = src.as_bytes();
+        let buf = src.remaining_slice();
         let buf_len = buf.len();
         let mut this = Self::new();
 
@@ -509,10 +509,10 @@ fn derive_partial_ref_object_decode<M, F>(
                   return ::core::result::Result::Err(::core::convert::Into::into(#path_to_grost::__private::error::Error::buffer_underflow()));
                 }
 
-                offset += <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::skip(context, identifier.wire_type(), src.slice(offset..))?;
+                offset += <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::skip(context, identifier.wire_type(), src.segment(offset..))?;
               } else {
                 let encoded_len = <<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Identifier as  #path_to_grost::__private::identifier::Identifier<#flavor_ty>>::encoded_len(&identifier);
-                let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.slice(offset - encoded_len..))?;
+                let (read, unknown) = <#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::decode_unknown(context, src.segment(offset - encoded_len..))?;
                 offset += read;
                 let unknowns_mut = this.#buffer_field_name.get_or_insert_with(|| #ubg::new());
 

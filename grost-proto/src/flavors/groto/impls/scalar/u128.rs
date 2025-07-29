@@ -87,7 +87,7 @@ impl<'de, RB, B> Decode<'de, Fixed128, RB, B, Groto> for u128 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    let src = src.as_bytes();
+    let src = src.remaining_slice();
     if src.len() < 16 {
       return Err(Error::buffer_underflow());
     }
@@ -103,7 +103,7 @@ impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for u128 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    varing::decode_u128_varint(src.as_bytes()).map_err(Into::into)
+    varing::decode_u128_varint(src.remaining_slice()).map_err(Into::into)
   }
 }
 

@@ -64,7 +64,7 @@ impl Flavor for Groto {
   // where
   //   B: ReadBuf + 'de,
   // {
-  //   let src = buf.as_bytes();
+  //   let src = buf.remaining_slice();
   //   let (identifier_len, identifier) = Identifier::decode(src)?;
   //   let (wire_type, tag) = identifier.into_components();
 
@@ -93,7 +93,7 @@ impl Flavor for Groto {
   //   }
 
   //   let mut offset = identifier_len;
-  //   let buf_len = src.len();
+  //   let buf_len = src.remaining();
   //   match identifier.wire_type() {
   //     WireType::LengthDelimited => {
   //       if offset >= buf_len {
@@ -206,9 +206,9 @@ fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
   }
 
   Ok(match wire_type {
-    WireType::Varint => varing::consume_varint(buf.as_bytes())?,
+    WireType::Varint => varing::consume_varint(buf.remaining_slice())?,
     WireType::LengthDelimited => {
-      let (size_len, size) = varing::decode_u32_varint(buf.as_bytes())?;
+      let (size_len, size) = varing::decode_u32_varint(buf.remaining_slice())?;
       let size = size as usize;
       if size > buf.len() {
         return Err(Error::buffer_underflow());

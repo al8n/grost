@@ -159,7 +159,7 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
-  let bytes = src.as_bytes();
+  let bytes = src.remaining_slice();
   let bytes_len = bytes.len();
   if bytes_len == 0 {
     return Err(Error::buffer_underflow());
@@ -184,7 +184,7 @@ where
 
   let mut map = constructor(num_elements as usize)?;
   while offset < bytes_len {
-    offset += merge_decode(&mut map, &ki, &vi, src.slice(offset..))?;
+    offset += merge_decode(&mut map, &ki, &vi, src.segment(offset..))?;
   }
 
   let actual_num_elements = len(&map);
@@ -265,10 +265,10 @@ where
   let vi = Identifier::new(VW::WIRE_TYPE, Tag::MAP_VALUE);
 
   let mut offset = 0;
-  let buf_len = src.len();
+  let buf_len = src.remaining();
 
   while offset < buf_len {
-    match merge_decode(&ei, &ki, &vi, src.slice(offset..))? {
+    match merge_decode(&ei, &ki, &vi, src.segment(offset..))? {
       Some(len) => {
         offset += len;
       }

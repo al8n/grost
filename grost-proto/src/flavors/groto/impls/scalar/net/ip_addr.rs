@@ -242,7 +242,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
     RB: ReadBuf,
     B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
-    let src = src.as_bytes();
+    let src = src.remaining_slice();
     macro_rules! decode_ip_variant {
       ($repr:ident($variant:literal)) => {{
         paste::paste! {
@@ -259,7 +259,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
       }};
     }
 
-    if src.is_empty() {
+    if !src.has_remaining() {
       return Err(Error::buffer_underflow());
     }
 
@@ -277,7 +277,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
     RB: ReadBuf,
     B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
-    let src = src.as_bytes();
+    let src = src.remaining_slice();
 
     macro_rules! decode_ip_variant {
       ($variant:ident($repr:ident, $read:ident)) => {{

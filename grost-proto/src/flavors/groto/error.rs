@@ -1,5 +1,6 @@
 use super::{Groto, Identifier, Tag, WireType};
 use crate::{
+  buffer::{TryAdvanceError, TryPeekError, TryReadError, TrySegmentError},
   error::Error as BaseError,
   flavors::{Flavor, FlavorError, ParseTagError, groto::ParseWireTypeError},
 };
@@ -177,6 +178,34 @@ impl From<varing::DecodeError> for Error {
   }
 }
 
+impl From<TryAdvanceError> for Error {
+  #[inline]
+  fn from(e: TryAdvanceError) -> Self {
+    Self::from_try_advance_error(e)
+  }
+}
+
+impl From<TryReadError> for Error {
+  #[inline]
+  fn from(e: TryReadError) -> Self {
+    Self::from_try_read_error(e)
+  }
+}
+
+impl From<TryPeekError> for Error {
+  #[inline]
+  fn from(e: TryPeekError) -> Self {
+    Self::from_try_peek_error(e)
+  }
+}
+
+impl From<TrySegmentError> for Error {
+  #[inline]
+  fn from(e: TrySegmentError) -> Self {
+    Self::from_try_segment_error(e)
+  }
+}
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl From<std::borrow::Cow<'static, str>> for Error {
   fn from(value: std::borrow::Cow<'static, str>) -> Self {
@@ -316,6 +345,30 @@ impl Error {
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       _ => Self::Custom("unknown error"),
     }
+  }
+
+  /// Creates a new error from [`TryAdvanceError`].
+  #[inline]
+  pub const fn from_try_advance_error(e: TryAdvanceError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TryReadError`].
+  #[inline]
+  pub const fn from_try_read_error(e: TryReadError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TryPeekError`].
+  #[inline]
+  pub const fn from_try_peek_error(e: TryPeekError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TrySegmentError`].
+  #[inline]
+  pub const fn from_try_segment_error(e: TrySegmentError) -> Self {
+    Self::insufficient_buffer(e.end(), e.available())
   }
 
   /// Creates a parse tag error.

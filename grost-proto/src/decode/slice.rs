@@ -55,7 +55,7 @@ where
   type Target = [u8];
 
   fn deref(&self) -> &Self::Target {
-    self.0.as_bytes()
+    self.0.remaining_slice()
   }
 }
 
@@ -98,7 +98,7 @@ impl<RB> BytesSlice<RB> {
 
   /// Returns a reference to the bytes in the slice.
   #[inline]
-  pub fn as_slice(&self) -> &[u8]
+  pub fn remaining_slice(&self) -> &[u8]
   where
     RB: ReadBuf,
   {

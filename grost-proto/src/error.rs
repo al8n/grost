@@ -1,6 +1,9 @@
 use core::num::NonZeroUsize;
 
-use crate::flavors::Flavor;
+use crate::{
+  buffer::{TryAdvanceError, TryPeekError, TryReadError, TrySegmentError},
+  flavors::Flavor,
+};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -286,6 +289,30 @@ impl<F: Flavor + ?Sized> Error<F> {
     }
   }
 
+  /// Creates a new error from [`TryAdvanceError`].
+  #[inline]
+  pub const fn from_try_advance_error(e: TryAdvanceError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TryPeekError`].
+  #[inline]
+  pub const fn from_try_peek_error(e: TryPeekError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TryReadError`].
+  #[inline]
+  pub const fn from_try_read_error(e: TryReadError) -> Self {
+    Self::insufficient_buffer(e.requested(), e.available())
+  }
+
+  /// Creates a new error from [`TrySegmentError`].
+  #[inline]
+  pub const fn from_try_segment_error(e: TrySegmentError) -> Self {
+    Self::insufficient_buffer(e.end(), e.available())
+  }
+
   /// Creates a custom encoding error.
   #[cfg(any(feature = "std", feature = "alloc"))]
   #[inline]
@@ -330,6 +357,34 @@ impl<F: Flavor + ?Sized> From<DecodeVarintError> for Error<F> {
   #[inline]
   fn from(e: DecodeVarintError) -> Self {
     Self::from_varint_decode_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<TryAdvanceError> for Error<F> {
+  #[inline]
+  fn from(e: TryAdvanceError) -> Self {
+    Self::from_try_advance_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<TryPeekError> for Error<F> {
+  #[inline]
+  fn from(e: TryPeekError) -> Self {
+    Self::from_try_peek_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<TryReadError> for Error<F> {
+  #[inline]
+  fn from(e: TryReadError) -> Self {
+    Self::from_try_read_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<TrySegmentError> for Error<F> {
+  #[inline]
+  fn from(e: TrySegmentError) -> Self {
+    Self::from_try_segment_error(e)
   }
 }
 

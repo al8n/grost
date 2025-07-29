@@ -87,11 +87,11 @@ impl<'de, RB, B> Decode<'de, Fixed8, RB, B, Groto> for u8 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    if src.is_empty() {
+    if !src.has_remaining() {
       return Err(Error::buffer_underflow());
     }
 
-    let value = src.as_bytes()[0];
+    let value = src.remaining_slice()[0];
     Ok((1, value))
   }
 }
@@ -103,7 +103,7 @@ impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for u8 {
     RB: ReadBuf,
     B: UnknownBuffer<RB, Groto>,
   {
-    varing::decode_u8_varint(src.as_bytes()).map_err(Into::into)
+    varing::decode_u8_varint(src.remaining_slice()).map_err(Into::into)
   }
 }
 

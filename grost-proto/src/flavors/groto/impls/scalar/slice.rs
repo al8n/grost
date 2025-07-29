@@ -7,7 +7,7 @@ use crate::{
 
 macro_rules! decode_impl {
   ($src:ident, $ty:ty) => {{
-    let bytes = $src.as_bytes();
+    let bytes = $src.remaining_slice();
     let (len_size, len) = $crate::__private::varing::decode_u32_varint(bytes)
       .map_err($crate::__private::flavors::groto::Error::from)?;
 
@@ -214,7 +214,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesSlice<RB> {
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    let bytes = src.as_bytes();
+    let bytes = src.remaining_slice();
     let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
 
     let len = len as usize;
@@ -228,7 +228,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesSlice<RB> {
       return Err(Error::buffer_underflow());
     }
 
-    Ok((total, BytesSlice::new(src.slice(len_size..total))))
+    Ok((total, BytesSlice::new(src.segment(len_size..total))))
   }
 }
 

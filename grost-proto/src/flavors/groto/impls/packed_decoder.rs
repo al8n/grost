@@ -57,7 +57,7 @@ use crate::{
 ///
 /// ### Byte Arrays (`T = u8`)
 /// For byte arrays, the decoder provides direct slice access via:
-/// - `as_slice()` - Returns the complete byte slice
+/// - `remaining_slice()` - Returns the complete byte slice
 /// - `Deref<Target = [u8]>` - Automatic dereferencing to slice
 /// - `AsRef<[u8]>` - Reference conversion
 ///
@@ -126,7 +126,7 @@ impl<'de, T, B, UB, W> PackedDecoder<'de, T, B, UB, W> {
   /// Multiple iterators can be created from the same decoder, each maintaining
   /// independent iteration state.
   ///
-  /// For byte arrays (`T = u8`), consider using `as_slice()` for better performance.
+  /// For byte arrays (`T = u8`), consider using `remaining_slice()` for better performance.
   #[inline]
   pub const fn iter(&self) -> PackedDecoderIter<'_, 'de, T, B, UB, W> {
     PackedDecoderIter {
@@ -182,20 +182,20 @@ where
   /// This is an O(1) operation that provides direct access to the underlying
   /// byte data without any copying or additional processing.
   #[inline]
-  pub fn as_slice(&self) -> &[u8] {
+  pub fn remaining_slice(&self) -> &[u8] {
     let src = &self.src;
-    if src.is_empty() {
-      return src.as_bytes();
+    if !src.has_remaining() {
+      return src.remaining_slice();
     }
 
-    let src_len = src.len();
+    let src_len = src.remaining();
     let start_offset = self.data_offset + self.num_elements_size;
 
     if src_len <= start_offset {
       return &[];
     }
 
-    &src.as_bytes()[start_offset..]
+    &src.remaining_slice()[start_offset..]
   }
 }
 
@@ -207,7 +207,7 @@ where
 
   #[inline]
   fn deref(&self) -> &Self::Target {
-    self.as_slice()
+    self.remaining_slice()
   }
 }
 
@@ -247,7 +247,7 @@ where
     let start_offset = self.data_offset + self.num_elements_size;
     match buf.prefix_mut_checked(src_len) {
       Some(buf) => {
-        buf.copy_from_slice(&self.src.as_bytes()[start_offset..]);
+        buf.copy_from_slice(&self.src.remaining_slice()[start_offset..]);
         Ok(src_len)
       }
       None => Err(Error::insufficient_buffer(src_len, buf_len)),
@@ -256,7 +256,7 @@ where
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     let start_offset = self.data_offset + self.num_elements_size;
-    self.src.len().saturating_sub(start_offset)
+    self.src.remaining().saturating_sub(start_offset)
   }
 
   fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
@@ -265,7 +265,7 @@ where
   {
     let src = &self.src;
     let buf_len = buf.len();
-    let src_len = src.len();
+    let src_len = src.remaining();
 
     if buf_len < src_len {
       return Err(Error::insufficient_buffer(src_len, buf_len));
@@ -273,7 +273,7 @@ where
 
     match buf.prefix_mut_checked(src_len) {
       Some(buf) => {
-        buf.copy_from_slice(src.as_bytes());
+        buf.copy_from_slice(src.remaining_slice());
         Ok(src_len)
       }
       None => Err(Error::insufficient_buffer(src_len, buf_len)),
@@ -281,7 +281,7 @@ where
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
-    self.src.len()
+    self.src.remaining()
   }
 }
 
@@ -355,7 +355,7 @@ where
     RB: crate::buffer::ReadBuf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let buf = src.as_bytes();
+    let buf = src.remaining_slice();
     let buf_len = buf.len();
 
     if buf_len == 0 {
@@ -380,7 +380,7 @@ where
     Ok((
       total_consumed,
       Self {
-        src: src.slice(..total_consumed),
+        src: src.segment(..total_consumed),
         data_offset: length_prefix_size,
         expected_elements: element_count,
         num_elements_size: count_prefix_size,
@@ -533,7 +533,7 @@ where
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    let src_len = self.decoder.src.len();
+    let src_len = self.decoder.src.remaining();
 
     // Check if we've reached the end of the buffer
     if self.offset >= src_len {
@@ -553,7 +553,7 @@ where
     // Decode the next element from the packed data
     // No identifier prefixes in packed format - elements are contiguous
     Some(
-      T::decode(self.decoder.ctx, self.decoder.src.slice(self.offset..))
+      T::decode(self.decoder.ctx, self.decoder.src.segment(self.offset..))
         .inspect(|(read, _)| {
           // Update position by the number of bytes consumed
           self.offset += read;

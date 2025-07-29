@@ -157,14 +157,14 @@ where
     match buf.prefix_mut_checked(src_len) {
       None => Err(Error::insufficient_buffer(src_len, buf_len)),
       Some(buf) => {
-        buf.copy_from_slice(self.src.as_bytes());
+        buf.copy_from_slice(self.src.remaining_slice());
         Ok(src_len)
       }
     }
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
-    self.src.len()
+    self.src.remaining()
   }
 
   fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
@@ -264,7 +264,7 @@ where
     let expected_identifier = Identifier::new(Repeated::<W, TAG>::WIRE_TYPE, Tag::new(TAG));
     let mut num_elements = 0;
     let mut offset = 0;
-    let buf = src.as_bytes();
+    let buf = src.remaining_slice();
     let buf_len = buf.len();
 
     if buf_len == 0 {
@@ -300,7 +300,7 @@ where
     Ok((
       offset,
       Self {
-        src: src.slice(..offset),
+        src: src.segment(..offset),
         expected_elements: num_elements,
         identifier_size: expected_identifier.encoded_len(),
         ctx,
@@ -451,7 +451,7 @@ where
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    let src_len = self.decoder.src.len();
+    let src_len = self.decoder.src.remaining();
 
     // Check if we've reached the end of the buffer
     if self.offset >= src_len {
@@ -481,7 +481,10 @@ where
     Some(
       T::decode(
         self.decoder.ctx,
-        self.decoder.src.slice(self.offset + self.identifier_size..),
+        self
+          .decoder
+          .src
+          .segment(self.offset + self.identifier_size..),
       )
       .inspect(|(read, _)| {
         // Update position: skip identifier + consumed bytes

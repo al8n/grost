@@ -156,7 +156,7 @@ macro_rules! varint {
       RB: $crate::__private::ReadBuf,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      $crate::__private::varing::Varint::decode(src.as_bytes()).map_err(::core::convert::Into::into)
+      $crate::__private::varing::Varint::decode(src.remaining_slice()).map_err(::core::convert::Into::into)
     }
   };
 }

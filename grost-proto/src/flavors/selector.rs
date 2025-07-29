@@ -90,13 +90,13 @@
 //     }
 
 //     let src = buf.as_bytes();
-//     if src.is_empty() {
+//     if !src.has_remaining() {
 //       return Err(DecodeError::buffer_underflow());
 //     }
 
 //     let identifier = SelectorIdentifier::try_from_u8(src[0])?;
 //     let mut offset = 1;
-//     let buf_len = src.len();
+//     let buf_len = src.remaining();
 //     let (wire_type, tag) = identifier.into_components();
 //     match wire_type {
 //       SelectorWireType::Zst => Ok((

@@ -226,7 +226,7 @@ where
     RB: ReadBuf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    if src.is_empty() {
+    if !src.has_remaining() {
       return Ok((0, None)); // If the source is empty, return None
     }
 

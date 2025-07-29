@@ -96,7 +96,7 @@ impl<'de> Decode<'de, Select, Zst, Self> for bool {
     Self: Sized + 'de,
     UB: crate::buffer::Buffer<Unknown<B>> + 'de,
   {
-    if src.is_empty() {
+    if !src.has_remaining() {
       return Err(DecodeError::buffer_underflow());
     }
 

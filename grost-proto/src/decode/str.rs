@@ -69,7 +69,7 @@ where
   fn deref(&self) -> &Self::Target {
     // SAFETY: We guarantee that the bytes is valid UTF-8 when constructing this type,
     // so we can safely convert it to a `&str` without checking.
-    unsafe { core::str::from_utf8_unchecked(self.0.as_bytes()) }
+    unsafe { core::str::from_utf8_unchecked(self.0.remaining_slice()) }
   }
 }
 
@@ -100,7 +100,7 @@ impl<RB> Str<RB> {
   where
     RB: Sized + ReadBuf,
   {
-    if core::str::from_utf8(buf.as_bytes()).is_ok() {
+    if core::str::from_utf8(buf.remaining_slice()).is_ok() {
       Ok(Self(buf))
     } else {
       Err(buf)

@@ -156,7 +156,7 @@ where
       None => Err(Error::insufficient_buffer(src_len, buf_len)),
       Some(buf) => {
         let start_offset = self.data_offset + self.num_elements_size;
-        buf.copy_from_slice(&self.src.as_bytes()[start_offset..]);
+        buf.copy_from_slice(&self.src.remaining_slice()[start_offset..]);
         Ok(src_len)
       }
     }
@@ -164,7 +164,7 @@ where
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     let start_offset = self.data_offset + self.num_elements_size;
-    self.src.len().saturating_sub(start_offset)
+    self.src.remaining().saturating_sub(start_offset)
   }
 
   fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
@@ -173,19 +173,19 @@ where
   {
     let src = &self.src;
     let buf_len = buf.len();
-    let src_len = src.len();
+    let src_len = src.remaining();
 
     match buf.prefix_mut_checked(src_len) {
       None => Err(Error::insufficient_buffer(src_len, buf_len)),
       Some(buf) => {
-        buf.copy_from_slice(&src.as_bytes());
+        buf.copy_from_slice(&src.remaining_slice());
         Ok(src_len)
       }
     }
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
-    self.src.len()
+    self.src.remaining()
   }
 }
 
@@ -263,7 +263,7 @@ where
     RB: crate::buffer::ReadBuf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let buf = src.as_bytes();
+    let buf = src.remaining_slice();
     let buf_len = buf.len();
 
     if buf_len == 0 {
@@ -288,7 +288,7 @@ where
     Ok((
       total_consumed,
       Self {
-        src: src.slice(..total_consumed),
+        src: src.segment(..total_consumed),
         data_offset: length_prefix_size,
         expected_elements: element_count,
         num_elements_size: count_prefix_size,
@@ -442,7 +442,7 @@ where
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    let src_len = self.decoder.src.len();
+    let src_len = self.decoder.src.remaining();
 
     // Check if we've reached the end of the buffer
     if self.offset >= src_len {
@@ -462,7 +462,7 @@ where
     Some(
       PartialDecomposableMapEntry::decode_packed_entry(
         self.decoder.ctx,
-        self.decoder.src.slice(self.offset..),
+        self.decoder.src.segment(self.offset..),
         &self.decoder.key_identifier,
         &self.decoder.value_identifier,
       )

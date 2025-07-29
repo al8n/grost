@@ -282,7 +282,7 @@ where
   RB: ReadBuf,
   KW: WireFormat<Groto> + 'a,
 {
-  let bytes = src.as_bytes();
+  let bytes = src.remaining_slice();
   let bytes_len = bytes.len();
   if bytes_len == 0 {
     return Err(Error::buffer_underflow());
@@ -304,7 +304,7 @@ where
 
   let mut set = constructor(num_elements as usize)?;
   while offset < bytes_len {
-    offset += merge_decode(&mut set, src.slice(offset..))?;
+    offset += merge_decode(&mut set, src.segment(offset..))?;
   }
 
   context.err_length_mismatch(num_elements as usize, len(&set))?;
@@ -380,7 +380,7 @@ where
 {
   let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
   let mut offset = 0;
-  let buf = src.as_bytes();
+  let buf = src.remaining_slice();
   let buf_len = buf.len();
   if buf_len == 0 {
     return Err(Error::buffer_underflow());
@@ -408,7 +408,7 @@ where
       return Err(Error::buffer_underflow());
     }
 
-    offset += merge_decode(this, src.slice(offset..))?;
+    offset += merge_decode(this, src.segment(offset..))?;
   }
 
   Ok(offset)
@@ -440,7 +440,7 @@ fn decode_slice<'de, RB>(src: &'de RB) -> Result<(usize, &'de [u8]), Error>
 where
   RB: ReadBuf + 'de,
 {
-  let bytes = src.as_bytes();
+  let bytes = src.remaining_slice();
   let (len_size, len) = crate::__private::varing::decode_u32_varint(bytes).map_err(Error::from)?;
 
   let len = len as usize;
