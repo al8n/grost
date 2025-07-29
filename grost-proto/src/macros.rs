@@ -150,13 +150,13 @@ macro_rules! varint {
     }
   };
   (@decode_impl $flavor:ty:$wf:ty) => {
-    fn decode(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, src: RB) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
+    fn decode(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, mut src: RB) -> ::core::result::Result<(::core::primitive::usize, Self), <$flavor as $crate::__private::flavors::Flavor>::Error>
     where
       Self: ::core::marker::Sized + 'de,
       RB: $crate::__private::ReadBuf,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      $crate::__private::varing::Varint::decode(src.remaining_slice()).map_err(::core::convert::Into::into)
+      src.read_varint::<Self>().map_err(::core::convert::Into::into)
     }
   };
 }

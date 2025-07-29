@@ -1,43 +1,11 @@
-use super::{DecodeVarintError, TryAdvanceError, TryPeekError, TryReadError, TrySegmentError};
+use super::{
+  DecodeVarintError, TryAdvanceError, TryPeekError, TryReadError, TrySegmentError,
+  TrySplitOffError, TrySplitToError,
+};
+
 use core::ops::{Bound, RangeBounds};
 
 pub use varing::Varint;
-
-macro_rules! peek_varint {
-  ($($ty:ty),+$(,)?) => {
-    paste::paste! {
-      $(
-        #[doc = "Peeks an `" $ty "` value from the given buffer without advancing the internal cursor."]
-        ///
-        /// Returns the length of the value and the value itself.
-        #[inline]
-        fn [<peek_ $ty _varint>](&self) -> Result<(usize, $ty), DecodeVarintError> {
-          varing::[<decode_ $ty _varint>](self.remaining_slice())
-        }
-      )*
-    }
-  };
-}
-
-macro_rules! read_varint {
-  ($($ty:ty),+$(,)?) => {
-    paste::paste! {
-      $(
-        #[doc = "Reads an `" $ty "` value from the given buffer."]
-        ///
-        /// Returns the length of the value and the value itself.
-        #[inline]
-        fn [<read_ $ty _varint>](&mut self) -> Result<(usize, $ty), DecodeVarintError> {
-          varing::[<decode_ $ty _varint>](self.remaining_slice())
-            .map(|(len, value)| {
-              self.advance(len);
-              (len, value)
-            })
-        }
-      )*
-    }
-  };
-}
 
 macro_rules! peek_fixed {
   ($($ty:ident), +$(,)?) => {
@@ -225,10 +193,7 @@ pub trait ReadBuf: Clone {
   /// Returns the number of bytes remaining in the buffer.
   fn remaining(&self) -> usize;
 
-  /// Returns `true` if there are remaining bytes in the buffer.
-  fn has_remaining(&self) -> bool;
-
-  /// Returns the bytes of the buffer.
+  /// Returns the remaining bytes of the buffer.
   fn remaining_slice(&self) -> &[u8];
 
   /// Advance the internal cursor of the `ReadBuf` by the specified number of bytes.
@@ -236,11 +201,6 @@ pub trait ReadBuf: Clone {
   /// # Panics
   /// - This function may panic if `cnt > self.remaining()`.
   fn advance(&mut self, cnt: usize);
-
-  /// Attempts to advance the internal cursor of the `ReadBuf` by the specified number of bytes.
-  ///
-  /// Returns `Ok(())` if the advancement was successful, or an error if there are not enough bytes remaining.
-  fn try_advance(&mut self, cnt: usize) -> Result<(), TryAdvanceError>;
 
   /// Creates a read buffer containing a segment of the current read buffer's data.
   ///
@@ -251,6 +211,122 @@ pub trait ReadBuf: Clone {
   /// # Panics
   /// - Panics if the range is out of bounds relative to the current buffer's remaining data.
   fn segment(&self, range: impl RangeBounds<usize>) -> Self;
+
+  /// Shortens the buffer, keeping the first `len` bytes and dropping the
+  /// rest.
+  ///
+  /// If `len` is greater than the buffer's current length, this has no
+  /// effect.
+  ///
+  /// The [split_off](`ReadBuf::split_off()`) method can emulate `truncate`, but this causes the
+  /// excess bytes to be returned instead of dropped.
+  fn truncate(&mut self, len: usize);
+
+  /// Splits the bytes into two at the given index.
+  ///
+  /// Afterwards `self` contains elements `[0, at)`, and the returned `ReadBuf`
+  /// contains elements `[at, len)`. It's guaranteed that the memory does not
+  /// move, that is, the address of `self` does not change, and the address of
+  /// the returned slice is `at` bytes after that.
+  ///
+  /// **Implementor Notes:** This should be an `O(1)` operation
+  ///
+  /// # Panics
+  ///
+  /// Panics if `at > len`.
+  #[must_use = "consider ReadBuf::truncate if you don't need the other half"]
+  fn split_off(&mut self, at: usize) -> Self;
+
+  /// Splits the bytes into two at the given index, returning `None` if the index is out of bounds.
+  ///
+  /// This is a non-panicking version of [`split_off`](ReadBuf::split_off).
+  #[must_use = "consider ReadBuf::truncate if you don't need the other half"]
+  fn split_off_checked(&mut self, at: usize) -> Option<Self> {
+    if at > self.remaining() {
+      None
+    } else {
+      Some(self.split_off(at))
+    }
+  }
+
+  /// Splits the bytes into two at the given index, returning an error if the index is out of bounds.
+  ///
+  /// This is a non-panicking version of [`split_off`](ReadBuf::split_off).
+  #[must_use = "consider ReadBuf::try_split_off if you don't need the other half"]
+  fn try_split_off(&mut self, at: usize) -> Result<Self, TrySplitOffError> {
+    if at > self.remaining() {
+      Err(TrySplitOffError::new(at + 1, self.remaining()))
+    } else {
+      Ok(self.split_off(at))
+    }
+  }
+
+  /// Splits the bytes into two at the given index.
+  ///
+  /// Afterwards `self` contains elements `[at, len)`, and the returned
+  /// `ReadBuf` contains elements `[0, at)`.
+  ///
+  /// **Implementor Notes:** This should be an `O(1)` operation.
+  ///
+  /// # Examples
+  ///
+  /// ```
+  /// use bytes::Bytes;
+  ///
+  /// let mut a = Bytes::from(&b"hello world"[..]);
+  /// let b = a.split_to(5);
+  ///
+  /// assert_eq!(&a[..], b" world");
+  /// assert_eq!(&b[..], b"hello");
+  /// ```
+  ///
+  /// # Panics
+  ///
+  /// Panics if `at > len`.
+  #[must_use = "consider ReadBuf::advance if you don't need the other half"]
+  fn split_to(&mut self, at: usize) -> Self;
+
+  /// Splits the bytes into two at the given index, returning `None` if the index is out of bounds.
+  ///
+  /// This is a non-panicking version of [`split_to`](ReadBuf::split_to).
+  #[must_use = "consider ReadBuf::advance if you don't need the other half"]
+  fn split_to_checked(&mut self, at: usize) -> Option<Self> {
+    if at > self.remaining() {
+      None
+    } else {
+      Some(self.split_to(at))
+    }
+  }
+
+  /// Splits the bytes into two at the given index, returning an error if the index is out of bounds.
+  ///
+  /// This is a non-panicking version of [`split_to`](ReadBuf::split_to).
+  #[must_use = "consider ReadBuf::try_split_to if you don't need the other half"]
+  fn try_split_to(&mut self, at: usize) -> Result<Self, TrySplitToError> {
+    if at > self.remaining() {
+      Err(TrySplitToError::new(at + 1, self.remaining()))
+    } else {
+      Ok(self.split_to(at))
+    }
+  }
+
+  /// Returns `true` if there are remaining bytes in the buffer.
+  fn has_remaining(&self) -> bool {
+    self.remaining() > 0
+  }
+
+  /// Attempts to advance the internal cursor of the `ReadBuf` by the specified number of bytes.
+  ///
+  /// Returns `Ok(())` if the advancement was successful, or an error if there are not enough bytes remaining.
+  fn try_advance(&mut self, cnt: usize) -> Result<(), TryAdvanceError> {
+    let remaining = self.remaining();
+    if remaining < cnt {
+      return Err(TryAdvanceError::new(cnt, remaining));
+    }
+
+    self.advance(cnt);
+    Ok(())
+  }
 
   /// Attempts to create a new buffer containing a segment of the current buffer's remaining data.
   ///
@@ -306,8 +382,6 @@ pub trait ReadBuf: Clone {
   }
 
   peek_fixed!(u16, u32, u64, u128, i16, i32, i64, i128, f32, f64);
-
-  peek_varint!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
 
   /// Peeks a variable-length encoded type from the buffer without advancing the internal cursor.
   ///
@@ -368,8 +442,6 @@ pub trait ReadBuf: Clone {
   }
 
   read_fixed!(u16, u32, u64, u128, i16, i32, i64, i128, f32, f64);
-
-  read_varint!(u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
 
   /// Peeks an `u8` value from the buffer without advancing the internal cursor.
   ///
@@ -529,6 +601,15 @@ impl ReadBuf for &[u8] {
   }
 
   #[inline]
+  fn truncate(&mut self, len: usize) {
+    if len > self.len() {
+      return;
+    }
+
+    *self = &self[..len];
+  }
+
+  #[inline]
   fn segment(&self, range: impl RangeBounds<usize>) -> Self {
     let len = self.len();
 
@@ -550,6 +631,56 @@ impl ReadBuf for &[u8] {
   #[inline]
   fn try_segment(&self, range: impl RangeBounds<usize>) -> Result<Self, TrySegmentError> {
     check_segment(range, self.len()).map(|(begin, end)| &self[begin..end])
+  }
+
+  #[inline]
+  fn split_off(&mut self, at: usize) -> Self {
+    let (left, right) = self.split_at(at);
+    *self = left;
+    right
+  }
+
+  #[inline]
+  fn split_off_checked(&mut self, at: usize) -> Option<Self> {
+    let (left, right) = self.split_at_checked(at)?;
+    *self = left;
+    Some(right)
+  }
+
+  #[inline]
+  fn split_to(&mut self, at: usize) -> Self {
+    let (left, right) = self.split_at(at);
+    *self = right;
+    left
+  }
+
+  #[inline]
+  fn split_to_checked(&mut self, at: usize) -> Option<Self> {
+    let (left, right) = self.split_at_checked(at)?;
+    *self = right;
+    Some(left)
+  }
+
+  #[inline]
+  fn try_split_off(&mut self, at: usize) -> Result<Self, TrySplitOffError> {
+    self
+      .split_at_checked(at)
+      .ok_or_else(|| TrySplitOffError::new(at + 1, self.len()))
+      .map(|(left, right)| {
+        *self = left;
+        right
+      })
+  }
+
+  #[inline]
+  fn try_split_to(&mut self, at: usize) -> Result<Self, TrySplitToError> {
+    self
+      .split_at_checked(at)
+      .ok_or_else(|| TrySplitToError::new(at + 1, self.len()))
+      .map(|(left, right)| {
+        *self = right;
+        left
+      })
   }
 
   #[inline]
@@ -632,41 +763,52 @@ const _: () = {
       self.is_empty()
     }
 
-    fn advance(&mut self, cnt: usize) {
-      bytes_1::Buf::advance(self, cnt);
-    }
-
-    fn try_advance(&mut self, cnt: usize) -> Result<(), TryAdvanceError> {
-      if self.len() < cnt {
-        return Err(TryAdvanceError::new(cnt, self.len()));
-      }
-
-      bytes_1::Buf::advance(self, cnt);
-      Ok(())
-    }
-
-    fn segment(&self, range: impl RangeBounds<usize>) -> Self {
-      Bytes::slice(self, range)
-    }
-
+    #[inline]
     fn remaining_slice(&self) -> &[u8] {
       self.as_ref()
     }
 
-    read_fixed_specification!(u16, u32, u64, u128, i16, i32, i64, i128, f32, f64);
-
-    fn read_i8(&mut self) -> i8 {
-      self.get_i8()
+    #[inline]
+    fn advance(&mut self, cnt: usize) {
+      bytes_1::Buf::advance(self, cnt);
     }
 
+    #[inline]
+    fn truncate(&mut self, len: usize) {
+      Bytes::truncate(self, len);
+    }
+
+    #[inline]
+    fn segment(&self, range: impl RangeBounds<usize>) -> Self {
+      Bytes::slice(self, range)
+    }
+
+    #[inline]
+    fn split_off(&mut self, at: usize) -> Self {
+      Bytes::split_off(self, at)
+    }
+
+    #[inline]
+    fn split_to(&mut self, at: usize) -> Self {
+      Bytes::split_to(self, at)
+    }
+
+    #[inline]
     fn read_u8(&mut self) -> u8 {
       self.get_u8()
     }
 
+    #[inline]
     fn read_u8_checked(&mut self) -> Option<u8> {
       self.try_get_u8().ok()
     }
 
+    #[inline]
+    fn read_i8(&mut self) -> i8 {
+      self.get_i8()
+    }
+
+    #[inline]
     fn read_i8_checked(&mut self) -> Option<i8> {
       self.try_get_i8().ok()
     }
@@ -675,6 +817,8 @@ const _: () = {
     fn to_bytes(&self) -> crate::bytes::Bytes {
       self.clone()
     }
+
+    read_fixed_specification!(u16, u32, u64, u128, i16, i32, i64, i128, f32, f64);
   }
 };
 

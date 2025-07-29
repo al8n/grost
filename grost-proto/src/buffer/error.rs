@@ -64,6 +64,22 @@ try_op_error!(
 );
 
 try_op_error!(
+  #[doc = "An error that occurs when trying to split off the buffer."]
+  #[error(
+    "Not enough bytes remaining in buffer to split off (requested {requested} but only {available} available)"
+  )]
+  split_off
+);
+
+try_op_error!(
+  #[doc = "An error that occurs when trying to split the buffer."]
+  #[error(
+    "Not enough bytes remaining in buffer to split (requested {requested} but only {available} available)"
+  )]
+  split_to
+);
+
+try_op_error!(
   #[doc = "An error that occurs when trying to write to the buffer."]
   #[error(
     "Not enough bytes remaining in buffer to write value (requested {requested} but only {available} available)"
