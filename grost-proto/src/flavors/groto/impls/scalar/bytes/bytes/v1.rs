@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, WriteBuf, UnknownBuffer},
+  buffer::{Buf, UnknownBuffer, WriteBuf},
   convert::{PartialIdentity, TryFromPartialRef, TryFromRef},
   decode::{BytesSlice, Decode},
   default_bytes_wire_format, encode_bridge, flatten_state,

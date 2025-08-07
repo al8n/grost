@@ -1,7 +1,7 @@
 use crate::{
   convert::{Extracted, Innermost},
   encode::EquivalentEncode,
-  flavors::{groto::EncodeError, Flatten},
+  flavors::{Flatten, groto::EncodeError},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
 };
@@ -230,8 +230,8 @@ where
 
   let mut offset = 0;
   for k in iter() {
-    offset += encode(k, buf.as_mut())
-      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
+    offset +=
+      encode(k, buf.as_mut()).map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
   }
 
   Ok(offset)

@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufMut, WriteBuf, UnknownBuffer},
+  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -87,11 +87,9 @@ where
         return Err(EncodeError::buffer_too_small(encoded_len, remaining));
       }
 
-      buf.try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
-        .map_err(|e| EncodeError::from(e).propagate_buffer_info(
-          || encoded_len,
-          || remaining,
-        ))?;
+      buf
+        .try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
+        .map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || remaining))?;
       encode_fn(value, context, buf.as_mut()).map(|written| written + 2)
     } else {
       Ok(buf.write_u8(0))
@@ -144,11 +142,9 @@ where
       if encoded_len > remaining {
         return Err(EncodeError::buffer_too_small(encoded_len, remaining));
       }
-      buf.try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
-        .map_err(|e| EncodeError::from(e).propagate_buffer_info(
-          || encoded_len,
-          || remaining,
-        ))?;
+      buf
+        .try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
+        .map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || remaining))?;
       encode_fn(value, context, buf.as_mut(), selector).map(|written| written + 2)
     } else {
       Ok(buf.write_u8(0))
@@ -183,14 +179,18 @@ where
     F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), DecodeError>,
   {
     let remaining = src.remaining();
-    let marker = src.try_read_u8().map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
+    let marker = src
+      .try_read_u8()
+      .map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
 
     if marker == 0 {
       // This is a zero byte indicating absence, so we return None
       return Ok((1, None));
     }
 
-    let wt = src.try_read_u8().map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
+    let wt = src
+      .try_read_u8()
+      .map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
     let wire_type = WireType::try_from_u8(wt)?;
     if wire_type != W::WIRE_TYPE {
       return Err(DecodeError::unexpected_wire_type(W::WIRE_TYPE, wire_type));
@@ -205,7 +205,11 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
     WB: BufMut,
   {
@@ -359,10 +363,7 @@ where
   T: Decode<'de, W, RB, B, Groto>,
   W: WireFormat<Groto>,
 {
-  fn decode(
-    context: &'de <Groto as Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode(context: &'de <Groto as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     RB: Buf + 'de,

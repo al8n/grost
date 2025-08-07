@@ -249,7 +249,46 @@ impl InsufficientData {
   const fn update(mut self, available: usize, requested: Option<NonZeroUsize>) -> Self {
     self.available = available;
     self.requested = requested;
+
+    #[cfg(debug_assertions)]
+    Self::check(requested, available);
+
     self
+  }
+
+  #[inline]
+  const fn accumulate(mut self, requested: Option<NonZeroUsize>) -> Self {
+    match (self.requested, requested) {
+      (Some(r1), Some(r2)) => {
+        let total = r1.get() + r2.get();
+        self.requested = NonZeroUsize::new(total);
+      }
+      (None, Some(r2)) => {
+        self.requested = Some(r2);
+      }
+      _ => {
+        self.requested = None;
+      }
+    }
+    self
+  }
+
+  #[inline]
+  const fn set_available(mut self, available: usize) -> Self {
+    #[cfg(debug_assertions)]
+    Self::check(self.requested, available);
+    self.available = available;
+    self
+  }
+
+  const fn check(requested: Option<NonZeroUsize>, available: usize) {
+    debug_assert!(
+      match requested {
+        Some(requested) => available < requested.get(),
+        None => true,
+      },
+      "InsufficientData: available must be less than requested if requested is set"
+    );
   }
 }
 
@@ -276,6 +315,10 @@ pub enum EncodeError<F: Flavor + ?Sized> {
     /// The wire type of the value.
     wire_type: F::WireType,
   },
+
+  /// Invalid tag value
+  #[display("{_0}")]
+  InvalidTag(ParseTagError),
 
   /// Other encode error.
   #[display("{_0}")]
@@ -346,6 +389,13 @@ impl<F: Flavor + ?Sized> From<WriteVarintAtError> for EncodeError<F> {
   }
 }
 
+impl<F: Flavor + ?Sized> From<ParseTagError> for EncodeError<F> {
+  #[inline]
+  fn from(e: ParseTagError) -> Self {
+    Self::from_parse_tag_error(e)
+  }
+}
+
 #[cfg(any(feature = "std", feature = "alloc"))]
 impl<F: Flavor + ?Sized> From<std::borrow::Cow<'static, str>> for EncodeError<F> {
   fn from(value: std::borrow::Cow<'static, str>) -> Self {
@@ -392,6 +442,12 @@ impl<F: Flavor + ?Sized> EncodeError<F> {
   #[inline]
   pub const fn incompatible_wire_type(ty: &'static str, wire_type: F::WireType) -> Self {
     Self::IncompatibleWireType { ty, wire_type }
+  }
+
+  /// Creates an invalid tag error.
+  #[inline]
+  pub const fn from_parse_tag_error(e: ParseTagError) -> Self {
+    Self::InvalidTag(e)
   }
 
   /// Creates a new encoding error from a [`WriteVarintError`].
@@ -658,6 +714,10 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
   /// This is used when decoding nested structures - if a field fails with a buffer
   /// error, the struct decoder can call this to update the error with the total
   /// size requirement instead of just the field requirement.
+  ///
+  /// # Panics
+  ///
+  /// - Panics if `available >= requested` when `requested` is `Some`.
   #[inline]
   pub fn propagate_buffer_info<R, A>(self, requested: R, available: A) -> Self
   where
@@ -667,6 +727,46 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
     match self {
       Self::InsufficientData(insufficient_data) => {
         Self::InsufficientData(insufficient_data.update(available(), requested()))
+      }
+      _ => self,
+    }
+  }
+
+  /// Accumulating insufficient buffer information.
+  ///
+  /// This is used when decoding nested structures - if a field fails with a buffer
+  /// error, the struct decoder can call this to update the error with the total
+  /// size requirement instead of just the field requirement.
+  #[inline]
+  pub fn accumulate_requested<R>(self, requested: R) -> Self
+  where
+    R: FnOnce() -> Option<NonZeroUsize>,
+  {
+    match self {
+      Self::InsufficientData(insufficient_data) => {
+        Self::InsufficientData(insufficient_data.accumulate(requested()))
+      }
+      _ => self,
+    }
+  }
+
+  /// Updating the available buffer information.
+  ///
+  /// This is used when decoding nested structures - if a field fails with a buffer
+  /// error, the struct decoder can call this to update the error with the total
+  /// size requirement instead of just the field requirement.
+  ///
+  /// # Panics
+  ///
+  /// - Panics if `available >= requested` when `requested` is `Some`.
+  #[inline]
+  pub fn update_available<A>(self, available: A) -> Self
+  where
+    A: FnOnce() -> usize,
+  {
+    match self {
+      Self::InsufficientData(insufficient_data) => {
+        Self::InsufficientData(insufficient_data.set_available(available()))
       }
       _ => self,
     }

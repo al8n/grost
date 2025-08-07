@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufMut, WriteBuf, UnknownBuffer},
+  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -44,7 +44,11 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
     WB: BufMut,
   {
@@ -82,7 +86,11 @@ where
     }
   }
 
-  fn encode_length_delimited<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
+  fn encode_length_delimited<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
     WB: BufMut,
   {
@@ -217,10 +225,7 @@ where
   T: Decode<'de, W, RB, B, Groto>,
   W: WireFormat<Groto>,
 {
-  fn decode(
-    context: &'de <Groto as Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), DecodeError>
+  fn decode(context: &'de <Groto as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
     RB: Buf + 'de,

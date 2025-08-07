@@ -1,13 +1,13 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buf, BufMut, WriteBuf, UnknownBuffer},
+  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
   convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, PackedEntry, WireFormat,
-    groto::{Context, EncodeError, DecodeError, Identifier, Tag},
+    groto::{Context, DecodeError, EncodeError, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},

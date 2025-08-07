@@ -33,7 +33,11 @@ impl<RB> Encode<LengthDelimited, Groto> for Str<RB>
 where
   RB: Buf,
 {
-  fn encode_raw<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode_raw<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError>
   where
     B: BufMut,
   {

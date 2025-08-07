@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{Buf, BufMut, BufExt, BufMutExt, WriteBuf, UnknownBuffer},
+  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer, WriteBuf},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
-    groto::{Context, EncodeError, DecodeError, Identifier},
+    groto::{Context, DecodeError, EncodeError, Identifier},
   },
   selection::Selectable,
 };

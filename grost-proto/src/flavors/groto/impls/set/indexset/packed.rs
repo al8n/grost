@@ -82,7 +82,11 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
     WB: BufMut,
   {
@@ -98,7 +102,11 @@ where
     packed_encoded_raw_len::<K, KW, _, _>(self.len(), self.iter(), |item| item.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
     WB: BufMut,
   {

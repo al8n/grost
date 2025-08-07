@@ -1,3 +1,5 @@
+use core::num::NonZeroUsize;
+
 use bufkit::WriteBuf;
 // mod map_selector;
 pub use map::*;
@@ -343,9 +345,12 @@ where
 
   let mut offset = 0;
   for k in iter() {
-    offset += buf.try_write_slice(&encoded_identifier).map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || buf_len))?;
+    offset += buf
+      .try_write_slice(&encoded_identifier)
+      .map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || buf_len))?;
 
-    let k_len = encode(k, buf.as_mut()).map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
+    let k_len =
+      encode(k, buf.as_mut()).map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += k_len;
   }
 
@@ -354,7 +359,7 @@ where
 
 fn repeated_decode<'a, K: 'a, KW, T, RB, B, const TAG: u32>(
   this: &mut T,
-  src: RB,
+  mut src: RB,
   mut merge_decode: impl FnMut(&mut T, RB) -> Result<usize, DecodeError>,
 ) -> Result<usize, DecodeError>
 where
@@ -365,21 +370,18 @@ where
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
+  let remaining = src.remaining();
   let mut offset = 0;
-  let buf = src.remaining_slice();
-  let buf_len = buf.len();
-  if buf_len == 0 {
-    return Err(Error::buffer_underflow());
-  }
 
   // The following elements should be prefixed with the identifier.
   // | identifier | element | identifier | element | ...
-  loop {
-    if offset >= buf_len {
-      break;
-    }
-
-    let (read, next_id) = Identifier::decode(&buf[offset..])?;
+  while src.has_remaining() {
+    let (read, next_id) = src.read_varint::<u32>().map_err(|e| {
+      DecodeError::from(e)
+        .accumulate_requested(|| NonZeroUsize::new(offset))
+        .update_available(|| remaining)
+    })?;
+    let next_id = Identifier::try_from_u32(next_id).map_err(DecodeError::from_parse_tag_error)?;
 
     // If the next identifier does not match the expected identifier, which means we have reached the end of the repeated elements.
     // We should stop decoding. We do not need to increment the offset here because we are not consuming the next identifier.
@@ -389,12 +391,10 @@ where
 
     // increment the offset by the size of the identifier
     offset += read;
-
-    if offset >= buf_len {
-      return Err(Error::buffer_underflow());
-    }
-
-    offset += merge_decode(this, src.segment(offset..))?;
+    offset += merge_decode(this, src.segment(..)).map_err(|e| {
+      e.accumulate_requested(|| NonZeroUsize::new(offset))
+        .update_available(|| remaining)
+    })?;
   }
 
   Ok(offset)
