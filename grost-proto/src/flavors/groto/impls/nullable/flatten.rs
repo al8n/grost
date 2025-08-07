@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, WriteBuf, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultFlattenWireFormat, Flatten, Flavor, Groto, Nullable, WireFormat,
-    groto::{Context, Error},
+    groto::{Context, DecodeError, EncodeError},
   },
   selection::Selector,
   state::{PartialRef, Ref, State},
@@ -44,9 +44,9 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if let Some(value) = self {
       value.encode_raw(context, buf)
@@ -63,9 +63,9 @@ where
     }
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     if let Some(value) = self {
       value.encode(context, buf)
@@ -82,9 +82,9 @@ where
     }
   }
 
-  fn encode_length_delimited<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_length_delimited<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if let Some(value) = self {
       value.encode_length_delimited(context, buf)
@@ -110,11 +110,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -146,11 +146,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -194,11 +194,11 @@ where
   fn partial_encode_length_delimited<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -220,10 +220,10 @@ where
   fn decode(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
-  ) -> Result<(usize, Self), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     if !src.has_remaining() {

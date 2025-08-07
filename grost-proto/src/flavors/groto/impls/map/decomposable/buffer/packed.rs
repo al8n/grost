@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buffer, ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, Buffer, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -46,12 +46,12 @@ where
   VW: WireFormat<Groto>,
   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
       |item, ki, vi, buf| item.encode_packed::<KW, VW>(context, buf, ki, vi),
@@ -64,12 +64,12 @@ where
     })
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
@@ -96,18 +96,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || {
         <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
@@ -131,18 +131,18 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || {
@@ -179,7 +179,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     packed_decode::<K, KW, V, VW, Self, RB>(
@@ -214,7 +214,7 @@ where
 //   V: TryFromRef<'de, VW, RB, UB, Groto> + 'de,
 //   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
 //   UB: UnknownBuffer<RB, Groto> + 'de,
-//   RB: ReadBuf + 'de,
+//   RB: Buf + 'de,
 //   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 // {
 //   fn try_from_ref(
@@ -224,7 +224,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'de, PackedEntry<KW, VW>, RB, UB, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'de,
+//     RB: Buf + 'de,
 //     UB: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();
@@ -257,7 +257,7 @@ where
 //   V: TryFromPartialRef<'de, VW, RB, UB, Groto> + 'de,
 //   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
 //   UB: UnknownBuffer<RB, Groto> + 'de,
-//   RB: ReadBuf + 'de,
+//   RB: Buf + 'de,
 //   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 // {
 //   fn try_from_partial_ref(
@@ -267,7 +267,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'de, PackedEntry<KW, VW>, RB, UB, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'de,
+//     RB: Buf + 'de,
 //     UB: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();

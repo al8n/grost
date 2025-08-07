@@ -50,7 +50,7 @@ impl ObjectDecoder {
     read_buf_where_clause
       .predicates
       .extend([syn::parse2::<WherePredicate>(quote! {
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf
       })?]);
 
     let base_type_generics = Self::replace_state_type_param(&generics, quote!(()));
@@ -239,7 +239,7 @@ If you do not want to implement a customized decoding logic, please see:
         /// Returns the number of the remaining in the buffer.
         #[inline]
         pub fn remaining(&self) -> ::core::primitive::usize {
-          #path_to_grost::__private::buffer::ReadBuf::len(&self.__grost_read_buffer__) - self.__grost_read_offset__
+          #path_to_grost::__private::buffer::Buf::len(&self.__grost_read_buffer__) - self.__grost_read_offset__
         }
       }
 
@@ -255,7 +255,7 @@ If you do not want to implement a customized decoding logic, please see:
           (#object_indexer, #name #with_identifier_tg),
           <#flavor_type as #path_to_grost::__private::flavors::Flavor>::Error
         > {
-          if self.__grost_read_offset__ >= #path_to_grost::__private::buffer::ReadBuf::len(&self.__grost_read_buffer__) {
+          if self.__grost_read_offset__ >= #path_to_grost::__private::buffer::Buf::len(&self.__grost_read_buffer__) {
             return ::core::result::Result::Err(
               ::core::convert::Into::into(
                 #path_to_grost::__private::error::Error::buffer_underflow()
@@ -263,7 +263,7 @@ If you do not want to implement a customized decoding logic, please see:
             );
           }
 
-          let buf = #path_to_grost::__private::buffer::ReadBuf::as_bytes(
+          let buf = #path_to_grost::__private::buffer::Buf::as_bytes(
             &self.__grost_read_buffer__
           );
           let (readed, identifier) = <#identifier as #path_to_grost::__private::identifier::Identifier>::decode(&buf[self.__grost_read_offset__..])?;

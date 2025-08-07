@@ -3,7 +3,10 @@ use crate::{
   encode::Encode,
   flavors::{
     Groto,
-    groto::{Context, Error, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128, LengthDelimited},
+    groto::{
+      Context, DecodeError, EncodeError, Fixed8, Fixed16, Fixed32, Fixed64, Fixed128,
+      LengthDelimited,
+    },
   },
 };
 
@@ -11,7 +14,7 @@ macro_rules! encode_fixed {
   ($this:ident($buf:ident) as $fixed:literal) => {{
     let buf_len = $buf.len();
     if buf_len < $fixed {
-      return Err(Error::insufficient_buffer($fixed, buf_len));
+      return Err(Error::buffer_too_small($fixed, buf_len));
     }
     $buf[..$fixed].copy_from_slice($this.as_slice());
     $fixed
@@ -31,7 +34,7 @@ macro_rules! impl_fixed {
   ($($wt:ident($size:literal)),+$(,)?) => {
     $(
       impl Encode<Groto, $wt> for [u8; $size] {
-        fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error> where WB: WriteBuf + ?Sized {
+        fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error> where WB: BufMut {
           Ok(encode_fixed!(self(buf) as $size))
         }
 

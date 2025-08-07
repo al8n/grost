@@ -1,7 +1,7 @@
 use arrayvec_0_7::ArrayVec;
 
 use crate::{
-  buffer::ReadBuf,
+  buffer::Buf,
   decode::BytesSlice,
   flavors::groto::{Error, LengthDelimited},
 };
@@ -44,5 +44,5 @@ encode_list!(@borrow ArrayVec<&'b T, N> [const N: usize]);
 length!(ArrayVec<T, N> [const N: usize]);
 selectable!(ArrayVec<T, N> [const N: usize]);
 
-bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<ArrayVec<u8, N>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: [const N: usize] impl<ArrayVec<u8, N>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!([const N: usize] impl <ArrayVec<u8, N>, LengthDelimited> for <[u8], LengthDelimited>);

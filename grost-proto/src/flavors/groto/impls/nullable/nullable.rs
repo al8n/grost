@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, WriteBuf, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultNullableWireFormat, Flavor, Groto, Nullable, WireFormat,
-    groto::{Context, Error, WireType},
+    groto::{Context, DecodeError, EncodeError, WireType},
   },
   selection::Selector,
   state::{PartialRef, Ref, State},
@@ -58,38 +58,43 @@ where
   W: WireFormat<Groto>,
 {
   /// Helper function to handle the common encoding pattern
-  fn encode_nullable<F, R>(
+  fn encode_nullable<B, F, R>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    mut buf: WriteBuf<B>,
     get_len: F,
     encode_fn: R,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
     F: Fn(&T, &Context) -> usize,
-    R: Fn(&T, &Context, &mut [u8]) -> Result<usize, Error>,
+    R: Fn(&T, &Context, WriteBuf<&mut B>) -> Result<usize, EncodeError>,
+    B: BufMut,
   {
-    if buf.is_empty() {
+    let remaining = buf.mutable();
+
+    if remaining == 0 {
       let required_len = if let Some(value) = self.value {
         2 + get_len(value, context)
       } else {
         1
       };
-      return Err(Error::insufficient_buffer(required_len, 0));
+      return Err(EncodeError::buffer_too_small(required_len, 0));
     }
 
     if let Some(value) = self.value {
       let encoded_len = 2 + get_len(value, context);
-      let buf_len = buf.len();
-      if encoded_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      if encoded_len > remaining {
+        return Err(EncodeError::buffer_too_small(encoded_len, remaining));
       }
-      buf[0] = 1; // Write a one byte to indicate presence
-      buf[1] = W::WIRE_TYPE.as_u8(); // Write the wire type
-      encode_fn(value, context, &mut buf[2..]).map(|written| written + 2)
+
+      buf.try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
+        .map_err(|e| EncodeError::from(e).propagate_buffer_info(
+          || encoded_len,
+          || remaining,
+        ))?;
+      encode_fn(value, context, buf.as_mut()).map(|written| written + 2)
     } else {
-      buf[0] = 0; // Write a zero byte to indicate absence
-      Ok(1)
+      Ok(buf.write_u8(0))
     }
   }
 
@@ -106,44 +111,47 @@ where
   }
 
   /// Helper function for partial encoding with selector
-  fn partial_encode_nullable<F, R, S>(
+  fn partial_encode_nullable<B, F, R, S>(
     &self,
     context: &Context,
-    buf: &mut [u8],
+    mut buf: WriteBuf<B>,
     selector: &S,
     get_len: F,
     encode_fn: R,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
     F: Fn(&T, &Context, &S) -> usize,
-    R: Fn(&T, &Context, &mut [u8], &S) -> Result<usize, Error>,
+    R: Fn(&T, &Context, WriteBuf<&mut B>, &S) -> Result<usize, EncodeError>,
     S: Selector<Groto>,
+    B: BufMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
     }
 
-    if buf.is_empty() {
+    let remaining = buf.mutable();
+    if remaining == 0 {
       let required_len = if let Some(value) = self.value {
         2 + get_len(value, context, selector)
       } else {
         1
       };
-      return Err(Error::insufficient_buffer(required_len, 0));
+      return Err(EncodeError::buffer_too_small(required_len, 0));
     }
 
     if let Some(value) = self.value {
       let encoded_len = 2 + get_len(value, context, selector);
-      let buf_len = buf.len();
-      if encoded_len > buf_len {
-        return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      if encoded_len > remaining {
+        return Err(EncodeError::buffer_too_small(encoded_len, remaining));
       }
-      buf[0] = 1; // Write a one byte to indicate presence
-      buf[1] = W::WIRE_TYPE.as_u8(); // Write the wire type
-      encode_fn(value, context, &mut buf[2..], selector).map(|written| written + 2)
+      buf.try_write_slice(&[1, W::WIRE_TYPE.as_u8()])
+        .map_err(|e| EncodeError::from(e).propagate_buffer_info(
+          || encoded_len,
+          || remaining,
+        ))?;
+      encode_fn(value, context, buf.as_mut(), selector).map(|written| written + 2)
     } else {
-      buf[0] = 0; // Write a zero byte to indicate absence
-      Ok(1)
+      Ok(buf.write_u8(0))
     }
   }
 
@@ -167,33 +175,28 @@ where
   /// Helper function for decoding pattern
   fn decode_nullable<'de, RB, F>(
     context: &'de <Groto as Flavor>::Context,
-    src: RB,
+    mut src: RB,
     decode_fn: F,
-  ) -> Result<(usize, Option<T>), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Option<T>), DecodeError>
   where
-    RB: ReadBuf + 'de,
-    F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), <Groto as Flavor>::Error>,
+    RB: Buf + 'de,
+    F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), DecodeError>,
   {
-    let buf = src.remaining_slice();
-    if buf.is_empty() {
-      return Err(Error::buffer_underflow());
-    }
+    let remaining = src.remaining();
+    let marker = src.try_read_u8().map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
 
-    let marker = buf[0];
     if marker == 0 {
       // This is a zero byte indicating absence, so we return None
       return Ok((1, None));
     }
 
-    if buf.len() < 2 {
-      return Err(Error::buffer_underflow());
-    }
-    let wire_type = WireType::try_from_u8(buf[1])?;
+    let wt = src.try_read_u8().map_err(|e| DecodeError::from(e).propagate_buffer_info(|| None, || remaining))?;
+    let wire_type = WireType::try_from_u8(wt)?;
     if wire_type != W::WIRE_TYPE {
-      return Err(Error::unexpected_wire_type(W::WIRE_TYPE, wire_type));
+      return Err(DecodeError::unexpected_wire_type(W::WIRE_TYPE, wire_type));
     }
 
-    decode_fn(context, src.segment(2..)).map(|(read, val)| (read + 2, Some(val)))
+    decode_fn(context, src).map(|(read, val)| (read + 2, Some(val)))
   }
 }
 
@@ -202,15 +205,15 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       |value, ctx| value.encoded_raw_len(ctx),
-      |value, ctx, buf| value.encode_raw(ctx, buf),
+      |value, ctx, buf| value.encode_raw::<&mut WB>(ctx, buf),
     )
   }
 
@@ -219,15 +222,15 @@ where
       .encoded_nullable_len(context, |value, ctx| value.encoded_raw_len(ctx))
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       |value, ctx| value.encoded_len(ctx),
-      |value, ctx, buf| value.encode(ctx, buf),
+      |value, ctx, buf| value.encode::<&mut B>(ctx, buf),
     )
   }
 
@@ -239,16 +242,16 @@ where
   fn encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+    buf: impl Into<WriteBuf<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       |value, ctx| value.encoded_length_delimited_len(ctx),
-      |value, ctx, buf| value.encode_length_delimited(ctx, buf),
+      |value, ctx, buf| value.encode_length_delimited::<&mut WB>(ctx, buf),
     )
   }
 
@@ -267,18 +270,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       selector,
       |value, ctx, sel| value.partial_encoded_raw_len(ctx, sel),
-      |value, ctx, buf, sel| value.partial_encode_raw(ctx, buf, sel),
+      |value, ctx, buf, sel| value.partial_encode_raw::<&mut WB>(ctx, buf, sel),
     )
   }
 
@@ -297,18 +300,18 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       selector,
       |value, ctx, sel| value.partial_encoded_len(ctx, sel),
-      |value, ctx, buf, sel| value.partial_encode(ctx, buf, sel),
+      |value, ctx, buf, sel| value.partial_encode::<&mut WB>(ctx, buf, sel),
     )
   }
 
@@ -323,18 +326,18 @@ where
   fn partial_encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
-      buf.as_mut_slice(),
+      buf.into(),
       selector,
       |value, ctx, sel| value.partial_encoded_length_delimited_len(ctx, sel),
-      |value, ctx, buf, sel| value.partial_encode_length_delimited(ctx, buf, sel),
+      |value, ctx, buf, sel| value.partial_encode_length_delimited::<&mut WB>(ctx, buf, sel),
     )
   }
 
@@ -359,10 +362,10 @@ where
   fn decode(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
-  ) -> Result<(usize, Self), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| T::decode(ctx, src))
@@ -371,10 +374,10 @@ where
   fn decode_length_delimited(
     context: &'de <Groto as Flavor>::Context,
     src: RB,
-  ) -> Result<(usize, Self), <Groto as Flavor>::Error>
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| {

@@ -75,11 +75,13 @@ mod tests {
 
     let encoded_len =
       <[&[u16]] as Encode<Flatten<Borrowed<'_, Packed<Varint>>, Varint>, Groto>>::encode(
-        a, &context, &mut buf,
+        a,
+        &context,
+        buf.as_mut(),
       )
       .unwrap();
     let flatten_encoded_len =
-      <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, &mut flatten_buf)
+      <[u16] as Encode<Packed<Varint>, Groto>>::encode(flatten_a, &context, flatten_buf.as_mut())
         .unwrap();
     assert_eq!(encoded_len, flatten_encoded_len);
     assert_eq!(&buf[..encoded_len], &flatten_buf[..flatten_encoded_len]);

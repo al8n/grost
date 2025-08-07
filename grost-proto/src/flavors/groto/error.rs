@@ -1,504 +1,491 @@
-use super::{Groto, Identifier, Tag, WireType};
-use crate::{
-  buffer::{TryAdvanceError, TryPeekError, TryReadError, TrySegmentError},
-  error::Error as BaseError,
-  flavors::{Flavor, FlavorError, ParseTagError, groto::ParseWireTypeError},
-};
-use core::num::NonZeroUsize;
+// use super::{Groto, Identifier, Tag, WireType};
+// use crate::{
+//   buffer::{TryAdvanceError, TryPeekError, TryReadError, TrySegmentError},
+//   error::{BufferTooSmall, Error as BaseError, PayloadTooLarge},
+//   flavors::{groto::ParseWireTypeError, Flavor, FlavorError, ParseTagError},
+// };
+// use core::num::NonZeroUsize;
 
-/// An error when encoding or decoding a message.
-#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, thiserror::Error)]
-pub enum Error {
-  /// Returned when the encoded buffer is too small to hold the bytes format of the types.
-  #[error("insufficient buffer capacity, required: {required}, remaining: {remaining}")]
-  InsufficientBytesBuffer {
-    /// The required buffer capacity.
-    required: usize,
-    /// The remaining buffer capacity.
-    remaining: usize,
-  },
-  /// Returned when the data in encoded format is larger than the maximum allowed size.
-  #[error("encoded data size {size} is too large, the maximum allowed size is {maximum} bytes")]
-  TooLarge {
-    /// The maximum allowed size.
-    maximum: usize,
-    /// The size of the encoded data.
-    size: usize,
-  },
-  /// Returned when the tag value is not in range `1..=536870911`.
-  #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
-  UnsupportedTagValue(u32),
-  /// Returned when the type cannot be encoded in the given wire type format
-  #[error("cannot encode {ty} in {wire_type} format in groto flavor")]
-  UnsupportedWireType {
-    /// The type of the value.
-    ty: &'static str,
-    /// The wire type of the value.
-    wire_type: WireType,
-  },
-  /// Returned when the type cannot be encoded in the given wire type format
-  #[error("cannot encode {ty} with tag({tag}) in groto flavor")]
-  UnsupportedTag {
-    /// The type of the value.
-    ty: &'static str,
-    /// The tag of the value.
-    tag: Tag,
-  },
-  /// Returned when the type cannot be encoded with the given identifier
-  #[error("cannot encode {ty} with identifier({identifier}) format in groto flavor")]
-  UnsupportedIdentifier {
-    /// The type of the value.
-    ty: &'static str,
-    /// The wire type of the value.
-    identifier: Identifier,
-  },
-  /// Returned when the expect identifier for encoding is mismatch the actual identifier for encoding.
-  #[error("unexpected identifier {actual}, expected {expected}")]
-  UnexpectedIdentifier {
-    /// The expected identifier for encoding.
-    expected: Identifier,
-    /// The actual identifier for encoding.
-    actual: Identifier,
-  },
-  /// Returned when the wire type is unexpected for the given type.
-  #[error("unexpected wire type {actual}, expected {expected}")]
-  UnexpectedWireType {
-    /// The expected wire type.
-    expected: WireType,
-    /// The actual wire type.
-    actual: WireType,
-  },
-  /// Returned when the buffer does not have enough data to decode the message.
-  #[error("buffer underflow")]
-  BytesBufferUnderflow,
-  /// [`Buffer`](super::buffer::Buffer) overflow, returned when decoding.
-  ///
-  /// Users can resize the buffer to a larger size (larger than `requried`) and retry decoding.
-  #[error("buffer overflow, available: {available}, required: {required}")]
-  BufferOverflow {
-    /// The available capacity of the buffer.
-    available: usize,
-    /// The required capacity of the buffer.
-    required: NonZeroUsize,
-  },
-  /// Returned when the field is not found but is required in the message.
-  #[error("field {field_name} not found when constructing {struct_name}")]
-  FieldNotFound {
-    /// The structure name.
-    struct_name: &'static str,
-    /// The field name.
-    field_name: &'static str,
-  },
-  /// Returned when the buffer contains duplicate fields for the same tag in a message.
-  #[error("duplicate field {name} with identifier{identifier} in {ty}")]
-  DuplicateField {
-    /// The name of the field.
-    name: &'static str,
-    /// The type of the message.
-    ty: &'static str,
-    /// The identifier of the field.
-    identifier: Identifier,
-  },
-  /// Returned when parsing a tag fails.
-  #[error("failed to parse tag {_0}")]
-  ParseTagError(ParseTagError),
-  /// Returned when there is a unknown identifier.
-  #[error("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = Groto::NAME)]
-  UnknownIdentifier {
-    /// The type of the message.
-    ty: &'static str,
-    /// The identifier of the field.
-    identifier: Identifier,
-  },
-  /// Returned when there is a unknown wire type value
-  #[error("unknown wire type value ({0}) of `{flavor}` flavor", flavor = Groto::NAME)]
-  UnknownWireTypeValue(u8),
-  /// Returned when fail to decode the length-delimited
-  #[error("length-delimited overflow the maximum value of u32")]
-  LengthDelimitedOverflow,
+// /// An error when encoding or decoding a message.
+// #[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant, thiserror::Error)]
+// pub enum Error {
+//   /// Returned when the encoded buffer is too small to hold the bytes format of the types.
+//   #[error(transparent)]
+//   BufferTooSmall(#[from] BufferTooSmall),
+//   /// Returned when the data in encoded format is larger than the maximum allowed size.
+//   #[error(transparent)]
+//   PayloadTooLarge(#[from] PayloadTooLarge),
+//   /// Returned when the tag value is not in range `1..=536870911`.
+//   #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
+//   UnsupportedTagValue(u32),
+//   /// Returned when the type cannot be encoded in the given wire type format
+//   #[error("cannot encode {ty} in {wire_type} format in groto flavor")]
+//   IncompatibleWireType {
+//     /// The type of the value.
+//     ty: &'static str,
+//     /// The wire type of the value.
+//     wire_type: WireType,
+//   },
+//   /// Returned when the type cannot be encoded in the given wire type format
+//   #[error("cannot encode {ty} with tag({tag}) in groto flavor")]
+//   UnsupportedTag {
+//     /// The type of the value.
+//     ty: &'static str,
+//     /// The tag of the value.
+//     tag: Tag,
+//   },
+//   /// Returned when the type cannot be encoded with the given identifier
+//   #[error("cannot encode {ty} with identifier({identifier}) format in groto flavor")]
+//   UnsupportedIdentifier {
+//     /// The type of the value.
+//     ty: &'static str,
+//     /// The wire type of the value.
+//     identifier: Identifier,
+//   },
+//   /// Returned when the expect identifier for encoding is mismatch the actual identifier for encoding.
+//   #[error("unexpected identifier {actual}, expected {expected}")]
+//   UnexpectedIdentifier {
+//     /// The expected identifier for encoding.
+//     expected: Identifier,
+//     /// The actual identifier for encoding.
+//     actual: Identifier,
+//   },
+//   /// Returned when the wire type is unexpected for the given type.
+//   #[error("unexpected wire type {actual}, expected {expected}")]
+//   UnexpectedWireType {
+//     /// The expected wire type.
+//     expected: WireType,
+//     /// The actual wire type.
+//     actual: WireType,
+//   },
+//   /// Returned when the buffer does not have enough data to decode the message.
+//   #[error("buffer underflow")]
+//   BytesBufferUnderflow,
+//   /// [`Buffer`](super::buffer::Buffer) overflow, returned when decoding.
+//   ///
+//   /// Users can resize the buffer to a larger size (larger than `requried`) and retry decoding.
+//   #[error("buffer overflow, available: {available}, required: {required}")]
+//   BufferOverflow {
+//     /// The available capacity of the buffer.
+//     available: usize,
+//     /// The required capacity of the buffer.
+//     required: NonZeroUsize,
+//   },
+//   /// Returned when the field is not found but is required in the message.
+//   #[error("field {field_name} not found when constructing {struct_name}")]
+//   FieldNotFound {
+//     /// The structure name.
+//     struct_name: &'static str,
+//     /// The field name.
+//     field_name: &'static str,
+//   },
+//   /// Returned when the buffer contains duplicate fields for the same tag in a message.
+//   #[error("duplicate field {name} with identifier{identifier} in {ty}")]
+//   DuplicateField {
+//     /// The name of the field.
+//     name: &'static str,
+//     /// The type of the message.
+//     ty: &'static str,
+//     /// The identifier of the field.
+//     identifier: Identifier,
+//   },
+//   /// Returned when parsing a tag fails.
+//   #[error("failed to parse tag {_0}")]
+//   ParseTagError(ParseTagError),
+//   /// Returned when there is a unknown identifier.
+//   #[error("unknown identifier{identifier} when decoding {ty} in {flavor} flavor", flavor = Groto::NAME)]
+//   UnknownIdentifier {
+//     /// The type of the message.
+//     ty: &'static str,
+//     /// The identifier of the field.
+//     identifier: Identifier,
+//   },
+//   /// Returned when there is a unknown wire type value
+//   #[error("unknown wire type value ({0}) of `{flavor}` flavor", flavor = Groto::NAME)]
+//   UnknownWireTypeValue(u8),
+//   /// Returned when fail to decode the length-delimited
+//   #[error("length-delimited overflow the maximum value of u32")]
+//   LengthDelimitedOverflow,
 
-  /// Returned when the type cannot be merged in the given wire type format
-  #[error("cannot merge {ty} in {wire_type} format in {flavor} flavor", flavor = Groto::NAME)]
-  Unmergeable {
-    /// The type of the value.
-    ty: &'static str,
-    /// The wire type.
-    wire_type: WireType,
-  },
+//   /// Returned when the type cannot be merged in the given wire type format
+//   #[error("cannot merge {ty} in {wire_type} format in {flavor} flavor", flavor = Groto::NAME)]
+//   Unmergeable {
+//     /// The type of the value.
+//     ty: &'static str,
+//     /// The wire type.
+//     wire_type: WireType,
+//   },
 
-  /// A custom encoding error.
-  #[error("{_0}")]
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  Custom(std::borrow::Cow<'static, str>),
+//   /// A custom encoding error.
+//   #[error("{_0}")]
+//   #[cfg(any(feature = "std", feature = "alloc"))]
+//   Custom(std::borrow::Cow<'static, str>),
 
-  /// A custom encoding error.
-  #[error("{_0}")]
-  #[cfg(not(any(feature = "std", feature = "alloc")))]
-  Custom(&'static str),
-}
+//   /// A custom encoding error.
+//   #[error("{_0}")]
+//   #[cfg(not(any(feature = "std", feature = "alloc")))]
+//   Custom(&'static str),
+// }
 
-impl FlavorError<Groto> for Error {
-  fn update_insufficient_buffer(&mut self, required: usize, remaining: usize) {
-    if let Self::InsufficientBytesBuffer {
-      required: r,
-      remaining: rem,
-    } = self
-    {
-      *r = required;
-      *rem = remaining;
-    }
-  }
-}
+// impl FlavorError<Groto> for Error {
+//   fn update_buffer_too_small(&mut self, required: usize, remaining: usize) {
+//     if let Self::BufferTooSmall {
+//       required: r,
+//       remaining: rem,
+//     } = self
+//     {
+//       *r = required;
+//       *rem = remaining;
+//     }
+//   }
+// }
 
-impl From<ParseWireTypeError> for Error {
-  #[inline]
-  fn from(e: ParseWireTypeError) -> Self {
-    Self::UnknownWireTypeValue(e.value())
-  }
-}
+// impl From<ParseWireTypeError> for Error {
+//   #[inline]
+//   fn from(e: ParseWireTypeError) -> Self {
+//     Self::UnknownWireTypeValue(e.value())
+//   }
+// }
 
-impl From<ParseTagError> for Error {
-  #[inline]
-  fn from(e: ParseTagError) -> Self {
-    Self::unsupported_tag_value(e.value())
-  }
-}
+// impl From<ParseTagError> for Error {
+//   #[inline]
+//   fn from(e: ParseTagError) -> Self {
+//     Self::unsupported_tag_value(e.value())
+//   }
+// }
 
-impl From<varing::EncodeError> for Error {
-  #[inline]
-  fn from(value: varing::EncodeError) -> Self {
-    Self::from_varint_encode_error(value)
-  }
-}
+// impl From<varing::EncodeError> for Error {
+//   #[inline]
+//   fn from(value: varing::EncodeError) -> Self {
+//     Self::from_varint_encode_error(value)
+//   }
+// }
 
-impl From<varing::DecodeError> for Error {
-  #[inline]
-  fn from(e: varing::DecodeError) -> Self {
-    Self::from_varint_decode_error(e)
-  }
-}
+// impl From<varing::DecodeError> for Error {
+//   #[inline]
+//   fn from(e: varing::DecodeError) -> Self {
+//     Self::from_varint_decode_error(e)
+//   }
+// }
 
-impl From<TryAdvanceError> for Error {
-  #[inline]
-  fn from(e: TryAdvanceError) -> Self {
-    Self::from_try_advance_error(e)
-  }
-}
+// impl From<TryAdvanceError> for Error {
+//   #[inline]
+//   fn from(e: TryAdvanceError) -> Self {
+//     Self::from_try_advance_error(e)
+//   }
+// }
 
-impl From<TryReadError> for Error {
-  #[inline]
-  fn from(e: TryReadError) -> Self {
-    Self::from_try_read_error(e)
-  }
-}
+// impl From<TryReadError> for Error {
+//   #[inline]
+//   fn from(e: TryReadError) -> Self {
+//     Self::from_try_read_error(e)
+//   }
+// }
 
-impl From<TryPeekError> for Error {
-  #[inline]
-  fn from(e: TryPeekError) -> Self {
-    Self::from_try_peek_error(e)
-  }
-}
+// impl From<TryPeekError> for Error {
+//   #[inline]
+//   fn from(e: TryPeekError) -> Self {
+//     Self::from_try_peek_error(e)
+//   }
+// }
 
-impl From<TrySegmentError> for Error {
-  #[inline]
-  fn from(e: TrySegmentError) -> Self {
-    Self::from_try_segment_error(e)
-  }
-}
+// impl From<TrySegmentError> for Error {
+//   #[inline]
+//   fn from(e: TrySegmentError) -> Self {
+//     Self::from_try_segment_error(e)
+//   }
+// }
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-impl From<std::borrow::Cow<'static, str>> for Error {
-  fn from(value: std::borrow::Cow<'static, str>) -> Self {
-    Self::custom(value)
-  }
-}
+// #[cfg(any(feature = "std", feature = "alloc"))]
+// impl From<std::borrow::Cow<'static, str>> for Error {
+//   fn from(value: std::borrow::Cow<'static, str>) -> Self {
+//     Self::custom(value)
+//   }
+// }
 
-impl From<&'static str> for Error {
-  fn from(value: &'static str) -> Self {
-    Self::custom(value)
-  }
-}
+// impl From<&'static str> for Error {
+//   fn from(value: &'static str) -> Self {
+//     Self::custom(value)
+//   }
+// }
 
-impl Error {
-  /// Creates an insufficient buffer error.
-  #[inline]
-  pub const fn insufficient_buffer(required: usize, remaining: usize) -> Self {
-    Self::InsufficientBytesBuffer {
-      required,
-      remaining,
-    }
-  }
+// impl Error {
+//   /// Creates an insufficient buffer error.
+//   #[inline]
+//   pub const fn buffer_too_small(required: usize, remaining: usize) -> Self {
+//     Self::BufferTooSmall {
+//       required,
+//       remaining,
+//     }
+//   }
 
-  /// Creates a too large error.
-  #[inline]
-  pub const fn too_large(maximum: usize, size: usize) -> Self {
-    Self::TooLarge { maximum, size }
-  }
+//   /// Creates a too large error.
+//   #[inline]
+//   pub const fn payload_too_large(maximum: usize, size: usize) -> Self {
+//     Self::PayloadTooLarge { maximum, size }
+//   }
 
-  /// Creates a new unsupported tag value error.
-  #[inline]
-  pub const fn unsupported_tag_value(tag: u32) -> Self {
-    Self::UnsupportedTagValue(tag)
-  }
+//   /// Creates a new unsupported tag value error.
+//   #[inline]
+//   pub const fn unsupported_tag_value(tag: u32) -> Self {
+//     Self::UnsupportedTagValue(tag)
+//   }
 
-  /// Creates an unsupported wire type error.
-  #[inline]
-  pub const fn unsupported_wire_type(ty: &'static str, wire_type: WireType) -> Self {
-    Self::UnsupportedWireType { ty, wire_type }
-  }
+//   /// Creates an unsupported wire type error.
+//   #[inline]
+//   pub const fn unsupported_wire_type(ty: &'static str, wire_type: WireType) -> Self {
+//     Self::IncompatibleWireType { ty, wire_type }
+//   }
 
-  /// Creates an unsupported tag error.
-  #[inline]
-  pub const fn unsupported_tag(ty: &'static str, tag: Tag) -> Self {
-    Self::UnsupportedTag { ty, tag }
-  }
+//   /// Creates an unsupported tag error.
+//   #[inline]
+//   pub const fn unsupported_tag(ty: &'static str, tag: Tag) -> Self {
+//     Self::UnsupportedTag { ty, tag }
+//   }
 
-  /// Creates an unsupported identifier error
-  #[inline]
-  pub const fn unsupported_identifier(ty: &'static str, identifier: Identifier) -> Self {
-    Self::UnsupportedIdentifier { ty, identifier }
-  }
+//   /// Creates an unsupported identifier error
+//   #[inline]
+//   pub const fn unsupported_identifier(ty: &'static str, identifier: Identifier) -> Self {
+//     Self::UnsupportedIdentifier { ty, identifier }
+//   }
 
-  /// Creates an unexpected identifier error.
-  #[inline]
-  pub const fn unexpected_identifier(expected: Identifier, actual: Identifier) -> Self {
-    Self::UnexpectedIdentifier { expected, actual }
-  }
+//   /// Creates an unexpected identifier error.
+//   #[inline]
+//   pub const fn unexpected_identifier(expected: Identifier, actual: Identifier) -> Self {
+//     Self::UnexpectedIdentifier { expected, actual }
+//   }
 
-  /// Creates an unexpected wire type error.
-  #[inline]
-  pub const fn unexpected_wire_type(expected: WireType, actual: WireType) -> Self {
-    Self::UnexpectedWireType { expected, actual }
-  }
+//   /// Creates an unexpected wire type error.
+//   #[inline]
+//   pub const fn unexpected_wire_type(expected: WireType, actual: WireType) -> Self {
+//     Self::UnexpectedWireType { expected, actual }
+//   }
 
-  /// Creates a new encoding error from a [`varing::EncodeError`].
-  #[inline]
-  pub const fn from_varint_encode_error(e: varing::EncodeError) -> Self {
-    match e {
-      varing::EncodeError::Underflow {
-        required,
-        remaining,
-      } => Self::InsufficientBytesBuffer {
-        required,
-        remaining,
-      },
-      #[cfg(any(feature = "std", feature = "alloc"))]
-      varing::EncodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
-      #[cfg(any(feature = "std", feature = "alloc"))]
-      _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      varing::EncodeError::Custom(e) => Self::Custom(e),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      _ => Self::Custom("unknown error"),
-    }
-  }
+//   /// Creates a new encoding error from a [`varing::EncodeError`].
+//   #[inline]
+//   pub const fn from_varint_encode_error(e: varing::EncodeError) -> Self {
+//     match e {
+//       varing::EncodeError::Underflow {
+//         required,
+//         remaining,
+//       } => Self::BufferTooSmall {
+//         required,
+//         remaining,
+//       },
+//       #[cfg(any(feature = "std", feature = "alloc"))]
+//       varing::EncodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+//       #[cfg(any(feature = "std", feature = "alloc"))]
+//       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
+//       #[cfg(not(any(feature = "std", feature = "alloc")))]
+//       varing::EncodeError::Custom(e) => Self::Custom(e),
+//       #[cfg(not(any(feature = "std", feature = "alloc")))]
+//       _ => Self::Custom("unknown error"),
+//     }
+//   }
 
-  /// Creates a new buffer underflow decoding error.
-  #[inline]
-  pub const fn buffer_underflow() -> Self {
-    Self::BytesBufferUnderflow
-  }
+//   /// Creates a new buffer underflow decoding error.
+//   #[inline]
+//   pub const fn buffer_underflow() -> Self {
+//     Self::BytesBufferUnderflow
+//   }
 
-  /// Creates a new buffer overflow decoding error.
-  #[inline]
-  pub const fn buffer_overflow(available: usize, required: NonZeroUsize) -> Self {
-    Self::BufferOverflow {
-      available,
-      required,
-    }
-  }
+//   /// Creates a new buffer overflow decoding error.
+//   #[inline]
+//   pub const fn buffer_overflow(available: usize, required: NonZeroUsize) -> Self {
+//     Self::BufferOverflow {
+//       available,
+//       required,
+//     }
+//   }
 
-  /// Creates a new missing field decoding error.
-  #[inline]
-  pub const fn field_not_found(struct_name: &'static str, field_name: &'static str) -> Self {
-    Self::FieldNotFound {
-      struct_name,
-      field_name,
-    }
-  }
+//   /// Creates a new missing field decoding error.
+//   #[inline]
+//   pub const fn field_not_found(struct_name: &'static str, field_name: &'static str) -> Self {
+//     Self::FieldNotFound {
+//       struct_name,
+//       field_name,
+//     }
+//   }
 
-  /// Creates a new duplicate field decoding error.
-  #[inline]
-  pub const fn duplicate_field(
-    name: &'static str,
-    ty: &'static str,
-    identifier: Identifier,
-  ) -> Self {
-    Self::DuplicateField {
-      name,
-      ty,
-      identifier,
-    }
-  }
-  /// Creates a new decoding error from [`varing::DecodeError`].
-  #[inline]
-  pub const fn from_varint_decode_error(e: varing::DecodeError) -> Self {
-    match e {
-      varing::DecodeError::Underflow => Self::BytesBufferUnderflow,
-      varing::DecodeError::Overflow => Self::LengthDelimitedOverflow,
-      #[cfg(any(feature = "std", feature = "alloc"))]
-      varing::DecodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
-      #[cfg(any(feature = "std", feature = "alloc"))]
-      _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      varing::DecodeError::Custom(e) => Self::Custom(e),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      _ => Self::Custom("unknown error"),
-    }
-  }
+//   /// Creates a new duplicate field decoding error.
+//   #[inline]
+//   pub const fn duplicate_field(
+//     name: &'static str,
+//     ty: &'static str,
+//     identifier: Identifier,
+//   ) -> Self {
+//     Self::DuplicateField {
+//       name,
+//       ty,
+//       identifier,
+//     }
+//   }
+//   /// Creates a new decoding error from [`varing::DecodeError`].
+//   #[inline]
+//   pub const fn from_varint_decode_error(e: varing::DecodeError) -> Self {
+//     match e {
+//       varing::DecodeError::Underflow => Self::BytesBufferUnderflow,
+//       varing::DecodeError::Overflow => Self::LengthDelimitedOverflow,
+//       #[cfg(any(feature = "std", feature = "alloc"))]
+//       varing::DecodeError::Custom(e) => Self::Custom(std::borrow::Cow::Borrowed(e)),
+//       #[cfg(any(feature = "std", feature = "alloc"))]
+//       _ => Self::Custom(std::borrow::Cow::Borrowed("unknown error")),
+//       #[cfg(not(any(feature = "std", feature = "alloc")))]
+//       varing::DecodeError::Custom(e) => Self::Custom(e),
+//       #[cfg(not(any(feature = "std", feature = "alloc")))]
+//       _ => Self::Custom("unknown error"),
+//     }
+//   }
 
-  /// Creates a new error from [`TryAdvanceError`].
-  #[inline]
-  pub const fn from_try_advance_error(e: TryAdvanceError) -> Self {
-    Self::insufficient_buffer(e.requested(), e.available())
-  }
+//   /// Creates a new error from [`TryAdvanceError`].
+//   #[inline]
+//   pub const fn from_try_advance_error(e: TryAdvanceError) -> Self {
+//     Self::buffer_too_small(e.requested(), e.available())
+//   }
 
-  /// Creates a new error from [`TryReadError`].
-  #[inline]
-  pub const fn from_try_read_error(e: TryReadError) -> Self {
-    Self::insufficient_buffer(e.requested(), e.available())
-  }
+//   /// Creates a new error from [`TryReadError`].
+//   #[inline]
+//   pub const fn from_try_read_error(e: TryReadError) -> Self {
+//     Self::buffer_too_small(e.requested(), e.available())
+//   }
 
-  /// Creates a new error from [`TryPeekError`].
-  #[inline]
-  pub const fn from_try_peek_error(e: TryPeekError) -> Self {
-    Self::insufficient_buffer(e.requested(), e.available())
-  }
+//   /// Creates a new error from [`TryPeekError`].
+//   #[inline]
+//   pub const fn from_try_peek_error(e: TryPeekError) -> Self {
+//     Self::buffer_too_small(e.requested(), e.available())
+//   }
 
-  /// Creates a new error from [`TrySegmentError`].
-  #[inline]
-  pub const fn from_try_segment_error(e: TrySegmentError) -> Self {
-    Self::insufficient_buffer(e.end(), e.available())
-  }
+//   /// Creates a new error from [`TrySegmentError`].
+//   #[inline]
+//   pub const fn from_try_segment_error(e: TrySegmentError) -> Self {
+//     Self::buffer_too_small(e.end(), e.available())
+//   }
 
-  /// Creates a parse tag error.
-  #[inline]
-  pub const fn parse_tag_error(e: ParseTagError) -> Self {
-    Self::ParseTagError(e)
-  }
+//   /// Creates a parse tag error.
+//   #[inline]
+//   pub const fn parse_tag_error(e: ParseTagError) -> Self {
+//     Self::ParseTagError(e)
+//   }
 
-  /// Creates a new unknown wire type decoding error.
-  #[inline]
-  pub const fn unknown_identifier(ty: &'static str, identifier: Identifier) -> Self {
-    Self::UnknownIdentifier { ty, identifier }
-  }
+//   /// Creates a new unknown wire type decoding error.
+//   #[inline]
+//   pub const fn unknown_identifier(ty: &'static str, identifier: Identifier) -> Self {
+//     Self::UnknownIdentifier { ty, identifier }
+//   }
 
-  /// Creates a unmergeable decoding error.
-  #[inline]
-  pub const fn unmergeable(ty: &'static str, wire_type: WireType) -> Self {
-    Self::Unmergeable { ty, wire_type }
-  }
+//   /// Creates a unmergeable decoding error.
+//   #[inline]
+//   pub const fn unmergeable(ty: &'static str, wire_type: WireType) -> Self {
+//     Self::Unmergeable { ty, wire_type }
+//   }
 
-  /// Update the error with the required and remaining buffer capacity.
-  pub const fn update(mut self, required: usize, remaining: usize) -> Self {
-    match self {
-      Self::InsufficientBytesBuffer {
-        required: ref mut r,
-        remaining: ref mut rem,
-      } => {
-        *r = required;
-        *rem = remaining;
-        self
-      }
-      _ => self,
-    }
-  }
+//   /// Update the error with the required and remaining buffer capacity.
+//   pub const fn update(mut self, required: usize, remaining: usize) -> Self {
+//     match self {
+//       Self::BufferTooSmall {
+//         required: ref mut r,
+//         remaining: ref mut rem,
+//       } => {
+//         *r = required;
+//         *rem = remaining;
+//         self
+//       }
+//       _ => self,
+//     }
+//   }
 
-  /// Creates a custom encoding error.
-  #[cfg(any(feature = "std", feature = "alloc"))]
-  #[inline]
-  pub fn custom<T>(value: T) -> Self
-  where
-    T: Into<std::borrow::Cow<'static, str>>,
-  {
-    Self::Custom(value.into())
-  }
+//   /// Creates a custom encoding error.
+//   #[cfg(any(feature = "std", feature = "alloc"))]
+//   #[inline]
+//   pub fn custom<T>(value: T) -> Self
+//   where
+//     T: Into<std::borrow::Cow<'static, str>>,
+//   {
+//     Self::Custom(value.into())
+//   }
 
-  /// Creates a custom encoding error.
-  #[cfg(not(any(feature = "std", feature = "alloc")))]
-  #[inline]
-  pub const fn custom(value: &'static str) -> Self {
-    Self::Custom(value)
-  }
+//   /// Creates a custom encoding error.
+//   #[cfg(not(any(feature = "std", feature = "alloc")))]
+//   #[inline]
+//   pub const fn custom(value: &'static str) -> Self {
+//     Self::Custom(value)
+//   }
 
-  #[inline]
-  pub(crate) fn allocation_failed(knd: &'static str) -> Self {
-    match () {
-      () if knd == "set" => {
-        Self::custom("allocation failed: could not allocate buffer with set capacity")
-      }
-      () if knd == "map" => {
-        Self::custom("allocation failed: could not allocate buffer with map capacity")
-      }
-      _ => Self::custom("allocation failed: could not allocate buffer with capacity"),
-    }
-  }
+//   #[inline]
+//   pub(crate) fn allocation_failed(knd: &'static str) -> Self {
+//     match () {
+//       () if knd == "set" => {
+//         Self::custom("allocation failed: could not allocate buffer with set capacity")
+//       }
+//       () if knd == "map" => {
+//         Self::custom("allocation failed: could not allocate buffer with map capacity")
+//       }
+//       _ => Self::custom("allocation failed: could not allocate buffer with capacity"),
+//     }
+//   }
 
-  #[inline]
-  pub(crate) fn capacity_exceeded(knd: &'static str) -> Self {
-    match () {
-      () if knd == "set" => {
-        Self::custom("capacity exceeded: cannot add more elements to the set buffer")
-      }
-      () if knd == "map" => {
-        Self::custom("capacity exceeded: cannot add more elements to the map buffer")
-      }
-      _ => Self::custom("capacity exceeded: cannot add more elements to the buffer"),
-    }
-  }
+//   #[inline]
+//   pub(crate) fn capacity_exceeded(knd: &'static str) -> Self {
+//     match () {
+//       () if knd == "set" => {
+//         Self::custom("capacity exceeded: cannot add more elements to the set buffer")
+//       }
+//       () if knd == "map" => {
+//         Self::custom("capacity exceeded: cannot add more elements to the map buffer")
+//       }
+//       _ => Self::custom("capacity exceeded: cannot add more elements to the buffer"),
+//     }
+//   }
 
-  #[inline]
-  pub(crate) fn fail_to_reserve_capacity(knd: &'static str) -> Self {
-    match () {
-      () if knd == "set" => Self::custom("failed to reserve capacity for set buffer"),
-      () if knd == "map" => Self::custom("failed to reserve capacity for map buffer"),
-      _ => Self::custom("failed to reserve capacity for buffer"),
-    }
-  }
-}
+//   #[inline]
+//   pub(crate) fn fail_to_reserve_capacity(knd: &'static str) -> Self {
+//     match () {
+//       () if knd == "set" => Self::custom("failed to reserve capacity for set buffer"),
+//       () if knd == "map" => Self::custom("failed to reserve capacity for map buffer"),
+//       _ => Self::custom("failed to reserve capacity for buffer"),
+//     }
+//   }
+// }
 
-impl From<BaseError<Groto>> for Error {
-  fn from(value: BaseError<Groto>) -> Self {
-    match value {
-      BaseError::InsufficientBytesBuffer {
-        required,
-        remaining,
-      } => Self::insufficient_buffer(required, remaining),
-      BaseError::TooLarge { maximum, size } => Self::too_large(maximum, size),
-      BaseError::UnsupportedWireType { ty, wire_type } => {
-        Self::unsupported_wire_type(ty, wire_type)
-      }
-      BaseError::UnsupportedTag { ty, tag } => Self::unsupported_tag(ty, tag),
-      BaseError::UnsupportedIdentifier { ty, identifier } => {
-        Self::unsupported_identifier(ty, identifier)
-      }
-      BaseError::UnexpectedIdentifier { expected, actual } => {
-        Self::unexpected_identifier(expected, actual)
-      }
-      BaseError::UnexpectedWireType { expected, actual } => {
-        Self::unexpected_wire_type(expected, actual)
-      }
-      BaseError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
-      BaseError::BufferOverflow {
-        available,
-        required,
-      } => Self::BufferOverflow {
-        available,
-        required,
-      },
-      BaseError::DuplicatedField {
-        name,
-        ty,
-        identifier,
-      } => Self::duplicate_field(name, ty, identifier),
-      BaseError::FieldNotFound {
-        struct_name,
-        field_name,
-      } => Self::field_not_found(struct_name, field_name),
-      BaseError::Unmergeable { ty, wire_type } => Self::unmergeable(ty, wire_type),
-      BaseError::UnknownIdentifier { ty, identifier } => Self::unknown_identifier(ty, identifier),
-      BaseError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
-      BaseError::Custom(cow) => Self::Custom(cow),
-    }
-  }
-}
+// impl From<BaseError<Groto>> for Error {
+//   fn from(value: BaseError<Groto>) -> Self {
+//     match value {
+//       BaseError::BufferTooSmall(e) => Self::BufferTooSmall(e),
+//       BaseError::PayloadTooLarge { maximum, size } => Self::payload_too_large(maximum, size),
+//       BaseError::IncompatibleWireType { ty, wire_type } => {
+//         Self::unsupported_wire_type(ty, wire_type)
+//       }
+//       BaseError::UnsupportedTag { ty, tag } => Self::unsupported_tag(ty, tag),
+//       BaseError::UnsupportedIdentifier { ty, identifier } => {
+//         Self::unsupported_identifier(ty, identifier)
+//       }
+//       BaseError::UnexpectedIdentifier { expected, actual } => {
+//         Self::unexpected_identifier(expected, actual)
+//       }
+//       BaseError::UnexpectedWireType { expected, actual } => {
+//         Self::unexpected_wire_type(expected, actual)
+//       }
+//       BaseError::BytesBufferUnderflow => Self::BytesBufferUnderflow,
+//       BaseError::BufferOverflow {
+//         available,
+//         required,
+//       } => Self::BufferOverflow {
+//         available,
+//         required,
+//       },
+//       BaseError::DuplicatedField {
+//         name,
+//         ty,
+//         identifier,
+//       } => Self::duplicate_field(name, ty, identifier),
+//       BaseError::FieldNotFound {
+//         struct_name,
+//         field_name,
+//       } => Self::field_not_found(struct_name, field_name),
+//       BaseError::Unmergeable { ty, wire_type } => Self::unmergeable(ty, wire_type),
+//       BaseError::UnknownIdentifier { ty, identifier } => Self::unknown_identifier(ty, identifier),
+//       BaseError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
+//       BaseError::Custom(cow) => Self::Custom(cow),
+//     }
+//   }
+// }

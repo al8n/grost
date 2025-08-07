@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   decode::Decode,
   flavors::{
     Groto, WireFormat,
@@ -18,7 +18,7 @@ where
   K: Decode<'a, KW, RB, B, Groto> + 'a,
   T: 'a,
   KW: WireFormat<Groto> + 'a,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   match ctx.repeated_decode_policy() {
@@ -283,11 +283,11 @@ macro_rules! encode_list {
     fn partial_encode_raw<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: &mut WB,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error>
+    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
     where
-      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      WB: $crate::__private::buffer::BufMut,
     {
       <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode_raw(self.as_ref(), context, buf, selector)
     }
@@ -299,11 +299,11 @@ macro_rules! encode_list {
     fn partial_encode<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: &mut WB,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error>
+    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
     where
-      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      WB: $crate::__private::buffer::BufMut,
     {
       <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode(self.as_ref(), context, buf, selector)
     }
@@ -320,10 +320,10 @@ macro_rules! encode_list {
     fn encode_raw<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: &mut WB,
-    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error>
+      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
     where
-      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      WB: $crate::__private::buffer::BufMut,
     {
       <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode_raw(
         self.as_ref(),
@@ -342,10 +342,10 @@ macro_rules! encode_list {
     fn encode<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: &mut WB,
-    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::Error>
+      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
     where
-      WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+      WB: $crate::__private::buffer::BufMut,
     {
       <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode(
         self.as_ref(),

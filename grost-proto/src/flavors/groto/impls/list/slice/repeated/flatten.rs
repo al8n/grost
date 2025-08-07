@@ -1,7 +1,7 @@
 use crate::{
   convert::{Extracted, Innermost},
   encode::EquivalentEncode,
-  flavors::Flatten,
+  flavors::{groto::EncodeError, Flatten},
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
   state::State,
 };
@@ -16,14 +16,14 @@ where
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       || self.iter(),
       |item| item.encoded_len(context),
       |item, buf| item.encode(context, buf),
@@ -34,9 +34,9 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <Self as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
       self, context, buf,
@@ -57,14 +57,14 @@ where
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       || self.iter(),
       |item| item.encoded_len(context),
       |item, buf| item.encode(context, buf),
@@ -75,9 +75,9 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self, context, buf)
   }
@@ -97,11 +97,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -110,7 +110,7 @@ where
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       || self.iter(),
       |item| item.partial_encoded_len(context, selector),
       |item, buf| item.partial_encode(context, buf, selector),
@@ -131,11 +131,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -161,11 +161,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -174,7 +174,7 @@ where
     check_list_type::<N>()?;
 
     repeated_encode::<_, Repeated<W, TAG>, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       || self.iter(),
       |item| item.partial_encoded_len(context, selector),
       |item, buf| item.partial_encode(context, buf, selector),
@@ -195,11 +195,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -211,29 +211,27 @@ where
   }
 }
 
-fn repeated_encode<'a, K: 'a, KW, I, const TAG: u32>(
-  buf: &'a mut [u8],
+fn repeated_encode<'a, B, K: 'a, KW, I, const TAG: u32>(
+  mut buf: WriteBuf<B>,
   iter: impl Fn() -> I,
   encoded_len: impl Fn(&K) -> usize,
-  mut encode: impl FnMut(&K, &mut [u8]) -> Result<usize, Error>,
-) -> Result<usize, Error>
+  mut encode: impl FnMut(&K, WriteBuf<&mut B>) -> Result<usize, EncodeError>,
+) -> Result<usize, EncodeError>
 where
   I: Iterator<Item = &'a K>,
   KW: WireFormat<Groto>,
+  B: BufMut,
 {
   let encoded_len = iter().map(encoded_len).sum::<usize>();
-  let buf_len = buf.len();
+  let buf_len = buf.mutable();
   if encoded_len > buf_len {
-    return Err(Error::insufficient_buffer(encoded_len, buf_len));
+    return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
   }
 
   let mut offset = 0;
   for k in iter() {
-    if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
-    }
-
-    offset += encode(k, &mut buf[offset..]).map_err(|e| e.update(encoded_len, buf_len))?;
+    offset += encode(k, buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
   }
 
   Ok(offset)

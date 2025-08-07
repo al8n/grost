@@ -33,10 +33,10 @@ macro_rules! array_str {
       fn encode_raw<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut WB,
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+        WB: $crate::__private::buffer::BufMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_raw(
           self.as_str(),
@@ -55,10 +55,10 @@ macro_rules! array_str {
       fn encode<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut WB,
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+        WB: $crate::__private::buffer::BufMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode(
           self.as_str(),
@@ -70,10 +70,10 @@ macro_rules! array_str {
       fn encode_length_delimited<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: &mut WB,
-      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::Error>
+        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+      ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::WriteBuf + ?::core::marker::Sized,
+        WB: $crate::__private::buffer::BufMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_length_delimited(
           self.as_str(),
@@ -125,17 +125,19 @@ macro_rules! array_str {
     impl<'de, RB, B, const $g: ::core::primitive::usize> $crate::__private::decode::Decode<'de, $crate::__private::flavors::groto::LengthDelimited, RB, B, $crate::__private::flavors::Groto,> for $ty {
       fn decode(
         _: &'de $crate::__private::flavors::groto::Context,
-        src: RB,
-      ) -> Result<(::core::primitive::usize, Self), <$crate::__private::flavors::Groto as $crate::__private::flavors::Flavor>::Error>
+        mut src: RB,
+      ) -> Result<(::core::primitive::usize, Self), $crate::__private::flavors::groto::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        RB: $crate::__private::ReadBuf + 'de,
+        RB: $crate::__private::Buf + 'de,
         B: $crate::__private::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
-        $crate::__private::flavors::groto::impls::decode_str(&src)
+        let res = $crate::__private::flavors::groto::impls::decode_str(&mut src)
           .and_then(|(len, s)| {
             $from_str(s).map(|s| (len, s))
-          })
+          })?;
+        src.advance(res.0);
+        Ok(res)
       }
     }
 
@@ -162,20 +164,22 @@ macro_rules! array_str {
     $crate::flatten_state!($ty [const N: usize]);
 
     bidi_equivalent!([const N: usize] impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
-    bidi_equivalent!(:<RB: $crate::__private::buffer::ReadBuf>: [const N: usize] impl <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
+    bidi_equivalent!(:<RB: $crate::__private::buffer::Buf>: [const N: usize] impl <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
   };
 }
 
 #[allow(unused)]
 #[cfg(not(any(feature = "std", feature = "alloc")))]
-pub fn larger_than_str_capacity<const N: usize>() -> crate::flavors::groto::Error {
-  crate::flavors::groto::Error::custom("cannot decode string with length greater than the capacity")
+pub fn larger_than_str_capacity<const N: usize>() -> crate::flavors::groto::DecodeError {
+  crate::flavors::groto::DecodeError::other(
+    "cannot decode string with length greater than the capacity",
+  )
 }
 
 #[allow(unused)]
 #[cfg(any(feature = "std", feature = "alloc"))]
-pub fn larger_than_str_capacity<const N: usize>() -> crate::flavors::groto::Error {
-  crate::flavors::groto::Error::custom(std::format!(
+pub fn larger_than_str_capacity<const N: usize>() -> crate::flavors::groto::DecodeError {
+  crate::flavors::groto::DecodeError::other(std::format!(
     "cannot decode string with length greater than the capacity {N}"
   ))
 }

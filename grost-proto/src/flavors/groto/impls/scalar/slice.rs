@@ -1,44 +1,45 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer, WriteBuf},
   decode::{BytesSlice, Decode},
   encode::{Encode, PartialEncode},
-  flavors::groto::{Context, Error, Groto, LengthDelimited},
+  error::{DecodeError, EncodeError},
+  flavors::groto::{Context, Groto, LengthDelimited},
 };
 
 macro_rules! decode_impl {
   ($src:ident, $ty:ty) => {{
-    let bytes = $src.remaining_slice();
-    let (len_size, len) = $crate::__private::varing::decode_u32_varint(bytes)
-      .map_err($crate::__private::flavors::groto::Error::from)?;
+    use $crate::__private::buffer::BufExt;
+
+    let remaining = $src.remaining();
+    let (len_size, len) = $src.read_varint::<u32>()?;
 
     let len = len as usize;
     let total = len_size + len;
 
-    if len_size >= bytes.len() {
+    if len > $src.remaining() {
       return ::core::result::Result::Err(
-        $crate::__private::flavors::groto::Error::buffer_underflow(),
+        $crate::__private::error::DecodeError::insufficient_data_with_requested(remaining, total),
       );
     }
 
-    if total > bytes.len() {
-      return ::core::result::Result::Err(
-        $crate::__private::flavors::groto::Error::buffer_underflow(),
-      );
-    }
-
-    ::core::result::Result::Ok((total, <$ty>::from(&bytes[len_size..total])))
+    let output = <$ty>::from($src.prefix(len));
+    $src.advance(len);
+    ::core::result::Result::Ok((total, output))
   }};
 }
 
 impl Encode<LengthDelimited, Groto> for [u8] {
   #[inline]
-  fn encode_raw<B>(&self, _: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode_raw<B>(
+    &self,
+    _: &Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
-    buf
-      .write_slice_checked(self)
-      .ok_or_else(|| Error::insufficient_buffer(self.len(), buf.len()))
+    let mut buf: WriteBuf<B> = buf.into();
+    buf.try_write_slice(self).map_err(Into::into)
   }
 
   #[inline]
@@ -47,32 +48,34 @@ impl Encode<LengthDelimited, Groto> for [u8] {
   }
 
   #[inline]
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
-    let buf_len = buf.len();
+    let mut buf: WriteBuf<B> = buf.into();
+    let remaining = buf.mutable();
     let this_len = self.len();
-    if buf_len < this_len {
-      return Err(Error::insufficient_buffer(
-        <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-        buf_len,
-      ));
-    }
 
-    let len_size = buf.write_u32_varint(this_len as u32).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-        buf_len,
+    let len_size = buf.write_varint::<u32>(&(this_len as u32)).map_err(|e| {
+      EncodeError::from_varint_error(e).propagate_buffer_info(
+        || <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
+        || remaining,
       )
     })?;
 
-    <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf.suffix_mut(len_size))
-      .map(|write| len_size + write)
+    <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf.prefix_mut(this_len))
+      .map(|write| {
+        buf.advance_mut(write);
+        len_size + write
+      })
       .map_err(|e| {
-        e.update(
-          <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
-          buf_len,
+        e.propagate_buffer_info(
+          || <Self as Encode<LengthDelimited, Groto>>::encoded_len(self, context),
+          || remaining,
         )
       })
   }
@@ -90,11 +93,11 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
@@ -116,11 +119,11 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
@@ -141,11 +144,15 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
 
 impl<RB> Encode<LengthDelimited, Groto> for BytesSlice<RB>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
-  fn encode_raw<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode_raw<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <[u8] as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
@@ -154,9 +161,13 @@ where
     <[u8] as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <[u8] as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
@@ -168,16 +179,16 @@ where
 
 impl<RB> PartialEncode<LengthDelimited, Groto> for BytesSlice<RB>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -193,11 +204,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError<Groto>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
@@ -208,31 +219,29 @@ where
 }
 
 impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesSlice<RB> {
-  fn decode(_: &'de Context, src: RB) -> Result<(usize, BytesSlice<RB>), Error>
+  fn decode(_: &'de Context, mut src: RB) -> Result<(usize, BytesSlice<RB>), DecodeError<Groto>>
   where
     BytesSlice<RB>: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    let bytes = src.remaining_slice();
-    let (len_size, len) = varing::decode_u32_varint(bytes).map_err(Error::from)?;
+    let remaining = src.remaining();
+    let (len_size, len) = src.read_varint::<u32>()?;
 
     let len = len as usize;
     let total = len_size + len;
 
-    if len_size >= bytes.len() {
-      return Err(Error::buffer_underflow());
+    if len > src.remaining() {
+      return Err(DecodeError::insufficient_data_with_requested(
+        remaining, total,
+      ));
     }
 
-    if total > bytes.len() {
-      return Err(Error::buffer_underflow());
-    }
-
-    Ok((total, BytesSlice::new(src.segment(len_size..total))))
+    Ok((total, BytesSlice::new(src.segment(..len))))
   }
 }
 
-bidi_equivalent!(:<RB: ReadBuf>: impl<str, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: impl<str, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod arc;

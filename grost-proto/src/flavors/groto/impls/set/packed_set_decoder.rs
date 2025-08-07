@@ -1,7 +1,7 @@
 use core::iter::FusedIterator;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -216,7 +216,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
   type Item = Result<(usize, T), Error>;
 
@@ -235,7 +235,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
 }
 
@@ -250,11 +250,11 @@ where
 impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.0.encode_raw(ctx, buf)
   }
@@ -265,7 +265,7 @@ where
 
   fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.0.encode(ctx, buf)
   }
@@ -279,17 +279,17 @@ impl<'a, T, RB, B, W> PartialEncode<Packed<W>, Groto> for PackedSetDecoder<'a, T
 where
   W: WireFormat<Groto> + 'a,
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
   T: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.0.partial_encode_raw(context, buf, selector)
   }
@@ -301,11 +301,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.0.partial_encode(context, buf, selector)
   }
@@ -318,7 +318,7 @@ where
 impl<'a, T, B, W, RB> Decode<'a, Packed<W>, RB, B, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
@@ -326,7 +326,7 @@ where
   ) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::ReadBuf,
+    RB: crate::buffer::Buf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, packed_decoder) = PackedDecoder::decode(ctx, src)?;

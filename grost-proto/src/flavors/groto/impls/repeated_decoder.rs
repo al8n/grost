@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buffer, DefaultBuffer, ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, Buffer, DefaultBuffer, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -145,17 +145,17 @@ impl<'a, T, RB, B, W, const TAG: u32> Encode<Repeated<W, TAG>, Groto>
   for RepeatedDecoder<'a, T, RB, B, W, TAG>
 where
   W: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
 
     match buf.prefix_mut_checked(src_len) {
-      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      None => Err(Error::buffer_too_small(src_len, buf_len)),
       Some(buf) => {
         buf.copy_from_slice(self.src.remaining_slice());
         Ok(src_len)
@@ -169,7 +169,7 @@ where
 
   fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.encode_raw(ctx, buf)
   }
@@ -185,17 +185,17 @@ where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, <Groto as Flavor>::Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -219,11 +219,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, <Groto as Flavor>::Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -258,7 +258,7 @@ where
   ) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::ReadBuf,
+    RB: crate::buffer::Buf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let expected_identifier = Identifier::new(Repeated::<W, TAG>::WIRE_TYPE, Tag::new(TAG));
@@ -445,7 +445,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
   type Item = Result<(usize, T), Error>;
 
@@ -510,7 +510,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
 }
 
@@ -660,25 +660,25 @@ where
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let encoded_raw_len = self.encoded_raw_len(context);
     let buf_len = buf.len();
     if buf_len < encoded_raw_len {
-      return Err(Error::insufficient_buffer(encoded_raw_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_raw_len, buf_len));
     }
 
     let mut offset = 0;
-    let wb = buf.as_mut_slice();
+    let wb = buf.buffer_mut();
     for decoder in self.buffer.as_slice() {
       // Double-check bounds for each decoder
       if offset >= buf_len {
-        return Err(Error::insufficient_buffer(encoded_raw_len, buf_len));
+        return Err(Error::buffer_too_small(encoded_raw_len, buf_len));
       }
 
       let size = decoder.encode_raw(context, &mut wb[offset..])?;
@@ -696,9 +696,9 @@ where
       .sum()
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     self.encode_raw(context, buf)
   }
@@ -715,17 +715,17 @@ where
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -745,11 +745,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -778,7 +778,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Self {
@@ -797,7 +797,7 @@ where
   fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, decoder) = <RepeatedDecoder<'a, T, RB, UB, W, TAG> as Decode<
@@ -957,7 +957,7 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> Iterator
 where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,
 {
@@ -1030,7 +1030,7 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> FusedIterator
 where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,
 {

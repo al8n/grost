@@ -1,5 +1,5 @@
 use crate::{
-  buffer::WriteBuf,
+  buffer::{BufMut, WriteBuf},
   encode::{Encode, PartialEncode},
   flavors::{
     Borrowed, Groto, Repeated, WireFormat,
@@ -20,15 +20,15 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
-    repeated_encode::<T, W, _, TAG>(
-      buf.as_mut_slice(),
+    repeated_encode::<WB, T, W, _, TAG>(
+      buf.into(),
       || self.iter(),
       |k| k.encoded_len(context),
-      |k, buf| k.encode(context, buf),
+      |k, buf| k.encode::<&mut WB>(context, buf),
     )
   }
 
@@ -36,9 +36,9 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as Encode<Repeated<W, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -56,21 +56,21 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    repeated_encode::<T, W, _, TAG>(
-      buf.as_mut_slice(),
+    repeated_encode::<WB, T, W, _, TAG>(
+      buf.into(),
       || self.iter(),
       |k| k.partial_encoded_len(context, selector),
-      |k, buf| k.partial_encode(context, buf, selector),
+      |k, buf| k.partial_encode::<&mut WB>(context, buf, selector),
     )
   }
 
@@ -85,21 +85,21 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    repeated_encode::<T, W, _, TAG>(
-      buf.as_mut_slice(),
+    repeated_encode::<WB, T, W, _, TAG>(
+      buf.into(),
       || self.iter(),
       |k| k.partial_encoded_len(context, selector),
-      |k, buf| k.partial_encode(context, buf, selector),
+      |k, buf| k.partial_encode::<&mut WB>(context, buf, selector),
     )
   }
 
@@ -117,15 +117,15 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
-    repeated_encode::<T, W, _, TAG>(
-      buf.as_mut_slice(),
+    repeated_encode::<WB, T, W, _, TAG>(
+      buf.into(),
       || self.iter().copied(),
       |k| k.encoded_len(context),
-      |k, buf| k.encode(context, buf),
+      |k, buf| k.encode::<&mut WB>(context, buf),
     )
   }
 
@@ -133,9 +133,9 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter().copied(), |k| k.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encode_raw(self, context, buf)
   }
@@ -154,21 +154,21 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    repeated_encode::<T, W, _, TAG>(
-      buf.as_mut_slice(),
+    repeated_encode::<WB, T, W, _, TAG>(
+      buf.into(),
       || self.iter().copied(),
       |k| k.partial_encoded_len(context, selector),
-      |k, buf| k.partial_encode(context, buf, selector),
+      |k, buf| k.partial_encode::<&mut WB>(context, buf, selector),
     )
   }
 
@@ -185,11 +185,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encode_raw(
       self, context, buf, selector,

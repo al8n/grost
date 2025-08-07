@@ -43,7 +43,7 @@ impl ObjectEncoder {
       .make_where_clause()
       .predicates
       .push(syn::parse2(quote! {
-        #wbi: #path_to_grost::__private::buffer::WriteBuf
+        #wbi: #path_to_grost::__private::buffer::BufMut
       })?);
     let encoder_state_type_param = TypeParam::from(format_ident!("__GROST_ENCODER_STATE__"));
 
@@ -396,7 +396,7 @@ fn derive_encode_field_identifier<T>(
           (
             self,
             ::core::convert::Into::into(
-              #path_to_grost::__private::error::Error::insufficient_buffer(
+              #path_to_grost::__private::error::Error::buffer_too_small(
                 encoded_identifier_len,
                 current_position - buf.len(),
               )

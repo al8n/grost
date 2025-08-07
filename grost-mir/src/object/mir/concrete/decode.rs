@@ -140,7 +140,7 @@ fn derive_partial_object_decode<M, F>(
       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
         Self: ::core::marker::Sized + #lt,
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         <#partial_object_ty as
@@ -198,7 +198,7 @@ fn derive_object_decode<M, F>(
       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
         Self: ::core::marker::Sized + #lt,
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         ::core::todo!()
@@ -478,7 +478,7 @@ fn derive_partial_ref_object_decode<M, F>(
       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
         Self: ::core::marker::Sized + #lt,
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         let buf = src.remaining_slice();
@@ -545,7 +545,7 @@ fn derive_partial_ref_object_decode<M, F>(
       ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
         #partial_ref_object_ty: ::core::marker::Sized + #lt,
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)
@@ -561,7 +561,7 @@ fn derive_partial_ref_object_decode<M, F>(
       ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
       where
         #partial_ref_object_ty: ::core::marker::Sized + #lt,
-        #read_buffer_ident: #path_to_grost::__private::buffer::ReadBuf + #lt,
+        #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
       {
         <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)

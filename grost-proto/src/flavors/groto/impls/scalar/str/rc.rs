@@ -1,19 +1,21 @@
 use std::rc::Rc;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, UnknownBuffer},
   decode::Decode,
-  flavors::groto::{Context, Error, Groto, LengthDelimited, impls::decode_str},
+  flavors::groto::{Context, DecodeError, Groto, LengthDelimited, impls::decode_str},
 };
 
 impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Rc<str> {
-  fn decode(_: &'de Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(_: &'de Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
-    decode_str(&src).map(|(read, s)| (read, Rc::from(s)))
+    let res = decode_str(&mut src).map(|(read, s)| (read, Rc::from(s)))?;
+    src.advance(res.0);
+    Ok(res)
   }
 }
 

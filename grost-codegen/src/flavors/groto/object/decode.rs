@@ -209,7 +209,7 @@ impl Groto {
         ) -> ::core::result::Result<(::core::primitive::usize, Self), #path_to_grost::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
-          __GROST_BUF__: #path_to_grost::__private::ReadBuf<#ltg>,
+          __GROST_BUF__: #path_to_grost::__private::Buf<#ltg>,
           #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::groto::Unknown<__GROST_BUF__>>,
         {
           let bytes = buf.as_bytes();
@@ -269,7 +269,7 @@ impl Groto {
         ) -> ::core::result::Result<(::core::primitive::usize, ::core::option::Option<Self>), #path_to_grost::__private::flavors::groto::Error>
         where
           Self: ::core::marker::Sized,
-          __GROST_BUF__: #path_to_grost::__private::ReadBuf<#ltg>,
+          __GROST_BUF__: #path_to_grost::__private::Buf<#ltg>,
           #ubi: #path_to_grost::__private::Buffer<#path_to_grost::__private::flavors::groto::Unknown<__GROST_BUF__>>,
         {
           let bytes = buf.as_bytes();

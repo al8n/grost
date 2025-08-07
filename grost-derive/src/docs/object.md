@@ -160,8 +160,8 @@ Customizes the names of generic parameters used in generated code to avoid confl
 // Use custom generic parameter names
 #[grost(generic(
     lifetime = "custom_lifetime",
-    read = "ReadBuf",
-    write = "WriteBuf"
+    read = "Buf",
+    write = "BufMut"
 ))]
 struct MyObject {
   // fields...

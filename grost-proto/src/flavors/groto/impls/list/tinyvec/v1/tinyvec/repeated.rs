@@ -1,7 +1,7 @@
 use tinyvec_1::{Array, TinyVec};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   flavors::{
@@ -36,7 +36,7 @@ where
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = TinyVec::new();
@@ -47,7 +47,7 @@ where
   fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     repeated_decode_list::<K, KW, RB, B, Self, TAG>(
@@ -71,7 +71,7 @@ where
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, KW, RB, UB, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
@@ -81,7 +81,7 @@ where
   where
     Self: Sized,
     <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -109,7 +109,7 @@ where
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, KW, RB, B, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
@@ -119,7 +119,7 @@ where
   where
     Self: Sized,
     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -148,7 +148,7 @@ where
   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Default + Selectable<Groto, Selector = K::Selector>,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(

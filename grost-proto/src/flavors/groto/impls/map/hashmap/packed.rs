@@ -9,7 +9,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -67,7 +67,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     packed_decode::<K, KW, V, VW, Self, RB>(
@@ -99,12 +99,12 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
       |item, ki, vi, buf| MapEntry::from(item).encode_packed::<KW, VW>(context, buf, ki, vi),
@@ -117,12 +117,12 @@ where
     })
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || <Self as Encode<PackedEntry<KW, VW>, Groto>>::encoded_raw_len(self, context),
@@ -147,18 +147,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || {
         <Self as PartialEncode<PackedEntry<KW, VW>, Groto>>::partial_encoded_raw_len(
@@ -184,18 +184,18 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode::<K, V, KW, VW, _, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || {
@@ -232,7 +232,7 @@ where
 //   V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -242,7 +242,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, PackedEntry<KW, VW>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -271,7 +271,7 @@ where
 //   V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -281,7 +281,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, PackedEntry<KW, VW>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -314,7 +314,7 @@ where
 //     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
 //   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

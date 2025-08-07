@@ -1,9 +1,9 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, UnknownBuffer},
   convert::{PartialIdentity, PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::{Decode, Str},
   default_string_wire_format, encode_bridge, flatten_state,
-  flavors::groto::{Context, Error, Groto, LengthDelimited, impls::decode_str},
+  flavors::groto::{Context, DecodeError, Groto, LengthDelimited, impls::decode_str},
   partial_ref_state, partial_state, ref_state, selectable,
   state::{Partial, PartialRef, Ref, State},
 };
@@ -34,16 +34,18 @@ partial_state!(
   Groto: SmolStr => SmolStr
 );
 bidi_equivalent!(impl <str, LengthDelimited> for <SmolStr, LengthDelimited>);
-bidi_equivalent!(:<RB: ReadBuf>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 impl<'a, RB, B> Decode<'a, LengthDelimited, RB, B, Groto> for SmolStr {
-  fn decode(_: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(_: &'a Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: ReadBuf,
+    RB: Buf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    decode_str(&src).map(|(read, s)| (read, SmolStr::new(s)))
+    let res = decode_str(&mut src).map(|(read, s)| (read, SmolStr::new(s)))?;
+    src.advance(res.0);
+    Ok(res)
   }
 }
 
@@ -51,11 +53,11 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for SmolS
   fn try_from_partial_ref(
     _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
-    RB: ReadBuf,
+    RB: Buf,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(SmolStr::new(input.as_ref()))
@@ -64,13 +66,13 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for SmolS
 
 impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
-  RB: ReadBuf,
+  RB: Buf,
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
     _: &'de Context,
     input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
   {
@@ -80,13 +82,13 @@ where
 
 impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
   fn partial_try_from_ref(
     _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
     _: &Self::Selector,
-  ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
+  ) -> Result<<Self as State<Partial<Groto>>>::Output, DecodeError>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,

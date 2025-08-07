@@ -6,7 +6,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -67,7 +67,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = HashMap::with_hasher(S::default());
@@ -80,7 +80,7 @@ where
   fn merge_decode(&mut self, context: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     match context.repeated_decode_policy() {
@@ -121,12 +121,12 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
       |item, ei, ki, vi, buf| {
@@ -141,9 +141,9 @@ where
     })
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -164,18 +164,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || {
         <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
@@ -201,11 +201,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -229,7 +229,7 @@ where
 //   V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -239,7 +239,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -268,7 +268,7 @@ where
 //   V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -278,7 +278,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -311,7 +311,7 @@ where
 //     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
 //   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
 //   S: BuildHasher + Default,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

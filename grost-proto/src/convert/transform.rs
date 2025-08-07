@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   flavors::{Flavor, WireFormat},
   selection::Selectable,
   state::{Partial, PartialRef, Ref, State},
@@ -56,7 +56,7 @@ where
   where
     Self: Sized,
     <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized,
-    RB: ReadBuf,
+    RB: Buf,
     UB: UnknownBuffer<RB, F>;
 }
 
@@ -73,7 +73,7 @@ where
   where
     Self: Sized,
     <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized,
-    RB: ReadBuf,
+    RB: Buf,
     UB: UnknownBuffer<RB, F>,
   {
     Ok(input)
@@ -124,7 +124,7 @@ where
   where
     Self: Sized,
     <Self as State<Ref<'a, W, RB, UB, F>>>::Output: Sized,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, F>;
 }
 
@@ -141,7 +141,7 @@ where
   where
     Self: Sized,
     <Self as State<Ref<'a, W, RB, UB, F>>>::Output: Sized,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     UB: UnknownBuffer<RB, F>,
   {
     Ok(input)

@@ -1,20 +1,12 @@
 use core::ops::{Bound, RangeBounds};
 
-pub use error::*;
-pub use read_buf::*;
 pub use stack_buffer::StackBuffer;
-pub use write_buf::*;
 
-use crate::{
-  error::{DecodeVarintError, EncodeVarintError},
-  flavors::Flavor,
-  unknown::Unknown,
-};
+use crate::{flavors::Flavor, unknown::Unknown};
 
-mod error;
-mod read_buf;
+pub use bufkit::{Buf, BufExt, BufMut, BufMutExt, WriteBuf};
+
 mod stack_buffer;
-mod write_buf;
 
 /// The default buffer type for storing unknown data or repeated values in decoding operations.
 #[cfg(all(
@@ -131,7 +123,7 @@ pub trait UnknownBuffer<RB, F: Flavor + ?Sized>: Buffer<Item = Unknown<RB, F>> {
 impl<T, RB, F> UnknownBuffer<RB, F> for T
 where
   T: Buffer<Item = Unknown<RB, F>>,
-  RB: ReadBuf,
+  RB: Buf,
   F: Flavor + ?Sized,
 {
 }
@@ -462,64 +454,6 @@ const _: () = {
 
     fn remaining_slice(&self) -> &[T] {
       self.remaining_slice()
-    }
-  }
-};
-
-#[cfg(feature = "bytes_1")]
-const _: () = {
-  use bytes_1::{Bytes, BytesMut};
-
-  impl WriteBuf for BytesMut {
-    #[inline]
-    fn is_empty(&self) -> bool {
-      self.is_empty()
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-      self.len()
-    }
-
-    #[inline]
-    fn as_mut_slice(&mut self) -> &mut [u8] {
-      self.as_mut()
-    }
-  }
-
-  impl Resizable for BytesMut {
-    #[inline]
-    fn resize(&mut self, new_len: usize, fill_value: u8) {
-      self.resize(new_len, fill_value);
-    }
-  }
-};
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-const _: () = {
-  use std::vec::Vec;
-
-  impl WriteBuf for Vec<u8> {
-    #[inline]
-    fn is_empty(&self) -> bool {
-      self.is_empty()
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-      self.len()
-    }
-
-    #[inline]
-    fn as_mut_slice(&mut self) -> &mut [u8] {
-      self.as_mut_slice()
-    }
-  }
-
-  impl Resizable for Vec<u8> {
-    #[inline]
-    fn resize(&mut self, new_len: usize, fill_value: u8) {
-      self.resize(new_len, fill_value);
     }
   }
 };

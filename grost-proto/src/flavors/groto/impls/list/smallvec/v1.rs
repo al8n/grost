@@ -1,6 +1,6 @@
 use smallvec_1::SmallVec;
 
-use crate::{buffer::ReadBuf, decode::BytesSlice, flavors::groto::LengthDelimited};
+use crate::{buffer::Buf, decode::BytesSlice, flavors::groto::LengthDelimited};
 
 mod packed;
 mod repeated;
@@ -28,5 +28,5 @@ encode_list!(@borrow SmallVec<[&'b T; N]> [const N: usize]);
 length!(SmallVec<[T; N]> [const N: usize]);
 selectable!(SmallVec<[T; N]> [const N: usize]);
 
-bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<SmallVec<[u8; N]>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: [const N: usize] impl<SmallVec<[u8; N]>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!([const N: usize] impl <SmallVec<[u8; N]>, LengthDelimited> for <[u8], LengthDelimited>);

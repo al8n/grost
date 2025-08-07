@@ -12,9 +12,8 @@ metadata.workspace = true
 
 [features]
 default = ["std"]
-alloc = ["bytes_1", "smol_str_0_3", "hostaddr_0_1?/alloc", "tinyvec_1?/alloc"]
-std = ["thiserror/std", "bytes_1/default", "smol_str_0_3/default", "hostaddr_0_1?/default", "tinyvec_1?/default", "either/default"]
-sql = []
+alloc = ["bytes_1", "smol_str_0_3", "hostaddr_0_1?/alloc", "tinyvec_1?/alloc", "bufkit/alloc"]
+std = ["thiserror/std", "bytes_1/default", "smol_str_0_3/default", "hostaddr_0_1?/default", "tinyvec_1?/default", "either/default", "bufkit/default"]
 
 # Enable `syn`, `proc-macro2`, and `quote` features for code generation
 codegen = ["dep:syn", "dep:proc-macro2", "dep:quote"]
@@ -31,7 +30,7 @@ bnum = ["bnum_0_13"]
 bstr_1 = ["dep:bstr_1"]
 bstr = ["bstr_1"]
 
-bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1"]
+bytes_1 = ["dep:bytes_1", "hostaddr_0_1?/bytes_1", "bufkit/bytes_1"]
 bytes = ["bytes_1"]
 
 chrono_0_4 = ["dep:chrono_0_4", "varing/chrono_0_4"]
@@ -104,6 +103,7 @@ quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck
 
 [dependencies]
 auto_enums = "0.8"
+bufkit = { version = "0.2", default-features = false, features = ["varing"] }
 either = { workspace = true, default-features = false }
 ghost = "0.1"
 ref-cast = { version = "1", default-features = false }

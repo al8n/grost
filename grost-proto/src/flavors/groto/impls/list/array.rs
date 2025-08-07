@@ -1,5 +1,5 @@
 use crate::{
-  buffer::ReadBuf,
+  buffer::Buf,
   decode::BytesSlice,
   flavors::groto::{Error, LengthDelimited},
   selection::Selector,
@@ -50,5 +50,5 @@ impl<T, const N: usize> crate::encode::Length for [T; N] {
 }
 
 // TODO(al8n): change this to single direction equivalent
-bidi_equivalent!(:<RB: ReadBuf>: [const N: usize] impl<[u8; N], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: [const N: usize] impl<[u8; N], LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!([const N: usize] impl <[u8; N], LengthDelimited> for <[u8], LengthDelimited>);

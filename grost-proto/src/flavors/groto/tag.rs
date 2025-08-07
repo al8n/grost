@@ -1,6 +1,9 @@
-use crate::{error::ParseTagError, selectable};
+use crate::{
+  error::{DecodeTagError, ParseTagError},
+  selectable,
+};
 
-use super::{Error, Groto};
+use super::Groto;
 
 /// Tag in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
@@ -69,13 +72,13 @@ impl Tag {
 
   /// Decodes the tag from bytes slice.
   #[inline]
-  pub const fn decode(bytes: &[u8]) -> Result<(usize, Self), Error> {
+  pub const fn decode(bytes: &[u8]) -> Result<(usize, Self), DecodeTagError> {
     match varing::decode_u32_varint(bytes) {
       Ok((len, tag)) => match Self::try_new(tag) {
         Ok(tag) => Ok((len, tag)),
-        Err(e) => Err(Error::parse_tag_error(e)),
+        Err(e) => Err(DecodeTagError::Parse(e)),
       },
-      Err(e) => Err(Error::from_varint_decode_error(e)),
+      Err(e) => Err(DecodeTagError::Read(e)),
     }
   }
 }

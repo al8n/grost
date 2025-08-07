@@ -1,9 +1,9 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, WriteBuf, UnknownBuffer},
   convert::{PartialIdentity, TryFromPartialRef, TryFromRef},
   decode::{BytesSlice, Decode},
   default_bytes_wire_format, encode_bridge, flatten_state,
-  flavors::groto::{Context, Error, Groto, LengthDelimited},
+  flavors::groto::{Context, DecodeError, EncodeError, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
   state::{Partial, PartialRef, Ref, State},
 };
@@ -45,10 +45,10 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for Bytes
   fn try_from_partial_ref(
     _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
-    RB: ReadBuf,
+    RB: Buf,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.into_inner().to_bytes())
@@ -59,10 +59,10 @@ impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for Bytes {
   fn try_from_ref(
     _: &'de Context,
     input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.into_inner().to_bytes())
@@ -85,10 +85,10 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for Bytes
   fn try_from_partial_ref(
     _: &'de Context,
     input: <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
-    RB: ReadBuf,
+    RB: Buf,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(BytesMut::from(input.into_inner().to_bytes()))
@@ -99,11 +99,11 @@ impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for BytesMut {
   fn try_from_ref(
     _: &'de Context,
     input: <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<Ref<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(BytesMut::from(input.into_inner().to_bytes()))
@@ -122,17 +122,17 @@ impl PartialIdentity<Groto> for BytesMut {
   }
 }
 
-bidi_equivalent!(:<RB: ReadBuf>: impl<Bytes, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: impl<Bytes, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!(impl <Bytes, LengthDelimited> for <[u8], LengthDelimited>);
 
-bidi_equivalent!(:<RB: ReadBuf>: impl<BytesMut, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: impl<BytesMut, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!(impl <BytesMut, LengthDelimited> for <[u8], LengthDelimited>);
 
 impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Bytes {
-  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     <BytesSlice<RB> as Decode<'de, LengthDelimited, RB, B, Groto>>::decode(context, src)
@@ -141,10 +141,10 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Bytes {
 }
 
 impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesMut {
-  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     <BytesSlice<RB> as Decode<'de, LengthDelimited, RB, B, Groto>>::decode(context, src)

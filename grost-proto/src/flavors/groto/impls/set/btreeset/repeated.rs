@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -47,12 +47,12 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     repeated_encode::<K, KW, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       || self.iter(),
       |k| k.encoded_len(context),
       |k, buf| k.encode(context, buf),
@@ -63,9 +63,9 @@ where
     repeated_encoded_len::<K, KW, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <Self as Encode<Repeated<KW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -83,11 +83,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if *selector {
       return Ok(0);
@@ -107,11 +107,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<Repeated<KW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -133,7 +133,7 @@ where
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = BTreeSet::new();
@@ -144,7 +144,7 @@ where
   fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     repeated_decode::<K, KW, Self, RB, B, TAG>(self, src, |set, src| {
@@ -163,7 +163,7 @@ where
 //   KW: WireFormat<Groto> + 'a,
 //   K: TryFromRef<'a, KW, RB, UB, Groto> + Ord + 'a,
 //   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   UB: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -173,7 +173,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     UB: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();
@@ -196,7 +196,7 @@ where
 //   KW: WireFormat<Groto> + 'a,
 //   K: TryFromPartialRef<'a, KW, RB, B, Groto> + Ord + 'a,
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -206,7 +206,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();
@@ -231,7 +231,7 @@ where
 //   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
 //     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
 //   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

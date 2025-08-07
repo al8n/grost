@@ -1,6 +1,6 @@
 use crate::{
   default_scalar_wire_format, flatten_state,
-  flavors::groto::{Error, Fixed32, Groto, Varint},
+  flavors::groto::{DecodeError, Fixed32, Groto, Varint},
   partial_identity, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge,
 };
 
@@ -31,9 +31,9 @@ const fn convert_char_to_u32(v: &char) -> u32 {
 }
 
 #[inline]
-fn convert_u32_to_char(v: u32) -> Result<char, Error> {
+fn convert_u32_to_char(v: u32) -> Result<char, DecodeError> {
   match char::from_u32(v) {
     Some(c) => Ok(c),
-    None => Err(Error::custom("invalid char value")),
+    None => Err(DecodeError::other("invalid char value")),
   }
 }

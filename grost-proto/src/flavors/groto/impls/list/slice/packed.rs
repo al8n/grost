@@ -1,7 +1,7 @@
 use varing::encoded_u32_varint_len;
 
 use crate::{
-  buffer::WriteBuf,
+  buffer::BufMut,
   convert::{Extracted, Innermost},
   encode::{Encode, EquivalentEncode, Length, PartialEncode},
   flavors::{
@@ -26,12 +26,12 @@ where
   W: WireFormat<Groto>,
 {
   #[inline]
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     packed_encode_raw::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || <Self as Encode<Packed<W>, Groto>>::encoded_raw_len(self, context),
       |item, buf| item.encode(context, buf),
@@ -43,12 +43,12 @@ where
     packed_encoded_raw_len::<T, W, _, _>(self.len(), self.iter(), |item| item.encoded_len(context))
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     packed_encode::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || <Self as Encode<Packed<W>, Groto>>::encoded_raw_len(self, context),
@@ -71,18 +71,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode_raw::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || {
         <Self as PartialEncode<Packed<W>, Groto>>::partial_encoded_raw_len(self, context, selector)
@@ -104,18 +104,18 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.iter(),
       || {
@@ -141,12 +141,12 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     packed_encode_raw::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.into_iter().copied(),
       || <Self as Encode<Borrowed<'b, Packed<W>>, Groto>>::encoded_raw_len(self, context),
       |item, buf| item.encode(context, buf),
@@ -159,12 +159,12 @@ where
     })
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     packed_encode::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.into_iter().copied(),
       || <Self as Encode<Borrowed<'b, Packed<W>>, Groto>>::encoded_raw_len(self, context),
@@ -187,18 +187,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode_raw::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.into_iter().copied(),
       || {
         <Self as PartialEncode<Borrowed<'b, Packed<W>>, Groto>>::partial_encoded_raw_len(
@@ -222,18 +222,18 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     packed_encode::<T, _, _, _>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.len(),
       self.into_iter().copied(),
       || {

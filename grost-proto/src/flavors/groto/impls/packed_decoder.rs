@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -166,7 +166,7 @@ impl<'de, T, B, UB, W> PackedDecoder<'de, T, B, UB, W> {
 
 impl<'a, RB, B> PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
@@ -201,7 +201,7 @@ where
 
 impl<'a, RB, B> core::ops::Deref for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
   type Target = [u8];
 
@@ -213,7 +213,7 @@ where
 
 impl<'a, RB, B> AsRef<[u8]> for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
   #[inline]
   fn as_ref(&self) -> &[u8] {
@@ -232,16 +232,16 @@ where
 impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
     if buf_len < src_len {
-      return Err(Error::insufficient_buffer(src_len, buf_len));
+      return Err(Error::buffer_too_small(src_len, buf_len));
     }
 
     let start_offset = self.data_offset + self.num_elements_size;
@@ -250,7 +250,7 @@ where
         buf.copy_from_slice(&self.src.remaining_slice()[start_offset..]);
         Ok(src_len)
       }
-      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      None => Err(Error::buffer_too_small(src_len, buf_len)),
     }
   }
 
@@ -261,14 +261,14 @@ where
 
   fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let src = &self.src;
     let buf_len = buf.len();
     let src_len = src.remaining();
 
     if buf_len < src_len {
-      return Err(Error::insufficient_buffer(src_len, buf_len));
+      return Err(Error::buffer_too_small(src_len, buf_len));
     }
 
     match buf.prefix_mut_checked(src_len) {
@@ -276,7 +276,7 @@ where
         buf.copy_from_slice(src.remaining_slice());
         Ok(src_len)
       }
-      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      None => Err(Error::buffer_too_small(src_len, buf_len)),
     }
   }
 
@@ -289,17 +289,17 @@ impl<'a, T, RB, B, W> PartialEncode<Packed<W>, Groto> for PackedDecoder<'a, T, R
 where
   W: WireFormat<Groto> + 'a,
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
   T: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -319,11 +319,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -344,7 +344,7 @@ where
 impl<'a, T, B, W, RB> Decode<'a, Packed<W>, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
@@ -352,7 +352,7 @@ where
   ) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::ReadBuf,
+    RB: crate::buffer::Buf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let buf = src.remaining_slice();
@@ -527,7 +527,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
   type Item = Result<(usize, T), Error>;
 
@@ -576,6 +576,6 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
 }

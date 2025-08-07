@@ -1,5 +1,6 @@
 use super::{
-  buffer::{ReadBuf, WriteBuf},
+  buffer::{Buf, BufMut, WriteBuf},
+  error::{DecodeError, EncodeError},
   flavors::Flavor,
 };
 
@@ -12,16 +13,16 @@ pub trait Identifier<F: Flavor + ?Sized>: Copy + core::fmt::Debug + core::fmt::D
   fn tag(&self) -> F::Tag;
 
   /// Encode the identifier into a buffer.
-  fn encode<B>(&self, dst: &mut B) -> Result<usize, F::Error>
+  fn encode<B>(&self, dst: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized;
+    B: BufMut;
 
   /// Return the length of the encoded identifier.
   fn encoded_len(&self) -> usize;
 
   /// Decode the identifier from a buffer.
-  fn decode<'de, B>(buf: B) -> Result<(usize, Self), F::Error>
+  fn decode<'de, B>(buf: B) -> Result<(usize, Self), DecodeError<F>>
   where
-    B: ReadBuf + Sized + 'de,
+    B: Buf + Sized + 'de,
     Self: Sized;
 }

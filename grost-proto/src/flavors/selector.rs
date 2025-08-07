@@ -58,7 +58,7 @@
 //     let value_len = value_bytes.len();
 
 //     if value_len > buf.len() {
-//       return Err(EncodeError::insufficient_buffer(value_len, buf.len()));
+//       return Err(EncodeError::buffer_too_small(value_len, buf.len()));
 //     }
 
 //     buf[..value_len].copy_from_slice(value_bytes);

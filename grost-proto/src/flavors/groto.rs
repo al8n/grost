@@ -1,16 +1,19 @@
 pub use context::Context;
-pub use error::Error;
 pub use identifier::Identifier;
 pub use impls::*;
 pub use tag::Tag;
 pub use wire_type::*;
 
+/// The encode error for the Groto flavor.
+pub type EncodeError = crate::error::EncodeError<Groto>;
+/// The decode error for the Groto flavor.
+pub type DecodeError = crate::error::DecodeError<Groto>;
+
 use super::Flavor;
 
-use crate::buffer::ReadBuf;
+use crate::buffer::Buf;
 
 mod context;
-mod error;
 mod identifier;
 mod impls;
 mod tag;
@@ -28,177 +31,30 @@ impl Flavor for Groto {
   type Identifier = Identifier;
   type WireType = WireType;
   type Tag = Tag;
-  type Error = Error;
 
   const NAME: &'static str = "Groto";
 
-  // fn encode_unknown<'a, B>(
-  //   _: &Self::Context,
-  //   value: &Self::Unknown<B>,
-  //   buf: &mut [u8],
-  // ) -> Result<usize, Self::Error>
-  // where
-  //   B: ReadBuf + 'a,
-  // {
-  //   let value_bytes = value.raw();
-  //   let value_len = value_bytes.len();
-  //   if value_len > buf.len() {
-  //     return Err(Error::insufficient_buffer(value_len, buf.len()));
-  //   }
-
-  //   buf[..value_len].copy_from_slice(value_bytes);
-  //   Ok(value_len)
-  // }
-
-  // fn encoded_unknown_len<'a, B>(_: &Self::Context, value: &Self::Unknown<B>) -> usize
-  // where
-  //   B: ReadBuf + 'a,
-  // {
-  //   value.raw().len()
-  // }
-
-  // fn decode_unknown<'de, B>(
-  //   _: &Self::Context,
-  //   buf: B,
-  // ) -> Result<(usize, Self::Unknown<B>), Self::Error>
-  // where
-  //   B: ReadBuf + 'de,
-  // {
-  //   let src = buf.remaining_slice();
-  //   let (identifier_len, identifier) = Identifier::decode(src)?;
-  //   let (wire_type, tag) = identifier.into_components();
-
-  //   macro_rules! slice {
-  //     ($end:ident, $buf_len:ident, $buf:ident) => {{
-  //       if $end == $buf_len {
-  //         $buf
-  //       } else {
-  //         $buf.slice(..$end)
-  //       }
-  //     }};
-  //   }
-
-  //   macro_rules! consume_fixed {
-  //     ($size:literal, $offset:ident, $buf_len:ident) => {{
-  //       let end = $offset + $size;
-  //       if end > $buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       Ok((
-  //         end,
-  //         Unknown::new(tag, wire_type, $offset, slice!(end, $buf_len, buf)),
-  //       ))
-  //     }};
-  //   }
-
-  //   let mut offset = identifier_len;
-  //   let buf_len = src.remaining();
-  //   match identifier.wire_type() {
-  //     WireType::LengthDelimited => {
-  //       if offset >= buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       let (size_len, size) = varing::decode_u32_varint(&src[offset..])?;
-  //       offset += size_len;
-  //       let end = offset + size as usize;
-
-  //       if end > buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       Ok((
-  //         end,
-  //         Unknown::new(tag, wire_type, offset, slice!(end, buf_len, buf)),
-  //       ))
-  //     }
-  //     WireType::Varint => {
-  //       if offset >= buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       let size_len = varing::consume_varint(&src[offset..])?;
-  //       let end = offset + size_len;
-  //       Ok((
-  //         end,
-  //         Unknown::new(tag, wire_type, offset, slice!(end, buf_len, buf)),
-  //       ))
-  //     }
-  //     WireType::Nullable => {
-  //       if offset + 1 >= buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       let marker = src[offset];
-  //       offset += 1;
-  //       if marker == 0 {
-  //         // This is a zero byte indicating absence, so we skip it
-  //         return Ok((
-  //           offset,
-  //           Unknown::new(tag, wire_type, offset, slice!(offset, buf_len, buf)),
-  //         ));
-  //       }
-  //       if offset + 1 >= buf_len {
-  //         return Err(Error::buffer_underflow());
-  //       }
-
-  //       let wire_type = WireType::try_from_u8(src[offset])?;
-  //       offset += 1;
-
-  //       match wire_type {
-  //         WireType::Nullable => Err(Error::custom("unexpected nested nullable wire type")),
-  //         WireType::Varint => {
-  //           let size_len = varing::consume_varint(&src[offset..])?;
-  //           let end = offset + size_len;
-  //           Ok((
-  //             end,
-  //             Unknown::new(tag, wire_type, offset, slice!(end, buf_len, buf)),
-  //           ))
-  //         }
-  //         WireType::LengthDelimited => {
-  //           let (size_len, size) = varing::decode_u32_varint(&src[offset..])?;
-  //           offset += size_len;
-  //           let end = offset + size as usize;
-  //           if end > buf_len {
-  //             return Err(Error::buffer_underflow());
-  //           }
-  //           Ok((
-  //             end,
-  //             Unknown::new(tag, wire_type, offset, slice!(end, buf_len, buf)),
-  //           ))
-  //         }
-  //         WireType::Fixed8 => consume_fixed!(1, offset, buf_len),
-  //         WireType::Fixed16 => consume_fixed!(2, offset, buf_len),
-  //         WireType::Fixed32 => consume_fixed!(4, offset, buf_len),
-  //         WireType::Fixed64 => consume_fixed!(8, offset, buf_len),
-  //         WireType::Fixed128 => consume_fixed!(16, offset, buf_len),
-  //       }
-  //     }
-  //     WireType::Fixed8 => consume_fixed!(1, offset, buf_len),
-  //     WireType::Fixed16 => consume_fixed!(2, offset, buf_len),
-  //     WireType::Fixed32 => consume_fixed!(4, offset, buf_len),
-  //     WireType::Fixed64 => consume_fixed!(8, offset, buf_len),
-  //     WireType::Fixed128 => consume_fixed!(16, offset, buf_len),
-  //   }
-  // }
-
-  fn peek_raw(
+  fn peek_raw<B>(
     _: &Self::Context,
     wire_type: Self::WireType,
-    buf: &[u8],
-  ) -> Result<usize, Self::Error> {
-    skip_helper(wire_type, buf)
+    buf: &B,
+  ) -> Result<usize, DecodeError>
+  where
+    B: crate::buffer::Buf,
+  {
+    skip_helper(wire_type, buf.buffer())
   }
 }
 
-fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
+fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, DecodeError> {
   let buf_len = buf.len();
 
   macro_rules! try_skip_fixed {
     ($bytes:literal) => {{
       if buf_len < $bytes {
-        return Err(Error::buffer_underflow());
+        return Err(DecodeError::insufficient_data_with_requested(
+          buf_len, $bytes,
+        ));
       }
 
       $bytes
@@ -206,18 +62,21 @@ fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
   }
 
   Ok(match wire_type {
-    WireType::Varint => varing::consume_varint(buf.remaining_slice())?,
+    WireType::Varint => varing::consume_varint(buf.buffer())?,
     WireType::LengthDelimited => {
-      let (size_len, size) = varing::decode_u32_varint(buf.remaining_slice())?;
+      let (size_len, size) = varing::decode_u32_varint(buf.buffer())?;
       let size = size as usize;
+      let total = size_len + size;
       if size > buf.len() {
-        return Err(Error::buffer_underflow());
+        return Err(DecodeError::insufficient_data_with_requested(
+          buf_len, total,
+        ));
       }
-      size_len + size
+      total
     }
     WireType::Nullable => {
       if buf_len <= 1 {
-        return Err(Error::buffer_underflow());
+        return Err(DecodeError::insufficient_data(buf_len));
       }
       let marker = buf[0];
       if marker == 0 {
@@ -226,11 +85,11 @@ fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
       }
 
       if buf_len <= 2 {
-        return Err(Error::buffer_underflow());
+        return Err(DecodeError::insufficient_data(buf_len));
       }
-      let wire_type = WireType::try_from_u8(buf[1])?;
+      let wire_type = WireType::try_from_u8(buf[1]).map_err(|_| unknown_wire_type_value(buf[1]))?;
       if wire_type.is_nullable() {
-        return Err(Error::custom("unexpected nested nullable wire type"));
+        return Err(DecodeError::other("unexpected nested nullable wire type"));
       }
       return skip_helper(wire_type, &buf[2..]).map(|len| len + 2);
     }
@@ -240,4 +99,14 @@ fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, Error> {
     WireType::Fixed64 => try_skip_fixed!(8),
     WireType::Fixed128 => try_skip_fixed!(16),
   })
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+fn unknown_wire_type_value(wire_type: u8) -> DecodeError {
+  DecodeError::other(std::format!("unknown wire type value {wire_type}"))
+}
+
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+fn unknown_wire_type_value(_: u8) -> DecodeError {
+  DecodeError::other("unknown wire type value")
 }

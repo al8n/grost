@@ -6,7 +6,7 @@ pub use repeated_map_decoder::*;
 use varing::decode_u32_varint;
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
     groto::{Context, Error, Identifier, Tag},
@@ -65,7 +65,7 @@ where
   let encoded_len = encoded_raw_len();
   let buf_len = buf.len();
   if buf_len < encoded_len {
-    return Err(Error::insufficient_buffer(encoded_len, buf_len));
+    return Err(Error::buffer_too_small(encoded_len, buf_len));
   }
 
   let mut offset = 0;
@@ -76,7 +76,7 @@ where
   // encode the elements
   for item in iter {
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     offset += encode(item, &ki, &vi, &mut buf[offset..])?;
@@ -114,14 +114,14 @@ where
 
   let buf_len = buf.len();
   if buf_len < encoded_len {
-    return Err(Error::insufficient_buffer(encoded_len, buf_len));
+    return Err(Error::buffer_too_small(encoded_len, buf_len));
   }
 
   let mut offset = 0;
 
   // encode total bytes
   if encoded_len > u32::MAX as usize {
-    return Err(Error::too_large(encoded_len, u32::MAX as usize));
+    return Err(Error::payload_too_large(encoded_len, u32::MAX as usize));
   }
 
   let total_bytes = encoded_raw_len as u32;
@@ -138,7 +138,7 @@ where
   // encode the elements
   for item in iter {
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     offset += encode(item, &ki, &vi, &mut buf[offset..])?;
@@ -155,7 +155,7 @@ fn packed_decode<'a, K, KW, V, VW, T, RB>(
   mut merge_decode: impl FnMut(&mut T, &Identifier, &Identifier, RB) -> Result<usize, Error>,
 ) -> Result<(usize, T), Error>
 where
-  RB: ReadBuf,
+  RB: Buf,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
@@ -227,7 +227,7 @@ where
   let encoded_len = encoded_raw_len();
   let buf_len = buf.len();
   if buf_len < encoded_len {
-    return Err(Error::insufficient_buffer(encoded_len, buf_len));
+    return Err(Error::buffer_too_small(encoded_len, buf_len));
   }
 
   let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
@@ -237,7 +237,7 @@ where
   let mut offset = 0;
   for item in iter {
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     offset += encode(item, &ei, &ki, &vi, &mut buf[offset..])?;
@@ -256,7 +256,7 @@ fn repeated_decode<'a, KW, VW, T, RB, const TAG: u32>(
   ) -> Result<Option<usize>, Error>,
 ) -> Result<usize, Error>
 where
-  RB: ReadBuf,
+  RB: Buf,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
@@ -295,7 +295,7 @@ where
   VW: WireFormat<Groto> + 'a,
   K: 'a,
   V: 'a,
-  RB: ReadBuf + 'a,
+  RB: Buf + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
   I: Iterator<Item = Result<(usize, PartialDecomposableMapEntry<KO, VO>), Error>>,
 {

@@ -1,4 +1,7 @@
-use super::{error::ParseTagError, identifier::Identifier};
+use super::{
+  error::{DecodeError, ParseTagError},
+  identifier::Identifier,
+};
 
 pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
@@ -184,14 +187,6 @@ const _: () = {
   );
 };
 
-/// The error for the flavor.
-pub trait FlavorError<F: ?Sized + Flavor>:
-  core::error::Error + From<super::error::Error<F>>
-{
-  /// Update the error with the required and remaining buffer capacity.
-  fn update_insufficient_buffer(&mut self, required: usize, remaining: usize);
-}
-
 /// The flavor of the encoding and decoding.
 pub trait Flavor: core::fmt::Debug + 'static {
   /// The identifier used for this flavor.
@@ -217,37 +212,8 @@ pub trait Flavor: core::fmt::Debug + 'static {
   #[cfg(feature = "quickcheck")]
   type Context: quickcheck::Arbitrary;
 
-  /// The error for this flavor.
-  type Error: FlavorError<Self>;
-
   /// The name of the flavor.
   const NAME: &'static str;
-
-  // /// Encodes the unknown value into a buffer.
-  // fn encode_unknown<'de, B>(
-  //   ctx: &Self::Context,
-  //   value: &Self::Unknown<B>,
-  //   buf: &mut [u8],
-  // ) -> Result<usize, Self::Error>
-  // where
-  //   B: ReadBuf + 'de;
-
-  // /// Returns the length of the encoded unknown value.
-  // fn encoded_unknown_len<'de, B>(ctx: &Self::Context, value: &Self::Unknown<B>) -> usize
-  // where
-  //   B: ReadBuf + 'de;
-
-  // /// Decodes an unknown value from a buffer.
-  // ///
-  // /// This function is used as a handler for unknown identifiers when decoding
-  // /// a message. It is called when the identifier is not recognized by the
-  // /// flavor.
-  // fn decode_unknown<'de, B>(
-  //   ctx: &Self::Context,
-  //   buf: B,
-  // ) -> Result<(usize, Self::Unknown<B>), Self::Error>
-  // where
-  //   B: ReadBuf + 'de;
 
   /// Try to peek the raw data according to the wire type.
   ///
@@ -255,9 +221,11 @@ pub trait Flavor: core::fmt::Debug + 'static {
   /// it should return an error.
   ///
   /// Returns the number of bytes for the next data.
-  fn peek_raw(
+  fn peek_raw<B>(
     ctx: &Self::Context,
     wire_type: Self::WireType,
-    buf: &[u8],
-  ) -> Result<usize, Self::Error>;
+    buf: &B,
+  ) -> Result<usize, DecodeError<Self>>
+  where
+    B: crate::buffer::Buf;
 }

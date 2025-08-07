@@ -357,31 +357,31 @@ impl Context {
     &self,
     expected: usize,
     actual: usize,
-  ) -> Result<(), super::Error> {
+  ) -> Result<(), super::DecodeError> {
     if self.err_on_length_mismatch() && expected != actual {
       #[cfg(any(feature = "std", feature = "alloc"))]
       let err = format!("expected {expected} elements, but got {actual} elements");
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       let err = "expected elements not match actual elements";
-      Err(super::Error::custom(err))
+      Err(super::DecodeError::other(err))
     } else {
       Ok(())
     }
   }
 
   #[inline]
-  pub(crate) fn err_duplicated_set_keys(&self, duplicated: bool) -> Result<(), super::Error> {
+  pub(crate) fn err_duplicated_set_keys(&self, duplicated: bool) -> Result<(), super::DecodeError> {
     if duplicated && self.err_on_duplicated_set_keys() {
-      Err(super::Error::custom("duplicated keys in set"))
+      Err(super::DecodeError::other("duplicated keys in set"))
     } else {
       Ok(())
     }
   }
 
   #[inline]
-  pub(crate) fn err_duplicated_map_keys(&self, duplicated: bool) -> Result<(), super::Error> {
+  pub(crate) fn err_duplicated_map_keys(&self, duplicated: bool) -> Result<(), super::DecodeError> {
     if duplicated && self.err_on_duplicated_map_keys() {
-      Err(super::Error::custom("duplicated keys in map"))
+      Err(super::DecodeError::other("duplicated keys in map"))
     } else {
       Ok(())
     }

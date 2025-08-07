@@ -1,7 +1,11 @@
 use varing::Varint;
 
 use super::{Tag, WireType};
-use crate::error::ParseTagError;
+
+use crate::{
+  buffer::{Buf, BufExt, BufMut, WriteBuf},
+  error::{DecodeTagError, ParseTagError},
+};
 
 /// An identifier for a field in a graph protocol buffer message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, derive_more::Display)]
@@ -9,13 +13,21 @@ use crate::error::ParseTagError;
 pub struct Identifier {
   wire_type: WireType,
   tag: Tag,
+  merged: u32,
+  encoded: varing::utils::Buffer<6>,
 }
 
 impl Identifier {
   /// Creates a new identifier with the given wire type and tag.
   #[inline]
   pub const fn new(wire_type: WireType, tag: Tag) -> Self {
-    Self { wire_type, tag }
+    let merged = merge_to_u32(tag, wire_type);
+    Self {
+      wire_type,
+      tag,
+      merged,
+      encoded: varing::encode_u32_varint(merged),
+    }
   }
 
   /// Returns the wire type of the identifier.
@@ -39,7 +51,7 @@ impl Identifier {
   /// Returns the encoded identifier as a `u32`.
   #[inline]
   pub const fn to_u32(&self) -> u32 {
-    (self.tag.get() << 3) | (self.wire_type as u8 as u32)
+    self.merged
   }
 
   /// Creates an identifier from a `u32` value.
@@ -73,65 +85,41 @@ impl Identifier {
   /// Encodes the identifier.
   #[inline]
   pub const fn encode(&self) -> varing::utils::Buffer<6> {
-    varing::encode_u32_varint(self.to_u32())
+    self.encoded
   }
 
   /// Returns the encoded length of the identifier.
   #[inline]
   pub const fn encoded_len(&self) -> usize {
-    varing::encoded_u32_varint_len(self.to_u32())
+    self.encoded.len()
   }
 
   /// Encodes the identifier.
   #[inline]
-  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::Error> {
-    match self.encode_to_inner(dst) {
-      Ok(bytes_written) => Ok(bytes_written),
-      Err(e) => Err(super::Error::from_varint_encode_error(e)),
+  pub const fn encode_to(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
+    match varing::encode_u32_varint_to(self.merged, dst) {
+      Ok(len) => Ok(len),
+      Err(e) => Err(super::EncodeError::from_varint_error(e)),
     }
   }
 
   /// Decodes an identifier from a buffer.
   #[inline]
-  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::Error> {
+  pub const fn decode(buf: &[u8]) -> Result<(usize, Self), super::DecodeError> {
     match Self::decode_inner(buf) {
       Ok((bytes_read, value)) => Ok((bytes_read, value)),
-      Err(e) => Err(super::Error::from_varint_decode_error(e)),
+      Err(e) => Err(super::DecodeError::from_decode_tag_error(e)),
     }
   }
 
-  const fn encode_to_inner(&self, dst: &mut [u8]) -> Result<usize, varing::EncodeError> {
-    varing::encode_u32_varint_to(self.to_u32(), dst)
-  }
-
-  pub(super) const fn decode_inner(buf: &[u8]) -> Result<(usize, Self), varing::DecodeError> {
+  pub(super) const fn decode_inner(buf: &[u8]) -> Result<(usize, Self), DecodeTagError> {
     match varing::decode_u32_varint(buf) {
-      Ok((bytes_read, value)) => Ok((bytes_read, Self::from_u32(value))),
-      Err(e) => Err(e),
+      Ok((bytes_read, value)) => match Self::try_from_u32(value) {
+        Ok(identifier) => Ok((bytes_read, identifier)),
+        Err(e) => Err(DecodeTagError::Parse(e)),
+      },
+      Err(e) => Err(DecodeTagError::Read(e)),
     }
-  }
-}
-
-impl Varint for Identifier {
-  const MIN_ENCODED_LEN: usize = 1;
-  const MAX_ENCODED_LEN: usize = u32::MAX_ENCODED_LEN;
-
-  #[inline]
-  fn encoded_len(&self) -> usize {
-    self.encoded_len()
-  }
-
-  #[inline]
-  fn encode(&self, buf: &mut [u8]) -> Result<usize, varing::EncodeError> {
-    self.encode_to_inner(buf)
-  }
-
-  #[inline]
-  fn decode(buf: &[u8]) -> Result<(usize, Self), varing::DecodeError>
-  where
-    Self: Sized,
-  {
-    Self::decode_inner(buf)
   }
 }
 
@@ -144,22 +132,36 @@ impl crate::identifier::Identifier<super::Groto> for Identifier {
     self.wire_type
   }
 
-  fn encode<B>(&self, dst: &mut B) -> Result<usize, super::Error>
+  fn encode<B>(&self, dst: impl Into<WriteBuf<B>>) -> Result<usize, super::EncodeError>
   where
-    B: crate::buffer::WriteBuf + ?Sized,
+    B: BufMut,
   {
-    self.encode_to(dst.as_mut_slice())
+    let mut dst: WriteBuf<B> = dst.into();
+    dst
+      .try_write_slice(self.encoded.as_slice())
+      .map_err(Into::into)
   }
 
   fn encoded_len(&self) -> usize {
     self.encoded_len()
   }
 
-  fn decode<'de, B>(buf: B) -> Result<(usize, Self), super::Error>
+  fn decode<'de, B>(mut buf: B) -> Result<(usize, Self), super::DecodeError>
   where
-    B: crate::buffer::ReadBuf + Sized + 'de,
+    B: Buf + Sized + 'de,
     Self: Sized,
   {
-    Self::decode(buf.remaining_slice())
+    match buf.read_varint::<u32>() {
+      Ok((read, val)) => match Self::try_from_u32(val) {
+        Ok(id) => Ok((read, id)),
+        Err(e) => Err(e.into()),
+      },
+      Err(e) => Err(e.into()),
+    }
   }
+}
+
+#[inline(always)]
+const fn merge_to_u32(tag: Tag, wire_type: WireType) -> u32 {
+  (tag.get() << 3) | (wire_type as u8 as u32)
 }

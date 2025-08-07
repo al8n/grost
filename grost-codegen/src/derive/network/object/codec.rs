@@ -61,7 +61,7 @@ impl Groto {
     });
 
     quote! {
-      fn insufficient_buffer_error<T, W>(
+      fn buffer_too_small_error<T, W>(
         f: &T,
         ctx: &<#path_to_grost::__private::flavors::Groto as #path_to_grost::__private::flavors::Flavor>::Context,
         selector: ::core::option::Option<&<T as #path_to_grost::__private::selection::Selectable<#path_to_grost::__private::flavors::Groto, W>>::Selector>,
@@ -84,7 +84,7 @@ impl Groto {
       {
         match selector {
           ::core::option::Option::Some(selector) => {
-            #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+            #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
               <T as #path_to_grost::__private::PartialEncode<
                 #path_to_grost::__private::flavors::Groto,
                 W,
@@ -93,7 +93,7 @@ impl Groto {
             )
           }
           ::core::option::Option::None => {
-            #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+            #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
               <T as #path_to_grost::__private::Encode<
                 #path_to_grost::__private::flavors::Groto,
                 W,
@@ -158,7 +158,7 @@ impl Groto {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(f, ctx),
                     buf_len,
                   ),
@@ -170,7 +170,7 @@ impl Groto {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(f, ctx),
                     buf_len,
                   ),
@@ -206,7 +206,7 @@ impl Groto {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -218,7 +218,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -322,7 +322,7 @@ impl Groto {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(f, ctx, selector),
                     buf_len,
                   ),
@@ -334,7 +334,7 @@ impl Groto {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(f, ctx, selector),
                     buf_len,
                   ),
@@ -372,7 +372,7 @@ impl Groto {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -384,7 +384,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -659,7 +659,7 @@ impl Groto {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(field, ctx, selector),
                     buf_len,
                   ),
@@ -671,7 +671,7 @@ impl Groto {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(field, ctx, selector),
                     buf_len,
                   ),
@@ -721,7 +721,7 @@ impl Groto {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -733,7 +733,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx, selector),
                 buf_len,
               ),
@@ -1014,7 +1014,7 @@ impl Groto {
               let mut offset = 0;
               if offset > buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(field, ctx),
                     buf_len,
                   ),
@@ -1026,7 +1026,7 @@ impl Groto {
 
               if offset >= buf_len {
                 return ::core::result::Result::Err(
-                  #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                  #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                     (ENCODED_LEN_FN)(field, ctx),
                     buf_len,
                   ),
@@ -1075,7 +1075,7 @@ impl Groto {
           let mut offset = 0;
           if offset > buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),
@@ -1087,7 +1087,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::flavors::groto::Error::buffer_too_small(
                 (ENCODED_LEN_FN)(f, ctx),
                 buf_len,
               ),

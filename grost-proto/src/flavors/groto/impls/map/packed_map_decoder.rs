@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -141,11 +141,11 @@ impl<'a, K, V, RB, B, KW, VW> Encode<PackedEntry<KW, VW>, Groto>
   for PackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
@@ -153,7 +153,7 @@ where
     let start_offset = self.data_offset + self.num_elements_size;
 
     match buf.prefix_mut_checked(src_len) {
-      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      None => Err(Error::buffer_too_small(src_len, buf_len)),
       Some(buf) => {
         buf.copy_from_slice(&self.src.remaining_slice()[start_offset..]);
         Ok(src_len)
@@ -168,14 +168,14 @@ where
 
   fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     let src = &self.src;
     let buf_len = buf.len();
     let src_len = src.remaining();
 
     match buf.prefix_mut_checked(src_len) {
-      None => Err(Error::insufficient_buffer(src_len, buf_len)),
+      None => Err(Error::buffer_too_small(src_len, buf_len)),
       Some(buf) => {
         buf.copy_from_slice(src.remaining_slice());
         Ok(src_len)
@@ -194,17 +194,17 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
   V: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     // Check if either key or value selector is empty
     if selector.is_empty() {
@@ -225,11 +225,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -253,12 +253,12 @@ where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::ReadBuf,
+    RB: crate::buffer::Buf,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let buf = src.remaining_slice();
@@ -421,7 +421,7 @@ where
   K: Decode<'de, KW, RB, UB, Groto> + 'de,
   V: Decode<'de, VW, RB, UB, Groto> + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
   type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
 
@@ -474,6 +474,6 @@ where
   K: Decode<'de, KW, RB, B, Groto> + 'de,
   V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: ReadBuf + 'de,
+  RB: Buf + 'de,
 {
 }

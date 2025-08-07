@@ -1,9 +1,10 @@
-use crate::{identifier::Identifier, selection::Selector};
+use bufkit::WriteBuf;
+
+use crate::{error::EncodeError, identifier::Identifier, selection::Selector};
 
 use super::{
-  buffer::WriteBuf,
-  error::Error,
-  flavors::{Flavor, FlavorError, WireFormat},
+  buffer::{BufMut, BufMutExt},
+  flavors::{Flavor, WireFormat},
   selection::Selectable,
 };
 
@@ -193,9 +194,13 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   /// // encode_raw()    -> [0x2a, 0x00, 0x00, 0x00]                 (4 bytes)
   /// // encode()        -> [0x2a, 0x00, 0x00, 0x00]                 (same, self-describing)
   /// ```
-  fn encode_raw<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+  fn encode_raw<B>(
+    &self,
+    context: &F::Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized;
+    B: BufMut;
 
   /// Returns the exact number of bytes that `encode_raw` will write.
   ///
@@ -234,9 +239,13 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   ///
   /// - For **not self-describing encode wire format**: `encode_raw` produces
   ///   different output than `encode` because it omits the self-describing information that `encode` includes.
-  fn encode<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+  fn encode<B>(
+    &self,
+    context: &F::Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized;
+    B: BufMut;
 
   /// Returns the exact number of bytes that `encode` will write.
   ///
@@ -272,28 +281,35 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   /// // For a message that encodes to 5 bytes:
   /// // encode_length_delimited() -> [0x05, ...5 bytes of encoded message...]
   /// ```
-  fn encode_length_delimited<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+  fn encode_length_delimited<B>(
+    &self,
+    context: &F::Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
+    let mut buf = buf.into();
     let encoded_len = self.encoded_len(context);
-    let buf_len = buf.len();
-    let offset = buf.write_u32_varint(encoded_len as u32).map_err(|e| {
-      Error::from_varint_encode_error(e).update(self.encoded_length_delimited_len(context), buf_len)
-    })?;
+    let buf_len = buf.mutable();
+    let offset = buf
+      .write_varint::<u32>(&(encoded_len as u32))
+      .map_err(|e| {
+        EncodeError::from_varint_error(e)
+          .propagate_buffer_info(|| self.encoded_length_delimited_len(context), || buf_len)
+      })?;
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(required, buf_len).into());
+      return Err(EncodeError::buffer_too_small(required, buf_len).into());
     }
 
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     self
-      .encode(context, &mut buf[offset..])
+      .encode::<&mut B>(context, buf.as_mut())
       .map(|v| {
         #[cfg(debug_assertions)]
         {
@@ -302,10 +318,7 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
 
         required
       })
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(required, buf_len);
-        e
-      })
+      .map_err(|e| e.propagate_buffer_info(|| required, || buf_len))
   }
 
   /// Returns the number of bytes needed for length-delimited encoding.
@@ -331,29 +344,32 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
 
   /// Encodes the raw message into a [`Vec`](std::vec::Vec).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_raw_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::Error> {
+  fn encode_raw_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.encoded_raw_len(context)];
-    self.encode_raw(context, &mut buf)?;
+    self.encode_raw(context, buf.as_mut_slice())?;
     Ok(buf)
   }
 
   /// Encodes the message into a [`Vec`](std::vec::Vec).
   #[cfg(any(feature = "std", feature = "alloc"))]
-  fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, F::Error> {
+  fn encode_to_vec(&self, context: &F::Context) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.encoded_len(context)];
-    self.encode(context, &mut buf)?;
+    self.encode(context, buf.as_mut_slice())?;
     Ok(buf)
   }
 
   /// Encodes the message into a [`Bytes`](super::bytes::Bytes).
   #[cfg(all(any(feature = "std", feature = "alloc"), feature = "bytes"))]
-  fn encode_raw_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::Error> {
+  fn encode_raw_to_bytes(
+    &self,
+    context: &F::Context,
+  ) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self.encode_raw_to_vec(context).map(Into::into)
   }
 
   /// Encodes the message into a [`Bytes`](super::bytes::Bytes).
   #[cfg(all(any(feature = "std", feature = "alloc"), feature = "bytes"))]
-  fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, F::Error> {
+  fn encode_to_bytes(&self, context: &F::Context) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self.encode_to_vec(context).map(Into::into)
   }
 
@@ -362,9 +378,9 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   fn encode_length_delimited_to_vec(
     &self,
     context: &F::Context,
-  ) -> Result<std::vec::Vec<u8>, F::Error> {
+  ) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.encoded_length_delimited_len(context)];
-    self.encode_length_delimited(context, &mut buf)?;
+    self.encode_length_delimited(context, buf.as_mut_slice())?;
     Ok(buf)
   }
 
@@ -373,7 +389,7 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   fn partial_encode_length_delimited_to_bytes(
     &self,
     context: &F::Context,
-  ) -> Result<super::bytes::Bytes, F::Error> {
+  ) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self.encode_length_delimited_to_vec(context).map(Into::into)
   }
 }
@@ -498,11 +514,11 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode_raw<B>(
     &self,
     context: &F::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized;
+    B: BufMut;
 
   /// Returns the exact number of bytes that `partial_encode_raw` will write for the selected fields.
   ///
@@ -559,11 +575,11 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode<B>(
     &self,
     context: &F::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized;
+    B: BufMut;
 
   /// Returns the exact number of bytes that `partial_encode` will write for the selected fields.
   ///
@@ -604,33 +620,33 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
+    let mut buf = buf.into();
     let encoded_len = self.partial_encoded_len(context, selector);
-    let buf_len = buf.len();
-    let offset = buf.write_u32_varint(encoded_len as u32).map_err(|e| {
-      Error::from_varint_encode_error(e).update(
-        self.partial_encoded_length_delimited_len(context, selector),
-        buf_len,
+    let buf_len = buf.mutable();
+    let offset = buf.write_varint(&(encoded_len as u32)).map_err(|e| {
+      EncodeError::from_varint_error(e).propagate_buffer_info(
+        || self.partial_encoded_length_delimited_len(context, selector),
+        || buf_len,
       )
     })?;
 
     let required = encoded_len + offset;
     if offset + encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(required, buf_len).into());
+      return Err(EncodeError::buffer_too_small(required, buf_len).into());
     }
 
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     self
-      .partial_encode(context, &mut buf[offset..], selector)
+      .partial_encode::<&mut B>(context, buf.as_mut(), selector)
       .map(|v| {
         #[cfg(debug_assertions)]
         {
@@ -639,10 +655,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
 
         required
       })
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(required, buf_len);
-        e
-      })
+      .map_err(|e| e.propagate_buffer_info(|| required, || buf_len))
   }
 
   /// Returns the number of bytes needed for length-delimited encoding of selected fields.
@@ -679,9 +692,9 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<std::vec::Vec<u8>, F::Error> {
+  ) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.partial_encoded_raw_len(context, selector)];
-    self.partial_encode_raw(context, &mut buf, selector)?;
+    self.partial_encode_raw(context, &mut buf.as_mut_slice(), selector)?;
     Ok(buf)
   }
 
@@ -693,7 +706,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<super::bytes::Bytes, F::Error> {
+  ) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self
       .partial_encode_raw_to_vec(context, selector)
       .map(Into::into)
@@ -708,9 +721,9 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<std::vec::Vec<u8>, F::Error> {
+  ) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.partial_encoded_len(context, selector)];
-    self.partial_encode(context, &mut buf, selector)?;
+    self.partial_encode(context, buf.as_mut_slice(), selector)?;
     Ok(buf)
   }
 
@@ -722,7 +735,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<super::bytes::Bytes, F::Error> {
+  ) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self
       .partial_encode_to_vec(context, selector)
       .map(Into::into)
@@ -737,9 +750,9 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<std::vec::Vec<u8>, F::Error> {
+  ) -> Result<std::vec::Vec<u8>, EncodeError<F>> {
     let mut buf = std::vec![0; self.partial_encoded_length_delimited_len(context, selector)];
-    self.partial_encode_length_delimited(context, &mut buf, selector)?;
+    self.partial_encode_length_delimited(context, buf.as_mut_slice(), selector)?;
     Ok(buf)
   }
 
@@ -751,7 +764,7 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
     &self,
     context: &F::Context,
     selector: &Self::Selector,
-  ) -> Result<super::bytes::Bytes, F::Error> {
+  ) -> Result<super::bytes::Bytes, EncodeError<F>> {
     self
       .partial_encode_length_delimited_to_vec(context, selector)
       .map(Into::into)
@@ -881,46 +894,45 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
   ///
   /// ## Returns
   /// - `Ok(usize)`: Number of bytes written (identifier + selected data)
-  /// - `Err(F::Error)`: Buffer insufficient or encoding error
+  /// - `Err(EncodeError<F>)`: Buffer insufficient or encoding error
   ///
   /// ## Buffer Requirements
   /// The buffer must be large enough to hold both the identifier and the selected data.
   /// Use `partial_encoded_raw_field_len()` to determine the required buffer size.
-  fn partial_encode_raw_field(
+  fn partial_encode_raw_field<B>(
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut impl WriteBuf,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error> {
+  ) -> Result<usize, EncodeError<F>>
+  where
+    B: BufMut,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    let buf_len = buf.len();
+    let mut buf = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.partial_encoded_raw_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     let written = self
-      .partial_encode_raw(context, &mut buf[offset..], selector)
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(encoded_len, buf_len);
-        e
-      })?;
+      .partial_encode_raw::<&mut B>(context, buf.as_mut(), selector)
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -973,41 +985,40 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
   /// ## Decoder Compatibility
   /// The output of this method can be decoded by partial decoders that expect
   /// the standard field encoding format.
-  fn partial_encode_field(
+  fn partial_encode_field<B>(
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut impl WriteBuf,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error> {
+  ) -> Result<usize, EncodeError<F>>
+  where
+    B: BufMut,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    let buf_len = buf.len();
+    let mut buf: WriteBuf<B> = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.partial_encoded_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     let written = self
-      .partial_encode(context, &mut buf[offset..], selector)
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(encoded_len, buf_len);
-        e
-      })?;
+      .partial_encode::<&mut B>(context, buf.as_mut(), selector)
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -1057,41 +1068,40 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
   ///
   /// ## Empty Selection Behavior
   /// Returns `Ok(0)` without writing any bytes if the selector is empty.
-  fn partial_encode_length_delimited_field(
+  fn partial_encode_length_delimited_field<B>(
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut impl WriteBuf,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error> {
+  ) -> Result<usize, EncodeError<F>>
+  where
+    B: BufMut,
+  {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    let buf_len = buf.len();
+    let mut buf = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.partial_encoded_length_delimited_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     let written = self
-      .partial_encode_length_delimited(context, &mut buf[offset..], selector)
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(encoded_len, buf_len);
-        e
-      })?;
+      .partial_encode_length_delimited::<&mut B>(context, buf.as_mut(), selector)
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -1248,7 +1258,7 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
   ///
   /// ## Returns
   /// - `Ok(usize)`: Number of bytes written to the buffer (identifier + complete raw data)
-  /// - `Err(F::Error)`: Encoding failed due to insufficient buffer space or encoding error
+  /// - `Err(EncodeError<F>)`: Encoding failed due to insufficient buffer space or encoding error
   ///
   /// ## Buffer Requirements
   /// The buffer must be large enough to hold both the field identifier and the complete
@@ -1276,35 +1286,32 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut B,
-  ) -> Result<usize, F::Error>
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
-    let buf_len = buf.len();
+    let mut buf: WriteBuf<B> = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.encoded_raw_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
+    let buf = buf.buffer_mut();
     let written = self
-      .encode_raw(context, &mut buf[offset..])
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(encoded_len, buf_len);
-        e
-      })?;
+      .encode_raw(context, &mut &mut buf[offset..])
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -1348,33 +1355,31 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut B,
-  ) -> Result<usize, F::Error>
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
-    let buf_len = buf.len();
+    let mut buf: WriteBuf<B> = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.encoded_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
-    let written = self.encode(context, &mut buf[offset..]).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let written = self
+      .encode::<&mut B>(context, buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -1416,35 +1421,31 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: &mut B,
-  ) -> Result<usize, F::Error>
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
-    let buf_len = buf.len();
+    let mut buf: WriteBuf<B> = buf.into();
+    let buf_len = buf.mutable();
     let encoded_data_len = self.encoded_length_delimited_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let mut offset = identifier.encode(buf).map_err(|mut e| {
-      e.update_insufficient_buffer(encoded_len, buf_len);
-      e
-    })?;
+    let mut offset = identifier
+      .encode::<&mut B>(buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
 
     if offset + encoded_data_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len).into());
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len).into());
     }
 
-    let buf = buf.as_mut_slice();
     let written = self
-      .encode_length_delimited(context, &mut buf[offset..])
-      .map_err(|mut e| {
-        e.update_insufficient_buffer(encoded_len, buf_len);
-        e
-      })?;
+      .encode_length_delimited::<&mut B>(context, buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
     offset += written;
 
     #[cfg(debug_assertions)]
@@ -1486,10 +1487,10 @@ where
   fn encode_raw<B>(
     &self,
     context: &<F as Flavor>::Context,
-    buf: &mut B,
-  ) -> Result<usize, <F as Flavor>::Error>
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).encode_raw(context, buf)
   }
@@ -1498,9 +1499,13 @@ where
     (*self).encoded_raw_len(context)
   }
 
-  fn encode<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+  fn encode<B>(
+    &self,
+    context: &F::Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).encode(context, buf)
   }
@@ -1509,9 +1514,13 @@ where
     (*self).encoded_len(context)
   }
 
-  fn encode_length_delimited<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+  fn encode_length_delimited<B>(
+    &self,
+    context: &F::Context,
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).encode_length_delimited(context, buf)
   }
@@ -1530,11 +1539,11 @@ where
   fn partial_encode_raw<B>(
     &self,
     context: &<F as Flavor>::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <F as Flavor>::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).partial_encode_raw(context, buf, selector)
   }
@@ -1550,11 +1559,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &F::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).partial_encode(context, buf, selector)
   }
@@ -1566,11 +1575,11 @@ where
   fn partial_encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, F::Error>
+  ) -> Result<usize, EncodeError<F>>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     (*self).partial_encode_length_delimited(context, buf, selector)
   }
@@ -1616,9 +1625,9 @@ macro_rules! deref_encode_impl {
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
-        fn encode_raw<B>(&self, context: &<F as Flavor>::Context, buf: &mut B) -> Result<usize, <F as Flavor>::Error>
+        fn encode_raw<B>(&self, context: &<F as Flavor>::Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).encode_raw(context, buf)
         }
@@ -1627,9 +1636,9 @@ macro_rules! deref_encode_impl {
           (**self).encoded_raw_len(context)
         }
 
-        fn encode<B>(&self, context: &F::Context, buf: &mut B) -> Result<usize, F::Error>
+        fn encode<B>(&self, context: &F::Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).encode(context, buf)
         }
@@ -1641,10 +1650,10 @@ macro_rules! deref_encode_impl {
         fn encode_length_delimited<B>(
           &self,
           context: &F::Context,
-          buf: &mut B,
-        ) -> Result<usize, F::Error>
+          buf: impl Into<WriteBuf<B>>,
+        ) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).encode_length_delimited(context, buf)
         }
@@ -1678,11 +1687,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode_raw<B>(
           &self,
           context: &<F as Flavor>::Context,
-          buf: &mut B,
+          buf: impl Into<WriteBuf<B>>,
           selector: &Self::Selector,
-        ) -> Result<usize, <F as Flavor>::Error>
+        ) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).partial_encode_raw(context, buf, selector)
         }
@@ -1698,11 +1707,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode<B>(
           &self,
           context: &F::Context,
-          buf: &mut B,
+          buf: impl Into<WriteBuf<B>>,
           selector: &Self::Selector,
-        ) -> Result<usize, F::Error>
+        ) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).partial_encode(context, buf, selector)
         }
@@ -1714,11 +1723,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode_length_delimited<B>(
           &self,
           context: &F::Context,
-          buf: &mut B,
+          buf: impl Into<WriteBuf<B>>,
           selector: &Self::Selector,
-        ) -> Result<usize, F::Error>
+        ) -> Result<usize, EncodeError<F>>
         where
-          B: WriteBuf + ?Sized,
+          B: BufMut,
         {
           (**self).partial_encode_length_delimited(context, buf, selector)
         }
@@ -1750,6 +1759,3 @@ const _: () = {
   deref_encode_impl!(Arc<T>);
   deref_partial_encode_impl!(Arc<T>);
 };
-
-#[test]
-fn t() {}

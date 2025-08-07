@@ -26,7 +26,7 @@ pub mod identifier;
 /// The reflection of the Graph protocol buffer types
 pub mod reflection;
 
-/// The buffer trait
+/// Utilities for working with the buffers
 pub mod buffer;
 
 /// The decoding trait
@@ -114,19 +114,19 @@ pub mod __private {
   pub use varing;
 
   #[cfg(not(any(feature = "std", feature = "alloc")))]
-  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  pub fn larger_than_array_capacity<F, const N: usize>() -> DecodeError<F>
   where
     F: flavors::Flavor + ?Sized,
   {
-    Error::custom("cannot decode array with length greater than the capacity")
+    DecodeError::other("cannot decode array with length greater than the capacity")
   }
 
   #[cfg(any(feature = "std", feature = "alloc"))]
-  pub fn larger_than_array_capacity<F, const N: usize>() -> Error<F>
+  pub fn larger_than_array_capacity<F, const N: usize>() -> DecodeError<F>
   where
     F: flavors::Flavor + ?Sized,
   {
-    Error::custom(std::format!(
+    DecodeError::other(std::format!(
       "cannot decode array with length greater than the capacity {N}"
     ))
   }

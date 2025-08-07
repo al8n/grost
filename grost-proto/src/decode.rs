@@ -1,6 +1,6 @@
 use super::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
-  error::Error,
+  buffer::{Buf, BufExt, UnknownBuffer},
+  error::DecodeError,
   flavors::{Flavor, WireFormat},
 };
 
@@ -86,7 +86,7 @@ where
 /// - `'de`: Lifetime of the input data.
 /// - `F`: The decoding flavor (e.g., [`Groto`](crate::flavors::Groto) or other implementations) implementing the [`Flavor`] trait.
 /// - `W`: The wire format strategy of the flavor, which must implement [`WireFormat<F>`].
-/// - `RB`: The type of the read buffer used for decoding, which must implement [`ReadBuf`].
+/// - `RB`: The type of the read buffer used for decoding, which must implement [`Buf`].
 /// - `B`: The buffer implementation used to store the unknown data during decoding, which must implement [`Buffer`].
 pub trait Decode<'de, W, RB, B, F>
 where
@@ -96,47 +96,54 @@ where
   /// Decodes an instance from a raw byte slice.
   ///
   /// Returns a tuple with the number of bytes consumed and the decoded output.
-  fn decode(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
+  fn decode(context: &'de F::Context, src: RB) -> Result<(usize, Self), DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, F> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
   ///
   /// The input buffer is expected to be length-prefixed with a `u32` encoded in varint format.
-  fn decode_length_delimited(context: &'de F::Context, src: RB) -> Result<(usize, Self), F::Error>
+  fn decode_length_delimited(
+    context: &'de F::Context,
+    mut src: RB,
+  ) -> Result<(usize, Self), DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, F> + 'de,
   {
-    let as_bytes = src.remaining_slice();
-    let (len_size, len) = varing::decode_u32_varint(as_bytes).map_err(Error::from)?;
+    let (len_size, len) = src.read_varint::<u32>()?;
     let src_len = src.remaining();
     let len = len as usize;
     let total = len_size + len;
     if total > src_len {
-      return Err(Error::buffer_underflow().into());
+      return Err(DecodeError::insufficient_data_with_requested(
+        src_len, total,
+      ));
     }
 
     if len_size >= src_len {
-      return Err(Error::buffer_underflow().into());
+      return Err(DecodeError::insufficient_data_with_requested(
+        src_len, total,
+      ));
     }
 
     Self::decode(context, src.segment(len_size..total))
   }
 
   /// Decodes an instance from a raw byte slice, merging the result into the current instance.
-  fn merge_decode(&mut self, ctx: &'de F::Context, src: RB) -> Result<usize, F::Error>
+  fn merge_decode(&mut self, ctx: &'de F::Context, src: RB) -> Result<usize, DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     B: UnknownBuffer<RB, F> + 'de,
   {
-    let _ = ctx;
-    let _ = src;
-    Err(Error::unmergeable(core::any::type_name::<Self>(), W::WIRE_TYPE).into())
+    Self::decode(ctx, src).map(|(read, val)| {
+      *self = val;
+      read
+    })
   }
 }
 
@@ -166,10 +173,10 @@ macro_rules! deref_decode_impl {
         W: WireFormat<F>,
         T: Decode<'de, W, RB, B, F>,
       {
-        fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, Self), <F as Flavor>::Error>
+        fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: ReadBuf + 'de,
+          RB: Buf + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           T::decode(context, src).map(|(size, output)| (size, Self::new(output)))
@@ -178,19 +185,19 @@ macro_rules! deref_decode_impl {
         fn decode_length_delimited(
           context: &'de <F as Flavor>::Context,
           src: RB,
-        ) -> Result<(usize, Self), <F as Flavor>::Error>
+        ) -> Result<(usize, Self), DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: ReadBuf + 'de,
+          RB: Buf + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           T::decode_length_delimited(context, src).map(|(size, output)| (size, Self::new(output)))
         }
 
-        fn merge_decode(&mut self, ctx: &'de <F as Flavor>::Context, src: RB) -> Result<usize, <F as Flavor>::Error>
+        fn merge_decode(&mut self, ctx: &'de <F as Flavor>::Context, src: RB) -> Result<usize, DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: ReadBuf + 'de,
+          RB: Buf + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           if let Some(val) = <$ty>::get_mut(self) {
@@ -198,7 +205,7 @@ macro_rules! deref_decode_impl {
           }
 
           Err(::core::convert::Into::into(
-            $crate::error::Error::custom(concat!(
+            $crate::error::DecodeError::other(concat!(
               "cannot merge decode into ",
               stringify!($ty),
               " as there are other references to the same allocation"
@@ -223,10 +230,10 @@ const _: () = {
     fn decode(
       context: &'de <F as Flavor>::Context,
       src: RB,
-    ) -> Result<(usize, Self), <F as Flavor>::Error>
+    ) -> Result<(usize, Self), DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: ReadBuf + 'de,
+      RB: Buf + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::decode(context, src).map(|(size, output)| (size, Box::new(output)))
@@ -235,10 +242,10 @@ const _: () = {
     fn decode_length_delimited(
       context: &'de <F as Flavor>::Context,
       src: RB,
-    ) -> Result<(usize, Self), <F as Flavor>::Error>
+    ) -> Result<(usize, Self), DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: ReadBuf + 'de,
+      RB: Buf + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::decode_length_delimited(context, src).map(|(size, output)| (size, Box::new(output)))
@@ -248,10 +255,10 @@ const _: () = {
       &mut self,
       ctx: &'de <F as Flavor>::Context,
       src: RB,
-    ) -> Result<usize, <F as Flavor>::Error>
+    ) -> Result<usize, DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: ReadBuf + 'de,
+      RB: Buf + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::merge_decode(&mut **self, ctx, src)

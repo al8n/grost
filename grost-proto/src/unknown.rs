@@ -1,4 +1,9 @@
-use crate::{buffer::ReadBuf, error::Error, flavors::Flavor, identifier::Identifier};
+use crate::{
+  buffer::Buf,
+  error::{DecodeError, EncodeError},
+  flavors::Flavor,
+  identifier::Identifier,
+};
 
 /// The unknown type, used for forward and backward compatibility.
 /// The data is stored as a byte array, including the wire type and the tag,
@@ -19,23 +24,25 @@ pub struct Unknown<B: ?Sized, F: Flavor + ?Sized> {
 
 impl<B, F> Unknown<B, F>
 where
-  B: ?Sized,
   F: Flavor + ?Sized,
+  B: ?Sized,
 {
   /// Decodes the unknown data from the given context and data.
   ///
   /// Returns the number of bytes consumed and the decoded unknown data.
-  pub fn decode(ctx: &F::Context, data: &B) -> Result<(usize, Self), F::Error>
+  pub fn decode(ctx: &F::Context, data: &B) -> Result<(usize, Self), DecodeError<F>>
   where
-    B: Sized + ReadBuf,
+    B: Buf + Sized,
   {
-    let (identifier_len, identifier) =
-      <F::Identifier as Identifier<F>>::decode(data.remaining_slice())?;
+    let (identifier_len, identifier) = <F::Identifier as Identifier<F>>::decode(data.buffer())?;
 
-    let data_len = F::peek_raw(ctx, identifier.wire_type(), data.remaining_slice())?;
+    let data_len = F::peek_raw(ctx, identifier.wire_type(), data)?;
     let total_len = identifier_len + data_len;
     if total_len > data.remaining() {
-      return Err(Error::insufficient_buffer(total_len, data.remaining()).into());
+      return Err(DecodeError::insufficient_data_with_requested(
+        data.remaining(),
+        total_len,
+      ));
     }
     Ok((
       identifier_len + data_len,
@@ -50,14 +57,14 @@ where
   }
 
   /// Encodes the unknown data into the given buffer.
-  pub fn encode(&self, buf: &mut [u8]) -> Result<usize, F::Error>
+  pub fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError<F>>
   where
-    B: ReadBuf,
+    B: Buf,
   {
     let value_bytes = self.raw();
     let value_len = value_bytes.len();
     if value_len > buf.len() {
-      return Err(Error::insufficient_buffer(value_len, buf.len()).into());
+      return Err(EncodeError::buffer_too_small(value_len, buf.len()));
     }
 
     buf[..value_len].copy_from_slice(value_bytes);
@@ -67,7 +74,7 @@ where
   /// Returns the encoded length of the unknown data.
   pub fn encoded_len(&self) -> usize
   where
-    B: ReadBuf,
+    B: Buf,
   {
     self.raw().len()
   }
@@ -91,37 +98,33 @@ where
   #[inline]
   pub fn data(&self) -> &[u8]
   where
-    B: ReadBuf,
+    B: Buf,
   {
-    let bytes = self.data.remaining_slice();
-    let len = bytes.len();
-    if len < self.encoded_identifier_len {
+    if self.data.remaining() <= self.encoded_identifier_len {
       return &[];
     }
 
     if self.encoded_identifier_len == 0 {
-      return bytes;
+      return self.data.buffer();
     }
 
-    &self.data.remaining_slice()[self.encoded_identifier_len..]
+    &self.data.buffer()[self.encoded_identifier_len..]
   }
 
   /// Returns the owned data of the unknown data type.
   ///
   /// Note: The data does not include the wire type and the tag.
   #[inline]
-  pub fn data_owned(self) -> B
+  pub fn data_owned(&self) -> B
   where
-    B: ReadBuf + Sized,
+    B: Buf + Sized,
   {
-    let bytes = self.data.remaining_slice();
-    let len = bytes.len();
-    if len < self.encoded_identifier_len {
-      return B::empty();
+    if self.data.remaining() <= self.encoded_identifier_len {
+      return self.data.segment(..0);
     }
 
     if self.encoded_identifier_len == 0 {
-      return self.data;
+      return self.data.segment(..);
     }
 
     self.data.segment(self.encoded_identifier_len..)
@@ -134,9 +137,9 @@ where
   #[inline]
   pub fn raw(&self) -> &[u8]
   where
-    B: ReadBuf,
+    B: Buf,
   {
-    self.data.remaining_slice()
+    self.data.buffer()
   }
 
   /// Returns the owned raw data of the unknown data type.
@@ -144,15 +147,15 @@ where
   /// Note: The data includes the wire type and the tag.
   /// If you want to access the actual data, use [`data_owned`] instead.
   #[inline]
-  pub fn raw_owned(self) -> B
+  pub fn raw_owned(&self) -> B
   where
-    B: ReadBuf + Sized,
+    B: Buf + Sized,
   {
-    self.data.clone()
+    self.data.segment(..)
   }
 }
 
-impl<B: ?Sized, F> Unknown<B, F>
+impl<B, F> Unknown<B, F>
 where
   F: Flavor + ?Sized,
 {
@@ -160,7 +163,7 @@ where
   pub fn map<'a, N>(&'a self) -> Unknown<N, F>
   where
     N: From<&'a [u8]>,
-    B: ReadBuf,
+    B: Buf,
   {
     Unknown {
       tag: self.tag,
@@ -186,3 +189,6 @@ where
     }
   }
 }
+
+#[test]
+fn t() {}

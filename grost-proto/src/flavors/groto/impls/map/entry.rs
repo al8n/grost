@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, BufExt, BufMutExt, WriteBuf, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
-    groto::{Context, Error, Identifier},
+    groto::{Context, EncodeError, DecodeError, Identifier},
   },
   selection::Selectable,
 };
@@ -92,7 +92,7 @@ impl<K, V> PartialMapEntry<K, V> {
 
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self.encode_helper(ctx, buf, ki, vi).map(|written| {
@@ -143,7 +143,7 @@ impl<K, V> PartialMapEntry<K, V> {
       .map_err(|e| Error::from_varint_encode_error(e).update(encoded_entry_len, buf_len))?;
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self.encode_helper(ctx, buf, ki, vi).map(|written| {
@@ -193,7 +193,7 @@ impl<K, V> PartialMapEntry<K, V> {
       .map_err(|e| Error::from_varint_encode_error(e).update(encoded_entry_len, buf_len))?;
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self
@@ -258,7 +258,7 @@ impl<K, V> PartialMapEntry<K, V> {
 
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self
@@ -301,7 +301,7 @@ impl<K, V> PartialMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -333,7 +333,7 @@ impl<K, V> PartialMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -377,7 +377,7 @@ impl<K, V> PartialMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -444,7 +444,7 @@ impl<K, V> PartialMapEntry<K, V> {
     let encoded_len = self.encoded_len_helper::<KW, VW>(ctx, ki, vi);
     let buf_len = buf.len();
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     let mut offset = 0;
@@ -509,7 +509,7 @@ impl<K, V> PartialMapEntry<K, V> {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
     let buf_len = buf.len();
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     let mut offset = 0;
@@ -628,7 +628,7 @@ impl<K, V> MapEntry<K, V> {
 
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self.encode_helper(ctx, buf, ki, vi).map(|written| {
@@ -679,7 +679,7 @@ impl<K, V> MapEntry<K, V> {
       .map_err(|e| Error::from_varint_encode_error(e).update(encoded_entry_len, buf_len))?;
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self.encode_helper(ctx, buf, ki, vi).map(|written| {
@@ -729,7 +729,7 @@ impl<K, V> MapEntry<K, V> {
       .map_err(|e| Error::from_varint_encode_error(e).update(encoded_entry_len, buf_len))?;
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self
@@ -794,7 +794,7 @@ impl<K, V> MapEntry<K, V> {
 
     let total = offset + encoded_entry_len;
     if total >= buf_len {
-      return Err(Error::insufficient_buffer(total, buf_len));
+      return Err(Error::buffer_too_small(total, buf_len));
     }
 
     self
@@ -837,7 +837,7 @@ impl<K, V> MapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -870,7 +870,7 @@ impl<K, V> MapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -907,27 +907,27 @@ impl<K, V> MapEntry<K, V> {
 
   fn decode_entry_helper<'de, KW, VW, RB, UB>(
     ctx: &'de Context,
-    src: RB,
+    mut src: RB,
     ki: &Identifier,
     vi: &Identifier,
   ) -> Result<(usize, Self), Error>
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: ReadBuf + 'de,
+    RB: Buf + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
   {
     let buf_len = src.remaining();
-    let buf = src.remaining_slice();
+    // let buf = src.remaining_slice();
     let mut offset = 0;
 
     let mut k = None;
     let mut v = None;
 
     while offset < buf_len {
-      let (identifier_size, identifier) = Identifier::decode(&buf[offset..])?;
+      let (identifier_size, identifier) = src.read_varint::<u32>()?;
       offset += identifier_size;
 
       if offset >= buf_len {
@@ -989,7 +989,7 @@ impl<K, V> MapEntry<K, V> {
     let encoded_len = self.encoded_len_helper::<KW, VW>(ctx, ki, vi);
     let buf_len = buf.len();
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     let mut offset = 0;
@@ -1046,7 +1046,7 @@ impl<K, V> MapEntry<K, V> {
     let encoded_len = self.partial_encoded_len_helper::<KW, VW>(ctx, ki, vi, selector);
     let buf_len = buf.len();
     if encoded_len > buf_len {
-      return Err(Error::insufficient_buffer(encoded_len, buf_len));
+      return Err(Error::buffer_too_small(encoded_len, buf_len));
     }
 
     let mut offset = 0;

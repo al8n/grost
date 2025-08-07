@@ -71,7 +71,7 @@ impl Groto {
       quote! {
         if offset >= buf_len {
           return ::core::result::Result::Err(
-            #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+            #path_to_grost::__private::error::EncodeError::buffer_too_small(
               #self_encoded_len,
               buf_len,
             ),
@@ -138,7 +138,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::error::EncodeError::buffer_too_small(#self_encoded_length_delimited_len, buf_len)
             );
           }
 
@@ -199,7 +199,7 @@ impl Groto {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::error::EncodeError::buffer_too_small(
                 #self_encoded_len,
                 buf_len,
               ),
@@ -218,7 +218,7 @@ impl Groto {
           if let ::core::option::Option::Some(ref f) = self.#field_name {
             if offset >= buf_len {
               return ::core::result::Result::Err(
-                #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                #path_to_grost::__private::error::EncodeError::buffer_too_small(
                   #self_encoded_len,
                   buf_len,
                 ),
@@ -256,7 +256,7 @@ impl Groto {
           //     for unknown in unknowns {
           //       if offset >= buf_len {
           //         return ::core::result::Result::Err(
-          //           #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(#self_encoded_len, buf_len),
+          //           #path_to_grost::__private::error::EncodeError::buffer_too_small(#self_encoded_len, buf_len),
           //         );
           //       }
 
@@ -319,7 +319,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::error::EncodeError::buffer_too_small(#self_encoded_length_delimited_len, buf_len)
             );
           }
 
@@ -380,7 +380,7 @@ impl Groto {
         quote! {
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+              #path_to_grost::__private::error::EncodeError::buffer_too_small(
                 #self_encoded_len,
                 buf_len,
               ),
@@ -399,7 +399,7 @@ impl Groto {
           if let ::core::option::Option::Some(ref f) = self.#field_name {
             if offset >= buf_len {
               return ::core::result::Result::Err(
-                #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(
+                #path_to_grost::__private::error::EncodeError::buffer_too_small(
                   #self_encoded_len,
                   buf_len,
                 ),
@@ -437,7 +437,7 @@ impl Groto {
           //     for unknown in unknowns {
           //       if offset >= buf_len {
           //         return ::core::result::Result::Err(
-          //           #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(#self_encoded_len, buf_len),
+          //           #path_to_grost::__private::error::EncodeError::buffer_too_small(#self_encoded_len, buf_len),
           //         );
           //       }
 
@@ -500,7 +500,7 @@ impl Groto {
 
           if offset >= buf_len {
             return ::core::result::Result::Err(
-              #path_to_grost::__private::flavors::groto::Error::insufficient_buffer(#self_encoded_length_delimited_len, buf_len)
+              #path_to_grost::__private::error::EncodeError::buffer_too_small(#self_encoded_length_delimited_len, buf_len)
             );
           }
 

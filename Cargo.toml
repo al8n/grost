@@ -37,7 +37,7 @@ quote = { version = "1", default-features = false }
 syn = "2"
 smol_str = { version = "0.3", default-features = false }
 thiserror = { version = "2", default-features = false }
-varing = { version = "0.5", default-features = false }
+varing = { version = "0.8", default-features = false }
 
 grost-codegen = { version = "0.1", path = "./grost-codegen", default-features = false }
 grost-derive = { version = "0.1", path = "./grost-derive", default-features = false }

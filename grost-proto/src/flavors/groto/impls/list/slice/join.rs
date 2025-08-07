@@ -1,5 +1,5 @@
 use crate::{
-  buffer::WriteBuf,
+  buffer::BufMut,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, JoinAscii, JoinChar, WireFormat,
@@ -13,11 +13,11 @@ macro_rules! blanket_partial_encode_impl {
     fn partial_encode_raw<WB>(
       &self,
       context: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
       selector: &Self::Selector,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
       if !*selector {
         return Ok(0);
@@ -37,11 +37,11 @@ macro_rules! blanket_partial_encode_impl {
     fn partial_encode<WB>(
       &self,
       context: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
       selector: &Self::Selector,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
       if *selector {
         <Self as Encode<$wf, Groto>>::encode(self, context, buf)
@@ -76,13 +76,13 @@ where
   let mut offset = 0;
   for value in input.iter() {
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(data_len, buf_len));
+      return Err(Error::buffer_too_small(data_len, buf_len));
     }
 
     if !fill_bytes.is_empty() {
       let len = fill_bytes.len();
       if offset + len >= buf_len {
-        return Err(Error::insufficient_buffer(data_len, buf_len));
+        return Err(Error::buffer_too_small(data_len, buf_len));
       }
       buf[offset..offset + len].copy_from_slice(fill_bytes);
       offset += len;
@@ -91,7 +91,7 @@ where
     let bytes = value.as_ref();
     let bytes_len = bytes.len();
     if offset + bytes_len >= buf_len {
-      return Err(Error::insufficient_buffer(data_len, buf_len));
+      return Err(Error::buffer_too_small(data_len, buf_len));
     }
     buf[offset..offset + bytes_len].copy_from_slice(bytes);
     offset += bytes_len;
@@ -130,7 +130,7 @@ where
   let data_len = get_data_len();
   let this_len = varing::encoded_u32_varint_len(data_len as u32) + data_len;
   if buf_len < this_len {
-    return Err(Error::insufficient_buffer(this_len, buf_len));
+    return Err(Error::buffer_too_small(this_len, buf_len));
   }
 
   let mut offset = varing::encode_u32_varint_to(data_len as u32, buf)
@@ -138,13 +138,13 @@ where
 
   for value in input.iter() {
     if offset >= buf_len {
-      return Err(Error::insufficient_buffer(this_len, buf_len));
+      return Err(Error::buffer_too_small(this_len, buf_len));
     }
 
     if !fill_bytes.is_empty() {
       let len = fill_bytes.len();
       if offset + len >= buf_len {
-        return Err(Error::insufficient_buffer(data_len, buf_len));
+        return Err(Error::buffer_too_small(data_len, buf_len));
       }
       buf[offset..offset + len].copy_from_slice(fill_bytes);
       offset += len;
@@ -153,7 +153,7 @@ where
     let bytes = value.as_ref();
     let bytes_len = bytes.len();
     if offset + bytes_len >= buf_len {
-      return Err(Error::insufficient_buffer(data_len, buf_len));
+      return Err(Error::buffer_too_small(data_len, buf_len));
     }
     buf[offset..offset + bytes_len].copy_from_slice(bytes);
     offset += bytes_len;
@@ -179,12 +179,12 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
-      encode_raw(self, buf.as_mut_slice(), JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
+      encode_raw(self, buf.buffer_mut(), JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
 
     fn encoded_raw_len(&self, _: &Context) -> usize {
@@ -194,14 +194,14 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode<WB>(
       &self,
       context: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
       encode(
         self,
-        buf.as_mut_slice(),
+        buf.buffer_mut(),
         JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES,
         || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, context),
       )
@@ -230,12 +230,12 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
-      encode_raw(self, buf.as_mut_slice(), JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
+      encode_raw(self, buf.buffer_mut(), JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
 
     fn encoded_raw_len(&self, _: &Context) -> usize {
@@ -245,14 +245,14 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode<WB>(
       &self,
       context: &Context,
-      buf: &mut WB,
+      buf: impl Into<WriteBuf<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: WriteBuf + ?Sized,
+      WB: BufMut,
     {
       encode(
         self,
-        buf.as_mut_slice(),
+        buf.buffer_mut(),
         JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES,
         || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, context),
       )

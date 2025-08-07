@@ -74,7 +74,7 @@ pub enum DecodeError {
 
   /// Returned when the type cannot be decoded in the given wire type format
   #[display("cannot decode {ty} in {wire_type} format in {flavor} flavor", flavor = Select::NAME)]
-  UnsupportedWireType {
+  IncompatibleWireType {
     /// The type of the value.
     ty: &'static str,
     /// The wire type of the value.
@@ -144,7 +144,7 @@ impl From<BaseDecodeError<super::Select>> for DecodeError {
       BaseDecodeError::UnknownIdentifier { ty, identifier } => {
         Self::unknown_identifier(ty, identifier)
       }
-      BaseDecodeError::UnsupportedWireType { ty, wire_type } => {
+      BaseDecodeError::IncompatibleWireType { ty, wire_type } => {
         Self::unsupported_wire_type(ty, wire_type)
       }
       BaseDecodeError::LengthDelimitedOverflow => Self::LengthDelimitedOverflow,
@@ -203,7 +203,7 @@ impl DecodeError {
   /// Creates a wire type not supported error.
   #[inline]
   pub const fn unsupported_wire_type(ty: &'static str, wire_type: SelectorWireType) -> Self {
-    Self::UnsupportedWireType { ty, wire_type }
+    Self::IncompatibleWireType { ty, wire_type }
   }
 
   /// Creates an unsupported identifier error

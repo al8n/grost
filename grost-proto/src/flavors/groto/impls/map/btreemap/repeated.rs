@@ -4,7 +4,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{ReadBuf, UnknownBuffer, WriteBuf},
+  buffer::{Buf, BufMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -62,7 +62,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = BTreeMap::new();
@@ -75,7 +75,7 @@ where
   fn merge_decode(&mut self, context: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: ReadBuf + 'a,
+    RB: Buf + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, decoder) = RepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(context, src)?;
@@ -96,12 +96,12 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encoded_raw_len(self, context),
       |item, ei, ki, vi, buf| MapEntry::from(item).encode_repeated(context, buf, ei, ki, vi),
@@ -114,9 +114,9 @@ where
     })
   }
 
-  fn encode<WB>(&self, context: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -137,18 +137,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf.as_mut_slice(),
+      buf.buffer_mut(),
       self.iter(),
       || {
         <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
@@ -174,11 +174,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: &mut WB,
+    buf: impl Into<WriteBuf<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: WriteBuf + ?Sized,
+    WB: BufMut,
   {
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -201,7 +201,7 @@ where
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -211,7 +211,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -239,7 +239,7 @@ where
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -249,7 +249,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: ReadBuf + 'a,
+//     RB: Buf + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -281,7 +281,7 @@ where
 //   <V as State<PartialRef<'a, VW, RB, B, Groto>>>::Output:
 //     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
 //   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
-//   RB: ReadBuf + 'a,
+//   RB: Buf + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

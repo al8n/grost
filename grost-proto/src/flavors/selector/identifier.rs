@@ -163,7 +163,7 @@ impl crate::identifier::Identifier<super::Select> for SelectorIdentifier {
 
   fn encode(&self, dst: &mut [u8]) -> Result<usize, super::EncodeError> {
     if dst.is_empty() {
-      return Err(EncodeError::insufficient_buffer(1, 0));
+      return Err(EncodeError::buffer_too_small(1, 0));
     }
 
     dst[0] = self.as_u8();

@@ -2,11 +2,11 @@ use indexmap_2::IndexMap;
 
 use super::super::{DecomposableMapSelector, DecomposablePartialMapBuffer};
 use crate::{
-  buffer::Buffer,
+  buffer::{Buffer, WriteBuf, Buf, BufMut},
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
-    groto::{Context, Error},
+    groto::{Context, EncodeError, DecodeError},
   },
   selection::Selectable,
   state::{Partial, State},

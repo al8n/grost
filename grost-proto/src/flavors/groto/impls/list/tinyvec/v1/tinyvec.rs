@@ -1,7 +1,7 @@
 use tinyvec_1::TinyVec;
 
 use crate::{
-  buffer::ReadBuf,
+  buffer::Buf,
   decode::BytesSlice,
   flavors::{Groto, groto::LengthDelimited},
   state::Partial,
@@ -35,7 +35,7 @@ encode_list!(@borrow :<A: tinyvec_1::Array<Item = &'b T>>: TinyVec<A>);
 length!(:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 selectable!(:<A: tinyvec_1::Array<Item = T>>: TinyVec<A>);
 
-bidi_equivalent!(:<RB: ReadBuf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf, A: tinyvec_1::Array<Item = u8>>: impl<TinyVec<A>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 bidi_equivalent!(:<A: tinyvec_1::Array<Item = u8>>: impl <TinyVec<A>, LengthDelimited> for <[u8], LengthDelimited>);
 
 impl<T, const N: usize> State<Partial<Groto>> for TinyVec<[T; N]>

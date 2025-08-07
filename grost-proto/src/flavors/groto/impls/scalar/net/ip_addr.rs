@@ -1,14 +1,15 @@
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use core::num::NonZeroUsize;
 
 use crate::{
-  buffer::{ReadBuf, WriteBuf},
+  buffer::{Buf, BufExt, BufMut, UnknownBuffer, WriteBuf},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
   flatten_state,
   flavors::{
     Groto,
-    groto::{Context, Error, Fixed32, Fixed128, LengthDelimited, Varint},
+    groto::{Context, DecodeError, EncodeError, Fixed32, Fixed128, LengthDelimited, Varint},
   },
   partial_encode_scalar, partial_ref_state, partial_state, ref_state, selectable,
 };
@@ -21,10 +22,10 @@ macro_rules! ip_addr {
       fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: &mut B,
-      ) -> Result<usize, Error>
+        buf: impl Into<WriteBuf<B>>,
+      ) -> Result<usize, EncodeError>
       where
-        B: WriteBuf + ?Sized,
+        B: BufMut,
       {
         <$convert as Encode<$variant, Groto>>::encode_raw(
           &self.to_bits(),
@@ -33,20 +34,20 @@ macro_rules! ip_addr {
         )
       }
 
-      fn encoded_raw_len(&self, _: &Context) -> usize {
+      fn encoded_raw_len(&self, ctx: &Context) -> usize {
         <$convert as Encode<$variant, Groto>>::encoded_raw_len(
           &self.to_bits(),
-          &Context::default(),
+          ctx,
         )
       }
 
       fn encode<B>(
         &self,
         context: &Context,
-        buf: &mut B,
-      ) -> Result<usize, Error>
+        buf: impl Into<WriteBuf<B>>,
+      ) -> Result<usize, EncodeError>
       where
-        B: WriteBuf + ?Sized,
+        B: BufMut,
       {
         <$convert as Encode<$variant, Groto>>::encode(
           &self.to_bits(),
@@ -55,10 +56,10 @@ macro_rules! ip_addr {
         )
       }
 
-      fn encoded_len(&self, _: &Context) -> usize {
+      fn encoded_len(&self, ctx: &Context) -> usize {
         <$convert as Encode<$variant, Groto>>::encoded_len(
           &self.to_bits(),
-          &Context::default(),
+          ctx,
         )
       }
     }
@@ -67,10 +68,10 @@ macro_rules! ip_addr {
       fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: &mut B,
-      ) -> Result<usize, Error>
+        buf: impl Into<WriteBuf<B>>,
+      ) -> Result<usize, EncodeError>
       where
-        B: WriteBuf + ?Sized,
+        B: BufMut,
       {
         <$convert as Encode<Varint, Groto>>::encode_raw(
           &self.to_bits(),
@@ -89,10 +90,10 @@ macro_rules! ip_addr {
       fn encode<B>(
         &self,
         context: &Context,
-        buf: &mut B,
-      ) -> Result<usize, Error>
+        buf: impl Into<WriteBuf<B>>,
+      ) -> Result<usize, EncodeError>
       where
-        B: WriteBuf + ?Sized,
+        B: BufMut,
       {
         <$convert as Encode<Varint, Groto>>::encode(
           &self.to_bits(),
@@ -113,11 +114,11 @@ macro_rules! ip_addr {
       fn decode(
         ctx: &'de Context,
         src: RB,
-      ) -> Result<(usize, Self), Error>
+      ) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
-        RB: ReadBuf + 'de,
-        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
+        RB: Buf + 'de,
+        B: UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, $variant, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
@@ -128,11 +129,11 @@ macro_rules! ip_addr {
       fn decode(
         ctx: &'de Context,
         src: RB,
-      ) -> Result<(usize, Self), Error>
+      ) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
-        RB: ReadBuf + 'de,
-        B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
+        RB: Buf + 'de,
+        B: UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, Varint, RB, B, Groto>>::decode(ctx, src)
           .map(|(len, val)| (len, $addr::from_bits($convert::from_le(val))))
@@ -169,10 +170,10 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
   fn encode_raw<B>(
     &self,
     context: &<Groto as crate::flavors::Flavor>::Context,
-    buf: &mut B,
-  ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
+    buf: impl Into<WriteBuf<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     match self {
       Self::V4(ipv4_addr) => {
@@ -195,24 +196,25 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
     }
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
+    let mut buf: WriteBuf<B> = buf.into();
     macro_rules! encode_ip_variant {
       ($variant:ident::$wt:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {
-          if buf.len() < [< $variant:upper _LEN >] + 1 {
-            return Err(Error::insufficient_buffer(
+          if buf.mutable() < [< $variant:upper _LEN >] + 1 {
+            return Err(EncodeError::buffer_too_small(
               [< $variant:upper _LEN >] + 1,
-              buf.len(),
+              buf.mutable(),
             ));
           }
 
-          <[< $variant:camel Addr>] as Encode<$wt, Groto>>::encode_length_delimited(
+          <[< $variant:camel Addr>] as Encode<$wt, Groto>>::encode_length_delimited::<&mut B>(
             $ip,
             context,
-            buf,
+            buf.as_mut(),
           )
         }
       }};
@@ -236,22 +238,25 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
 }
 
 impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
-  fn decode(_: &Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf,
-    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
+    RB: Buf,
+    B: UnknownBuffer<RB, Groto> + 'de,
   {
-    let src = src.remaining_slice();
+    let remaining = src.remaining();
     macro_rules! decode_ip_variant {
       ($repr:ident($variant:literal)) => {{
         paste::paste! {
-          if src.len() < [< IPV $variant _LEN >] + 1 {
-            return Err(Error::buffer_underflow());
-          }
-
           let ip = [< Ipv $variant Addr >]::from_bits($repr::from_le_bytes(
-            src[1..[< IPV $variant _LEN >] + 1].try_into().unwrap(),
+            src
+              .try_read_array::<[< IPV $variant _LEN >]>()
+              .map_err(|e| {
+                DecodeError::from(e).propagate_buffer_info(
+                  || Some(NonZeroUsize::new([< IPV $variant _LEN >] + 1).expect("+ 1 must be non-zero")),
+                  || remaining,
+                )
+              })?,
           ));
 
           ([< IPV $variant _LEN >] + 1, IpAddr::from(ip))
@@ -259,45 +264,48 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
       }};
     }
 
-    if !src.has_remaining() {
-      return Err(Error::buffer_underflow());
+    if remaining == 0 {
+      return Err(DecodeError::insufficient_data(remaining));
     }
 
-    let tag = src[0];
+    let tag = src.try_read_u8()?;
     Ok(match tag {
       IPV4_TAG => decode_ip_variant!(u32(4)),
       IPV6_TAG => decode_ip_variant!(u128(6)),
-      _ => return Err(Error::custom("unknown ip tag")),
+      _ => return Err(DecodeError::other("unknown ip tag")),
     })
   }
 
-  fn decode_length_delimited(_: &Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode_length_delimited(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: ReadBuf,
-    B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
+    RB: Buf,
+    B: UnknownBuffer<RB, Groto> + 'de,
   {
-    let src = src.remaining_slice();
-
+    let remaining = src.remaining();
     macro_rules! decode_ip_variant {
-      ($variant:ident($repr:ident, $read:ident)) => {{
+      ($variant:ident($repr:ident)) => {{
         paste::paste! {
-          if src.len() < [< $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
-            return Err(Error::buffer_underflow());
-          }
           let ip = [< $variant:camel Addr >]::from_bits($repr::from_le_bytes(
-            src[$read..$read + [< $variant _LEN >]].try_into().unwrap(),
+            src
+              .try_read_array::<[< $variant _LEN >]>()
+              .map_err(|e| {
+                DecodeError::from(e).propagate_buffer_info(
+                  || Some(NonZeroUsize::new([< $variant _ENCODED_LENGTH_DELIMITED_LEN >]).expect("must be non-zero")),
+                  || remaining,
+                )
+              })?,
           ));
           Ok(([< $variant _ENCODED_LENGTH_DELIMITED_LEN >], IpAddr::from(ip)))
         }
       }};
     }
 
-    let (read, len) = varing::decode_u32_varint(src)?;
+    let (_, len) = src.read_varint::<u32>()?;
     match len as usize {
-      IPV4_LEN => decode_ip_variant!(IPV4(u32, read)),
-      IPV6_LEN => decode_ip_variant!(IPV6(u128, read)),
-      _ => Err(Error::custom("unknown ip tag")),
+      IPV4_LEN => decode_ip_variant!(IPV4(u32)),
+      IPV6_LEN => decode_ip_variant!(IPV6(u128)),
+      _ => Err(DecodeError::other("unknown ip tag")),
     }
   }
 }
@@ -309,7 +317,7 @@ mod tests {
   quickcheck::quickcheck! {
     fn fuzzy_ipv4_round_trip(ip: Ipv4Addr) -> bool {
       let mut buf = [0u8; 128];
-      let len = <Ipv4Addr as Encode<Fixed32, Groto>>::encode_length_delimited(&ip, &Context::default(), &mut buf).unwrap();
+      let len = <Ipv4Addr as Encode<Fixed32, Groto>>::encode_length_delimited(&ip, &Context::default(), buf.as_mut()).unwrap();
       let encoded_len = <Ipv4Addr as Encode<Fixed32, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
@@ -317,7 +325,7 @@ mod tests {
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
-      let len = <Ipv4Addr as Encode<Varint, Groto>>::encode_length_delimited(&ip, &Context::default(), &mut buf).unwrap();
+      let len = <Ipv4Addr as Encode<Varint, Groto>>::encode_length_delimited(&ip, &Context::default(), buf.as_mut()).unwrap();
       let encoded_len = <Ipv4Addr as Encode<Varint, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
@@ -330,7 +338,7 @@ mod tests {
 
     fn fuzzy_ipv6_round_trip(ip: Ipv6Addr) -> bool {
       let mut buf = [0u8; 128];
-      let len = <Ipv6Addr as Encode<Fixed128, Groto>>::encode_length_delimited(&ip, &Context::default(), &mut buf).unwrap();
+      let len = <Ipv6Addr as Encode<Fixed128, Groto>>::encode_length_delimited(&ip, &Context::default(), buf.as_mut()).unwrap();
       let encoded_len = <Ipv6Addr as Encode<Fixed128, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
@@ -338,7 +346,7 @@ mod tests {
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
-      let len = <Ipv6Addr as Encode<Varint, Groto>>::encode_length_delimited(&ip, &Context::default(), &mut buf).unwrap();
+      let len = <Ipv6Addr as Encode<Varint, Groto>>::encode_length_delimited(&ip, &Context::default(), buf.as_mut()).unwrap();
       let encoded_len = <Ipv6Addr as Encode<Varint, Groto>>::encoded_length_delimited_len(&ip, &Context::default());
       assert_eq!(len, encoded_len);
 
@@ -351,7 +359,7 @@ mod tests {
 
     fn fuzzy_ip_round_trip(ip: IpAddr) -> bool {
       let mut buf = [0u8; 128];
-      let len = ip.encode_length_delimited(&Context::default(), &mut buf).unwrap();
+      let len = ip.encode_length_delimited(&Context::default(), buf.as_mut()).unwrap();
       let encoded_len = ip.encoded_length_delimited_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 
@@ -359,7 +367,7 @@ mod tests {
       assert_eq!(len, encoded_len);
       assert_eq!(decoded, ip);
 
-      let len = ip.encode(&Context::default(),  &mut buf).unwrap();
+      let len = ip.encode(&Context::default(), buf.as_mut()).unwrap();
       let encoded_len = ip.encoded_len(&Context::default(), );
       assert_eq!(len, encoded_len);
 

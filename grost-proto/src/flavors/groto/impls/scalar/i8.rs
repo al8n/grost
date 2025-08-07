@@ -1,6 +1,6 @@
 use crate::{
   bridge, default_scalar_wire_format, flatten_state,
-  flavors::groto::{Error, Fixed8, Groto, Varint},
+  flavors::groto::{DecodeError, Fixed8, Groto, Varint},
   partial_identity, partial_ref_state, partial_state, ref_state, selectable, try_from_bridge,
 };
 use core::num::NonZeroI8;
@@ -39,11 +39,11 @@ bridge!(
 try_from_bridge!(
   Groto: i8 {
     NonZeroI8 as Fixed8 {
-      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| DecodeError::other("value cannot be zero"));
       to: |v: &NonZeroI8| v.get();
     },
     NonZeroI8 as Varint {
-      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| Error::custom("value cannot be zero"));
+      try_from: |v: i8| NonZeroI8::new(v).ok_or_else(|| DecodeError::other("value cannot be zero"));
       to: |v: &NonZeroI8| v.get();
     }
   },

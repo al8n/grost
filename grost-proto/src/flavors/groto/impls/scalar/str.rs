@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{ReadBuf, WriteBuf},
+  buffer::{Buf, BufMut, WriteBuf},
   decode::{BytesSlice, Decode, Str},
   default_string_wire_format,
   encode::{Encode, PartialEncode},
   encode_bridge, flatten_state,
-  flavors::groto::{Context, Error, Groto, LengthDelimited},
+  flavors::groto::{Context, DecodeError, EncodeError, Groto, LengthDelimited},
   partial_ref_state, partial_state, ref_state, selectable,
 };
 
@@ -31,11 +31,11 @@ encode_bridge!(
 
 impl<RB> Encode<LengthDelimited, Groto> for Str<RB>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
-  fn encode_raw<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode_raw<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <str as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
@@ -44,9 +44,9 @@ where
     <str as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode<B>(&self, context: &Context, buf: &mut B) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <str as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
@@ -58,16 +58,16 @@ where
 
 impl<RB> PartialEncode<LengthDelimited, Groto> for Str<RB>
 where
-  RB: ReadBuf,
+  RB: Buf,
 {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(self, context, buf, selector)
   }
@@ -79,11 +79,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: &mut B,
+    buf: impl Into<WriteBuf<B>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    B: WriteBuf + ?Sized,
+    B: BufMut,
   {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
@@ -94,23 +94,23 @@ where
 }
 
 impl<'de: 'a, 'a, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Str<RB> {
-  fn decode(context: &'de Context, src: RB) -> Result<(usize, Str<RB>), Error>
+  fn decode(context: &'de Context, src: RB) -> Result<(usize, Str<RB>), DecodeError>
   where
     Str<RB>: Sized + 'de,
-    RB: crate::buffer::ReadBuf + 'de,
+    RB: crate::buffer::Buf + 'de,
     B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     <BytesSlice<RB> as Decode<'de, LengthDelimited, RB, B, Groto>>::decode(context, src).and_then(
       |(read, val)| {
         Str::try_new(val.into_inner())
-          .map_err(|_| Error::custom("invalid UTF-8"))
+          .map_err(|_| DecodeError::other("invalid UTF-8"))
           .map(|s| (read, s))
       },
     )
   }
 }
 
-bidi_equivalent!(:<RB: ReadBuf>: impl<str, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Buf>: impl<str, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod arc;
