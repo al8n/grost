@@ -6,7 +6,7 @@ use crate::{
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
-    groto::{Context, Error},
+    groto::{Context, DecodeError, EncodeError},
   },
   selection::Selectable,
   state::{Partial, State},

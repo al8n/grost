@@ -1,5 +1,5 @@
 use crate::{
-  buffer::Buf, convert::Extracted, flavors::Flavor, selection::Selectable, state::State,
+  buffer::Chunk, convert::Extracted, flavors::Flavor, selection::Selectable, state::State,
 };
 
 /// The decoded type for `[u8]`
@@ -7,7 +7,7 @@ use crate::{
 #[repr(transparent)]
 pub struct BytesSlice<RB: ?Sized>(RB);
 
-impl<RB: Buf> Default for BytesSlice<RB> {
+impl<RB: Chunk> Default for BytesSlice<RB> {
   fn default() -> Self {
     Self::empty()
   }
@@ -23,7 +23,7 @@ impl<RB: ?Sized, O> State<Extracted<O>> for BytesSlice<RB> {
 
 impl<RB> core::borrow::Borrow<[u8]> for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn borrow(&self) -> &[u8] {
     self
@@ -32,7 +32,7 @@ where
 
 impl<RB> core::hash::Hash for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
     self.as_ref().hash(state);
@@ -41,7 +41,7 @@ where
 
 impl<RB> core::fmt::Debug for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     self.as_ref().fmt(f)
@@ -50,7 +50,7 @@ where
 
 impl<RB> core::ops::Deref for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   type Target = [u8];
 
@@ -61,7 +61,7 @@ where
 
 impl<RB> AsRef<[u8]> for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn as_ref(&self) -> &[u8] {
     self
@@ -82,7 +82,7 @@ impl<RB> BytesSlice<RB> {
   #[inline]
   pub fn empty() -> Self
   where
-    RB: Buf,
+    RB: Chunk,
   {
     Self(RB::empty())
   }
@@ -100,7 +100,7 @@ impl<RB> BytesSlice<RB> {
   #[inline]
   pub fn remaining_slice(&self) -> &[u8]
   where
-    RB: Buf,
+    RB: Chunk,
   {
     self
   }

@@ -1,13 +1,15 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
+use bufkit::RefPeeker;
+
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkWriter, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
-    groto::{Context, Error, Fixed8},
+    groto::{Context, DecodeError, EncodeError, Fixed8},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -166,7 +168,7 @@ impl<'de, T, B, UB, W> PackedDecoder<'de, T, B, UB, W> {
 
 impl<'a, RB, B> PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   /// Returns a slice to the fully decoded byte data.
   ///
@@ -185,23 +187,18 @@ where
   pub fn remaining_slice(&self) -> &[u8] {
     let src = &self.src;
     if !src.has_remaining() {
-      return src.remaining_slice();
-    }
-
-    let src_len = src.remaining();
-    let start_offset = self.data_offset + self.num_elements_size;
-
-    if src_len <= start_offset {
       return &[];
     }
 
-    &src.remaining_slice()[start_offset..]
+    src
+      .buffer_from_checked(self.data_offset + self.num_elements_size)
+      .unwrap_or_default()
   }
 }
 
 impl<'a, RB, B> core::ops::Deref for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   type Target = [u8];
 
@@ -213,7 +210,7 @@ where
 
 impl<'a, RB, B> AsRef<[u8]> for PackedDecoder<'a, u8, RB, B, Fixed8>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   #[inline]
   fn as_ref(&self) -> &[u8] {
@@ -232,26 +229,21 @@ where
 impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    ctx: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
-    let buf_len = buf.len();
-    let src_len = self.encoded_raw_len(ctx);
-    if buf_len < src_len {
-      return Err(Error::buffer_too_small(src_len, buf_len));
-    }
-
+    let mut writer: ChunkWriter<WB> = buf.into();
     let start_offset = self.data_offset + self.num_elements_size;
-    match buf.prefix_mut_checked(src_len) {
-      Some(buf) => {
-        buf.copy_from_slice(&self.src.remaining_slice()[start_offset..]);
-        Ok(src_len)
-      }
-      None => Err(Error::buffer_too_small(src_len, buf_len)),
-    }
+    writer
+      .try_write_slice(self.src.buffer_from(start_offset))
+      .map_err(Into::into)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
@@ -259,25 +251,13 @@ where
     self.src.remaining().saturating_sub(start_offset)
   }
 
-  fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, _: &Context, buf: impl Into<ChunkWriter<WB>>) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     let src = &self.src;
-    let buf_len = buf.len();
-    let src_len = src.remaining();
-
-    if buf_len < src_len {
-      return Err(Error::buffer_too_small(src_len, buf_len));
-    }
-
-    match buf.prefix_mut_checked(src_len) {
-      Some(buf) => {
-        buf.copy_from_slice(src.remaining_slice());
-        Ok(src_len)
-      }
-      None => Err(Error::buffer_too_small(src_len, buf_len)),
-    }
+    let mut writer: ChunkWriter<WB> = buf.into();
+    writer.try_write_slice(src.buffer()).map_err(Into::into)
   }
 
   fn encoded_len(&self, _: &Context) -> usize {
@@ -289,17 +269,17 @@ impl<'a, T, RB, B, W> PartialEncode<Packed<W>, Groto> for PackedDecoder<'a, T, R
 where
   W: WireFormat<Groto> + 'a,
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
   T: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -319,11 +299,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -344,43 +324,47 @@ where
 impl<'a, T, B, W, RB> Decode<'a, Packed<W>, RB, B, Groto> for PackedDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), Error>
+    mut src: RB,
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let buf = src.remaining_slice();
-    let buf_len = buf.len();
-
-    if buf_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
+    let buf_len = src.remaining();
+    let mut peeker = RefPeeker::new(&src);
 
     // Decode the total length prefix
-    let (length_prefix_size, data_length) = varing::decode_u32_varint(buf)?;
+    let (length_prefix_size, data_length) = peeker.read_varint::<u32>()?;
     let data_length = data_length as usize;
 
     // Verify we have enough data for the declared length
     let total_consumed = length_prefix_size + data_length;
     if total_consumed > buf_len {
-      return Err(Error::buffer_underflow());
+      return Err(DecodeError::insufficient_data_with_requested(
+        buf_len,
+        total_consumed,
+      ));
     }
 
     // Decode the element count prefix
     let count_start = length_prefix_size;
-    let (count_prefix_size, element_count) = varing::decode_u32_varint(&buf[count_start..])?;
+    let (count_prefix_size, element_count) = peeker.read_varint::<u32>().map_err(|e| {
+      DecodeError::from_varint_error(e).propagate_buffer_info(|| total_consumed, buf_len)
+    })?;
     let element_count = element_count as usize;
 
+    drop(peeker);
+
+    src.truncate(total_consumed);
     Ok((
       total_consumed,
       Self {
-        src: src.segment(..total_consumed),
+        src,
         data_offset: length_prefix_size,
         expected_elements: element_count,
         num_elements_size: count_prefix_size,
@@ -527,9 +511,9 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
-  type Item = Result<(usize, T), Error>;
+  type Item = Result<(usize, T), DecodeError>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -576,6 +560,6 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
 }

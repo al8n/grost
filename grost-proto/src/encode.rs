@@ -1,9 +1,9 @@
-use bufkit::WriteBuf;
+use bufkit::ChunkWriter;
 
 use crate::{error::EncodeError, identifier::Identifier, selection::Selector};
 
 use super::{
-  buffer::{BufMut, BufMutExt},
+  buffer::{ChunkMut, ChunkMutExt},
   flavors::{Flavor, WireFormat},
   selection::Selectable,
 };
@@ -197,10 +197,10 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   fn encode_raw<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut;
+    B: ChunkMut;
 
   /// Returns the exact number of bytes that `encode_raw` will write.
   ///
@@ -242,10 +242,10 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   fn encode<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut;
+    B: ChunkMut;
 
   /// Returns the exact number of bytes that `encode` will write.
   ///
@@ -284,14 +284,14 @@ pub trait Encode<W: WireFormat<F>, F: Flavor + ?Sized> {
   fn encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     let mut buf = buf.into();
     let encoded_len = self.encoded_len(context);
-    let buf_len = buf.mutable();
+    let buf_len = buf.remaining_mut();
     let offset = buf
       .write_varint::<u32>(&(encoded_len as u32))
       .map_err(|e| {
@@ -514,11 +514,11 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode_raw<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut;
+    B: ChunkMut;
 
   /// Returns the exact number of bytes that `partial_encode_raw` will write for the selected fields.
   ///
@@ -575,11 +575,11 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut;
+    B: ChunkMut;
 
   /// Returns the exact number of bytes that `partial_encode` will write for the selected fields.
   ///
@@ -620,15 +620,15 @@ pub trait PartialEncode<W: WireFormat<F>, F: Flavor + ?Sized>: Selectable<F> {
   fn partial_encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     let mut buf = buf.into();
     let encoded_len = self.partial_encoded_len(context, selector);
-    let buf_len = buf.mutable();
+    let buf_len = buf.remaining_mut();
     let offset = buf.write_varint(&(encoded_len as u32)).map_err(|e| {
       EncodeError::from_varint_error(e).propagate_buffer_info(
         || self.partial_encoded_length_delimited_len(context, selector),
@@ -903,18 +903,18 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     let mut buf = buf.into();
-    let buf_len = buf.mutable();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.partial_encoded_raw_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -989,18 +989,18 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
-    let mut buf: WriteBuf<B> = buf.into();
-    let buf_len = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.partial_encoded_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -1072,18 +1072,18 @@ pub trait PartialEncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: PartialEncod
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     let mut buf = buf.into();
-    let buf_len = buf.mutable();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.partial_encoded_length_delimited_len(context, selector);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -1286,13 +1286,13 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
-    let buf_len = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.encoded_raw_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -1355,13 +1355,13 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
-    let buf_len = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.encoded_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -1421,13 +1421,13 @@ pub trait EncodeField<W: WireFormat<F>, F: Flavor + ?Sized>: Encode<W, F> {
     &self,
     context: &F::Context,
     identifier: &F::Identifier,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
-    let buf_len = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let buf_len = buf.remaining_mut();
     let encoded_data_len = self.encoded_length_delimited_len(context);
     let encoded_len = identifier.encoded_len() + encoded_data_len;
 
@@ -1487,10 +1487,10 @@ where
   fn encode_raw<B>(
     &self,
     context: &<F as Flavor>::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).encode_raw(context, buf)
   }
@@ -1502,10 +1502,10 @@ where
   fn encode<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).encode(context, buf)
   }
@@ -1517,10 +1517,10 @@ where
   fn encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).encode_length_delimited(context, buf)
   }
@@ -1539,11 +1539,11 @@ where
   fn partial_encode_raw<B>(
     &self,
     context: &<F as Flavor>::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).partial_encode_raw(context, buf, selector)
   }
@@ -1559,11 +1559,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).partial_encode(context, buf, selector)
   }
@@ -1575,11 +1575,11 @@ where
   fn partial_encode_length_delimited<B>(
     &self,
     context: &F::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<F>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     (*self).partial_encode_length_delimited(context, buf, selector)
   }
@@ -1625,9 +1625,9 @@ macro_rules! deref_encode_impl {
         F: Flavor + ?Sized,
         W: WireFormat<F>,
       {
-        fn encode_raw<B>(&self, context: &<F as Flavor>::Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError<F>>
+        fn encode_raw<B>(&self, context: &<F as Flavor>::Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).encode_raw(context, buf)
         }
@@ -1636,9 +1636,9 @@ macro_rules! deref_encode_impl {
           (**self).encoded_raw_len(context)
         }
 
-        fn encode<B>(&self, context: &F::Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError<F>>
+        fn encode<B>(&self, context: &F::Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).encode(context, buf)
         }
@@ -1650,10 +1650,10 @@ macro_rules! deref_encode_impl {
         fn encode_length_delimited<B>(
           &self,
           context: &F::Context,
-          buf: impl Into<WriteBuf<B>>,
+          buf: impl Into<ChunkWriter<B>>,
         ) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).encode_length_delimited(context, buf)
         }
@@ -1687,11 +1687,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode_raw<B>(
           &self,
           context: &<F as Flavor>::Context,
-          buf: impl Into<WriteBuf<B>>,
+          buf: impl Into<ChunkWriter<B>>,
           selector: &Self::Selector,
         ) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).partial_encode_raw(context, buf, selector)
         }
@@ -1707,11 +1707,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode<B>(
           &self,
           context: &F::Context,
-          buf: impl Into<WriteBuf<B>>,
+          buf: impl Into<ChunkWriter<B>>,
           selector: &Self::Selector,
         ) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).partial_encode(context, buf, selector)
         }
@@ -1723,11 +1723,11 @@ macro_rules! deref_partial_encode_impl {
         fn partial_encode_length_delimited<B>(
           &self,
           context: &F::Context,
-          buf: impl Into<WriteBuf<B>>,
+          buf: impl Into<ChunkWriter<B>>,
           selector: &Self::Selector,
         ) -> Result<usize, EncodeError<F>>
         where
-          B: BufMut,
+          B: ChunkMut,
         {
           (**self).partial_encode_length_delimited(context, buf, selector)
         }

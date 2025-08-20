@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufMut, WriteBuf},
+  buffer::{Chunk, ChunkMut, ChunkWriter},
   decode::{BytesSlice, Decode, Str},
   default_string_wire_format,
   encode::{Encode, PartialEncode},
@@ -31,15 +31,15 @@ encode_bridge!(
 
 impl<RB> Encode<LengthDelimited, Groto> for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <str as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
@@ -48,9 +48,13 @@ where
     <str as Encode<LengthDelimited, Groto>>::encoded_raw_len(self, context)
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <str as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
@@ -62,16 +66,16 @@ where
 
 impl<RB> PartialEncode<LengthDelimited, Groto> for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(self, context, buf, selector)
   }
@@ -83,11 +87,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <str as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
@@ -101,7 +105,7 @@ impl<'de: 'a, 'a, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Str<RB> 
   fn decode(context: &'de Context, src: RB) -> Result<(usize, Str<RB>), DecodeError>
   where
     Str<RB>: Sized + 'de,
-    RB: crate::buffer::Buf + 'de,
+    RB: crate::buffer::Chunk + 'de,
     B: crate::buffer::UnknownBuffer<RB, Groto> + 'de,
   {
     <BytesSlice<RB> as Decode<'de, LengthDelimited, RB, B, Groto>>::decode(context, src).and_then(
@@ -114,7 +118,7 @@ impl<'de: 'a, 'a, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Str<RB> 
   }
 }
 
-bidi_equivalent!(:<RB: Buf>: impl<str, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Chunk>: impl<str, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod arc;

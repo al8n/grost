@@ -3,7 +3,7 @@ use super::HashSet;
 use core::hash::{BuildHasher, Hash};
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -53,7 +53,7 @@ where
   fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     packed_decode::<K, KW, Self, RB>(
@@ -86,10 +86,10 @@ where
   fn encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     packed_encode_raw::<K, _, _, _>(
       buf.buffer_mut(),
@@ -106,10 +106,10 @@ where
   fn encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     packed_encode::<K, _, _, _>(
       buf.buffer_mut(),
@@ -135,11 +135,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if *selector {
       return Ok(0);
@@ -159,11 +159,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if *selector {
       return Ok(0);
@@ -187,7 +187,7 @@ where
 //   K: TryFromRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -197,7 +197,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
-//     RB: Buf + 'a,
+//     RB: Chunk + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -221,7 +221,7 @@ where
 //   K: TryFromPartialRef<'a, KW, RB, B, Groto> + Eq + Hash + 'a,
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   S: BuildHasher + Default,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -231,7 +231,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
-//     RB: Buf + 'a,
+//     RB: Chunk + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -257,7 +257,7 @@ where
 //     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
 //   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
 //   S: BuildHasher + Default,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

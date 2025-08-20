@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -61,16 +61,16 @@ where
   fn encode_nullable<B, F, R>(
     &self,
     context: &Context,
-    mut buf: WriteBuf<B>,
+    mut buf: ChunkWriter<B>,
     get_len: F,
     encode_fn: R,
   ) -> Result<usize, EncodeError>
   where
     F: Fn(&T, &Context) -> usize,
-    R: Fn(&T, &Context, WriteBuf<&mut B>) -> Result<usize, EncodeError>,
-    B: BufMut,
+    R: Fn(&T, &Context, ChunkWriter<&mut B>) -> Result<usize, EncodeError>,
+    B: ChunkMut,
   {
-    let remaining = buf.mutable();
+    let remaining = buf.remaining_mut();
 
     if remaining == 0 {
       let required_len = if let Some(value) = self.value {
@@ -112,22 +112,22 @@ where
   fn partial_encode_nullable<B, F, R, S>(
     &self,
     context: &Context,
-    mut buf: WriteBuf<B>,
+    mut buf: ChunkWriter<B>,
     selector: &S,
     get_len: F,
     encode_fn: R,
   ) -> Result<usize, EncodeError>
   where
     F: Fn(&T, &Context, &S) -> usize,
-    R: Fn(&T, &Context, WriteBuf<&mut B>, &S) -> Result<usize, EncodeError>,
+    R: Fn(&T, &Context, ChunkWriter<&mut B>, &S) -> Result<usize, EncodeError>,
     S: Selector<Groto>,
-    B: BufMut,
+    B: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
     }
 
-    let remaining = buf.mutable();
+    let remaining = buf.remaining_mut();
     if remaining == 0 {
       let required_len = if let Some(value) = self.value {
         2 + get_len(value, context, selector)
@@ -175,7 +175,7 @@ where
     decode_fn: F,
   ) -> Result<(usize, Option<T>), DecodeError>
   where
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     F: Fn(&'de <Groto as Flavor>::Context, RB) -> Result<(usize, T), DecodeError>,
   {
     let remaining = src.remaining();
@@ -208,10 +208,10 @@ where
   fn encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
@@ -226,9 +226,13 @@ where
       .encoded_nullable_len(context, |value, ctx| value.encoded_raw_len(ctx))
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
@@ -246,10 +250,10 @@ where
   fn encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).encode_nullable(
       context,
@@ -274,11 +278,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
@@ -304,11 +308,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
@@ -330,11 +334,11 @@ where
   fn partial_encode_length_delimited<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     OptionImpl::<W, _>::from(self).partial_encode_nullable(
       context,
@@ -366,7 +370,7 @@ where
   fn decode(context: &'de <Groto as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| T::decode(ctx, src))
@@ -378,7 +382,7 @@ where
   ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     OptionImpl::<W, T>::decode_nullable::<RB, _>(context, src, |ctx, src| {

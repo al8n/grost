@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
@@ -47,10 +47,10 @@ where
   fn encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if let Some(value) = self {
       value.encode_raw(context, buf)
@@ -67,9 +67,13 @@ where
     }
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if let Some(value) = self {
       value.encode(context, buf)
@@ -89,10 +93,10 @@ where
   fn encode_length_delimited<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if let Some(value) = self {
       value.encode_length_delimited(context, buf)
@@ -118,11 +122,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -154,11 +158,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -202,11 +206,11 @@ where
   fn partial_encode_length_delimited<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0); // If the selector is empty, no encoding is needed
@@ -228,7 +232,7 @@ where
   fn decode(context: &'de <Groto as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     if !src.has_remaining() {

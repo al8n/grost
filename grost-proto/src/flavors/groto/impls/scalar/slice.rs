@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkMutExt, ChunkWriter, UnknownBuffer},
   decode::{BytesSlice, Decode},
   encode::{Encode, PartialEncode},
   error::{DecodeError, EncodeError},
@@ -8,7 +8,7 @@ use crate::{
 
 macro_rules! decode_impl {
   ($src:ident, $ty:ty) => {{
-    use $crate::__private::buffer::BufExt;
+    use $crate::__private::buffer::ChunkExt;
 
     let remaining = $src.remaining();
     let (len_size, len) = $src.read_varint::<u32>()?;
@@ -33,12 +33,12 @@ impl Encode<LengthDelimited, Groto> for [u8] {
   fn encode_raw<B>(
     &self,
     _: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     buf.try_write_slice(self).map_err(Into::into)
   }
 
@@ -51,13 +51,13 @@ impl Encode<LengthDelimited, Groto> for [u8] {
   fn encode<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
-    let remaining = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let remaining = buf.remaining_mut();
     let this_len = self.len();
 
     let len_size = buf.write_varint::<u32>(&(this_len as u32)).map_err(|e| {
@@ -93,11 +93,11 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
@@ -119,11 +119,11 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     if *selector {
       <Self as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
@@ -144,15 +144,15 @@ impl PartialEncode<LengthDelimited, Groto> for [u8] {
 
 impl<RB> Encode<LengthDelimited, Groto> for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <[u8] as Encode<LengthDelimited, Groto>>::encode_raw(self, context, buf)
   }
@@ -164,10 +164,10 @@ where
   fn encode<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <[u8] as Encode<LengthDelimited, Groto>>::encode(self, context, buf)
   }
@@ -179,16 +179,16 @@ where
 
 impl<RB> PartialEncode<LengthDelimited, Groto> for BytesSlice<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn partial_encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -204,11 +204,11 @@ where
   fn partial_encode<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
     selector: &Self::Selector,
   ) -> Result<usize, EncodeError<Groto>>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <[u8] as PartialEncode<LengthDelimited, Groto>>::partial_encode(self, context, buf, selector)
   }
@@ -222,7 +222,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesSlice<RB> {
   fn decode(_: &'de Context, mut src: RB) -> Result<(usize, BytesSlice<RB>), DecodeError<Groto>>
   where
     BytesSlice<RB>: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let remaining = src.remaining();
@@ -241,7 +241,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for BytesSlice<RB> {
   }
 }
 
-bidi_equivalent!(:<RB: Buf>: impl<str, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Chunk>: impl<str, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 mod arc;

@@ -1,15 +1,15 @@
+use core::num::NonZeroUsize;
+
 pub use decomposable::*;
 pub use entry::{MapEntry, PartialMapEntry};
 pub use packed_map_decoder::*;
 pub use repeated_map_decoder::*;
 
-use varing::decode_u32_varint;
-
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkMutExt, ChunkWriter, UnknownBuffer},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, Identifier, Tag},
+    groto::{Context, DecodeError, EncodeError, Identifier, Tag},
   },
 };
 
@@ -47,26 +47,24 @@ where
   len
 }
 
-fn packed_encode_raw<'a, K, V, KW, VW, I, Item, EFL, EF>(
-  buf: &mut [u8],
+fn packed_encode_raw<'a, B, K, V, KW, VW, I, Item, EFL, EF>(
+  mut buf: ChunkWriter<B>,
   iter: I,
   encoded_raw_len: EFL,
   mut encode: EF,
-) -> Result<usize, Error>
+) -> Result<usize, EncodeError>
 where
+  B: ChunkMut,
   K: 'a,
   V: 'a,
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
   I: Iterator<Item = Item>,
   EFL: Fn() -> usize,
-  EF: FnMut(Item, &Identifier, &Identifier, &mut [u8]) -> Result<usize, Error>,
+  EF: FnMut(Item, &Identifier, &Identifier, ChunkWriter<&mut B>) -> Result<usize, EncodeError>,
 {
   let encoded_len = encoded_raw_len();
-  let buf_len = buf.len();
-  if buf_len < encoded_len {
-    return Err(Error::buffer_too_small(encoded_len, buf_len));
-  }
+  let buf_len = buf.remaining_mut();
 
   let mut offset = 0;
 
@@ -75,11 +73,8 @@ where
 
   // encode the elements
   for item in iter {
-    if offset >= buf_len {
-      return Err(Error::buffer_too_small(encoded_len, buf_len));
-    }
-
-    offset += encode(item, &ki, &vi, &mut buf[offset..])?;
+    offset += encode(item, &ki, &vi, buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
   }
 
   Ok(offset)
@@ -95,41 +90,45 @@ where
   varing::encoded_u32_varint_len(total_bytes as u32) + total_bytes
 }
 
-fn packed_encode<'a, K: 'a, V: 'a, KW, VW, I, Item, EFL, EF>(
-  buf: &mut [u8],
+fn packed_encode<'a, B, K: 'a, V: 'a, KW, VW, I, Item, EFL, EF>(
+  mut buf: ChunkWriter<B>,
   num_elems: usize,
   iter: I,
   encoded_raw_len: EFL,
   encode: EF,
-) -> Result<usize, Error>
+) -> Result<usize, EncodeError>
 where
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
   I: Iterator<Item = Item>,
   EFL: Fn() -> usize,
-  EF: Fn(Item, &Identifier, &Identifier, &mut [u8]) -> Result<usize, Error>,
+  EF: Fn(Item, &Identifier, &Identifier, ChunkWriter<&mut B>) -> Result<usize, EncodeError>,
+  B: ChunkMut,
 {
   let encoded_raw_len = encoded_raw_len();
   let encoded_len = varing::encoded_u32_varint_len(encoded_raw_len as u32) + encoded_raw_len;
 
-  let buf_len = buf.len();
-  if buf_len < encoded_len {
-    return Err(Error::buffer_too_small(encoded_len, buf_len));
-  }
-
+  let buf_len = buf.remaining_mut();
   let mut offset = 0;
-
   // encode total bytes
   if encoded_len > u32::MAX as usize {
-    return Err(Error::payload_too_large(encoded_len, u32::MAX as usize));
+    return Err(EncodeError::payload_too_large(
+      encoded_len,
+      u32::MAX as usize,
+    ));
   }
 
   let total_bytes = encoded_raw_len as u32;
-  let total_bytes_size = varing::encode_u32_varint_to(total_bytes, buf)?;
+
+  let total_bytes_size = buf
+    .write_varint(&total_bytes)
+    .map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || buf_len))?;
   offset += total_bytes_size;
 
   // encode num of elements
-  let num_elems_size = varing::encode_u32_varint_to(num_elems as u32, buf)?;
+  let num_elems_size = buf
+    .write_varint(&(num_elems as u32))
+    .map_err(|e| EncodeError::from(e).propagate_buffer_info(|| encoded_len, || buf_len))?;
   offset += num_elems_size;
 
   let ki = Identifier::new(KW::WIRE_TYPE, Tag::MAP_KEY);
@@ -137,11 +136,8 @@ where
 
   // encode the elements
   for item in iter {
-    if offset >= buf_len {
-      return Err(Error::buffer_too_small(encoded_len, buf_len));
-    }
-
-    offset += encode(item, &ki, &vi, &mut buf[offset..])?;
+    offset += encode(item, &ki, &vi, buf.as_mut())
+      .map_err(|e| e.propagate_buffer_info(|| encoded_len, || buf_len))?;
   }
 
   Ok(offset)
@@ -149,31 +145,34 @@ where
 
 fn packed_decode<'a, K, KW, V, VW, T, RB>(
   context: &Context,
-  src: RB,
-  constructor: impl FnOnce(usize) -> Result<T, Error>,
+  mut src: RB,
+  constructor: impl FnOnce(usize) -> Result<T, DecodeError>,
   mut len: impl FnMut(&T) -> usize,
-  mut merge_decode: impl FnMut(&mut T, &Identifier, &Identifier, RB) -> Result<usize, Error>,
-) -> Result<(usize, T), Error>
+  mut merge_decode: impl FnMut(&mut T, &Identifier, &Identifier, RB) -> Result<usize, DecodeError>,
+) -> Result<(usize, T), DecodeError>
 where
-  RB: Buf,
+  RB: Chunk,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
-  let bytes = src.remaining_slice();
-  let bytes_len = bytes.len();
+  let bytes_len = src.remaining();
   if bytes_len == 0 {
-    return Err(Error::buffer_underflow());
+    return Err(DecodeError::insufficient_data(bytes_len));
   }
 
   // decode total bytes
-  let (mut offset, total_bytes) = decode_u32_varint(bytes)?;
-
+  let (mut offset, total_bytes) = src.read_varint::<u32>()?;
+  let requested = offset + total_bytes as usize;
   if bytes_len < offset + total_bytes as usize {
-    return Err(Error::buffer_underflow());
+    return Err(DecodeError::insufficient_data_with_requested(
+      bytes_len, requested,
+    ));
   }
 
   // decode the number of elements
-  let (num_elements_size, num_elements) = decode_u32_varint(&bytes[offset..])?;
+  let (num_elements_size, num_elements) = src.read_varint::<u32>().map_err(|e| {
+    DecodeError::from(e).propagate_buffer_info(|| NonZeroUsize::new(requested), || bytes_len)
+  })?;
   offset += num_elements_size;
   if num_elements == 0 {
     return Ok((offset, constructor(0)?));
@@ -184,14 +183,17 @@ where
 
   let mut map = constructor(num_elements as usize)?;
   while offset < bytes_len {
-    offset += merge_decode(&mut map, &ki, &vi, src.segment(offset..))?;
+    offset += merge_decode(&mut map, &ki, &vi, src.segment(..)).map_err(|e| {
+      DecodeError::from(e).propagate_buffer_info(|| NonZeroUsize::new(requested), || bytes_len)
+    })?;
   }
 
   let actual_num_elements = len(&map);
   if actual_num_elements != num_elements as usize && context.err_on_length_mismatch() {
-    return Err(Error::custom(format!(
-      "expected {num_elements} elements in map, but got {actual_num_elements} elements",
-    )));
+    return Err(expected_elements_mismatch(
+      num_elements as usize,
+      actual_num_elements,
+    ));
   }
 
   Ok((offset, map))
@@ -217,8 +219,14 @@ fn repeated_encode<KW, VW, I, Item, const TAG: u32>(
   buf: &mut [u8],
   iter: I,
   encoded_raw_len: impl Fn() -> usize,
-  mut encode: impl FnMut(Item, &Identifier, &Identifier, &Identifier, &mut [u8]) -> Result<usize, Error>,
-) -> Result<usize, Error>
+  mut encode: impl FnMut(
+    Item,
+    &Identifier,
+    &Identifier,
+    &Identifier,
+    &mut [u8],
+  ) -> Result<usize, EncodeError>,
+) -> Result<usize, EncodeError>
 where
   KW: WireFormat<Groto>,
   VW: WireFormat<Groto>,
@@ -227,7 +235,7 @@ where
   let encoded_len = encoded_raw_len();
   let buf_len = buf.len();
   if buf_len < encoded_len {
-    return Err(Error::buffer_too_small(encoded_len, buf_len));
+    return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
   }
 
   let ei = Identifier::new(RepeatedEntry::<KW, VW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
@@ -237,7 +245,7 @@ where
   let mut offset = 0;
   for item in iter {
     if offset >= buf_len {
-      return Err(Error::buffer_too_small(encoded_len, buf_len));
+      return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
     }
 
     offset += encode(item, &ei, &ki, &vi, &mut buf[offset..])?;
@@ -253,10 +261,10 @@ fn repeated_decode<'a, KW, VW, T, RB, const TAG: u32>(
     &Identifier,
     &Identifier,
     RB,
-  ) -> Result<Option<usize>, Error>,
-) -> Result<usize, Error>
+  ) -> Result<Option<usize>, DecodeError>,
+) -> Result<usize, DecodeError>
 where
-  RB: Buf,
+  RB: Chunk,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
 {
@@ -285,19 +293,19 @@ where
 fn try_from<'a, K, V, KO, VO, KW, VW, RB, B, I, T>(
   map: &mut T,
   iter: I,
-  check: impl FnOnce(&T) -> Result<(), Error>,
-  mut insert: impl FnMut(&mut T, K, V) -> Result<(), Error>,
-  mut from_key: impl FnMut(KO) -> Result<K, Error>,
-  mut from_value: impl FnMut(VO) -> Result<V, Error>,
-) -> Result<(), Error>
+  check: impl FnOnce(&T) -> Result<(), DecodeError>,
+  mut insert: impl FnMut(&mut T, K, V) -> Result<(), DecodeError>,
+  mut from_key: impl FnMut(KO) -> Result<K, DecodeError>,
+  mut from_value: impl FnMut(VO) -> Result<V, DecodeError>,
+) -> Result<(), DecodeError>
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   K: 'a,
   V: 'a,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
-  I: Iterator<Item = Result<(usize, PartialDecomposableMapEntry<KO, VO>), Error>>,
+  I: Iterator<Item = Result<(usize, PartialDecomposableMapEntry<KO, VO>), DecodeError>>,
 {
   for res in iter {
     let (_, item) = res?;
@@ -309,4 +317,16 @@ where
   }
 
   check(map)
+}
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+fn expected_elements_mismatch(expected: usize, actual: usize) -> DecodeError {
+  DecodeError::other(format!(
+    "expected {expected} elements in map, but got {actual} elements",
+  ))
+}
+
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+fn expected_elements_mismatch(_expected: usize, _actual: usize) -> DecodeError {
+  DecodeError::other("the number of elements in map does not match the expected number")
 }

@@ -4,7 +4,7 @@ use core::{
 };
 
 use crate::{
-  buffer::{Buf, BufExt, BufMut, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -40,13 +40,13 @@ macro_rules! socket_addr_impl {
           fn encode_raw<B>(
             &self,
             _: &Context,
-            buf: impl Into<WriteBuf<B>>,
+            buf: impl Into<ChunkWriter<B>>,
           ) -> Result<usize, EncodeError>
           where
-            B: BufMut,
+            B: ChunkMut,
           {
-            let mut buf: WriteBuf<B> = buf.into();
-            let remaining = buf.mutable();
+            let mut buf: ChunkWriter<B> = buf.into();
+            let remaining = buf.remaining_mut();
 
             if remaining < [< SOCKET_ADDR_V $variant _LEN >] {
               return Err(EncodeError::buffer_too_small([< SOCKET_ADDR_V $variant _LEN >], remaining));
@@ -62,12 +62,12 @@ macro_rules! socket_addr_impl {
             [< SOCKET_ADDR_V $variant _LEN >]
           }
 
-          fn encode<B>(&self, ctx: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+          fn encode<B>(&self, ctx: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
           where
-            B: BufMut,
+            B: ChunkMut,
           {
-            let mut buf: WriteBuf<B> = buf.into();
-            let remaining = buf.mutable();
+            let mut buf: ChunkWriter<B> = buf.into();
+            let remaining = buf.remaining_mut();
             if remaining < [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >] {
               return Err(EncodeError::buffer_too_small(
                 [< SOCKET_ADDR_V $variant _ENCODED_LENGTH_DELIMITED_LEN >],
@@ -93,7 +93,7 @@ macro_rules! socket_addr_impl {
           fn decode(_: &'de Context, mut src: RB) -> Result<(usize, Self), DecodeError>
           where
             Self: Sized + 'de,
-            RB: Buf,
+            RB: Chunk,
             B: UnknownBuffer<RB, Groto> + 'de,
           {
             let remaining = src.remaining();
@@ -159,10 +159,10 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
   fn encode_raw<B>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     match self {
       Self::V4(addr) => {
@@ -185,12 +185,16 @@ impl Encode<LengthDelimited, Groto> for SocketAddr {
     }
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
-    let remaining = buf.mutable();
+    let mut buf: ChunkWriter<B> = buf.into();
+    let remaining = buf.remaining_mut();
     macro_rules! encode_addr {
       ($addr:ident, $variant:literal) => {{
         paste::paste! {
@@ -225,7 +229,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for SocketAddr {
   fn decode(_: &'de Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let remaining = src.remaining();

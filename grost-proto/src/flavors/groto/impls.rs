@@ -1,15 +1,15 @@
 use core::num::NonZeroUsize;
 
-use bufkit::WriteBuf;
+use bufkit::{ChunkMutExt, ChunkWriter, RefPeeker};
 // mod map_selector;
 pub use map::*;
 pub use packed_decoder::*;
 pub use repeated_decoder::*;
 pub use set::*;
-use varing::{decode_u32_varint, encode_u32_varint_to, encoded_u32_varint_len};
+use varing::{encode_u32_varint_to, encoded_u32_varint_len};
 
 use crate::{
-  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer},
+  buffer::{Chunk, ChunkExt, ChunkMut, UnknownBuffer},
   decode::Decode,
   flavors::{
     Groto, Repeated, WireFormat,
@@ -183,16 +183,17 @@ where
   len
 }
 
-fn packed_encode_raw<'a, T: 'a, I, EFL, EF>(
-  buf: &mut [u8],
+fn packed_encode_raw<'a, B, T: 'a, I, EFL, EF>(
+  buf: ChunkWriter<B>,
   iter: I,
   encoded_raw_len: EFL,
   encode: EF,
 ) -> Result<usize, EncodeError>
 where
+  B: ChunkMut,
   I: Iterator<Item = &'a T>,
   EFL: Fn() -> usize,
-  EF: Fn(&T, &mut [u8]) -> Result<usize, EncodeError>,
+  EF: Fn(&T, ChunkWriter<&'a mut B>) -> Result<usize, EncodeError>,
 {
   let encoded_len = encoded_raw_len();
   let buf_len = buf.len();
@@ -204,27 +205,26 @@ where
 
   // encode the elements
   for item in iter {
-    if offset >= buf_len {
-      return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
-    }
-    let item_encoded_len = encode(item, &mut buf[offset..])?;
+    let item_encoded_len =
+      encode(item, buf.as_mut()).map_err(|e| e.propagate_buffer_info(encoded_len, buf_len))?;
     offset += item_encoded_len;
   }
 
   Ok(offset)
 }
 
-fn packed_encode<'a, T: 'a, I, EFL, EF>(
-  buf: &mut [u8],
+fn packed_encode<'a, C, T: 'a, I, EFL, EF>(
+  mut buf: ChunkWriter<C>,
   num_elems: usize,
   iter: I,
   encoded_raw_len: EFL,
   encode: EF,
 ) -> Result<usize, EncodeError>
 where
+  C: ChunkMut,
   I: Iterator<Item = &'a T>,
   EFL: Fn() -> usize,
-  EF: Fn(&T, &mut [u8]) -> Result<usize, EncodeError>,
+  EF: Fn(&T, ChunkWriter<&mut C>) -> Result<usize, EncodeError>,
 {
   let elems_bytes = encoded_raw_len();
   let num_elems_size = encoded_u32_varint_len(num_elems as u32);
@@ -238,30 +238,19 @@ where
 
   let mut offset = 0;
 
-  // encode total bytes
-  if encoded_len > u32::MAX as usize {
-    return Err(EncodeError::payload_too_large(
-      encoded_len,
-      u32::MAX as usize,
-    ));
-  }
-
-  offset += encode_u32_varint_to(total_bytes as u32, buf)?;
-
-  if offset + total_bytes > buf_len {
-    return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
-  }
+  offset += buf
+    .write_varint(&(total_bytes as u32))
+    .map_err(|e| EncodeError::from(e).propagate_buffer_info(encoded_len, buf_len))?;
 
   // encode num of elements
-  offset += encode_u32_varint_to(num_elems as u32, &mut buf[offset..])?;
+  offset += buf
+    .write_varint(&(num_elems as u32))
+    .map_err(|e| EncodeError::from(e).propagate_buffer_info(encoded_len, buf_len))?;
 
   // encode the elements
   for item in iter {
-    if offset >= buf_len {
-      return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
-    }
-
-    offset += encode(item, &mut buf[offset..])?;
+    offset +=
+      encode(item, buf.as_mut()).map_err(|e| e.propagate_buffer_info(encoded_len, buf_len))?;
   }
 
   Ok(offset)
@@ -282,10 +271,10 @@ fn packed_decode<'a, K, KW, T, RB>(
   mut src: RB,
   constructor: impl FnOnce(usize) -> Result<T, DecodeError>,
   mut len: impl FnMut(&T) -> usize,
-  mut merge_decode: impl FnMut(&mut T, RB) -> Result<usize, DecodeError>,
+  mut merge_decode: impl FnMut(&mut T, RB) -> Result<(usize, RB), DecodeError>,
 ) -> Result<(usize, T), DecodeError>
 where
-  RB: Buf,
+  RB: Chunk,
   KW: WireFormat<Groto> + 'a,
 {
   // decode the total bytes
@@ -300,7 +289,9 @@ where
 
   let mut set = constructor(num_elements as usize)?;
   while offset < total_bytes as usize {
-    offset += merge_decode(&mut set, src.segment(offset..))?;
+    let (read, remaining_src) = merge_decode(&mut set, src)?;
+    offset += read;
+    src = remaining_src;
   }
 
   context.err_length_mismatch(num_elements as usize, len(&set))?;
@@ -322,15 +313,15 @@ where
 }
 
 fn repeated_encode<'a, B, K: 'a, KW, I, const TAG: u32>(
-  mut buf: WriteBuf<B>,
+  mut buf: ChunkWriter<B>,
   iter: impl Fn() -> I,
   encoded_len: impl Fn(&K) -> usize,
-  mut encode: impl FnMut(&K, WriteBuf<&mut B>) -> Result<usize, EncodeError>,
+  mut encode: impl FnMut(&K, ChunkWriter<&mut B>) -> Result<usize, EncodeError>,
 ) -> Result<usize, EncodeError>
 where
   I: Iterator<Item = &'a K>,
   KW: WireFormat<Groto>,
-  B: BufMut,
+  B: ChunkMut,
 {
   let identifier = Identifier::new(Repeated::<KW, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
   let encoded_identifier = identifier.encode();
@@ -338,7 +329,7 @@ where
   let encoded_len = iter()
     .map(|k| encoded_identifier_len + encoded_len(k))
     .sum::<usize>();
-  let buf_len = buf.mutable();
+  let buf_len = buf.remaining_mut();
   if encoded_len > buf_len {
     return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
   }
@@ -360,10 +351,10 @@ where
 fn repeated_decode<'a, K: 'a, KW, T, RB, B, const TAG: u32>(
   this: &mut T,
   mut src: RB,
-  mut merge_decode: impl FnMut(&mut T, RB) -> Result<usize, DecodeError>,
+  mut merge_decode: impl FnMut(&mut T, RB) -> Result<(usize, RB), DecodeError>,
 ) -> Result<usize, DecodeError>
 where
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   KW: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, B, Groto>,
   T: Sized + 'a,
@@ -391,10 +382,13 @@ where
 
     // increment the offset by the size of the identifier
     offset += read;
-    offset += merge_decode(this, src.segment(..)).map_err(|e| {
+    let (read, remaining_src) = merge_decode(this, src).map_err(|e| {
       e.accumulate_requested(|| NonZeroUsize::new(offset))
         .update_available(|| remaining)
     })?;
+
+    offset += read;
+    src = remaining_src;
   }
 
   Ok(offset)
@@ -410,7 +404,7 @@ fn try_from<'a, K, KO, KW, RB, B, I, T>(
 where
   KW: WireFormat<Groto> + 'a,
   K: 'a,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
   I: Iterator<Item = Result<(usize, KO), DecodeError>>,
 {
@@ -424,7 +418,7 @@ where
 
 fn decode_slice<'de, RB>(src: &'de mut RB) -> Result<(usize, &'de [u8]), DecodeError>
 where
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   let remaining = src.remaining();
   let (len_size, len) = src.read_varint::<u32>().map_err(DecodeError::from)?;
@@ -443,7 +437,7 @@ where
 
 fn decode_str<'de, RB>(src: &'de mut RB) -> Result<(usize, &'de str), DecodeError>
 where
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   let (total, bytes) = decode_slice(src)?;
   crate::utils::from_utf8(bytes)

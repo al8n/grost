@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use crate::{buffer::Buf, decode::BytesSlice, flavors::groto::LengthDelimited};
+use crate::{buffer::Chunk, decode::BytesSlice, flavors::groto::LengthDelimited};
 
 mod packed;
 mod repeated;
@@ -29,6 +29,6 @@ length!(Vec<T>);
 selectable!(Vec<T>);
 
 // Vec<u8> is the same as encode BytesSlice<RB>
-bidi_equivalent!(:<RB: Buf>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Chunk>: impl<Vec<u8>, LengthDelimited> for <BytesSlice<RB>, LengthDelimited>);
 // Vec<u8> is the same as encode [u8]
 bidi_equivalent!(impl <Vec<u8>, LengthDelimited> for <[u8], LengthDelimited>);

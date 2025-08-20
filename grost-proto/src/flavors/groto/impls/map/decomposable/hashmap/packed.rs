@@ -9,7 +9,7 @@ use super::{
 };
 
 use crate::{
-  buffer::{Buf, BufMut, Buffer, UnknownBuffer},
+  buffer::{Buffer, Chunk, ChunkMut, UnknownBuffer},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -67,10 +67,10 @@ where
   K: Eq + Hash + Decode<'a, KW, RB, B, Groto>,
   V: Decode<'a, VW, RB, B, Groto>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     packed_decode::<K, KW, V, VW, HashMap<K, V, S>, RB>(
@@ -103,9 +103,13 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     packed_encode_raw::<K, V, KW, VW, _, _, _, _>(
       buf.buffer_mut(),
@@ -123,9 +127,9 @@ where
     })
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, Error>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     packed_encode::<K, V, KW, VW, _, _, _, _>(
       buf.buffer_mut(),
@@ -155,11 +159,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -194,11 +198,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -243,7 +247,7 @@ where
   V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   S: BuildHasher + Default,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
@@ -253,7 +257,7 @@ where
   where
     Self: Sized,
     <Self as State<Ref<'a, PackedEntry<KW, VW>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let iter = input.iter();
@@ -282,7 +286,7 @@ where
   V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
   S: BuildHasher + Default,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
@@ -292,7 +296,7 @@ where
   where
     Self: Sized,
     <Self as State<PartialRef<'a, PackedEntry<KW, VW>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let iter = input.iter();
@@ -325,7 +329,7 @@ where
     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
   S: BuildHasher + Default,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(

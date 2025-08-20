@@ -1,13 +1,13 @@
 use core::iter::FusedIterator;
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Packed, WireFormat,
-    groto::{Context, Error, PackedDecoder, PackedDecoderIter},
+    groto::{Context, DecodeError, EncodeError, PackedDecoder, PackedDecoderIter},
   },
   selection::Selectable,
   state::{Partial, PartialRef, Ref, State},
@@ -216,9 +216,9 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
-  type Item = Result<(usize, T), Error>;
+  type Item = Result<(usize, T), DecodeError>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -235,7 +235,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
 }
 
@@ -250,11 +250,15 @@ where
 impl<'a, T, RB, B, W> Encode<Packed<W>, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    ctx: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.0.encode_raw(ctx, buf)
   }
@@ -263,9 +267,9 @@ where
     self.0.encoded_raw_len(ctx)
   }
 
-  fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, ctx: &Context, buf: impl Into<ChunkWriter<WB>>) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.0.encode(ctx, buf)
   }
@@ -279,17 +283,17 @@ impl<'a, T, RB, B, W> PartialEncode<Packed<W>, Groto> for PackedSetDecoder<'a, T
 where
   W: WireFormat<Groto> + 'a,
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
   T: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.0.partial_encode_raw(context, buf, selector)
   }
@@ -301,11 +305,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.0.partial_encode(context, buf, selector)
   }
@@ -318,15 +322,12 @@ where
 impl<'a, T, B, W, RB> Decode<'a, Packed<W>, RB, B, Groto> for PackedSetDecoder<'a, T, RB, B, W>
 where
   Packed<W>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn decode(
-    ctx: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, packed_decoder) = PackedDecoder::decode(ctx, src)?;

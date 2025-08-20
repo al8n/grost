@@ -4,7 +4,7 @@ pub use stack_buffer::StackBuffer;
 
 use crate::{flavors::Flavor, unknown::Unknown};
 
-pub use bufkit::{Buf, BufExt, BufMut, BufMutExt, WriteBuf};
+pub use bufkit::{Chunk, ChunkExt, ChunkMut, ChunkMutExt, ChunkWriter, Peeker, Putter, RefPeeker};
 
 mod stack_buffer;
 
@@ -123,7 +123,7 @@ pub trait UnknownBuffer<RB, F: Flavor + ?Sized>: Buffer<Item = Unknown<RB, F>> {
 impl<T, RB, F> UnknownBuffer<RB, F> for T
 where
   T: Buffer<Item = Unknown<RB, F>>,
-  RB: Buf,
+  RB: Chunk,
   F: Flavor + ?Sized,
 {
 }

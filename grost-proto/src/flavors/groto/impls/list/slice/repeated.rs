@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{BufMut, WriteBuf},
+  buffer::{ChunkMut, ChunkWriter},
   encode::{Encode, PartialEncode},
   flavors::{
     Borrowed, Groto, Repeated, WireFormat,
     groto::{
-      Context, Error,
+      Context, DecodeError, EncodeError,
       impls::{repeated_encode, repeated_encoded_len},
     },
   },
@@ -20,9 +20,13 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     repeated_encode::<WB, T, W, _, TAG>(
       buf.into(),
@@ -36,9 +40,13 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter(), |k| k.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as Encode<Repeated<W, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -56,11 +64,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -85,11 +93,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -117,9 +125,13 @@ where
   T: Encode<W, Groto>,
   W: WireFormat<Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     repeated_encode::<WB, T, W, _, TAG>(
       buf.into(),
@@ -133,9 +145,13 @@ where
     repeated_encoded_len::<T, W, _, TAG>(self.iter().copied(), |k| k.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as Encode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::encode_raw(self, context, buf)
   }
@@ -154,11 +170,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -185,11 +201,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as PartialEncode<Borrowed<'b, Repeated<W, TAG>>, Groto>>::partial_encode_raw(
       self, context, buf, selector,

@@ -4,12 +4,12 @@ use super::{
 };
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultRepeatedEntryWireFormat, Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, RepeatedMapDecoder, RepeatedMapDecoderBuffer},
+    groto::{Context, DecodeError, EncodeError, RepeatedMapDecoder, RepeatedMapDecoderBuffer},
   },
   selection::Selector,
   state::{PartialRef, Ref, State},
@@ -59,10 +59,10 @@ where
   K: Ord + Decode<'a, KW, RB, B, Groto>,
   V: Decode<'a, VW, RB, B, Groto>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = BTreeMap::new();
@@ -72,10 +72,10 @@ where
     .map(|size| (size, this))
   }
 
-  fn merge_decode(&mut self, context: &'a Context, src: RB) -> Result<usize, Error>
+  fn merge_decode(&mut self, context: &'a Context, src: RB) -> Result<usize, DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, decoder) = RepeatedMapDecoder::<K, V, RB, B, KW, VW, TAG>::decode(context, src)?;
@@ -96,9 +96,13 @@ where
   K: Encode<KW, Groto>,
   V: Encode<VW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     repeated_encode::<KW, VW, _, _, TAG>(
       buf.buffer_mut(),
@@ -114,9 +118,13 @@ where
     })
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -137,18 +145,18 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
     }
 
     repeated_encode::<KW, VW, _, _, TAG>(
-      buf.buffer_mut(),
+      buf.into(),
       self.iter(),
       || {
         <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encoded_raw_len(
@@ -174,11 +182,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -201,7 +209,7 @@ where
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   V: TryFromRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_ref(
@@ -211,7 +219,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: Buf + 'a,
+//     RB: Chunk + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -239,7 +247,7 @@ where
 //   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
 //   V: TryFromPartialRef<'a, VW, RB, B, Groto> + 'a,
 //   V::Output: Sized + Decode<'a, VW, RB, B, Groto>,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn try_from_partial_ref(
@@ -249,7 +257,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'a, RepeatedEntry<KW, VW, TAG>, RB, B, Groto>>>::Output: Sized,
-//     RB: Buf + 'a,
+//     RB: Chunk + 'a,
 //     B: UnknownBuffer<RB, Groto>,
 //   {
 //     let iter = input.iter();
@@ -281,7 +289,7 @@ where
 //   <V as State<PartialRef<'a, VW, RB, B, Groto>>>::Output:
 //     Sized + Decode<'a, VW, RB, B, Groto> + Selectable<Groto, Selector = V::Selector>,
 //   <V as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = V::Selector>,
-//   RB: Buf + 'a,
+//   RB: Chunk + 'a,
 //   B: UnknownBuffer<RB, Groto> + 'a,
 // {
 //   fn partial_try_from_ref(

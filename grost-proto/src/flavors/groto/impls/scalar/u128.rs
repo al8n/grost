@@ -1,7 +1,7 @@
 use core::num::NonZeroU128;
 
 use crate::{
-  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkMutExt, ChunkWriter, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -31,11 +31,11 @@ partial_identity!(@scalar Groto: u128, NonZeroU128);
 partial_encode_scalar!(Groto: u128 as Fixed128, u128 as Varint);
 
 impl Encode<Fixed128, Groto> for u128 {
-  fn encode_raw<B>(&self, _: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode_raw<B>(&self, _: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     buf.try_write_u128_le(*self).map_err(Into::into)
   }
 
@@ -43,9 +43,13 @@ impl Encode<Fixed128, Groto> for u128 {
     16
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<Fixed128, Groto>>::encode_raw(self, context, buf)
   }
@@ -56,11 +60,11 @@ impl Encode<Fixed128, Groto> for u128 {
 }
 
 impl Encode<Varint, Groto> for u128 {
-  fn encode_raw<B>(&self, _: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode_raw<B>(&self, _: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     buf.write_varint(self).map_err(Into::into)
   }
 
@@ -68,9 +72,13 @@ impl Encode<Varint, Groto> for u128 {
     varing::encoded_u128_varint_len(*self)
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<Varint, Groto>>::encode_raw(self, context, buf)
   }
@@ -84,7 +92,7 @@ impl<'de, RB, B> Decode<'de, Fixed128, RB, B, Groto> for u128 {
   fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     src
@@ -98,7 +106,7 @@ impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for u128 {
   fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     src

@@ -1,5 +1,5 @@
 use super::{
-  buffer::{Buf, BufExt, UnknownBuffer},
+  buffer::{Chunk, ChunkExt, UnknownBuffer},
   error::DecodeError,
   flavors::{Flavor, WireFormat},
 };
@@ -99,7 +99,7 @@ where
   fn decode(context: &'de F::Context, src: RB) -> Result<(usize, Self), DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, F> + 'de;
 
   /// Decodes an instance of this type from a length-delimited byte buffer.
@@ -111,7 +111,7 @@ where
   ) -> Result<(usize, Self), DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, F> + 'de,
   {
     let (len_size, len) = src.read_varint::<u32>()?;
@@ -137,7 +137,7 @@ where
   fn merge_decode(&mut self, ctx: &'de F::Context, src: RB) -> Result<usize, DecodeError<F>>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, F> + 'de,
   {
     Self::decode(ctx, src).map(|(read, val)| {
@@ -176,7 +176,7 @@ macro_rules! deref_decode_impl {
         fn decode(context: &'de <F as Flavor>::Context, src: RB) -> Result<(usize, Self), DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: Buf + 'de,
+          RB: Chunk + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           T::decode(context, src).map(|(size, output)| (size, Self::new(output)))
@@ -188,7 +188,7 @@ macro_rules! deref_decode_impl {
         ) -> Result<(usize, Self), DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: Buf + 'de,
+          RB: Chunk + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           T::decode_length_delimited(context, src).map(|(size, output)| (size, Self::new(output)))
@@ -197,7 +197,7 @@ macro_rules! deref_decode_impl {
         fn merge_decode(&mut self, ctx: &'de <F as Flavor>::Context, src: RB) -> Result<usize, DecodeError<F>>
         where
           Self: Sized + 'de,
-          RB: Buf + 'de,
+          RB: Chunk + 'de,
           B: UnknownBuffer<RB, F> + 'de
         {
           if let Some(val) = <$ty>::get_mut(self) {
@@ -233,7 +233,7 @@ const _: () = {
     ) -> Result<(usize, Self), DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: Buf + 'de,
+      RB: Chunk + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::decode(context, src).map(|(size, output)| (size, Box::new(output)))
@@ -245,7 +245,7 @@ const _: () = {
     ) -> Result<(usize, Self), DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: Buf + 'de,
+      RB: Chunk + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::decode_length_delimited(context, src).map(|(size, output)| (size, Box::new(output)))
@@ -258,7 +258,7 @@ const _: () = {
     ) -> Result<usize, DecodeError<F>>
     where
       Self: Sized + 'de,
-      RB: Buf + 'de,
+      RB: Chunk + 'de,
       B: UnknownBuffer<RB, F> + 'de,
     {
       T::merge_decode(&mut **self, ctx, src)

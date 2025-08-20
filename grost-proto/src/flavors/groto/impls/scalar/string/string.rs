@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, UnknownBuffer},
+  buffer::{Chunk, UnknownBuffer},
   convert::{PartialIdentity, PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::{Decode, Str},
   flatten_state,
@@ -31,7 +31,7 @@ str_bridge!(Groto: String {
   as_str: AsRef::as_ref;
 },);
 
-bidi_equivalent!(:<RB: Buf>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Chunk>: impl<String, LengthDelimited> for <Str<RB>, LengthDelimited>);
 bidi_equivalent!(impl <String, LengthDelimited> for <str, LengthDelimited>);
 
 impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for String {
@@ -42,7 +42,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for Strin
   where
     Self: Sized,
     <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(input.to_string())
@@ -51,7 +51,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for Strin
 
 impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for String
 where
-  RB: Buf,
+  RB: Chunk,
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
@@ -67,7 +67,7 @@ where
 
 impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for String
 where
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   fn partial_try_from_ref(
     _: &'de Context,
@@ -98,7 +98,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for String {
   fn decode(_: &'de Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let res = decode_str(&mut src).map(|(read, s)| (read, s.to_string()))?;

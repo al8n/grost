@@ -161,7 +161,7 @@ Customizes the names of generic parameters used in generated code to avoid confl
 #[grost(generic(
     lifetime = "custom_lifetime",
     read = "Buf",
-    write = "BufMut"
+    write = "ChunkMut"
 ))]
 struct MyObject {
   // fields...

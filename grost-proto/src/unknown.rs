@@ -1,5 +1,5 @@
 use crate::{
-  buffer::Buf,
+  buffer::Chunk,
   error::{DecodeError, EncodeError},
   flavors::Flavor,
   identifier::Identifier,
@@ -32,7 +32,7 @@ where
   /// Returns the number of bytes consumed and the decoded unknown data.
   pub fn decode(ctx: &F::Context, data: &B) -> Result<(usize, Self), DecodeError<F>>
   where
-    B: Buf + Sized,
+    B: Chunk + Sized,
   {
     let (identifier_len, identifier) = <F::Identifier as Identifier<F>>::decode(data.buffer())?;
 
@@ -59,7 +59,7 @@ where
   /// Encodes the unknown data into the given buffer.
   pub fn encode(&self, buf: &mut [u8]) -> Result<usize, EncodeError<F>>
   where
-    B: Buf,
+    B: Chunk,
   {
     let value_bytes = self.raw();
     let value_len = value_bytes.len();
@@ -74,7 +74,7 @@ where
   /// Returns the encoded length of the unknown data.
   pub fn encoded_len(&self) -> usize
   where
-    B: Buf,
+    B: Chunk,
   {
     self.raw().len()
   }
@@ -98,7 +98,7 @@ where
   #[inline]
   pub fn data(&self) -> &[u8]
   where
-    B: Buf,
+    B: Chunk,
   {
     if self.data.remaining() <= self.encoded_identifier_len {
       return &[];
@@ -117,7 +117,7 @@ where
   #[inline]
   pub fn data_owned(&self) -> B
   where
-    B: Buf + Sized,
+    B: Chunk + Sized,
   {
     if self.data.remaining() <= self.encoded_identifier_len {
       return self.data.segment(..0);
@@ -137,7 +137,7 @@ where
   #[inline]
   pub fn raw(&self) -> &[u8]
   where
-    B: Buf,
+    B: Chunk,
   {
     self.data.buffer()
   }
@@ -149,7 +149,7 @@ where
   #[inline]
   pub fn raw_owned(&self) -> B
   where
-    B: Buf + Sized,
+    B: Chunk + Sized,
   {
     self.data.segment(..)
   }
@@ -163,7 +163,7 @@ where
   pub fn map<'a, N>(&'a self) -> Unknown<N, F>
   where
     N: From<&'a [u8]>,
-    B: Buf,
+    B: Chunk,
   {
     Unknown {
       tag: self.tag,

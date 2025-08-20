@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-  buffer::{Buf, UnknownBuffer},
+  buffer::{Chunk, UnknownBuffer},
   convert::PartialTryFromRef,
   decode::Decode,
   flavors::groto::{Context, DecodeError, Groto, LengthDelimited, impls::decode_str},
@@ -11,7 +11,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for Arc<str> {
   fn decode(_: &'de Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let res = decode_str(&mut src).map(|(read, s)| (read, Arc::from(s)))?;
@@ -24,7 +24,7 @@ bidi_equivalent!(impl<str, LengthDelimited> for <Arc<str>, LengthDelimited>);
 
 impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for Arc<str>
 where
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   fn partial_try_from_ref(
     _: &'de Context,

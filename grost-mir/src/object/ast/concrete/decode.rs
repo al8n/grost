@@ -198,7 +198,7 @@
 //       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
 //       where
 //         Self: ::core::marker::Sized + #lt,
-//         #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
+//         #read_buffer_ident: #path_to_grost::__private::buffer::Chunk + #lt,
 //         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
 //       {
 //         <#partial_object_ty as
@@ -225,7 +225,7 @@
 //       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
 //       where
 //         Self: ::core::marker::Sized + #lt,
-//         #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
+//         #read_buffer_ident: #path_to_grost::__private::buffer::Chunk + #lt,
 //         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
 //       {
 //         <#partial_object_ty as #decode_from_partial_trait>::decode(context, src)
@@ -542,7 +542,7 @@
 //       ) -> ::core::result::Result<(::core::primitive::usize, Self), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
 //       where
 //         Self: ::core::marker::Sized + #lt,
-//         #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
+//         #read_buffer_ident: #path_to_grost::__private::buffer::Chunk + #lt,
 //         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
 //       {
 //         let buf = src.remaining_slice();
@@ -609,7 +609,7 @@
 //       ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
 //       where
 //         #partial_ref_object_ty: ::core::marker::Sized + #lt,
-//         #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
+//         #read_buffer_ident: #path_to_grost::__private::buffer::Chunk + #lt,
 //         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
 //       {
 //         <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)
@@ -625,7 +625,7 @@
 //       ) -> ::core::result::Result<(::core::primitive::usize, #partial_ref_object_ty), <#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Error>
 //       where
 //         #partial_ref_object_ty: ::core::marker::Sized + #lt,
-//         #read_buffer_ident: #path_to_grost::__private::buffer::Buf + #lt,
+//         #read_buffer_ident: #path_to_grost::__private::buffer::Chunk + #lt,
 //         #ubg: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#read_buffer_ident>> + #lt
 //       {
 //         <#partial_ref_object_ty as #decode_to_partial_ref_trait>::decode(context, src)

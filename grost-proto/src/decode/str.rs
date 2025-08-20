@@ -1,5 +1,5 @@
 use crate::{
-  buffer::Buf, convert::Extracted, flavors::Flavor, selection::Selectable, state::State,
+  buffer::Chunk, convert::Extracted, flavors::Flavor, selection::Selectable, state::State,
 };
 
 /// The decoded type for `str`
@@ -9,7 +9,7 @@ pub struct Str<RB: ?Sized>(RB);
 
 impl<RB> Default for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn default() -> Self {
     Self(RB::empty())
@@ -26,7 +26,7 @@ impl<RB: ?Sized, O> State<Extracted<O>> for Str<RB> {
 
 impl<RB> core::borrow::Borrow<str> for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn borrow(&self) -> &str {
     self
@@ -35,7 +35,7 @@ where
 
 impl<RB> core::hash::Hash for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
     self.as_ref().hash(state);
@@ -44,7 +44,7 @@ where
 
 impl<RB> core::fmt::Debug for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     self.as_ref().fmt(f)
@@ -53,7 +53,7 @@ where
 
 impl<RB> core::fmt::Display for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     self.as_ref().fmt(f)
@@ -62,7 +62,7 @@ where
 
 impl<RB> core::ops::Deref for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   type Target = str;
 
@@ -75,7 +75,7 @@ where
 
 impl<RB> AsRef<str> for Str<RB>
 where
-  RB: Buf,
+  RB: Chunk,
 {
   fn as_ref(&self) -> &str {
     self
@@ -98,7 +98,7 @@ impl<RB> Str<RB> {
   #[inline]
   pub fn try_new(buf: RB) -> Result<Self, RB>
   where
-    RB: Sized + Buf,
+    RB: Sized + Chunk,
   {
     if core::str::from_utf8(buf.remaining_slice()).is_ok() {
       Ok(Self(buf))
@@ -111,7 +111,7 @@ impl<RB> Str<RB> {
   #[inline]
   pub fn empty() -> Self
   where
-    RB: Sized + Buf,
+    RB: Sized + Chunk,
   {
     Self(RB::empty())
   }

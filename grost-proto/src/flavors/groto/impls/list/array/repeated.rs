@@ -1,7 +1,7 @@
 use core::{cell::RefCell, mem::MaybeUninit};
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, UnknownBuffer},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -32,10 +32,10 @@ where
   KW: WireFormat<Groto> + 'a,
   K: Ord + Decode<'a, KW, RB, B, Groto>,
 {
-  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this: [MaybeUninit<K>; CAP] = core::array::from_fn(|_| MaybeUninit::uninit());
@@ -71,7 +71,7 @@ where
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, KW, RB, UB, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
@@ -81,7 +81,7 @@ where
   where
     Self: Sized,
     <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -124,7 +124,7 @@ where
   Repeated<KW, TAG>: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, KW, RB, B, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
@@ -134,7 +134,7 @@ where
   where
     Self: Sized,
     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -178,7 +178,7 @@ where
   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(

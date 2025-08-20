@@ -16,9 +16,13 @@ where
   T: Encode<W, Groto> + ?Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     check_list_type::<N>()?;
 
@@ -34,9 +38,9 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, Error>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::encode_raw(
       self, context, buf,
@@ -57,9 +61,13 @@ where
   T: Encode<W, Groto> + Sized,
   SchemaTypeReflection<N>: Reflectable<N, Reflection = SchemaType>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     check_list_type::<N>()?;
 
@@ -75,9 +83,13 @@ where
     self.iter().map(|n| n.encoded_len(context)).sum::<usize>()
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as Encode<Flatten<Repeated<W, TAG>, W>, Groto>>::encode_raw(self, context, buf)
   }
@@ -97,11 +109,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -131,11 +143,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as PartialEncode<Flatten<Repeated<W, TAG>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -161,11 +173,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -195,11 +207,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as PartialEncode<Flatten<Borrowed<'_, Repeated<W, TAG>>, W>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -212,18 +224,18 @@ where
 }
 
 fn repeated_encode<'a, B, K: 'a, KW, I, const TAG: u32>(
-  mut buf: WriteBuf<B>,
+  mut buf: ChunkWriter<B>,
   iter: impl Fn() -> I,
   encoded_len: impl Fn(&K) -> usize,
-  mut encode: impl FnMut(&K, WriteBuf<&mut B>) -> Result<usize, EncodeError>,
+  mut encode: impl FnMut(&K, ChunkWriter<&mut B>) -> Result<usize, EncodeError>,
 ) -> Result<usize, EncodeError>
 where
   I: Iterator<Item = &'a K>,
   KW: WireFormat<Groto>,
-  B: BufMut,
+  B: ChunkMut,
 {
   let encoded_len = iter().map(encoded_len).sum::<usize>();
-  let buf_len = buf.mutable();
+  let buf_len = buf.remaining_mut();
   if encoded_len > buf_len {
     return Err(EncodeError::buffer_too_small(encoded_len, buf_len));
   }

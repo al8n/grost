@@ -1,13 +1,13 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buf, BufMut, Buffer, DefaultBuffer, UnknownBuffer},
+  buffer::{Buffer, Chunk, ChunkMut, ChunkWriter, DefaultBuffer, UnknownBuffer},
   convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Flavor, Groto, RepeatedEntry, WireFormat,
-    groto::{Context, Error, Identifier, Tag},
+    groto::{Context, DecodeError, EncodeError, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -183,11 +183,15 @@ impl<'a, K, V, RB, B, KW, VW, const TAG: u32> Encode<RepeatedEntry<KW, VW, TAG>,
 where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    ctx: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
@@ -204,9 +208,9 @@ where
     self.src.remaining()
   }
 
-  fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, ctx: &Context, buf: impl Into<ChunkWriter<WB>>) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.encode_raw(ctx, buf)
   }
@@ -224,17 +228,17 @@ where
   RepeatedEntry<KW, VW, TAG>: WireFormat<Groto> + 'a,
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -258,11 +262,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -293,10 +297,10 @@ where
   K: Decode<'a, KW, RB, B, Groto>,
   V: Decode<'a, VW, RB, B, Groto>,
 {
-  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let expected_identifier =
@@ -501,9 +505,9 @@ where
   K: Decode<'de, KW, RB, B, Groto> + 'de,
   V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
-  type Item = Result<(usize, PartialMapEntry<K, V>), Error>;
+  type Item = Result<(usize, PartialMapEntry<K, V>), DecodeError>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
@@ -578,7 +582,7 @@ where
   K: Decode<'de, KW, RB, B, Groto> + 'de,
   V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
 }
 
@@ -740,12 +744,16 @@ where
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     let encoded_raw_len = self.encoded_raw_len(context);
     let buf_len = buf.len();
@@ -776,9 +784,13 @@ where
       .sum()
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.encode_raw(context, buf)
   }
@@ -797,17 +809,17 @@ where
   K: Decode<'a, KW, RB, UB, Groto>,
   V: Decode<'a, VW, RB, UB, Groto> + Selectable<Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -827,11 +839,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -860,10 +872,10 @@ where
   V: Decode<'a, VW, RB, UB, Groto>,
   B: Buffer<Item = RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG>>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Self {
@@ -886,7 +898,7 @@ where
   fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, decoder) = <RepeatedMapDecoder<'a, K, V, RB, UB, KW, VW, TAG> as Decode<
@@ -1065,7 +1077,7 @@ where
   VW: WireFormat<Groto> + 'de,
   K: Decode<'de, KW, RB, UB, Groto> + Sized + 'de,
   V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {
@@ -1140,7 +1152,7 @@ where
   VW: WireFormat<Groto> + 'de,
   K: Decode<'de, KW, RB, UB, Groto> + Sized + 'de,
   V: Decode<'de, VW, RB, UB, Groto> + Sized + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedMapDecoder<'de, K, V, RB, UB, KW, VW, TAG>>,
 {

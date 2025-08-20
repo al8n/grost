@@ -33,10 +33,10 @@ macro_rules! array_str {
       fn encode_raw<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+        buf: impl Into<$crate::__private::buffer::ChunkWriter<WB>>,
       ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::BufMut,
+        WB: $crate::__private::buffer::ChunkMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_raw(
           self.as_str(),
@@ -55,10 +55,10 @@ macro_rules! array_str {
       fn encode<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+        buf: impl Into<$crate::__private::buffer::ChunkWriter<WB>>,
       ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::BufMut,
+        WB: $crate::__private::buffer::ChunkMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode(
           self.as_str(),
@@ -70,10 +70,10 @@ macro_rules! array_str {
       fn encode_length_delimited<WB>(
         &self,
         context: &$crate::__private::flavors::groto::Context,
-        buf: impl Into<$crate::__private::buffer::WriteBuf<WB>>,
+        buf: impl Into<$crate::__private::buffer::ChunkWriter<WB>>,
       ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::flavors::groto::EncodeError>
       where
-        WB: $crate::__private::buffer::BufMut,
+        WB: $crate::__private::buffer::ChunkMut,
       {
         <::core::primitive::str as $crate::__private::Encode<$crate::__private::flavors::groto::LengthDelimited, $crate::__private::flavors::Groto>>::encode_length_delimited(
           self.as_str(),
@@ -129,7 +129,7 @@ macro_rules! array_str {
       ) -> Result<(::core::primitive::usize, Self), $crate::__private::flavors::groto::DecodeError>
       where
         Self: ::core::marker::Sized + 'de,
-        RB: $crate::__private::Buf + 'de,
+        RB: $crate::__private::Chunk + 'de,
         B: $crate::__private::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         let res = $crate::__private::flavors::groto::impls::decode_str(&mut src)
@@ -164,7 +164,7 @@ macro_rules! array_str {
     $crate::flatten_state!($ty [const N: usize]);
 
     bidi_equivalent!([const N: usize] impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
-    bidi_equivalent!(:<RB: $crate::__private::buffer::Buf>: [const N: usize] impl <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
+    bidi_equivalent!(:<RB: $crate::__private::buffer::Chunk>: [const N: usize] impl <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
   };
 }
 

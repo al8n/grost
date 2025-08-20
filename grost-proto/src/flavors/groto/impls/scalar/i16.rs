@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, BufExt, BufMut, BufMutExt, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkMutExt, ChunkWriter, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -29,11 +29,11 @@ flatten_state!(i16, NonZeroI16);
 partial_identity!(@scalar Groto: i16, NonZeroI16);
 
 impl Encode<Fixed16, Groto> for i16 {
-  fn encode_raw<B>(&self, _: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode_raw<B>(&self, _: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     buf.try_write_i16_le(*self).map_err(Into::into)
   }
 
@@ -41,9 +41,9 @@ impl Encode<Fixed16, Groto> for i16 {
     2
   }
 
-  fn encode<B>(&self, ctx: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(&self, ctx: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<Fixed16, Groto>>::encode_raw(self, ctx, buf)
   }
@@ -54,11 +54,11 @@ impl Encode<Fixed16, Groto> for i16 {
 }
 
 impl Encode<Varint, Groto> for i16 {
-  fn encode_raw<B>(&self, _: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode_raw<B>(&self, _: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     buf.write_varint(self).map_err(Into::into)
   }
 
@@ -66,9 +66,9 @@ impl Encode<Varint, Groto> for i16 {
     varing::encoded_i16_varint_len(*self)
   }
 
-  fn encode<B>(&self, ctx: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(&self, ctx: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<Varint, Groto>>::encode_raw(self, ctx, buf)
   }
@@ -84,7 +84,7 @@ impl<'de, RB, B> Decode<'de, Fixed16, RB, B, Groto> for i16 {
   fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     src
@@ -98,7 +98,7 @@ impl<'de, RB, B> Decode<'de, Varint, RB, B, Groto> for i16 {
   fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     src.read_varint().map_err(Into::into)

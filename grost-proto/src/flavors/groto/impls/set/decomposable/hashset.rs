@@ -11,7 +11,7 @@ use crate::{
   convert::{Extracted, Inner, PartialIdentity, TryFromPartial},
   flavors::{
     Groto,
-    groto::{Context, Error},
+    groto::{Context, DecodeError, EncodeError},
   },
   selection::Selectable,
   state::{Partial, State},
@@ -71,7 +71,7 @@ where
   K::Output: Sized,
   S: BuildHasher + Default,
 {
-  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
+  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, DecodeError> {
     let mut set = HashSet::with_capacity_and_hasher(input.len(), S::default());
 
     for item in input.into_iter() {

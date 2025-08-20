@@ -111,11 +111,11 @@ macro_rules! varint {
     }
   };
   (@encode_impl $flavor:ty:$wf:ty) => {
-    fn encode_raw<WB>(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn encode_raw<WB>(&self, _: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
-      use $crate::__private::buffer::BufMutExt;
+      use $crate::__private::buffer::ChunkMutExt;
 
       let mut buf = ::core::convert::Into::into(buf);
       buf.write_varint(self)
@@ -126,9 +126,9 @@ macro_rules! varint {
       $crate::__private::varing::Varint::encoded_len(self)
     }
 
-    fn encode<WB>(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn encode<WB>(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <Self as $crate::__private::Encode<$wf, $flavor>>::encode_raw(self, ctx, buf)
     }
@@ -137,9 +137,9 @@ macro_rules! varint {
       <Self as $crate::__private::Encode<$wf, $flavor>>::encoded_raw_len(self, ctx)
     }
 
-    fn encode_length_delimited<WB>(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn encode_length_delimited<WB>(&self, ctx: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <Self as $crate::__private::Encode<$wf, $flavor>>::encode(self, ctx, buf)
     }
@@ -157,10 +157,10 @@ macro_rules! varint {
     fn decode(_: &<$flavor as $crate::__private::flavors::Flavor>::Context, mut src: RB) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::error::DecodeError<$flavor>>
     where
       Self: ::core::marker::Sized + 'de,
-      RB: $crate::__private::buffer::Buf,
+      RB: $crate::__private::buffer::Chunk,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
-      use $crate::__private::buffer::BufExt;
+      use $crate::__private::buffer::ChunkExt;
 
       src.read_varint::<Self>().map_err(::core::convert::Into::into)
     }
@@ -171,9 +171,9 @@ macro_rules! varint {
 #[macro_export]
 macro_rules! partial_encode_scalar {
   (@impl $flavor:ty as $format:ty) => {
-    fn partial_encode_raw<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn partial_encode_raw<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode_raw(self, context, buf)
@@ -190,9 +190,9 @@ macro_rules! partial_encode_scalar {
       }
     }
 
-    fn partial_encode<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn partial_encode<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode(self, context, buf)
@@ -209,9 +209,9 @@ macro_rules! partial_encode_scalar {
       }
     }
 
-    fn partial_encode_length_delimited<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
+    fn partial_encode_length_delimited<WB>(&self, context: &<$flavor as $crate::__private::flavors::Flavor>::Context, buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>, s: &Self::Selector) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       if *s {
         <Self as $crate::__private::Encode<$format, $flavor>>::encode_length_delimited(self, context, buf)
@@ -648,10 +648,10 @@ macro_rules! encode_bridge {
     fn encode_raw<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode_raw(&$to(self), context, buf)
     }
@@ -663,10 +663,10 @@ macro_rules! encode_bridge {
     fn encode<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode(&$to(self), context, buf)
     }
@@ -678,10 +678,10 @@ macro_rules! encode_bridge {
     fn encode_length_delimited<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::Encode<$format, $flavor>>::encode_length_delimited(&$to(self), context, buf)
     }
@@ -709,11 +709,11 @@ macro_rules! encode_bridge {
     fn partial_encode_raw<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
       selector: &Self::Selector,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode_raw(&$to(self), context, buf, selector)
     }
@@ -729,11 +729,11 @@ macro_rules! encode_bridge {
     fn partial_encode<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
       selector: &Self::Selector,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode(&$to(self), context, buf, selector)
     }
@@ -749,11 +749,11 @@ macro_rules! encode_bridge {
     fn partial_encode_length_delimited<WB>(
       &self,
       context: &<$flavor as $crate::__private::flavors::Flavor>::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
       selector: &Self::Selector,
     ) -> ::core::result::Result<::core::primitive::usize, $crate::__private::error::EncodeError<$flavor>>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$bridge as $crate::__private::PartialEncode<$format, $flavor>>::partial_encode_length_delimited(&$to(self), context, buf, selector)
     }
@@ -835,7 +835,7 @@ macro_rules! decode_bridge {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::error::DecodeError<$flavor>>
     where
       Self: ::core::marker::Sized + 'de,
-      RB: $crate::__private::Buf + 'de,
+      RB: $crate::__private::Chunk + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode(context, src).map(|(n, v)| (n, $from(v)))
@@ -847,7 +847,7 @@ macro_rules! decode_bridge {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::error::DecodeError<$flavor>>
     where
       Self: ::core::marker::Sized + 'de,
-      RB: $crate::__private::Buf + 'de,
+      RB: $crate::__private::Chunk + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode_length_delimited(context, src).map(|(n, v)| (n, $from(v)))
@@ -895,7 +895,7 @@ macro_rules! try_decode_bridge {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::error::DecodeError<$flavor>>
     where
       Self: ::core::marker::Sized + 'de,
-      RB: $crate::__private::Buf + 'de,
+      RB: $crate::__private::Chunk + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
@@ -907,7 +907,7 @@ macro_rules! try_decode_bridge {
     ) -> ::core::result::Result<(::core::primitive::usize, Self), $crate::__private::error::DecodeError<$flavor>>
     where
       Self: ::core::marker::Sized + 'de,
-      RB: $crate::__private::Buf + 'de,
+      RB: $crate::__private::Chunk + 'de,
       B: $crate::__private::UnknownBuffer<RB, $flavor> + 'de,
     {
       <$bridge as $crate::__private::decode::Decode<'de, $format, RB, B, $flavor>>::decode_length_delimited(context, src).and_then(|(n, v)| $from(v).map(|v| (n, v)))
@@ -965,7 +965,7 @@ macro_rules! try_from_ref {
         where
           Self: Sized,
           <Self as $crate::__private::state::State<$crate::__private::state::Ref<$lifetime, $wf, __GROST_READ_BUF__, __GROST_BUFFER__, $flavor>>>::Output: Sized,
-          __GROST_READ_BUF__: $crate::__private::buffer::Buf + $lifetime,
+          __GROST_READ_BUF__: $crate::__private::buffer::Chunk + $lifetime,
           __GROST_BUFFER__: $crate::__private::buffer::UnknownBuffer<__GROST_READ_BUF__, $flavor> + $lifetime,
         {
           ::core::result::Result::Ok(input)

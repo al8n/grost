@@ -226,3 +226,6 @@ impl<T> Decomposable<T> {
     self.0
   }
 }
+
+#[test]
+fn t() {}

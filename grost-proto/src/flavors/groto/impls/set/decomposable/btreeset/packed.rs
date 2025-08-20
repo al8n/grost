@@ -1,13 +1,13 @@
 use std::collections::BTreeSet;
 
 use crate::{
-  buffer::{Buf, BufMut, Buffer, UnknownBuffer},
+  buffer::{Buffer, Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     DefaultSetWireFormat, Groto, Packed, WireFormat,
-    groto::{Context, Error, PackedSetDecoder},
+    groto::{Context, DecodeError, EncodeError, PackedSetDecoder},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -54,10 +54,10 @@ where
   KW: WireFormat<Groto> + 'a,
   K: Ord + Decode<'a, KW, RB, B, Groto>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     packed_decode::<K, KW, BTreeSet<_>, RB>(
@@ -82,9 +82,13 @@ where
   KW: WireFormat<Groto>,
   K: Encode<KW, Groto>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     packed_encode_raw::<K, _, _, _>(
       buf.buffer_mut(),
@@ -98,9 +102,13 @@ where
     packed_encoded_raw_len::<K, KW, _, _>(self.len(), self.iter(), |item| item.encoded_len(context))
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     packed_encode::<K, _, _, _>(
       buf.buffer_mut(),
@@ -126,11 +134,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -159,11 +167,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -196,17 +204,17 @@ where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, KW, RB, B, Groto> + Ord + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
     ctx: &'a Context,
     input: <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<Ref<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -228,17 +236,17 @@ where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, KW, RB, B, Groto> + Ord + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
     input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -262,14 +270,14 @@ where
   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(
     context: &'a Context,
     input: <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
-  ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
+  ) -> Result<<Self as State<Partial<Groto>>>::Output, DecodeError>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'a, Packed<KW>, RB, B, Groto>>>::Output: Sized,
@@ -283,7 +291,7 @@ where
     let Some(mut partial_set) =
       <DefaultPartialSetBuffer<_> as Buffer>::with_capacity(capacity_hint)
     else {
-      return Err(Error::allocation_failed("set"));
+      return Err(DecodeError::allocation_failed("set"));
     };
 
     try_from::<_, _, KW, RB, B, _, _>(
@@ -292,7 +300,7 @@ where
       |set| context.err_length_mismatch(capacity_hint, set.len()),
       |set, k| {
         if <DefaultPartialSetBuffer<_> as Buffer>::push(set, k).is_some() {
-          return Err(Error::capacity_exceeded("set"));
+          return Err(DecodeError::capacity_exceeded("set"));
         }
         Ok(())
       },

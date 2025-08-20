@@ -6,7 +6,7 @@ use crate::{
   encode::Length,
   flavors::{
     Groto,
-    groto::{Context, Error},
+    groto::{Context, DecodeError, EncodeError},
   },
   selection::Selectable,
   state::{Partial, State},
@@ -65,7 +65,7 @@ where
   K: TryFromPartial<Groto> + Ord,
   K::Output: Sized,
 {
-  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, Error> {
+  fn try_from_partial(ctx: &Context, input: Self::Output) -> Result<Self, DecodeError> {
     let mut set = BTreeSet::new();
 
     for item in input.into_inner() {

@@ -103,7 +103,7 @@ quickcheck = ["dep:quickcheck", "ruint_1?/quickcheck", "hostaddr_0_1?/quickcheck
 
 [dependencies]
 auto_enums = "0.8"
-bufkit = { version = "0.2", default-features = false, features = ["varing"] }
+bufkit = { version = "0.5", default-features = false, features = ["varint"] }
 either = { workspace = true, default-features = false }
 ghost = "0.1"
 ref-cast = { version = "1", default-features = false }

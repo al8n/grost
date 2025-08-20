@@ -238,7 +238,7 @@ impl ConcretePartialRefObject {
         .predicates
         .extend([
           syn::parse2::<WherePredicate>(quote! {
-            #rb: #path_to_grost::__private::buffer::Buf + #lt
+            #rb: #path_to_grost::__private::buffer::Chunk + #lt
           })?,
           syn::parse2::<WherePredicate>(quote! {
             #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt
@@ -257,7 +257,7 @@ impl ConcretePartialRefObject {
         .predicates
         .extend([
           syn::parse2::<WherePredicate>(quote! {
-            #rb: #path_to_grost::__private::buffer::Buf + #lt
+            #rb: #path_to_grost::__private::buffer::Chunk + #lt
           })?,
           syn::parse2::<WherePredicate>(quote! {
             #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt

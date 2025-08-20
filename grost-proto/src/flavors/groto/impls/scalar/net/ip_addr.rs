@@ -2,7 +2,7 @@ use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use core::num::NonZeroUsize;
 
 use crate::{
-  buffer::{Buf, BufExt, BufMut, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkWriter, UnknownBuffer},
   decode::Decode,
   default_scalar_wire_format,
   encode::Encode,
@@ -22,10 +22,10 @@ macro_rules! ip_addr {
       fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: impl Into<WriteBuf<B>>,
+        buf: impl Into<ChunkWriter<B>>,
       ) -> Result<usize, EncodeError>
       where
-        B: BufMut,
+        B: ChunkMut,
       {
         <$convert as Encode<$variant, Groto>>::encode_raw(
           &self.to_bits(),
@@ -44,10 +44,10 @@ macro_rules! ip_addr {
       fn encode<B>(
         &self,
         context: &Context,
-        buf: impl Into<WriteBuf<B>>,
+        buf: impl Into<ChunkWriter<B>>,
       ) -> Result<usize, EncodeError>
       where
-        B: BufMut,
+        B: ChunkMut,
       {
         <$convert as Encode<$variant, Groto>>::encode(
           &self.to_bits(),
@@ -68,10 +68,10 @@ macro_rules! ip_addr {
       fn encode_raw<B>(
         &self,
         context: &Context,
-        buf: impl Into<WriteBuf<B>>,
+        buf: impl Into<ChunkWriter<B>>,
       ) -> Result<usize, EncodeError>
       where
-        B: BufMut,
+        B: ChunkMut,
       {
         <$convert as Encode<Varint, Groto>>::encode_raw(
           &self.to_bits(),
@@ -90,10 +90,10 @@ macro_rules! ip_addr {
       fn encode<B>(
         &self,
         context: &Context,
-        buf: impl Into<WriteBuf<B>>,
+        buf: impl Into<ChunkWriter<B>>,
       ) -> Result<usize, EncodeError>
       where
-        B: BufMut,
+        B: ChunkMut,
       {
         <$convert as Encode<Varint, Groto>>::encode(
           &self.to_bits(),
@@ -117,7 +117,7 @@ macro_rules! ip_addr {
       ) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
-        RB: Buf + 'de,
+        RB: Chunk + 'de,
         B: UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, $variant, RB, B, Groto>>::decode(ctx, src)
@@ -132,7 +132,7 @@ macro_rules! ip_addr {
       ) -> Result<(usize, Self), DecodeError>
       where
         Self: Sized + 'de,
-        RB: Buf + 'de,
+        RB: Chunk + 'de,
         B: UnknownBuffer<RB, Groto> + 'de,
       {
         <$convert as Decode<'de, Varint, RB, B, Groto>>::decode(ctx, src)
@@ -170,10 +170,10 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
   fn encode_raw<B>(
     &self,
     context: &<Groto as crate::flavors::Flavor>::Context,
-    buf: impl Into<WriteBuf<B>>,
+    buf: impl Into<ChunkWriter<B>>,
   ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     match self {
       Self::V4(ipv4_addr) => {
@@ -196,18 +196,22 @@ impl Encode<LengthDelimited, Groto> for IpAddr {
     }
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, EncodeError>
+  fn encode<B>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<B>>,
+  ) -> Result<usize, EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut buf: WriteBuf<B> = buf.into();
+    let mut buf: ChunkWriter<B> = buf.into();
     macro_rules! encode_ip_variant {
       ($variant:ident::$wt:ident($buf:ident, $ip:ident)) => {{
         paste::paste! {
-          if buf.mutable() < [< $variant:upper _LEN >] + 1 {
+          if buf.remaining_mut() < [< $variant:upper _LEN >] + 1 {
             return Err(EncodeError::buffer_too_small(
               [< $variant:upper _LEN >] + 1,
-              buf.mutable(),
+              buf.remaining_mut(),
             ));
           }
 
@@ -241,7 +245,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
   fn decode(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let remaining = src.remaining();
@@ -279,7 +283,7 @@ impl<'de, RB, B> Decode<'de, LengthDelimited, RB, B, Groto> for IpAddr {
   fn decode_length_delimited(_: &Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'de,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'de,
   {
     let remaining = src.remaining();

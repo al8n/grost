@@ -1,7 +1,7 @@
 use crate::{
   flavors::{
     Borrowed, Flatten, Groto, Packed, WireFormat,
-    groto::{Context, Error},
+    groto::{Context, EncodeError},
   },
   reflection::{Reflectable, SchemaType, SchemaTypeReflection},
 };
@@ -27,13 +27,13 @@ default_wire_format!(@repeated [T]);
 
 selectable!([T]);
 
-fn check_list_type<T>() -> Result<(), Error>
+fn check_list_type<T>() -> Result<(), EncodeError>
 where
   T: ?Sized,
   SchemaTypeReflection<T>: Reflectable<T, Reflection = SchemaType>,
 {
   if !SchemaTypeReflection::<T>::REFLECTION.is_list() {
-    return Err(Error::custom(
+    return Err(EncodeError::other(
       "cannot encode a non-nested list type as flatten format",
     ));
   }

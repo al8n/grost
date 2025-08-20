@@ -1,13 +1,15 @@
-use core::{iter::FusedIterator, marker::PhantomData};
+use core::{iter::FusedIterator, marker::PhantomData, num::NonZeroUsize};
+
+use bufkit::RefPeeker;
 
 use crate::{
-  buffer::{Buf, BufMut, Buffer, DefaultBuffer, UnknownBuffer},
+  buffer::{Buffer, Chunk, ChunkExt, ChunkMut, ChunkWriter, DefaultBuffer, UnknownBuffer},
   convert::Extracted,
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Flavor, Groto, Repeated, WireFormat,
-    groto::{Context, Error, Identifier, Tag},
+    groto::{Context, DecodeError, EncodeError, Identifier, Tag},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -103,12 +105,12 @@ impl<'de, T, B, UB, W, const TAG: u32> RepeatedDecoder<'de, T, B, UB, W, TAG> {
   #[inline]
   pub const fn iter(&self) -> RepeatedDecoderIter<'_, 'de, T, B, UB, W, TAG> {
     RepeatedDecoderIter {
+      reader: RefPeeker::new(&self.src),
       decoder: self,
       expected_elements: self.expected_elements,
       has_error: false,
       identifier_size: self.identifier_size,
       yielded_elements: 0,
-      offset: 0,
     }
   }
 
@@ -145,31 +147,27 @@ impl<'a, T, RB, B, W, const TAG: u32> Encode<Repeated<W, TAG>, Groto>
   for RepeatedDecoder<'a, T, RB, B, W, TAG>
 where
   W: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    ctx: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
-    let buf_len = buf.len();
-    let src_len = self.encoded_raw_len(ctx);
-
-    match buf.prefix_mut_checked(src_len) {
-      None => Err(Error::buffer_too_small(src_len, buf_len)),
-      Some(buf) => {
-        buf.copy_from_slice(self.src.remaining_slice());
-        Ok(src_len)
-      }
-    }
+    let mut buf: ChunkWriter<WB> = buf.into();
+    buf.try_write_slice(self.src.buffer()).map_err(Into::into)
   }
 
   fn encoded_raw_len(&self, _: &Context) -> usize {
     self.src.remaining()
   }
 
-  fn encode<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, ctx: &Context, buf: impl Into<ChunkWriter<WB>>) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.encode_raw(ctx, buf)
   }
@@ -185,17 +183,17 @@ where
   W: WireFormat<Groto> + 'a,
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -219,11 +217,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &<Groto as Flavor>::Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, <Groto as Flavor>::Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -254,32 +252,29 @@ where
 {
   fn decode(
     ctx: &'a <Groto as crate::flavors::Flavor>::Context,
-    src: RB,
-  ) -> Result<(usize, Self), Error>
+    mut src: RB,
+  ) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
-    let expected_identifier = Identifier::new(Repeated::<W, TAG>::WIRE_TYPE, Tag::new(TAG));
+    let expected_identifier = Identifier::new(Repeated::<W, TAG>::WIRE_TYPE, Tag::try_new(TAG)?);
     let mut num_elements = 0;
     let mut offset = 0;
-    let buf = src.remaining_slice();
-    let buf_len = buf.len();
-
-    if buf_len == 0 {
-      return Err(Error::buffer_underflow());
-    }
+    let buf_len = src.remaining();
+    let mut peeker = RefPeeker::new(&src);
 
     // Scan for consecutive elements with matching identifiers
     // Format: [identifier][element] [identifier][element] ...
     loop {
-      if offset >= buf_len {
-        break;
-      }
-
       // Try to decode the next identifier
-      let (id_bytes, next_identifier) = Identifier::decode(&buf[offset..])?;
+      let (id_bytes, next_identifier) = peeker.read_varint::<u32>().map_err(|e| {
+        DecodeError::from(e)
+          .accumulate_requested(|| NonZeroUsize::new(offset))
+          .update_available(|| buf_len)
+      })?;
+      let next_identifier = Identifier::try_from_u32(next_identifier)?;
 
       // If the identifier doesn't match, we've reached the end of the repeated field
       // Note: We don't consume this identifier as it belongs to the next field
@@ -291,16 +286,23 @@ where
       offset += id_bytes;
 
       // Use peek_raw to determine element size without consuming it
-      let element_bytes = Groto::peek_raw(ctx, W::WIRE_TYPE, &buf[offset..])?;
+      let element_bytes = Groto::peek_raw(ctx, W::WIRE_TYPE, &peeker).map_err(|e| {
+        e.accumulate_requested(|| NonZeroUsize::new(offset))
+          .update_available(|| buf_len)
+      })?;
       offset += element_bytes;
       num_elements += 1;
     }
+
+    drop(peeker);
+
+    src.truncate(offset);
 
     // Return the decoder configured for the exact range of repeated data
     Ok((
       offset,
       Self {
-        src: src.segment(..offset),
+        src,
         expected_elements: num_elements,
         identifier_size: expected_identifier.encoded_len(),
         ctx,
@@ -361,6 +363,7 @@ where
 pub struct RepeatedDecoderIter<'a, 'de: 'a, T, RB, UB, W, const TAG: u32> {
   /// Reference to the parent decoder
   decoder: &'a RepeatedDecoder<'de, T, RB, UB, W, TAG>,
+  reader: RefPeeker<'a, RB>,
   /// Total elements expected (cached from decoder)
   expected_elements: usize,
   /// Error flag - once set, iteration stops permanently
@@ -369,8 +372,6 @@ pub struct RepeatedDecoderIter<'a, 'de: 'a, T, RB, UB, W, const TAG: u32> {
   identifier_size: usize,
   /// Number of elements successfully decoded so far
   yielded_elements: usize,
-  /// Current byte offset within the source buffer
-  offset: usize,
 }
 
 impl<'a, 'de: 'a, T, B, UB, W, const TAG: u32> RepeatedDecoderIter<'a, 'de, T, B, UB, W, TAG> {
@@ -380,7 +381,7 @@ impl<'a, 'de: 'a, T, B, UB, W, const TAG: u32> RepeatedDecoderIter<'a, 'de, T, B
   /// Useful for tracking progress through the binary data or debugging.
   #[inline]
   pub const fn position(&self) -> usize {
-    self.offset
+    self.reader.position()
   }
 
   /// Returns the number of elements that have been successfully decoded so far.
@@ -445,19 +446,12 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
-  type Item = Result<(usize, T), Error>;
+  type Item = Result<(usize, T), DecodeError>;
 
   #[inline]
   fn next(&mut self) -> Option<Self::Item> {
-    let src_len = self.decoder.src.remaining();
-
-    // Check if we've reached the end of the buffer
-    if self.offset >= src_len {
-      return None;
-    }
-
     // Check if we've decoded all expected elements
     if self.yielded_elements >= self.expected_elements {
       return None;
@@ -468,12 +462,14 @@ where
       return None;
     }
 
+    let remaining = self.reader.remaining();
+
     // Ensure we have enough bytes for the identifier
-    if self.offset + self.identifier_size > src_len {
+    if remaining < self.identifier_size {
       // This indicates the buffer is malformed - we expected more elements
       // but don't have enough bytes even for the identifier
       self.has_error = true;
-      return Some(Err(Error::buffer_underflow()));
+      return Some(Err(DecodeError::insufficient_data(remaining)));
     }
 
     // Skip the identifier and decode the element
@@ -484,11 +480,11 @@ where
         self
           .decoder
           .src
-          .segment(self.offset + self.identifier_size..),
+          .segment(self.reader.position() + self.identifier_size..),
       )
       .inspect(|(read, _)| {
         // Update position: skip identifier + consumed bytes
-        self.offset += self.identifier_size + read;
+        self.reader.advance(self.identifier_size + read);
         self.yielded_elements += 1;
       })
       .inspect_err(|_| {
@@ -510,7 +506,7 @@ where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
 }
 
@@ -660,28 +656,30 @@ where
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
+    let mut buf: ChunkWriter<WB> = buf.into();
     let encoded_raw_len = self.encoded_raw_len(context);
-    let buf_len = buf.len();
+    let buf_len = buf.remaining_mut();
     if buf_len < encoded_raw_len {
-      return Err(Error::buffer_too_small(encoded_raw_len, buf_len));
+      return Err(EncodeError::buffer_too_small(encoded_raw_len, buf_len));
     }
 
     let mut offset = 0;
-    let wb = buf.buffer_mut();
+    // let wb = buf.buffer_mut();
     for decoder in self.buffer.as_slice() {
-      // Double-check bounds for each decoder
-      if offset >= buf_len {
-        return Err(Error::buffer_too_small(encoded_raw_len, buf_len));
-      }
-
-      let size = decoder.encode_raw(context, &mut wb[offset..])?;
+      let size = decoder
+        .encode_raw::<&mut WB>(context, buf.as_mut())
+        .map_err(|e| e.propagate_buffer_info(encoded_raw_len, buf_len))?;
       offset += size;
     }
     Ok(offset)
@@ -696,9 +694,13 @@ where
       .sum()
   }
 
-  fn encode<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     self.encode_raw(context, buf)
   }
@@ -715,17 +717,17 @@ where
   Repeated<W, TAG>: WireFormat<Groto> + 'a,
   T: Decode<'a, W, RB, UB, Groto> + Selectable<Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -745,11 +747,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
-  ) -> Result<usize, Error>
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -775,10 +777,10 @@ where
   T: Decode<'a, W, RB, UB, Groto>,
   B: Buffer<Item = RepeatedDecoder<'a, T, RB, UB, W, TAG>>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Self {
@@ -794,10 +796,10 @@ where
       .map(|size| (size, this))
   }
 
-  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
+  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto> + 'a,
   {
     let (read, decoder) = <RepeatedDecoder<'a, T, RB, UB, W, TAG> as Decode<
@@ -809,7 +811,7 @@ where
     >>::decode(ctx, src)?;
 
     if self.buffer.push(decoder).is_none() {
-      return Err(Error::custom(
+      return Err(DecodeError::other(
         "failed to push decoder into buffer: capacity exceeded",
       ));
     }
@@ -957,11 +959,11 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> Iterator
 where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,
 {
-  type Item = Result<(usize, T), Error>;
+  type Item = Result<(usize, T), DecodeError>;
 
   fn next(&mut self) -> Option<Self::Item> {
     // Check if we've processed all decoder batches
@@ -1030,7 +1032,7 @@ impl<'a, 'de: 'a, T, RB, UB, W, const TAG: u32, B> FusedIterator
 where
   W: WireFormat<Groto> + 'de,
   T: Decode<'de, W, RB, UB, Groto> + Sized + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
   B: Buffer<Item = RepeatedDecoder<'de, T, RB, UB, W, TAG>>,
 {

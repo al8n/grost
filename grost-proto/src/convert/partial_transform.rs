@@ -1,4 +1,5 @@
 use crate::{
+  error::DecodeError,
   flavors::{Flavor, WireFormat, groto::Context},
   selection::Selectable,
   state::{Partial, PartialRef, State},
@@ -19,7 +20,7 @@ where
     context: &'a Context,
     input: <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output,
     selector: &Self::Selector,
-  ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
+  ) -> Result<<Self as State<Partial<F>>>::Output, DecodeError<F>>
   where
     <Self as State<Partial<F>>>::Output: Sized,
     <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized;
@@ -42,7 +43,7 @@ where
     _: &'a Context,
     mut input: <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output,
     selector: &Self::Selector,
-  ) -> Result<<Self as State<Partial<F>>>::Output, F::Error>
+  ) -> Result<<Self as State<Partial<F>>>::Output, DecodeError<F>>
   where
     <Self as State<Partial<F>>>::Output: Sized,
     <Self as State<PartialRef<'a, W, RB, UB, F>>>::Output: Sized,

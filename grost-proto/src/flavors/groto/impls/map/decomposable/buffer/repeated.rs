@@ -1,12 +1,13 @@
 use crate::{
-  buffer::{Buf, BufMut, Buffer, UnknownBuffer},
+  buffer::{Buffer, Chunk, ChunkMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, RepeatedEntry, WireFormat,
     groto::{
-      Context, DecomposablePartialMapBuffer, DecomposableRepeatedMapDecoder, Error,
-      PartialDecomposableMapEntry, RepeatedMapDecoderBuffer, context::RepeatedDecodePolicy,
+      Context, DecodeError, DecomposablePartialMapBuffer, DecomposableRepeatedMapDecoder,
+      EncodeError, PartialDecomposableMapEntry, RepeatedMapDecoderBuffer,
+      context::RepeatedDecodePolicy,
     },
   },
   selection::Selector,
@@ -48,9 +49,13 @@ where
   VW: WireFormat<Groto>,
   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
-  fn encode_raw<WB>(&self, context: &Context, buf: impl Into<WriteBuf<WB>>) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    context: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     repeated_encode::<KW, VW, _, _, TAG>(
       buf.buffer_mut(),
@@ -66,9 +71,9 @@ where
     })
   }
 
-  fn encode<B>(&self, context: &Context, buf: impl Into<WriteBuf<B>>) -> Result<usize, Error>
+  fn encode<B>(&self, context: &Context, buf: impl Into<ChunkWriter<B>>) -> Result<usize, Error>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
     <Self as Encode<RepeatedEntry<KW, VW, TAG>, Groto>>::encode_raw(self, context, buf)
   }
@@ -90,11 +95,11 @@ where
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -127,11 +132,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     <Self as PartialEncode<RepeatedEntry<KW, VW, TAG>, Groto>>::partial_encode_raw(
       self, context, buf, selector,
@@ -154,10 +159,10 @@ where
   V: Decode<'a, VW, RB, B, Groto>,
   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 {
-  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(context: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Self::new();
@@ -170,7 +175,7 @@ where
   fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     match ctx.repeated_decode_policy() {
@@ -221,7 +226,7 @@ where
 //   V: TryFromRef<'de, VW, RB, UB, Groto> + 'de,
 //   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
 //   UB: UnknownBuffer<RB, Groto> + 'de,
-//   RB: Buf + 'de,
+//   RB: Chunk + 'de,
 //   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 // {
 //   fn try_from_ref(
@@ -231,7 +236,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<Ref<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output: Sized,
-//     RB: Buf + 'de,
+//     RB: Chunk + 'de,
 //     UB: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();
@@ -263,7 +268,7 @@ where
 //   V: TryFromPartialRef<'de, VW, RB, UB, Groto> + 'de,
 //   V::Output: Sized + Decode<'de, VW, RB, UB, Groto>,
 //   UB: UnknownBuffer<RB, Groto> + 'de,
-//   RB: Buf + 'de,
+//   RB: Chunk + 'de,
 //   PB: Buffer<Item = PartialDecomposableMapEntry<K, V>>,
 // {
 //   fn try_from_partial_ref(
@@ -273,7 +278,7 @@ where
 //   where
 //     Self: Sized,
 //     <Self as State<PartialRef<'de, RepeatedEntry<KW, VW, TAG>, RB, UB, Groto>>>::Output: Sized,
-//     RB: Buf + 'de,
+//     RB: Chunk + 'de,
 //     UB: UnknownBuffer<RB, Groto>,
 //   {
 //     let capacity_hint = input.capacity_hint();

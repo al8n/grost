@@ -1,7 +1,7 @@
 use regex_1::{Regex, bytes::Regex as BytesRegex};
 
 use crate::{
-  buffer::Buf,
+  buffer::Chunk,
   default_string_wire_format,
   flavors::{
     Groto,
@@ -44,7 +44,7 @@ macro_rules! try_str_bridge {
       $crate::flatten_state!($ty $([ $(const $g: usize),* ])?);
 
       bidi_equivalent!(impl <str, $crate::__private::flavors::groto::LengthDelimited> for <$ty, $crate::__private::flavors::groto::LengthDelimited>);
-      bidi_equivalent!(:<RB: $crate::__private::buffer::Buf>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
+      bidi_equivalent!(:<RB: $crate::__private::buffer::Chunk>: impl <$ty, $crate::__private::flavors::groto::LengthDelimited> for <$crate::__private::decode::Str<RB>, $crate::__private::flavors::groto::LengthDelimited>);
 
       impl<'de, RB, B> $crate::__private::convert::TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for $ty
       {
@@ -55,7 +55,7 @@ macro_rules! try_str_bridge {
         where
           Self: Sized,
           <Self as $crate::__private::state::State<$crate::__private::state::PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
-          RB: $crate::__private::buffer::Buf,
+          RB: $crate::__private::buffer::Chunk,
           B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto>,
         {
           <$ty>::new(input.as_ref()).map_err(|_| DecodeError::other(ERR_MSG))
@@ -64,7 +64,7 @@ macro_rules! try_str_bridge {
 
       impl<'de, RB, B> $crate::__private::convert::TryFromRef<'de, LengthDelimited, RB, B, Groto> for $ty
       where
-        RB: Buf,
+        RB: Chunk,
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn try_from_ref(
@@ -80,7 +80,7 @@ macro_rules! try_str_bridge {
 
       impl<'de, RB, B> $crate::__private::convert::PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for $ty
       where
-        RB: Buf,
+        RB: Chunk,
         B: $crate::__private::buffer::UnknownBuffer<RB, $crate::__private::flavors::Groto> + 'de,
       {
         fn partial_try_from_ref(

@@ -1,5 +1,5 @@
 use crate::{
-  buffer::{Buf, UnknownBuffer},
+  buffer::{Chunk, UnknownBuffer},
   convert::{PartialIdentity, PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::{Decode, Str},
   default_string_wire_format, encode_bridge, flatten_state,
@@ -34,13 +34,13 @@ partial_state!(
   Groto: SmolStr => SmolStr
 );
 bidi_equivalent!(impl <str, LengthDelimited> for <SmolStr, LengthDelimited>);
-bidi_equivalent!(:<RB: Buf>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
+bidi_equivalent!(:<RB: Chunk>: impl<SmolStr, LengthDelimited> for <Str<RB>, LengthDelimited>);
 
 impl<'a, RB, B> Decode<'a, LengthDelimited, RB, B, Groto> for SmolStr {
   fn decode(_: &'a Context, mut src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let res = decode_str(&mut src).map(|(read, s)| (read, SmolStr::new(s)))?;
@@ -57,7 +57,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for SmolS
   where
     Self: Sized,
     <Self as State<PartialRef<'de, LengthDelimited, RB, B, Groto>>>::Output: Sized,
-    RB: Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto>,
   {
     Ok(SmolStr::new(input.as_ref()))
@@ -66,7 +66,7 @@ impl<'de, RB, B> TryFromPartialRef<'de, LengthDelimited, RB, B, Groto> for SmolS
 
 impl<'de, RB, B> TryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
-  RB: Buf,
+  RB: Chunk,
   B: UnknownBuffer<RB, Groto>,
 {
   fn try_from_ref(
@@ -82,7 +82,7 @@ where
 
 impl<'de, RB, B> PartialTryFromRef<'de, LengthDelimited, RB, B, Groto> for SmolStr
 where
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   fn partial_try_from_ref(
     _: &'de Context,

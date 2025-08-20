@@ -1,9 +1,9 @@
 use crate::{
-  buffer::BufMut,
+  buffer::ChunkMut,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, JoinAscii, JoinChar, WireFormat,
-    groto::{Context, Error, LengthDelimited},
+    groto::{Context, DecodeError, EncodeError, LengthDelimited},
   },
   selection::Selectable,
 };
@@ -13,11 +13,11 @@ macro_rules! blanket_partial_encode_impl {
     fn partial_encode_raw<WB>(
       &self,
       context: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
       selector: &Self::Selector,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       if !*selector {
         return Ok(0);
@@ -37,11 +37,11 @@ macro_rules! blanket_partial_encode_impl {
     fn partial_encode<WB>(
       &self,
       context: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
       selector: &Self::Selector,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       if *selector {
         <Self as Encode<$wf, Groto>>::encode(self, context, buf)
@@ -179,10 +179,10 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       encode_raw(self, buf.buffer_mut(), JoinAscii::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinAscii<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
@@ -194,10 +194,10 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode<WB>(
       &self,
       context: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       encode(
         self,
@@ -230,10 +230,10 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode_raw<WB>(
       &self,
       ctx: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       encode_raw(self, buf.buffer_mut(), JoinChar::<LengthDelimited, #(A~IDX,)*>::BYTES, || <Self as Encode<JoinChar<LengthDelimited, #(A~IDX,)*>, Groto>>::encoded_raw_len(self, ctx))
     }
@@ -245,10 +245,10 @@ seq_macro::seq!(IDX in 0..=63 {
     fn encode<WB>(
       &self,
       context: &Context,
-      buf: impl Into<WriteBuf<WB>>,
+      buf: impl Into<ChunkWriter<WB>>,
     ) -> Result<usize, Error>
     where
-      WB: BufMut,
+      WB: ChunkMut,
     {
       encode(
         self,

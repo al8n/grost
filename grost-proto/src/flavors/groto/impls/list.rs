@@ -1,9 +1,9 @@
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, UnknownBuffer},
   decode::Decode,
   flavors::{
     Groto, WireFormat,
-    groto::{Context, Error, RepeatedDecoder, context::RepeatedDecodePolicy},
+    groto::{Context, DecodeError, RepeatedDecoder, context::RepeatedDecodePolicy},
   },
 };
 
@@ -11,14 +11,14 @@ fn repeated_decode_list<'a, K, KW, RB, B, T, const TAG: u32>(
   ctx: &'a Context,
   output: &mut T,
   src: RB,
-  mut push: impl FnMut(&mut T, K) -> Result<(), Error>,
-  reserve: impl FnOnce(&mut T, usize) -> Result<(), Error>,
-) -> Result<usize, Error>
+  mut push: impl FnMut(&mut T, K) -> Result<(), DecodeError>,
+  reserve: impl FnOnce(&mut T, usize) -> Result<(), DecodeError>,
+) -> Result<usize, DecodeError>
 where
   K: Decode<'a, KW, RB, B, Groto> + 'a,
   T: 'a,
   KW: WireFormat<Groto> + 'a,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   match ctx.repeated_decode_policy() {
@@ -283,11 +283,11 @@ macro_rules! encode_list {
     fn partial_encode_raw<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::EncodeError>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode_raw(self.as_ref(), context, buf, selector)
     }
@@ -299,11 +299,11 @@ macro_rules! encode_list {
     fn partial_encode<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
       selector: &Self::Selector,
-    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::EncodeError>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$ty as $crate::__private::PartialEncode<$wf, $crate::__private::flavors::Groto>>::partial_encode(self.as_ref(), context, buf, selector)
     }
@@ -320,10 +320,10 @@ macro_rules! encode_list {
     fn encode_raw<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
-    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::EncodeError>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode_raw(
         self.as_ref(),
@@ -342,10 +342,10 @@ macro_rules! encode_list {
     fn encode<WB>(
       &self,
       context: &$crate::__private::flavors::groto::Context,
-      buf: impl ::core::convert::Into<$crate::__private::buffer::WriteBuf<WB>>,
-    ) -> ::core::result::Result<usize, $crate::__private::error::EncodeError<Groto>>
+      buf: impl ::core::convert::Into<$crate::__private::buffer::ChunkWriter<WB>>,
+    ) -> ::core::result::Result<usize, $crate::__private::flavors::groto::EncodeError>
     where
-      WB: $crate::__private::buffer::BufMut,
+      WB: $crate::__private::buffer::ChunkMut,
     {
       <$ty as $crate::__private::Encode<$wf, $crate::__private::flavors::Groto>>::encode(
         self.as_ref(),

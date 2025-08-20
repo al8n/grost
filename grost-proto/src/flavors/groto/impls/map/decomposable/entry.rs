@@ -1,10 +1,10 @@
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, UnknownBuffer},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, WireFormat,
-    groto::{Context, Error, Identifier},
+    groto::{Context, DecodeError, EncodeError, Identifier},
   },
   selection::Selectable,
 };
@@ -304,7 +304,7 @@ impl<K, V> PartialDecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -336,7 +336,7 @@ impl<K, V> PartialDecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -380,7 +380,7 @@ impl<K, V> PartialDecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -840,7 +840,7 @@ impl<K, V> DecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -873,7 +873,7 @@ impl<K, V> DecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,
@@ -917,7 +917,7 @@ impl<K, V> DecomposableMapEntry<K, V> {
   where
     KW: WireFormat<Groto>,
     VW: WireFormat<Groto>,
-    RB: Buf + 'de,
+    RB: Chunk + 'de,
     UB: UnknownBuffer<RB, Groto> + 'de,
     K: Decode<'de, KW, RB, UB, Groto> + 'de,
     V: Decode<'de, VW, RB, UB, Groto> + 'de,

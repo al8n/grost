@@ -1,13 +1,13 @@
 use std::vec::Vec;
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer},
+  buffer::{Chunk, ChunkMut, UnknownBuffer},
   convert::{PartialTryFromRef, TryFromPartialRef, TryFromRef},
   decode::Decode,
   encode::{Encode, PartialEncode},
   flavors::{
     Groto, Repeated, WireFormat,
-    groto::{Context, Error},
+    groto::{Context, DecodeError, EncodeError},
   },
   selection::{Selectable, Selector},
   state::{Partial, PartialRef, Ref, State},
@@ -22,10 +22,10 @@ where
   KW: WireFormat<Groto> + 'a,
   K: Ord + Decode<'a, KW, RB, B, Groto>,
 {
-  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let mut this = Vec::new();
@@ -33,10 +33,10 @@ where
       .map(|size| (size, this))
   }
 
-  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, Error>
+  fn merge_decode(&mut self, ctx: &'a Context, src: RB) -> Result<usize, DecodeError>
   where
     Self: Sized + 'a,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     repeated_decode_list::<K, KW, RB, B, Self, TAG>(
@@ -57,17 +57,17 @@ where
   KW: WireFormat<Groto> + 'a,
   K: TryFromRef<'a, KW, RB, UB, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, UB, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   UB: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_ref(
     ctx: &'a Context,
     input: <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<Ref<'a, Repeated<KW, TAG>, RB, UB, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     UB: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -93,17 +93,17 @@ where
   KW: WireFormat<Groto> + 'a,
   K: TryFromPartialRef<'a, KW, RB, B, Groto> + 'a,
   K::Output: Sized + Decode<'a, KW, RB, B, Groto>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn try_from_partial_ref(
     ctx: &'a Context,
     input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
-  ) -> Result<Self, Error>
+  ) -> Result<Self, DecodeError>
   where
     Self: Sized,
     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,
-    RB: Buf + 'a,
+    RB: Chunk + 'a,
     B: UnknownBuffer<RB, Groto>,
   {
     let capacity_hint = input.capacity_hint();
@@ -131,14 +131,14 @@ where
   <K as State<PartialRef<'a, KW, RB, B, Groto>>>::Output:
     Sized + Decode<'a, KW, RB, B, Groto> + Selectable<Groto, Selector = K::Selector>,
   <K as State<Partial<Groto>>>::Output: Sized + Selectable<Groto, Selector = K::Selector>,
-  RB: Buf + 'a,
+  RB: Chunk + 'a,
   B: UnknownBuffer<RB, Groto> + 'a,
 {
   fn partial_try_from_ref(
     context: &'a Context,
     input: <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output,
     selector: &Self::Selector,
-  ) -> Result<<Self as State<Partial<Groto>>>::Output, Error>
+  ) -> Result<<Self as State<Partial<Groto>>>::Output, DecodeError>
   where
     <Self as State<Partial<Groto>>>::Output: Sized,
     <Self as State<PartialRef<'a, Repeated<KW, TAG>, RB, B, Groto>>>::Output: Sized,

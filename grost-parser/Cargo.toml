@@ -11,5 +11,6 @@ categories.workspace = true
 metadata.workspace = true
 
 [dependencies]
+chumsky = { version = "0.10", default-features = false }
 pest = "2.8"
 pest_derive = "2.8"

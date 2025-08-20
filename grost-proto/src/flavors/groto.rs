@@ -1,3 +1,4 @@
+use bufkit::RefPeeker;
 pub use context::Context;
 pub use identifier::Identifier;
 pub use impls::*;
@@ -11,7 +12,7 @@ pub type DecodeError = crate::error::DecodeError<Groto>;
 
 use super::Flavor;
 
-use crate::buffer::Buf;
+use crate::buffer::Chunk;
 
 mod context;
 mod identifier;
@@ -40,13 +41,17 @@ impl Flavor for Groto {
     buf: &B,
   ) -> Result<usize, DecodeError>
   where
-    B: crate::buffer::Buf,
+    B: Chunk,
   {
     skip_helper(wire_type, buf.buffer())
   }
 }
 
-fn skip_helper(wire_type: WireType, buf: &[u8]) -> Result<usize, DecodeError> {
+fn skip_helper<B>(wire_type: WireType, buf: &B) -> Result<usize, DecodeError>
+where
+  B: Chunk,
+{
+  let mut peeker = RefPeeker::new(buf);
   let buf_len = buf.len();
 
   macro_rules! try_skip_fixed {

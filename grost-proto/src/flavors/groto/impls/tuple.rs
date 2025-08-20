@@ -20,7 +20,7 @@
 //           mut buf: &mut B,
 //         ) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
 //         where
-//           B: crate::buffer::BufMut + ?Sized,
+//           B: crate::buffer::ChunkMut + ?Sized,
 //         {
 //           let buf_len = buf.len();
 //           if buf_len < <$merged_wf>::SIZE {
@@ -59,7 +59,7 @@
 
 //         fn encode<B>(&self, context: &<Groto as crate::flavors::Flavor>::Context, buf: &mut B) -> Result<usize, <Groto as crate::flavors::Flavor>::Error>
 //         where
-//           B: crate::buffer::BufMut + ?Sized,
+//           B: crate::buffer::ChunkMut + ?Sized,
 //         {
 //           <Self as Encode<$merged_wf, Groto>>::encode_raw(self, context, buf)
 //         }

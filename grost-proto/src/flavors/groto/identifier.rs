@@ -1,9 +1,7 @@
-use varing::Varint;
-
 use super::{Tag, WireType};
 
 use crate::{
-  buffer::{Buf, BufExt, BufMut, WriteBuf},
+  buffer::{Chunk, ChunkExt, ChunkMut, ChunkWriter},
   error::{DecodeTagError, ParseTagError},
 };
 
@@ -132,11 +130,11 @@ impl crate::identifier::Identifier<super::Groto> for Identifier {
     self.wire_type
   }
 
-  fn encode<B>(&self, dst: impl Into<WriteBuf<B>>) -> Result<usize, super::EncodeError>
+  fn encode<B>(&self, dst: impl Into<ChunkWriter<B>>) -> Result<usize, super::EncodeError>
   where
-    B: BufMut,
+    B: ChunkMut,
   {
-    let mut dst: WriteBuf<B> = dst.into();
+    let mut dst: ChunkWriter<B> = dst.into();
     dst
       .try_write_slice(self.encoded.as_slice())
       .map_err(Into::into)
@@ -148,7 +146,7 @@ impl crate::identifier::Identifier<super::Groto> for Identifier {
 
   fn decode<'de, B>(mut buf: B) -> Result<(usize, Self), super::DecodeError>
   where
-    B: Buf + Sized + 'de,
+    B: Chunk + Sized + 'de,
     Self: Sized,
   {
     match buf.read_varint::<u32>() {

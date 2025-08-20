@@ -1,9 +1,9 @@
+use crate::error::ParseWireTypeError;
+
 use super::{
   error::{DecodeError, ParseTagError},
   identifier::Identifier,
 };
-
-pub use varing::{DecodeError as DecodeVarintError, EncodeError as EncodeVarintError};
 
 pub use groto::Groto;
 pub use wire_format::*;
@@ -48,19 +48,6 @@ macro_rules! wire_type {
     ),+$(,)?
   }) => {
     paste::paste! {
-      #[doc = "The error when parsing a [`" $name "`]"]
-      #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-      #[error("invalid selector wire type value: {0}")]
-      pub struct [< Parse $name:camel Error >](pub(crate) u8);
-
-      impl [< Parse $name:camel Error >] {
-        /// Returns the invalid selector wire type value.
-        #[inline]
-        pub const fn value(&self) -> u8 {
-          self.0
-        }
-      }
-
       /// A wire type for encoding and decoding messages.
       ///
       #[doc = "This is a sum type that holds all the [`WireFormat`](crate::flavors::WireFormat)s for [`" $flavor "`](" $flavor ") flavor"]
@@ -93,12 +80,12 @@ macro_rules! wire_type {
 
         /// Decode a wire type from a byte.
         #[inline]
-        pub const fn try_from_u8(value: u8) -> Result<Self, [< Parse $name:camel Error >]> {
+        pub const fn try_from_u8(value: u8) -> Result<Self, $crate::__private::error::ParseWireTypeError> {
           Ok(match value {
             $(
               $value => Self::[< $ty: camel >],
             )*
-            _ => return Err([< Parse $name:camel Error >](value)),
+            _ => return Err($crate::__private::error::ParseWireTypeError::new(value)),
           })
         }
 
@@ -120,7 +107,7 @@ macro_rules! wire_type {
       }
 
       impl core::convert::TryFrom<u8> for $name {
-        type Error = [< Parse $name:camel Error >];
+        type Error = $crate::__private::error::ParseWireTypeError;
 
         #[inline]
         fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -203,7 +190,12 @@ pub trait Flavor: core::fmt::Debug + 'static {
   /// The wire type used for this flavor.
   ///
   /// A wire type is typically a sum type of all possible [`WireFormat`]s supported by this flavor.
-  type WireType: Copy + Eq + core::hash::Hash + core::fmt::Debug + core::fmt::Display;
+  type WireType: Copy
+    + Eq
+    + core::hash::Hash
+    + core::fmt::Debug
+    + core::fmt::Display
+    + TryFrom<u8, Error = ParseWireTypeError>;
 
   /// The context used for this flavor.
   #[cfg(not(feature = "quickcheck"))]
@@ -227,5 +219,5 @@ pub trait Flavor: core::fmt::Debug + 'static {
     buf: &B,
   ) -> Result<usize, DecodeError<Self>>
   where
-    B: crate::buffer::Buf;
+    B: crate::buffer::Chunk;
 }

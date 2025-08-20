@@ -243,7 +243,7 @@ impl PartialObject {
         let wc = output.make_where_clause();
         wc.predicates.extend(transform_ref_constraints);
         wc.predicates.push(syn::parse2(quote! {
-          #rb: #path_to_grost::__private::buffer::Buf + #lt
+          #rb: #path_to_grost::__private::buffer::Chunk + #lt
         })?);
         wc.predicates.push(syn::parse2(quote! {
           #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt
@@ -281,7 +281,7 @@ impl PartialObject {
         let wc = output.make_where_clause();
         wc.predicates.extend(partial_transform_ref_constraints);
         wc.predicates.push(syn::parse2(quote! {
-          #rb: #path_to_grost::__private::buffer::Buf + #lt
+          #rb: #path_to_grost::__private::buffer::Chunk + #lt
         })?);
         wc.predicates.push(syn::parse2(quote! {
           #ub: #path_to_grost::__private::buffer::Buffer<<#flavor_ty as #path_to_grost::__private::flavors::Flavor>::Unknown<#rb>> + #lt

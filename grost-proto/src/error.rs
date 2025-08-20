@@ -2,12 +2,33 @@ use core::num::NonZeroUsize;
 
 use crate::flavors::Flavor;
 
+pub use varing::{ConstDecodeError as ConstDecodeVarintError, ConstEncodeError as ConstEncodeVarintError};
+
 pub use bufkit::error::{
-  OutOfBounds, ReadVarintError, TryAdvanceError, TryPeekError, TryReadError, TrySegmentError,
-  TryWriteAtError, TryWriteError, WriteVarintAtError, WriteVarintError,
+  OutOfBounds, EncodeVarintAtError, DecodeVarintError, TryAdvanceError, TryPeekError, TryPutAtError,
+  TryReadError, TrySegmentError, TryWriteError, EncodeVarintError,
 };
 
-/// Invalid tag error
+/// An error that occurs when parsing a [`Flavor::WireType`](Flavor::WireType) from a raw value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[error("invalid wire type value: {0}")]
+pub struct ParseWireTypeError(pub(crate) u8);
+
+impl ParseWireTypeError {
+  /// Creates a new `ParseWireTypeError`.
+  #[inline]
+  pub const fn new(value: u8) -> Self {
+    Self(value)
+  }
+
+  /// Returns the invalid wire type value.
+  #[inline]
+  pub const fn value(&self) -> u8 {
+    self.0
+  }
+}
+
+/// An error that occurs when parsing a tag value from a raw value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("tag value {0} is not in range 1..={max}", max = (1u32 << 29) - 1)]
 pub struct ParseTagError(pub(crate) u32);
@@ -23,9 +44,9 @@ impl ParseTagError {
 /// Error type for decoding tags.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum DecodeTagError {
-  /// Constructed from a `ReadVarintError`.
+  /// Constructed from a `DecodeVarintError`.
   #[error(transparent)]
-  Read(#[from] ReadVarintError),
+  Read(#[from] DecodeVarintError),
   /// Constructed from a `ParseTagError`.
   #[error(transparent)]
   Parse(#[from] ParseTagError),
@@ -333,9 +354,9 @@ pub enum EncodeError<F: Flavor + ?Sized> {
 
 impl<F: Flavor + ?Sized> core::error::Error for EncodeError<F> {}
 
-impl<F: Flavor + ?Sized> From<WriteVarintError> for EncodeError<F> {
+impl<F: Flavor + ?Sized> From<EncodeVarintError> for EncodeError<F> {
   #[inline]
-  fn from(e: WriteVarintError) -> Self {
+  fn from(e: EncodeVarintError) -> Self {
     Self::from_varint_error(e)
   }
 }
@@ -361,12 +382,12 @@ impl<F: Flavor + ?Sized> From<TryWriteError> for EncodeError<F> {
   }
 }
 
-impl<F: Flavor + ?Sized> From<TryWriteAtError> for EncodeError<F> {
+impl<F: Flavor + ?Sized> From<TryPutAtError> for EncodeError<F> {
   #[inline]
-  fn from(e: TryWriteAtError) -> Self {
+  fn from(e: TryPutAtError) -> Self {
     match e {
-      TryWriteAtError::OutOfBounds(out_of_bounds) => Self::OutOfBounds(out_of_bounds),
-      TryWriteAtError::InsufficientSpace(insufficient_space_at) => Self::buffer_too_small(
+      TryPutAtError::OutOfBounds(out_of_bounds) => Self::OutOfBounds(out_of_bounds),
+      TryPutAtError::InsufficientSpace(insufficient_space_at) => Self::buffer_too_small(
         insufficient_space_at.requested() + insufficient_space_at.offset(),
         insufficient_space_at.available() + insufficient_space_at.offset(),
       ),
@@ -375,12 +396,12 @@ impl<F: Flavor + ?Sized> From<TryWriteAtError> for EncodeError<F> {
   }
 }
 
-impl<F: Flavor + ?Sized> From<WriteVarintAtError> for EncodeError<F> {
+impl<F: Flavor + ?Sized> From<EncodeVarintAtError> for EncodeError<F> {
   #[inline]
-  fn from(e: WriteVarintAtError) -> Self {
+  fn from(e: EncodeVarintAtError) -> Self {
     match e {
-      WriteVarintAtError::OutOfBounds(out_of_bounds) => Self::OutOfBounds(out_of_bounds),
-      WriteVarintAtError::InsufficientSpace(insufficient_space_at) => Self::buffer_too_small(
+      EncodeVarintAtError::OutOfBounds(out_of_bounds) => Self::OutOfBounds(out_of_bounds),
+      EncodeVarintAtError::InsufficientSpace(insufficient_space_at) => Self::buffer_too_small(
         insufficient_space_at.requested() + insufficient_space_at.offset(),
         insufficient_space_at.available() + insufficient_space_at.offset(),
       ),
@@ -413,6 +434,13 @@ impl<F: Flavor + ?Sized> From<std::string::String> for EncodeError<F> {
 impl<F: Flavor + ?Sized> From<&'static str> for EncodeError<F> {
   fn from(value: &'static str) -> Self {
     Self::other(value)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<ConstEncodeVarintError> for EncodeError<F> {
+  #[inline]
+  fn from(e: ConstEncodeVarintError) -> Self {
+    Self::from_const_varint_error(e)
   }
 }
 
@@ -450,21 +478,33 @@ impl<F: Flavor + ?Sized> EncodeError<F> {
     Self::InvalidTag(e)
   }
 
-  /// Creates a new encoding error from a [`WriteVarintError`].
+  /// Creates a new encoding error from a [`EncodeVarintError`].
   #[inline]
-  pub const fn from_varint_error(e: WriteVarintError) -> Self {
+  pub fn from_varint_error(e: EncodeVarintError) -> Self {
     match e {
-      WriteVarintError::InsufficientSpace(e) => {
+      EncodeVarintError::InsufficientSpace(e) => {
+        Self::BufferTooSmall(BufferTooSmall::new(e.requested(), e.available()))
+      }
+      EncodeVarintError::Other(e) => Self::Other(e),
+      _ => Self::other("unknown error"),
+    }
+  }
+
+  /// Creates a new encoding error from a [`ConstEncodeVarintError`].
+  #[inline]
+  pub const fn from_const_varint_error(e: ConstEncodeVarintError) -> Self {
+    match e {
+      ConstEncodeVarintError::InsufficientSpace(e) => {
         Self::BufferTooSmall(BufferTooSmall::new(e.requested(), e.available()))
       }
       #[cfg(any(feature = "std", feature = "alloc"))]
-      WriteVarintError::Other(e) => Self::Other(std::borrow::Cow::Borrowed(e)),
+      ConstEncodeVarintError::Other(e) => Self::Other(std::borrow::Cow::Borrowed(e)),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      ConstEncodeVarintError::Other(e) => Self::other(e),
       #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Other(std::borrow::Cow::Borrowed("unknown error")),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
-      WriteVarintError::Other(e) => Self::Other(e),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      _ => Self::Other("unknown error"),
+      _ => Self::other("unknown error"),
     }
   }
 
@@ -540,10 +580,19 @@ pub enum DecodeError<F: Flavor + ?Sized> {
   /// Returned when the decoded identifier is not the expected identifier.
   #[display("unexpected identifier {actual}, expected {expected}")]
   UnexpectedIdentifier {
-    /// The expected identifier for encoding.
+    /// The expected identifier.
     expected: F::Identifier,
-    /// The actual identifier for encoding.
+    /// The actual identifier.
     actual: F::Identifier,
+  },
+
+  /// Returned when the decoded wire type is not the expected wire type.
+  #[display("unexpected wire type {actual}, expected {expected}")]
+  UnexpectedWireType {
+    /// The expected wire type.
+    expected: F::WireType,
+    /// The actual wire type.
+    actual: F::WireType,
   },
 
   /// Returned when the field is not found but is required when decoding or transforming the data.
@@ -558,6 +607,10 @@ pub enum DecodeError<F: Flavor + ?Sized> {
   /// Invalid tag value
   #[display("{_0}")]
   InvalidTag(ParseTagError),
+
+  /// Invalid wire type value
+  #[display("{_0}")]
+  InvalidWireType(ParseWireTypeError),
 
   /// Returned when the decoded type overflows the maximum value.
   #[display("decoded value would overflow the target type")]
@@ -576,9 +629,9 @@ pub enum DecodeError<F: Flavor + ?Sized> {
 
 impl<F: Flavor + ?Sized> core::error::Error for DecodeError<F> {}
 
-impl<F: Flavor + ?Sized> From<ReadVarintError> for DecodeError<F> {
+impl<F: Flavor + ?Sized> From<DecodeVarintError> for DecodeError<F> {
   #[inline]
-  fn from(e: ReadVarintError) -> Self {
+  fn from(e: DecodeVarintError) -> Self {
     Self::from_varint_error(e)
   }
 }
@@ -586,7 +639,21 @@ impl<F: Flavor + ?Sized> From<ReadVarintError> for DecodeError<F> {
 impl<F: Flavor + ?Sized> From<ParseTagError> for DecodeError<F> {
   #[inline]
   fn from(e: ParseTagError) -> Self {
-    Self::parse_tag(e)
+    Self::from_parse_tag_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<DecodeTagError> for DecodeError<F> {
+  #[inline]
+  fn from(e: DecodeTagError) -> Self {
+    Self::from_decode_tag_error(e)
+  }
+}
+
+impl<F: Flavor + ?Sized> From<ParseWireTypeError> for DecodeError<F> {
+  #[inline]
+  fn from(e: ParseWireTypeError) -> Self {
+    Self::from_parse_wire_type_error(e)
   }
 }
 
@@ -645,6 +712,13 @@ impl<F: Flavor + ?Sized> From<&'static str> for DecodeError<F> {
   }
 }
 
+impl<F: Flavor + ?Sized> From<ConstDecodeVarintError> for DecodeError<F> {
+  #[inline]
+  fn from(e: ConstDecodeVarintError) -> Self {
+    Self::from_const_varint_error(e)
+  }
+}
+
 impl<F: Flavor + ?Sized> DecodeError<F> {
   /// Creates an insufficient data error.
   #[inline]
@@ -668,6 +742,12 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
     Self::UnexpectedIdentifier { expected, actual }
   }
 
+  /// Creates an unexpected wire type error.
+  #[inline]
+  pub const fn unexpected_wire_type(expected: F::WireType, actual: F::WireType) -> Self {
+    Self::UnexpectedWireType { expected, actual }
+  }
+
   /// Creates a missing selected field error.
   #[inline]
   pub const fn missing_selected_field(struct_name: &'static str, field_name: &'static str) -> Self {
@@ -679,16 +759,27 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
 
   /// Creates a new error from the varint error.
   #[inline]
-  pub const fn from_varint_error(e: ReadVarintError) -> Self {
+  pub fn from_varint_error(e: DecodeVarintError) -> Self {
     match e {
-      ReadVarintError::InsufficientData { available } => Self::insufficient_data(available),
-      ReadVarintError::Overflow => Self::Overflow,
+      DecodeVarintError::InsufficientData { available } => Self::insufficient_data(available),
+      DecodeVarintError::Overflow => Self::Overflow,
+      DecodeVarintError::Other(e) => Self::Other(e),
+      _ => Self::other("unknown error"),
+    }
+  }
+
+  /// Creates a new error from the varint error.
+  #[inline]
+  pub const fn from_const_varint_error(e: ConstDecodeVarintError) -> Self {
+    match e {
+      ConstDecodeVarintError::InsufficientData { available } => Self::insufficient_data(available),
+      ConstDecodeVarintError::Overflow => Self::Overflow,
       #[cfg(any(feature = "std", feature = "alloc"))]
-      ReadVarintError::Other(e) => Self::Other(std::borrow::Cow::Borrowed(e)),
+      ConstDecodeVarintError::Other(e) => Self::Other(std::borrow::Cow::Borrowed(e)),
+      #[cfg(not(any(feature = "std", feature = "alloc")))]
+      ConstDecodeVarintError::Other(e) => Self::other(e),
       #[cfg(any(feature = "std", feature = "alloc"))]
       _ => Self::Other(std::borrow::Cow::Borrowed("unknown error")),
-      #[cfg(not(any(feature = "std", feature = "alloc")))]
-      ReadVarintError::Other(e) => Self::other(e),
       #[cfg(not(any(feature = "std", feature = "alloc")))]
       _ => Self::other("unknown error"),
     }
@@ -696,7 +787,7 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
 
   /// Creates a new error from the tag decode error.
   #[inline]
-  pub const fn from_decode_tag_error(e: DecodeTagError) -> Self {
+  pub fn from_decode_tag_error(e: DecodeTagError) -> Self {
     match e {
       DecodeTagError::Read(e) => Self::from_varint_error(e),
       DecodeTagError::Parse(e) => Self::from_parse_tag_error(e),
@@ -707,6 +798,12 @@ impl<F: Flavor + ?Sized> DecodeError<F> {
   #[inline]
   pub const fn from_parse_tag_error(err: ParseTagError) -> Self {
     Self::InvalidTag(err)
+  }
+
+  /// Creates a invalid wire type error.
+  #[inline]
+  pub const fn from_parse_wire_type_error(err: ParseWireTypeError) -> Self {
+    Self::InvalidWireType(err)
   }
 
   /// Propagating insufficient buffer information.

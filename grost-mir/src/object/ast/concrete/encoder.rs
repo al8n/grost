@@ -43,7 +43,7 @@ impl ObjectEncoder {
       .make_where_clause()
       .predicates
       .push(syn::parse2(quote! {
-        #wbi: #path_to_grost::__private::buffer::BufMut
+        #wbi: #path_to_grost::__private::buffer::ChunkMut
       })?);
     let encoder_state_type_param = TypeParam::from(format_ident!("__GROST_ENCODER_STATE__"));
 

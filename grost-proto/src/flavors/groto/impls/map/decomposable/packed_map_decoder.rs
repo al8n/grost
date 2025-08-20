@@ -1,7 +1,7 @@
 use core::{iter::FusedIterator, marker::PhantomData};
 
 use crate::{
-  buffer::{Buf, BufMut, UnknownBuffer, WriteBuf},
+  buffer::{Chunk, ChunkMut, ChunkWriter, UnknownBuffer},
   convert::{Extracted, PartialIdentity},
   decode::Decode,
   encode::{Encode, PartialEncode},
@@ -143,11 +143,15 @@ impl<'a, K, V, RB, B, KW, VW> Encode<PackedEntry<KW, VW>, Groto>
   for DecomposablePackedMapDecoder<'a, K, V, RB, B, KW, VW>
 where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn encode_raw<WB>(&self, ctx: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode_raw<WB>(
+    &self,
+    ctx: &Context,
+    buf: impl Into<ChunkWriter<WB>>,
+  ) -> Result<usize, EncodeError>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     let buf_len = buf.len();
     let src_len = self.encoded_raw_len(ctx);
@@ -167,9 +171,9 @@ where
     self.src.remaining().saturating_sub(start_offset)
   }
 
-  fn encode<WB>(&self, _: &Context, buf: &mut WB) -> Result<usize, Error>
+  fn encode<WB>(&self, _: &Context, buf: impl Into<ChunkWriter<WB>>) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     let src = &self.src;
     let buf_len = buf.len();
@@ -195,18 +199,18 @@ where
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
   K: Selectable<Groto>,
   V: Selectable<Groto>,
 {
   fn partial_encode_raw<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     // Check if either key or value selector is empty
     if selector.is_empty() {
@@ -227,11 +231,11 @@ where
   fn partial_encode<WB>(
     &self,
     context: &Context,
-    buf: impl Into<WriteBuf<WB>>,
+    buf: impl Into<ChunkWriter<WB>>,
     selector: &Self::Selector,
   ) -> Result<usize, Error>
   where
-    WB: BufMut,
+    WB: ChunkMut,
   {
     if selector.is_empty() {
       return Ok(0);
@@ -255,12 +259,12 @@ where
   PackedEntry<KW, VW>: WireFormat<Groto> + 'a,
   KW: WireFormat<Groto> + 'a,
   VW: WireFormat<Groto> + 'a,
-  RB: Buf,
+  RB: Chunk,
 {
-  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), Error>
+  fn decode(ctx: &'a Context, src: RB) -> Result<(usize, Self), DecodeError>
   where
     Self: Sized + 'a,
-    RB: crate::buffer::Buf,
+    RB: Chunk,
     B: UnknownBuffer<RB, Groto> + 'a,
   {
     let buf = src.remaining_slice();
@@ -436,7 +440,7 @@ where
   K: Decode<'de, KW, RB, UB, Groto> + 'de,
   V: Decode<'de, VW, RB, UB, Groto> + 'de,
   UB: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
   type Item = Result<(usize, PartialDecomposableMapEntry<K, V>), Error>;
 
@@ -489,6 +493,6 @@ where
   K: Decode<'de, KW, RB, B, Groto> + 'de,
   V: Decode<'de, VW, RB, B, Groto> + 'de,
   B: UnknownBuffer<RB, Groto> + 'de,
-  RB: Buf + 'de,
+  RB: Chunk + 'de,
 {
 }

@@ -1,7 +1,7 @@
 // use core::marker::PhantomData;
 
 // use crate::{
-//   buffer::{Buf, BufMut, UnknownBuffer},
+//   buffer::{Chunk, ChunkMut, UnknownBuffer},
 //   decode::{Decode, EquivalentDecode},
 //   flavors::{Flavor, WireFormat},
 // };
@@ -51,7 +51,7 @@
 
 //   pub fn decode<'a, O, OW, UB>(self, ctx: &'a F::Context) -> Result<(usize, O), F::Error>
 //   where
-//     RB: Buf + 'a,
+//     RB: Chunk + 'a,
 //     O: Decode<'a, OW, RB, UB, F> + 'a,
 //     OW: WireFormat<F>,
 //     UB: UnknownBuffer<RB, F> + 'a,

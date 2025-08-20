@@ -2,7 +2,7 @@ use indexmap_2::IndexMap;
 
 use super::super::{DecomposableMapSelector, DecomposablePartialMapBuffer};
 use crate::{
-  buffer::{Buf, BufMut, Buffer, WriteBuf},
+  buffer::{Buffer, Chunk, ChunkMut, ChunkWriter},
   convert::{Extracted, Inner, MapKey, MapValue, TryFromPartial},
   flavors::{
     Groto,
